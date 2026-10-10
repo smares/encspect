@@ -87,6 +87,12 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 - The bit reservoir: each frame's bytes after the side information are split by owner into its own main data, main data of later frames ("Bit Reservoir") and ancillary data no frame uses, so every byte is accounted for. Main data runs through the data of consecutive frames of one stream, skipping headers and side information, and continues across junk and tags between frames; a stream change starts with an empty reservoir. Main data that begins before the stream (a cut file), overlaps the previous frame's (missing frames), reaches back across a gap (decoders disagree there) or does not fit the frame is reported.
 - Side-information checks: big_values above 288, the reserved block type, Huffman tables 4 and 14, scalefactors longer than part2_3_length, scfsi on a channel with short blocks, and MS or intensity stereo with different block types in the two channels (the last two are rejected by libmad).
 
+**Layer II audio data and multichannel**
+
+- Bit allocation per subband and channel from the allocation tables (ISO/IEC 11172-3 Annex B, and ISO/IEC 13818-3 for the lower sampling rates), scfsi and scalefactors, the length of the sample data and where the ancillary data starts. The same tables let Layer II CRCs be verified.
+- The MPEG-2 multichannel extension (ISO/IEC 13818-3), which an MPEG-1 Layer II frame carries in its ancillary data, so the stereo base stays playable: the multichannel header (center, surround and LFE channels, audio mix, dematrix procedure, multilingual channels with their layer and sampling rate, whether an extension bitstream exists), the channel configuration such as 3/2 plus LFE, its CRC, and how many bytes the multichannel data takes. The frame header has no flag for it, so it is detected by structure and consistency across frames, like a tag, never by a single match. An extension bitstream the header announces but the file lacks is reported.
+- Layers I and III can carry the extension too but are practically never found with it; they follow if a sample turns up.
+
 **Encoder and VBR headers**
 
 - Xing and Info: flags, frame and byte counts, the seek table, quality.
@@ -207,6 +213,7 @@ The largest risks are a wrong core contract and spec details that no reviewer wi
 - **Decoders.** Quality, license and upkeep of managed decoders vary, and some formats (AAC, Musepack, Monkey's Audio) may have none. Waveform and spectrum are therefore optional per format.
 - **Closed formats.** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
 - **Heuristic encoder detection.** Files without LAME or Xing tags can be misidentified; results carry a confidence label.
+- **Thin references for MPEG-2 multichannel.** No tool in Ubuntu encodes or fully decodes it. mp3guessenc reads the multichannel header and channel configuration and ffmpeg, mpg123 and libmad decode the stereo base, so the frame layout and the header are cross-checked, but the rest of the multichannel syntax rests on the standard alone until real files (DVD-Video, DVB) are available.
 - **Large inputs.** Multi-gigabyte files and 100,000-frame reports need streaming reads and a lazily loaded, virtualized tree in the GUI.
 
 **Open questions**
