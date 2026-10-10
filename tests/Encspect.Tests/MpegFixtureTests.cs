@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
 
@@ -70,6 +71,19 @@ public class MpegFixtureTests
             .Select(r => $"{r.GetProperty("name").GetString()}@{r.GetProperty("offset").GetInt64()}+{r.GetProperty("length").GetInt64()}"));
         string actualRegions = string.Join(", ", report.Root.Children.Select(n => $"{n.Name}@{n.Offset}+{n.Length}"));
         Assert.Equal(expectedRegions, actualRegions);
+
+        foreach (JsonElement region in manifest.GetProperty("regions").EnumerateArray())
+        {
+            Node node = report.Root.Children.Single(n => n.Offset == region.GetProperty("offset").GetInt64() && n.Name == region.GetProperty("name").GetString());
+            if (region.TryGetProperty("statistics", out JsonElement statistics))
+            {
+                CheckFields(node, statistics);
+            }
+            else
+            {
+                Assert.DoesNotContain(node.Children, c => c.Name == "Statistics");
+            }
+        }
 
         Node[] frames = Streams(report).SelectMany(s => s.Children.Where(c => c.Name == "Frame")).ToArray();
         JsonElement[] expectedFrames = manifest.GetProperty("frames").EnumerateArray().ToArray();
@@ -259,6 +273,8 @@ public class MpegFixtureTests
 
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
+
+        CheckToolStatistics(manifest, report);
     }
 
     // Side information as minimp3_side_info.c prints it: compared field by field where minimp3
@@ -469,6 +485,80 @@ public class MpegFixtureTests
     }
 
     private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
+
+    private static void CheckFields(Node node, JsonElement fields)
+    {
+        foreach (JsonProperty field in fields.EnumerateObject())
+        {
+            string? actual = Fixtures.Resolve(node, field.Name).FirstOrDefault()?.Value;
+            Assert.True(field.Value.GetString() == actual, $"{node.Name} at {node.Offset}, field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
+        }
+    }
+
+    // mp3guessenc counts the frames it takes as audio, which are ours unless a finding says some
+    // frames differ (see crosscheck_mpeg_fixtures.py), and rounds its figures in floating point, so
+    // at an exact tie either rounding agrees; ffmpeg and mpg123 output the gapless sample count when
+    // the padding covers their own 529-sample decoder delay.
+    private static void CheckToolStatistics(JsonElement manifest, Report report)
+    {
+        const long clock = 14_112_000;
+        Node region = Streams(report).Single();
+        Node statistics = region.Children.Single(c => c.Name == "Statistics");
+        Node[] audio = region.Children.Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c)).ToArray();
+        long ticks = audio.Sum(f => SamplesOf(f) * (clock / long.Parse(Field(f, "Header/Sample Rate")!.Split(' ')[0], CultureInfo.InvariantCulture)));
+        long bits = audio.Sum(f => f.Length * 8);
+        Assert.True(Agrees(Field(statistics, "Average Bitrate")!.Split(' ')[0], (Int128)bits * clock, (Int128)ticks * 1000, 10, allowTie: false));
+
+        string[] neutral = ["mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-", "mpeg.free-format"];
+        if (manifest.TryGetProperty("mp3guessenc_stream", out JsonElement guessenc)
+            && report.Findings.All(f => neutral.Any(n => f.Code.StartsWith(n, StringComparison.Ordinal))))
+        {
+            Assert.Equal(guessenc.GetProperty("Number of frames").GetString(), Field(statistics, "Frames"));
+            string[] parts = guessenc.GetProperty("Length").GetString()!.Split(':');
+            decimal ms = (((long.Parse(parts[0], CultureInfo.InvariantCulture) * 60) + long.Parse(parts[1], CultureInfo.InvariantCulture)) * 60_000)
+                + (decimal.Parse(parts[2], CultureInfo.InvariantCulture) * 1000);
+            Assert.True(Agrees(ms.ToString(CultureInfo.InvariantCulture), (Int128)ticks * 1000, clock, 1), $"Length {ms} ms");
+            string rate = guessenc.GetProperty("Data rate").GetString()!.Split(' ')[0];
+            Assert.True(Agrees(rate, (Int128)bits * clock, (Int128)ticks * 1000, 10), $"Data rate {rate}");
+            foreach (JsonProperty bar in guessenc.GetProperty("histogram").EnumerateObject())
+            {
+                int count = bar.Value[0].GetInt32();
+                string? ours = Field(statistics, $"Bitrate Distribution/{bar.Name} kbps");
+                Assert.StartsWith(count == 1 ? "1 frame (" : $"{count} frames (", ours);
+                Assert.True(Agrees(bar.Value[1].GetString()!, count * 100, audio.Length, 10), $"{bar.Name} kbps share {bar.Value[1].GetString()}%");
+            }
+        }
+
+        if (manifest.TryGetProperty("decoded_samples", out JsonElement decoded))
+        {
+            long ffmpeg = decoded.GetProperty("ffmpeg").GetInt64();
+            long padding = long.Parse(Field(statistics, "Gapless/Encoder Padding")!.Split(' ')[0], CultureInfo.InvariantCulture);
+            if (ffmpeg == decoded.GetProperty("mpg123").GetInt64() && padding >= 529)
+            {
+                Assert.Equal(ffmpeg.ToString(CultureInfo.InvariantCulture), Field(statistics, "Gapless/Sample Count"));
+            }
+        }
+
+        static string? Field(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
+
+        static long SamplesOf(Node frame) => (Field(frame, "Header/Layer"), Field(frame, "Header/Version")) switch
+        {
+            ("I", _) => 384,
+            ("III", not "MPEG-1") => 576,
+            _ => 1152,
+        };
+    }
+
+    // Whether shown, a decimal with scale steps per unit, is numerator / denominator rounded half
+    // to even, or, with allowTie, the other neighbor of an exact tie.
+    private static bool Agrees(string shown, Int128 numerator, Int128 denominator, int scale, bool allowTie = true)
+    {
+        long value = (long)decimal.Round(decimal.Parse(shown, CultureInfo.InvariantCulture) * scale);
+        (Int128 quotient, Int128 rest) = Int128.DivRem(numerator * scale, denominator);
+        bool tie = rest * 2 == denominator;
+        long nearest = (long)(rest * 2 > denominator || (tie && quotient % 2 != 0) ? quotient + 1 : quotient);
+        return value == nearest || (allowTie && tie && (value == (long)quotient || value == (long)quotient + 1));
+    }
 
     private static IEnumerable<Node> Streams(Report report) => report.Root.Children.Where(c => c.Name == "MPEG Audio");
 

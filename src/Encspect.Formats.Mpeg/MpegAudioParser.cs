@@ -50,6 +50,8 @@ public sealed partial class MpegAudioParser : IFormatParser
             region.Encoder = DetectEncoder(stream, region.Entries);
         }
 
+        AddStatistics(stream);
+
         findings.Flush(context);
     }
 
@@ -126,7 +128,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
         {
-            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1, null, 0, 0, 0, null, null);
+            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1, null, 0, 0, 0, null, null, false);
             entries.Add(gap);
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
@@ -208,7 +210,8 @@ public sealed partial class MpegAudioParser : IFormatParser
             state.Reservoir.Reset();
         }
 
-        var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier, fill, layer2, vbrFrame);
+        var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier, fill, layer2, vbrFrame,
+            available < length);
         entries.Add(frame);
         if (vbr is not null)
         {
@@ -260,6 +263,11 @@ public sealed partial class MpegAudioParser : IFormatParser
         if (region.Encoder is { } encoder)
         {
             nodes.Add(encoder);
+        }
+
+        if (region.Statistics is { } statistics)
+        {
+            nodes.Add(statistics);
         }
 
         nodes.AddRange(region.Entries.Select(e => e.IsGap ? GapNode(e) : FrameNode(e, build)));
@@ -671,9 +679,9 @@ public sealed partial class MpegAudioParser : IFormatParser
     // SideInfo holds a Layer III frame's raw side information; MainDataLength and Earlier, how
     // long its main data is and how much of it lies in earlier frames; ReservoirFill, the bytes
     // in the bit reservoir when the frame starts. VbrFrame holds the bytes of a frame that carries
-    // a Xing, Info or VBRI header, which is not audio.
+    // a Xing, Info or VBRI header, which is not audio. IsTruncated marks a frame the data ends inside.
     private readonly record struct Entry(long Offset, long Length, uint Header, int Crc, int ComputedCrc, byte[]? SideInfo,
-        int MainDataLength, int Earlier, int ReservoirFill, Layer2Record? Layer2, byte[]? VbrFrame)
+        int MainDataLength, int Earlier, int ReservoirFill, Layer2Record? Layer2, byte[]? VbrFrame, bool IsTruncated)
     {
         public bool IsGap => Header == 0;
 
@@ -689,12 +697,15 @@ public sealed partial class MpegAudioParser : IFormatParser
     private sealed record StreamState(BlockReader Blocks, FindingCollector Findings, BuildContext Build, BitReservoir Reservoir,
         List<Entry> Candidates, List<RegionState> Regions, List<(Entry Frame, VbrHeader Tag)> LameTags);
 
-    // A region's frames and gaps, and the encoder they point to, known once every frame is read.
+    // A region's frames and gaps, and the encoder they point to and their statistics, known once
+    // every frame is read.
     private sealed class RegionState(List<Entry> entries)
     {
         public List<Entry> Entries => entries;
 
         public Node? Encoder { get; set; }
+
+        public Node? Statistics { get; set; }
     }
 
     // What building frame nodes needs beyond each frame's record: the Layer III main-data runs, and

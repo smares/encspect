@@ -34,6 +34,150 @@
               ]
             },
             {
+              "name": "Statistics",
+              "value": "6 frames, 0.157 s",
+              "offset": 417,
+              "length": 2507,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": "6",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Samples",
+                  "value": "6912",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Duration",
+                  "value": "0.157 s",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "IsVbr",
+                  "value": "false",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": "128.0 kbps",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": "128 kbps",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": "128 kbps",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "value": "1 bitrate",
+                  "offset": 417,
+                  "length": 2507,
+                  "children": [
+                    {
+                      "name": "128 kbps",
+                      "value": "6 frames (100.0%)",
+                      "offset": 417,
+                      "length": 2507
+                    }
+                  ]
+                },
+                {
+                  "name": "Bitrate Over Time",
+                  "value": "128",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Maximum Reservoir Fill",
+                  "value": "382 bytes",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "Reservoir Fill Over Time",
+                  "value": "382",
+                  "offset": 417,
+                  "length": 2507
+                },
+                {
+                  "name": "VBR Header",
+                  "offset": 417,
+                  "length": 2507,
+                  "children": [
+                    {
+                      "name": "Claimed Frames",
+                      "value": "10",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Counted Frames",
+                      "value": "6",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Claimed Bytes",
+                      "value": "4596",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Counted Bytes",
+                      "value": "2924",
+                      "offset": 417,
+                      "length": 2507
+                    }
+                  ]
+                },
+                {
+                  "name": "Gapless",
+                  "offset": 417,
+                  "length": 2507,
+                  "children": [
+                    {
+                      "name": "Encoder Delay",
+                      "value": "576 samples",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Encoder Padding",
+                      "value": "1566 samples",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Sample Count",
+                      "value": "4770",
+                      "offset": 417,
+                      "length": 2507
+                    },
+                    {
+                      "name": "Duration",
+                      "value": "0.108 s",
+                      "offset": 417,
+                      "length": 2507
+                    }
+                  ]
+                }
+              ]
+            },
+            {
               "name": "Frame",
               "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
               "offset": 0,
@@ -3673,6 +3817,20 @@
         "severity": "Warning",
         "code": "mpeg.music-crc-not-verified",
         "message": "The LAME tag of 1 frame covers more music than the file holds after it, so the music CRC is not verified; the first at 0x0.",
+        "offset": 0,
+        "length": 417
+      },
+      {
+        "severity": "Warning",
+        "code": "mpeg.vbr-frame-count-mismatch",
+        "message": "The Info header of 1 frame claims a frame count the stream after it does not have, the first at 0x0: 10 claimed, 6 counted.",
+        "offset": 0,
+        "length": 417
+      },
+      {
+        "severity": "Warning",
+        "code": "mpeg.vbr-byte-count-mismatch",
+        "message": "The Info header of 1 frame claims a byte count the stream after it does not have, the first at 0x0: 4596 claimed, 2924 counted.",
         "offset": 0,
         "length": 417
       }
