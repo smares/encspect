@@ -8,14 +8,17 @@ prediction and extension bitstreams), its output matches ISO's reference output 
 least significant bit.
 """
 
-import hashlib
 import pathlib
 import subprocess
 import tarfile
 import tempfile
 
+import downloads
+
 URL = "https://sourceforge.net/projects/mctoolame/files/mctoolamed/mctoolamed-01a/mctoolamed-01a.tgz/download"
 SHA256 = "654b7e20e905946dc4a7e58262e81f6cf1d0a171455eeeaeeaf0cc223e0c052e"
+# SourceForge's mirror network, directly; the Wayback Machine has no copy.
+ADDRESSES = [URL, "https://downloads.sourceforge.net/project/mctoolame/mctoolamed/mctoolamed-01a/mctoolamed-01a.tgz"]
 
 NAMING = '''  numchannels = numchan; // Set the global var for later on.
   if (numchan == 5)
@@ -33,10 +36,7 @@ GENERIC = '''  numchannels = numchan; // Set the global var for later on.
 def build():
     directory = pathlib.Path(tempfile.mkdtemp(prefix="mctoolamed-"))
     archive = directory / "mctoolamed.tgz"
-    subprocess.run(["curl", "-fsSL", "--retry", "3", "-o", str(archive), URL], check=True)
-    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-    if digest != SHA256:
-        raise SystemExit(f"mctoolamed-01a.tgz has SHA-256 {digest}, expected {SHA256}")
+    downloads.fetch(ADDRESSES, SHA256, archive)
     with tarfile.open(archive) as tar:
         tar.extractall(directory, filter="data")
     source = directory / "mctoolamed-01a"

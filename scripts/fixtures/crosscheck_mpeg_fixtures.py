@@ -53,7 +53,8 @@ External fixtures list their encoder settings and ffprobe's packets instead of e
 them, ffprobe's sample rate, channel count and bitrate must match those settings, and minimp3 and
 mp3guessenc must still report what the manifest recorded.
 
-Needs ffprobe, madplay, mpg123, mp3guessenc, curl, make and a C compiler on the PATH. Exits
+Needs ffprobe, madplay, mpg123, curl, make and a C compiler on the PATH; minimp3 and mp3guessenc
+are built from third_party. Exits
 non-zero when anything disagrees.
 """
 
@@ -63,6 +64,7 @@ import re
 import subprocess
 import sys
 
+import guessenc_tool
 import mctoolamed_tool
 import minimp3_tool
 import stream_stats
@@ -136,7 +138,7 @@ def madplay_frame_count(path):
 def guessenc_summary(path):
     """The Layer III statistics mp3guessenc prints, in the shape make_layer3_fixtures.py writes."""
     # The exit status is the guessed encoder, not an error.
-    output = subprocess.run(["mp3guessenc", "-e", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), "-e", str(path)], capture_output=True, text=True).stdout
     summary = {"blocks": {"long": 0, "switch": 0, "short": 0, "mixed": 0}, "mode_extensions": {}, "global_gain": {},
                "ancillary": [0, 0, 0]}
     gains = {}
@@ -221,7 +223,7 @@ GUESSENC_MODES_BY_MISC = {0: "mono", 4: "simple LR stereo", 8: "dual channel", 1
 
 def guessenc_tag_lines(path):
     """mp3guessenc's report of the VBR header, the music CRC and the encoder string, by label (first occurrence)."""
-    output = subprocess.run(["mp3guessenc", "-v", "-r", "-s", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), "-v", "-r", "-s", str(path)], capture_output=True, text=True).stdout
     lines = {}
     for line in output.splitlines():
         if " tag detected into the first frame" in line:
@@ -436,7 +438,7 @@ def ffprobe_skips_first(manifest):
 
 def guessenc_stream(path):
     """mp3guessenc's figures for the stream: frames, length, average bitrate and the bitrate histogram."""
-    output = subprocess.run(["mp3guessenc", "-m", "-f", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), "-m", "-f", str(path)], capture_output=True, text=True).stdout
     stream = {"histogram": {}}
     in_stream = False
     for line in output.splitlines():
@@ -493,7 +495,7 @@ def guessenc_problems(actual, statistics, exact):
 
 def guessenc_guess(path):
     """The encoder mp3guessenc guesses, from its "Maybe this file is encoded by" line, or None."""
-    output = subprocess.run(["mp3guessenc", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), str(path)], capture_output=True, text=True).stdout
     for line in output.splitlines():
         if line.startswith("Maybe this file is encoded by "):
             return line[len("Maybe this file is encoded by "):].strip()
@@ -503,7 +505,7 @@ def guessenc_guess(path):
 def guessenc_ofl(path):
     """The delay and original length mp3guessenc reads from an Original File Length block, or None.
     For MP3 Surround it adds 576 samples to the delay it reads."""
-    output = subprocess.run(["mp3guessenc", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), str(path)], capture_output=True, text=True).stdout
     if "Original File Length block found" not in output:
         return None
     ofl = {}

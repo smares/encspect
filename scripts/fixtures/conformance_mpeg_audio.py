@@ -29,13 +29,12 @@ continue in the extension bitstream, and no warning or error beyond the stream's
 stream whose multichannel side information never fits its base frame ("verified": false) cannot
 be verified at all, so the analyzer must report it as a possible extension instead.
 
-Needs curl, ffprobe, mp3guessenc and a C compiler. Usage:
+Needs curl, ffprobe and a C compiler, which builds mctoolamed and mp3guessenc (from third_party). Usage:
 
     python3 scripts/fixtures/conformance_mpeg_audio.py [cache directory]
     python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer path/to/encspect [cache directory]
 """
 
-import hashlib
 import json
 import pathlib
 import re
@@ -43,10 +42,18 @@ import subprocess
 import sys
 import tarfile
 
+import downloads
+import guessenc_tool
 import mctoolamed_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "mpeg2-audio.json"
+
+
+def addresses(manifest, name):
+    """ISO's address of a file, then the Wayback Machine's copy."""
+    url = manifest["source"] + name
+    return [url, downloads.archived(url, manifest["archive_year"])]
 
 
 def fetch(manifest, cache):
@@ -54,11 +61,7 @@ def fetch(manifest, cache):
     cache.mkdir(parents=True, exist_ok=True)
     for stream in manifest["streams"]:
         archive = cache / f"{stream['name']}.tar.gz"
-        if not archive.exists() or hashlib.sha256(archive.read_bytes()).hexdigest() != stream["archive_sha256"]:
-            subprocess.run(["curl", "-fsSL", "--retry", "3", "-o", str(archive), manifest["source"] + archive.name], check=True)
-        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-        if digest != stream["archive_sha256"]:
-            raise SystemExit(f"{archive.name} has SHA-256 {digest}, expected {stream['archive_sha256']}")
+        downloads.fetch(addresses(manifest, archive.name), stream["archive_sha256"], archive)
         target = cache / stream["name"]
         if not (target / stream["file"]).exists():
             with tarfile.open(archive) as tar:
@@ -66,7 +69,7 @@ def fetch(manifest, cache):
 
 
 def guessenc(path):
-    output = subprocess.run(["mp3guessenc", "-e", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), "-e", str(path)], capture_output=True, text=True).stdout
     if "Multichannel parameters" not in output:
         return None
     field = lambda key: re.search(rf"{key}\s*:\s*(.+)", output).group(1).strip()

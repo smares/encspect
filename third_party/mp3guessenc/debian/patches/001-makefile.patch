@@ -1,0 +1,53 @@
+Description: Comment out hardwired Flag values.
+ Allow Debian defaults to be used for CC, CFLAGS etc.
+ Change PREFIX from usr/local to usr.
+ Remove recipes for make install (now uses dh_install).
+  
+Author: P Blackman <peter@pblackman.plus.com>
+Forwarded: not-needed
+
+Index: b/Makefile
+===================================================================
+--- a/Makefile
++++ b/Makefile
+@@ -17,18 +17,18 @@
+ # compiler naming scheme after suppressing the `setgcc' utility. Now gcc2 is
+ # called `gcc' and newer gcc is called `gcc-x86' and this Makefile is smart enough
+ # to set the right compiler name for you.
+-TARGET_OS = other
++#TARGET_OS = other
+ #TARGET_OS = haiku32_gcc2
+ #TARGET_OS = haiku32_gcc4
+ 
+ # here you can edit the installation path (only one will be used)
+ # On *nix systems you may want to have mp3guessenc installed under /usr/local
+ # In Haiku it is useful to put executables under /boot/home/config/non-packaged
+-PREFIX = /usr/local
++PREFIX = /usr
+ #PREFIX = /boot/home/config/non-packaged
+ 
+ # common preferences
+-CC = gcc
++CC ?= gcc
+ #CC = tcc
+ #CC = clang
+ CFLAGS += -Wall
+@@ -58,7 +58,6 @@
+ 
+ ifeq ($(BUILD),release)
+   CFLAGS += -O2
+-  LDFLAGS += -s
+ else
+   CFLAGS += -g
+   ifneq ($(TARGET_OS),haiku32_gcc2)
+@@ -80,9 +79,7 @@
+ tags.o: tags.c tags.h mp3guessenc.h mp3g_io_config.h
+ decode.o: decode.c
+ 
+-install:
+-	mkdir -p $(PREFIX)/bin
+-	cp -v -f mp3guessenc$(BIN_EXT) $(PREFIX)/bin/
++install: mp3guessenc
+ 
+ clean:
+ 	rm -f $(OBJ0) mp3guessenc$(BIN_EXT)

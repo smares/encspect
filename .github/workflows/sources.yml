@@ -1,0 +1,32 @@
+name: sources
+
+# Every file the fixture scripts download, from its original address and from each copy, so a
+# source that disappears is noticed while a copy still serves it. Weekly, and on changes to the
+# lists of addresses.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/fixtures/downloads.py
+      - scripts/fixtures/check_sources.py
+      - scripts/fixtures/conformance_mpeg_audio.py
+      - scripts/fixtures/check_mp3pro_samples.py
+      - scripts/fixtures/mctoolamed_tool.py
+      - scripts/fixtures/fhg_tool.py
+      - tests/conformance/**
+      - .github/workflows/sources.yml
+
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    name: every download address serves its pinned file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download every file from every address
+        run: python3 scripts/fixtures/check_sources.py
