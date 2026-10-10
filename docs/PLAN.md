@@ -105,10 +105,11 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 
 **Computed statistics**
 
-- Counted frames and duration compared with what the Xing, LAME or VBRI header claims, with mismatches flagged.
-- Bitrate distribution, average, minimum and maximum, and bitrate over time for VBR.
-- Bit reservoir usage over time.
-- Gapless information: encoder delay, padding, and exact sample count when available.
+- A Statistics node in each MPEG Audio region, over its complete audio frames (not a frame holding a VBR header, not a truncated last frame): frames, samples and duration, whether the bitrate varies, the average, minimum and maximum bitrate, and the bitrate distribution. Time runs on a clock of 1/14,112,000 s (ffmpeg's time base for MP3, which every MPEG sample rate divides), so frames of different sample rates add up exactly, and figures are rounded half to even.
+- Bitrate over time and bit reservoir fill over time, one value per second of audio as a comma-separated list: the bitrate of the frames that start in that second, in kbps, and their mean reservoir fill, in bytes (Layer III only). The GUI's graphs can use the per-frame values instead.
+- Counted frames and bytes compared with what the Xing or VBRI header claims, over the frames from the header to the end of its stream (the next header or a change of version, layer or sample rate, across gaps and tags). Xing's and Fraunhofer's encoders count the header's own frame and LAME does not, so either count holds; a mismatch is a warning.
+- Gapless information from a LAME tag: encoder delay, padding, and the exact sample count, the frames' samples minus both, which is what ffmpeg and mpg123 output with their gapless trimming when the padding covers their own 529-sample decoder delay. Delay and padding longer than the stream are a warning.
+- Cross-checked with mp3guessenc (frame count, length, average bitrate, bitrate histogram), where it takes the same frames as audio, and with the samples ffmpeg and mpg123 decode; at an exact tie their floating-point rounding may differ from ours by one in the last digit.
 
 ## Tag detection and false positives
 

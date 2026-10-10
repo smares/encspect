@@ -86,6 +86,9 @@ jobs:
       - name: Regenerate the hand-built VBR header fixtures
         run: python3 scripts/fixtures/make_vbr_fixtures.py
 
+      - name: Regenerate the hand-built statistics fixtures
+        run: python3 scripts/fixtures/make_stats_fixtures.py
+
       - name: Fail if they differ from the committed files
         run: |
           git status --porcelain -- tests/fixtures

@@ -37,6 +37,13 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   after any "LAME", mpg123 prints the lowpass byte as the revision), the check follows the tool.
   The peak is the one field no tool reports.
 - "mp3guessenc_encoder_string": the encoder string mp3guessenc finds in the tag or ancillary data.
+- "statistics" per region (stream_stats.py): mp3guessenc must count the same frames, length,
+  average bitrate and bitrate histogram where it takes the same frames as audio (no gaps, one
+  region and stream, constant header flags, no finding about frames it skips), and ffmpeg and
+  mpg123 must decode the gapless sample count where the VBR header's counts hold and the padding
+  covers their 529-sample decoder delay. At an exact tie, mp3guessenc's floating-point rounding
+  may differ by one in the last digit. External fixtures record mp3guessenc's figures
+  ("mp3guessenc_stream") and the decoders' sample counts ("decoded_samples") instead.
 
 External fixtures list their encoder settings and ffprobe's packets instead of every frame; for
 them, ffprobe's sample rate, channel count and bitrate must match those settings, and minimp3 and
@@ -54,11 +61,12 @@ import sys
 
 import mctoolamed_tool
 import minimp3_tool
+import stream_stats
 import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2", ROOT / "vbr"]
+DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2", ROOT / "vbr", ROOT / "stats"]
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
 GUESSENC_BLOCKS = {"Long block": "long", "Switch block": "switch", "Short block": "short", "Mixed block": "mixed"}
@@ -214,6 +222,8 @@ def guessenc_tag_lines(path):
     for line in output.splitlines():
         if " tag detected into the first frame" in line:
             lines.setdefault("detected", line.split()[0])
+        elif line.startswith("Unexpected data at "):
+            lines.setdefault("unexpected", line)
         elif line.startswith("Music CRC verification"):
             lines.setdefault("music crc", line.split()[-1].rstrip("."))
         elif ":" in line:
@@ -345,6 +355,10 @@ def check_vbr_header(path, manifest):
         # mp3guessenc looks for Xing in every layer; LAME, ffmpeg and mpg123 only in Layer III.
         if "detected" in guessenc and layer3:
             problems.append(f"mp3guessenc finds a {guessenc['detected']} header the manifest does not list")
+    elif "unexpected" in guessenc:
+        # mp3guessenc stops at some leading tags, such as an ID3v2.4 tag with a SEEK frame, and
+        # never reaches the header.
+        pass
     elif tag["truncated"]:
         if guessenc.get("detected") != ("VBRI" if tag["type"] == "VBRI" else "Xing"):
             problems.append("mp3guessenc does not find the truncated VBR header")
@@ -416,6 +430,115 @@ def ffprobe_skips_first(manifest):
     return tag is not None and bool(tag.get("frames") or tag.get("bytes"))
 
 
+def guessenc_stream(path):
+    """mp3guessenc's figures for the stream: frames, length, average bitrate and the bitrate histogram."""
+    output = subprocess.run(["mp3guessenc", "-m", "-f", str(path)], capture_output=True, text=True).stdout
+    stream = {"histogram": {}}
+    in_stream = False
+    for line in output.splitlines():
+        if line.startswith("Detected MPEG stream"):
+            in_stream = True
+        key, _, value = (part.strip() for part in line.partition(":"))
+        if in_stream and key in ("Length", "Data rate", "Number of frames") and key not in stream:
+            stream[key] = value.removesuffix(" (free format bitstream)")
+        match = re.match(r"\s*(\d+|free) kbps\s*:\s*(\d+)\s*\(\s*([\d.]+)%\)", line)
+        if match:
+            stream["histogram"][match[1]] = (int(match[2]), match[3])
+    return stream
+
+
+def region_infos(manifest, region):
+    """A region's frames as stream_stats.FrameInfo, from the manifest."""
+    infos = []
+    for frame in manifest["frames"]:
+        if not region["offset"] <= frame["offset"] < region["offset"] + region["length"]:
+            continue
+        fields = frame["fields"]
+        bitrate = fields["Header/Bitrate"]
+        header = {} if "Xing" in fields or any(k.startswith("VBRI") for k in fields) else None
+        infos.append(stream_stats.FrameInfo(frame["offset"], frame["length"], fields["Header/Version"], fields["Header/Layer"],
+                                            int(fields["Header/Sample Rate"].split()[0]),
+                                            None if bitrate == "free" else int(bitrate.split()[0]),
+                                            header=header, truncated=frame.get("truncated", False)))
+    return infos
+
+
+def guessenc_problems(actual, statistics, exact):
+    """Differences between mp3guessenc's stream figures and a region's statistics; at an exact tie
+    either rounding counts as agreement (stream_stats.agrees)."""
+    problems = []
+    if actual.get("Number of frames") != statistics["Statistics/Frames"]:
+        problems.append(f"mp3guessenc counts {actual.get('Number of frames')} frames, the manifest {statistics['Statistics/Frames']}")
+    hours, minutes, seconds = actual.get("Length", "0:0:0").split(":")
+    ms = (int(hours) * 3600 + int(minutes) * 60) * 1000 + stream_stats.Fraction(seconds) * 1000
+    if not stream_stats.agrees(str(ms), exact["ms"], stream_stats.Fraction(1)):
+        problems.append(f"mp3guessenc's length {actual.get('Length')} disagrees with {statistics['Statistics/Duration']}")
+    rate = actual.get("Data rate", "0 kbps").split()[0]
+    if not stream_stats.agrees(rate, exact["kbps"], stream_stats.Fraction(1, 10)):
+        problems.append(f"mp3guessenc's data rate {actual.get('Data rate')} disagrees with {statistics['Statistics/Average Bitrate']}")
+    # mp3guessenc leaves free-format frames out of its histogram.
+    expected_bars = {str(b): c for b, c in exact["counts"].items() if b is not None}
+    if {k: v[0] for k, v in actual["histogram"].items()} != expected_bars:
+        problems.append(f"mp3guessenc's histogram {actual['histogram']} disagrees with the counts {expected_bars}")
+    for bitrate, (_, percent) in actual["histogram"].items():
+        share = exact["percent"].get(int(bitrate))
+        if share is None or not stream_stats.agrees(percent, share, stream_stats.Fraction(1, 10)):
+            problems.append(f"mp3guessenc's {bitrate} kbps share {percent}% disagrees with {share}")
+    return problems
+
+
+DECODER_DELAY = 529
+
+
+def decoded_samples(path, channels):
+    """Samples per channel ffmpeg and mpg123 output with their gapless trimming, which follows the LAME tag."""
+    counts = {}
+    for name, command in [("ffmpeg", ["ffmpeg", "-v", "error", "-i", str(path), "-f", "s16le", "-"]),
+                          ("mpg123", ["mpg123", "-q", "-s", str(path)])]:
+        counts[name] = len(subprocess.run(command, capture_output=True).stdout) // (2 * channels)
+    return counts
+
+
+# Findings about frames mp3guessenc skips or reads differently; the others leave its counts alone.
+GUESSENC_NEUTRAL = ("mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-", "mpeg.free-format")
+VARIABLE_HEADER_FIELDS = {"Header/Bitrate", "Header/HasPadding", "Header/Mode Extension"}
+
+
+def guessenc_counts_like_us(path, manifest):
+    """Whether mp3guessenc takes the same frames as audio: it skips frames whose constant header
+    fields change, frames that fail their CRC or hold invalid side information, and Layer II modes
+    the standard does not allow; it reads "Xing" in any layer, and only the first VBR header."""
+    frames = manifest["frames"]
+    constant = [{k: v for k, v in f["fields"].items() if k.startswith("Header/") and k not in VARIABLE_HEADER_FIELDS} for f in frames]
+    headers = sum(1 for f in frames if "Xing" in f["fields"] or "VBRI/Version" in f["fields"] or "VBRI" in f["fields"])
+    return (sum(1 for r in manifest["regions"] if "statistics" in r) == 1 and not manifest["gaps"]
+            and all(c == constant[0] for c in constant) and headers <= 1
+            and all(f["code"].startswith(GUESSENC_NEUTRAL) for f in manifest["findings"])
+            and ("detected" in guessenc_tag_lines(path)) == (manifest.get("vbr_header") is not None))
+
+
+def check_statistics(path, manifest):
+    """mp3guessenc must count the frames, length, average bitrate and histogram of a single-region
+    stream as the manifest does, and ffmpeg and mpg123 must decode the gapless sample count where
+    the VBR header's counts hold; decoders trim by the counts the header claims."""
+    problems = []
+    regions = [r for r in manifest["regions"] if "statistics" in r]
+    if guessenc_counts_like_us(path, manifest):
+        problems += guessenc_problems(guessenc_stream(path), regions[0]["statistics"], stream_stats.exact(region_infos(manifest, regions[0])))
+    consistent = not any(f["code"] in ("mpeg.vbr-frame-count-mismatch", "mpeg.vbr-header-mid-stream") for f in manifest["findings"])
+    for region in regions:
+        count = region["statistics"].get("Statistics/Gapless/Sample Count")
+        padding = int(region["statistics"].get("Statistics/Gapless/Encoder Padding", "0 samples").split()[0])
+        # Decoders discard their own 529-sample delay at the end too; with less padding (the first
+        # file of a --nogap sequence) those samples belong to the next file.
+        if count is not None and consistent and padding >= DECODER_DELAY:
+            channels = 1 if manifest["frames"][0]["fields"]["Header/Channel Mode"] == "Mono" else 2
+            for decoder, samples in decoded_samples(path, channels).items():
+                if samples != int(count):
+                    problems.append(f"{decoder} decodes {samples} samples with gapless trimming, the manifest {count}")
+    return problems
+
+
 def check(path, manifest, tools):
     dumper, decoder = tools
     problems = []
@@ -435,6 +558,8 @@ def check(path, manifest, tools):
         problems.append("minimp3 reads different side information than the manifest recorded")
     if "vbr_header" in manifest:
         problems += check_vbr_header(path, manifest)
+    if "regions" in manifest:
+        problems += check_statistics(path, manifest)
     if "mp3guessenc" in manifest:
         expected = dict(manifest["mp3guessenc"])
         expected["mode_extensions"] = {k: v for k, v in expected["mode_extensions"].items() if k != "None"}
@@ -449,8 +574,10 @@ def check(path, manifest, tools):
             count = madplay_frame_count(path)
         else:
             count = mpg123_frame_count(path, *frame_shape(manifest["frames"][0]["fields"]))
-        if count != len(manifest["frames"]):
-            problems.append(f"{manifest['crosscheck']} decodes {count} frames, the manifest lists {len(manifest['frames'])}")
+        # Both skip a VBR header in the first frame, as ffmpeg does.
+        expected = len(manifest["frames"]) - (1 if ffprobe_skips_first(manifest) else 0)
+        if count != expected:
+            problems.append(f"{manifest['crosscheck']} decodes {count} frames, the manifest lists {expected} audio frames")
         return problems
 
     if "frames" in manifest:
@@ -477,6 +604,16 @@ def check(path, manifest, tools):
             if failures != expected_failures:
                 problems.append(f"madplay reports {failures} CRC failures, the manifest expects {expected_failures}")
 
+    if "mp3guessenc_stream" in manifest:
+        # Through JSON, so the histogram's tuples compare as the manifest's lists.
+        actual = json.loads(json.dumps(guessenc_stream(path)))
+        if actual != manifest["mp3guessenc_stream"]:
+            problems.append(f"mp3guessenc's stream figures {actual} differ from the ones recorded in the manifest")
+    if "decoded_samples" in manifest:
+        settings = manifest["encoder"]
+        actual = decoded_samples(path, CHANNELS.get(settings["channel_mode"], 2))
+        if actual != manifest["decoded_samples"]:
+            problems.append(f"ffmpeg and mpg123 decode {actual} samples, the manifest recorded {manifest['decoded_samples']}")
     if "encoder" in manifest:
         settings = manifest["encoder"]
         if settings.get("free_format"):

@@ -37,6 +37,8 @@ import pathlib
 import struct
 import sys
 
+import stream_stats
+
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
 
 VERSION_BITS = {"1": 0b11, "2": 0b10, "2.5": 0b00}
@@ -265,6 +267,9 @@ class Fixture:
         self.data = bytearray()
         self.regions, self.frames, self.gaps, self.findings = [], [], [], []
         self.audio_start = None
+        # Per frame, what the statistics need beyond the manifest entry; "header" is set for a
+        # frame that holds a VBR header.
+        self.layout = []
 
     def tag(self, name, data):
         self.end_audio()
@@ -291,6 +296,7 @@ class Fixture:
                 entry["length"] = len(data)
                 entry["truncated"] = True
             self.frames.append(entry)
+            self.layout.append(frame_layout(frame, len(data)))
             self.data += data
         return self
 
@@ -304,7 +310,35 @@ class Fixture:
         self.findings.append({"code": code, "contains": contains})
         return self
 
+    def statistics(self):
+        """Adds each MPEG Audio region's statistics (stream_stats.py) and the findings about VBR
+        header counts; the reservoir model must agree with any fill the fixture states itself."""
+        fills = stream_stats.reservoir_fills(self.layout)
+        infos = []
+        for entry, layout, fill in zip(self.frames, self.layout, fills):
+            stated = entry["fields"].get("Side Info/Reservoir Fill")
+            assert stated is None or stated == f"{fill} bytes", (self.name, entry["offset"], stated, fill)
+            fields = entry["fields"]
+            bitrate = fields["Header/Bitrate"]
+            infos.append(stream_stats.FrameInfo(
+                entry["offset"], entry["length"], fields["Header/Version"], fields["Header/Layer"],
+                int(fields["Header/Sample Rate"].split()[0]), None if bitrate == "free" else int(bitrate.split()[0]),
+                header=layout.get("header"), truncated=entry.get("truncated", False), fill=fill))
+        for region in self.regions:
+            if region["name"] != "MPEG Audio":
+                continue
+            inside = [i for i in infos if region["offset"] <= i.offset < region["offset"] + region["length"]]
+            fields = stream_stats.region_fields(inside, infos)
+            if fields:
+                region["statistics"] = fields
+        for info in infos:
+            if info.header is not None:
+                for code, contains in stream_stats.header_findings(info, infos):
+                    if not any(f["code"] == code and f["contains"] == contains for f in self.findings):
+                        self.finding(code, contains)
+
     def manifest(self):
+        self.statistics()
         return {
             "description": self.description,
             "length": len(self.data),
@@ -321,6 +355,20 @@ class Fixture:
         path.write_bytes(bytes(self.data))
         text = json.dumps(self.manifest(), indent=1, ensure_ascii=False) + "\n"
         (self.out / f"{self.name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
+
+
+def frame_layout(frame, available):
+    """What the reservoir model needs of a frame: whether its side information is there, its data
+    area after the side information, and where its main data lies (none for a zero frame)."""
+    side = side_info_size(frame.version, frame.mode) if frame.layer == 3 else 0
+    head = 4 + (2 if frame.protected else 0) + side
+    return {
+        "layer3": frame.layer == 3 and available >= head,
+        "stream": (VERSION_NAMES[frame.version], frame.rate),
+        "area": available - head,
+        "main_data_begin": getattr(frame, "main_data_begin", 0),
+        "main_data_length": frame.main_data_length() if hasattr(frame, "main_data_length") else 0,
+    }
 
 
 FIXTURES = []

@@ -112,6 +112,10 @@ internal sealed class VbrHeader
 
     public int StoredMusicCrc { get; private set; }
 
+    public int EncoderDelay { get; private set; }
+
+    public int EncoderPadding { get; private set; }
+
     // The previous file of a gapless (--nogap) sequence continues into this one.
     public bool IsNoGapContinuation { get; private set; }
 
@@ -282,6 +286,8 @@ internal sealed class VbrHeader
         LameEncoder = encoder;
         End = position + LameTagSize;
         IsNoGapContinuation = (_frame[position + 19] & 0x80) != 0;
+        EncoderDelay = (_frame[position + 21] << 4) | (_frame[position + 22] >> 4);
+        EncoderPadding = ((_frame[position + 22] & 15) << 8) | _frame[position + 23];
         MusicLength = UInt32At(position + 28);
         StoredMusicCrc = UInt16At(position + 32);
         StoredTagCrc = UInt16At(position + 34);
