@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v2 IND field that claims timestamps the lyrics do not have, and no lyrics field.",
+  "length": 694,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "IND/HasTimestamps": "true"
+      },
+      "offset": 512,
+      "length": 54
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 566,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.ind-mismatch",
+      "contains": "timestamps"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "description": "ID3v2.3 at the start, then data, then ID3v1, Lyrics3, APE.",
-  "length": 887,
+  "length": 866,
   "regions": [
     {
       "name": "ID3v2",
@@ -39,10 +39,13 @@
       "confidence": "Medium",
       "fields": {
         "LYR/Data": "First line\r\nSecond line",
-        "ETT/Data": "Extended Title"
+        "LYR/Data/Line": [
+          "First line",
+          "Second line"
+        ]
       },
       "offset": 686,
-      "length": 89
+      "length": 68
     },
     {
       "name": "APE",
@@ -52,7 +55,7 @@
         "Items/Title/Value": "APE Title",
         "Items/Artist/Value": "APE Artist"
       },
-      "offset": 775,
+      "offset": 754,
       "length": 112
     }
   ],

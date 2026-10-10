@@ -4,7 +4,7 @@
     "root": {
       "name": "File",
       "offset": 0,
-      "length": 601,
+      "length": 580,
       "children": [
         {
           "name": "Data",
@@ -15,7 +15,7 @@
           "name": "Lyrics3",
           "value": "2.00",
           "offset": 512,
-          "length": 89,
+          "length": 68,
           "children": [
             {
               "name": "Begin",
@@ -25,9 +25,9 @@
             },
             {
               "name": "IND",
-              "value": "10",
+              "value": "100",
               "offset": 523,
-              "length": 10,
+              "length": 11,
               "children": [
                 {
                   "name": "ID",
@@ -37,123 +37,111 @@
                 },
                 {
                   "name": "Size",
-                  "value": "2",
+                  "value": "3",
                   "offset": 526,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "10",
+                  "value": "100",
                   "offset": 531,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 531,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
                   "offset": 531,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
                   "offset": 531,
-                  "length": 2
+                  "length": 3
                 }
               ]
             },
             {
               "name": "LYR",
               "value": "First line\r\nSecond line",
-              "offset": 533,
+              "offset": 534,
               "length": 31,
               "children": [
                 {
                   "name": "ID",
                   "value": "LYR",
-                  "offset": 533,
+                  "offset": 534,
                   "length": 3
                 },
                 {
                   "name": "Size",
                   "value": "23",
-                  "offset": 536,
+                  "offset": 537,
                   "length": 5
                 },
                 {
                   "name": "Data",
                   "value": "First line\r\nSecond line",
-                  "offset": 541,
-                  "length": 23
-                }
-              ]
-            },
-            {
-              "name": "ETT",
-              "value": "Extended Title",
-              "offset": 564,
-              "length": 22,
-              "children": [
-                {
-                  "name": "ID",
-                  "value": "ETT",
-                  "offset": 564,
-                  "length": 3
-                },
-                {
-                  "name": "Size",
-                  "value": "14",
-                  "offset": 567,
-                  "length": 5
-                },
-                {
-                  "name": "Data",
-                  "value": "Extended Title",
-                  "offset": 572,
-                  "length": 14
+                  "offset": 542,
+                  "length": 23,
+                  "children": [
+                    {
+                      "name": "Line",
+                      "value": "First line",
+                      "offset": 542,
+                      "length": 10
+                    },
+                    {
+                      "name": "Line",
+                      "value": "Second line",
+                      "offset": 554,
+                      "length": 11
+                    }
+                  ]
                 }
               ]
             },
             {
               "name": "Size",
-              "value": "74",
-              "offset": 586,
+              "value": "53",
+              "offset": 565,
               "length": 6
             },
             {
               "name": "End",
               "value": "LYRICS200",
-              "offset": 592,
+              "offset": 571,
               "length": 9
             },
             {
               "name": "Detection",
               "value": "Medium",
               "offset": 512,
-              "length": 89,
+              "length": 68,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "End marker \u0022LYRICS200\u0022",
-                  "offset": 592,
+                  "offset": 571,
                   "length": 9
                 },
                 {
                   "name": "Evidence",
-                  "value": "Size field 74 points at \u0022LYRICSBEGIN\u0022",
-                  "offset": 586,
+                  "value": "Size field 53 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 565,
                   "length": 6
                 },
                 {
                   "name": "Evidence",
                   "value": "Fields end exactly at the size field",
                   "offset": 512,
-                  "length": 74
+                  "length": 53
                 }
               ]
             }
@@ -174,7 +162,7 @@
         "code": "layout.lyrics3-without-id3v1",
         "message": "The Lyrics3 tag at 0x200 is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 512,
-        "length": 89
+        "length": 68
       }
     ]
   }

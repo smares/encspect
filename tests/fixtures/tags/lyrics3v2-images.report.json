@@ -1,0 +1,292 @@
+[
+  {
+    "source": "lyrics3v2-images.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 750,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 110,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "IND",
+              "value": "000",
+              "offset": 523,
+              "length": 11,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "IND",
+                  "offset": 523,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "3",
+                  "offset": 526,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "000",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasLyrics",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasTimestamps",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "IsRandomSelectionInhibited",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "IMG",
+              "value": "cover.jpg||Front cover||[00:00]\r\nback.jpg\r\nbooklet.jpg||||[01:30]",
+              "offset": 534,
+              "length": 73,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "IMG",
+                  "offset": 534,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "65",
+                  "offset": 537,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "cover.jpg||Front cover||[00:00]\r\nback.jpg\r\nbooklet.jpg||||[01:30]",
+                  "offset": 542,
+                  "length": 65,
+                  "children": [
+                    {
+                      "name": "Image",
+                      "value": "cover.jpg||Front cover||[00:00]",
+                      "offset": 542,
+                      "length": 31,
+                      "children": [
+                        {
+                          "name": "Filename",
+                          "value": "cover.jpg",
+                          "offset": 542,
+                          "length": 9
+                        },
+                        {
+                          "name": "Description",
+                          "value": "Front cover",
+                          "offset": 553,
+                          "length": 11
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": "[00:00]",
+                          "offset": 566,
+                          "length": 7
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Image",
+                      "value": "back.jpg",
+                      "offset": 575,
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Filename",
+                          "value": "back.jpg",
+                          "offset": 575,
+                          "length": 8
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Image",
+                      "value": "booklet.jpg||||[01:30]",
+                      "offset": 585,
+                      "length": 22,
+                      "children": [
+                        {
+                          "name": "Filename",
+                          "value": "booklet.jpg",
+                          "offset": 585,
+                          "length": 11
+                        },
+                        {
+                          "name": "Description",
+                          "value": "",
+                          "offset": 598,
+                          "length": 0
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": "[01:30]",
+                          "offset": 600,
+                          "length": 7
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Size",
+              "value": "95",
+              "offset": 607,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 613,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 110,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 613,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 95 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 607,
+                  "length": 6
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Fields end exactly at the size field",
+                  "offset": 512,
+                  "length": 95
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 622,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 622,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 625,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 655,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 685,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 715,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 719,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 748,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 749,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 622,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 622,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 625,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]

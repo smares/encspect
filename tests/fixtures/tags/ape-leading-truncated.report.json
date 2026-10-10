@@ -119,18 +119,18 @@
         "length": 47
       },
       {
-        "severity": "Warning",
-        "code": "ape.items-invalid",
-        "message": "The 3-byte value of item \u0022Title\u0022 runs past the end of the items. The remaining 15 bytes are not parsed.",
-        "offset": 32,
-        "length": 15
-      },
-      {
         "severity": "Info",
         "code": "layout.tags-only",
         "message": "The file holds only tags; no bytes are left for audio data.",
         "offset": 0,
         "length": 47
+      },
+      {
+        "severity": "Warning",
+        "code": "ape.items-invalid",
+        "message": "The 3-byte value of item \u0022Title\u0022 runs past the end of the items. The remaining 15 bytes are not parsed.",
+        "offset": 32,
+        "length": 15
       }
     ]
   }

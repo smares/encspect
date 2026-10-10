@@ -18,4 +18,9 @@ public interface ITagParser
 
     // Probes for a tag that ends exactly at end. Returns null when the signature is absent.
     TagProbe? ProbeBefore(ByteReader reader, long end) => null;
+
+    // Searches [from, limit) for the first tag that starts there and validates with full
+    // confidence. Only used where a previous tag points at a later one (TagProbe.NextTagOffset),
+    // since it is the one search not tied to a fixed position.
+    TagProbe? FindFrom(ByteReader reader, long from, long limit) => null;
 }

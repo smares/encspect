@@ -20,7 +20,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - Tag parsers (ID3, APE, Lyrics3) are separate from format parsers. The host orchestrates detection and assembles one report.
 - The result model is a node tree; every node carries a name, value, byte offset and length. Findings carry a severity and point to a node.
 - Malformed or damaged input produces findings, never an unhandled exception and never a hang. Files are read as streams, not loaded whole.
-- Tag detection uses position, structural validation and byte-range ownership, never a signature match alone. APE is evaluated before Lyrics3, and Lyrics3 before ID3v1. See "Tag detection and false positives" in the plan.
+- Tag detection uses position, structural validation and byte-range ownership, never a signature match alone. When candidates compete for the same bytes, the strongest evidence wins; the order APE, Lyrics3, ID3v2, ID3v1 only breaks ties. A tag that breaks its specification is reported with findings, not dropped. See "Tag detection and false positives" in the plan.
 - A frame header only counts as MPEG sync when a chain of consistent frames follows it.
 
 ## Code style

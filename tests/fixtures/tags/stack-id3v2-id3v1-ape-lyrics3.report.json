@@ -4,7 +4,7 @@
     "root": {
       "name": "File",
       "offset": 0,
-      "length": 887,
+      "length": 866,
       "children": [
         {
           "name": "ID3v2",
@@ -547,7 +547,7 @@
           "name": "Lyrics3",
           "value": "2.00",
           "offset": 798,
-          "length": 89,
+          "length": 68,
           "children": [
             {
               "name": "Begin",
@@ -557,9 +557,9 @@
             },
             {
               "name": "IND",
-              "value": "10",
+              "value": "100",
               "offset": 809,
-              "length": 10,
+              "length": 11,
               "children": [
                 {
                   "name": "ID",
@@ -569,123 +569,111 @@
                 },
                 {
                   "name": "Size",
-                  "value": "2",
+                  "value": "3",
                   "offset": 812,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "10",
+                  "value": "100",
                   "offset": 817,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 817,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
                   "offset": 817,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
                   "offset": 817,
-                  "length": 2
+                  "length": 3
                 }
               ]
             },
             {
               "name": "LYR",
               "value": "First line\r\nSecond line",
-              "offset": 819,
+              "offset": 820,
               "length": 31,
               "children": [
                 {
                   "name": "ID",
                   "value": "LYR",
-                  "offset": 819,
+                  "offset": 820,
                   "length": 3
                 },
                 {
                   "name": "Size",
                   "value": "23",
-                  "offset": 822,
+                  "offset": 823,
                   "length": 5
                 },
                 {
                   "name": "Data",
                   "value": "First line\r\nSecond line",
-                  "offset": 827,
-                  "length": 23
-                }
-              ]
-            },
-            {
-              "name": "ETT",
-              "value": "Extended Title",
-              "offset": 850,
-              "length": 22,
-              "children": [
-                {
-                  "name": "ID",
-                  "value": "ETT",
-                  "offset": 850,
-                  "length": 3
-                },
-                {
-                  "name": "Size",
-                  "value": "14",
-                  "offset": 853,
-                  "length": 5
-                },
-                {
-                  "name": "Data",
-                  "value": "Extended Title",
-                  "offset": 858,
-                  "length": 14
+                  "offset": 828,
+                  "length": 23,
+                  "children": [
+                    {
+                      "name": "Line",
+                      "value": "First line",
+                      "offset": 828,
+                      "length": 10
+                    },
+                    {
+                      "name": "Line",
+                      "value": "Second line",
+                      "offset": 840,
+                      "length": 11
+                    }
+                  ]
                 }
               ]
             },
             {
               "name": "Size",
-              "value": "74",
-              "offset": 872,
+              "value": "53",
+              "offset": 851,
               "length": 6
             },
             {
               "name": "End",
               "value": "LYRICS200",
-              "offset": 878,
+              "offset": 857,
               "length": 9
             },
             {
               "name": "Detection",
               "value": "Medium",
               "offset": 798,
-              "length": 89,
+              "length": 68,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "End marker \u0022LYRICS200\u0022",
-                  "offset": 878,
+                  "offset": 857,
                   "length": 9
                 },
                 {
                   "name": "Evidence",
-                  "value": "Size field 74 points at \u0022LYRICSBEGIN\u0022",
-                  "offset": 872,
+                  "value": "Size field 53 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 851,
                   "length": 6
                 },
                 {
                   "name": "Evidence",
                   "value": "Fields end exactly at the size field",
                   "offset": 798,
-                  "length": 74
+                  "length": 53
                 }
               ]
             }
@@ -703,17 +691,17 @@
       },
       {
         "severity": "Warning",
-        "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x31E is not directly followed by an ID3v1 tag, which its specification requires.",
-        "offset": 798,
-        "length": 89
-      },
-      {
-        "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x22E is followed by a APE tag; readers expect ID3v1 in the last 128 bytes.",
         "offset": 558,
         "length": 128
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.lyrics3-without-id3v1",
+        "message": "The Lyrics3 tag at 0x31E is not directly followed by an ID3v1 tag, which its specification requires.",
+        "offset": 798,
+        "length": 68
       }
     ]
   }

@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.4 SEEK frame pointing into data where no tag follows.",
+  "length": 539,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "SEEK/Minimum Offset": "100"
+      },
+      "offset": 0,
+      "length": 39
+    },
+    {
+      "name": "Data",
+      "offset": 39,
+      "length": 500
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.next-missing",
+      "contains": "none was found"
+    }
+  ]
+}

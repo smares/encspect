@@ -1,0 +1,33 @@
+{
+  "description": "Prepended ID3v2.4 tag whose SEEK frame points at an appended tag with a footer (ID3v2.4 section 5, case 2): the appended tag is found from the end and satisfies the SEEK frame.",
+  "length": 590,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Lead",
+        "SEEK/Minimum Offset": "512"
+      },
+      "offset": 0,
+      "length": 39
+    },
+    {
+      "name": "Data",
+      "offset": 39,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Appended"
+      },
+      "offset": 551,
+      "length": 39
+    }
+  ],
+  "findings": []
+}

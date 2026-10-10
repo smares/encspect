@@ -20,6 +20,7 @@ import json
 import pathlib
 import struct
 import sys
+import zlib
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "tags"
 
@@ -396,10 +397,10 @@ BASIC_APE_FIELDS = {"Items/Title/Value": "APE Title", "Items/Artist/Value": "APE
 
 
 def basic_lyrics3v2():
-    return lyrics3v2([("IND", "10"), ("LYR", "First line\r\nSecond line"), ("ETT", "Extended Title")])
+    return lyrics3v2([("IND", "100"), ("LYR", "First line\r\nSecond line")])
 
 
-BASIC_LYRICS3V2_FIELDS = {"LYR/Data": "First line\r\nSecond line", "ETT/Data": "Extended Title"}
+BASIC_LYRICS3V2_FIELDS = {"LYR/Data": "First line\r\nSecond line", "LYR/Data/Line": ["First line", "Second line"]}
 
 
 def basic_id3v23():
@@ -592,7 +593,9 @@ def id3v23_unsync():
         frame23("APIC", apic_data(LATIN1, "image/jpeg", 3, "", picture)),
         frame23("TPE1", text_frame_data(UTF16, ["ÿÿ Artist"])),
     ]
-    data = id3v2(3, frames, padding=8, extended_header=ext_header23(8, crc=0x12345678), unsync=True)
+    # ID3v2.3 section 3.2: the CRC covers the frames only, before unsynchronization.
+    crc = zlib.crc32(b"".join(frames))
+    data = id3v2(3, frames, padding=8, extended_header=ext_header23(8, crc=crc), unsync=True)
     f.tag(
         "ID3v2",
         "2.3.0",
@@ -602,7 +605,8 @@ def id3v23_unsync():
             "Header/Flags/IsUnsynchronized": "true",
             "Header/Flags/HasExtendedHeader": "true",
             "Extended Header/Padding Size": "8",
-            "Extended Header/CRC": "0x12345678",
+            "Extended Header/CRC": f"0x{crc:08X}",
+            "Extended Header/CRC/Computed": f"0x{crc:08X}",
             "TIT2/Text": "Unsynchronized",
             "APIC/Picture Data": f"{len(picture)} bytes",
             "TPE1/Text": "ÿÿ Artist",
@@ -610,6 +614,28 @@ def id3v23_unsync():
         },
     )
     f.audio()
+    return f
+
+
+@fixture
+def id3v23_crc_mismatch():
+    f = Fixture("id3v23-crc-mismatch", "ID3v2.3 tag whose extended header CRC does not match its frames: kept, with a finding.")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Checked"]))]
+    wrong = zlib.crc32(b"".join(frames)) ^ 0x1
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(4, crc=wrong)), "Medium", {"Extended Header/CRC": f"0x{wrong:08X}", "TIT2/Text": "Checked"})
+    f.audio()
+    f.finding("id3v2.crc-mismatch", f"0x{wrong:X}")
+    return f
+
+
+@fixture
+def id3v24_crc_mismatch():
+    f = Fixture("id3v24-crc-mismatch", "ID3v2.4 tag whose extended header CRC does not match its frames and padding: kept, with a finding.")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Checked"]))]
+    wrong = zlib.crc32(b"".join(frames)) ^ 0x80000000
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=4, extended_header=ext_header24(crc=wrong)), "Medium", {"Extended Header/CRC": f"0x{wrong:X}", "TIT2/Text": "Checked"})
+    f.audio()
+    f.finding("id3v2.crc-mismatch", f"0x{wrong:X}")
     return f
 
 
@@ -630,7 +656,10 @@ def id3v24_basic():
         frame24("TCOP", text_frame_data(LATIN1, ["Read-only"]), status=0x10),
     ]
     restrictions = 0b01_1_10_1_01
-    ext = ext_header24(update=True, crc=0x0ABCDEF12, restrictions=restrictions)
+    # ID3v2.4 section 3.2: the CRC covers everything after the extended header up to the end of
+    # the tag size, padding included, as stored.
+    crc = zlib.crc32(b"".join(frames) + b"\x00" * 20)
+    ext = ext_header24(update=True, crc=crc, restrictions=restrictions)
     f.tag(
         "ID3v2",
         "2.4.0",
@@ -640,7 +669,8 @@ def id3v24_basic():
             "Extended Header/Flags/IsUpdate": "true",
             "Extended Header/Flags/HasCrc": "true",
             "Extended Header/Flags/HasRestrictions": "true",
-            "Extended Header/CRC": "0xABCDEF12",
+            "Extended Header/CRC": f"0x{crc:X}",
+            "Extended Header/CRC/Computed": f"0x{crc:X}",
             "Extended Header/Restrictions/Tag Size": "No more than 64 frames and 128 KB",
             "Extended Header/Restrictions/Text Encoding": "ISO-8859-1 or UTF-8 only",
             "Extended Header/Restrictions/Text Size": "No more than 128 characters",
@@ -762,6 +792,110 @@ def id3v24_appended_without_footer():
         "from the end, so it stays part of the data.",
     )
     f.add(filler(300) + id3v2(4, [frame24("TIT2", text_frame_data(UTF8, ["No Footer"]))]), {"name": "Data"})
+    return f
+
+
+def seek_tag(title, offset, extra_seek=None):
+    """ID3v2.4 tag with a SEEK frame: "Minimum offset to next tag $xx xx xx xx" (frames 4.29)."""
+    frames = [frame24("TIT2", text_frame_data(UTF8, [title])), frame24("SEEK", struct.pack(">I", offset))]
+    if extra_seek is not None:
+        frames.append(frame24("SEEK", struct.pack(">I", extra_seek)))
+    return id3v2(4, frames)
+
+
+def plain_id3v24(title):
+    return id3v2(4, [frame24("TIT2", text_frame_data(UTF8, [title]))])
+
+
+@fixture
+def id3v24_seek_to_appended():
+    f = Fixture(
+        "id3v24-seek-to-appended",
+        "Prepended ID3v2.4 tag whose SEEK frame points at an appended tag with a footer (ID3v2.4 section 5, case 2): "
+        "the appended tag is found from the end and satisfies the SEEK frame.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 512), "High", {"TIT2/Text": "Lead", "SEEK/Minimum Offset": "512"})
+    f.audio(512)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    return f
+
+
+@fixture
+def id3v24_seek_embedded():
+    f = Fixture(
+        "id3v24-seek-embedded",
+        "ID3v2.4 tag whose SEEK frame points exactly at a tag in the middle of the stream; the data around it is split.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300), "High", {"SEEK/Minimum Offset": "300"})
+    f.audio(300, 2)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Middle"), "High", {"TIT2/Text": "Middle"})
+    f.audio(200, 3)
+    return f
+
+
+@fixture
+def id3v24_seek_guided():
+    f = Fixture(
+        "id3v24-seek-guided",
+        "ID3v2.4 SEEK frame giving a minimum offset 50 bytes short of the next tag; the tag is found by searching from there.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 250), "High", {"SEEK/Minimum Offset": "250"})
+    f.audio(300, 2)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Middle"), "High", {"TIT2/Text": "Middle"})
+    f.audio(200, 3)
+    return f
+
+
+@fixture
+def id3v24_seek_chain():
+    f = Fixture("id3v24-seek-chain", "Three ID3v2.4 tags linked by SEEK frames, each followed by data.")
+    f.tag("ID3v2", "2.4.0", seek_tag("First", 200), "High", {"TIT2/Text": "First"})
+    f.audio(200, 2)
+    f.tag("ID3v2", "2.4.0", seek_tag("Second", 150), "High", {"TIT2/Text": "Second"})
+    f.audio(150, 3)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Third"), "High", {"TIT2/Text": "Third"})
+    f.audio(100, 4)
+    return f
+
+
+@fixture
+def id3v24_seek_missing():
+    f = Fixture("id3v24-seek-missing", "ID3v2.4 SEEK frame pointing into data where no tag follows.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 100), "High", {"SEEK/Minimum Offset": "100"})
+    f.audio(500)
+    f.finding("tag.next-missing", "none was found")
+    return f
+
+
+@fixture
+def id3v24_seek_beyond_eof():
+    f = Fixture("id3v24-seek-beyond-eof", "ID3v2.4 SEEK frame pointing past the end of the file.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 100000), "High", {"SEEK/Minimum Offset": "100000"})
+    f.audio(500)
+    f.finding("tag.next-beyond-file", "beyond the end of the file")
+    return f
+
+
+@fixture
+def id3v24_seek_too_early():
+    f = Fixture(
+        "id3v24-seek-too-early",
+        "ID3v2.4 SEEK frame whose minimum offset lies past the appended tag that actually follows.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 310), "High", {"SEEK/Minimum Offset": "310"})
+    f.audio(300)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    f.finding("tag.next-too-early", "but the next one starts at")
+    return f
+
+
+@fixture
+def id3v24_seek_duplicate():
+    f = Fixture("id3v24-seek-duplicate", "ID3v2.4 tag with two SEEK frames; only one is allowed, the first is used.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300, extra_seek=10), "Medium", {"SEEK[0]/Minimum Offset": "300"})
+    f.audio(300)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    f.finding("id3v2.seek-duplicate", "more than one SEEK")
     return f
 
 
@@ -1095,17 +1229,24 @@ def lyrics3v1_basic():
 
 @fixture
 def lyrics3v2_basic():
-    f = Fixture("lyrics3v2-basic", "Lyrics3 v2 tag with every field type before ID3v1.")
+    f = Fixture(
+        "lyrics3v2-basic",
+        "Lyrics3 v2 tag with every field type before ID3v1. The extended fields start with the 30 characters of the "
+        "ID3v1 fields they extend, as the specification requires.",
+    )
     f.audio()
+    album = "Extended Album Name That Runs Past Thirty Characters"
+    artist = "Extended Artist Name That Runs Past Thirty Characters"
+    title = "Extended Track Title That Runs Past Thirty Characters"
     fields = [
         ("IND", "110"),
         ("LYR", "[00:01]Timed line\r\n[00:05]Another"),
         ("INF", "Information"),
         ("AUT", "Lyrics Author"),
-        ("EAL", "Extended Album Name"),
-        ("EAR", "Extended Artist Name"),
-        ("ETT", "Extended Title Name"),
-        ("IMG", "cover.jpg||00:00"),
+        ("EAL", album),
+        ("EAR", artist),
+        ("ETT", title),
+        ("IMG", "cover.jpg||Front cover||[00:00]"),
     ]
     tag = lyrics3v2(fields)
     f.tag(
@@ -1118,13 +1259,15 @@ def lyrics3v2_basic():
             "IND/HasTimestamps": "true",
             "IND/IsRandomSelectionInhibited": "false",
             "LYR/Data": "[00:01]Timed line\r\n[00:05]Another",
+            "LYR/Data/Line[0]/Timestamp": "00:01",
             "AUT/Data": "Lyrics Author",
-            "EAL/Data": "Extended Album Name",
-            "IMG/Data": "cover.jpg||00:00",
+            "EAL/Data": album,
+            "IMG/Data/Image/Filename": "cover.jpg",
             "Size": str(len(tag) - 15),
         },
     )
-    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    v1 = id3v1(title[:30], artist[:30], album[:30], "2001", "A comment", track=7, genre=17)
+    f.tag("ID3v1", "1.1", v1, "Medium", {"Title": title[:30].rstrip(), "Album": album[:30].rstrip()})
     return f
 
 
@@ -1168,9 +1311,118 @@ def lyrics3v2_no_fields():
 def lyrics3v2_ind_not_first():
     f = Fixture("lyrics3v2-ind-not-first", "Lyrics3 v2 tag with the IND field after LYR; IND must come first.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "10")]), "Medium", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "100")]), "Medium", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.ind-not-first", "IND")
+    return f
+
+
+@fixture
+def lyrics3v2_timestamps():
+    f = Fixture(
+        "lyrics3v2-timestamps",
+        "Lyrics3 v2 lyrics with [mm:ss] timestamps at the start of lines, several on one line, and a line without one.",
+    )
+    f.audio()
+    lyrics = "[00:01]First\r\n[00:05][00:06]Second\r\nNo stamp\r\nMid [01:30] line"
+    f.tag(
+        "Lyrics3",
+        "2.00",
+        lyrics3v2([("IND", "110"), ("LYR", lyrics)]),
+        "High",
+        {
+            "LYR/Data/Line": ["[00:01]First", "[00:05][00:06]Second", "No stamp", "Mid [01:30] line"],
+            "LYR/Data/Line[0]/Timestamp": "00:01",
+            "LYR/Data/Line[1]/Timestamp": ["00:05", "00:06"],
+            "LYR/Data/Line[3]/Timestamp": ["01:30"],
+        },
+    )
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v2_images():
+    f = Fixture(
+        "lyrics3v2-images",
+        "Lyrics3 v2 IMG field with three image lines: all parts, filename only, and filename plus timestamp without a "
+        "description (\"||||\").",
+    )
+    f.audio()
+    images = "cover.jpg||Front cover||[00:00]\r\nback.jpg\r\nbooklet.jpg||||[01:30]"
+    f.tag(
+        "Lyrics3",
+        "2.00",
+        lyrics3v2([("IND", "000"), ("IMG", images)]),
+        "High",
+        {
+            "IMG/Data/Image[0]/Filename": "cover.jpg",
+            "IMG/Data/Image[0]/Description": "Front cover",
+            "IMG/Data/Image[0]/Timestamp": "[00:00]",
+            "IMG/Data/Image[1]/Filename": "back.jpg",
+            "IMG/Data/Image[2]/Description": "",
+            "IMG/Data/Image[2]/Timestamp": "[01:30]",
+        },
+    )
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v2_bad_timestamps():
+    f = Fixture("lyrics3v2-bad-timestamps", "Lyrics3 v2 timestamps with 75 seconds and an IMG timestamp that is not [mm:ss].")
+    f.audio()
+    fields = [("IND", "110"), ("LYR", "[00:75]Too many seconds"), ("IMG", "cover.jpg||Front||0:10")]
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"LYR/Data/Line/Timestamp": "00:75"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.timestamp-invalid", "[00:75]")
+    f.finding("lyrics3.timestamp-invalid", "0:10")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_mismatch():
+    f = Fixture("lyrics3v2-ind-mismatch", "Lyrics3 v2 IND field that claims timestamps the lyrics do not have, and no lyrics field.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "010"), ("INF", "Info only")]), "High", {"IND/HasTimestamps": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.ind-mismatch", "timestamps")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_size():
+    f = Fixture("lyrics3v2-ind-size", "Lyrics3 v2 IND field with two characters instead of the three v2.00 defines.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "10"), ("LYR", "Words")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.ind-size", "2 characters")
+    return f
+
+
+@fixture
+def lyrics3v2_field_too_long():
+    f = Fixture("lyrics3v2-field-too-long", "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "000"), ("AUT", "a" * 300)]), "High", {"AUT/Size": "300"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.field-too-long", "300")
+    return f
+
+
+@fixture
+def lyrics3v2_extended_mismatch():
+    f = Fixture(
+        "lyrics3v2-extended-mismatch",
+        "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, and an EAR field no longer than the "
+        "ID3v1 artist, which the specification recommends not to save.",
+    )
+    f.audio()
+    fields = [("IND", "000"), ("ETT", "A Completely Different Long Track Title"), ("EAR", "Artist Name")]
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"ETT/Data": "A Completely Different Long Track Title"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.extended-mismatch", "ETT")
+    f.finding("lyrics3.extended-unneeded", "EAR")
     return f
 
 
@@ -1393,7 +1645,7 @@ def collision_containers():
         yield "id3v2", "ID3v2", id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", USER_TEXT))], footer=True), follow
     # Both Lyrics3 versions require an ID3 tag after them.
     yield "lyrics3v1", "Lyrics3", lyrics3v1(USER_TEXT), True
-    yield "lyrics3v2", "Lyrics3", lyrics3v2([("IND", "10"), ("LYR", USER_TEXT)]), True
+    yield "lyrics3v2", "Lyrics3", lyrics3v2([("IND", "100"), ("LYR", USER_TEXT)]), True
 
 
 def collision_cases():

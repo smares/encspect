@@ -1,0 +1,266 @@
+[
+  {
+    "source": "id3v23-crc-mismatch.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 558,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.3.0",
+          "offset": 0,
+          "length": 46,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.3.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x40",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "true",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "36",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Extended Header",
+              "offset": 10,
+              "length": 14,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": "10",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x8000",
+                  "offset": 14,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "HasCrc",
+                      "value": "true",
+                      "offset": 14,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Padding Size",
+                  "value": "4",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "CRC",
+                  "value": "0xF935FC9C",
+                  "offset": 20,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Computed",
+                      "value": "0xF935FC9D",
+                      "offset": 20,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Checked",
+              "offset": 24,
+              "length": 18,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 24,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "8",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 32,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 32,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 34,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Checked",
+                  "offset": 35,
+                  "length": 7
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "4 bytes",
+              "offset": 42,
+              "length": 4
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 0,
+              "length": 46,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.3.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 36 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 24,
+                  "length": 18
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 46,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "id3v2.crc-mismatch",
+        "message": "The extended header stores CRC-32 0xF935FC9C, but the data from 0x18 to 0x2A gives 0xF935FC9D.",
+        "offset": 20,
+        "length": 4
+      },
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 46,
+        "length": 512
+      }
+    ]
+  }
+]

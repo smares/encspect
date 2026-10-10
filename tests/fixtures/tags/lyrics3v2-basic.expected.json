@@ -1,6 +1,6 @@
 {
-  "description": "Lyrics3 v2 tag with every field type before ID3v1.",
-  "length": 864,
+  "description": "Lyrics3 v2 tag with every field type before ID3v1. The extended fields start with the 30 characters of the ID3v1 fields they extend, as the specification requires.",
+  "length": 979,
   "regions": [
     {
       "name": "Data",
@@ -16,28 +16,24 @@
         "IND/HasTimestamps": "true",
         "IND/IsRandomSelectionInhibited": "false",
         "LYR/Data": "[00:01]Timed line\r\n[00:05]Another",
+        "LYR/Data/Line[0]/Timestamp": "00:01",
         "AUT/Data": "Lyrics Author",
-        "EAL/Data": "Extended Album Name",
-        "IMG/Data": "cover.jpg||00:00",
-        "Size": "209"
+        "EAL/Data": "Extended Album Name That Runs Past Thirty Characters",
+        "IMG/Data/Image/Filename": "cover.jpg",
+        "Size": "324"
       },
       "offset": 512,
-      "length": 224
+      "length": 339
     },
     {
       "name": "ID3v1",
       "version": "1.1",
       "confidence": "Medium",
       "fields": {
-        "Title": "Song Title",
-        "Artist": "Artist Name",
-        "Album": "Album Name",
-        "Year": "2001",
-        "Comment": "A comment",
-        "Track": "7",
-        "Genre": "17 (Rock)"
+        "Title": "Extended Track Title That Runs",
+        "Album": "Extended Album Name That Runs"
       },
-      "offset": 736,
+      "offset": 851,
       "length": 128
     }
   ],

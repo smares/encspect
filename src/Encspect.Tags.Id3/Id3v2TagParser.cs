@@ -35,6 +35,38 @@ public sealed class Id3v2TagParser : ITagParser
         return problem is null ? Parse(reader, start, header, start) : TagProbe.Reject(start, problem);
     }
 
+    // ID3v2.4 section 5: "If a SEEK frame was found, use its values to guide further searching."
+    // The frame only gives a minimum offset, so the tag is searched for from there.
+    public TagProbe? FindFrom(ByteReader reader, long from, long limit)
+    {
+        const int Chunk = 1 << 16;
+        limit = Math.Min(limit, reader.End);
+        for (long chunkStart = from; chunkStart < limit; chunkStart += Chunk)
+        {
+            int length = (int)Math.Min(Chunk + HeaderId.Length - 1, limit - chunkStart);
+            byte[] window = reader.ReadBytesAt(chunkStart, length);
+            int index = 0;
+            while (true)
+            {
+                int found = window.AsSpan(index).IndexOf(HeaderId);
+                long candidate = chunkStart + index + found;
+                if (found < 0 || candidate >= Math.Min(chunkStart + Chunk, limit))
+                {
+                    break;
+                }
+
+                if (ProbeAt(reader, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
+                {
+                    return probe;
+                }
+
+                index += found + 1;
+            }
+        }
+
+        return null;
+    }
+
     // ID3v2.4 section 3.4: a tag appended at the end of a file has a footer, "3DI" followed by
     // the same version, flags and size as the header, so it can be found from the end.
     public TagProbe? ProbeBefore(ByteReader reader, long end)
@@ -167,9 +199,11 @@ public sealed class Id3v2TagParser : ITagParser
             if (major >= 3 && (flags & 0x40) != 0)
             {
                 declaredPadding = major == 3 ? ParseExtendedHeader23(body, state) : ParseExtendedHeader24(body, state);
+                state.ExtendedHeaderEnd = body.FilePosition;
             }
 
             long padding = ParseFrames(body, state, unsync);
+            VerifyCrc(reader, state, unsync, bodyEnd, declaredPadding, truncated);
 
             if (declaredPadding is { } expected && expected != padding)
             {
@@ -193,7 +227,79 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         Confidence confidence = truncated ? Confidence.Low : state.HasProblems ? Confidence.Medium : Confidence.High;
-        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings);
+        long? next = state.SeekOffset is { } seek ? declaredEnd + seek : null;
+        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings, next);
+    }
+
+    private static void VerifyCrc(ByteReader reader, ParseState state, bool unsync, long bodyEnd, long? declaredPadding, bool truncated)
+    {
+        if (state.StoredCrc is not { } stored)
+        {
+            return;
+        }
+
+        if (truncated)
+        {
+            state.Findings.Add(new Finding(Severity.Info, "id3v2.crc-not-verified", "The tag is truncated, so its CRC cannot be verified.", stored.Node));
+            return;
+        }
+
+        long start = state.ExtendedHeaderEnd;
+        uint crc = Crc32.Initial;
+        long end;
+        if (state.Major == 3)
+        {
+            // ID3v2.3 section 3.2: "The CRC should be calculated before unsynchronisation on the
+            // data between the extended header and the padding, i.e. the frames and only the
+            // frames." The padding size is the one the extended header declares.
+            long decoded = new Id3v2BodyReader(reader, start, bodyEnd, unsync).Skip(long.MaxValue);
+            long remaining = Math.Max(0, decoded - (declaredPadding ?? 0));
+            var body = new Id3v2BodyReader(reader, start, bodyEnd, unsync);
+            while (remaining > 0)
+            {
+                DecodedBytes chunk = body.Read((int)Math.Min(remaining, 1 << 16));
+                if (chunk.Length == 0)
+                {
+                    break;
+                }
+
+                crc = Crc32.Append(crc, chunk.Data);
+                remaining -= chunk.Length;
+            }
+
+            end = body.FilePosition;
+        }
+        else
+        {
+            // ID3v2.4 section 3.2: "calculated on all the data between the header and footer as
+            // indicated by the header's tag length field, minus the extended header", padding
+            // included, as stored.
+            reader.Position = start;
+            while (reader.Position < bodyEnd)
+            {
+                crc = Crc32.Append(crc, reader.ReadBytes((int)Math.Min(bodyEnd - reader.Position, 1 << 16)));
+            }
+
+            end = bodyEnd;
+        }
+
+        uint computed = Crc32.Finish(crc);
+        string text = state.Major == 3 ? $"0x{computed:X8}" : $"0x{computed:X}";
+        stored.Node.Add("Computed", stored.Node.Offset, stored.Node.Length, text);
+        string covered = $"0x{start:X} to 0x{end:X}";
+        if (stored.Value == computed)
+        {
+            state.Evidence.Add(new Evidence($"CRC-32 in the extended header matches the data from {covered}", start, end - start));
+        }
+        else
+        {
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.crc-mismatch",
+                $"The extended header stores CRC-32 0x{stored.Value:X}, but the data from {covered} gives {text}.",
+                stored.Node));
+            state.HasProblems = true;
+        }
     }
 
     private static void AddHeaderNode(Node tag, string name, string identifier, long offset, byte[] header)
@@ -268,7 +374,8 @@ public sealed class Id3v2TagParser : ITagParser
             else
             {
                 uint crc = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(6));
-                ext.Add("CRC", data.OffsetOf(6), data.FileLength(6, 10), $"0x{crc:X8}");
+                Node crcNode = ext.Add("CRC", data.OffsetOf(6), data.FileLength(6, 10), $"0x{crc:X8}");
+                state.StoredCrc = (crc, crcNode);
             }
         }
 
@@ -331,6 +438,10 @@ public sealed class Id3v2TagParser : ITagParser
             {
                 AddRestrictions(node, value[0]);
             }
+            else if (name == "CRC" && length == 5)
+            {
+                state.StoredCrc = (Syncsafe35(value), node);
+            }
 
             i += 1 + length;
         }
@@ -343,14 +454,7 @@ public sealed class Id3v2TagParser : ITagParser
         switch (name)
         {
             case "CRC" when value.Length == 5:
-                // A 35-bit CRC-32 stored as five syncsafe bytes.
-                ulong crc = 0;
-                foreach (byte b in value)
-                {
-                    crc = (crc << 7) | (uint)(b & 0x7F);
-                }
-
-                return $"0x{crc:X}";
+                return $"0x{Syncsafe35(value):X}";
             case "Restrictions" when value.Length == 1:
                 return $"0x{value[0]:X2}";
             default:
@@ -580,7 +684,40 @@ public sealed class Id3v2TagParser : ITagParser
             return;
         }
 
+        if (major == 4 && id == "SEEK")
+        {
+            ParseSeekFrame(state, frame, content);
+            return;
+        }
+
         frame.Value = Id3v2FrameDecoder.Decode(major, id, frame, content, decodedSize, frameEnd, findings);
+    }
+
+    // ID3v2.4 frames section 4.29: "Minimum offset to next tag $xx xx xx xx", "calculated from
+    // the end of this tag to the beginning of the next". "There may only be one 'seek frame' in
+    // a tag."
+    private static void ParseSeekFrame(ParseState state, Node frame, DecodedBytes content)
+    {
+        if (content.Length != 4)
+        {
+            frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), $"{content.Length} bytes");
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {content.Length} bytes instead of 4.", frame));
+            state.HasProblems = true;
+            return;
+        }
+
+        uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Data);
+        frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), offset.ToString(CultureInfo.InvariantCulture));
+        frame.Value = $"next tag at least {offset} bytes after this one";
+
+        if (state.SeekOffset is not null)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-duplicate", "The tag has more than one SEEK frame; the first one is used.", frame));
+            state.HasProblems = true;
+            return;
+        }
+
+        state.SeekOffset = offset;
     }
 
     private static void AddFrameFlags(Node headerNode, DecodedBytes header, int flags, int major, string id, List<Finding> findings, Node frame)
@@ -669,6 +806,19 @@ public sealed class Id3v2TagParser : ITagParser
         }
     }
 
+    // ID3v2.4 section 3.2: "The CRC-32 is stored as an 35 bit synchsafe integer, leaving the
+    // upper four bits always zeroed."
+    private static ulong Syncsafe35(ReadOnlySpan<byte> value)
+    {
+        ulong result = 0;
+        foreach (byte b in value)
+        {
+            result = (result << 7) | (uint)(b & 0x7F);
+        }
+
+        return result;
+    }
+
     private static long Syncsafe(byte[] data, int offset) =>
         ((long)(data[offset] & 0x7F) << 21) | ((long)(data[offset + 1] & 0x7F) << 14) | ((long)(data[offset + 2] & 0x7F) << 7) | (long)(data[offset + 3] & 0x7F);
 
@@ -696,6 +846,12 @@ public sealed class Id3v2TagParser : ITagParser
         public List<Evidence> Evidence { get; } = [];
 
         public bool HasProblems { get; set; }
+
+        public long ExtendedHeaderEnd { get; set; }
+
+        public (ulong Value, Node Node)? StoredCrc { get; set; }
+
+        public long? SeekOffset { get; set; }
     }
 
     private readonly struct FrameExtras

@@ -96,9 +96,17 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0x12345678",
+                  "value": "0xF0DC291E",
                   "offset": 20,
-                  "length": 4
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Computed",
+                      "value": "0xF0DC291E",
+                      "offset": 20,
+                      "length": 4
+                    }
+                  ]
                 }
               ]
             },
@@ -408,6 +416,12 @@
                 {
                   "name": "Evidence",
                   "value": "Frames fill the tag up to the padding",
+                  "offset": 24,
+                  "length": 98
+                },
+                {
+                  "name": "Evidence",
+                  "value": "CRC-32 in the extended header matches the data from 0x18 to 0x7A",
                   "offset": 24,
                   "length": 98
                 }

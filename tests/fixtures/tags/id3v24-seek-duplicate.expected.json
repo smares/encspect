@@ -1,0 +1,37 @@
+{
+  "description": "ID3v2.4 tag with two SEEK frames; only one is allowed, the first is used.",
+  "length": 392,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "SEEK[0]/Minimum Offset": "300"
+      },
+      "offset": 0,
+      "length": 53
+    },
+    {
+      "name": "Data",
+      "offset": 53,
+      "length": 300
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Appended"
+      },
+      "offset": 353,
+      "length": 39
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.seek-duplicate",
+      "contains": "more than one SEEK"
+    }
+  ]
+}

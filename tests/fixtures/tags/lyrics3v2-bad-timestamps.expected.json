@@ -1,0 +1,47 @@
+{
+  "description": "Lyrics3 v2 timestamps with 75 seconds and an IMG timestamp that is not [mm:ss].",
+  "length": 738,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "LYR/Data/Line/Timestamp": "00:75"
+      },
+      "offset": 512,
+      "length": 98
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 610,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.timestamp-invalid",
+      "contains": "[00:75]"
+    },
+    {
+      "code": "lyrics3.timestamp-invalid",
+      "contains": "0:10"
+    }
+  ]
+}

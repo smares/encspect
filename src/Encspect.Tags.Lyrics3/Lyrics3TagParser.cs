@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Encspect.Core;
 
 namespace Encspect.Tags.Lyrics3;
@@ -23,6 +24,12 @@ public sealed class Lyrics3TagParser : ITagParser
     // Lyrics3 v2.00 field IDs: indications, lyrics, additional information, lyrics author,
     // extended album, artist and track title, image links.
     private static readonly HashSet<string> KnownFields = ["IND", "LYR", "INF", "AUT", "EAL", "EAR", "ETT", "IMG"];
+
+    // Lyrics3 v2.00 field table: these fields hold at most 250 characters.
+    private static readonly HashSet<string> ShortFields = ["AUT", "EAL", "EAR", "ETT"];
+
+    // "Timestamp format is [mm:ss] (no spaces allowed in the timestamps)."
+    private static readonly Regex Timestamp = new(@"\[([0-9]{2}):([0-9]{2})\]", RegexOptions.CultureInvariant);
 
     public string Name => "Lyrics3";
 
@@ -136,6 +143,10 @@ public sealed class Lyrics3TagParser : ITagParser
             confidence = Confidence.Low;
         }
 
+        (string Value, Node Node)? indications = null;
+        bool hasLyricsField = false;
+        bool hasTimestamps = false;
+
         int pos = Begin.Length;
         while (pos < data.Length)
         {
@@ -177,7 +188,7 @@ public sealed class Lyrics3TagParser : ITagParser
             Node field = tag.Add(id, fieldStart, 8 + fieldSize, value);
             field.Add("ID", fieldStart, 3, id);
             field.Add("Size", fieldStart + 3, 5, fieldSize.ToString(CultureInfo.InvariantCulture));
-            field.Add("Data", fieldStart + 8, fieldSize, value);
+            Node dataNode = field.Add("Data", fieldStart + 8, fieldSize, value);
 
             // Lyrics3 v2.00: field data consists of characters 01 to 254.
             int bad = data.AsSpan(pos + 8, fieldSize).IndexOfAny((byte)0x00, (byte)0xFF);
@@ -200,16 +211,50 @@ public sealed class Lyrics3TagParser : ITagParser
                 }
 
                 // Characters: lyrics present, timestamps in the lyrics, inhibit random selection.
+                // "This is always three (3) characters big in v2.00."
                 field.Add("HasLyrics", fieldStart + 8, fieldSize, Bool(value, 0));
                 field.Add("HasTimestamps", fieldStart + 8, fieldSize, Bool(value, 1));
                 field.Add("IsRandomSelectionInhibited", fieldStart + 8, fieldSize, Bool(value, 2));
+                if (fieldSize != 3)
+                {
+                    findings.Add(new Finding(Severity.Info, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines exactly 3.", field));
+                }
+
+                indications = (value, field);
             }
             else if (!KnownFields.Contains(id))
             {
                 findings.Add(new Finding(Severity.Info, "lyrics3.unknown-field", $"Lyrics3 field ID {id} is not defined by Lyrics3 v2.00.", field));
             }
+            else if (id == "LYR")
+            {
+                hasLyricsField = true;
+                hasTimestamps |= AddLyricsLines(dataNode, value, findings);
+            }
+            else if (id == "IMG")
+            {
+                AddImageLines(dataNode, value, findings);
+            }
+
+            if (ShortFields.Contains(id) && fieldSize > 250)
+            {
+                findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"Field {id} holds {fieldSize} characters; Lyrics3 v2.00 allows at most 250.", field));
+            }
 
             pos += 8 + fieldSize;
+        }
+
+        if (indications is ({ } flags, { } indNode))
+        {
+            if ((Bool(flags, 0) == "true") != hasLyricsField)
+            {
+                findings.Add(new Finding(Severity.Info, "lyrics3.ind-mismatch", $"IND says the tag {(hasLyricsField ? "has no" : "has a")} LYR field, but it {(hasLyricsField ? "has one" : "has none")}.", indNode));
+            }
+
+            if ((Bool(flags, 1) == "true") != hasTimestamps)
+            {
+                findings.Add(new Finding(Severity.Info, "lyrics3.ind-mismatch", $"IND says the lyrics {(hasTimestamps ? "have no" : "have")} timestamps, but they {(hasTimestamps ? "have some" : "have none")}.", indNode));
+            }
         }
 
         tag.Add("Size", sizeStart, SizeFieldLength, size.ToString(CultureInfo.InvariantCulture));
@@ -221,6 +266,92 @@ public sealed class Lyrics3TagParser : ITagParser
         }
 
         return TagProbe.Accept(tag, marker, confidence, evidence, findings);
+    }
+
+    // "Fields that include more then one line uses [CR][LF] delimiters between lines." Returns
+    // whether any line carries a timestamp, which may appear "anywhere in the text in any order".
+    private static bool AddLyricsLines(Node data, string text, List<Finding> findings)
+    {
+        bool any = false;
+        foreach ((int start, int length) in Lines(text))
+        {
+            string line = text.Substring(start, length);
+            Node lineNode = data.Add("Line", data.Offset + start, length, line);
+            foreach (Match match in Timestamp.Matches(line))
+            {
+                any = true;
+                Node stamp = lineNode.Add("Timestamp", lineNode.Offset + match.Index, match.Length, $"{match.Groups[1].Value}:{match.Groups[2].Value}");
+                CheckSeconds(match, stamp, findings);
+            }
+        }
+
+        return any;
+    }
+
+    // "Image lines include filename, description and timestamp separated by delimiter - two
+    // ASCII chars 124 ("||"). Description and timestamp are optional", one image per line.
+    private static void AddImageLines(Node data, string text, List<Finding> findings)
+    {
+        foreach ((int start, int length) in Lines(text))
+        {
+            string line = text.Substring(start, length);
+            Node image = data.Add("Image", data.Offset + start, length, line);
+            string[] parts = line.Split("||");
+            if (parts.Length > 3 || parts[0].Length == 0)
+            {
+                findings.Add(new Finding(Severity.Warning, "lyrics3.image-invalid", "An IMG line is not \"filename||description||timestamp\".", image));
+            }
+
+            string[] names = ["Filename", "Description", "Timestamp"];
+            int offset = 0;
+            for (int i = 0; i < Math.Min(parts.Length, names.Length); i++)
+            {
+                Node part = image.Add(names[i], image.Offset + offset, parts[i].Length, parts[i]);
+                if (i == 1 && parts[i].Length > 250)
+                {
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"An IMG description holds {parts[i].Length} characters; Lyrics3 v2.00 allows at most 250.", part));
+                }
+                else if (i == 2 && parts[i].Length > 0)
+                {
+                    Match match = Timestamp.Match(parts[i]);
+                    if (!match.Success || match.Length != parts[i].Length)
+                    {
+                        findings.Add(new Finding(Severity.Warning, "lyrics3.timestamp-invalid", $"The IMG timestamp \"{parts[i]}\" is not [mm:ss].", part));
+                    }
+                    else
+                    {
+                        CheckSeconds(match, part, findings);
+                    }
+                }
+
+                offset += parts[i].Length + 2;
+            }
+        }
+    }
+
+    private static void CheckSeconds(Match match, Node node, List<Finding> findings)
+    {
+        if (int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) >= 60)
+        {
+            findings.Add(new Finding(Severity.Warning, "lyrics3.timestamp-invalid", $"The timestamp {match.Value} has more than 59 seconds.", node));
+        }
+    }
+
+    private static IEnumerable<(int Start, int Length)> Lines(string text)
+    {
+        int start = 0;
+        while (true)
+        {
+            int end = text.IndexOf("\r\n", start, StringComparison.Ordinal);
+            if (end < 0)
+            {
+                yield return (start, text.Length - start);
+                yield break;
+            }
+
+            yield return (start, end - start);
+            start = end + 2;
+        }
     }
 
     private static string Bool(string indications, int index) =>

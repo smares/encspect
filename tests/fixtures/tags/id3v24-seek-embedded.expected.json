@@ -1,0 +1,37 @@
+{
+  "description": "ID3v2.4 tag whose SEEK frame points exactly at a tag in the middle of the stream; the data around it is split.",
+  "length": 566,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "SEEK/Minimum Offset": "300"
+      },
+      "offset": 0,
+      "length": 39
+    },
+    {
+      "name": "Data",
+      "offset": 39,
+      "length": 300
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Middle"
+      },
+      "offset": 339,
+      "length": 27
+    },
+    {
+      "name": "Data",
+      "offset": 366,
+      "length": 200
+    }
+  ],
+  "findings": []
+}

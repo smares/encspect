@@ -120,9 +120,17 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xABCDEF12",
+                  "value": "0xA554F800",
                   "offset": 17,
-                  "length": 6
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "Computed",
+                      "value": "0xA554F800",
+                      "offset": 17,
+                      "length": 6
+                    }
+                  ]
                 },
                 {
                   "name": "Restrictions",
@@ -1013,6 +1021,12 @@
                   "value": "Frames fill the tag up to the padding",
                   "offset": 25,
                   "length": 260
+                },
+                {
+                  "name": "Evidence",
+                  "value": "CRC-32 in the extended header matches the data from 0x19 to 0x131",
+                  "offset": 25,
+                  "length": 280
                 }
               ]
             }
