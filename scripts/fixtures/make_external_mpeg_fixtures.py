@@ -13,10 +13,15 @@ manifest says whether there is one. ffmpeg does not read free format and libmad 
 frame of a LAME free-format stream ("bad audio data length"), so that fixture records the frame
 count mpg123 decodes instead.
 
+For Layer III, the manifest also records the side information of every frame as minimp3 reads it
+("minimp3_side_info", see minimp3_side_info.c), and the statistics mp3guessenc prints about the
+stream ("mp3guessenc": block usage, stereo modes, global gain, the largest main_data_begin,
+ancillary data, scalefactor scaling and scfsi), both from frames that are not the Info frame.
+
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
 
-    apt-get install lame twolame ffmpeg madplay mpg123
+    apt-get install lame twolame ffmpeg madplay mpg123 mp3guessenc
     python3 scripts/fixtures/make_external_mpeg_fixtures.py
 """
 
@@ -29,13 +34,17 @@ import sys
 import tempfile
 import wave
 
+import minimp3_tool
+from crosscheck_mpeg_fixtures import guessenc_summary
+
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
 LAME_VERSION = "LAME 64bits version 3.100"
 TWOLAME_VERSION = "TwoLAME version 0.4.0"
 
 
-def write_tone(path, rate, channels, seconds=0.5):
-    """A 440 Hz sine (the right channel at 660 Hz), 16-bit PCM."""
+def write_tone(path, rate, channels, seconds=0.5, clicks=False):
+    """A 440 Hz sine (the right channel at 660 Hz), 16-bit PCM; with clicks, a quiet sine with a loud click
+    every 50 ms, whose transients make LAME switch to short blocks."""
     frames = int(rate * seconds)
     with wave.open(str(path), "wb") as out:
         out.setnchannels(channels)
@@ -45,7 +54,10 @@ def write_tone(path, rate, channels, seconds=0.5):
         for i in range(frames):
             for channel in range(channels):
                 frequency = 440 if channel == 0 else 660
-                data += struct.pack("<h", int(12000 * math.sin(2 * math.pi * frequency * i / rate)))
+                sample = 12000 * math.sin(2 * math.pi * frequency * i / rate)
+                if clicks:
+                    sample = sample / 20 + (24000 if i % (rate // 20) < 8 else 0)
+                data += struct.pack("<h", int(sample))
         out.writeframes(bytes(data))
 
 
@@ -86,6 +98,12 @@ FIXTURES = [
      dict(version="2", layer=3, sample_rate=22050, channel_mode="Mono", bitrate=32, info_frame=False)),
     ("external-lame-mpeg25-mono", ".mp3", 8000, 1, ["lame", "--quiet", "-t", "-b", "16", "-m", "m"],
      dict(version="2.5", layer=3, sample_rate=8000, channel_mode="Mono", bitrate=16, info_frame=False)),
+    ("external-lame-no-reservoir", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "--nores", "-b", "128", "-m", "j"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
+    ("external-lame-clicks", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "s"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, clicks=True)),
+    ("external-lame-forced-ms", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "f"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
     ("external-lame-free-format", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "--freeformat", "-b", "400", "-m", "s"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, free_format=True, info_frame=False)),
     ("external-twolame-192-stereo", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
@@ -110,15 +128,17 @@ def check_versions():
 def main():
     check_versions()
     OUT.mkdir(parents=True, exist_ok=True)
+    dumper = minimp3_tool.build()
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in FIXTURES:
             source = pathlib.Path(temp) / f"{name}.wav"
-            write_tone(source, rate, channels)
+            write_tone(source, rate, channels, clicks=settings.get("clicks", False))
             path = OUT / f"{name}{extension}"
             subprocess.run(command + [str(source), str(path)], check=True)
 
+            signal = "a quiet 440/660 Hz tone with a click every 50 ms" if settings.get("clicks") else "a 440/660 Hz tone"
             manifest = {
-                "description": f"{' '.join(command)} on a 0.5 s, {rate} Hz, {channels}-channel 440/660 Hz tone.",
+                "description": f"{' '.join(command)} on 0.5 s of {signal}, {rate} Hz, {channels} channels.",
                 "crosscheck": True,
                 "encoder": {"command": command, **settings},
             }
@@ -126,6 +146,9 @@ def main():
                 manifest["mpg123_frames"] = mpg123_frame_count(path, 1152, channels)
             else:
                 manifest["ffprobe_frames"] = ffprobe_frames(path)
+            if settings["layer"] == 3:
+                manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
+                manifest["mp3guessenc"] = guessenc_summary(path)
 
             text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
             (OUT / f"{name}.expected.json").write_text(text, encoding="utf-8", newline="\n")

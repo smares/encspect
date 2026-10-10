@@ -258,6 +258,8 @@ LONE_HEADER = Frame(version="1", layer=3, bitrate=128, rate=44100, mode="Stereo"
 
 
 class Fixture:
+    out = OUT
+
     def __init__(self, name, extension, description, crosscheck=True):
         self.name, self.extension, self.description, self.crosscheck = name, extension, description, crosscheck
         self.data = bytearray()
@@ -302,11 +304,8 @@ class Fixture:
         self.findings.append({"code": code, "contains": contains})
         return self
 
-    def write(self):
-        self.end_audio()
-        path = OUT / f"{self.name}{self.extension}"
-        path.write_bytes(bytes(self.data))
-        manifest = {
+    def manifest(self):
+        return {
             "description": self.description,
             "length": len(self.data),
             "crosscheck": self.crosscheck,
@@ -315,8 +314,13 @@ class Fixture:
             "gaps": self.gaps,
             "findings": self.findings,
         }
-        text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
-        (OUT / f"{self.name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
+
+    def write(self):
+        self.end_audio()
+        path = self.out / f"{self.name}{self.extension}"
+        path.write_bytes(bytes(self.data))
+        text = json.dumps(self.manifest(), indent=1, ensure_ascii=False) + "\n"
+        (self.out / f"{self.name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
 
 
 FIXTURES = []

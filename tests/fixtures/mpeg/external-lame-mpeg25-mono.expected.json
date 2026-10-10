@@ -1,5 +1,5 @@
 {
- "description": "lame --quiet -t -b 16 -m m on a 0.5 s, 8000 Hz, 1-channel 440/660 Hz tone.",
+ "description": "lame --quiet -t -b 16 -m m on 0.5 s of a 440/660 Hz tone, 8000 Hz, 1 channels.",
  "crosscheck": true,
  "encoder": {
   "command": [
@@ -55,5 +55,255 @@
    1152,
    144
   ]
- ]
+ ],
+ "minimp3_side_info": [
+  {
+   "offset": 0,
+   "reservoir": 0,
+   "main_data_begin": 0,
+   "granules": [
+    {
+     "part2_3_length": 930,
+     "big_values": 43,
+     "global_gain": 166,
+     "scalefac_compress": 27,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      24,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 144,
+   "reservoir": 14,
+   "main_data_begin": 14,
+   "granules": [
+    {
+     "part2_3_length": 1037,
+     "big_values": 202,
+     "global_gain": 165,
+     "scalefac_compress": 28,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 288,
+   "reservoir": 15,
+   "main_data_begin": 15,
+   "granules": [
+    {
+     "part2_3_length": 909,
+     "big_values": 96,
+     "global_gain": 136,
+     "scalefac_compress": 0,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      23,
+      2
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 432,
+   "reservoir": 32,
+   "main_data_begin": 32,
+   "granules": [
+    {
+     "part2_3_length": 922,
+     "big_values": 222,
+     "global_gain": 134,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      19,
+      31,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 1
+    }
+   ]
+  },
+  {
+   "offset": 576,
+   "reservoir": 47,
+   "main_data_begin": 47,
+   "granules": [
+    {
+     "part2_3_length": 1020,
+     "big_values": 280,
+     "global_gain": 132,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      22,
+      31,
+      5
+     ],
+     "region0_count": 4,
+     "region1_count": 1
+    }
+   ]
+  },
+  {
+   "offset": 720,
+   "reservoir": 50,
+   "main_data_begin": 50,
+   "granules": [
+    {
+     "part2_3_length": 803,
+     "big_values": 222,
+     "global_gain": 136,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      22,
+      31,
+      20
+     ],
+     "region0_count": 4,
+     "region1_count": 0
+    }
+   ]
+  },
+  {
+   "offset": 864,
+   "reservoir": 80,
+   "main_data_begin": 80,
+   "granules": [
+    {
+     "part2_3_length": 958,
+     "big_values": 119,
+     "global_gain": 135,
+     "scalefac_compress": 0,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      23,
+      2
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 1008,
+   "reservoir": 91,
+   "main_data_begin": 91,
+   "granules": [
+    {
+     "part2_3_length": 1628,
+     "big_values": 240,
+     "global_gain": 154,
+     "scalefac_compress": 0,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      30,
+      20
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 1152,
+   "reservoir": 18,
+   "main_data_begin": 18,
+   "granules": [
+    {
+     "part2_3_length": 931,
+     "big_values": 45,
+     "global_gain": 171,
+     "scalefac_compress": 63,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      9,
+      1
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  }
+ ],
+ "mp3guessenc": {
+  "blocks": {
+   "long": 3,
+   "switch": 4,
+   "short": 2,
+   "mixed": 0
+  },
+  "mode_extensions": {},
+  "global_gain": {
+   "0": [
+    132,
+    171
+   ]
+  },
+  "ancillary": [
+   32,
+   32,
+   32
+  ],
+  "max_main_data_begin": 91,
+  "scalefac_scale_used": false,
+  "scfsi_used": false
+ }
 }
