@@ -37,6 +37,10 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   after any "LAME", mpg123 prints the lowpass byte as the revision), the check follows the tool.
   The peak is the one field no tool reports.
 - "mp3guessenc_encoder_string": the encoder string mp3guessenc finds in the tag or ancillary data.
+- "mp3guessenc_guess": the encoder mp3guessenc guesses, which for mp3PRO and MP3 Surround follows
+  the signature in the ancillary data (ancillary_scan.py). Every fixture must have the OFL block
+  mp3guessenc reads ("mp3guessenc_ofl"), or none; where the Fraunhofer encoder wrote one,
+  ffmpeg's output must start within 16 samples of its delay ("decoded_onset").
 - "statistics" per region (stream_stats.py): mp3guessenc must count the same frames, length,
   average bitrate and bitrate histogram where it takes the same frames as audio (no gaps, one
   region and stream, constant header flags, no finding about frames it skips), and ffmpeg and
@@ -487,6 +491,41 @@ def guessenc_problems(actual, statistics, exact):
     return problems
 
 
+def guessenc_guess(path):
+    """The encoder mp3guessenc guesses, from its "Maybe this file is encoded by" line, or None."""
+    output = subprocess.run(["mp3guessenc", str(path)], capture_output=True, text=True).stdout
+    for line in output.splitlines():
+        if line.startswith("Maybe this file is encoded by "):
+            return line[len("Maybe this file is encoded by "):].strip()
+    return None
+
+
+def guessenc_ofl(path):
+    """The delay and original length mp3guessenc reads from an Original File Length block, or None.
+    For MP3 Surround it adds 576 samples to the delay it reads."""
+    output = subprocess.run(["mp3guessenc", str(path)], capture_output=True, text=True).stdout
+    if "Original File Length block found" not in output:
+        return None
+    ofl = {}
+    for line in output.splitlines():
+        key, _, value = (part.strip() for part in line.partition(":"))
+        if key == "Encoder delay":
+            ofl["delay"] = int(value.split()[0])
+        elif key == "Length of original audio":
+            ofl["length"] = int(value.split()[0])
+    return ofl
+
+
+def decoded_onset(path):
+    """The first sample of ffmpeg's mono downmix louder than 200: where an encoded tone that starts at
+    sample 0 comes out, the encoder's and the decoder's delay together."""
+    pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-f", "s16le", "-"], capture_output=True).stdout
+    for i in range(0, len(pcm) - 1, 2):
+        if abs(int.from_bytes(pcm[i : i + 2], "little", signed=True)) > 200:
+            return i // 2
+    return None
+
+
 DECODER_DELAY = 529
 
 
@@ -566,6 +605,10 @@ def check(path, manifest, tools):
         actual = guessenc_summary(path)
         if actual != expected:
             problems.append(f"mp3guessenc reports {json.dumps(actual)}, the manifest {json.dumps(expected)}")
+    if "mp3guessenc_guess" in manifest and guessenc_guess(path) != manifest["mp3guessenc_guess"]:
+        problems.append(f"mp3guessenc guesses {guessenc_guess(path)!r}, the manifest recorded {manifest['mp3guessenc_guess']!r}")
+    if guessenc_ofl(path) != manifest.get("mp3guessenc_ofl"):
+        problems.append(f"mp3guessenc reads the OFL block as {guessenc_ofl(path)}, the manifest recorded {manifest.get('mp3guessenc_ofl')}")
     if not manifest.get("crosscheck"):
         return problems
 
@@ -604,6 +647,14 @@ def check(path, manifest, tools):
             if failures != expected_failures:
                 problems.append(f"madplay reports {failures} CRC failures, the manifest expects {expected_failures}")
 
+    if "decoded_onset" in manifest and decoded_onset(path) != manifest["decoded_onset"]:
+        problems.append(f"ffmpeg's output starts at sample {decoded_onset(path)}, the manifest recorded {manifest['decoded_onset']}")
+    if "decoded_onset" in manifest:
+        # The tone comes out within a few samples of the delay the OFL block stores, as the filter bank
+        # spreads it; a delay without the decoder's 529 samples would be far off.
+        delay = manifest["mp3guessenc_ofl"]["delay"] - (576 if manifest.get("enhancement") == "MP3 Surround" else 0)
+        if abs(manifest["decoded_onset"] - delay) > 16:
+            problems.append(f"ffmpeg's output starts at sample {manifest['decoded_onset']}, not at the OFL delay {delay}")
     if "mp3guessenc_stream" in manifest:
         # Through JSON, so the histogram's tuples compare as the manifest's lists.
         actual = json.loads(json.dumps(guessenc_stream(path)))

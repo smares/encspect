@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Writes MPEG audio fixtures with real encoders: LAME 3.100, TwoLAME 0.4.0 and ffmpeg 6.1 with libmp3lame.
+"""Writes MPEG audio fixtures with real encoders: LAME 3.100, TwoLAME 0.4.0, ffmpeg 6.1 with libmp3lame, and
+Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
+Original File Length (OFL) blocks.
 
 The hand-built fixtures from make_mpeg_fixtures.py have zero payloads. These come from encoders
 fed with a known signal and known settings, so the parser is checked against real bit streams:
@@ -22,6 +24,11 @@ causes; crosscheck_mpeg_fixtures.py confirms the raw values with mp3guessenc, mp
 the tag CRC holds) or, without a tag, from the "LAME3.100" it writes into ancillary data (low);
 ffmpeg's tag names ffmpeg, so the LAME behind it is again known from ancillary data (medium);
 TwoLAME leaves no trace. "mp3guessenc_encoder_string" is the encoder string mp3guessenc finds.
+
+"mp3guessenc_guess" is the encoder mp3guessenc guesses, and for a stream with an OFL block,
+"mp3guessenc_ofl" the delay and original length mp3guessenc reads from it and "decoded_onset" the
+sample at which the encoded tone starts in ffmpeg's output, which shows what the delay counts.
+"enhancement" names the extension the analyzer must find in the ancillary data, or is null.
 
 For the statistics, "mp3guessenc_stream" records mp3guessenc's frame count, length, average bitrate
 and bitrate histogram, and, where a LAME tag gives an encoder delay and padding, "decoded_samples"
@@ -49,9 +56,11 @@ import sys
 import tempfile
 import wave
 
+import fhg_tool
 import minimp3_tool
 import vbr_tags
-from crosscheck_mpeg_fixtures import decoded_samples, guessenc_stream, guessenc_summary, guessenc_tag_lines
+from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
+                                      guessenc_tag_lines)
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
 LAME_VERSION = "LAME 64bits version 3.100"
@@ -60,9 +69,14 @@ TWOLAME_VERSION = "TwoLAME version 0.4.0"
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 
 
+# Left, right, center, LFE, left surround, right surround.
+SURROUND_FREQUENCIES = [440, 660, 550, 60, 330, 880]
+
+
 def write_tone(path, rate, channels, seconds=0.5, clicks=False):
-    """A 440 Hz sine (the right channel at 660 Hz), 16-bit PCM; with clicks, a quiet sine with a loud click
-    every 50 ms, whose transients make LAME switch to short blocks."""
+    """A 440 Hz sine (the right channel at 660 Hz, 5.1 channels each at their own frequency), 16-bit
+    PCM; with clicks, a quiet sine with a loud click every 50 ms, whose transients make LAME switch
+    to short blocks."""
     frames = int(rate * seconds)
     with wave.open(str(path), "wb") as out:
         out.setnchannels(channels)
@@ -71,7 +85,7 @@ def write_tone(path, rate, channels, seconds=0.5, clicks=False):
         data = bytearray()
         for i in range(frames):
             for channel in range(channels):
-                frequency = 440 if channel == 0 else 660
+                frequency = SURROUND_FREQUENCIES[channel] if channels == 6 else 440 if channel == 0 else 660
                 sample = 12000 * math.sin(2 * math.pi * frequency * i / rate)
                 if clicks:
                     sample = sample / 20 + (24000 if i % (rate // 20) < 8 else 0)
@@ -154,6 +168,24 @@ FIXTURES = [
     # source's encoder string but ffmpeg's fields.
     ("external-ffmpeg-remux", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{lame -V 2}", "-c", "copy", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
+    ("external-fhg-surround-cbr", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "192000"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=False, enhancement="MP3 Surround")),
+    ("external-fhg-surround-ofl", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "192000", "-ofl"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=False, enhancement="MP3 Surround")),
+    ("external-fhg-surround-vbr", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "0", "-m", "2", "-vbri"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, enhancement="MP3 Surround")),
+    ("external-fhg-surround-vbr-ofl", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "0", "-m", "2", "-vbri", "-ofl"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, enhancement="MP3 Surround")),
+    ("external-fhg-stereo-cbr", ".mp3", 44100, 2, ["mp3sEncoder", "-br", "128000"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
+    ("external-fhg-stereo-ofl", ".mp3", 44100, 2, ["mp3sEncoder", "-br", "128000", "-ofl"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
+    ("external-fhg-stereo-vbr", ".mp3", 44100, 2, ["mp3sEncoder", "-br", "0", "-m", "3", "-vbri"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
+    ("external-fhg-stereo-vbr-ofl", ".mp3", 44100, 2, ["mp3sEncoder", "-br", "0", "-m", "3", "-vbri", "-ofl"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
+    ("external-fhg-mono-cbr", ".mp3", 44100, 1, ["mp3sEncoder", "-br", "64000"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=False)),
     ("external-twolame-192-stereo", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False)),
     # Stereo, because TwoLAME 0.4.0 with -m j picks the mode per frame (joint, then stereo).
@@ -201,12 +233,20 @@ def first_frame(data):
     return start, (144 if mpeg1 else 72) * bitrates[index] * 1000 // rate + ((header[2] >> 1) & 1)
 
 
-def detected_encoder(command, tag):
+def detected_encoder(command, tag, settings):
     """TwoLAME leaves no trace. LAME's own tag names it; ffmpeg's tag names ffmpeg, or copies the
     encoder string of the file it remuxes; without a LAME string in the tag, LAME is known from the
-    "LAME3.100" it writes into ancillary data."""
+    "LAME3.100" it writes into ancillary data. Fraunhofer's encoder is known from its VBRI header
+    (high confidence), the MP3 Surround data in every frame or its OFL block (medium); its plain
+    CBR leaves no trace."""
     if command[0] == "twolame":
         return None
+    if command[0] == "mp3sEncoder":
+        surround = settings.get("enhancement") == "MP3 Surround"
+        name = "Fraunhofer MP3 Surround encoder" if surround else "Fraunhofer"
+        if tag is not None and tag["type"] == "VBRI":
+            return {"name": name, "confidence": "High"}
+        return {"name": name, "confidence": "Medium"} if surround or "-ofl" in command else None
     lame = tag.get("lame") if tag else None
     if lame is None:
         return {"name": "LAME 3.100", "confidence": "Low"}
@@ -225,11 +265,14 @@ def describe_tag(path, command, manifest):
         manifest["vbr_header_fields"] = vbr_tags.report_fields(tag)
         manifest["vbr_findings"] = [{"code": code, "contains": contains} for code, contains in vbr_tags.findings(tag, start)]
     manifest["vbr_header"] = tag
-    manifest["detected_encoder"] = detected_encoder(command, tag)
+    manifest["detected_encoder"] = detected_encoder(command, tag, manifest["encoder"])
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
 
 
 def encode(command, source, path, temp):
+    if command[0] == "mp3sEncoder":
+        fhg_tool.encode(FHG_ENCODER[0], command[1:], source, path)
+        return
     if command[0] != "ffmpeg":
         subprocess.run(command + [str(source), str(path)], check=True)
         return
@@ -249,6 +292,8 @@ def encode(command, source, path, temp):
 
 def write_manifest(name, path, rate, channels, command, settings, dumper):
     signal = "a quiet 440/660 Hz tone with a click every 50 ms" if settings.get("clicks") else "a 440/660 Hz tone"
+    if channels == 6:
+        signal = f"a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
     manifest = {
         "description": f"{' '.join(command)} on 0.5 s of {signal}, {rate} Hz, {channels} channels.",
         "crosscheck": True,
@@ -264,16 +309,26 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["mp3guessenc"] = guessenc_summary(path)
     describe_tag(path, command, manifest)
     manifest["mp3guessenc_stream"] = guessenc_stream(path)
+    manifest["mp3guessenc_guess"] = guessenc_guess(path)
+    manifest["enhancement"] = settings.get("enhancement")
+    ofl = guessenc_ofl(path)
+    if ofl is not None:
+        manifest["mp3guessenc_ofl"] = ofl
+        manifest["decoded_onset"] = decoded_onset(path)
     if manifest["vbr_header"] and manifest["vbr_header"].get("lame"):
         manifest["decoded_samples"] = decoded_samples(path, CHANNELS.get(settings["channel_mode"], 2))
     text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
     (OUT / f"{name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
 
 
+FHG_ENCODER = []
+
+
 def main():
     check_versions()
     OUT.mkdir(parents=True, exist_ok=True)
     dumper = minimp3_tool.build()
+    FHG_ENCODER.append(fhg_tool.fetch())
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in FIXTURES:
             source = pathlib.Path(temp) / f"{name}.wav"

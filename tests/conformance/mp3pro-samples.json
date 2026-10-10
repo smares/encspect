@@ -1,0 +1,39 @@
+{
+ "description": "mp3PRO files from the FFmpeg sample archive, which the Thomson mp3PRO encoder 1.0.2 wrote (two of them say so in an ID3v1 comment). They are commercial music, so they are downloaded and checked against their SHA-256 rather than committed. Per file: the frames, stream, and the ancillary data bytes and rate the analyzer and mp3guessenc must report.",
+ "source": "https://samples.ffmpeg.org/A-codecs/MP3-pro/",
+ "samples": [
+  {
+   "file": "18 Daft Punk - Harder, Better, Faster, Stronger.mp3",
+   "sha256": "d144b1bd7a6b5729d5a8bacd38dea5367946378f9a816c2f755e0dfc2de03ec0",
+   "frames": 8636,
+   "version": "MPEG-2",
+   "sample_rate": 22050,
+   "enhancement": "mp3PRO",
+   "ancillary_bytes": 113715,
+   "ancillary_rate": "4.0 kbps",
+   "mp3guessenc_guess": "Fraunhofer IIS mp3PRO encoder"
+  },
+  {
+   "file": "27 MC Solaar - Rmi.mp3",
+   "sha256": "0067eda172a8090cde303ab44ae36f049cef74fa8ef0cc32465029bdc3855183",
+   "frames": 9959,
+   "version": "MPEG-2",
+   "sample_rate": 22050,
+   "enhancement": "mp3PRO",
+   "ancillary_bytes": 135302,
+   "ancillary_rate": "4.2 kbps",
+   "mp3guessenc_guess": "Fraunhofer IIS mp3PRO encoder"
+  },
+  {
+   "file": "scooter-wicked-02-imraving.mp3",
+   "sha256": "200de024eb4134ed5be52598d4c4bba81bdc8b12f22d4fcbd3c173b96490144f",
+   "frames": 7979,
+   "version": "MPEG-2",
+   "sample_rate": 22050,
+   "enhancement": "mp3PRO",
+   "ancillary_bytes": 136604,
+   "ancillary_rate": "5.2 kbps",
+   "mp3guessenc_guess": "Fraunhofer IIS mp3PRO encoder"
+  }
+ ]
+}

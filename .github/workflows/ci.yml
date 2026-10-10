@@ -95,7 +95,7 @@ jobs:
           test -z "$(git status --porcelain -- tests/fixtures)"
 
   mpeg-crosscheck:
-    name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc and the ISO streams
+    name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc, the ISO streams and mp3PRO samples
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -119,6 +119,17 @@ jobs:
       - name: Check the conformance manifest against the ISO streams
         run: python3 scripts/fixtures/conformance_mpeg_audio.py .cache/conformance
 
+      # The mp3PRO samples are commercial music, so they are fetched, checked against their SHA-256
+      # and cached rather than committed.
+      - name: Cache the mp3PRO samples
+        uses: actions/cache@v4
+        with:
+          path: .cache/mp3pro
+          key: mp3pro-samples-${{ hashFiles('tests/conformance/mp3pro-samples.json') }}
+
+      - name: Check the mp3PRO manifest against the samples
+        run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
+
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -128,3 +139,6 @@ jobs:
 
       - name: Check the analyzer against the conformance manifest
         run: python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/conformance
+
+      - name: Check the analyzer against the mp3PRO manifest
+        run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro

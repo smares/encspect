@@ -43,7 +43,9 @@ import json
 import pathlib
 import sys
 
+import ancillary_scan
 import make_mpeg_fixtures as mpeg
+import stream_stats
 from make_mpeg_fixtures import Fixture, Frame, cbr_padding, junk, side_info_size
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "layer3"
@@ -347,6 +349,7 @@ class Layer3Fixture(Fixture):
         super().__init__(name, ".mp3", description, crosscheck)
         self.silent, self.guessenc = silent, guessenc
         self.layer3 = []
+        self.extra = {}
 
     def finding(self, code, contains):
         # The analyzer reports each kind once per file, pointing at the first case.
@@ -459,14 +462,76 @@ class Layer3Fixture(Fixture):
             "scfsi_used": any(f.mpeg1() and any(f.scfsi) for f, _ in self.layer3),
         }
 
+    def segments(self):
+        """Each frame's ancillary segment (ancillary_scan.py), by frame offset: from the end of its
+        main data to the start of the next frame's, or None where that is not defined. A truncated
+        frame or a stream change ends the stream, so the frame before it keeps the rest of its data."""
+        result = {}
+        stream, previous, previous_end, key = bytearray(), None, None, None
+        for frame, entry in self.layer3 + [(None, None)]:
+            if frame is None or entry.get("truncated") or key != (frame.version, frame.rate):
+                if previous is not None:
+                    result[previous] = None if previous_end is None else bytes(stream[previous_end:])
+                stream, previous, previous_end, key = bytearray(), None, None, None
+                if frame is None or entry.get("truncated"):
+                    continue
+                key = (frame.version, frame.rate)
+            start = len(stream)
+            stream += frame.area
+            begin = start - frame.main_data_begin
+            end = begin + frame.main_data_length()
+            if previous is not None:
+                fits = previous_end is not None and 0 <= begin and previous_end <= begin
+                result[previous] = bytes(stream[previous_end:begin]) if fits else None
+            previous = entry["offset"]
+            previous_end = end if begin >= 0 and end <= len(stream) else None
+        return result
+
+    def ancillary(self):
+        """Adds what each region's ancillary data holds (ancillary_scan.py) and its findings."""
+        segments = self.segments()
+        for region in self.regions:
+            if region["name"] != "MPEG Audio":
+                continue
+            inside = [(frame, entry) for frame, entry in self.layer3
+                      if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and entry["offset"] in segments]
+            if not inside:
+                continue
+            first = inside[0][0]
+            version = mpeg.VERSION_NAMES[first.version]
+            enhancement, total, block = ancillary_scan.scan([segments[entry["offset"]] for _, entry in inside], version, first.rate)
+            audio = [frame for frame, entry in self.layer3
+                     if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and not entry.get("truncated")]
+            ticks = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") * (stream_stats.CLOCK // f.rate) for f in audio)
+            fields = {}
+            if enhancement:
+                fields["Enhancement"] = enhancement
+                fields["Enhancement/Ancillary Data"] = f"{total} bytes"
+                fields["Enhancement/Data Rate"] = stream_stats.kbps_tenths_text(total * 8, ticks)
+                code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
+                self.finding(code, f"{total} bytes")
+            if block:
+                delay, length, _ = block
+                fields["Original File Length"] = f"{length} samples"
+                fields["Original File Length/Delay"] = f"{delay} samples"
+                fields["Original File Length/Original Length"] = f"{length} samples"
+                fields["Original File Length/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // first.rate))
+                samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio)
+                if delay + length > samples:
+                    self.finding("mpeg.ofl-exceeds-stream", f"{delay + length} samples")
+            if fields:
+                region["ancillary"] = fields
+
     def manifest(self):
         self.model()
+        self.ancillary()
         manifest = super().manifest()
         manifest["silent"] = self.silent
         if self.guessenc:
             manifest["mp3guessenc"] = self.guessenc_summary()
         for entry in manifest["frames"]:
             entry.pop("ancillary_after", None)
+        manifest.update(self.extra)
         return manifest
 
 
@@ -810,6 +875,154 @@ def main_data_overflow():
     for frame in frames:
         frame.area[:] = bytes(len(frame.area))
     return f.add_frames(pack(frames))
+
+
+# --- mp3PRO, MP3 Surround and OFL -------------------------------------------------------------------
+
+
+def enhanced_chain(segments, main=100, **kwargs):
+    """Frames with main bytes of main data each; every frame's ancillary segment starts with the
+    given bytes, or is empty for None: the next frame's main data then starts right after it."""
+    probe = reservoir_chain([(main, 0)] * len(segments), **kwargs)
+    specs = [(main, probe[k - 1].area_length() - main if k and segments[k - 1] is None else 0) for k in range(len(segments))]
+    frames = reservoir_chain(specs, ancillary=b"\x5a", **kwargs)
+    stream = bytearray(b"".join(frame.area for frame in frames))
+    position = 0
+    for k, (frame, data) in enumerate(zip(frames, segments)):
+        at = position - specs[k][1] + main
+        if data:
+            following = len(stream) if k + 1 == len(frames) else position + frame.area_length() - specs[k + 1][1]
+            assert at + len(data) <= following, "the bytes do not fit the ancillary segment"
+            stream[at : at + len(data)] = data
+        position += frame.area_length()
+    position = 0
+    for frame in frames:
+        frame.area[:] = stream[position : position + frame.area_length()]
+        position += frame.area_length()
+    return frames
+
+
+def signatures(count, first, second):
+    """Two-byte segment starts that all keep the bits first and second and vary in the others."""
+    return [bytes([first | (k * 37 + 5) & 0xFF, second | (k * 91 + 17) & 0xFF]) for k in range(count)]
+
+
+MP3PRO = dict(bitrate=64, rate=22050, version="2")
+# mp3guessenc's guess for constant-bitrate frames without other evidence.
+OLD_XING = "Xing (old)"
+SURROUND = dict(bitrate=128, rate=44100)
+
+
+def ofl_block(delay, length, rest=b""):
+    return b"\xb4" + delay.to_bytes(2, "big") + length.to_bytes(4, "big") + rest
+
+
+def enhancement_fixture(name, description, segments, guess, encoder=None, ofl=None, **kwargs):
+    f = Layer3Fixture(name, description)
+    f.add_frames(enhanced_chain(segments, **kwargs))
+    f.extra = {"detected_encoder": encoder, "mp3guessenc_guess": guess, "mp3guessenc_ofl": ofl}
+    return f
+
+
+@fixture
+def mp3pro_signature():
+    return enhancement_fixture(
+        "mp3pro-signature",
+        "Twelve MPEG-2 Layer III frames at 22050 Hz whose ancillary data starts with the mp3PRO signature: every first "
+        "byte keeps the bits 0xC0, every second byte the bit 0x08.",
+        signatures(12, 0xC0, 0x08), "Fraunhofer IIS mp3PRO encoder", {"name": "mp3PRO encoder", "confidence": "Medium"}, **MP3PRO)
+
+
+@fixture
+def mp3pro_signature_broken():
+    segments = signatures(12, 0xC0, 0x08)
+    segments[6] = bytes([segments[6][0], segments[6][1] & ~0x08 & 0xFF])
+    return enhancement_fixture(
+        "mp3pro-signature-broken",
+        "The mp3PRO signature with the bit 0x08 missing from the second byte of the seventh frame's ancillary data: not "
+        "mp3PRO.", segments, OLD_XING, **MP3PRO)
+
+
+@fixture
+def mp3pro_frame_without_ancillary():
+    segments = signatures(12, 0xC0, 0x08)
+    segments[5] = None
+    return enhancement_fixture(
+        "mp3pro-frame-without-ancillary",
+        "The mp3PRO signature, except that the sixth frame has no ancillary data at all, as an mp3PRO encoder never "
+        "writes: not mp3PRO.", segments, OLD_XING, **MP3PRO)
+
+
+@fixture
+def mp3pro_signature_mpeg1():
+    return enhancement_fixture(
+        "mp3pro-signature-mpeg1",
+        "The mp3PRO signature in MPEG-1 frames at 44100 Hz. mp3PRO only exists for MPEG-2 and 2.5, so it is not mp3PRO.",
+        signatures(12, 0xC0, 0x08), OLD_XING, **SURROUND)
+
+
+@fixture
+def mp3pro_short_stream():
+    return enhancement_fixture(
+        "mp3pro-short-stream",
+        "Six frames with the mp3PRO signature. mp3guessenc takes them as mp3PRO; the analyzer needs at least eight, so "
+        "that the signature's three bits do not match by chance (1 in 8 per frame).",
+        signatures(6, 0xC0, 0x08), "Fraunhofer IIS mp3PRO encoder", **MP3PRO)
+
+
+@fixture
+def mp3_surround_signature():
+    return enhancement_fixture(
+        "mp3-surround-signature",
+        "Twelve MPEG-1 Layer III frames at 44100 Hz whose ancillary data starts with the MP3 Surround signature: every "
+        "first byte keeps the bits 0xCF, every second byte the bits 0x30.",
+        signatures(12, 0xCF, 0x30), "Fraunhofer IIS mp3Surround 5.1 encoder",
+        {"name": "Fraunhofer MP3 Surround encoder", "confidence": "Medium"}, **SURROUND)
+
+
+@fixture
+def mp3_surround_signature_32khz():
+    return enhancement_fixture(
+        "mp3-surround-signature-32khz",
+        "The MP3 Surround signature at 32000 Hz, a sample rate MP3 Surround does not use: not MP3 Surround.",
+        signatures(12, 0xCF, 0x30), OLD_XING, bitrate=128, rate=32000)
+
+
+@fixture
+def ofl_plain():
+    segments = signatures(12, 0, 0)
+    segments[0] = ofl_block(1201, 12000, b"\x00\x00\x00")
+    return enhancement_fixture(
+        "ofl-plain",
+        "An Original File Length block at the start of the first frame's ancillary data, as Fraunhofer's encoders write "
+        "it for plain MP3: a delay of 1201 samples and 12000 samples of original audio, which the 13824 samples of the "
+        "twelve frames hold.",
+        segments, OLD_XING, {"name": "Fraunhofer", "confidence": "Medium"}, {"delay": 1201, "length": 12000},
+        **SURROUND)
+
+
+@fixture
+def ofl_surround():
+    segments = signatures(12, 0xCF, 0x30)
+    segments[0] = ofl_block(2176, 11000, b"\x00\x00\x00\xdf\x3c")
+    return enhancement_fixture(
+        "ofl-surround",
+        "MP3 Surround with an Original File Length block: the first frame's ancillary data starts with the block (delay "
+        "2176, 11000 samples), and its signature follows at bytes 10 and 11. mp3guessenc adds 576 samples to the delay.",
+        segments, "Fraunhofer IIS mp3Surround 5.1 encoder with OFL",
+        {"name": "Fraunhofer MP3 Surround encoder", "confidence": "Medium"}, {"delay": 2752, "length": 11000}, **SURROUND)
+
+
+@fixture
+def ofl_exceeds_stream():
+    segments = signatures(12, 0, 0)
+    segments[0] = ofl_block(1201, 20000, b"\x00\x00\x00")
+    return enhancement_fixture(
+        "ofl-exceeds-stream",
+        "An Original File Length block that claims 20000 samples after a delay of 1201, more than the 13824 samples of "
+        "the twelve frames, as when a file is cut after encoding.",
+        segments, OLD_XING, {"name": "Fraunhofer", "confidence": "Medium"}, {"delay": 1201, "length": 20000},
+        **SURROUND)
 
 
 def main():
