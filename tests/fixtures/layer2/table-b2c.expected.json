@@ -1,0 +1,623 @@
+{
+ "description": "MPEG-1 Layer II mono at 48000 Hz and 48 kbps: allocation table B.2c with 8 subbands.",
+ "length": 864,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 864
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x8E93",
+    "CRC/Computed": "0x8E93",
+    "Bit Allocation/Subband 0/Channel 0": "32767 levels",
+    "Bit Allocation/Subband 1/Channel 0": "None",
+    "Bit Allocation/Subband 2/Channel 0": "None",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 0": "3 levels",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "SCFSI/Subband 0/Channel 0": "0",
+    "SCFSI/Subband 3/Channel 0": "1",
+    "SCFSI/Subband 6/Channel 0": "2",
+    "Scalefactors/Subband 0/Channel 0": "0, 17, 34",
+    "Scalefactors/Subband 3/Channel 0": "15, 32",
+    "Scalefactors/Subband 6/Channel 0": "30",
+    "Samples": "660 bits",
+    "Ancillary Data": "47 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 84,
+    "subbands": [
+     [
+      {
+       "class": 15,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.0002000000000p-14",
+        "0x1.428cb60000000p-20",
+        "0x1.9663160000000p-26"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-6",
+        "0x1.5555560000000p-6",
+        "0x1.ae0d960000000p-12"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-11",
+        "0x1.5555560000000p-11",
+        "0x1.5555560000000p-11"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "offset": 144,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xA5D0",
+    "CRC/Computed": "0xA5D0",
+    "Bit Allocation/Subband 0/Channel 0": "None",
+    "Bit Allocation/Subband 1/Channel 0": "None",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 0": "3 levels",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 0": "63 levels",
+    "SCFSI/Subband 2/Channel 0": "3",
+    "SCFSI/Subband 5/Channel 0": "0",
+    "SCFSI/Subband 7/Channel 0": "2",
+    "Scalefactors/Subband 2/Channel 0": "21, 38",
+    "Scalefactors/Subband 5/Channel 0": "36, 53, 7",
+    "Scalefactors/Subband 7/Channel 0": "46",
+    "Samples": "336 bits",
+    "Ancillary Data": "87 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 84,
+    "subbands": [
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-8",
+        "0x1.ae0d960000000p-14",
+        "0x1.ae0d960000000p-14"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-13",
+        "0x1.ae0d960000000p-19",
+        "0x1.0eea9c0000000p-3"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 6,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.9cd3360000000p-21",
+        "0x1.9cd3360000000p-21",
+        "0x1.9cd3360000000p-21"
+       ]
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "offset": 288,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xAC98",
+    "CRC/Computed": "0xAC98",
+    "Bit Allocation/Subband 0/Channel 0": "None",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "None",
+    "Bit Allocation/Subband 3/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 0": "3 levels",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 0": "31 levels",
+    "Bit Allocation/Subband 7/Channel 0": "3 levels",
+    "SCFSI/Subband 1/Channel 0": "1",
+    "SCFSI/Subband 4/Channel 0": "2",
+    "SCFSI/Subband 6/Channel 0": "0",
+    "SCFSI/Subband 7/Channel 0": "3",
+    "Scalefactors/Subband 1/Channel 0": "27, 44",
+    "Scalefactors/Subband 4/Channel 0": "42",
+    "Scalefactors/Subband 6/Channel 0": "52, 6, 23",
+    "Scalefactors/Subband 7/Channel 0": "57, 11",
+    "Samples": "360 bits",
+    "Ancillary Data": "82 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 98,
+    "subbands": [
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-10",
+        "0x1.5555560000000p-10",
+        "0x1.ae0d960000000p-16"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-15",
+        "0x1.5555560000000p-15",
+        "0x1.5555560000000p-15"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 5,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.a37bc80000000p-22",
+        "0x1.0842100000000p-6",
+        "0x1.4cf1be0000000p-12"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-20",
+        "0x1.ae0d960000000p-5",
+        "0x1.ae0d960000000p-5"
+       ]
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "offset": 432,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xB80A",
+    "CRC/Computed": "0xB80A",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "None",
+    "Bit Allocation/Subband 2/Channel 0": "None",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 0": "127 levels",
+    "Bit Allocation/Subband 6/Channel 0": "3 levels",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "SCFSI/Subband 0/Channel 0": "3",
+    "SCFSI/Subband 3/Channel 0": "0",
+    "SCFSI/Subband 5/Channel 0": "2",
+    "SCFSI/Subband 6/Channel 0": "1",
+    "Scalefactors/Subband 0/Channel 0": "33, 50",
+    "Scalefactors/Subband 3/Channel 0": "48, 2, 19",
+    "Scalefactors/Subband 5/Channel 0": "58",
+    "Scalefactors/Subband 6/Channel 0": "0, 17",
+    "Samples": "432 bits",
+    "Ancillary Data": "73 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 98,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-12",
+        "0x1.ae0d960000000p-18",
+        "0x1.ae0d960000000p-18"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-17",
+        "0x1.ae0d960000000p-2",
+        "0x1.0eea9c0000000p-7"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 7,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.9993100000000p-26",
+        "0x1.9993100000000p-26",
+        "0x1.9993100000000p-26"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-1",
+        "0x1.5555560000000p-1",
+        "0x1.ae0d960000000p-7"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "offset": 576,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xA08A",
+    "CRC/Computed": "0xA08A",
+    "Bit Allocation/Subband 0/Channel 0": "None",
+    "Bit Allocation/Subband 1/Channel 0": "None",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 0": "63 levels",
+    "Bit Allocation/Subband 5/Channel 0": "3 levels",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "SCFSI/Subband 2/Channel 0": "2",
+    "SCFSI/Subband 4/Channel 0": "0",
+    "SCFSI/Subband 5/Channel 0": "3",
+    "Scalefactors/Subband 2/Channel 0": "54",
+    "Scalefactors/Subband 4/Channel 0": "1, 18, 35",
+    "Scalefactors/Subband 5/Channel 0": "6, 23",
+    "Samples": "336 bits",
+    "Ancillary Data": "87 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 84,
+    "subbands": [
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-19",
+        "0x1.5555560000000p-19",
+        "0x1.5555560000000p-19"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 6,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.9cd3360000000p-6",
+        "0x1.0410420000000p-11",
+        "0x1.47a8d40000000p-17"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-3",
+        "0x1.ae0d960000000p-9",
+        "0x1.ae0d960000000p-9"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "offset": 720,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xD945",
+    "CRC/Computed": "0xD945",
+    "Bit Allocation/Subband 0/Channel 0": "None",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "None",
+    "Bit Allocation/Subband 3/Channel 0": "31 levels",
+    "Bit Allocation/Subband 4/Channel 0": "3 levels",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 0": "3 levels",
+    "SCFSI/Subband 1/Channel 0": "0",
+    "SCFSI/Subband 3/Channel 0": "2",
+    "SCFSI/Subband 4/Channel 0": "1",
+    "SCFSI/Subband 7/Channel 0": "2",
+    "Scalefactors/Subband 1/Channel 0": "60, 14, 31",
+    "Scalefactors/Subband 3/Channel 0": "7",
+    "Scalefactors/Subband 4/Channel 0": "12, 29",
+    "Scalefactors/Subband 7/Channel 0": "27",
+    "Samples": "360 bits",
+    "Ancillary Data": "83 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 8,
+    "bound": 0,
+    "scale_info_bits": 92,
+    "subbands": [
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-21",
+        "0x1.ae0d960000000p-6",
+        "0x1.0eea9c0000000p-11"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 5,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.a37bc80000000p-7",
+        "0x1.a37bc80000000p-7",
+        "0x1.a37bc80000000p-7"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-5",
+        "0x1.5555560000000p-5",
+        "0x1.ae0d960000000p-11"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-10",
+        "0x1.5555560000000p-10",
+        "0x1.5555560000000p-10"
+       ]
+      }
+     ]
+    ]
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true
+}

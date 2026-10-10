@@ -1,0 +1,799 @@
+{
+ "source": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_13818-4_2004_Conformance_Testing/Audio/",
+ "streams": [
+  {
+   "name": "test01",
+   "archive_sha256": "13ef1cc7df90e562fb9c1e1f3c7932b80e795d9de68f883fd85b840c17fd64e6",
+   "file": "test01/test01.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 29,
+   "multichannel": {
+    "configuration": "3/2 + LFE",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": true,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 29,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "yes",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test02",
+   "archive_sha256": "7df96764f5e8dc015dd30084c5c22b0b1001d7dd581ea6119a89925ab7ad2f0f",
+   "file": "test02/test02.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 40,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 40,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test03",
+   "archive_sha256": "2c7315fe17cfa984addf35256cd89c84961e3b61de3a0530c16bdcd14c460777",
+   "file": "test03/test03.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 32000,
+   "frames": 56,
+   "multichannel": {
+    "configuration": "3/1",
+    "center": "Present",
+    "surround": "Mono",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 1,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 56,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "2",
+    "ml": "0",
+    "config": "3/1"
+   }
+  },
+  {
+   "name": "test04",
+   "archive_sha256": "9d9b80e864687f53849e95646deda833912e532af022334b2c49fab04576f6dd",
+   "file": "test04/test04.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 24,
+   "multichannel": {
+    "configuration": "3/0 (phantom center)",
+    "center": "Phantom",
+    "surround": "None",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 24,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "1",
+    "ml": "0",
+    "config": "3/0"
+   }
+  },
+  {
+   "name": "test05",
+   "archive_sha256": "ab0323dc3e1eaeb9ea788e96967d0f8472333b30ea574eb93adaa96ef0cafed1",
+   "file": "test05/test05.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 77,
+   "multichannel": {
+    "configuration": "2/1",
+    "center": "None",
+    "surround": "Mono",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 77,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "1",
+    "ml": "0",
+    "config": "2/1"
+   }
+  },
+  {
+   "name": "test06",
+   "archive_sha256": "e707a2601af33d59a803a384de2859bdacbcd2546f1ecd8e977c50120cd3d388",
+   "file": "test06/test06.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "2/0 + 2/0",
+    "center": "None",
+    "surround": "Second stereo programme",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "2",
+    "ml": "0",
+    "config": "2/0 and 2/0"
+   }
+  },
+  {
+   "name": "test07",
+   "archive_sha256": "6a879cb462cb5fd080534e8a4f6c028f441176b8b425ca0cfee149b18b6de31a",
+   "file": "test07/test07.mpg",
+   "extension_file": "test07/test07.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/0 + 2/0",
+    "center": "Present",
+    "surround": "Second stereo programme",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/0 and 2/0"
+   }
+  },
+  {
+   "name": "test08",
+   "archive_sha256": "8dd875bcb1866aab1ab2301abc2619c89db472602d0611d531494bc30a54a76c",
+   "file": "test08/test08.mpg",
+   "extension_file": "test08/test08.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 123,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": true,
+    "crc_verified_frames": 2,
+    "frames_continued_in_extension": 121
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test09",
+   "archive_sha256": "dc73966b8fea11ca09659f6f5e4292c8f3700479ab617a4578cd8c78e85380c8",
+   "file": "test09/test09.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 40,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": true,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 40,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test10",
+   "archive_sha256": "04597282f7d2af252a03bcea05b43ae4e86216e9bebd141dd66e5a4ff8153a4b",
+   "file": "test10/test10.mpg",
+   "extension_file": "test10/test10.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 7,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "7",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test11",
+   "archive_sha256": "5c96fcfc483e8ef58063b4db7ae8c8eb3f1602842c9559bae3567f0f38bdbd19",
+   "file": "test11/test11.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 2,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test12",
+   "archive_sha256": "1dd8ca5a90ad830f2c358dd9ce03336852487358ce4443afcacc6d00b74f4c11",
+   "file": "test12/test12.mpg",
+   "extension_file": "test12/test12.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 20,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 7,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 20,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "7",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test13",
+   "archive_sha256": "4516550488e20b50f0097b9fc35755e1b7f1c2cac2bb5060853448703df24a71",
+   "file": "test13/test13.mpg",
+   "extension_file": "test13/test13.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 39,
+   "multichannel": {
+    "configuration": "3/2 (phantom center) + LFE",
+    "center": "Phantom",
+    "surround": "Stereo",
+    "lfe": true,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": true,
+    "dynamic_crosstalk": true,
+    "crc_verified_frames": 0,
+    "frames_continued_in_extension": 39,
+    "verified": false
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "yes",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test14",
+   "archive_sha256": "b3d324057bfcdf0fbf95ba4afe2541728db00c29177725a653b08f2a2b9d6fbe",
+   "file": "test14/test14.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 40,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 40,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test15",
+   "archive_sha256": "72624a9ea7f7a68d7c2afb778b6d3f40b74db39a55304adc8637237bb998fcf5",
+   "file": "test15/test15.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 125,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": true,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 125,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test16",
+   "archive_sha256": "a84714986041639f09746e7bbfb5cf3270d8600130ddebb781fd82473fc1b324",
+   "file": "test16/test16.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": true,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test17",
+   "archive_sha256": "0b3ba41db8df40847866968dc0eae72ed35990c685e18e9b91ae3a532425e0a6",
+   "file": "test17/test17.mpg",
+   "extension_file": "test17/test17.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2 + LFE",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": true,
+    "extension_bitstream": true,
+    "dematrix_procedure": 1,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "yes",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test18",
+   "archive_sha256": "7e9d4516706f5a435481210138568d6dc2e5eb68ecee9b30869d609822df5a68",
+   "file": "test18/test18.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/1",
+    "center": "Present",
+    "surround": "Mono",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": true,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "2",
+    "ml": "0",
+    "config": "3/1"
+   }
+  },
+  {
+   "name": "test19",
+   "archive_sha256": "acd3f3320e16a918374ff6d9a4adbc8796c64b5d4f1f34693bd744f3e4a26b56",
+   "file": "test19/test19.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 48000,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "2/1",
+    "center": "None",
+    "surround": "Mono",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": true,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "1",
+    "ml": "0",
+    "config": "2/1"
+   }
+  },
+  {
+   "name": "test20",
+   "archive_sha256": "19453913ee6484775797f12441a9f58cf05a70841db2671ddcdf9d388019a44a",
+   "file": "test20/test20.mpg",
+   "extension_file": "test20/test20.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": true,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test21",
+   "archive_sha256": "64b29c3463d5e945c1421b3099a48b769920c177c1d071994b0d21b9bb29a4f8",
+   "file": "test21/test21.mpg",
+   "extension_file": "test21/test21.ext",
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 30,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": true,
+    "dematrix_procedure": 0,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 18,
+    "frames_continued_in_extension": 12
+   },
+   "mp3guessenc": {
+    "extension": "yes",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  },
+  {
+   "name": "test22",
+   "archive_sha256": "5ac95a62562ac59cd63208790e32c72702836bf98488d2a27df0e409ac53daa5",
+   "file": "test22.mpg",
+   "extension_file": "test22.ext",
+   "version": "MPEG-1",
+   "layer": "I",
+   "sample_rate": 44100,
+   "frames": 60
+  },
+  {
+   "name": "test23",
+   "archive_sha256": "5b04e95be8d5d5bdbe73d327d2e4ed218c6361236fc9da2f776fd2c8c38e30c1",
+   "file": "test23/test23.mpg",
+   "extension_file": "test23/test23.ext",
+   "version": "MPEG-1",
+   "layer": "III",
+   "sample_rate": 48000,
+   "frames": 342,
+   "findings": [
+    "mpeg.frame-truncated"
+   ]
+  },
+  {
+   "name": "test24",
+   "archive_sha256": "4694a9785bee5ddb94e34b185a6a535c6bb18d0a0de95603fd825593302c8b74",
+   "file": "test24/test24.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 16000,
+   "frames": 27
+  },
+  {
+   "name": "test25",
+   "archive_sha256": "6d9f855ab57644fabd18f323c1c4f9accbf96459420cc85a47edbc1cb8c84568",
+   "file": "test25/test25.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 22050,
+   "frames": 27
+  },
+  {
+   "name": "test26",
+   "archive_sha256": "b9890fbc53100a425da1f9c0772b850999d3fdb3f095cb45806b66edb00aeea6",
+   "file": "test26/test26.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test27",
+   "archive_sha256": "3a3b58a5be32dd6f0e1c6d8f8e8c645b2e3893824b109b0a5001205d2aa93b97",
+   "file": "test27/test27.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test28",
+   "archive_sha256": "bd72446fdef6fe86e060d6349896b6200dfe4e843521f40aa081bc3efed51ea2",
+   "file": "test28/test28.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test29",
+   "archive_sha256": "f92dfbc1c6937b78ef750426890a28014fb03a7abbfc11298862723df83e57ac",
+   "file": "test29/test29.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test30",
+   "archive_sha256": "046166e3303b9662776fa4fbc3bb3564aa216595884737997207b291903b7990",
+   "file": "test30/test30.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test31",
+   "archive_sha256": "21754aa7af53fccc90206df98262a73e79d88e2cc8d59f3b89f9e378ed8082eb",
+   "file": "test31/test31.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test32",
+   "archive_sha256": "e5b37653baa126efae6845190f2fd7454f977ad5907aee33242cf61138b24d0e",
+   "file": "test32/test32.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 63
+  },
+  {
+   "name": "test33",
+   "archive_sha256": "3be5a8217c58005381c1badc9f27251558a8cac3a1b508cdd24e377c85f35a7a",
+   "file": "test33/test33.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "I",
+   "sample_rate": 22050,
+   "frames": 81
+  },
+  {
+   "name": "test34",
+   "archive_sha256": "070df2efff3cd55ea030b8aa2cc1b37638a91e527ae01a31e01657e572f2ff94",
+   "file": "test34/test34.mpg",
+   "extension_file": null,
+   "version": "MPEG-2",
+   "layer": "II",
+   "sample_rate": 24000,
+   "frames": 27
+  },
+  {
+   "name": "test35",
+   "archive_sha256": "821b65353f31171da70c421d0d03bce152023fd54abc3a9b9e1838a9419ba6ab",
+   "file": "test35/test35.mpg",
+   "extension_file": null,
+   "version": "MPEG-1",
+   "layer": "II",
+   "sample_rate": 44100,
+   "frames": 27,
+   "multichannel": {
+    "configuration": "3/2",
+    "center": "Present",
+    "surround": "Stereo",
+    "lfe": false,
+    "extension_bitstream": false,
+    "dematrix_procedure": 3,
+    "multilingual_channels": 0,
+    "prediction": false,
+    "dynamic_crosstalk": false,
+    "crc_verified_frames": 27,
+    "frames_continued_in_extension": 0
+   },
+   "mp3guessenc": {
+    "extension": "no",
+    "lfe": "no",
+    "channels": "3",
+    "ml": "0",
+    "config": "3/2"
+   }
+  }
+ ]
+}

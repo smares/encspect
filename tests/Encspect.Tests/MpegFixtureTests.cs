@@ -74,6 +74,11 @@ public class MpegFixtureTests
                 CheckSideInfo(frames[i], sideInfo);
             }
 
+            if (expectedFrames[i].TryGetProperty("scale_info", out JsonElement scaleInfo))
+            {
+                CheckScaleInfo(frames[i], scaleInfo);
+            }
+
             if (expectedFrames[i].TryGetProperty("data", out JsonElement data))
             {
                 IReadOnlyList<Node> children = frames[i].Children;
@@ -185,7 +190,15 @@ public class MpegFixtureTests
             Assert.Equal(minimp3.GetArrayLength(), frames.Length);
             foreach (JsonElement row in minimp3.EnumerateArray())
             {
-                CheckSideInfo(byOffset[row.GetProperty("offset").GetInt64()], row);
+                Node frame = byOffset[row.GetProperty("offset").GetInt64()];
+                if (row.TryGetProperty("layer", out _))
+                {
+                    CheckScaleInfo(frame, row);
+                }
+                else
+                {
+                    CheckSideInfo(frame, row);
+                }
             }
         }
 
@@ -260,6 +273,63 @@ public class MpegFixtureTests
         }
 
         static string Flag(JsonElement value) => value.GetInt32() != 0 ? "true" : "false";
+    }
+
+    // Layer II allocation, scfsi and scalefactors as minimp3_side_info.c prints them: allocations as
+    // minimp3's quantization classes, scalefactors as the single-precision floats minimp3 computes.
+    private static void CheckScaleInfo(Node frame, JsonElement expected)
+    {
+        Node allocation = Fixtures.Resolve(frame, "Bit Allocation").Single();
+        Assert.Equal(expected.GetProperty("bands").GetInt32(), allocation.Children.Count);
+        int sb = 0;
+        foreach (JsonElement subband in expected.GetProperty("subbands").EnumerateArray())
+        {
+            int ch = 0;
+            foreach (JsonElement channel in subband.EnumerateArray())
+            {
+                int cls = channel.GetProperty("class").GetInt32();
+                int levels = cls switch { 0 => 0, 17 => 3, 18 => 5, 19 => 9, _ => (1 << cls) - 1 };
+                Node coded = allocation.Children[sb].Children.Count == 1 ? allocation.Children[sb].Children[0] : allocation.Children[sb].Children[ch];
+                Assert.True(coded.Value == (levels == 0 ? "None" : $"{levels} levels"), $"Frame at {frame.Offset}, subband {sb}, channel {ch}: {coded.Value}, minimp3 {levels} levels");
+                if (levels != 0)
+                {
+                    int scfsi = channel.GetProperty("scfsi").GetInt32();
+                    Assert.Equal($"{scfsi}", Value(frame, $"SCFSI/Subband {sb}/Channel {ch}"));
+                    int[] sent = Value(frame, $"Scalefactors/Subband {sb}/Channel {ch}")!.Split(", ").Select(int.Parse).ToArray();
+                    int[] expanded = scfsi switch { 0 => sent, 1 => [sent[0], sent[0], sent[1]], 2 => [sent[0], sent[0], sent[0]], _ => [sent[0], sent[1], sent[1]] };
+                    double[] minimp3 = channel.GetProperty("scalefactors").EnumerateArray().Select(s => HexFloat(s.GetString()!)).ToArray();
+                    Assert.Equal(minimp3, expanded.Select(index => Minimp3Scalefactor(cls, index)));
+                }
+
+                ch++;
+            }
+
+            sb++;
+        }
+    }
+
+    // minimp3's g_deq_L12 entry for the class times 2 to the power of 21 - index / 3, in single precision.
+    private static double Minimp3Scalefactor(int cls, int index)
+    {
+        int[] divisors = [3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535, 3, 5, 9];
+        float[] bases = [9.53674316e-07f, 7.56931807e-07f, 6.00777173e-07f];
+        float step = bases[index % 3] / divisors[cls - 2];
+        return step * (float)(1 << 21 >> (index / 3));
+    }
+
+    // A C99 hexadecimal float such as 0x1.972b8p-11, as printf %a writes it.
+    private static double HexFloat(string text)
+    {
+        int p = text.IndexOf('p', StringComparison.Ordinal);
+        string[] parts = text[2..p].Split('.');
+        double mantissa = Convert.ToInt64(parts[0], 16);
+        string fraction = parts.Length > 1 ? parts[1] : string.Empty;
+        for (int i = 0; i < fraction.Length; i++)
+        {
+            mantissa += Convert.ToInt32(fraction[i].ToString(), 16) / Math.Pow(16, i + 1);
+        }
+
+        return mantissa * Math.Pow(2, int.Parse(text[(p + 1)..], System.Globalization.CultureInfo.InvariantCulture));
     }
 
     // The statistics mp3guessenc prints about a Layer III stream, computed from the report. A
