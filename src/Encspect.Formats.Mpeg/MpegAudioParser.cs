@@ -46,7 +46,8 @@ public sealed class MpegAudioParser : IFormatParser
 
     private static void ParseSegment(BlockReader blocks, Node root, long start, long end, FindingCollector findings)
     {
-        Node region = root.Add("MPEG Audio", start, end - start);
+        var entries = new List<Entry>();
+        Node region = root.Add(new Node("MPEG Audio", start, end - start, null, () => BuildRegion(entries)));
         int frames = 0;
         long position = start;
         MpegHeader? stream = null;
@@ -59,13 +60,14 @@ public sealed class MpegAudioParser : IFormatParser
             {
                 if (header.IsSameStream(current))
                 {
-                    position = AddFrame(blocks, region, at, end, header, freeLength, findings);
+                    Entry frame = AddFrame(blocks, entries, at, end, header, freeLength, findings);
                     if (header.ChannelModeBits != current.ChannelModeBits)
                     {
-                        findings.Add(Severity.Info, "mpeg.channel-mode-changed", region.Children[^1], count =>
+                        findings.Add(Severity.Info, "mpeg.channel-mode-changed", FrameNode(frame), count =>
                             $"The channel mode changes {Times(count)}, first from {current.ChannelMode} to {header.ChannelMode} at 0x{at:X}.");
                     }
 
+                    position = frame.End;
                     stream = header;
                     frames++;
                     continue;
@@ -75,9 +77,10 @@ public sealed class MpegAudioParser : IFormatParser
                 {
                     freeLength = newFreeLength;
                     stream = header;
-                    position = AddFrame(blocks, region, at, end, header, freeLength, findings);
-                    findings.Add(Severity.Info, "mpeg.stream-changed", region.Children[^1], count =>
+                    Entry frame = AddFrame(blocks, entries, at, end, header, freeLength, findings);
+                    findings.Add(Severity.Info, "mpeg.stream-changed", FrameNode(frame), count =>
                         $"The stream changes {Times(count)}, first from {current.StreamName} to {header.StreamName} at 0x{at:X}.");
+                    position = frame.End;
                     frames++;
                     continue;
                 }
@@ -87,7 +90,7 @@ public sealed class MpegAudioParser : IFormatParser
             long gapEnd = next < 0 ? end : next;
             if (gapEnd > position)
             {
-                AddGap(blocks, region, position, gapEnd, frames == 0, next < 0 && frames > 0);
+                AddGap(position, gapEnd, frames == 0, next < 0 && frames > 0);
             }
 
             if (next < 0)
@@ -108,15 +111,16 @@ public sealed class MpegAudioParser : IFormatParser
 
         region.Value = $"{frames} frames";
 
-        void AddGap(BlockReader reader, Node parent, long gapStart, long gapEnd, bool leading, bool trailing)
+        void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
         {
-            long length = gapEnd - gapStart;
-            Node gap = parent.Add("Gap", gapStart, length, $"{length} bytes");
+            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1);
+            entries.Add(gap);
+            long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
             {
-                bool zero = Enumerable.Range(0, (int)Math.Min(length, 1 << 20)).All(i => reader.ByteAt(gapStart + i) == 0);
+                bool zero = Enumerable.Range(0, (int)Math.Min(length, 1 << 20)).All(i => blocks.ByteAt(gapStart + i) == 0);
                 string what = zero ? " (all zero bytes)" : string.Empty;
-                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{length} bytes before the first frame are not audio{what}.", gap);
+                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{length} bytes before the first frame are not audio{what}.", GapNode(gap));
             }
             else if (leading)
             {
@@ -124,23 +128,91 @@ public sealed class MpegAudioParser : IFormatParser
             }
             else if (trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{length} bytes after the last frame at 0x{gapStart:X} are not a frame.", gap);
+                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{length} bytes after the last frame at 0x{gapStart:X} are not a frame.", GapNode(gap));
             }
             else
             {
-                findings.AddNow(Severity.Warning, "mpeg.sync-lost", $"Sync is lost for {length} bytes at 0x{gapStart:X}.", gap);
+                findings.AddNow(Severity.Warning, "mpeg.sync-lost", $"Sync is lost for {length} bytes at 0x{gapStart:X}.", GapNode(gap));
             }
         }
     }
 
-    // Adds the frame at position and returns where the next one starts.
-    private static long AddFrame(BlockReader blocks, Node region, long position, long end, MpegHeader header, int freeLength, FindingCollector findings)
+    // Records the frame at position, with what checking it needs the bytes for, and reports its
+    // problems. Its nodes are built from the record when the report is read.
+    private static Entry AddFrame(BlockReader blocks, List<Entry> entries, long position, long end, MpegHeader header, int freeLength, FindingCollector findings)
     {
         int length = header.FrameLength(freeLength);
         long available = Math.Min(length, end - position);
-        var frame = region.Add("Frame", position, available, header.Summary);
+        int stored = -1;
+        int computed = -1;
 
-        Node fields = frame.Add("Header", position, 4);
+        if (header.IsProtected && available >= 6)
+        {
+            byte[] crcBytes = blocks.Read(position + 4, 2);
+            stored = (crcBytes[0] << 8) | crcBytes[1];
+            int coverage = header.CrcCoverage;
+            if (coverage >= 0 && 6 + coverage <= available)
+            {
+                byte[] headerTail = blocks.Read(position + 2, 2);
+                byte[] covered = blocks.Read(position + 6, coverage);
+                computed = Crc16.Compute(covered, Crc16.Compute(headerTail));
+            }
+        }
+
+        var frame = new Entry(position, available, header.Raw, stored, computed);
+        entries.Add(frame);
+
+        if (header.EmphasisBits == 2)
+        {
+            findings.Add(Severity.Warning, "mpeg.emphasis-reserved", new Node("Emphasis", position + 3, 1, header.Emphasis), count =>
+                $"{Frames(count)} use the reserved emphasis value, the first at 0x{position:X}.");
+        }
+
+        if (!header.IsLayer2BitrateModeAllowed)
+        {
+            findings.Add(Severity.Warning, "mpeg.bitrate-mode-not-allowed", FrameNode(frame), count =>
+                $"{Frames(count)} combine Layer II at {header.Bitrate} kbps with {header.ChannelMode}, which ISO/IEC 11172-3 does not allow, the first at 0x{position:X}.");
+        }
+
+        if (stored >= 0)
+        {
+            var crc = new Node("CRC", position + 4, 2, $"0x{stored:X4}");
+            if (header.CrcCoverage < 0)
+            {
+                findings.Add(Severity.Info, "mpeg.crc-not-verified", crc, count =>
+                    $"{Frames(count)} carry a CRC that is not verified yet; Layer II CRC coverage depends on the allocation tables.");
+            }
+            else if (computed >= 0 && computed != stored)
+            {
+                findings.Add(Severity.Warning, "mpeg.crc-mismatch", crc, count =>
+                    $"{Frames(count)} fail the CRC check, the first at 0x{position:X}.");
+            }
+        }
+
+        if (available < length)
+        {
+            findings.AddNow(Severity.Warning, "mpeg.frame-truncated", $"The last frame at 0x{position:X} has {available} of its {length} bytes.", FrameNode(frame));
+        }
+
+        return frame;
+    }
+
+    private static List<Node> BuildRegion(List<Entry> entries) =>
+        entries.Select(e => e.IsGap ? GapNode(e) : FrameNode(e)).ToList();
+
+    private static Node GapNode(Entry gap) => new("Gap", gap.Offset, gap.Length, $"{gap.Length} bytes");
+
+    private static Node FrameNode(Entry frame) =>
+        new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary, () => BuildFrame(frame));
+
+    private static List<Node> BuildFrame(Entry frame)
+    {
+        var header = new MpegHeader(frame.Header);
+        long position = frame.Offset;
+        var children = new List<Node>();
+
+        Node fields = new("Header", position, 4);
+        children.Add(fields);
         fields.Add("Version", position + 1, 1, header.VersionName);
         fields.Add("Layer", position + 1, 1, header.LayerName);
         fields.Add("IsProtected", position + 1, 1, Bool(header.IsProtected));
@@ -152,59 +224,27 @@ public sealed class MpegAudioParser : IFormatParser
         fields.Add("Mode Extension", position + 3, 1, header.ModeExtensionName);
         fields.Add("IsCopyrighted", position + 3, 1, Bool(header.IsCopyrighted));
         fields.Add("IsOriginal", position + 3, 1, Bool(header.IsOriginal));
-        Node emphasis = fields.Add("Emphasis", position + 3, 1, header.Emphasis);
-
-        if (header.EmphasisBits == 2)
-        {
-            findings.Add(Severity.Warning, "mpeg.emphasis-reserved", emphasis, count =>
-                $"{Frames(count)} use the reserved emphasis value, the first at 0x{position:X}.");
-        }
-
-        if (!header.IsLayer2BitrateModeAllowed)
-        {
-            findings.Add(Severity.Warning, "mpeg.bitrate-mode-not-allowed", frame, count =>
-                $"{Frames(count)} combine Layer II at {header.Bitrate} kbps with {header.ChannelMode}, which ISO/IEC 11172-3 does not allow, the first at 0x{position:X}.");
-        }
+        fields.Add("Emphasis", position + 3, 1, header.Emphasis);
 
         long dataStart = position + 4;
-        if (header.IsProtected && available >= 6)
+        if (frame.Crc >= 0)
         {
-            byte[] crcBytes = blocks.Read(position + 4, 2);
-            ushort stored = (ushort)((crcBytes[0] << 8) | crcBytes[1]);
-            Node crc = frame.Add("CRC", position + 4, 2, $"0x{stored:X4}");
+            Node crc = new("CRC", position + 4, 2, $"0x{frame.Crc:X4}");
+            children.Add(crc);
+            if (frame.ComputedCrc >= 0)
+            {
+                crc.Add("Computed", position + 4, 2, $"0x{frame.ComputedCrc:X4}");
+            }
+
             dataStart += 2;
-
-            int coverage = header.CrcCoverage;
-            if (coverage < 0)
-            {
-                findings.Add(Severity.Info, "mpeg.crc-not-verified", crc, count =>
-                    $"{Frames(count)} carry a CRC that is not verified yet; Layer II CRC coverage depends on the allocation tables.");
-            }
-            else if (6 + coverage <= available)
-            {
-                byte[] headerTail = blocks.Read(position + 2, 2);
-                byte[] covered = blocks.Read(position + 6, coverage);
-                ushort computed = Crc16.Compute(covered, Crc16.Compute(headerTail));
-                crc.Add("Computed", position + 4, 2, $"0x{computed:X4}");
-                if (computed != stored)
-                {
-                    findings.Add(Severity.Warning, "mpeg.crc-mismatch", crc, count =>
-                        $"{Frames(count)} fail the CRC check, the first at 0x{position:X}.");
-                }
-            }
         }
 
-        if (available > dataStart - position)
+        if (frame.End > dataStart)
         {
-            frame.Add("Data", dataStart, position + available - dataStart, $"{position + available - dataStart} bytes");
+            children.Add(new Node("Data", dataStart, frame.End - dataStart, $"{frame.End - dataStart} bytes"));
         }
 
-        if (available < length)
-        {
-            findings.AddNow(Severity.Warning, "mpeg.frame-truncated", $"The last frame at 0x{position:X} has {available} of its {length} bytes.", frame);
-        }
-
-        return position + available;
+        return children;
     }
 
     // The first offset in [from, limit) where a stream starts, or -1. A stream starts at a valid
@@ -289,6 +329,15 @@ public sealed class MpegAudioParser : IFormatParser
     }
 
     private static string Bool(bool value) => value ? "true" : "false";
+
+    // A frame or, with a zero header (never a valid one), a gap: all a region keeps per frame
+    // until its nodes are asked for. Crc and ComputedCrc are -1 when absent.
+    private readonly record struct Entry(long Offset, long Length, uint Header, int Crc, int ComputedCrc)
+    {
+        public bool IsGap => Header == 0;
+
+        public long End => Offset + Length;
+    }
 
     private static string Frames(int count) => count == 1 ? "1 frame" : $"{count.ToString(CultureInfo.InvariantCulture)} frames";
 

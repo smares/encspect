@@ -214,7 +214,7 @@ The largest risks are a wrong core contract and spec details that no reviewer wi
 - **Closed formats.** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
 - **Heuristic encoder detection.** Files without LAME or Xing tags can be misidentified; results carry a confidence label.
 - **Thin references for MPEG-2 multichannel.** No tool in Ubuntu encodes or fully decodes it. mp3guessenc reads the multichannel header and channel configuration and ffmpeg, mpg123 and libmad decode the stereo base, so the frame layout and the header are cross-checked, but the rest of the multichannel syntax rests on the standard alone until real files (DVD-Video, DVB) are available.
-- **Large inputs.** Multi-gigabyte files and 100,000-frame reports need streaming reads and a lazily loaded, virtualized tree in the GUI.
+- **Large inputs.** Multi-gigabyte files and 100,000-frame reports need streaming reads and a lazily loaded, virtualized tree in the GUI. Parsers keep repeated parts such as audio frames as compact records and give their nodes a build function, so a node's children exist only while something reads them; reports are written as they are read.
 
 **Open questions**
 
