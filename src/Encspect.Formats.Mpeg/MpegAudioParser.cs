@@ -47,7 +47,8 @@ public sealed partial class MpegAudioParser : IFormatParser
         CheckMusicCrcs(stream);
         foreach (RegionState region in stream.Regions)
         {
-            region.Encoder = DetectEncoder(stream, region.Entries);
+            ScanAncillary(stream, region);
+            region.Encoder = DetectEncoder(stream, region);
         }
 
         AddStatistics(stream);
@@ -263,6 +264,16 @@ public sealed partial class MpegAudioParser : IFormatParser
         if (region.Encoder is { } encoder)
         {
             nodes.Add(encoder);
+        }
+
+        if (region.Enhancement is { } enhancement)
+        {
+            nodes.Add(enhancement);
+        }
+
+        if (region.Ofl is { } ofl)
+        {
+            nodes.Add(ofl);
         }
 
         if (region.Statistics is { } statistics)
@@ -704,6 +715,11 @@ public sealed partial class MpegAudioParser : IFormatParser
         public List<Entry> Entries => entries;
 
         public Node? Encoder { get; set; }
+
+        // mp3PRO or MP3 Surround, and the Original File Length block, from the ancillary data.
+        public Node? Enhancement { get; set; }
+
+        public Node? Ofl { get; set; }
 
         public Node? Statistics { get; set; }
     }

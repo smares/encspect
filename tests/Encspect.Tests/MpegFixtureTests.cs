@@ -83,6 +83,17 @@ public class MpegFixtureTests
             {
                 Assert.DoesNotContain(node.Children, c => c.Name == "Statistics");
             }
+
+            if (region.TryGetProperty("ancillary", out JsonElement ancillary))
+            {
+                CheckFields(node, ancillary);
+            }
+
+            foreach (string name in new[] { "Enhancement", "Original File Length" })
+            {
+                bool expected = region.TryGetProperty("ancillary", out JsonElement fields) && fields.TryGetProperty(name, out _);
+                Assert.True(expected == node.Children.Any(c => c.Name == name), $"{name} in region at {node.Offset}: expected {expected}");
+            }
         }
 
         Node[] frames = Streams(report).SelectMany(s => s.Children.Where(c => c.Name == "Frame")).ToArray();
@@ -275,6 +286,27 @@ public class MpegFixtureTests
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
 
         CheckToolStatistics(manifest, report);
+        CheckAncillary(manifest, report);
+    }
+
+    // The enhancement the encoder was asked for, and the OFL block as mp3guessenc reads it, which adds
+    // 576 samples to the delay of MP3 Surround.
+    private static void CheckAncillary(JsonElement manifest, Report report)
+    {
+        Node[] regions = Streams(report).ToArray();
+        string? expected = manifest.TryGetProperty("enhancement", out JsonElement e) ? e.GetString() : null;
+        Assert.Equal(expected, regions.SelectMany(r => r.Children).FirstOrDefault(c => c.Name == "Enhancement")?.Value);
+        Node? ofl = regions.SelectMany(r => r.Children).FirstOrDefault(c => c.Name == "Original File Length");
+        if (!manifest.TryGetProperty("mp3guessenc_ofl", out JsonElement read) || read.ValueKind == JsonValueKind.Null)
+        {
+            Assert.Null(ofl);
+            return;
+        }
+
+        Assert.NotNull(ofl);
+        int delay = read.GetProperty("delay").GetInt32() - (expected == "MP3 Surround" ? 576 : 0);
+        Assert.Equal($"{delay} samples", Value(ofl, "Delay"));
+        Assert.Equal($"{read.GetProperty("length").GetInt64()} samples", Value(ofl, "Original Length"));
     }
 
     // Side information as minimp3_side_info.c prints it: compared field by field where minimp3

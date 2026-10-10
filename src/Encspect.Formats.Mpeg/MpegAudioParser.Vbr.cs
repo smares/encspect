@@ -114,16 +114,30 @@ public sealed partial class MpegAudioParser
     // VBRI header, and "LAME" with its version where LAME wrote them into ancillary data, which it
     // does with the bits no frame uses (libmp3lame/bitstream.c, drain_into_ancillary). The
     // ancillary data alone is low confidence; ffmpeg's tag names ffmpeg, which leaves the encoder
-    // behind it to the ancillary data.
-    private static Node? DetectEncoder(StreamState state, List<Entry> entries)
+    // behind it to the ancillary data. MP3 Surround is Fraunhofer's, mp3PRO encoders came from
+    // several licensees, and the OFL block is written by Fraunhofer's encoders.
+    private static Node? DetectEncoder(StreamState state, RegionState region)
     {
+        List<Entry> entries = region.Entries;
         Entry tagFrame = entries.FirstOrDefault(e => e.VbrFrame is not null);
         VbrHeader? vbr = tagFrame.VbrFrame is null ? null : VbrHeader.TryRead(tagFrame.VbrFrame, new MpegHeader(tagFrame.Header));
         Node? tagNode = vbr?.ToNodes(tagFrame.Offset, 0, null).FirstOrDefault(n => n.Name is "VBRI" or "LAME Tag" or "Encoder String");
+        string? enhancement = region.Enhancement?.Value;
+        var ancillaryEvidence = new List<Node>();
+        if (region.Enhancement is { } enhanced)
+        {
+            ancillaryEvidence.Add(Evidence(enhanced, $"{enhanced.Value} signature in the ancillary data of every frame"));
+        }
+
+        if (region.Ofl is { } ofl)
+        {
+            ancillaryEvidence.Add(Evidence(ofl, "Original File Length block"));
+        }
 
         if (vbr is { IsVbri: true })
         {
-            return Encoder("Fraunhofer", "High", Evidence(tagNode!, "VBRI header"));
+            string name = enhancement == "MP3 Surround" ? "Fraunhofer MP3 Surround encoder" : "Fraunhofer";
+            return Encoder(name, "High", [Evidence(tagNode!, "VBRI header"), .. ancillaryEvidence]);
         }
 
         (long Offset, int Length, string Text)? signature = FindSignature(state, entries);
@@ -152,6 +166,17 @@ public sealed partial class MpegAudioParser
         if (vbr?.EncoderString is { } old && LameName(old) is { } oldName)
         {
             return Encoder(oldName, "Medium", Evidence(tagNode!, "Version string after the Xing header"));
+        }
+
+        if (ancillaryEvidence.Count > 0)
+        {
+            string name = enhancement switch
+            {
+                "MP3 Surround" => "Fraunhofer MP3 Surround encoder",
+                "mp3PRO" => "mp3PRO encoder",
+                _ => "Fraunhofer",
+            };
+            return Encoder(name, "Medium", [.. ancillaryEvidence]);
         }
 
         return ancillary is null ? null : Encoder(LameName(signature!.Value.Text)!, "Low", ancillary);
