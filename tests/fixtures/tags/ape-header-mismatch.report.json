@@ -1,0 +1,33 @@
+[
+  {
+    "source": "ape-header-mismatch.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 486,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 486
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 486
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "APE candidate at 0x1C6 (EOF-32) rejected: the header at 0x190 disagrees with the footer: item count 2 vs 1.",
+        "offset": 0,
+        "length": 486
+      }
+    ]
+  }
+]

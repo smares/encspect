@@ -1,0 +1,163 @@
+[
+  {
+    "source": "id3v1-enhanced.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 867,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 512,
+          "length": 355,
+          "children": [
+            {
+              "name": "Enhanced TAG",
+              "offset": 512,
+              "length": 227,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "TAG\u002B",
+                  "offset": 512,
+                  "length": 4
+                },
+                {
+                  "name": "Title",
+                  "value": "Extended title text",
+                  "offset": 516,
+                  "length": 60
+                },
+                {
+                  "name": "Artist",
+                  "value": "Extended artist",
+                  "offset": 576,
+                  "length": 60
+                },
+                {
+                  "name": "Album",
+                  "value": "Extended album",
+                  "offset": 636,
+                  "length": 60
+                },
+                {
+                  "name": "Speed",
+                  "value": "3 (fast)",
+                  "offset": 696,
+                  "length": 1
+                },
+                {
+                  "name": "Genre",
+                  "value": "Progressive Psytrance",
+                  "offset": 697,
+                  "length": 30
+                },
+                {
+                  "name": "Start Time",
+                  "value": "001:05",
+                  "offset": 727,
+                  "length": 6
+                },
+                {
+                  "name": "End Time",
+                  "value": "004:30",
+                  "offset": 733,
+                  "length": 6
+                }
+              ]
+            },
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 739,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 742,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 772,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 802,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 832,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 836,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 865,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 866,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 512,
+              "length": 355,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 739,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Enhanced TAG signature \u0022TAG\u002B\u0022 directly before the tag",
+                  "offset": 512,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 742,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]

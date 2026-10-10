@@ -1,0 +1,33 @@
+[
+  {
+    "source": "id3v2-invalid-header.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 510,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 510
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 510
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "ID3v2 candidate at 0x0 (EOF-510) rejected: size byte 2 in the header ($80) is not syncsafe.",
+        "offset": 0,
+        "length": 510
+      }
+    ]
+  }
+]

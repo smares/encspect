@@ -1,0 +1,33 @@
+[
+  {
+    "source": "id3v2-unknown-flags.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 346,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 346
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 346
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "ID3v2 candidate at 0x0 (EOF-346) rejected: undefined header flag bits $01 are set.",
+        "offset": 0,
+        "length": 346
+      }
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "source": "ape-items-overrun.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 466,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 466
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 466
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "APE candidate at 0x1B2 (EOF-32) rejected: the 1 items end at 0x1A1, 17 bytes before the footer, so the items do not end at the footer.",
+        "offset": 0,
+        "length": 466
+      }
+    ]
+  }
+]

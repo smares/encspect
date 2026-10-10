@@ -1,0 +1,26 @@
+[
+  {
+    "source": "id3v1-too-short.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 100,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 100
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 100
+      }
+    ]
+  }
+]

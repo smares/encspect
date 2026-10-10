@@ -1,0 +1,148 @@
+[
+  {
+    "source": "lyrics3v1-basic.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 684,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 512,
+          "length": 44,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "Some lyrics\r\nMore lyrics",
+              "offset": 523,
+              "length": 24
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 547,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 512,
+              "length": 44,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICSEND\u0022",
+                  "offset": 547,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\u0022LYRICSBEGIN\u0022 35 bytes earlier, within the 5100-byte limit",
+                  "offset": 512,
+                  "length": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 556,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 556,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 559,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 589,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 619,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 649,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 653,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 682,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 683,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 556,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 556,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 559,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]

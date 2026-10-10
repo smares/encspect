@@ -1,0 +1,516 @@
+[
+  {
+    "source": "ape-v2-full.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 884,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 512,
+          "length": 244,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 512,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 512,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 520,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "212",
+                  "offset": 524,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "5",
+                  "offset": 528,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0xA0000000",
+                  "offset": 532,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 532,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 532,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "true",
+                      "offset": 532,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 532,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 536,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": "5 items",
+              "offset": 544,
+              "length": 180,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "\u00DCn\u00EFc\u00F6d\u00E9 APE Title",
+                  "offset": 544,
+                  "length": 35,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "21",
+                      "offset": 544,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 548,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 548,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 548,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 552,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "\u00DCn\u00EFc\u00F6d\u00E9 APE Title",
+                      "offset": 558,
+                      "length": 21
+                    }
+                  ]
+                },
+                {
+                  "name": "Artist",
+                  "value": "First Artist; Second Artist",
+                  "offset": 579,
+                  "length": 41,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "26",
+                      "offset": 579,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 583,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 583,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 583,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Artist",
+                      "offset": 587,
+                      "length": 6
+                    },
+                    {
+                      "name": "Value",
+                      "value": "First Artist",
+                      "offset": 594,
+                      "length": 12
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Second Artist",
+                      "offset": 607,
+                      "length": 13
+                    }
+                  ]
+                },
+                {
+                  "name": "Cover Art (Front)",
+                  "value": "18 bytes",
+                  "offset": 620,
+                  "length": 44,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "18",
+                      "offset": 620,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000002",
+                      "offset": 624,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 624,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Binary",
+                          "offset": 624,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Cover Art (Front)",
+                      "offset": 628,
+                      "length": 17
+                    },
+                    {
+                      "name": "Value",
+                      "value": "18 bytes",
+                      "offset": 646,
+                      "length": 18
+                    }
+                  ]
+                },
+                {
+                  "name": "Related",
+                  "value": "https://example.com/related",
+                  "offset": 664,
+                  "length": 43,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "27",
+                      "offset": 664,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000004",
+                      "offset": 668,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 668,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "External",
+                          "offset": 668,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Related",
+                      "offset": 672,
+                      "length": 7
+                    },
+                    {
+                      "name": "Value",
+                      "value": "https://example.com/related",
+                      "offset": 680,
+                      "length": 27
+                    }
+                  ]
+                },
+                {
+                  "name": "Year",
+                  "value": "2010",
+                  "offset": 707,
+                  "length": 17,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "4",
+                      "offset": 707,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000001",
+                      "offset": 711,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "true",
+                          "offset": 711,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 711,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Year",
+                      "offset": 715,
+                      "length": 4
+                    },
+                    {
+                      "name": "Value",
+                      "value": "2010",
+                      "offset": 720,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 724,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 724,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 732,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "212",
+                  "offset": 736,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "5",
+                  "offset": 740,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x80000000",
+                  "offset": 744,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 744,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 744,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 744,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 744,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 748,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 244,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000",
+                  "offset": 724,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Header agrees with the footer",
+                  "offset": 512,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "5 items end exactly at the footer",
+                  "offset": 544,
+                  "length": 180
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 756,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 756,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 759,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 789,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 819,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 849,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 853,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 882,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 883,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 756,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 756,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 759,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]
