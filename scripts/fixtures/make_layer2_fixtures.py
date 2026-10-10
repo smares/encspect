@@ -125,6 +125,7 @@ class Bits:
         self.bits = []
 
     def put(self, value, count):
+        assert 0 <= value < (1 << count), f"{value} does not fit {count} bits"
         self.bits += [(value >> (count - 1 - i)) & 1 for i in range(count)]
 
     def __len__(self):
@@ -149,7 +150,7 @@ class Multichannel:
 
     def __init__(self, center=1, surround=2, lfe=0, audio_mix=0, dematrix=0, ml=0, ml_fs=0, ml_layer=0,
                  copyright_bit=0, copyright_start=0, n_ad_bytes=None, tc_alloc=(0,), prediction=None,
-                 lfe_alloc=0, seed=1, bad_crc=False):
+                 lfe_alloc=0, seed=1, bad_crc=False, continues=False):
         self.center, self.surround, self.lfe, self.audio_mix, self.dematrix = center, surround, lfe, audio_mix, dematrix
         self.ml, self.ml_fs, self.ml_layer = ml, ml_fs, ml_layer
         self.copyright_bit, self.copyright_start = copyright_bit, copyright_start
@@ -157,6 +158,9 @@ class Multichannel:
         self.tc_alloc = tc_alloc  # one value for all subband groups, or twelve
         self.prediction = prediction  # eight entries: None or a list of predsi values
         self.lfe_alloc, self.seed, self.bad_crc = lfe_alloc if lfe else 0, seed, bad_crc
+        # The side information continues in the extension bitstream: the frame keeps only the bits
+        # that fit before its n_ad_bytes of MPEG-1 ancillary data.
+        self.continues = continues
         self.channels, self.tc_bits, _, self.pred_table = MC_SHAPE[(surround, center & 1)]
 
     def configuration(self):
@@ -330,6 +334,8 @@ class Layer2Frame(Frame):
         return bits
 
     def budget(self):
+        if self.mc is not None and self.mc.continues:
+            return self.length() * 8 - 8 * len(self.ancillary) - 64
         reserve = 8 * len(self.ancillary) + (500 + 1500 * self.mc.channels if self.mc is not None else 0)
         return self.length() * 8 - reserve
 
@@ -419,6 +425,10 @@ class Layer2Frame(Frame):
         header = self.header()
         bits, fields, crc_at, scfsi_end = self.build()
         body_length = self.length() - 4
+        if self.mc is not None and self.mc.continues:
+            room = 8 * (body_length - len(self.ancillary))
+            assert self.offsets[4][1] > room, "the side information fits the frame"
+            bits.bits = bits.bits[:room]
         data = bytearray(bits.bytes())
         assert len(data) + len(self.ancillary) <= body_length, f"{len(data)} + {len(self.ancillary)} > {body_length}"
         data += bytes(body_length - len(data) - len(self.ancillary)) + self.ancillary
@@ -438,7 +448,12 @@ class Layer2Frame(Frame):
         mc_start = mc_range[0] if mc_range else None
         data_end = (mc_start if mc_start is not None else samples_end)
         ancillary_start = (data_end + 7) // 8
-        if self.mc is not None:
+        if self.mc is not None and self.mc.continues:
+            # Unverifiable, so reported as a possible extension, not as multichannel nodes.
+            for key in [k for k in fields if k.startswith("Multichannel")]:
+                del fields[key]
+            fields["Ancillary Data"] = f"{self.length() - 4 - ancillary_start} bytes"
+        elif self.mc is not None:
             mc_end = self.length() - 4 - (self.mc.n_ad_bytes or 0)
             fields["Multichannel/Data"] = f"{mc_end - (mc_range[1] + 7) // 8} bytes"
             if self.mc.n_ad_bytes:
@@ -574,7 +589,7 @@ def crc_mismatch():
 @fixture
 def undefined_scalefactor():
     f = Layer2Fixture("scalefactor-undefined", "MPEG-1 Layer II whose fourth frame uses scalefactor index 63, which "
-                      "Table B.1 does not define; libmad rejects it.", crosscheck=False, silent=False)
+                      "Table B.1 does not define. TwoLAME writes it too, and decoders accept it.")
     frames = stream(6, 192, 48000, mode="Stereo")
     first = next((ch, sb) for sb in range(frames[3].sblimit) for ch in range(2) if frames[3].alloc(ch, sb))
     frames[3].scalefactor_override = (first, 63)
@@ -654,6 +669,22 @@ def mc_extension():
     )
     return f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, n_ad_bytes=12, seed=i),
                                   ancillary=text(12, b"MPEG-1 anc. ")))
+
+
+@fixture
+def mc_unverified():
+    f = Layer2Fixture(
+        "mc-unverified",
+        "MPEG-1 Layer II at 48000 Hz and 128 kbps whose multichannel side information (3/2 + LFE) continues in an "
+        "extension bitstream in every frame: 255 bytes of MPEG-1 ancillary data, the most n_ad_bytes can announce, "
+        "leave too little room in the base frame. Without the extension bitstream no multichannel CRC can be "
+        "checked, so the extension is reported as possible, not as fact.",
+    )
+    sparse = [[1, 1, 1, 1] + [0] * 23, [1, 1, 1, 1] + [0] * 23]
+    f.add_frames(mc_stream(6, 128, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, lfe_alloc=2, n_ad_bytes=255, seed=i,
+                                                                  continues=True), ancillary=bytes(i % 251 for i in range(255)),
+                           allocation=sparse))
+    return f.finding("mpeg.multichannel-unverified", "3/2 + LFE")
 
 
 @fixture

@@ -21,4 +21,22 @@ internal static class Crc16
 
         return crc;
     }
+
+    // Over bits [startBit, startBit + count) of data, for coverage that does not end on a byte
+    // boundary, such as the Layer II bit allocation and scfsi.
+    public static ushort ComputeBits(byte[] data, int startBit, int count, ushort crc = 0xFFFF)
+    {
+        for (int i = startBit; i < startBit + count; i++)
+        {
+            int bit = i >> 3 < data.Length ? (data[i >> 3] >> (7 - (i & 7))) & 1 : 0;
+            bool top = (crc & 0x8000) != 0;
+            crc = (ushort)(crc << 1);
+            if (top ^ (bit != 0))
+            {
+                crc ^= 0x8005;
+            }
+        }
+
+        return crc;
+    }
 }

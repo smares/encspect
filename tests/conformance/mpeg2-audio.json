@@ -381,7 +381,8 @@
     "prediction": true,
     "dynamic_crosstalk": true,
     "crc_verified_frames": 0,
-    "frames_continued_in_extension": 39
+    "frames_continued_in_extension": 39,
+    "verified": false
    },
    "mp3guessenc": {
     "extension": "yes",
@@ -621,7 +622,7 @@
     "prediction": false,
     "dynamic_crosstalk": false,
     "crc_verified_frames": 18,
-    "frames_continued_in_extension": 11
+    "frames_continued_in_extension": 12
    },
    "mp3guessenc": {
     "extension": "yes",
@@ -649,7 +650,10 @@
    "version": "MPEG-1",
    "layer": "III",
    "sample_rate": 48000,
-   "frames": 342
+   "frames": 342,
+   "findings": [
+    "mpeg.frame-truncated"
+   ]
   },
   {
    "name": "test24",

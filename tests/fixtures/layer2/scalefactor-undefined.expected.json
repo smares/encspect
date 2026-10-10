@@ -1,7 +1,7 @@
 {
- "description": "MPEG-1 Layer II whose fourth frame uses scalefactor index 63, which Table B.1 does not define; libmad rejects it.",
+ "description": "MPEG-1 Layer II whose fourth frame uses scalefactor index 63, which Table B.1 does not define. TwoLAME writes it too, and decoders accept it.",
  "length": 3456,
- "crosscheck": false,
+ "crosscheck": true,
  "regions": [
   {
    "name": "MPEG Audio",
@@ -2456,5 +2456,5 @@
    "contains": "63"
   }
  ],
- "silent": false
+ "silent": true
 }

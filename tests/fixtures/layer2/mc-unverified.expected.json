@@ -1,0 +1,2170 @@
+{
+ "description": "MPEG-1 Layer II at 48000 Hz and 128 kbps whose multichannel side information (3/2 + LFE) continues in an extension bitstream in every frame: 255 bytes of MPEG-1 ancillary data, the most n_ad_bytes can announce, leave too little room in the base frame. Without the extension bitstream no multichannel CRC can be checked, so the extension is reported as possible, not as fact.",
+ "length": 2304,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2304
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "0",
+    "SCFSI/Subband 0/Channel 1": "1",
+    "SCFSI/Subband 1/Channel 0": "3",
+    "SCFSI/Subband 1/Channel 1": "0",
+    "SCFSI/Subband 2/Channel 0": "2",
+    "SCFSI/Subband 2/Channel 1": "3",
+    "SCFSI/Subband 3/Channel 0": "1",
+    "SCFSI/Subband 3/Channel 1": "2",
+    "Scalefactors/Subband 0/Channel 0": "0, 17, 34",
+    "Scalefactors/Subband 0/Channel 1": "3, 20",
+    "Scalefactors/Subband 1/Channel 0": "5, 22",
+    "Scalefactors/Subband 1/Channel 1": "8, 25, 42",
+    "Scalefactors/Subband 2/Channel 0": "10",
+    "Scalefactors/Subband 2/Channel 1": "13, 30",
+    "Scalefactors/Subband 3/Channel 0": "15, 32",
+    "Scalefactors/Subband 3/Channel 1": "18",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-1",
+        "0x1.ae0d960000000p-7",
+        "0x1.0eea9c0000000p-12"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-2",
+        "0x1.5555560000000p-2",
+        "0x1.ae0d960000000p-8"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.ae0d960000000p-3",
+        "0x1.0eea9c0000000p-8",
+        "0x1.0eea9c0000000p-8"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.ae0d960000000p-4",
+        "0x1.0eea9c0000000p-9",
+        "0x1.5555560000000p-15"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-4",
+        "0x1.0eea9c0000000p-4",
+        "0x1.0eea9c0000000p-4"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-5",
+        "0x1.5555560000000p-11",
+        "0x1.5555560000000p-11"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-6",
+        "0x1.5555560000000p-6",
+        "0x1.ae0d960000000p-12"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-7",
+        "0x1.5555560000000p-7",
+        "0x1.5555560000000p-7"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  },
+  {
+   "offset": 384,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "1",
+    "SCFSI/Subband 0/Channel 1": "2",
+    "SCFSI/Subband 1/Channel 0": "0",
+    "SCFSI/Subband 1/Channel 1": "1",
+    "SCFSI/Subband 2/Channel 0": "3",
+    "SCFSI/Subband 2/Channel 1": "0",
+    "SCFSI/Subband 3/Channel 0": "2",
+    "SCFSI/Subband 3/Channel 1": "3",
+    "Scalefactors/Subband 0/Channel 0": "11, 28",
+    "Scalefactors/Subband 0/Channel 1": "14",
+    "Scalefactors/Subband 1/Channel 0": "16, 33, 50",
+    "Scalefactors/Subband 1/Channel 1": "19, 36",
+    "Scalefactors/Subband 2/Channel 0": "21, 38",
+    "Scalefactors/Subband 2/Channel 1": "24, 41, 58",
+    "Scalefactors/Subband 3/Channel 0": "26",
+    "Scalefactors/Subband 3/Channel 1": "29, 46",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.ae0d960000000p-5",
+        "0x1.ae0d960000000p-5",
+        "0x1.0eea9c0000000p-10"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.ae0d960000000p-6",
+        "0x1.ae0d960000000p-6",
+        "0x1.ae0d960000000p-6"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-6",
+        "0x1.5555560000000p-12",
+        "0x1.ae0d960000000p-18"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-7",
+        "0x1.0eea9c0000000p-7",
+        "0x1.5555560000000p-13"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-8",
+        "0x1.ae0d960000000p-14",
+        "0x1.ae0d960000000p-14"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-9",
+        "0x1.ae0d960000000p-15",
+        "0x1.0eea9c0000000p-20"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.ae0d960000000p-10",
+        "0x1.ae0d960000000p-10",
+        "0x1.ae0d960000000p-10"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.ae0d960000000p-11",
+        "0x1.0eea9c0000000p-16",
+        "0x1.0eea9c0000000p-16"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  },
+  {
+   "offset": 768,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "2",
+    "SCFSI/Subband 0/Channel 1": "3",
+    "SCFSI/Subband 1/Channel 0": "1",
+    "SCFSI/Subband 1/Channel 1": "2",
+    "SCFSI/Subband 2/Channel 0": "0",
+    "SCFSI/Subband 2/Channel 1": "1",
+    "SCFSI/Subband 3/Channel 0": "3",
+    "SCFSI/Subband 3/Channel 1": "0",
+    "Scalefactors/Subband 0/Channel 0": "22",
+    "Scalefactors/Subband 0/Channel 1": "25, 42",
+    "Scalefactors/Subband 1/Channel 0": "27, 44",
+    "Scalefactors/Subband 1/Channel 1": "30",
+    "Scalefactors/Subband 2/Channel 0": "32, 49, 3",
+    "Scalefactors/Subband 2/Channel 1": "35, 52",
+    "Scalefactors/Subband 3/Channel 0": "37, 54",
+    "Scalefactors/Subband 3/Channel 1": "40, 57, 11",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-8",
+        "0x1.0eea9c0000000p-8",
+        "0x1.0eea9c0000000p-8"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-9",
+        "0x1.5555560000000p-15",
+        "0x1.5555560000000p-15"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-10",
+        "0x1.5555560000000p-10",
+        "0x1.ae0d960000000p-16"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-11",
+        "0x1.5555560000000p-11",
+        "0x1.5555560000000p-11"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.ae0d960000000p-12",
+        "0x1.0eea9c0000000p-17",
+        "0x1.5555560000000p-2"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.ae0d960000000p-13",
+        "0x1.ae0d960000000p-13",
+        "0x1.0eea9c0000000p-18"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-13",
+        "0x1.5555560000000p-19",
+        "0x1.5555560000000p-19"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-14",
+        "0x1.5555560000000p-20",
+        "0x1.ae0d960000000p-5"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  },
+  {
+   "offset": 1152,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "3",
+    "SCFSI/Subband 0/Channel 1": "0",
+    "SCFSI/Subband 1/Channel 0": "2",
+    "SCFSI/Subband 1/Channel 1": "3",
+    "SCFSI/Subband 2/Channel 0": "1",
+    "SCFSI/Subband 2/Channel 1": "2",
+    "SCFSI/Subband 3/Channel 0": "0",
+    "SCFSI/Subband 3/Channel 1": "1",
+    "Scalefactors/Subband 0/Channel 0": "33, 50",
+    "Scalefactors/Subband 0/Channel 1": "36, 53, 7",
+    "Scalefactors/Subband 1/Channel 0": "38",
+    "Scalefactors/Subband 1/Channel 1": "41, 58",
+    "Scalefactors/Subband 2/Channel 0": "43, 60",
+    "Scalefactors/Subband 2/Channel 1": "46",
+    "Scalefactors/Subband 3/Channel 0": "48, 2, 19",
+    "Scalefactors/Subband 3/Channel 1": "51, 5",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-12",
+        "0x1.ae0d960000000p-18",
+        "0x1.ae0d960000000p-18"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-13",
+        "0x1.ae0d960000000p-19",
+        "0x1.0eea9c0000000p-3"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.ae0d960000000p-14",
+        "0x1.ae0d960000000p-14",
+        "0x1.ae0d960000000p-14"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.ae0d960000000p-15",
+        "0x1.0eea9c0000000p-20",
+        "0x1.0eea9c0000000p-20"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-15",
+        "0x1.0eea9c0000000p-15",
+        "0x1.5555560000000p-21"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-16",
+        "0x1.0eea9c0000000p-16",
+        "0x1.0eea9c0000000p-16"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-17",
+        "0x1.ae0d960000000p-2",
+        "0x1.0eea9c0000000p-7"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-18",
+        "0x1.5555560000000p-18",
+        "0x1.ae0d960000000p-3"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  },
+  {
+   "offset": 1536,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "0",
+    "SCFSI/Subband 0/Channel 1": "1",
+    "SCFSI/Subband 1/Channel 0": "3",
+    "SCFSI/Subband 1/Channel 1": "0",
+    "SCFSI/Subband 2/Channel 0": "2",
+    "SCFSI/Subband 2/Channel 1": "3",
+    "SCFSI/Subband 3/Channel 0": "1",
+    "SCFSI/Subband 3/Channel 1": "2",
+    "Scalefactors/Subband 0/Channel 0": "44, 61, 15",
+    "Scalefactors/Subband 0/Channel 1": "47, 1",
+    "Scalefactors/Subband 1/Channel 0": "49, 3",
+    "Scalefactors/Subband 1/Channel 1": "52, 6, 23",
+    "Scalefactors/Subband 2/Channel 0": "54",
+    "Scalefactors/Subband 2/Channel 1": "57, 11",
+    "Scalefactors/Subband 3/Channel 0": "59, 13",
+    "Scalefactors/Subband 3/Channel 1": "62",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.ae0d960000000p-16",
+        "0x1.0eea9c0000000p-21",
+        "0x1.5555560000000p-6"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.ae0d960000000p-17",
+        "0x1.ae0d960000000p-17",
+        "0x1.0eea9c0000000p-1"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-17",
+        "0x1.5555560000000p-2",
+        "0x1.5555560000000p-2"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-18",
+        "0x1.5555560000000p-3",
+        "0x1.ae0d960000000p-9"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.5555560000000p-19",
+        "0x1.5555560000000p-19",
+        "0x1.5555560000000p-19"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.5555560000000p-20",
+        "0x1.ae0d960000000p-5",
+        "0x1.ae0d960000000p-5"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.ae0d960000000p-21",
+        "0x1.ae0d960000000p-21",
+        "0x1.0eea9c0000000p-5"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.ae0d960000000p-22",
+        "0x1.ae0d960000000p-22",
+        "0x1.ae0d960000000p-22"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  },
+  {
+   "offset": 1920,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Bit Allocation/Subband 0/Channel 0": "3 levels",
+    "Bit Allocation/Subband 0/Channel 1": "3 levels",
+    "Bit Allocation/Subband 1/Channel 0": "3 levels",
+    "Bit Allocation/Subband 1/Channel 1": "3 levels",
+    "Bit Allocation/Subband 2/Channel 0": "3 levels",
+    "Bit Allocation/Subband 2/Channel 1": "3 levels",
+    "Bit Allocation/Subband 3/Channel 0": "3 levels",
+    "Bit Allocation/Subband 3/Channel 1": "3 levels",
+    "Bit Allocation/Subband 4/Channel 0": "None",
+    "Bit Allocation/Subband 4/Channel 1": "None",
+    "Bit Allocation/Subband 5/Channel 0": "None",
+    "Bit Allocation/Subband 5/Channel 1": "None",
+    "Bit Allocation/Subband 6/Channel 0": "None",
+    "Bit Allocation/Subband 6/Channel 1": "None",
+    "Bit Allocation/Subband 7/Channel 0": "None",
+    "Bit Allocation/Subband 7/Channel 1": "None",
+    "Bit Allocation/Subband 8/Channel 0": "None",
+    "Bit Allocation/Subband 8/Channel 1": "None",
+    "Bit Allocation/Subband 9/Channel 0": "None",
+    "Bit Allocation/Subband 9/Channel 1": "None",
+    "Bit Allocation/Subband 10/Channel 0": "None",
+    "Bit Allocation/Subband 10/Channel 1": "None",
+    "Bit Allocation/Subband 11/Channel 0": "None",
+    "Bit Allocation/Subband 11/Channel 1": "None",
+    "Bit Allocation/Subband 12/Channel 0": "None",
+    "Bit Allocation/Subband 12/Channel 1": "None",
+    "Bit Allocation/Subband 13/Channel 0": "None",
+    "Bit Allocation/Subband 13/Channel 1": "None",
+    "Bit Allocation/Subband 14/Channel 0": "None",
+    "Bit Allocation/Subband 14/Channel 1": "None",
+    "Bit Allocation/Subband 15/Channel 0": "None",
+    "Bit Allocation/Subband 15/Channel 1": "None",
+    "Bit Allocation/Subband 16/Channel 0": "None",
+    "Bit Allocation/Subband 16/Channel 1": "None",
+    "Bit Allocation/Subband 17/Channel 0": "None",
+    "Bit Allocation/Subband 17/Channel 1": "None",
+    "Bit Allocation/Subband 18/Channel 0": "None",
+    "Bit Allocation/Subband 18/Channel 1": "None",
+    "Bit Allocation/Subband 19/Channel 0": "None",
+    "Bit Allocation/Subband 19/Channel 1": "None",
+    "Bit Allocation/Subband 20/Channel 0": "None",
+    "Bit Allocation/Subband 20/Channel 1": "None",
+    "Bit Allocation/Subband 21/Channel 0": "None",
+    "Bit Allocation/Subband 21/Channel 1": "None",
+    "Bit Allocation/Subband 22/Channel 0": "None",
+    "Bit Allocation/Subband 22/Channel 1": "None",
+    "Bit Allocation/Subband 23/Channel 0": "None",
+    "Bit Allocation/Subband 23/Channel 1": "None",
+    "Bit Allocation/Subband 24/Channel 0": "None",
+    "Bit Allocation/Subband 24/Channel 1": "None",
+    "Bit Allocation/Subband 25/Channel 0": "None",
+    "Bit Allocation/Subband 25/Channel 1": "None",
+    "Bit Allocation/Subband 26/Channel 0": "None",
+    "Bit Allocation/Subband 26/Channel 1": "None",
+    "SCFSI/Subband 0/Channel 0": "1",
+    "SCFSI/Subband 0/Channel 1": "2",
+    "SCFSI/Subband 1/Channel 0": "0",
+    "SCFSI/Subband 1/Channel 1": "1",
+    "SCFSI/Subband 2/Channel 0": "3",
+    "SCFSI/Subband 2/Channel 1": "0",
+    "SCFSI/Subband 3/Channel 0": "2",
+    "SCFSI/Subband 3/Channel 1": "3",
+    "Scalefactors/Subband 0/Channel 0": "55, 9",
+    "Scalefactors/Subband 0/Channel 1": "58",
+    "Scalefactors/Subband 1/Channel 0": "60, 14, 31",
+    "Scalefactors/Subband 1/Channel 1": "0, 17",
+    "Scalefactors/Subband 2/Channel 0": "2, 19",
+    "Scalefactors/Subband 2/Channel 1": "5, 22, 39",
+    "Scalefactors/Subband 3/Channel 0": "7",
+    "Scalefactors/Subband 3/Channel 1": "10, 27",
+    "Samples": "480 bits",
+    "Ancillary Data": "284 bytes"
+   },
+   "scale_info": {
+    "layer": 2,
+    "bands": 27,
+    "bound": 27,
+    "scale_info_bits": 288,
+    "subbands": [
+     [
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-19",
+        "0x1.0eea9c0000000p-19",
+        "0x1.5555560000000p-4"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-20",
+        "0x1.0eea9c0000000p-20",
+        "0x1.0eea9c0000000p-20"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.5555560000000p-21",
+        "0x1.ae0d960000000p-6",
+        "0x1.0eea9c0000000p-11"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 1,
+       "scalefactors": [
+        "0x1.5555560000000p-1",
+        "0x1.5555560000000p-1",
+        "0x1.ae0d960000000p-7"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.ae0d960000000p-2",
+        "0x1.0eea9c0000000p-7",
+        "0x1.0eea9c0000000p-7"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 0,
+       "scalefactors": [
+        "0x1.ae0d960000000p-3",
+        "0x1.0eea9c0000000p-8",
+        "0x1.5555560000000p-14"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 17,
+       "scfsi": 2,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-3",
+        "0x1.0eea9c0000000p-3",
+        "0x1.0eea9c0000000p-3"
+       ]
+      },
+      {
+       "class": 17,
+       "scfsi": 3,
+       "scalefactors": [
+        "0x1.0eea9c0000000p-4",
+        "0x1.5555560000000p-10",
+        "0x1.5555560000000p-10"
+       ]
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ],
+     [
+      {
+       "class": 0
+      },
+      {
+       "class": 0
+      }
+     ]
+    ]
+   },
+   "mc_crc": true
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.multichannel-unverified",
+   "contains": "3/2 + LFE"
+  }
+ ],
+ "silent": true
+}

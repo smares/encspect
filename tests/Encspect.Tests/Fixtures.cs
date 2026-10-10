@@ -11,12 +11,12 @@ internal static class Fixtures
 
     public static string FixtureDirectory { get; } = Path.Combine(FindRepositoryRoot(), "tests", "fixtures");
 
-    // Paths relative to tests/fixtures of the MPEG audio fixtures and the Layer III fixtures.
+    // Paths relative to tests/fixtures of the MPEG audio, Layer III and Layer II fixtures.
     public static TheoryData<string> MpegFixtures()
     {
         var data = new TheoryData<string>();
         string[] extensions = [".mp1", ".mp2", ".mp3"];
-        foreach (string directory in new[] { "mpeg", "layer3" })
+        foreach (string directory in new[] { "mpeg", "layer3", "layer2" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(FixtureDirectory, directory))
                 .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
