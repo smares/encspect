@@ -22,9 +22,10 @@ def archived(url, timestamp):
 
 
 def download(url, path):
-    """Downloads url to path; returns None when it worked, else curl's error."""
-    result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "10", "--connect-timeout", "30", "-o", str(path), url],
-                            capture_output=True, text=True)
+    """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
+    refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
+    result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--retry-all-errors", "--connect-timeout", "30",
+                             "-o", str(path), url], capture_output=True, text=True)
     return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
 
 
