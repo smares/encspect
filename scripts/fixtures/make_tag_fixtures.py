@@ -20,6 +20,7 @@ import json
 import pathlib
 import struct
 import sys
+import zlib
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "tags"
 
@@ -592,7 +593,9 @@ def id3v23_unsync():
         frame23("APIC", apic_data(LATIN1, "image/jpeg", 3, "", picture)),
         frame23("TPE1", text_frame_data(UTF16, ["ÿÿ Artist"])),
     ]
-    data = id3v2(3, frames, padding=8, extended_header=ext_header23(8, crc=0x12345678), unsync=True)
+    # ID3v2.3 section 3.2: the CRC covers the frames only, before unsynchronization.
+    crc = zlib.crc32(b"".join(frames))
+    data = id3v2(3, frames, padding=8, extended_header=ext_header23(8, crc=crc), unsync=True)
     f.tag(
         "ID3v2",
         "2.3.0",
@@ -602,7 +605,8 @@ def id3v23_unsync():
             "Header/Flags/IsUnsynchronized": "true",
             "Header/Flags/HasExtendedHeader": "true",
             "Extended Header/Padding Size": "8",
-            "Extended Header/CRC": "0x12345678",
+            "Extended Header/CRC": f"0x{crc:08X}",
+            "Extended Header/CRC/Computed": f"0x{crc:08X}",
             "TIT2/Text": "Unsynchronized",
             "APIC/Picture Data": f"{len(picture)} bytes",
             "TPE1/Text": "ÿÿ Artist",
@@ -610,6 +614,28 @@ def id3v23_unsync():
         },
     )
     f.audio()
+    return f
+
+
+@fixture
+def id3v23_crc_mismatch():
+    f = Fixture("id3v23-crc-mismatch", "ID3v2.3 tag whose extended header CRC does not match its frames: kept, with a finding.")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Checked"]))]
+    wrong = zlib.crc32(b"".join(frames)) ^ 0x1
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(4, crc=wrong)), "Medium", {"Extended Header/CRC": f"0x{wrong:08X}", "TIT2/Text": "Checked"})
+    f.audio()
+    f.finding("id3v2.crc-mismatch", f"0x{wrong:X}")
+    return f
+
+
+@fixture
+def id3v24_crc_mismatch():
+    f = Fixture("id3v24-crc-mismatch", "ID3v2.4 tag whose extended header CRC does not match its frames and padding: kept, with a finding.")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Checked"]))]
+    wrong = zlib.crc32(b"".join(frames)) ^ 0x80000000
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=4, extended_header=ext_header24(crc=wrong)), "Medium", {"Extended Header/CRC": f"0x{wrong:X}", "TIT2/Text": "Checked"})
+    f.audio()
+    f.finding("id3v2.crc-mismatch", f"0x{wrong:X}")
     return f
 
 
@@ -630,7 +656,10 @@ def id3v24_basic():
         frame24("TCOP", text_frame_data(LATIN1, ["Read-only"]), status=0x10),
     ]
     restrictions = 0b01_1_10_1_01
-    ext = ext_header24(update=True, crc=0x0ABCDEF12, restrictions=restrictions)
+    # ID3v2.4 section 3.2: the CRC covers everything after the extended header up to the end of
+    # the tag size, padding included, as stored.
+    crc = zlib.crc32(b"".join(frames) + b"\x00" * 20)
+    ext = ext_header24(update=True, crc=crc, restrictions=restrictions)
     f.tag(
         "ID3v2",
         "2.4.0",
@@ -640,7 +669,8 @@ def id3v24_basic():
             "Extended Header/Flags/IsUpdate": "true",
             "Extended Header/Flags/HasCrc": "true",
             "Extended Header/Flags/HasRestrictions": "true",
-            "Extended Header/CRC": "0xABCDEF12",
+            "Extended Header/CRC": f"0x{crc:X}",
+            "Extended Header/CRC/Computed": f"0x{crc:X}",
             "Extended Header/Restrictions/Tag Size": "No more than 64 frames and 128 KB",
             "Extended Header/Restrictions/Text Encoding": "ISO-8859-1 or UTF-8 only",
             "Extended Header/Restrictions/Text Size": "No more than 128 characters",

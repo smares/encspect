@@ -16,6 +16,10 @@ public class TagLibCrossCheckTests
         "TagLib# 2.3 misreads WXXX frames (empty or merged description, no URL). mutagen 1.47 reads the " +
         "same bytes as Encspect does.";
 
+    private const string CrcReason =
+        "TagLib# 2.3 loses every frame after an extended header with a CRC in this layout, whether or not the CRC " +
+        "matches (checked with a correct CRC as well); mutagen 1.47 reads the frame, as Encspect does.";
+
     // Each entry: fixture, a substring of the difference, and why the tools legitimately differ.
     private static readonly (string Fixture, string Difference, string Reason)[] Explained =
     [
@@ -29,6 +33,8 @@ public class TagLibCrossCheckTests
         ("ape-v1-zero-byte", "APE Title value", "TagLib# splits an APEv1 value at $00 into a list, which only APEv2 defines; mutagen 1.47 keeps one value, as Encspect does."),
         ("ape-leading-header-only", "TagLib# fails", "TagLib# throws on a header-only APE tag at the start of the file; mutagen 1.47 reads the same items as Encspect."),
         ("ape-leading-v1-block", "TagLib# fails", "TagLib# throws on an APEv1 block at the start of the file; Encspect rejects it with a finding."),
+        ("id3v23-crc-mismatch", "frame count", CrcReason),
+        ("id3v24-crc-mismatch", "frame count", CrcReason),
         ("ape-size-too-large", "TagLib# fails", "TagLib# seeks before the start of the file and throws; Encspect rejects the candidate with a finding."),
         ("stack-id3v2-ape-lyrics3-id3v1", "APE:", LyricsStack),
         ("stack-id3v2-ape-id3v1-lyrics3", "APE:", LyricsStack),

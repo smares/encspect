@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 tag whose extended header CRC does not match its frames and padding: kept, with a finding.",
+  "length": 556,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/CRC": "0xF7BAFB7E",
+        "TIT2/Text": "Checked"
+      },
+      "offset": 0,
+      "length": 44
+    },
+    {
+      "name": "Data",
+      "offset": 44,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.crc-mismatch",
+      "contains": "0xF7BAFB7E"
+    }
+  ]
+}
