@@ -691,17 +691,17 @@
       },
       {
         "severity": "Warning",
-        "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x2AE is not directly followed by an ID3v1 tag, which its specification requires.",
-        "offset": 686,
-        "length": 68
-      },
-      {
-        "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x22E is followed by a Lyrics3 tag; readers expect ID3v1 in the last 128 bytes.",
         "offset": 558,
         "length": 128
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.lyrics3-without-id3v1",
+        "message": "The Lyrics3 tag at 0x2AE is not directly followed by an ID3v1 tag, which its specification requires.",
+        "offset": 686,
+        "length": 68
       }
     ]
   }

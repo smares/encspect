@@ -246,18 +246,18 @@
         "length": 512
       },
       {
-        "severity": "Info",
-        "code": "lyrics3.extended-unneeded",
-        "message": "The Lyrics3 EAR field is not longer than the 30 characters the ID3v1 artist already holds.",
-        "offset": 581,
-        "length": 19
-      },
-      {
         "severity": "Warning",
         "code": "lyrics3.extended-mismatch",
         "message": "The Lyrics3 ETT field does not start with the ID3v1 title \u0022Song Title\u0022, so readers show the ID3v1 value.",
         "offset": 534,
         "length": 47
+      },
+      {
+        "severity": "Info",
+        "code": "lyrics3.extended-unneeded",
+        "message": "The Lyrics3 EAR field is not longer than the 30 characters the ID3v1 artist already holds.",
+        "offset": 581,
+        "length": 19
       }
     ]
   }

@@ -53,27 +53,25 @@ public sealed class Analyzer
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
         List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
+        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings);
 
         var detectionNodes = new HashSet<Node>();
-        foreach (Claim claim in leading)
+        foreach (Claim claim in leading.Concat(embedded).Concat(trailing))
         {
             AddClaim(root, claim, findings, detectionNodes);
         }
 
-        if (dataEnd > dataStart)
+        long embeddedBytes = embedded.Sum(c => c.Tag.Length);
+        if (dataEnd - dataStart > embeddedBytes)
         {
-            ParseData(reader.Slice(dataStart, dataEnd - dataStart), root, findings);
+            ParseData(reader.Slice(dataStart, dataEnd - dataStart), root, embedded.Select(c => c.Tag).ToList(), findings);
         }
         else
         {
             findings.Add(new Finding(Severity.Info, "layout.tags-only", "The file holds only tags; no bytes are left for audio data.", root));
         }
 
-        foreach (Claim claim in trailing)
-        {
-            AddClaim(root, claim, findings, detectionNodes);
-        }
-
+        root.SortChildrenByOffset();
         CheckTrailingLayout(trailing, findings);
 
         foreach (PendingFinding finding in pending)
@@ -82,7 +80,9 @@ public sealed class Analyzer
             findings.Add(new Finding(finding.Severity, finding.Code, finding.Message(node, root), node));
         }
 
-        return new Report(source, root, findings);
+        // In file order, so the list reads like the tree; stable for findings on the same bytes.
+        List<Finding> ordered = findings.OrderBy(f => f.Node?.Offset ?? 0).ToList();
+        return new Report(source, root, ordered);
     }
 
     private List<Claim> FindLeadingTags(ByteReader reader, List<PendingFinding> pending)
@@ -214,6 +214,80 @@ public sealed class Analyzer
     // "Lyrics3 tag", but "Enhanced TAG" rather than "Enhanced TAG tag".
     private static string TagLabel(string name) => name.EndsWith("TAG", StringComparison.Ordinal) ? name : name + " tag";
 
+    private const long MaxNextTagSearch = 1 << 20;
+
+    // A tag may say where the next tag of its kind starts at the earliest (ID3v2.4 SEEK). If the
+    // next such tag found at an anchor starts at or after that point, the pointer is satisfied;
+    // otherwise the unclaimed data from there on is searched, at most 1 MiB of it. Tags found
+    // this way are followed in turn, and each search starts after the previous tag, so it ends.
+    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, List<Finding> findings)
+    {
+        var embedded = new List<Claim>();
+        var queue = new Queue<Claim>(leading.Concat(trailing));
+
+        while (queue.Count > 0)
+        {
+            Claim claim = queue.Dequeue();
+            if (claim.Probe.NextTagOffset is not { } target)
+            {
+                continue;
+            }
+
+            Node tag = claim.Tag;
+            string label = $"The {claim.Parser.Name} tag at 0x{tag.Offset:X} says the next one starts at 0x{target:X} or later";
+            if (target > reader.Length)
+            {
+                findings.Add(new Finding(Severity.Warning, "tag.next-beyond-file", $"{label}, beyond the end of the file.", tag));
+                continue;
+            }
+
+            Claim? next = leading.Concat(embedded).Concat(trailing)
+                .Where(c => c.Parser == claim.Parser && c.Tag.Offset >= tag.End)
+                .OrderBy(c => c.Tag.Offset)
+                .FirstOrDefault();
+            if (next is not null && next.Tag.Offset < target)
+            {
+                findings.Add(new Finding(Severity.Warning, "tag.next-too-early", $"{label}, but the next one starts at 0x{next.Tag.Offset:X}.", tag));
+                continue;
+            }
+
+            long from = Math.Max(target, dataStart);
+            long limit = Math.Min(Math.Min(dataEnd, next?.Tag.Offset ?? dataEnd), from + MaxNextTagSearch);
+            limit = embedded.Where(e => e.Tag.Offset >= from).Select(e => e.Tag.Offset).DefaultIfEmpty(limit).Min();
+
+            TagProbe? found = null;
+            if (from < limit)
+            {
+                try
+                {
+                    found = claim.Parser.FindFrom(reader, from, limit);
+                }
+                catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
+                {
+                    found = null;
+                }
+            }
+
+            if (found?.Tag is { } foundTag && foundTag.Offset >= from && foundTag.Offset < limit && foundTag.End <= dataEnd)
+            {
+                var foundClaim = new Claim(claim.Parser, found);
+                embedded.Add(foundClaim);
+                queue.Enqueue(foundClaim);
+            }
+            else if (next is null)
+            {
+                findings.Add(new Finding(
+                    Severity.Warning,
+                    "tag.next-missing",
+                    $"{label}, but none was found in the {Math.Max(0, limit - from)} bytes searched from there.",
+                    tag));
+            }
+        }
+
+        embedded.Sort((a, b) => a.Tag.Offset.CompareTo(b.Tag.Offset));
+        return embedded;
+    }
+
     // An ID3v2.4 tag with a footer that ends where the leading tags end is found again from the
     // end; it is the same tag, not a near miss.
     private static bool IsLeadingTagAgain(ITagParser parser, TagProbe probe, List<Claim> leading) =>
@@ -292,18 +366,31 @@ public sealed class Analyzer
         findings.AddRange(claim.LayoutFindings);
     }
 
-    private void ParseData(ByteReader window, Node root, List<Finding> findings)
+    private void ParseData(ByteReader window, Node root, List<Node> embedded, List<Finding> findings)
     {
         IFormatParser? parser = FindParser(window);
         if (parser is null)
         {
-            Node data = root.Add("Data", window.Start, window.Length);
-            findings.Add(new Finding(Severity.Info, "format.unrecognized", "No format parser recognized this file.", data));
+            Node? first = null;
+            long position = window.Start;
+            foreach (Node? tag in embedded.Append<Node?>(null))
+            {
+                long gapEnd = tag?.Offset ?? window.End;
+                if (gapEnd > position)
+                {
+                    Node data = root.Add("Data", position, gapEnd - position);
+                    first ??= data;
+                }
+
+                position = tag?.End ?? position;
+            }
+
+            findings.Add(new Finding(Severity.Info, "format.unrecognized", "No format parser recognized this file.", first ?? root));
             return;
         }
 
         root.Value = parser.Name;
-        var context = new ParseContext(window, root);
+        var context = new ParseContext(window, root, embedded);
 
         try
         {

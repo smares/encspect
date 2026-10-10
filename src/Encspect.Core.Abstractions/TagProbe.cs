@@ -46,12 +46,17 @@ public sealed class TagProbe
 
     public string? RejectionReason { get; }
 
+    // The earliest offset at which the tag says another tag of its kind starts (an ID3v2.4 SEEK
+    // frame), or null.
+    public long? NextTagOffset { get; private init; }
+
     public static TagProbe Accept(
         Node tag,
         long signatureOffset,
         Confidence confidence,
         IReadOnlyList<Evidence> evidence,
-        IReadOnlyList<Finding> findings)
+        IReadOnlyList<Finding> findings,
+        long? nextTagOffset = null)
     {
         ArgumentNullException.ThrowIfNull(tag);
         ArgumentNullException.ThrowIfNull(evidence);
@@ -61,7 +66,7 @@ public sealed class TagProbe
             throw new ArgumentException("An accepted tag must cover at least one byte.", nameof(tag));
         }
 
-        return new TagProbe(signatureOffset, tag, confidence, evidence, findings, null);
+        return new TagProbe(signatureOffset, tag, confidence, evidence, findings, null) { NextTagOffset = nextTagOffset };
     }
 
     public static TagProbe Reject(long signatureOffset, string reason)

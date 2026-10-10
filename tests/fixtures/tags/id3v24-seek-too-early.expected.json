@@ -1,0 +1,37 @@
+{
+  "description": "ID3v2.4 SEEK frame whose minimum offset lies past the appended tag that actually follows.",
+  "length": 378,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "SEEK/Minimum Offset": "310"
+      },
+      "offset": 0,
+      "length": 39
+    },
+    {
+      "name": "Data",
+      "offset": 39,
+      "length": 300
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Appended"
+      },
+      "offset": 339,
+      "length": 39
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.next-too-early",
+      "contains": "but the next one starts at"
+    }
+  ]
+}

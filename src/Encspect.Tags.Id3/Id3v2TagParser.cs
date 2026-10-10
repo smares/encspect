@@ -35,6 +35,38 @@ public sealed class Id3v2TagParser : ITagParser
         return problem is null ? Parse(reader, start, header, start) : TagProbe.Reject(start, problem);
     }
 
+    // ID3v2.4 section 5: "If a SEEK frame was found, use its values to guide further searching."
+    // The frame only gives a minimum offset, so the tag is searched for from there.
+    public TagProbe? FindFrom(ByteReader reader, long from, long limit)
+    {
+        const int Chunk = 1 << 16;
+        limit = Math.Min(limit, reader.End);
+        for (long chunkStart = from; chunkStart < limit; chunkStart += Chunk)
+        {
+            int length = (int)Math.Min(Chunk + HeaderId.Length - 1, limit - chunkStart);
+            byte[] window = reader.ReadBytesAt(chunkStart, length);
+            int index = 0;
+            while (true)
+            {
+                int found = window.AsSpan(index).IndexOf(HeaderId);
+                long candidate = chunkStart + index + found;
+                if (found < 0 || candidate >= Math.Min(chunkStart + Chunk, limit))
+                {
+                    break;
+                }
+
+                if (ProbeAt(reader, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
+                {
+                    return probe;
+                }
+
+                index += found + 1;
+            }
+        }
+
+        return null;
+    }
+
     // ID3v2.4 section 3.4: a tag appended at the end of a file has a footer, "3DI" followed by
     // the same version, flags and size as the header, so it can be found from the end.
     public TagProbe? ProbeBefore(ByteReader reader, long end)
@@ -195,7 +227,8 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         Confidence confidence = truncated ? Confidence.Low : state.HasProblems ? Confidence.Medium : Confidence.High;
-        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings);
+        long? next = state.SeekOffset is { } seek ? declaredEnd + seek : null;
+        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings, next);
     }
 
     private static void VerifyCrc(ByteReader reader, ParseState state, bool unsync, long bodyEnd, long? declaredPadding, bool truncated)
@@ -651,7 +684,40 @@ public sealed class Id3v2TagParser : ITagParser
             return;
         }
 
+        if (major == 4 && id == "SEEK")
+        {
+            ParseSeekFrame(state, frame, content);
+            return;
+        }
+
         frame.Value = Id3v2FrameDecoder.Decode(major, id, frame, content, decodedSize, frameEnd, findings);
+    }
+
+    // ID3v2.4 frames section 4.29: "Minimum offset to next tag $xx xx xx xx", "calculated from
+    // the end of this tag to the beginning of the next". "There may only be one 'seek frame' in
+    // a tag."
+    private static void ParseSeekFrame(ParseState state, Node frame, DecodedBytes content)
+    {
+        if (content.Length != 4)
+        {
+            frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), $"{content.Length} bytes");
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {content.Length} bytes instead of 4.", frame));
+            state.HasProblems = true;
+            return;
+        }
+
+        uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Data);
+        frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), offset.ToString(CultureInfo.InvariantCulture));
+        frame.Value = $"next tag at least {offset} bytes after this one";
+
+        if (state.SeekOffset is not null)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-duplicate", "The tag has more than one SEEK frame; the first one is used.", frame));
+            state.HasProblems = true;
+            return;
+        }
+
+        state.SeekOffset = offset;
     }
 
     private static void AddFrameFlags(Node headerNode, DecodedBytes header, int flags, int major, string id, List<Finding> findings, Node frame)
@@ -784,6 +850,8 @@ public sealed class Id3v2TagParser : ITagParser
         public long ExtendedHeaderEnd { get; set; }
 
         public (ulong Value, Node Node)? StoredCrc { get; set; }
+
+        public long? SeekOffset { get; set; }
     }
 
     private readonly struct FrameExtras

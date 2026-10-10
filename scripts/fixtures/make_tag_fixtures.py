@@ -795,6 +795,110 @@ def id3v24_appended_without_footer():
     return f
 
 
+def seek_tag(title, offset, extra_seek=None):
+    """ID3v2.4 tag with a SEEK frame: "Minimum offset to next tag $xx xx xx xx" (frames 4.29)."""
+    frames = [frame24("TIT2", text_frame_data(UTF8, [title])), frame24("SEEK", struct.pack(">I", offset))]
+    if extra_seek is not None:
+        frames.append(frame24("SEEK", struct.pack(">I", extra_seek)))
+    return id3v2(4, frames)
+
+
+def plain_id3v24(title):
+    return id3v2(4, [frame24("TIT2", text_frame_data(UTF8, [title]))])
+
+
+@fixture
+def id3v24_seek_to_appended():
+    f = Fixture(
+        "id3v24-seek-to-appended",
+        "Prepended ID3v2.4 tag whose SEEK frame points at an appended tag with a footer (ID3v2.4 section 5, case 2): "
+        "the appended tag is found from the end and satisfies the SEEK frame.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 512), "High", {"TIT2/Text": "Lead", "SEEK/Minimum Offset": "512"})
+    f.audio(512)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    return f
+
+
+@fixture
+def id3v24_seek_embedded():
+    f = Fixture(
+        "id3v24-seek-embedded",
+        "ID3v2.4 tag whose SEEK frame points exactly at a tag in the middle of the stream; the data around it is split.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300), "High", {"SEEK/Minimum Offset": "300"})
+    f.audio(300, 2)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Middle"), "High", {"TIT2/Text": "Middle"})
+    f.audio(200, 3)
+    return f
+
+
+@fixture
+def id3v24_seek_guided():
+    f = Fixture(
+        "id3v24-seek-guided",
+        "ID3v2.4 SEEK frame giving a minimum offset 50 bytes short of the next tag; the tag is found by searching from there.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 250), "High", {"SEEK/Minimum Offset": "250"})
+    f.audio(300, 2)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Middle"), "High", {"TIT2/Text": "Middle"})
+    f.audio(200, 3)
+    return f
+
+
+@fixture
+def id3v24_seek_chain():
+    f = Fixture("id3v24-seek-chain", "Three ID3v2.4 tags linked by SEEK frames, each followed by data.")
+    f.tag("ID3v2", "2.4.0", seek_tag("First", 200), "High", {"TIT2/Text": "First"})
+    f.audio(200, 2)
+    f.tag("ID3v2", "2.4.0", seek_tag("Second", 150), "High", {"TIT2/Text": "Second"})
+    f.audio(150, 3)
+    f.tag("ID3v2", "2.4.0", plain_id3v24("Third"), "High", {"TIT2/Text": "Third"})
+    f.audio(100, 4)
+    return f
+
+
+@fixture
+def id3v24_seek_missing():
+    f = Fixture("id3v24-seek-missing", "ID3v2.4 SEEK frame pointing into data where no tag follows.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 100), "High", {"SEEK/Minimum Offset": "100"})
+    f.audio(500)
+    f.finding("tag.next-missing", "none was found")
+    return f
+
+
+@fixture
+def id3v24_seek_beyond_eof():
+    f = Fixture("id3v24-seek-beyond-eof", "ID3v2.4 SEEK frame pointing past the end of the file.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 100000), "High", {"SEEK/Minimum Offset": "100000"})
+    f.audio(500)
+    f.finding("tag.next-beyond-file", "beyond the end of the file")
+    return f
+
+
+@fixture
+def id3v24_seek_too_early():
+    f = Fixture(
+        "id3v24-seek-too-early",
+        "ID3v2.4 SEEK frame whose minimum offset lies past the appended tag that actually follows.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 310), "High", {"SEEK/Minimum Offset": "310"})
+    f.audio(300)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    f.finding("tag.next-too-early", "but the next one starts at")
+    return f
+
+
+@fixture
+def id3v24_seek_duplicate():
+    f = Fixture("id3v24-seek-duplicate", "ID3v2.4 tag with two SEEK frames; only one is allowed, the first is used.")
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300, extra_seek=10), "Medium", {"SEEK[0]/Minimum Offset": "300"})
+    f.audio(300)
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Appended"), "High", {"TIT2/Text": "Appended"})
+    f.finding("id3v2.seek-duplicate", "more than one SEEK")
+    return f
+
+
 @fixture
 def id3v24_plain_frame_sizes():
     f = Fixture(

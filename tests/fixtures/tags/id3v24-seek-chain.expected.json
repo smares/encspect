@@ -1,0 +1,52 @@
+{
+  "description": "Three ID3v2.4 tags linked by SEEK frames, each followed by data.",
+  "length": 557,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "First"
+      },
+      "offset": 0,
+      "length": 40
+    },
+    {
+      "name": "Data",
+      "offset": 40,
+      "length": 200
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Second"
+      },
+      "offset": 240,
+      "length": 41
+    },
+    {
+      "name": "Data",
+      "offset": 281,
+      "length": 150
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Third"
+      },
+      "offset": 431,
+      "length": 26
+    },
+    {
+      "name": "Data",
+      "offset": 457,
+      "length": 100
+    }
+  ],
+  "findings": []
+}

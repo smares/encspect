@@ -7,29 +7,44 @@ namespace Encspect.Tests;
 // of bytes, and what a format parser gets to see.
 public class AnalyzerTagTests
 {
-    private sealed class FakeTagParser(string name, Func<ByteReader, long, TagProbe?>? at = null, Func<ByteReader, long, TagProbe?>? before = null) : ITagParser
+    private sealed class FakeTagParser(
+        string name,
+        Func<ByteReader, long, TagProbe?>? at = null,
+        Func<ByteReader, long, TagProbe?>? before = null,
+        Func<long, long, TagProbe?>? find = null) : ITagParser
     {
         public string Name { get; } = name;
+
+        public List<(long From, long Limit)> Searches { get; } = [];
 
         public TagProbe? ProbeAt(ByteReader reader, long start) => at?.Invoke(reader, start);
 
         public TagProbe? ProbeBefore(ByteReader reader, long end) => before?.Invoke(reader, end);
+
+        public TagProbe? FindFrom(ByteReader reader, long from, long limit)
+        {
+            Searches.Add((from, limit));
+            return find?.Invoke(from, limit);
+        }
     }
 
-    private sealed class RecordingFormatParser : IFormatParser
+    private sealed class RecordingFormatParser(int confidence = 0) : IFormatParser
     {
         public string Name => "recording";
 
         public (long Start, long End, long Position)? Seen { get; private set; }
 
+        public IReadOnlyList<Node>? Embedded { get; private set; }
+
         public int Sniff(ByteReader reader)
         {
             Seen = (reader.Start, reader.End, reader.Position);
-            return 0;
+            return confidence;
         }
 
         public void Parse(ParseContext context)
         {
+            Embedded = context.EmbeddedTags;
         }
     }
 
@@ -180,5 +195,64 @@ public class AnalyzerTagTests
 
         Assert.Equal(["Footer"], report.Root.Children.Select(c => c.Name));
         Assert.Equal("layout.tags-only", Assert.Single(report.Findings).Code);
+    }
+
+    private static TagProbe AcceptWithNext(string name, long offset, long length, long next) =>
+        TagProbe.Accept(new Node(name, offset, length), offset, Confidence.High, [], [], next);
+
+    [Fact]
+    public void NextTagOffsetIsSearchedFromAndSplitsTheData()
+    {
+        var parser = new FakeTagParser(
+            "Lead",
+            at: (_, start) => start == 0 ? AcceptWithNext("Lead", 0, 10, 40) : null,
+            find: (from, _) => from == 40 ? Accept("Lead", 50, 10) : null);
+        var format = new RecordingFormatParser(confidence: 50);
+
+        Report report = Analyze(100, [parser], [format]);
+
+        Assert.Equal((40L, 100L), parser.Searches.Single());
+        Assert.Equal(["Lead", "Lead"], report.Root.Children.Select(c => c.Name));
+        Assert.Equal(50L, Assert.Single(format.Embedded!).Offset);
+    }
+
+    [Fact]
+    public void WithoutAFormatParserTheDataAroundAnEmbeddedTagIsSplit()
+    {
+        var parser = new FakeTagParser(
+            "Lead",
+            at: (_, start) => start == 0 ? AcceptWithNext("Lead", 0, 10, 40) : null,
+            find: (from, _) => from == 40 ? Accept("Lead", 50, 10) : null);
+
+        Report report = Analyze(100, [parser]);
+
+        Assert.Equal(["Lead@0", "Data@10", "Lead@50", "Data@60"], report.Root.Children.Select(c => $"{c.Name}@{c.Offset}"));
+    }
+
+    [Fact]
+    public void NextTagSearchIsBoundedByTheNextKnownTag()
+    {
+        var parser = new FakeTagParser(
+            "Tag",
+            at: (_, start) => start == 0 ? AcceptWithNext("Tag", 0, 10, 20) : null,
+            before: (_, end) => end == 100 ? Accept("Tag", 80, 20) : null);
+
+        Report report = Analyze(100, [parser]);
+
+        Assert.Equal((20L, 80L), parser.Searches.Single());
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("tag.next", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void FindingsAreInFileOrder()
+    {
+        var parser = new FakeTagParser(
+            "Tag",
+            at: (_, start) => start == 0 ? TagProbe.Accept(new Node("Tag", 0, 10), 0, Confidence.High, [], [new Finding(Severity.Info, "x.late", "late", new Node("n", 5, 1))]) : null,
+            before: (_, end) => end == 100 ? TagProbe.Accept(new Node("Tag", 90, 10), 90, Confidence.High, [], [new Finding(Severity.Info, "x.end", "end", new Node("n", 95, 1))]) : null);
+
+        Report report = Analyze(100, [parser]);
+
+        Assert.Equal(["x.late", "format.unrecognized", "x.end"], report.Findings.Select(f => f.Code));
     }
 }

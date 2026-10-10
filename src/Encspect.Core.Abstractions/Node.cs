@@ -42,4 +42,12 @@ public sealed class Node
         _children.Add(child);
         return child;
     }
+
+    // Stable, so children at the same offset keep their order.
+    public void SortChildrenByOffset()
+    {
+        var sorted = _children.OrderBy(c => c.Offset).ToList();
+        _children.Clear();
+        _children.AddRange(sorted);
+    }
 }
