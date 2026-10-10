@@ -8,12 +8,18 @@
  *
  *     cc -O1 -o minimp3_side_info minimp3_side_info.c -lm
  *
- * Per frame: the file offset, the bytes minimp3 has in its bit reservoir before the frame
- * (capped at 511), main_data_begin (-1 when minimp3 rejects the side information), and for
+ * Per Layer III frame: the file offset, the bytes minimp3 has in its bit reservoir before the
+ * frame (capped at 511), main_data_begin (-1 when minimp3 rejects the side information), and for
  * each granule and channel the fields minimp3 keeps as read. It rewrites a few fields, so those
  * are left out where they do not hold the coded value: region counts and table_select[2] with
  * window switching, subblock gains without it, preflag outside MPEG-1, and scfsi, which it only
  * holds for granule 1 of MPEG-1 streams without short blocks.
+ *
+ * Per Layer II frame, from minimp3's L12_read_scale_info: the number of subbands and of subbands
+ * coded per channel (the joint stereo bound), and per subband and channel the quantization
+ * minimp3 selected (its own class codes: 0 none, 2 to 16 for 2^code - 1 levels, 17 to 19 for
+ * grouped 3, 5 and 9 levels), scfsi, and the scalefactors as the floats minimp3 computes from
+ * them, printed exactly in hexadecimal.
  */
 #define MINIMP3_IMPLEMENTATION
 #include "minimp3.h"
@@ -63,6 +69,45 @@ static void dump_side_info(const uint8_t *hdr, int frame_bytes, int reservoir, l
     printf("}\n");
 }
 
+static void dump_scale_info(const uint8_t *hdr, int frame_bytes, long offset)
+{
+    bs_t bs;
+    L12_scale_info sci;
+    uint8_t bitalloc[64];
+    int i, j, k;
+
+    bs_init(&bs, hdr + HDR_SIZE, frame_bytes - HDR_SIZE);
+    if (HDR_IS_CRC(hdr))
+        get_bits(&bs, 16);
+    L12_read_scale_info(hdr, &bs, &sci);
+    /* minimp3 clears the second channel above the bound after reading; both channels share it. */
+    memcpy(bitalloc, sci.bitalloc, sizeof(bitalloc));
+    for (i = sci.stereo_bands; i < sci.total_bands && sci.stereo_bands; i++)
+        bitalloc[2*i + 1] = bitalloc[2*i];
+
+    printf("{\"offset\":%ld,\"layer\":%d,\"bands\":%d,\"bound\":%d,\"scale_info_bits\":%d,\"subbands\":[",
+           offset, 4 - HDR_GET_LAYER(hdr), sci.total_bands, sci.stereo_bands, bs.pos);
+    for (i = 0; i < sci.total_bands; i++)
+    {
+        printf("%s[", i ? "," : "");
+        for (j = 0; j < (HDR_IS_MONO(hdr) ? 1 : 2); j++)
+        {
+            int ba = bitalloc[2*i + j];
+            printf("%s{\"class\":%d", j ? "," : "", ba);
+            if (ba)
+            {
+                printf(",\"scfsi\":%d,\"scalefactors\":[", sci.scfcod[2*i + j]);
+                for (k = 0; k < 3; k++)
+                    printf("%s\"%a\"", k ? "," : "", (double)sci.scf[(2*i + j)*3 + k]);
+                printf("]");
+            }
+            printf("}");
+        }
+        printf("]");
+    }
+    printf("]}\n");
+}
+
 int main(int argc, char **argv)
 {
     static uint8_t data[64 << 20];
@@ -102,6 +147,8 @@ int main(int argc, char **argv)
         if (info.layer == 3)
             dump_side_info(next + info.frame_offset, info.frame_bytes - info.frame_offset, reservoir,
                            position + info.frame_offset);
+        else if (info.layer == 2)
+            dump_scale_info(next + info.frame_offset, info.frame_bytes - info.frame_offset, position + info.frame_offset);
         position += info.frame_bytes;
     }
     return 0;

@@ -80,13 +80,16 @@ jobs:
       - name: Regenerate the hand-built Layer III fixtures
         run: python3 scripts/fixtures/make_layer3_fixtures.py
 
+      - name: Regenerate the hand-built Layer II fixtures
+        run: python3 scripts/fixtures/make_layer2_fixtures.py
+
       - name: Fail if they differ from the committed files
         run: |
           git status --porcelain -- tests/fixtures
           test -z "$(git status --porcelain -- tests/fixtures)"
 
   mpeg-crosscheck:
-    name: MPEG fixtures agree with ffprobe, libmad, mpg123, minimp3 and mp3guessenc
+    name: MPEG fixtures agree with ffprobe, libmad, mpg123, minimp3, mctoolamed and mp3guessenc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -98,3 +101,14 @@ jobs:
 
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py
+
+      # ISO's licence does not allow redistributing the conformance streams, so they are fetched,
+      # checked against their SHA-256 and cached rather than committed.
+      - name: Cache the ISO conformance streams
+        uses: actions/cache@v4
+        with:
+          path: .cache/conformance
+          key: iso-13818-4-audio-${{ hashFiles('tests/conformance/mpeg2-audio.json') }}
+
+      - name: Check the conformance manifest against the ISO streams
+        run: python3 scripts/fixtures/conformance_mpeg_audio.py .cache/conformance

@@ -179,7 +179,8 @@ public class MpegFixtureTests
             }
         }
 
-        if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3))
+        // Layer II rows (with a "layer" property) hold allocation and scalefactors, not side information.
+        if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3) && !minimp3[0].TryGetProperty("layer", out _))
         {
             Dictionary<long, Node> byOffset = frames.ToDictionary(f => f.Offset);
             Assert.Equal(minimp3.GetArrayLength(), frames.Length);

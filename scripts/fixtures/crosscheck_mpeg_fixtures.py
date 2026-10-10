@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the MPEG fixtures' expected results against independent decoders.
 
-For every fixture in tests/fixtures/mpeg and tests/fixtures/layer3 whose manifest has
+For every fixture in tests/fixtures/mpeg, layer3 and layer2 whose manifest has
 "crosscheck": true, ffprobe must report exactly the frames the manifest lists (offset and length
 of each), and for protected frames libmad (madplay) must report a CRC failure for exactly the
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
@@ -10,11 +10,16 @@ decoded frames is compared instead, where ffmpeg resyncs differently or cannot r
 all (free format; libmad also skips the first frame of a LAME free-format stream, so mpg123 counts
 those).
 
-Layer III fixtures are checked whatever their "crosscheck" value:
+Layer II and III fixtures are checked whatever their "crosscheck" value:
 
 - "silent": ffmpeg, mpg123 and libmad (without dither) decode the file to all-zero samples and
-  report no error, which only happens when every granule's bits start and end where the side
-  information and the bit reservoir say.
+  report no error, which only happens when every granule's bits, or every Layer II allocation,
+  scalefactor and sample, start and end where the fixture says.
+- "scale_info" per Layer II frame: minimp3 reads exactly this allocation, scfsi and these
+  scalefactors.
+- "mctoolamed": the multichannel decoder decodes every channel to silence with exactly this many
+  multichannel CRC errors.
+- "mp3guessenc_multichannel": the multichannel parameters mp3guessenc prints.
 - "side_info" per frame: minimp3 reads exactly these values (minimp3_side_info.c), or rejects the
   frame where the manifest says it does. Its reservoir before each frame must match, except where
   minimp3 resets or discards it: after a gap, after a frame it rejects, and after a frame whose
@@ -26,8 +31,8 @@ External fixtures list their encoder settings instead of every frame; for them, 
 rate, channel count and bitrate must match those settings, and minimp3 and mp3guessenc must still
 report what the manifest recorded.
 
-Needs ffprobe, madplay, mpg123, mp3guessenc, curl and a C compiler on the PATH. Exits non-zero
-when anything disagrees.
+Needs ffprobe, madplay, mpg123, mp3guessenc, curl, make and a C compiler on the PATH. Exits
+non-zero when anything disagrees.
 """
 
 import json
@@ -36,10 +41,12 @@ import re
 import subprocess
 import sys
 
+import mctoolamed_tool
 import minimp3_tool
+from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3"]
+DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2"]
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
 GUESSENC_BLOCKS = {"Long block": "long", "Switch block": "switch", "Short block": "short", "Mixed block": "mixed"}
@@ -126,7 +133,7 @@ def decodes_to_silence(path):
     commands = {
         "ffmpeg": ["ffmpeg", "-v", "error", "-i", str(path), "-f", "s16le", "-"],
         "mpg123": ["mpg123", "-q", "-s", str(path)],
-        "madplay": ["madplay", "-q", "--no-dither", "-o", "raw:-", str(path)],
+        "madplay": ["madplay", "-q", "--no-dither", "--stereo", "-o", "raw:-", str(path)],
     }
     for name, command in commands.items():
         result = subprocess.run(command, capture_output=True)
@@ -160,10 +167,33 @@ def check_side_info(path, manifest, dumper):
     return problems
 
 
-def check(path, manifest, dumper):
+def check_scale_info(path, manifest, dumper):
+    """Layer II allocation, scfsi and scalefactors as minimp3 reads them; scalefactors as floats."""
+    rows = {row["offset"]: row for row in minimp3_tool.side_info(dumper, path)}
+    normal = lambda info: (info["bands"], info["bound"], info["scale_info_bits"], [
+        [{k: [float.fromhex(s) for s in v] if k == "scalefactors" else v for k, v in channel.items()} for channel in subband]
+        for subband in info["subbands"]])
+    problems = []
+    for frame in manifest["frames"]:
+        row = rows.get(frame["offset"])
+        if row is None or normal(row) != normal(frame["scale_info"]):
+            problems.append(f"minimp3 reads different allocation, scfsi or scalefactors at {frame['offset']}")
+    return problems
+
+
+def check(path, manifest, tools):
+    dumper, decoder = tools
     problems = []
     if manifest.get("silent"):
         problems += decodes_to_silence(path)
+    if manifest.get("frames") and "scale_info" in manifest["frames"][0]:
+        problems += check_scale_info(path, manifest, dumper)
+    if "mctoolamed" in manifest:
+        errors, silent, channels = mctoolamed_tool.decode(decoder, path)
+        if errors != manifest["mctoolamed"]["crc_errors"] or not silent:
+            problems.append(f"mctoolamed reports {errors} multichannel CRC errors, silent {silent}, {channels} channels")
+    if "mp3guessenc_multichannel" in manifest and guessenc_multichannel(path) != manifest["mp3guessenc_multichannel"]:
+        problems.append(f"mp3guessenc reports {guessenc_multichannel(path)}, the manifest {manifest['mp3guessenc_multichannel']}")
     if manifest.get("frames") and "side_info" in manifest["frames"][0]:
         problems += check_side_info(path, manifest, dumper)
     if "minimp3_side_info" in manifest and minimp3_tool.side_info(dumper, path) != manifest["minimp3_side_info"]:
@@ -228,14 +258,13 @@ def check(path, manifest, dumper):
 def main():
     failed = 0
     checked = 0
-    dumper = minimp3_tool.build()
+    tools = (minimp3_tool.build(), mctoolamed_tool.build())
     for manifest_path in sorted(p for directory in DIRECTORIES for p in directory.glob("*.expected.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         name = manifest_path.name[: -len(".expected.json")]
         path = next(p for p in manifest_path.parent.glob(name + ".*") if not p.name.endswith(".json"))
-        problems = check(path, manifest, dumper)
-        checked += bool(manifest.get("crosscheck") or manifest.get("silent") or "mp3guessenc" in manifest
-                        or (manifest.get("frames") and "side_info" in manifest["frames"][0]))
+        problems = check(path, manifest, tools)
+        checked += 1
         for problem in problems:
             failed += 1
             print(f"{path.name}: {problem}")

@@ -16,7 +16,8 @@ count mpg123 decodes instead.
 For Layer III, the manifest also records the side information of every frame as minimp3 reads it
 ("minimp3_side_info", see minimp3_side_info.c), and the statistics mp3guessenc prints about the
 stream ("mp3guessenc": block usage, stereo modes, global gain, the largest main_data_begin,
-ancillary data, scalefactor scaling and scfsi), both from frames that are not the Info frame.
+ancillary data, scalefactor scaling and scfsi), both from frames that are not the Info frame. For
+Layer II, "minimp3_side_info" holds every frame's allocation, scfsi and scalefactors.
 
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
@@ -146,8 +147,9 @@ def main():
                 manifest["mpg123_frames"] = mpg123_frame_count(path, 1152, channels)
             else:
                 manifest["ffprobe_frames"] = ffprobe_frames(path)
-            if settings["layer"] == 3:
+            if settings["layer"] in (2, 3):
                 manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
+            if settings["layer"] == 3:
                 manifest["mp3guessenc"] = guessenc_summary(path)
 
             text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
