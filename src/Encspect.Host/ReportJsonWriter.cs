@@ -89,10 +89,11 @@ public static class ReportJsonWriter
         writer.WriteNumber("offset", node.Offset);
         writer.WriteNumber("length", node.Length);
 
-        if (node.Children.Count > 0)
+        IReadOnlyList<Node> children = node.Children;
+        if (children.Count > 0)
         {
             writer.WriteStartArray("children");
-            foreach (Node child in node.Children)
+            foreach (Node child in children)
             {
                 WriteNode(writer, child);
             }

@@ -6,7 +6,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-Core abstractions, host, CLI and the tag parsers: ID3v1 (with ID3v1.1 and the Enhanced TAG), ID3v2.2, 2.3 and 2.4, APEv1 and APEv2, and Lyrics3 v1 and v2. The host finds tags by position and structure, never by signature alone (see the plan). The MPEG audio parser reads MP1, MP2 and MP3 at frame-header level: sync and resync, every header field, free format, and CRC-16 for Layers I and III. Next in the first milestone: Layer III side info, the Xing, Info, LAME and VBRI headers, and statistics. The plan is in [docs/PLAN.md](docs/PLAN.md).
+Core abstractions, host, CLI and the tag parsers: ID3v1 (with ID3v1.1 and the Enhanced TAG), ID3v2.2, 2.3 and 2.4, APEv1 and APEv2, and Lyrics3 v1 and v2. The host finds tags by position and structure, never by signature alone (see the plan). The MPEG audio parser reads MP1, MP2 and MP3 frames: sync and resync, every header field, free format, CRC-16 for Layers I and III, and for Layer III the side information of every granule and the bit reservoir, with each frame's bytes split into its own main data, other frames' main data and ancillary data. Next in the first milestone: Layer II allocation and MPEG-2 multichannel, the Xing, Info, LAME and VBRI headers, and statistics. The plan is in [docs/PLAN.md](docs/PLAN.md).
 
 ## Development
 
@@ -18,7 +18,7 @@ dotnet run -c Release --project src/Encspect.Cli -- --offsets file.mp3
 
 The CLI prints a text tree by default. `--json` writes one JSON array of reports, `--ndjson` one compact report per line (newline-delimited JSON), which stays usable line by line if a long run stops early. Reports are written as each file is analyzed.
 
-Tag fixtures live in `tests/fixtures/tags`. `scripts/fixtures/make_tag_fixtures.py` writes the hand-built ones (CI checks they are reproducible) and `scripts/fixtures/make_external_tag_fixtures.py` the ones written by mutagen and ffmpeg. MPEG fixtures live in `tests/fixtures/mpeg`, written by `make_mpeg_fixtures.py` (hand-built, reproducible in CI) and `make_external_mpeg_fixtures.py` (LAME and TwoLAME); `crosscheck_mpeg_fixtures.py` confirms their manifests with ffprobe, madplay and mpg123. Golden reports (`*.report.json`) are compared on every test run; after an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
+Tag fixtures live in `tests/fixtures/tags`. `scripts/fixtures/make_tag_fixtures.py` writes the hand-built ones (CI checks they are reproducible) and `scripts/fixtures/make_external_tag_fixtures.py` the ones written by mutagen and ffmpeg. MPEG fixtures live in `tests/fixtures/mpeg`, written by `make_mpeg_fixtures.py` (hand-built, reproducible in CI) and `make_external_mpeg_fixtures.py` (LAME and TwoLAME), and Layer III side-information and bit-reservoir fixtures in `tests/fixtures/layer3`, written by `make_layer3_fixtures.py`; `crosscheck_mpeg_fixtures.py` confirms their manifests with ffprobe, madplay, mpg123, minimp3 and mp3guessenc. Golden reports (`*.report.json`) are compared on every test run; after an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 
 ## Planned stack
 

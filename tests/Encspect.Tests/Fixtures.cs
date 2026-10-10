@@ -9,30 +9,37 @@ internal static class Fixtures
 {
     public static string TagDirectory { get; } = Path.Combine(FindRepositoryRoot(), "tests", "fixtures", "tags");
 
-    public static string MpegDirectory { get; } = Path.Combine(FindRepositoryRoot(), "tests", "fixtures", "mpeg");
+    public static string FixtureDirectory { get; } = Path.Combine(FindRepositoryRoot(), "tests", "fixtures");
 
-    // File names (with extension) of the MPEG audio fixtures.
+    // Paths relative to tests/fixtures of the MPEG audio fixtures and the Layer III fixtures.
     public static TheoryData<string> MpegFixtures()
     {
         var data = new TheoryData<string>();
-        foreach (string path in Directory.EnumerateFiles(MpegDirectory).Where(p => p.EndsWith(".mp1", StringComparison.Ordinal) || p.EndsWith(".mp2", StringComparison.Ordinal) || p.EndsWith(".mp3", StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        string[] extensions = [".mp1", ".mp2", ".mp3"];
+        foreach (string directory in new[] { "mpeg", "layer3" })
         {
-            data.Add(Path.GetFileName(path));
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(FixtureDirectory, directory))
+                .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
+            {
+                data.Add($"{directory}/{Path.GetFileName(path)}");
+            }
         }
 
         return data;
     }
 
-    public static Report AnalyzeMpeg(string fileName)
+    public static Report AnalyzeMpeg(string name)
     {
-        using FileStream stream = File.OpenRead(Path.Combine(MpegDirectory, fileName));
-        return Analyzer.CreateDefault().Analyze(fileName, stream);
+        using FileStream stream = File.OpenRead(Path.Combine(FixtureDirectory, name));
+        return Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream);
     }
 
-    public static JsonElement LoadMpegManifest(string fileName)
+    public static string MpegCompanion(string name, string suffix) =>
+        Path.Combine(FixtureDirectory, Path.GetDirectoryName(name)!, Path.GetFileNameWithoutExtension(name) + suffix);
+
+    public static JsonElement LoadMpegManifest(string name)
     {
-        string path = Path.Combine(MpegDirectory, Path.GetFileNameWithoutExtension(fileName) + ".expected.json");
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(MpegCompanion(name, ".expected.json")));
         return document.RootElement.Clone();
     }
 

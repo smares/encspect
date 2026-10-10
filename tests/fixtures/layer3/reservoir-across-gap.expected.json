@@ -1,0 +1,1927 @@
+{
+ "description": "The reservoir chain with 40 bytes of junk between frames 3 and 4: frame 4's main data lies in frame 3, across the junk. ffmpeg keeps the reservoir across the gap, minimp3 and libmad empty it. Four frames come first, because two frames before junk are not a chain.",
+ "length": 5055,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 5055
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "0 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "199 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "49",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "199 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "49",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "199 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "49",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "200 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "50",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "0 bytes"
+   },
+   "reservoir": 0,
+   "side_info": {
+    "main_data_begin": 0,
+    "granules": [
+     {
+      "part2_3_length": 199,
+      "big_values": 49,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 199,
+      "big_values": 49,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 199,
+      "big_values": 49,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 200,
+      "big_values": 50,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 100,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 36,
+     "length": 100,
+     "value": "100 bytes"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 136,
+     "length": 81,
+     "value": "81 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 217,
+     "length": 200,
+     "value": "200 bytes of the main data of the frame at 0x1A1"
+    }
+   ]
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "200 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "149",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "149",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "149",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "600 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "150",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "281 bytes"
+   },
+   "reservoir": 281,
+   "side_info": {
+    "main_data_begin": 200,
+    "granules": [
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 600,
+      "big_values": 150,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 300,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 453,
+     "length": 100,
+     "value": "300 bytes, 200 of them in earlier frames"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 553,
+     "length": 282,
+     "value": "282 bytes of the main data of the frame at 0x343"
+    }
+   ]
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "282 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "279",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "279",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "279",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "1120 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "280",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "282 bytes"
+   },
+   "reservoir": 282,
+   "side_info": {
+    "main_data_begin": 282,
+    "granules": [
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 1120,
+      "big_values": 280,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 560,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 871,
+     "length": 278,
+     "value": "560 bytes, 282 of them in earlier frames"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 1149,
+     "length": 104,
+     "value": "104 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "0 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "99 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "24",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "99 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "24",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "99 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "24",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "100 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "25",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "104 bytes"
+   },
+   "reservoir": 104,
+   "side_info": {
+    "main_data_begin": 0,
+    "granules": [
+     {
+      "part2_3_length": 99,
+      "big_values": 24,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 99,
+      "big_values": 24,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 99,
+      "big_values": 24,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 100,
+      "big_values": 25,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 50,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 1289,
+     "length": 50,
+     "value": "50 bytes"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 1339,
+     "length": 32,
+     "value": "32 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 1371,
+     "length": 20,
+     "value": "20 bytes of the main data of the frame at 0x6AF"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 1391,
+     "length": 162,
+     "value": "162 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 1553,
+     "length": 10,
+     "value": "10 bytes of the main data of the frame at 0x851"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 1563,
+     "length": 108,
+     "value": "108 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 1711,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "300 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "39 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "9",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "39 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "9",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "39 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "9",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "40 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "10",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "332 bytes"
+   },
+   "reservoir": 332,
+   "side_info": {
+    "main_data_begin": 300,
+    "granules": [
+     {
+      "part2_3_length": 39,
+      "big_values": 9,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 39,
+      "big_values": 9,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 39,
+      "big_values": 9,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 40,
+      "big_values": 10,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 20,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 1747,
+     "length": 0,
+     "value": "20 bytes, 20 of them in earlier frames"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 1747,
+     "length": 253,
+     "value": "253 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 2000,
+     "length": 129,
+     "value": "129 bytes of the main data of the frame at 0x9F3"
+    }
+   ]
+  },
+  {
+   "offset": 2129,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "500 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "19 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "4",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "19 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "4",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "19 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "4",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "20 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "5",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "511 bytes"
+   },
+   "reservoir": 662,
+   "side_info": {
+    "main_data_begin": 500,
+    "granules": [
+     {
+      "part2_3_length": 19,
+      "big_values": 4,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 19,
+      "big_values": 4,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 19,
+      "big_values": 4,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 20,
+      "big_values": 5,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 10,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 2165,
+     "length": 0,
+     "value": "10 bytes, 10 of them in earlier frames"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 2165,
+     "length": 382,
+     "value": "382 bytes of the main data of the frame at 0x9F3"
+    }
+   ]
+  },
+  {
+   "offset": 2547,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "511 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "279",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "279",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "1119 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "279",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "1120 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "280",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "511 bytes"
+   },
+   "reservoir": 872,
+   "side_info": {
+    "main_data_begin": 511,
+    "granules": [
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 1119,
+      "big_values": 279,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 1120,
+      "big_values": 280,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 560,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 2583,
+     "length": 49,
+     "value": "560 bytes, 511 of them in earlier frames"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 2632,
+     "length": 333,
+     "value": "333 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 2965,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "0 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "763 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "190",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "763 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "190",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "763 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "190",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "764 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "191",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "333 bytes"
+   },
+   "reservoir": 333,
+   "side_info": {
+    "main_data_begin": 0,
+    "granules": [
+     {
+      "part2_3_length": 763,
+      "big_values": 190,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 763,
+      "big_values": 190,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 763,
+      "big_values": 190,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 764,
+      "big_values": 191,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 382,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 3001,
+     "length": 382,
+     "value": "382 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 3383,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "0 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "0 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "0",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "0 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "0",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "0 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "0",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "0 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "0",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "0 bytes"
+   },
+   "reservoir": 0,
+   "side_info": {
+    "main_data_begin": 0,
+    "granules": [
+     {
+      "part2_3_length": 0,
+      "big_values": 0,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 0,
+      "big_values": 0,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 0,
+      "big_values": 0,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 0,
+      "big_values": 0,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 0,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 3419,
+     "length": 0,
+     "value": "0 bytes"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 3419,
+     "length": 1,
+     "value": "1 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 3420,
+     "length": 300,
+     "value": "300 bytes of the main data of the frame at 0xED9"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 3720,
+     "length": 81,
+     "value": "81 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 3801,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "381 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "149",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "149",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "599 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "149",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "600 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "150",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "382 bytes"
+   },
+   "reservoir": 382,
+   "side_info": {
+    "main_data_begin": 381,
+    "granules": [
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 599,
+      "big_values": 149,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 600,
+      "big_values": 150,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 300,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 3837,
+     "length": 0,
+     "value": "300 bytes, 300 of them in earlier frames"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 3837,
+     "length": 301,
+     "value": "301 bytes"
+    },
+    {
+     "name": "Bit Reservoir",
+     "offset": 4138,
+     "length": 81,
+     "value": "81 bytes of the main data of the frame at 0x107B"
+    }
+   ]
+  },
+  {
+   "offset": 4219,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "81 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "399 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "99",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "399 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "99",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "399 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "99",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "400 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "100",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "463 bytes"
+   },
+   "reservoir": 463,
+   "side_info": {
+    "main_data_begin": 81,
+    "granules": [
+     {
+      "part2_3_length": 399,
+      "big_values": 99,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 399,
+      "big_values": 99,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 399,
+      "big_values": 99,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 400,
+      "big_values": 100,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 200,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 4255,
+     "length": 119,
+     "value": "200 bytes, 81 of them in earlier frames"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 4374,
+     "length": 263,
+     "value": "263 bytes"
+    }
+   ]
+  },
+  {
+   "offset": 4637,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "Side Info/Main Data Begin": "0 bytes",
+    "Side Info/Private Bits": "0",
+    "Side Info/SCFSI/Channel 0": "0000",
+    "Side Info/SCFSI/Channel 1": "0000",
+    "Side Info/Granule 0/Channel 0/Part 2 and 3 Length": "79 bits",
+    "Side Info/Granule 0/Channel 0/Big Values": "19",
+    "Side Info/Granule 0/Channel 0/Global Gain": "150",
+    "Side Info/Granule 0/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 0/Channel 1/Part 2 and 3 Length": "79 bits",
+    "Side Info/Granule 0/Channel 1/Big Values": "19",
+    "Side Info/Granule 0/Channel 1/Global Gain": "151",
+    "Side Info/Granule 0/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 0/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 0/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 0/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 0/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 0/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 0/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 0/Channel 1/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 0/Part 2 and 3 Length": "79 bits",
+    "Side Info/Granule 1/Channel 0/Big Values": "19",
+    "Side Info/Granule 1/Channel 0/Global Gain": "152",
+    "Side Info/Granule 1/Channel 0/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 0/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 0/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 0/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 0/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 0/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 0/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 0/Count1 Table": "A",
+    "Side Info/Granule 1/Channel 1/Part 2 and 3 Length": "80 bits",
+    "Side Info/Granule 1/Channel 1/Big Values": "20",
+    "Side Info/Granule 1/Channel 1/Global Gain": "153",
+    "Side Info/Granule 1/Channel 1/Scalefactor Compress": "0",
+    "Side Info/Granule 1/Channel 1/Block Type": "Normal",
+    "Side Info/Granule 1/Channel 1/Table Select": "24, 25, 31",
+    "Side Info/Granule 1/Channel 1/Region 0 Count": "7",
+    "Side Info/Granule 1/Channel 1/Region 1 Count": "7",
+    "Side Info/Granule 1/Channel 1/HasPreflag": "false",
+    "Side Info/Granule 1/Channel 1/HasCoarseScalefactors": "false",
+    "Side Info/Granule 1/Channel 1/Count1 Table": "A",
+    "Side Info/Reservoir Fill": "263 bytes"
+   },
+   "reservoir": 263,
+   "side_info": {
+    "main_data_begin": 0,
+    "granules": [
+     {
+      "part2_3_length": 79,
+      "big_values": 19,
+      "global_gain": 150,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 79,
+      "big_values": 19,
+      "global_gain": 151,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0
+     },
+     {
+      "part2_3_length": 79,
+      "big_values": 19,
+      "global_gain": 152,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     },
+     {
+      "part2_3_length": 80,
+      "big_values": 20,
+      "global_gain": 153,
+      "scalefac_compress": 0,
+      "block_type": 0,
+      "scalefac_scale": 0,
+      "count1_table": 0,
+      "table_select": [
+       24,
+       25,
+       31
+      ],
+      "region0_count": 7,
+      "region1_count": 7,
+      "preflag": 0,
+      "scfsi": 0
+     }
+    ]
+   },
+   "main_data_length": 40,
+   "data": [
+    {
+     "name": "Main Data",
+     "offset": 4673,
+     "length": 40,
+     "value": "40 bytes"
+    },
+    {
+     "name": "Ancillary Data",
+     "offset": 4713,
+     "length": 342,
+     "value": "342 bytes"
+    }
+   ]
+  }
+ ],
+ "gaps": [
+  {
+   "offset": 1671,
+   "length": 40
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.sync-lost",
+   "contains": "40 bytes"
+  },
+  {
+   "code": "mpeg.reservoir-across-gap",
+   "contains": "0x6AF"
+  }
+ ],
+ "silent": false
+}
