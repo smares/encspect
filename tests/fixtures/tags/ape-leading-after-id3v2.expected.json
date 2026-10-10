@@ -1,0 +1,33 @@
+{
+  "description": "ID3v2.3 tag, then an APEv2 tag with a header, at the start of the file.",
+  "length": 670,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "ID3 Title"
+      },
+      "offset": 0,
+      "length": 46
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "APE Title",
+        "Items/Artist/Value": "APE Artist"
+      },
+      "offset": 46,
+      "length": 112
+    },
+    {
+      "name": "Data",
+      "offset": 158,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,17 @@
+{
+  "description": "An APETAGEX block with version 1000 at the start of the file: APEv1 has no header, so no tag starts there.",
+  "length": 432,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 432
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "APEv1"
+    }
+  ]
+}

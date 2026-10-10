@@ -1,0 +1,33 @@
+{
+  "description": "APEv1 tag whose footer and item set flags. APEv1 defines none: they are reported and ignored, so the item stays text.",
+  "length": 565,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "1.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "Flagged",
+        "Items/Title/Flags/Item Type": "Text",
+        "Items/Title/Flags/IsReadOnly": "false"
+      },
+      "offset": 512,
+      "length": 53
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.v1-flags",
+      "contains": "footer sets flags 0x80000000"
+    },
+    {
+      "code": "ape.v1-flags",
+      "contains": "Item \"Title\" sets flags 0x00000003"
+    }
+  ]
+}

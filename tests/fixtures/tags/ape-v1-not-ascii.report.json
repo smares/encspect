@@ -1,0 +1,210 @@
+[
+  {
+    "source": "ape-v1-not-ascii.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 588,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "APE",
+          "value": "1.0",
+          "offset": 512,
+          "length": 76,
+          "children": [
+            {
+              "name": "Items",
+              "value": "2 items",
+              "offset": 512,
+              "length": 44,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "Caf\u00E9",
+                  "offset": 512,
+                  "length": 18,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "4",
+                      "offset": 512,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 516,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 516,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 516,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 520,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Caf\u00E9",
+                      "offset": 526,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Artist",
+                  "value": "\u00DCn\u00EFc\u00F6d\u00E9",
+                  "offset": 530,
+                  "length": 26,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "11",
+                      "offset": 530,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 534,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 534,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 534,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Artist",
+                      "offset": 538,
+                      "length": 6
+                    },
+                    {
+                      "name": "Value",
+                      "value": "\u00DCn\u00EFc\u00F6d\u00E9",
+                      "offset": 545,
+                      "length": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 556,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 556,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "1000",
+                  "offset": 564,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "76",
+                  "offset": 568,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "2",
+                  "offset": 572,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00000000",
+                  "offset": 576,
+                  "length": 4
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 580,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 76,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 1000 and a size that fits the file",
+                  "offset": 556,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "2 items end exactly where the size says",
+                  "offset": 512,
+                  "length": 44
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Info",
+        "code": "ape.v1-not-ascii",
+        "message": "The APEv1 value of item \u0022Title\u0022 is not ASCII; it is read as ISO-8859-1.",
+        "offset": 512,
+        "length": 18
+      },
+      {
+        "severity": "Info",
+        "code": "ape.v1-not-ascii",
+        "message": "The APEv1 value of item \u0022Artist\u0022 is not ASCII; it is read as UTF-8.",
+        "offset": 530,
+        "length": 26
+      }
+    ]
+  }
+]

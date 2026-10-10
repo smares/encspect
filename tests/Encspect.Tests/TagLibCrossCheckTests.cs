@@ -24,6 +24,11 @@ public class TagLibCrossCheckTests
         ("id3v24-plain-frame-sizes", "TIT2[0] text", "TagLib# reads the non-syncsafe size as syncsafe and cuts TIT2 short; mutagen 1.47 agrees with Encspect."),
         ("id3v24-plain-frame-sizes", "frame count", "TagLib# loses TPE1 after misreading the TIT2 size; mutagen 1.47 finds both frames."),
         ("id3v2-unknown-flags", "ID3v2:", "TagLib# (and mutagen 1.47) refuse an ID3v2 tag with undefined header flags; Encspect reports the tag with a finding."),
+        ("ape-v1-flags", "APE Title", "TagLib# applies APEv2 item flags to an APEv1 item; APEv1 flags are \"ignored on reading\" per the specification."),
+        ("ape-v1-not-ascii", "APE Title value", "TagLib# reads every APE value as UTF-8; Encspect reads APEv1 values that are not valid UTF-8 as ISO-8859-1, with a finding."),
+        ("ape-v1-zero-byte", "APE Title value", "TagLib# splits an APEv1 value at $00 into a list, which only APEv2 defines; mutagen 1.47 keeps one value, as Encspect does."),
+        ("ape-leading-header-only", "TagLib# fails", "TagLib# throws on a header-only APE tag at the start of the file; mutagen 1.47 reads the same items as Encspect."),
+        ("ape-leading-v1-block", "TagLib# fails", "TagLib# throws on an APEv1 block at the start of the file; Encspect rejects it with a finding."),
         ("ape-size-too-large", "TagLib# fails", "TagLib# seeks before the start of the file and throws; Encspect rejects the candidate with a finding."),
         ("stack-id3v2-ape-lyrics3-id3v1", "APE:", LyricsStack),
         ("stack-id3v2-ape-id3v1-lyrics3", "APE:", LyricsStack),
@@ -66,7 +71,7 @@ public class TagLibCrossCheckTests
         {
             file = TagLib.File.Create(Fixtures.PathOf(name, ".mp3"), "taglib/mp3", ReadStyle.None);
         }
-        catch (Exception ex) when (ex is CorruptFileException or IOException)
+        catch (Exception ex) when (ex is CorruptFileException or IOException or ArgumentOutOfRangeException)
         {
             differences.Add($"TagLib# fails on the file: {ex.Message}");
             return differences;

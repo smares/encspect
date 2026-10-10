@@ -1,0 +1,157 @@
+[
+  {
+    "source": "ape-v1-zero-byte.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 565,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "APE",
+          "value": "1.0",
+          "offset": 512,
+          "length": 53,
+          "children": [
+            {
+              "name": "Items",
+              "value": "1 items",
+              "offset": 512,
+              "length": 21,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "One\u0000Two",
+                  "offset": 512,
+                  "length": 21,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "7",
+                      "offset": 512,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 516,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 516,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 516,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 520,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "One\u0000Two",
+                      "offset": 526,
+                      "length": 7
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 533,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 533,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "1000",
+                  "offset": 541,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "53",
+                  "offset": 545,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "1",
+                  "offset": 549,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00000000",
+                  "offset": 553,
+                  "length": 4
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 557,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 53,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 1000 and a size that fits the file",
+                  "offset": 533,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 items end exactly where the size says",
+                  "offset": 512,
+                  "length": 21
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Info",
+        "code": "ape.v1-zero-byte",
+        "message": "The APEv1 value of item \u0022Title\u0022 contains a $00 byte; APEv1 has no value lists, so it is kept as one value.",
+        "offset": 526,
+        "length": 7
+      }
+    ]
+  }
+]

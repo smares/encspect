@@ -254,13 +254,17 @@ def ape_item(key, value, item_type=APE_TEXT, read_only=False):
     return struct.pack("<II", len(value), flags) + key.encode("ascii") + b"\x00" + value
 
 
-def ape_tag(items, version=2000, header=True, footer_overrides=None, header_overrides=None):
-    """APE tag: optional header, items, footer (APEv2 specification, "APE Tag Header/Footer")."""
-    body = b"".join(items)
-    size = len(body) + 32
+def ape_tag(items, version=2000, header=True, footer=True, footer_overrides=None, header_overrides=None, item_bytes=None):
+    """APE tag: optional header, items, optional footer (APEv2 specification, "APE Tag Header/Footer").
+
+    The size covers the items and the footer if there is one, never the header. A tag without a
+    footer is only valid at the start of a file, with a header.
+    """
+    body = b"".join(items) if item_bytes is None else item_bytes
+    size = len(body) + (32 if footer else 0)
     count = len(items)
     has_header = header and version == 2000
-    base_flags = (1 << 31) if has_header else 0
+    base_flags = ((1 << 31) if has_header else 0) | (0 if footer else (1 << 30))
 
     def block(is_header, overrides):
         fields = {
@@ -272,10 +276,16 @@ def ape_tag(items, version=2000, header=True, footer_overrides=None, header_over
         fields.update(overrides or {})
         return b"APETAGEX" + struct.pack("<IIII", fields["version"], fields["size"], fields["count"], fields["flags"]) + b"\x00" * 8
 
-    tag = body + block(False, footer_overrides)
+    tag = body
+    if footer:
+        tag += block(False, footer_overrides)
     if has_header:
         tag = block(True, header_overrides) + tag
     return tag
+
+
+def raw_ape_item(key, value_bytes, flags=0):
+    return struct.pack("<II", len(value_bytes), flags) + key.encode("ascii") + b"\x00" + value_bytes
 
 
 # --- Lyrics3 ----------------------------------------------------------------------------------
@@ -882,6 +892,128 @@ def ape_v1():
 
 
 @fixture
+def ape_v1_flags():
+    f = Fixture(
+        "ape-v1-flags",
+        "APEv1 tag whose footer and item set flags. APEv1 defines none: they are reported and ignored, so the item stays text.",
+    )
+    f.audio()
+    items = [raw_ape_item("Title", b"Flagged", flags=0x00000003)]
+    tag = ape_tag(items, version=1000, item_bytes=b"".join(items), footer_overrides={"flags": 0x80000000})
+    f.tag("APE", "1.0", tag, "High", {"Items/Title/Value": "Flagged", "Items/Title/Flags/Item Type": "Text", "Items/Title/Flags/IsReadOnly": "false"})
+    f.finding("ape.v1-flags", "footer sets flags 0x80000000")
+    f.finding("ape.v1-flags", "Item \"Title\" sets flags 0x00000003")
+    return f
+
+
+@fixture
+def ape_v1_not_ascii():
+    f = Fixture(
+        "ape-v1-not-ascii",
+        "APEv1 values that are not ASCII: one in ISO-8859-1 (as Windows writers produced), one in UTF-8. Both are read and reported.",
+    )
+    f.audio()
+    items = [raw_ape_item("Title", "Café".encode("latin-1")), raw_ape_item("Artist", "Ünïcödé".encode("utf-8"))]
+    f.tag("APE", "1.0", ape_tag(items, version=1000), "High", {"Items/Title/Value": "Café", "Items/Artist/Value": "Ünïcödé"})
+    f.finding("ape.v1-not-ascii", "ISO-8859-1")
+    f.finding("ape.v1-not-ascii", "UTF-8")
+    return f
+
+
+@fixture
+def ape_v1_zero_byte():
+    f = Fixture("ape-v1-zero-byte", "APEv1 value with a $00 byte: APEv1 has no value lists, so it stays one value, with a finding.")
+    f.audio()
+    items = [raw_ape_item("Title", b"One\x00Two")]
+    f.tag("APE", "1.0", ape_tag(items, version=1000), "High", {"Items/Title/Value": ["One\x00Two"]})
+    f.finding("ape.v1-zero-byte", "$00")
+    return f
+
+
+@fixture
+def ape_v2_undefined_flags():
+    f = Fixture("ape-v2-undefined-flags", "APEv2 tag whose header, footer and one item set undefined flag bits: kept, with findings.")
+    f.audio()
+    items = [raw_ape_item("Title", b"Odd Flags", flags=0x00000010)]
+    tag = ape_tag(items, item_bytes=b"".join(items), header_overrides={"flags": 0xA0000020}, footer_overrides={"flags": 0x80000020})
+    f.tag("APE", "2.0", tag, "Medium", {"Items/Title/Value": "Odd Flags"})
+    f.finding("ape.flags-unknown", "header sets undefined flag bits 0x00000020")
+    f.finding("ape.flags-unknown", "footer sets undefined flag bits 0x00000020")
+    f.finding("ape.item-flags-unknown", "0x00000010")
+    return f
+
+
+@fixture
+def ape_leading():
+    f = Fixture("ape-leading", "APEv2 tag with header and footer at the start of the file, found through its header.")
+    f.tag("APE", "2.0", basic_ape(), "High", dict(BASIC_APE_FIELDS, **{"Header/Flags/IsHeader": "true", "Footer/Flags/IsHeader": "false"}))
+    f.audio()
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def ape_leading_header_only():
+    f = Fixture(
+        "ape-leading-header-only",
+        "APEv2 tag at the start of the file with a header and no footer; its size covers only the items.",
+    )
+    tag = ape_tag([ape_item("Title", "Header Only"), ape_item("Album", "Start")], footer=False)
+    f.tag("APE", "2.0", tag, "High", {"Items/Title/Value": "Header Only", "Header/Flags/HasFooter": "false", "Header/Tag Size": str(len(tag) - 32)})
+    f.audio()
+    return f
+
+
+@fixture
+def ape_leading_after_id3v2():
+    f = Fixture("ape-leading-after-id3v2", "ID3v2.3 tag, then an APEv2 tag with a header, at the start of the file.")
+    f.tag("ID3v2", "2.3.0", basic_id3v23(), "High", BASIC_ID3V23_FIELDS)
+    f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
+    f.audio()
+    return f
+
+
+@fixture
+def ape_leading_whole_file():
+    f = Fixture(
+        "ape-leading-whole-file",
+        "A file that is one APEv2 tag with header and footer: found through its header, and found again through its footer "
+        "without being reported twice.",
+    )
+    f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
+    f.finding("layout.tags-only", "")
+    return f
+
+
+@fixture
+def ape_leading_footer_mismatch():
+    f = Fixture("ape-leading-footer-mismatch", "Leading APEv2 tag whose footer declares a different item count than the header: kept, with a finding.")
+    f.tag("APE", "2.0", ape_tag([ape_item("Title", "Mismatch")], footer_overrides={"count": 3}), "Medium", {"Items/Title/Value": "Mismatch"})
+    f.audio()
+    f.finding("ape.footer-mismatch", "item count 3 vs 1")
+    return f
+
+
+@fixture
+def ape_leading_truncated():
+    f = Fixture("ape-leading-truncated", "Leading APEv2 header declaring more bytes than the file has: kept up to EOF, with an error.")
+    tag = ape_tag([ape_item("Title", "Cut")], header_overrides={"size": 5000})[:32 + 15]
+    f.tag("APE", "2.0", tag, "Low", {"Header/Tag Size": "5000"})
+    f.finding("ape.truncated", "5000")
+    f.finding("ape.items-invalid", "")
+    f.finding("layout.tags-only", "")
+    return f
+
+
+@fixture
+def ape_leading_v1_block():
+    f = Fixture("ape-leading-v1-block", "An APETAGEX block with version 1000 at the start of the file: APEv1 has no header, so no tag starts there.")
+    f.add(ape_tag([ape_item("Title", "Old")], version=1000)[-32:] + filler(400), {"name": "Data"})
+    f.finding("tag.rejected", "APEv1")
+    return f
+
+
+@fixture
 def ape_131_collision():
     f = Fixture(
         "ape-131-collision",
@@ -937,7 +1069,7 @@ def ape_items_overrun():
     second = ape_item("Album", "Two")
     tag = ape_tag([ape_item("Title", "One"), second], footer_overrides={"count": 1}, header=False)
     f.tag("APE", "2.0", tag, "Low", {"Items/Title/Value": "One", "Unparsed": f"{len(second)} bytes"})
-    f.finding("ape.items-invalid", "bytes before the footer")
+    f.finding("ape.items-invalid", "bytes before the end of the items")
     return f
 
 
