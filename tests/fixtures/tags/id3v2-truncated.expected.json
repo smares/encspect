@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.3 header that declares more bytes than the file has; the tag is clipped at EOF.",
+  "length": 24,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Low",
+      "fields": {
+        "TIT2/Text": "Cut",
+        "Header/Size": "5000"
+      },
+      "offset": 0,
+      "length": 24
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.truncated",
+      "contains": "5000"
+    },
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

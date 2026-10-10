@@ -1,0 +1,52 @@
+{
+  "description": "ID3v2.4 tag with UTF-8 and UTF-16BE text, multiple values, a data length indicator, per-frame unsynchronization and an extended header.",
+  "length": 817,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "Extended Header/Flags/IsUpdate": "true",
+        "Extended Header/Flags/HasCrc": "true",
+        "Extended Header/Flags/HasRestrictions": "true",
+        "Extended Header/CRC": "0xABCDEF12",
+        "Extended Header/Restrictions/Tag Size": "No more than 64 frames and 128 KB",
+        "Extended Header/Restrictions/Text Encoding": "ISO-8859-1 or UTF-8 only",
+        "Extended Header/Restrictions/Text Size": "No more than 128 characters",
+        "Extended Header/Restrictions/Image Encoding": "PNG or JPEG only",
+        "Extended Header/Restrictions/Image Size": "256x256 pixels or less",
+        "TIT2/Encoding": "UTF-8",
+        "TIT2/Text": "Ünïcödé Title",
+        "TPE1/Text": [
+          "Artist One",
+          "Artist Two"
+        ],
+        "TALB/Encoding": "UTF-16BE",
+        "TALB/Text": "UTF-16BE Album",
+        "TDRC/Text": "2024-05-01",
+        "TCON/Text": [
+          "Rock",
+          "Pop"
+        ],
+        "TXXX/Header/Flags/HasDataLengthIndicator": "true",
+        "TXXX/Header/Data Length": "30",
+        "TXXX/Description": "MusicBrainz Album Id",
+        "TXXX/Text": "0f0e0d0c",
+        "APIC/Header/Flags/IsUnsynchronized": "true",
+        "APIC/Description": "Front",
+        "APIC/Picture Data": "11 bytes",
+        "TCOP/Header/Flags/IsReadOnly": "true",
+        "Padding": "20 bytes"
+      },
+      "offset": 0,
+      "length": 305
+    },
+    {
+      "name": "Data",
+      "offset": 305,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

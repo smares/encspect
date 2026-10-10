@@ -1,0 +1,24 @@
+{
+  "description": "ID3v1.0 tag with every field filled, after untagged data.",
+  "length": 640,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Title",
+        "Comment": "Thirty character comment field",
+        "Genre": "13 (Pop)"
+      },
+      "offset": 512,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

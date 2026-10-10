@@ -1,0 +1,38 @@
+{
+  "description": "Lyrics3 v1 block before ID3v1.",
+  "length": 684,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Medium",
+      "fields": {
+        "Lyrics": "Some lyrics\r\nMore lyrics"
+      },
+      "offset": 512,
+      "length": 44
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 556,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,17 @@
+{
+  "description": "APEv2 tag whose header declares a different item count than the footer: rejected.",
+  "length": 486,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 486
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "header"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "description": "Two ID3v2 tags back to back at the start of the file.",
+  "length": 585,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "ID3 Title"
+      },
+      "offset": 0,
+      "length": 46
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Second"
+      },
+      "offset": 46,
+      "length": 27
+    },
+    {
+      "name": "Data",
+      "offset": 73,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

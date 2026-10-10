@@ -1,0 +1,45 @@
+{
+  "description": "Lyrics3 v2 tag with every field type before ID3v1.",
+  "length": 864,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "IND/HasLyrics": "true",
+        "IND/HasTimestamps": "true",
+        "IND/IsRandomSelectionInhibited": "false",
+        "LYR/Data": "[00:01]Timed line\r\n[00:05]Another",
+        "AUT/Data": "Lyrics Author",
+        "EAL/Data": "Extended Album Name",
+        "IMG/Data": "cover.jpg||00:00",
+        "Size": "209"
+      },
+      "offset": 512,
+      "length": 224
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 736,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

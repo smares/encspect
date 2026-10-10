@@ -1,0 +1,17 @@
+{
+  "description": "ID3v2.3 header with an undefined flag bit set: rejected.",
+  "length": 346,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 346
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "flag"
+    }
+  ]
+}

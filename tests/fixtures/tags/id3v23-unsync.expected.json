@@ -1,0 +1,29 @@
+{
+  "description": "ID3v2.3 tag with tag-level unsynchronization and an extended header with CRC; the APIC data contains $FF $E0 and $FF $00.",
+  "length": 642,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "Header/Flags/IsUnsynchronized": "true",
+        "Header/Flags/HasExtendedHeader": "true",
+        "Extended Header/Padding Size": "8",
+        "Extended Header/CRC": "0x12345678",
+        "TIT2/Text": "Unsynchronized",
+        "APIC/Picture Data": "13 bytes",
+        "TPE1/Text": "ÿÿ Artist",
+        "Padding": "8 bytes"
+      },
+      "offset": 0,
+      "length": 130
+    },
+    {
+      "name": "Data",
+      "offset": 130,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,35 @@
+{
+  "description": "ID3v2.3 and ID3v1 written by the ffmpeg 6.1 MP3 muxer.",
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "offset": 0,
+      "fields": {
+        "TIT2/Text": "FFmpeg Title",
+        "TPE1/Text": "FFmpeg Artist",
+        "TALB/Text": "FFmpeg Album",
+        "TRCK/Text": "4",
+        "TYER/Text": "2019"
+      }
+    },
+    {
+      "name": "Data"
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "length": 128,
+      "fields": {
+        "Title": "FFmpeg Title",
+        "Artist": "FFmpeg Artist",
+        "Album": "FFmpeg Album",
+        "Year": "2019",
+        "Track": "4"
+      }
+    }
+  ],
+  "findings": []
+}

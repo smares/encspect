@@ -1,0 +1,17 @@
+{
+  "description": "APEv2 footer whose item count does not match the items: items do not end at the footer, rejected.",
+  "length": 466,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 466
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "items"
+    }
+  ]
+}

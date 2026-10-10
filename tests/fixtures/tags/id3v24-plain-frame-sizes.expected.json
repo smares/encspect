@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 tag whose frame size is written as a plain 32-bit integer (an old iTunes bug); the byte $80 cannot be syncsafe.",
+  "length": 749,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "TPE1/Text": "After"
+      },
+      "offset": 0,
+      "length": 237
+    },
+    {
+      "name": "Data",
+      "offset": 237,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-size-not-syncsafe",
+      "contains": "TIT2"
+    }
+  ]
+}

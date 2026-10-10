@@ -1,0 +1,28 @@
+{
+  "description": "TAG at EOF-128 followed by binary data: still an ID3v1 tag by position, but low confidence.",
+  "length": 640,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Low",
+      "offset": 512,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v1.not-text",
+      "contains": "Title"
+    },
+    {
+      "code": "id3v1.year-not-numeric",
+      "contains": "[\\]^"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 tag where garbage follows the first frame: the tag keeps its declared size, the rest is reported as unparsed.",
+  "length": 549,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Good",
+        "Unparsed": "12 bytes"
+      },
+      "offset": 0,
+      "length": 37
+    },
+    {
+      "name": "Data",
+      "offset": 37,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-id-invalid",
+      "contains": "t!t2"
+    }
+  ]
+}

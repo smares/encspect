@@ -1,0 +1,52 @@
+{
+  "description": "APEv2 tag with header, text, multi-value, binary, external and read-only items, before ID3v1.",
+  "length": 884,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Header/Version": "2000",
+        "Header/Item Count": "5",
+        "Header/Flags/IsHeader": "true",
+        "Footer/Flags/HasHeader": "true",
+        "Footer/Flags/IsHeader": "false",
+        "Items/Title/Value": "Ünïcödé APE Title",
+        "Items/Artist/Value": [
+          "First Artist",
+          "Second Artist"
+        ],
+        "Items/Cover Art (Front)/Flags/Item Type": "Binary",
+        "Items/Cover Art (Front)/Value": "18 bytes",
+        "Items/Related/Flags/Item Type": "External",
+        "Items/Related/Value": "https://example.com/related",
+        "Items/Year/Flags/IsReadOnly": "true"
+      },
+      "offset": 512,
+      "length": 244
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 756,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

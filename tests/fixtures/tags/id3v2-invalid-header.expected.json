@@ -1,0 +1,17 @@
+{
+  "description": "ID3 at offset 0 with a size byte of $80: not syncsafe, so no tag; the bytes stay data.",
+  "length": 510,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 510
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "size"
+    }
+  ]
+}

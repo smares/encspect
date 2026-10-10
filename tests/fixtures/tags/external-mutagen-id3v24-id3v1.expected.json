@@ -1,0 +1,52 @@
+{
+  "description": "ID3v2.4 plus ID3v1.1 written by mutagen 1.47.0 (v1=2 forces the ID3v1 tag, which holds only the first artist).",
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "offset": 0,
+      "fields": {
+        "TIT2/Encoding": "UTF-8",
+        "TIT2/Text": "Song Title",
+        "TPE1/Text": [
+          "Artist One",
+          "Artist Two"
+        ],
+        "TALB/Encoding": "UTF-16BE",
+        "TALB/Text": "Album Name",
+        "TDRC/Text": "2024",
+        "TRCK/Text": "7",
+        "USLT/Language": "eng",
+        "USLT/Text": "Line one\nLine two",
+        "POPM/Email": "rater@example.com",
+        "POPM/Rating": "128",
+        "POPM/Counter": "5",
+        "PRIV/Owner": "com.example",
+        "PRIV/Data": "3 bytes",
+        "UFID/Owner": "http://musicbrainz.org",
+        "UFID/Identifier": "0f0e0d0c-0000-1111-2222-333344445555",
+        "WXXX/Description": "Home",
+        "WXXX/URL": "https://example.com/",
+        "WOAR/URL": "https://example.com/artist"
+      }
+    },
+    {
+      "name": "Data"
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "length": 128,
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist One",
+        "Album": "Album Name",
+        "Year": "2024",
+        "Track": "7"
+      }
+    }
+  ],
+  "findings": []
+}

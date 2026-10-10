@@ -1,0 +1,44 @@
+{
+  "description": "APEv2 written by mutagen 1.47.0 into a file with ID3v2.3 and ID3v1 tags; mutagen keeps ID3v1 last.",
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "offset": 0,
+      "fields": {
+        "TIT2/Text": "V1 Title"
+      }
+    },
+    {
+      "name": "Data"
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Header/Flags/IsHeader": "true",
+        "Items/Title/Value": "Ünïcödé APE Title",
+        "Items/Artist/Value": [
+          "First",
+          "Second"
+        ],
+        "Items/Cover Art (Front)/Flags/Item Type": "Binary",
+        "Items/Cover Art (Front)/Value": "18 bytes",
+        "Items/Related/Flags/Item Type": "External",
+        "Items/Related/Value": "https://example.com/related"
+      }
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Medium",
+      "length": 128,
+      "fields": {
+        "Title": "V1 Title"
+      }
+    }
+  ],
+  "findings": []
+}
