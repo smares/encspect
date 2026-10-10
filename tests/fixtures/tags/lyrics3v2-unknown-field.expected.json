@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v2 tag with a field ID, XYZ, that v2.00 does not define.",
+  "length": 703,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "IND/HasLyrics": "true"
+      },
+      "offset": 512,
+      "length": 63
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 575,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.unknown-field",
+      "contains": "XYZ"
+    }
+  ]
+}

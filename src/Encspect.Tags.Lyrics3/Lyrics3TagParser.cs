@@ -224,7 +224,7 @@ public sealed class Lyrics3TagParser : ITagParser
             }
             else if (!KnownFields.Contains(id))
             {
-                findings.Add(new Finding(Severity.Info, "lyrics3.unknown-field", $"Lyrics3 field ID {id} is not defined by Lyrics3 v2.00.", field));
+                findings.Add(new Finding(Severity.Warning, "lyrics3.unknown-field", $"Lyrics3 field ID {id} is not defined by Lyrics3 v2.00.", field));
             }
             else if (id == "LYR")
             {

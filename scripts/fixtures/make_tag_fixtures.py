@@ -1445,6 +1445,16 @@ def lyrics3v2_ind_size():
 
 
 @fixture
+def lyrics3v2_unknown_field():
+    f = Fixture("lyrics3v2-unknown-field", "Lyrics3 v2 tag with a field ID, XYZ, that v2.00 does not define.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "100"), ("LYR", "Words"), ("XYZ", "Extra")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.unknown-field", "XYZ")
+    return f
+
+
+@fixture
 def lyrics3v2_field_too_long():
     f = Fixture("lyrics3v2-field-too-long", "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.")
     f.audio()
@@ -1668,7 +1678,8 @@ def tags_only():
 # Every trailing probe looks for an identifier at a fixed distance before an anchor. These cases
 # put user-editable text (ID3v1 fields, an APE text item, Lyrics3 lyrics or fields, an appended
 # ID3v2 text frame) at each of those distances and fill it with each identifier. The real tags
-# must still be reported unchanged, and no forged identifier may produce a warning or an error.
+# must still be reported unchanged, and no forged identifier may produce a warning or an error
+# beyond the case's "findings": an identifier written into the ID3v1 year makes it not a number.
 
 COLLISIONS_OUT = OUT.parent / "collisions"
 
@@ -1683,7 +1694,7 @@ USER_TEXT = "q" * 400
 
 
 def collision_containers():
-    yield "id3v1", "ID3v1", id3v1("q" * 30, "q" * 30, "q" * 30, "qqqq", "q" * 30, genre=ord("q")), False
+    yield "id3v1", "ID3v1", id3v1("q" * 30, "q" * 30, "q" * 30, "1999", "q" * 30, genre=ord("q")), False
     for follow in (False, True):
         yield "ape", "APE", ape_tag([ape_item("Comment", USER_TEXT)]), follow
         yield "id3v2", "ID3v2", id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", USER_TEXT))], footer=True), follow
@@ -1720,10 +1731,12 @@ def collision_cases():
                     regions.append({"name": "ID3v1", "offset": len(body), "length": len(trailer)})
                     body += trailer
                 suffix = "-id3v1" if follow else ""
+                year = bytes(data[93:97]) if container_name == "id3v1" else b"1999"
                 yield {
                     "name": f"{container_name}{suffix}-{identifier}-at-{distance}",
                     "data": body.hex(),
                     "regions": regions,
+                    "findings": [] if year.isdigit() else ["id3v1.year-not-numeric"],
                 }
 
 

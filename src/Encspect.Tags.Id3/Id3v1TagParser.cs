@@ -40,7 +40,7 @@ public sealed class Id3v1TagParser : ITagParser
         Node year = AddText(tag, "Year", data, start, 93, 4, nonText);
         if (year.Value!.Length > 0 && !year.Value.All(char.IsAsciiDigit))
         {
-            findings.Add(new Finding(Severity.Info, "id3v1.year-not-numeric", $"The ID3v1 year \"{year.Value}\" is not a number.", year));
+            findings.Add(new Finding(Severity.Warning, "id3v1.year-not-numeric", $"The ID3v1 year \"{year.Value}\" is not a number.", year));
         }
 
         if (isV11)

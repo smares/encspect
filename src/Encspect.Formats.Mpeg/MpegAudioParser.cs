@@ -91,7 +91,7 @@ public sealed partial class MpegAudioParser : IFormatParser
                     freeLength = newFreeLength;
                     stream = header;
                     Entry frame = AddFrame(state, entries, at, end, header, freeLength);
-                    findings.Add(Severity.Info, "mpeg.stream-changed", FindingNode(frame), count =>
+                    findings.Add(Severity.Warning, "mpeg.stream-changed", FindingNode(frame), count =>
                         $"The stream changes {Times(count)}, first from {current.StreamName} to {header.StreamName} at 0x{at:X}.");
                     position = frame.End;
                     frames++;
