@@ -1,0 +1,33 @@
+[
+  {
+    "source": "id3v24-footer-mismatch.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 339,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 339
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 339
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "ID3v2 candidate at 0x149 (EOF-10) rejected: the footer does not match a header at 0x13C.",
+        "offset": 0,
+        "length": 339
+      }
+    ]
+  }
+]

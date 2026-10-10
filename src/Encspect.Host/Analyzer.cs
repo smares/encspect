@@ -138,7 +138,7 @@ public sealed class Analyzer
             foreach (ITagParser parser in _tagParsers)
             {
                 TagProbe? probe = Probe(parser, anchor, reader, leading: false);
-                if (probe is null)
+                if (probe is null || IsLeadingTagAgain(parser, probe, leading))
                 {
                     continue;
                 }
@@ -178,6 +178,11 @@ public sealed class Analyzer
 
         return claims;
     }
+
+    // An ID3v2.4 tag with a footer that ends where the leading tags end is found again from the
+    // end; it is the same tag, not a near miss.
+    private static bool IsLeadingTagAgain(ITagParser parser, TagProbe probe, List<Claim> leading) =>
+        probe.Tag is { } tag && leading.Any(c => c.Parser == parser && c.Tag.Offset == tag.Offset && c.Tag.Length == tag.Length);
 
     private static TagProbe? Probe(ITagParser parser, long anchor, ByteReader reader, bool leading)
     {

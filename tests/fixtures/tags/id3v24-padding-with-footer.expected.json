@@ -1,0 +1,28 @@
+{
+  "description": "Appended ID3v2.4 tag with both padding and a footer, which section 3.3 forbids.",
+  "length": 565,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Padded",
+        "Padding": "16 bytes"
+      },
+      "offset": 512,
+      "length": 53
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.padding-with-footer",
+      "contains": "footer"
+    }
+  ]
+}

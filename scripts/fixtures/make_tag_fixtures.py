@@ -652,6 +652,93 @@ def id3v24_footer_appended():
     return f
 
 
+def appended_id3v24(title, **kwargs):
+    return id3v2(4, [frame24("TIT2", text_frame_data(UTF8, [title]))], footer=True, **kwargs)
+
+
+@fixture
+def id3v24_footer_at_eof():
+    f = Fixture("id3v24-footer-at-eof", "ID3v2.4 tag with a footer as the very last bytes of the file.")
+    f.audio()
+    f.tag("ID3v2", "2.4.0", appended_id3v24("At EOF"), "High", {"TIT2/Text": "At EOF"})
+    return f
+
+
+@fixture
+def id3v24_footer_before_ape():
+    f = Fixture("id3v24-footer-before-ape", "Appended ID3v2.4 tag with a footer, followed by APEv2 and ID3v1.")
+    f.audio()
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Before APE"), "High", {"TIT2/Text": "Before APE"})
+    f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def id3v24_footer_leading_and_trailing():
+    f = Fixture("id3v24-footer-leading-and-trailing", "ID3v2.4 tags with footers at both the start and the end of the file.")
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Start"), "High", {"TIT2/Text": "Start", "Footer/Identifier": "3DI"})
+    f.audio()
+    f.tag("ID3v2", "2.4.0", appended_id3v24("End"), "High", {"TIT2/Text": "End"})
+    return f
+
+
+@fixture
+def id3v24_footer_whole_file():
+    f = Fixture(
+        "id3v24-footer-whole-file",
+        "A file that is one ID3v2.4 tag with a footer. The trailing walk finds the same tag through its footer, "
+        "which is neither a second tag nor a near miss.",
+    )
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Whole File"), "High", {"TIT2/Text": "Whole File"})
+    f.finding("layout.tags-only", "")
+    return f
+
+
+@fixture
+def id3v24_footer_tag_collision():
+    f = Fixture(
+        "id3v24-footer-tag-collision",
+        "Appended ID3v2.4 tag with a footer whose TXXX value puts TAG exactly at EOF-128. The tag validates by header "
+        "and footer, so it owns the bytes and the ID3v1 signature is a near miss.",
+    )
+    f.audio()
+    tag = id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", "x" * 50 + "TAG" + "y" * 115))], footer=True)
+    assert tag[-128:-125] == b"TAG"
+    f.tag("ID3v2", "2.4.0", tag, "High", {"TXXX/Description": "note"})
+    f.finding("tag.near-miss", hex_offset(f.size - 128))
+    return f
+
+
+@fixture
+def id3v24_footer_mismatch():
+    f = Fixture("id3v24-footer-mismatch", "3DI footer at the end whose size does not lead to a matching ID3 header: rejected.")
+    tag = appended_id3v24("Mismatch")
+    f.add(filler(300) + tag[:-4] + syncsafe(3), {"name": "Data"})
+    f.finding("tag.rejected", "does not match a header")
+    return f
+
+
+@fixture
+def id3v24_padding_with_footer():
+    f = Fixture("id3v24-padding-with-footer", "Appended ID3v2.4 tag with both padding and a footer, which section 3.3 forbids.")
+    f.audio()
+    f.tag("ID3v2", "2.4.0", appended_id3v24("Padded", padding=16), "Medium", {"TIT2/Text": "Padded", "Padding": "16 bytes"})
+    f.finding("id3v2.padding-with-footer", "footer")
+    return f
+
+
+@fixture
+def id3v24_appended_without_footer():
+    f = Fixture(
+        "id3v24-appended-without-footer",
+        "ID3v2.4 tag appended at the end without a footer. Section 3.4 makes the footer the only way to find a tag "
+        "from the end, so it stays part of the data.",
+    )
+    f.add(filler(300) + id3v2(4, [frame24("TIT2", text_frame_data(UTF8, ["No Footer"]))]), {"name": "Data"})
+    return f
+
+
 @fixture
 def id3v24_plain_frame_sizes():
     f = Fixture(

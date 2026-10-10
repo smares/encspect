@@ -167,4 +167,18 @@ public class AnalyzerTagTests
         Assert.Equal(["Data"], report.Root.Children.Select(c => c.Name));
         Assert.Contains(report.Findings, f => f.Code == "tag.rejected" && f.Message.Contains("not anchored"));
     }
+
+    [Fact]
+    public void LeadingTagFoundAgainFromTheEndIsNotANearMiss()
+    {
+        var parser = new FakeTagParser(
+            "Footer",
+            at: (_, start) => start == 0 ? Accept("Footer", 0, 40) : null,
+            before: (_, end) => end == 40 ? Accept("Footer", 0, 40) : null);
+
+        Report report = Analyze(40, [parser]);
+
+        Assert.Equal(["Footer"], report.Root.Children.Select(c => c.Name));
+        Assert.Equal("layout.tags-only", Assert.Single(report.Findings).Code);
+    }
 }

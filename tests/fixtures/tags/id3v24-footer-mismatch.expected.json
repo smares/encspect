@@ -1,0 +1,17 @@
+{
+  "description": "3DI footer at the end whose size does not lead to a matching ID3 header: rejected.",
+  "length": 339,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 339
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "does not match a header"
+    }
+  ]
+}
