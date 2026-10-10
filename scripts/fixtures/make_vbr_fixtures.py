@@ -55,6 +55,7 @@ class VbrFixture(Fixture):
         entry = self.frames[-len(audio) - 1]
         entry["fields"].update(vbr_tags.report_fields(tag))
         tag["frame_offset"] = start
+        self.layout[-len(audio) - 1]["header"] = tag
         self.headers.append(tag)
         for code, contains in vbr_tags.findings(tag, start):
             self.finding(code, contains)

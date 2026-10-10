@@ -23,6 +23,10 @@ the tag CRC holds) or, without a tag, from the "LAME3.100" it writes into ancill
 ffmpeg's tag names ffmpeg, so the LAME behind it is again known from ancillary data (medium);
 TwoLAME leaves no trace. "mp3guessenc_encoder_string" is the encoder string mp3guessenc finds.
 
+For the statistics, "mp3guessenc_stream" records mp3guessenc's frame count, length, average bitrate
+and bitrate histogram, and, where a LAME tag gives an encoder delay and padding, "decoded_samples"
+the samples per channel ffmpeg and mpg123 output with their gapless trimming.
+
 For Layer III, the manifest also records the side information of every frame as minimp3 reads it
 ("minimp3_side_info", see minimp3_side_info.c), and the statistics mp3guessenc prints about the
 stream ("mp3guessenc": block usage, stereo modes, global gain, the largest main_data_begin,
@@ -47,10 +51,11 @@ import wave
 
 import minimp3_tool
 import vbr_tags
-from crosscheck_mpeg_fixtures import guessenc_summary, guessenc_tag_lines
+from crosscheck_mpeg_fixtures import decoded_samples, guessenc_stream, guessenc_summary, guessenc_tag_lines
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
 LAME_VERSION = "LAME 64bits version 3.100"
+CHANNELS = {"Mono": 1}
 TWOLAME_VERSION = "TwoLAME version 0.4.0"
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 
@@ -258,6 +263,9 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     if settings["layer"] == 3:
         manifest["mp3guessenc"] = guessenc_summary(path)
     describe_tag(path, command, manifest)
+    manifest["mp3guessenc_stream"] = guessenc_stream(path)
+    if manifest["vbr_header"] and manifest["vbr_header"].get("lame"):
+        manifest["decoded_samples"] = decoded_samples(path, CHANNELS.get(settings["channel_mode"], 2))
     text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
     (OUT / f"{name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
 
