@@ -73,6 +73,7 @@ public sealed class Id3v2TagParser : ITagParser
         return Parse(reader, start, header, footerStart);
     }
 
+    // Only problems that leave the version or the extent of the tag unknown reject it.
     private static string? ValidateHeader(byte[] header, string what)
     {
         int major = header[3];
@@ -80,11 +81,6 @@ public sealed class Id3v2TagParser : ITagParser
         if (major is < 2 or > 4)
         {
             return $"version 2.{major}.{revision} in the {what} is not 2.2, 2.3 or 2.4";
-        }
-
-        if (revision == 0xFF)
-        {
-            return $"the {what} revision is $FF, which the specification rules out";
         }
 
         for (int i = 6; i < 10; i++)
@@ -95,8 +91,7 @@ public sealed class Id3v2TagParser : ITagParser
             }
         }
 
-        int undefined = header[5] & ~DefinedHeaderFlags(major);
-        return undefined != 0 ? $"undefined {what} flag bits ${undefined:X2} are set" : null;
+        return null;
     }
 
     private static int DefinedHeaderFlags(int major) => major switch
@@ -120,10 +115,27 @@ public sealed class Id3v2TagParser : ITagParser
         var state = new ParseState(tag, major);
 
         state.Evidence.Add(new Evidence($"Signature \"ID3\" with version 2.{major}.{revision}", start, 5));
-        state.Evidence.Add(new Evidence("Only defined header flags are set", start + 5, 1));
         state.Evidence.Add(new Evidence($"Syncsafe size of {size} bytes", start + 6, 4));
 
         AddHeaderNode(tag, "Header", "ID3", start, header);
+        Node headerNode = tag.Children[^1];
+
+        if (revision == 0xFF)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.revision-invalid", "The header revision is $FF, which the specification rules out.", headerNode));
+            state.HasProblems = true;
+        }
+
+        int undefined = flags & ~DefinedHeaderFlags(major);
+        if (undefined != 0)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.header-flags-unknown", $"The header sets undefined flag bits ${undefined:X2}.", headerNode));
+            state.HasProblems = true;
+        }
+        else
+        {
+            state.Evidence.Add(new Evidence("Only defined header flags are set", start + 5, 1));
+        }
 
         bool truncated = declaredEnd > reader.End;
         if (truncated)

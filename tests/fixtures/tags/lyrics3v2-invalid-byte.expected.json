@@ -1,11 +1,21 @@
 {
-  "description": "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: rejected.",
+  "description": "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: kept, low confidence.",
   "length": 686,
   "regions": [
     {
       "name": "Data",
       "offset": 0,
-      "length": 558
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "Low",
+      "fields": {
+        "LYR/Data": "Before\u0000After"
+      },
+      "offset": 512,
+      "length": 46
     },
     {
       "name": "ID3v1",
@@ -26,7 +36,7 @@
   ],
   "findings": [
     {
-      "code": "tag.rejected",
+      "code": "lyrics3.invalid-byte",
       "contains": "$00"
     }
   ]

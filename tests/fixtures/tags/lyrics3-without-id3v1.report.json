@@ -133,7 +133,7 @@
             },
             {
               "name": "Detection",
-              "value": "High",
+              "value": "Medium",
               "offset": 512,
               "length": 89,
               "children": [
@@ -172,7 +172,7 @@
       {
         "severity": "Warning",
         "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x200 is not followed by an ID3v1 tag, which its specification requires.",
+        "message": "The Lyrics3 tag at 0x200 is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 512,
         "length": 89
       }

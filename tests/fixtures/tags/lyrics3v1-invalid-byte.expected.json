@@ -1,11 +1,18 @@
 {
-  "description": "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: rejected.",
+  "description": "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: kept, low confidence.",
   "length": 672,
   "regions": [
     {
       "name": "Data",
       "offset": 0,
-      "length": 544
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Low",
+      "offset": 512,
+      "length": 32
     },
     {
       "name": "ID3v1",
@@ -26,7 +33,7 @@
   ],
   "findings": [
     {
-      "code": "tag.rejected",
+      "code": "lyrics3.invalid-byte",
       "contains": "$FF"
     }
   ]

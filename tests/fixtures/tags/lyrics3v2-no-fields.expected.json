@@ -1,11 +1,21 @@
 {
-  "description": "The 26 characters LYRICSBEGIN000011LYRICS200 form a Lyrics3 v2 tag without fields, which the specification rules out; such a string is easy to type into any text field. Rejected.",
+  "description": "The 26 characters LYRICSBEGIN000011LYRICS200 form a Lyrics3 v2 tag without fields, which the specification rules out: kept, low confidence.",
   "length": 666,
   "regions": [
     {
       "name": "Data",
       "offset": 0,
-      "length": 538
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "Low",
+      "fields": {
+        "Size": "11"
+      },
+      "offset": 512,
+      "length": 26
     },
     {
       "name": "ID3v1",
@@ -26,7 +36,7 @@
   ],
   "findings": [
     {
-      "code": "tag.rejected",
+      "code": "lyrics3.no-fields",
       "contains": "no fields"
     }
   ]

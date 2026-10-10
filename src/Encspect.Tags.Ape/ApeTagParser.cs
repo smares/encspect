@@ -7,8 +7,8 @@ namespace Encspect.Tags.Ape;
 
 // APEv1 and APEv2 (hydrogenaud.io wiki, "APEv2 specification" and "APE Tags Header"). A tag is
 // found through its 32-byte footer at the end of the file or directly before a following tag.
-// It is accepted only when the footer, the optional header and the items agree exactly, because
-// "APETAGEX" contains "TAG" and a loose match would collide with ID3v1.
+// A known version and a size that fits the file establish the tag; a disagreeing header or items
+// that do not end at the footer are findings that lower the confidence.
 public sealed class ApeTagParser : ITagParser
 {
     private const int BlockSize = 32;
@@ -37,11 +37,6 @@ public sealed class ApeTagParser : ITagParser
             return TagProbe.Reject(footerStart, $"version {footer.Version} in the footer is neither 1000 nor 2000");
         }
 
-        if (footer.Version == 2000 && footer.IsHeader)
-        {
-            return TagProbe.Reject(footerStart, "the footer has the is-header flag set");
-        }
-
         if (footer.Size < BlockSize)
         {
             return TagProbe.Reject(footerStart, $"the tag size {footer.Size} is smaller than the 32-byte footer");
@@ -54,69 +49,90 @@ public sealed class ApeTagParser : ITagParser
             return TagProbe.Reject(footerStart, $"the tag size {footer.Size} exceeds the {end - reader.Start} bytes up to the end of the footer");
         }
 
-        if (footer.ItemCount > (footer.Size - BlockSize) / MinItemSize)
-        {
-            return TagProbe.Reject(footerStart, $"{footer.ItemCount} items cannot fit in {footer.Size - BlockSize} bytes");
-        }
-
-        var evidence = new List<Evidence> { new($"\"APETAGEX\" footer with version {footer.Version}", footerStart, BlockSize) };
+        var evidence = new List<Evidence> { new($"\"APETAGEX\" footer with version {footer.Version} and a size that fits the file", footerStart, BlockSize) };
+        var findings = new List<Finding>();
+        var problems = new List<(Node? Node, string Code, string Message)>();
+        Confidence confidence = Confidence.High;
         long tagStart = itemsStart;
         Block? header = null;
+
+        if (footer.Version == 2000 && footer.IsHeader)
+        {
+            problems.Add((null, "ape.footer-flags", "The footer has the is-header flag set."));
+            confidence = Confidence.Medium;
+        }
 
         if (footer.Version == 2000 && footer.HasHeader)
         {
             long headerStart = itemsStart - BlockSize;
             if (!reader.MatchesAt(headerStart, Preamble))
             {
-                return TagProbe.Reject(footerStart, $"the footer announces a header, but there is no \"APETAGEX\" header at 0x{headerStart:X}");
+                problems.Add((null, "ape.header-missing", $"The footer announces a header, but there is no \"APETAGEX\" header at 0x{headerStart:X}."));
+                confidence = Confidence.Medium;
             }
-
-            header = Block.Parse(reader.ReadBytesAt(headerStart, BlockSize));
-            string? mismatch = header.Version != footer.Version ? $"version {header.Version} vs {footer.Version}"
-                : header.Size != footer.Size ? $"tag size {header.Size} vs {footer.Size}"
-                : header.ItemCount != footer.ItemCount ? $"item count {header.ItemCount} vs {footer.ItemCount}"
-                : !header.IsHeader ? "the is-header flag is not set"
-                : null;
-            if (mismatch is not null)
+            else
             {
-                return TagProbe.Reject(footerStart, $"the header at 0x{headerStart:X} disagrees with the footer: {mismatch}");
+                header = Block.Parse(reader.ReadBytesAt(headerStart, BlockSize));
+                tagStart = headerStart;
+                string? mismatch = header.Version != footer.Version ? $"version {header.Version} vs {footer.Version}"
+                    : header.Size != footer.Size ? $"tag size {header.Size} vs {footer.Size}"
+                    : header.ItemCount != footer.ItemCount ? $"item count {header.ItemCount} vs {footer.ItemCount}"
+                    : !header.IsHeader ? "the is-header flag is not set"
+                    : null;
+                if (mismatch is null)
+                {
+                    evidence.Add(new Evidence("Header agrees with the footer", headerStart, BlockSize));
+                }
+                else
+                {
+                    problems.Add((null, "ape.header-mismatch", $"The header disagrees with the footer: {mismatch}."));
+                    confidence = Confidence.Medium;
+                }
             }
-
-            tagStart = headerStart;
-            evidence.Add(new Evidence("Header agrees with the footer", headerStart, BlockSize));
         }
 
         var tag = new Node(Name, tagStart, end - tagStart, footer.Version == 2000 ? "2.0" : "1.0");
-        var findings = new List<Finding>();
-
         if (header is not null)
         {
             AddBlock(tag, "Header", tagStart, header, findings);
         }
 
         Node items = tag.Add("Items", itemsStart, footerStart - itemsStart, $"{footer.ItemCount} items");
-        string? itemProblem = ParseItems(reader, items, itemsStart, footerStart, footer, findings);
-        if (itemProblem is not null)
+        string? itemProblem = ParseItems(reader, items, itemsStart, footerStart, footer, findings, out long parsedEnd);
+        if (itemProblem is null)
         {
-            return TagProbe.Reject(footerStart, itemProblem);
+            evidence.Add(new Evidence($"{footer.ItemCount} items end exactly at the footer", itemsStart, footerStart - itemsStart));
+        }
+        else
+        {
+            Node unparsed = tag.Add("Unparsed", parsedEnd, footerStart - parsedEnd, $"{footerStart - parsedEnd} bytes");
+            problems.Add((unparsed, "ape.items-invalid", $"{itemProblem} The remaining {footerStart - parsedEnd} bytes are not parsed."));
+            confidence = Confidence.Low;
         }
 
-        evidence.Add(new Evidence($"{footer.ItemCount} items end exactly at the footer", itemsStart, footerStart - itemsStart));
         AddBlock(tag, "Footer", footerStart, footer, findings);
 
-        return TagProbe.Accept(tag, footerStart, Confidence.High, evidence, findings);
+        foreach ((Node? node, string code, string message) in problems)
+        {
+            findings.Add(new Finding(Severity.Warning, code, message, node ?? tag));
+        }
+
+        return TagProbe.Accept(tag, footerStart, confidence, evidence, findings);
     }
 
-    private static string? ParseItems(ByteReader reader, Node items, long start, long end, Block footer, List<Finding> findings)
+    // Returns why the items do not end exactly at the footer, or null; parsedEnd is where the
+    // last complete item ends.
+    private static string? ParseItems(ByteReader reader, Node items, long start, long end, Block footer, List<Finding> findings, out long parsedEnd)
     {
         var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long pos = start;
+        parsedEnd = start;
 
         for (uint index = 1; index <= footer.ItemCount; index++)
         {
             if (end - pos < MinItemSize)
             {
-                return $"item {index} of {footer.ItemCount} starts {end - pos} bytes before the footer, so the items do not end at the footer";
+                return $"Item {index} of {footer.ItemCount} starts {end - pos} bytes before the footer, too few for an item.";
             }
 
             byte[] fixedPart = reader.ReadBytesAt(pos, 8);
@@ -128,20 +144,20 @@ public sealed class ApeTagParser : ITagParser
             int keyLength = Array.IndexOf(keyBytes, (byte)0);
             if (keyLength < 0)
             {
-                return $"item {index} has no key terminator, so the items do not parse";
+                return $"Item {index} has no key terminator.";
             }
 
             // Keys are 2 to 255 characters from 0x20 to 0x7E.
             if (keyLength is < 2 or > 255 || keyBytes.Take(keyLength).Any(b => b is < 0x20 or > 0x7E))
             {
-                return $"item {index} has an invalid key, so the items do not parse";
+                return $"Item {index} has an invalid key.";
             }
 
             string key = Encoding.ASCII.GetString(keyBytes, 0, keyLength);
             long valueStart = pos + 8 + keyLength + 1;
             if (valueSize > end - valueStart)
             {
-                return $"the {valueSize}-byte value of item \"{key}\" runs past the footer, so the items do not end at the footer";
+                return $"The {valueSize}-byte value of item \"{key}\" runs past the footer.";
             }
 
             long itemEnd = valueStart + valueSize;
@@ -172,9 +188,10 @@ public sealed class ApeTagParser : ITagParser
             }
 
             pos = itemEnd;
+            parsedEnd = pos;
         }
 
-        return pos == end ? null : $"the {footer.ItemCount} items end at 0x{pos:X}, {end - pos} bytes before the footer, so the items do not end at the footer";
+        return pos == end ? null : $"The footer lists {footer.ItemCount} item(s), which end at 0x{pos:X}, {end - pos} bytes before the footer.";
     }
 
     // Text and external values are UTF-8; text may hold several values separated by $00.

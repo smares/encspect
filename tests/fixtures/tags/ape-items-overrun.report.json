@@ -9,7 +9,157 @@
         {
           "name": "Data",
           "offset": 0,
-          "length": 466
+          "length": 400
+        },
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 400,
+          "length": 66,
+          "children": [
+            {
+              "name": "Items",
+              "value": "1 items",
+              "offset": 400,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "One",
+                  "offset": 400,
+                  "length": 17,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "3",
+                      "offset": 400,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 404,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 404,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 404,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 408,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "One",
+                      "offset": 414,
+                      "length": 3
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Unparsed",
+              "value": "17 bytes",
+              "offset": 417,
+              "length": 17
+            },
+            {
+              "name": "Footer",
+              "offset": 434,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 434,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 442,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "66",
+                  "offset": 446,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "1",
+                  "offset": 450,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00000000",
+                  "offset": 454,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "false",
+                      "offset": 454,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 454,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 454,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 454,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 458,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 400,
+              "length": 66,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
+                  "offset": 434,
+                  "length": 32
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -19,14 +169,14 @@
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 466
+        "length": 400
       },
       {
         "severity": "Warning",
-        "code": "tag.rejected",
-        "message": "APE candidate at 0x1B2 (EOF-32) rejected: the 1 items end at 0x1A1, 17 bytes before the footer, so the items do not end at the footer.",
-        "offset": 0,
-        "length": 466
+        "code": "ape.items-invalid",
+        "message": "The footer lists 1 item(s), which end at 0x1A1, 17 bytes before the footer. The remaining 17 bytes are not parsed.",
+        "offset": 417,
+        "length": 17
       }
     ]
   }

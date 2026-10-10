@@ -1,17 +1,27 @@
 {
-  "description": "ID3v2.3 header with an undefined flag bit set: rejected.",
+  "description": "ID3v2.3 header with an undefined flag bit set: still a tag, reported with a finding.",
   "length": 346,
   "regions": [
     {
-      "name": "Data",
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "ID3 Title"
+      },
       "offset": 0,
-      "length": 346
+      "length": 46
+    },
+    {
+      "name": "Data",
+      "offset": 46,
+      "length": 300
     }
   ],
   "findings": [
     {
-      "code": "tag.rejected",
-      "contains": "flag"
+      "code": "id3v2.header-flags-unknown",
+      "contains": "$01"
     }
   ]
 }

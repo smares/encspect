@@ -9,7 +9,53 @@
         {
           "name": "Data",
           "offset": 0,
-          "length": 538
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 26,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Size",
+              "value": "11",
+              "offset": 523,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 529,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 529,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 11 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 523,
+                  "length": 6
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "ID3v1",
@@ -95,14 +141,14 @@
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 538
+        "length": 512
       },
       {
         "severity": "Warning",
-        "code": "tag.rejected",
-        "message": "Lyrics3 candidate at 0x211 (EOF-137) rejected: the tag has no fields; Lyrics3 v2.00 requires at least one.",
-        "offset": 0,
-        "length": 538
+        "code": "lyrics3.no-fields",
+        "message": "The tag has no fields; Lyrics3 v2.00 requires at least one.",
+        "offset": 512,
+        "length": 26
       }
     ]
   }

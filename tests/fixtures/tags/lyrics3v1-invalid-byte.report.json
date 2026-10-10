@@ -9,7 +9,53 @@
         {
           "name": "Data",
           "offset": 0,
-          "length": 544
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 512,
+          "length": 32,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "Sync \u00FF\u00FB here",
+              "offset": 523,
+              "length": 12
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 535,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICSEND\u0022",
+                  "offset": 535,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\u0022LYRICSBEGIN\u0022 23 bytes earlier",
+                  "offset": 512,
+                  "length": 11
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "ID3v1",
@@ -95,14 +141,14 @@
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 544
+        "length": 512
       },
       {
         "severity": "Warning",
-        "code": "tag.rejected",
-        "message": "Lyrics3 candidate at 0x217 (EOF-137) rejected: the lyrics contain the byte $FF at 0x210, which is not lyrics text.",
-        "offset": 0,
-        "length": 544
+        "code": "lyrics3.invalid-byte",
+        "message": "The lyrics contain the byte $FF at 0x210, which is not lyrics text.",
+        "offset": 523,
+        "length": 12
       }
     ]
   }

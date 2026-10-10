@@ -166,15 +166,15 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "Only defined header flags are set",
-                  "offset": 5,
-                  "length": 1
-                },
-                {
-                  "name": "Evidence",
                   "value": "Syncsafe size of 36 bytes",
                   "offset": 6,
                   "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
                 },
                 {
                   "name": "Evidence",
@@ -395,7 +395,7 @@
             },
             {
               "name": "Detection",
-              "value": "High",
+              "value": "Medium",
               "offset": 686,
               "length": 89,
               "children": [
@@ -671,7 +671,7 @@
               "children": [
                 {
                   "name": "Evidence",
-                  "value": "\u0022APETAGEX\u0022 footer with version 2000",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
                   "offset": 855,
                   "length": 32
                 },
@@ -703,17 +703,17 @@
       },
       {
         "severity": "Warning",
+        "code": "layout.lyrics3-without-id3v1",
+        "message": "The Lyrics3 tag at 0x2AE is not directly followed by an ID3v1 tag, which its specification requires.",
+        "offset": 686,
+        "length": 89
+      },
+      {
+        "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x22E is followed by a Lyrics3 tag; readers expect ID3v1 in the last 128 bytes.",
         "offset": 558,
         "length": 128
-      },
-      {
-        "severity": "Warning",
-        "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x2AE is not followed by an ID3v1 tag, which its specification requires.",
-        "offset": 686,
-        "length": 89
       }
     ]
   }

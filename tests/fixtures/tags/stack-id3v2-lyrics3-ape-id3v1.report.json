@@ -166,15 +166,15 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "Only defined header flags are set",
-                  "offset": 5,
-                  "length": 1
-                },
-                {
-                  "name": "Evidence",
                   "value": "Syncsafe size of 36 bytes",
                   "offset": 6,
                   "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
                 },
                 {
                   "name": "Evidence",
@@ -319,7 +319,7 @@
             },
             {
               "name": "Detection",
-              "value": "High",
+              "value": "Medium",
               "offset": 558,
               "length": 89,
               "children": [
@@ -595,7 +595,7 @@
               "children": [
                 {
                   "name": "Evidence",
-                  "value": "\u0022APETAGEX\u0022 footer with version 2000",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
                   "offset": 727,
                   "length": 32
                 },
@@ -704,7 +704,7 @@
       {
         "severity": "Warning",
         "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x22E is not followed by an ID3v1 tag, which its specification requires.",
+        "message": "The Lyrics3 tag at 0x22E is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 558,
         "length": 89
       }

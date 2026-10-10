@@ -122,9 +122,10 @@ public sealed class Analyzer
         return claims;
     }
 
-    // Walks backward from the end of the file: at each anchor every parser is probed in
-    // priority order, the first validated tag that does not reach into the leading tags wins,
-    // and its start becomes the next anchor. Every anchor moves strictly toward the start.
+    // Walks backward from the end of the file. At each anchor every parser is probed; among the
+    // accepted tags that do not reach into the leading tags, the strongest evidence wins and the
+    // parser order breaks ties. The winner's start becomes the next anchor, so every anchor moves
+    // strictly toward the start.
     private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, List<PendingFinding> pending)
     {
         var claims = new List<Claim>();
@@ -132,31 +133,35 @@ public sealed class Analyzer
 
         while (anchor > 0)
         {
-            Claim? winner = null;
+            var candidates = new List<(int Order, Claim Claim)>();
             var others = new List<(ITagParser Parser, TagProbe Probe)>();
 
-            foreach (ITagParser parser in _tagParsers)
+            for (int order = 0; order < _tagParsers.Count; order++)
             {
+                ITagParser parser = _tagParsers[order];
                 TagProbe? probe = Probe(parser, anchor, reader, leading: false);
                 if (probe is null || IsLeadingTagAgain(parser, probe, leading))
                 {
                     continue;
                 }
 
-                if (probe.IsAccepted && parser.MustPrecede is { } required && (claims.Count == 0 || claims[0].Parser.Name != required))
+                if (probe.IsAccepted && probe.Tag!.Offset >= dataStart)
                 {
-                    probe = TagProbe.Reject(probe.SignatureOffset, $"it is not directly followed by an {required} tag");
-                }
-
-                if (winner is null && probe.IsAccepted && probe.Tag!.Offset >= dataStart)
-                {
-                    winner = new Claim(parser, probe);
+                    candidates.Add((order, Candidate(parser, probe, claims.Count > 0 ? claims[0] : null)));
                 }
                 else
                 {
                     others.Add((parser, probe));
                 }
             }
+
+            Claim? winner = candidates
+                .OrderByDescending(c => c.Claim.Confidence)
+                .ThenBy(c => c.Order)
+                .Select(c => c.Claim)
+                .FirstOrDefault();
+
+            others.AddRange(candidates.Where(c => c.Claim != winner).Select(c => (c.Claim.Parser, c.Claim.Probe)));
 
             foreach ((ITagParser parser, TagProbe probe) in others)
             {
@@ -183,6 +188,31 @@ public sealed class Analyzer
 
         return claims;
     }
+
+    // A tag that its specification places directly before another one (Lyrics3 and the Enhanced
+    // TAG before ID3v1) is still reported without it, but with a finding and lower confidence,
+    // so a well-placed competitor at the same anchor wins.
+    private static Claim Candidate(ITagParser parser, TagProbe probe, Claim? following)
+    {
+        if (parser.MustPrecede is not { } required || following?.Parser.Name == required)
+        {
+            return new Claim(parser, probe);
+        }
+
+        Node tag = probe.Tag!;
+        var finding = new Finding(
+            Severity.Warning,
+            $"layout.{Slug(parser.Name)}-without-{Slug(required)}",
+            $"The {TagLabel(parser.Name)} at 0x{tag.Offset:X} is not directly followed by an {TagLabel(required)}, which its specification requires.",
+            tag);
+        Confidence lowered = probe.Confidence == Confidence.High ? Confidence.Medium : Confidence.Low;
+        return new Claim(parser, probe, lowered, [finding]);
+    }
+
+    private static string Slug(string name) => name.ToLowerInvariant().Replace(' ', '-');
+
+    // "Lyrics3 tag", but "Enhanced TAG" rather than "Enhanced TAG tag".
+    private static string TagLabel(string name) => name.EndsWith("TAG", StringComparison.Ordinal) ? name : name + " tag";
 
     // An ID3v2.4 tag with a footer that ends where the leading tags end is found again from the
     // end; it is the same tag, not a near miss.
@@ -249,7 +279,7 @@ public sealed class Analyzer
         Node tag = claim.Tag;
         TagProbe probe = claim.Probe;
 
-        var detection = new Node("Detection", tag.Offset, tag.Length, probe.Confidence.ToString());
+        var detection = new Node("Detection", tag.Offset, tag.Length, claim.Confidence.ToString());
         foreach (Evidence evidence in probe.Evidence)
         {
             detection.Add("Evidence", evidence.Offset, evidence.Length, evidence.Description);
@@ -259,6 +289,7 @@ public sealed class Analyzer
         detectionNodes.Add(detection);
         root.Add(tag);
         findings.AddRange(probe.Findings);
+        findings.AddRange(claim.LayoutFindings);
     }
 
     private void ParseData(ByteReader window, Node root, List<Finding> findings)
@@ -320,23 +351,14 @@ public sealed class Analyzer
         return best;
     }
 
-    // Lyrics3 belongs directly before ID3v1 (Lyrics3 v2.00 specification), and ID3v1 belongs in
-    // the last 128 bytes; other orders occur in the wild, so they are findings, not rejections.
+    // ID3v1 belongs in the last 128 bytes; other orders occur in the wild, so they are findings,
+    // not rejections.
     private static void CheckTrailingLayout(List<Claim> trailing, List<Finding> findings)
     {
         for (int i = 0; i < trailing.Count; i++)
         {
             Node tag = trailing[i].Tag;
             string? next = i + 1 < trailing.Count ? trailing[i + 1].Tag.Name : null;
-
-            if (tag.Name == "Lyrics3" && next != "ID3v1")
-            {
-                findings.Add(new Finding(
-                    Severity.Warning,
-                    "layout.lyrics3-without-id3v1",
-                    $"The Lyrics3 tag at 0x{tag.Offset:X} is not followed by an ID3v1 tag, which its specification requires.",
-                    tag));
-            }
 
             if (tag.Name == "ID3v1" && next is not null)
             {
@@ -385,8 +407,13 @@ public sealed class Analyzer
 
     private static bool Contains(Node node, Node target) => node == target || node.Children.Any(c => Contains(c, target));
 
-    private sealed record Claim(ITagParser Parser, TagProbe Probe)
+    private sealed record Claim(ITagParser Parser, TagProbe Probe, Confidence Confidence, IReadOnlyList<Finding> LayoutFindings)
     {
+        public Claim(ITagParser parser, TagProbe probe)
+            : this(parser, probe, probe.Confidence, [])
+        {
+        }
+
         public Node Tag => Probe.Tag!;
     }
 

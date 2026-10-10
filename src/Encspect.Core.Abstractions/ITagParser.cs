@@ -8,8 +8,9 @@ public interface ITagParser
 {
     string Name { get; }
 
-    // The name of the tag that must directly follow this one, for blocks that only extend
-    // another tag (the Enhanced TAG before ID3v1). The host rejects the candidate otherwise.
+    // The name of the tag that the specification places directly after this one (ID3v1 after
+    // Lyrics3 and after the Enhanced TAG). Without it the host still reports the tag, with a
+    // layout finding and one level less confidence.
     string? MustPrecede => null;
 
     // Probes for a tag that starts exactly at start. Returns null when the signature is absent.

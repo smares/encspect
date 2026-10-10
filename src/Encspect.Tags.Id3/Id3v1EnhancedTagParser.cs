@@ -5,7 +5,7 @@ namespace Encspect.Tags.Id3;
 // The Enhanced TAG ("TAG+", 227 bytes) that some players write directly before an ID3v1 tag:
 // title, artist and album of 60 bytes each, a speed byte, a free-text genre, and start and end
 // times as "mmm:ss". No authoritative specification exists, so beyond the signature only the
-// text fields are checked. The host accepts it only directly before an ID3v1 tag.
+// text fields are checked. Without an ID3v1 tag after it, the host lowers its confidence.
 public sealed class Id3v1EnhancedTagParser : ITagParser
 {
     public const int TagSize = 227;

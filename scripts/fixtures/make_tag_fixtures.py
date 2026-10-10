@@ -447,9 +447,13 @@ def id3v1_enhanced():
 
 @fixture
 def enhanced_tag_without_id3v1():
-    f = Fixture("enhanced-tag-without-id3v1", "Enhanced TAG at the end of the file with no ID3v1 tag after it: rejected.")
-    f.add(filler(300) + enhanced_tag("Alone"), {"name": "Data"})
-    f.finding("tag.rejected", "not directly followed by an ID3v1 tag")
+    f = Fixture(
+        "enhanced-tag-without-id3v1",
+        "Enhanced TAG at the end of the file with no ID3v1 tag after it: kept, with a layout finding and lower confidence.",
+    )
+    f.audio(300)
+    f.tag("Enhanced TAG", None, enhanced_tag("Alone"), "Low", {"Title": "Alone"})
+    f.finding("layout.enhanced-tag-without-id3v1", "not directly followed by an ID3v1 tag")
     return f
 
 
@@ -821,11 +825,12 @@ def id3v2_invalid_header():
 
 @fixture
 def id3v2_unknown_flags():
-    f = Fixture("id3v2-unknown-flags", "ID3v2.3 header with an undefined flag bit set: rejected.")
+    f = Fixture("id3v2-unknown-flags", "ID3v2.3 header with an undefined flag bit set: still a tag, reported with a finding.")
     tag = bytearray(basic_id3v23())
     tag[5] = 0x01
-    f.add(bytes(tag) + filler(300), {"name": "Data"})
-    f.finding("tag.rejected", "flag")
+    f.tag("ID3v2", "2.3.0", bytes(tag), "Medium", BASIC_ID3V23_FIELDS)
+    f.audio(300)
+    f.finding("id3v2.header-flags-unknown", "$01")
     return f
 
 
@@ -915,17 +920,24 @@ def id3v1_then_ape():
 
 @fixture
 def ape_header_mismatch():
-    f = Fixture("ape-header-mismatch", "APEv2 tag whose header declares a different item count than the footer: rejected.")
-    f.add(filler(400) + ape_tag([ape_item("Title", "Mismatch")], header_overrides={"count": 2}), {"name": "Data"})
-    f.finding("tag.rejected", "header")
+    f = Fixture("ape-header-mismatch", "APEv2 tag whose header declares a different item count than the footer: kept, with a finding.")
+    f.audio(400)
+    f.tag("APE", "2.0", ape_tag([ape_item("Title", "Mismatch")], header_overrides={"count": 2}), "Medium", {"Items/Title/Value": "Mismatch", "Header/Item Count": "2"})
+    f.finding("ape.header-mismatch", "item count 2 vs 1")
     return f
 
 
 @fixture
 def ape_items_overrun():
-    f = Fixture("ape-items-overrun", "APEv2 footer whose item count does not match the items: items do not end at the footer, rejected.")
-    f.add(filler(400) + ape_tag([ape_item("Title", "One"), ape_item("Album", "Two")], footer_overrides={"count": 1}, header=False), {"name": "Data"})
-    f.finding("tag.rejected", "items")
+    f = Fixture(
+        "ape-items-overrun",
+        "APEv2 footer whose item count (1) is smaller than the items present (2): the tag is kept, the second item is unparsed.",
+    )
+    f.audio(400)
+    second = ape_item("Album", "Two")
+    tag = ape_tag([ape_item("Title", "One"), second], footer_overrides={"count": 1}, header=False)
+    f.tag("APE", "2.0", tag, "Low", {"Items/Title/Value": "One", "Unparsed": f"{len(second)} bytes"})
+    f.finding("ape.items-invalid", "bytes before the footer")
     return f
 
 
@@ -998,13 +1010,11 @@ def lyrics3v2_bad_size():
 
 @fixture
 def lyrics3v2_invalid_byte():
-    f = Fixture("lyrics3v2-invalid-byte", "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: rejected.")
+    f = Fixture("lyrics3v2-invalid-byte", "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: kept, low confidence.")
     f.audio()
-    f.add(lyrics3v2([("LYR", "Before\x00After")]), {"name": "Data"})
-    f.regions[-2]["length"] += f.regions[-1]["length"]
-    f.regions.pop()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Before\x00After")]), "Low", {"LYR/Data": "Before\x00After"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("tag.rejected", "$00")
+    f.finding("lyrics3.invalid-byte", "$00")
     return f
 
 
@@ -1013,14 +1023,12 @@ def lyrics3v2_no_fields():
     f = Fixture(
         "lyrics3v2-no-fields",
         "The 26 characters LYRICSBEGIN000011LYRICS200 form a Lyrics3 v2 tag without fields, which the specification "
-        "rules out; such a string is easy to type into any text field. Rejected.",
+        "rules out: kept, low confidence.",
     )
     f.audio()
-    f.add(b"LYRICSBEGIN000011LYRICS200", {"name": "Data"})
-    f.regions[-2]["length"] += f.regions[-1]["length"]
-    f.regions.pop()
+    f.tag("Lyrics3", "2.00", b"LYRICSBEGIN000011LYRICS200", "Low", {"Size": "11"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("tag.rejected", "no fields")
+    f.finding("lyrics3.no-fields", "no fields")
     return f
 
 
@@ -1028,7 +1036,7 @@ def lyrics3v2_no_fields():
 def lyrics3v2_ind_not_first():
     f = Fixture("lyrics3v2-ind-not-first", "Lyrics3 v2 tag with the IND field after LYR; IND must come first.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "10")]), "High", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "10")]), "Medium", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.ind-not-first", "IND")
     return f
@@ -1036,13 +1044,22 @@ def lyrics3v2_ind_not_first():
 
 @fixture
 def lyrics3v1_invalid_byte():
-    f = Fixture("lyrics3v1-invalid-byte", "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: rejected.")
+    f = Fixture("lyrics3v1-invalid-byte", "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: kept, low confidence.")
     f.audio()
-    f.add(b"LYRICSBEGIN" + b"Sync \xff\xfb here" + b"LYRICSEND", {"name": "Data"})
-    f.regions[-2]["length"] += f.regions[-1]["length"]
-    f.regions.pop()
+    f.tag("Lyrics3", "1.00", b"LYRICSBEGIN" + b"Sync \xff\xfb here" + b"LYRICSEND", "Low")
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("tag.rejected", "$FF")
+    f.finding("lyrics3.invalid-byte", "$FF")
+    return f
+
+
+@fixture
+def lyrics3v1_too_long():
+    f = Fixture("lyrics3v1-too-long", "Lyrics3 v1 block with 6000 bytes of lyrics, more than the 5100 allowed: kept, low confidence.")
+    f.audio()
+    lyrics = ("La la la\r\n" * 600)[:6000]
+    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Low")
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.too-long", "6000")
     return f
 
 
@@ -1064,10 +1081,28 @@ def id3v1_forged_lyrics3v1():
 
 
 @fixture
-def lyrics3_without_id3v1():
-    f = Fixture("lyrics3-without-id3v1", "Lyrics3 v2 tag at the very end without the ID3v1 tag its specification requires.")
+def id3v1_forged_lyrics3v1_full_fields():
+    f = Fixture(
+        "id3v1-forged-lyrics3v1-full-fields",
+        "Like id3v1-forged-lyrics3v1, but every ID3v1 field is filled to its last byte, so no zero padding betrays the "
+        "forged Lyrics3 v1 block. It ends the file with no ID3v1 tag after it, against its specification, so its "
+        "confidence drops below that of the ID3v1 tag, which keeps its bytes.",
+    )
     f.audio()
-    f.tag("Lyrics3", "2.00", basic_lyrics3v2(), "High", BASIC_LYRICS3V2_FIELDS)
+    title = "LYRICSBEGIN Song Title Words"[:30].ljust(30, "!")
+    comment = "A comment that fills the whole"[:22] + "LYRICSEN"
+    tag = id3v1(title, "A" * 30, "B" * 30, "1999", comment, genre=68)
+    assert tag[-9:] == b"LYRICSEND" and b"\x00" not in tag
+    f.tag("ID3v1", "1.0", tag, "Medium", {"Title": title, "Comment": comment})
+    f.finding("tag.near-miss", "Lyrics3")
+    return f
+
+
+@fixture
+def lyrics3_without_id3v1():
+    f = Fixture("lyrics3-without-id3v1", "Lyrics3 v2 tag at the very end without the ID3v1 tag its specification requires: kept, one level less confidence.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", basic_lyrics3v2(), "Medium", BASIC_LYRICS3V2_FIELDS)
     f.finding("layout.lyrics3-without-id3v1", "Lyrics3")
     return f
 
@@ -1096,8 +1131,12 @@ def make_stack(order):
         f = Fixture(name, f"ID3v2.3 at the start, then data, then {', '.join(order)}.")
         f.tag("ID3v2", "2.3.0", basic_id3v23(), "High", BASIC_ID3V23_FIELDS)
         f.audio()
-        for tag_name in order:
-            f.tag(*TRAILING[tag_name]())
+        for i, tag_name in enumerate(order):
+            name_, version, data, confidence, fields = TRAILING[tag_name]()
+            following = order[i + 1] if i + 1 < len(order) else None
+            if tag_name == "Lyrics3" and following != "ID3v1":
+                confidence = "Medium"
+            f.tag(name_, version, data, confidence, fields)
         for i, tag_name in enumerate(order):
             following = order[i + 1] if i + 1 < len(order) else None
             if tag_name == "Lyrics3" and following != "ID3v1":
