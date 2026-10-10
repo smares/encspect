@@ -1,0 +1,128 @@
+{
+ "description": "MPEG-1 Layer III mono, 32000 Hz: the Xing header (21 bytes in) has only the frame count.",
+ "length": 2664,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2664
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 288,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Xing": "Xing",
+    "Xing/Flags": "0x00000001",
+    "Xing/Flags/HasFrameCount": "true",
+    "Xing/Flags/HasByteCount": "false",
+    "Xing/Flags/HasToc": "false",
+    "Xing/Flags/HasQuality": "false",
+    "Xing/Frame Count": "6"
+   }
+  },
+  {
+   "offset": 288,
+   "length": 288,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 576,
+   "length": 432,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1008,
+   "length": 360,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "80 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1368,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1944,
+   "length": 288,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2232,
+   "length": 432,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "32000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true,
+ "vbr_header": {
+  "type": "Xing",
+  "offset": 21,
+  "truncated": false,
+  "flags": 1,
+  "frames": 6,
+  "bytes": null,
+  "toc": null,
+  "quality": null,
+  "after_fields": "000000000000000000000000000000000000000000000000000000000000000000000000",
+  "frame_offset": 0
+ },
+ "detected_encoder": null
+}

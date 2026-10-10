@@ -1,0 +1,147 @@
+{
+ "description": "MPEG-1 Layer III mono, 48000 Hz, VBRI with 4-byte TOC entries.",
+ "length": 1824,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 1824
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 192,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "VBRI/Version": "1",
+    "VBRI/Delay": "1105",
+    "VBRI/Quality": "75",
+    "VBRI/Byte Count": "1824",
+    "VBRI/Frame Count": "7",
+    "VBRI/TOC Entries": "6",
+    "VBRI/TOC Scale": "1",
+    "VBRI/TOC Entry Size": "4 bytes",
+    "VBRI/Frames Per TOC Entry": "1",
+    "VBRI/TOC": "6 entries",
+    "VBRI/TOC/Entry 0": "192 bytes",
+    "VBRI/TOC/Entry 5": "192 bytes"
+   }
+  },
+  {
+   "offset": 192,
+   "length": 192,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 384,
+   "length": 288,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 672,
+   "length": 240,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "80 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 912,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1296,
+   "length": 336,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "112 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1632,
+   "length": 192,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true,
+ "vbr_header": {
+  "type": "VBRI",
+  "offset": 36,
+  "truncated": false,
+  "version": 1,
+  "delay": 1105,
+  "quality": 75,
+  "bytes": 1824,
+  "frames": 7,
+  "toc_entries": 6,
+  "toc_scale": 1,
+  "entry_size": 4,
+  "frames_per_entry": 1,
+  "toc": [
+   192,
+   288,
+   240,
+   384,
+   336,
+   192
+  ],
+  "frame_offset": 0
+ },
+ "detected_encoder": {
+  "name": "Fraunhofer",
+  "confidence": "High"
+ }
+}

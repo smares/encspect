@@ -1,0 +1,519 @@
+{
+ "description": "lame --quiet -V 5 -m m on 0.5 s of a 440/660 Hz tone, 8000 Hz, 1 channels.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "lame",
+   "--quiet",
+   "-V",
+   "5",
+   "-m",
+   "m"
+  ],
+  "version": "2.5",
+  "layer": 3,
+  "sample_rate": 8000,
+  "channel_mode": "Mono",
+  "bitrate": null,
+  "info_frame": true
+ },
+ "ffprobe_packets": [
+  [
+   288,
+   360
+  ],
+  [
+   648,
+   216
+  ],
+  [
+   864,
+   144
+  ],
+  [
+   1008,
+   144
+  ],
+  [
+   1152,
+   144
+  ],
+  [
+   1296,
+   72
+  ],
+  [
+   1368,
+   144
+  ],
+  [
+   1512,
+   360
+  ],
+  [
+   1872,
+   144
+  ]
+ ],
+ "minimp3_side_info": [
+  {
+   "offset": 0,
+   "reservoir": 0,
+   "main_data_begin": 0,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0
+    }
+   ]
+  },
+  {
+   "offset": 288,
+   "reservoir": 275,
+   "main_data_begin": 0,
+   "granules": [
+    {
+     "part2_3_length": 1100,
+     "big_values": 36,
+     "global_gain": 172,
+     "scalefac_compress": 63,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 648,
+   "reservoir": 209,
+   "main_data_begin": 209,
+   "granules": [
+    {
+     "part2_3_length": 1782,
+     "big_values": 208,
+     "global_gain": 161,
+     "scalefac_compress": 300,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      30,
+      19
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 864,
+   "reservoir": 189,
+   "main_data_begin": 189,
+   "granules": [
+    {
+     "part2_3_length": 1088,
+     "big_values": 280,
+     "global_gain": 145,
+     "scalefac_compress": 223,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      23,
+      5
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 1008,
+   "reservoir": 184,
+   "main_data_begin": 184,
+   "granules": [
+    {
+     "part2_3_length": 779,
+     "big_values": 222,
+     "global_gain": 147,
+     "scalefac_compress": 303,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      30,
+      5
+     ],
+     "region0_count": 4,
+     "region1_count": 1
+    }
+   ]
+  },
+  {
+   "offset": 1152,
+   "reservoir": 217,
+   "main_data_begin": 217,
+   "granules": [
+    {
+     "part2_3_length": 838,
+     "big_values": 280,
+     "global_gain": 146,
+     "scalefac_compress": 63,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      30,
+      19
+     ],
+     "region0_count": 4,
+     "region1_count": 0
+    }
+   ]
+  },
+  {
+   "offset": 1296,
+   "reservoir": 243,
+   "main_data_begin": 243,
+   "granules": [
+    {
+     "part2_3_length": 912,
+     "big_values": 280,
+     "global_gain": 145,
+     "scalefac_compress": 303,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      21,
+      31,
+      19
+     ],
+     "region0_count": 4,
+     "region1_count": 0
+    }
+   ]
+  },
+  {
+   "offset": 1368,
+   "reservoir": 188,
+   "main_data_begin": 188,
+   "granules": [
+    {
+     "part2_3_length": 1003,
+     "big_values": 223,
+     "global_gain": 145,
+     "scalefac_compress": 223,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      30,
+      5
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 1512,
+   "reservoir": 193,
+   "main_data_begin": 193,
+   "granules": [
+    {
+     "part2_3_length": 2693,
+     "big_values": 240,
+     "global_gain": 165,
+     "scalefac_compress": 316,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      30,
+      27
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "offset": 1872,
+   "reservoir": 203,
+   "main_data_begin": 203,
+   "granules": [
+    {
+     "part2_3_length": 1198,
+     "big_values": 82,
+     "global_gain": 169,
+     "scalefac_compress": 143,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  }
+ ],
+ "mp3guessenc": {
+  "blocks": {
+   "long": 3,
+   "switch": 4,
+   "short": 2,
+   "mixed": 0
+  },
+  "mode_extensions": {},
+  "global_gain": {
+   "0": [
+    145,
+    172
+   ]
+  },
+  "ancillary": [
+   184,
+   184,
+   184
+  ],
+  "max_main_data_begin": 243,
+  "scalefac_scale_used": false,
+  "scfsi_used": false
+ },
+ "vbr_header_fields": {
+  "Xing": "Xing",
+  "Xing/Flags": "0x0000000F",
+  "Xing/Flags/HasFrameCount": "true",
+  "Xing/Flags/HasByteCount": "true",
+  "Xing/Flags/HasToc": "true",
+  "Xing/Flags/HasQuality": "true",
+  "Xing/Frame Count": "9",
+  "Xing/Byte Count": "2016",
+  "Xing/TOC": "100 entries",
+  "Xing/TOC/Entry 0": "0",
+  "Xing/TOC/Entry 1": "53",
+  "Xing/TOC/Entry 50": "149",
+  "Xing/TOC/Entry 99": "255",
+  "Xing/Quality": "80",
+  "LAME Tag": "LAME3.100",
+  "LAME Tag/Encoder": "LAME3.100",
+  "LAME Tag/Revision": "0",
+  "LAME Tag/VBR Method": "VBR method 2 (mtrh)",
+  "LAME Tag/Lowpass": "4000 Hz",
+  "LAME Tag/Peak": "Unknown",
+  "LAME Tag/Radio Replay Gain": "-7.8 dB",
+  "LAME Tag/Radio Replay Gain/Name": "Radio",
+  "LAME Tag/Radio Replay Gain/Originator": "Determined automatically",
+  "LAME Tag/Audiophile Replay Gain": "Not set",
+  "LAME Tag/Encoding Flags/UsesNsPsytune": "true",
+  "LAME Tag/Encoding Flags/UsesNsSafeJoint": "false",
+  "LAME Tag/Encoding Flags/IsNoGapContinued": "false",
+  "LAME Tag/Encoding Flags/IsNoGapContinuation": "false",
+  "LAME Tag/ATH Type": "5",
+  "LAME Tag/Minimum Bitrate": "8 kbps",
+  "LAME Tag/Encoder Delay": "576 samples",
+  "LAME Tag/Encoder Padding": "608 samples",
+  "LAME Tag/Noise Shaping": "1",
+  "LAME Tag/Stereo Mode": "Mono",
+  "LAME Tag/HasUnwiseSettings": "true",
+  "LAME Tag/Source Sample Rate": "32 kHz or lower",
+  "LAME Tag/MP3 Gain": "+0.0 dB",
+  "LAME Tag/Surround": "None",
+  "LAME Tag/Preset": "V2",
+  "LAME Tag/Music Length": "2016 bytes",
+  "LAME Tag/Music CRC": "0x94DA",
+  "LAME Tag/Tag CRC": "0x5217",
+  "LAME Tag/Tag CRC/Computed": "0x5217",
+  "LAME Tag/Music CRC/Computed": "0x94DA"
+ },
+ "vbr_findings": [],
+ "vbr_header": {
+  "type": "Xing",
+  "offset": 13,
+  "truncated": false,
+  "flags": 15,
+  "frames": 9,
+  "bytes": 2016,
+  "toc": [
+   0,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   53,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   85,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   106,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   128,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   149,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   160,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   181,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   234,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255,
+   255
+  ],
+  "quality": 80,
+  "after_fields": "4c414d45332e3130300428000000002e4e00001508240260210001e0000007e094da5217",
+  "lame": {
+   "offset": 133,
+   "encoder": "LAME3.100",
+   "revision": 0,
+   "method": 4,
+   "lowpass": 40,
+   "peak": 0,
+   "radio_gain": 11854,
+   "audiophile_gain": 0,
+   "flags": 21,
+   "bitrate": 8,
+   "delay": 576,
+   "padding": 608,
+   "misc": 33,
+   "mp3_gain": 0,
+   "preset_surround": 480,
+   "music_length": 2016,
+   "music_crc": 38106,
+   "tag_crc": 21015,
+   "tag_crc_computed": 21015,
+   "tag_crc_ffmpeg": 64093,
+   "music_crc_computed": 38106
+  },
+  "frame_offset": 0
+ },
+ "detected_encoder": {
+  "name": "LAME 3.100",
+  "confidence": "High"
+ },
+ "mp3guessenc_encoder_string": "LAME3.100"
+}

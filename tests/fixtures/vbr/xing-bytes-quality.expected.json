@@ -1,0 +1,129 @@
+{
+ "description": "MPEG-2 Layer III stereo, 22050 Hz: the Xing header (21 bytes in) has the byte count and quality, so the quality follows the byte count directly.",
+ "length": 1458,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 1458
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 208,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Xing": "Xing",
+    "Xing/Flags": "0x0000000A",
+    "Xing/Flags/HasFrameCount": "false",
+    "Xing/Flags/HasByteCount": "true",
+    "Xing/Flags/HasToc": "false",
+    "Xing/Flags/HasQuality": "true",
+    "Xing/Byte Count": "1458",
+    "Xing/Quality": "78"
+   }
+  },
+  {
+   "offset": 208,
+   "length": 208,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 416,
+   "length": 104,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 520,
+   "length": 313,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 833,
+   "length": 208,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1041,
+   "length": 156,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "48 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1197,
+   "length": 261,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "80 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true,
+ "vbr_header": {
+  "type": "Xing",
+  "offset": 21,
+  "truncated": false,
+  "flags": 10,
+  "frames": null,
+  "bytes": 1458,
+  "toc": null,
+  "quality": 78,
+  "after_fields": "000000000000000000000000000000000000000000000000000000000000000000000000",
+  "frame_offset": 0
+ },
+ "detected_encoder": null
+}

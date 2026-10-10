@@ -83,6 +83,9 @@ jobs:
       - name: Regenerate the hand-built Layer II fixtures
         run: python3 scripts/fixtures/make_layer2_fixtures.py
 
+      - name: Regenerate the hand-built VBR header fixtures
+        run: python3 scripts/fixtures/make_vbr_fixtures.py
+
       - name: Fail if they differ from the committed files
         run: |
           git status --porcelain -- tests/fixtures

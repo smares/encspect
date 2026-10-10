@@ -1,0 +1,84 @@
+{
+ "description": "MPEG-1 Layer II frames with \"Xing\" where a Layer III frame would hold it; Layer II frames carry no VBR header, so these bytes are ancillary data.",
+ "length": 2880,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2880
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 576,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1152,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1728,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2304,
+   "length": 576,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true,
+ "vbr_header": null,
+ "detected_encoder": null
+}
