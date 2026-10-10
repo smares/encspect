@@ -5,11 +5,12 @@ namespace Encspect.Cli;
 
 internal static class Program
 {
-    private const string Usage = "Usage: encspect [--json] [--offsets] <file-or-folder>...";
+    private const string Usage = "Usage: encspect [--json | --ndjson] [--offsets] <file-or-folder>...";
 
     private static int Main(string[] args)
     {
         bool json = false;
+        bool ndjson = false;
         bool offsets = false;
         var paths = new List<string>();
 
@@ -19,6 +20,9 @@ internal static class Program
             {
                 case "--json":
                     json = true;
+                    break;
+                case "--ndjson":
+                    ndjson = true;
                     break;
                 case "--offsets":
                     offsets = true;
@@ -40,45 +44,61 @@ internal static class Program
             }
         }
 
-        if (paths.Count == 0)
+        if (paths.Count == 0 || (json && ndjson))
         {
             Console.Error.WriteLine(Usage);
             return 2;
         }
 
         var analyzer = Analyzer.CreateDefault();
-        var reports = new List<Report>();
         int exitCode = 0;
 
-        foreach (string file in ExpandPaths(paths))
-        {
-            try
-            {
-                reports.Add(analyzer.AnalyzeFile(file));
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                Console.Error.WriteLine($"{file}: {ex.Message}");
-                exitCode = 1;
-            }
-        }
-
+        using Stream stdout = Console.OpenStandardOutput();
         if (json)
         {
-            using Stream stdout = Console.OpenStandardOutput();
-            ReportJsonWriter.Write(reports, stdout);
+            ReportJsonWriter.Write(Reports(), stdout);
             stdout.WriteByte((byte)'\n');
+        }
+        else if (ndjson)
+        {
+            ReportJsonWriter.WriteLines(Reports(), stdout);
         }
         else
         {
-            foreach (Report report in reports)
+            // Console.Out flushes after every write, which costs a system call per node.
+            using var output = new StreamWriter(stdout, Console.OutputEncoding, 1 << 16);
+            foreach (Report report in Reports())
             {
-                ReportTextWriter.Write(report, Console.Out, offsets);
-                Console.Out.WriteLine();
+                ReportTextWriter.Write(report, output, offsets);
+                output.WriteLine();
             }
         }
 
         return exitCode;
+
+        // Each report is written as soon as its file is analyzed and is then dropped, so memory
+        // does not grow with the number of files.
+        IEnumerable<Report> Reports()
+        {
+            foreach (string file in ExpandPaths(paths))
+            {
+                Report? report = null;
+                try
+                {
+                    report = analyzer.AnalyzeFile(file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Console.Error.WriteLine($"{file}: {ex.Message}");
+                    exitCode = 1;
+                }
+
+                if (report is not null)
+                {
+                    yield return report;
+                }
+            }
+        }
     }
 
     private static IEnumerable<string> ExpandPaths(IEnumerable<string> paths)

@@ -16,6 +16,8 @@ dotnet test -c Release
 dotnet run -c Release --project src/Encspect.Cli -- --offsets file.mp3
 ```
 
+The CLI prints a text tree by default. `--json` writes one JSON array of reports, `--ndjson` one compact report per line (newline-delimited JSON), which stays usable line by line if a long run stops early. Reports are written as each file is analyzed.
+
 Tag fixtures live in `tests/fixtures/tags`. `scripts/fixtures/make_tag_fixtures.py` writes the hand-built ones (CI checks they are reproducible) and `scripts/fixtures/make_external_tag_fixtures.py` the ones written by mutagen and ffmpeg. MPEG fixtures live in `tests/fixtures/mpeg`, written by `make_mpeg_fixtures.py` (hand-built, reproducible in CI) and `make_external_mpeg_fixtures.py` (LAME and TwoLAME); `crosscheck_mpeg_fixtures.py` confirms their manifests with ffprobe, madplay and mpg123. Golden reports (`*.report.json`) are compared on every test run; after an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 
 ## Planned stack

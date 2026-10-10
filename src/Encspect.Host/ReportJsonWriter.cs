@@ -5,6 +5,13 @@ namespace Encspect.Host;
 
 public static class ReportJsonWriter
 {
+    // Utf8JsonWriter buffers everything until it is flushed, which for a report with a node per
+    // frame header field means the whole document in memory. Flushing once this much is pending
+    // keeps memory flat however large the report gets.
+    private const int FlushThreshold = 1 << 16;
+
+    // Reports are written as they are enumerated, so a lazy sequence is analyzed and written one
+    // file at a time.
     public static void Write(IEnumerable<Report> reports, Stream output)
     {
         ArgumentNullException.ThrowIfNull(reports);
@@ -16,9 +23,30 @@ public static class ReportJsonWriter
         foreach (Report report in reports)
         {
             WriteReport(writer, report);
+            writer.Flush();
         }
 
         writer.WriteEndArray();
+    }
+
+    // Newline-delimited JSON: one compact report per line, so every finished line can be used on
+    // its own, even when the run stops early, and outputs can be concatenated.
+    public static void WriteLines(IEnumerable<Report> reports, Stream output)
+    {
+        ArgumentNullException.ThrowIfNull(reports);
+        ArgumentNullException.ThrowIfNull(output);
+
+        using var writer = new Utf8JsonWriter(output);
+
+        foreach (Report report in reports)
+        {
+            WriteReport(writer, report);
+            writer.Flush();
+            output.WriteByte((byte)'\n');
+
+            // A writer accepts only one top-level value until it is reset.
+            writer.Reset(output);
+        }
     }
 
     private static void WriteReport(Utf8JsonWriter writer, Report report)
@@ -73,5 +101,9 @@ public static class ReportJsonWriter
         }
 
         writer.WriteEndObject();
+        if (writer.BytesPending > FlushThreshold)
+        {
+            writer.Flush();
+        }
     }
 }

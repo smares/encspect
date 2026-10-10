@@ -1,9 +1,12 @@
+using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Host;
 
 public static class ReportTextWriter
 {
+    private static readonly string Spaces = new(' ', 64);
+
     public static void Write(Report report, TextWriter writer, bool showOffsets)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -23,13 +26,32 @@ public static class ReportTextWriter
         }
     }
 
+    // Written piece by piece rather than as one interpolated line per node, because a report can
+    // hold hundreds of thousands of nodes.
     private static void WriteNode(Node node, TextWriter writer, bool showOffsets, int depth)
     {
-        string indent = new(' ', (depth + 1) * 2);
-        string value = node.Value is null ? string.Empty : $": {Escape(node.Value)}";
-        string location = showOffsets ? $" [0x{node.Offset:X}, {node.Length} bytes]" : string.Empty;
+        for (int indent = (depth + 1) * 2; indent > 0; indent -= Spaces.Length)
+        {
+            writer.Write(Spaces.AsSpan(0, Math.Min(indent, Spaces.Length)));
+        }
 
-        writer.WriteLine($"{indent}{node.Name}{value}{location}");
+        writer.Write(node.Name);
+        if (node.Value is not null)
+        {
+            writer.Write(": ");
+            writer.Write(Escape(node.Value));
+        }
+
+        if (showOffsets)
+        {
+            writer.Write(" [0x");
+            writer.Write(node.Offset.ToString("X", CultureInfo.InvariantCulture));
+            writer.Write(", ");
+            writer.Write(node.Length.ToString(CultureInfo.InvariantCulture));
+            writer.Write(" bytes]");
+        }
+
+        writer.WriteLine();
 
         foreach (Node child in node.Children)
         {

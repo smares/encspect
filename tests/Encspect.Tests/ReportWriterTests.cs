@@ -67,6 +67,88 @@ public class ReportWriterTests
     }
 
     [Fact]
+    public void JsonOutputWritesEachReportBeforeTheNextIsRequested()
+    {
+        using var output = new MemoryStream();
+        var lengthsWhenRequested = new List<long>();
+
+        IEnumerable<Report> Reports()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                lengthsWhenRequested.Add(output.Length);
+                yield return CreateReport();
+            }
+        }
+
+        ReportJsonWriter.Write(Reports(), output);
+
+        Assert.Equal(0, lengthsWhenRequested[0]);
+        Assert.True(lengthsWhenRequested[1] > lengthsWhenRequested[0]);
+        Assert.True(lengthsWhenRequested[2] > lengthsWhenRequested[1]);
+        using JsonDocument document = JsonDocument.Parse(output.ToArray());
+        Assert.Equal(3, document.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public void JsonOutputIsFlushedWhileALargeReportIsWritten()
+    {
+        var root = new Node("File", 0, 100_000);
+        for (int i = 0; i < 10_000; i++)
+        {
+            root.Add("Frame", i * 10, 10, "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo");
+        }
+
+        using var output = new WriteCountingStream();
+
+        ReportJsonWriter.Write([new Report("large.bin", root, [])], output);
+
+        Assert.True(output.Writes > 2, $"{output.Writes} writes");
+        Assert.True(output.LargestWrite < 1 << 20, $"largest write {output.LargestWrite} bytes");
+    }
+
+    [Fact]
+    public void NdjsonOutputHasOneCompactReportPerLine()
+    {
+        var root = new Node("File", 0, 10);
+        root.Add("Lyrics", 0, 10, "one\r\ntwo");
+        Report[] reports = [CreateReport(), new Report("second.bin", root, [])];
+        using var output = new MemoryStream();
+
+        ReportJsonWriter.WriteLines(reports, output);
+
+        string text = System.Text.Encoding.UTF8.GetString(output.ToArray());
+        Assert.EndsWith("\n", text);
+        string[] lines = text[..^1].Split('\n');
+        Assert.Equal(2, lines.Length);
+        Assert.All(lines, line => Assert.DoesNotContain('\r', line));
+
+        using JsonDocument first = JsonDocument.Parse(lines[0]);
+        Assert.Equal("test.bin", first.RootElement.GetProperty("source").GetString());
+        Assert.Equal("test.code", first.RootElement.GetProperty("findings")[0].GetProperty("code").GetString());
+
+        using JsonDocument second = JsonDocument.Parse(lines[1]);
+        JsonElement lyrics = second.RootElement.GetProperty("root").GetProperty("children")[0];
+        Assert.Equal("one\r\ntwo", lyrics.GetProperty("value").GetString());
+    }
+
+    [Fact]
+    public void NdjsonLinesMatchTheJsonArrayEntries()
+    {
+        Report[] reports = [CreateReport(), CreateReport()];
+        using var array = new MemoryStream();
+        using var lines = new MemoryStream();
+
+        ReportJsonWriter.Write(reports, array);
+        ReportJsonWriter.WriteLines(reports, lines);
+
+        using JsonDocument document = JsonDocument.Parse(array.ToArray());
+        string[] expected = [.. document.RootElement.EnumerateArray().Select(r => JsonSerializer.Serialize(r))];
+        string[] actual = System.Text.Encoding.UTF8.GetString(lines.ToArray()).TrimEnd('\n').Split('\n');
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void TextOutputEscapesControlCharactersInValues()
     {
         var root = new Node("File", 0, 10);
@@ -76,5 +158,23 @@ public class ReportWriterTests
         ReportTextWriter.Write(new Report("test.bin", root, []), writer, showOffsets: false);
 
         Assert.Contains("Lyrics: one\\r\\ntwo\\x01", writer.ToString());
+    }
+
+    private sealed class WriteCountingStream : MemoryStream
+    {
+        public int Writes { get; private set; }
+
+        public int LargestWrite { get; private set; }
+
+        // MemoryStream.Write(ReadOnlySpan) on a derived type goes through Write(byte[], int, int),
+        // so both are counted here and neither calls the other.
+        public override void Write(ReadOnlySpan<byte> buffer) => Write(buffer.ToArray(), 0, buffer.Length);
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            Writes++;
+            LargestWrite = Math.Max(LargestWrite, count);
+            base.Write(buffer, offset, count);
+        }
     }
 }
