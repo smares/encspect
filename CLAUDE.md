@@ -6,6 +6,14 @@ Audio file analyzer with a GUI and a CLI. Read `docs/PLAN.md` for goals, archite
 
 C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one project per format. No playback, no runtime-loadable plugins, no bundled native libraries.
 
+## Layout
+
+- `src/Encspect.Core.Abstractions`: result model, byte reader, parser interface.
+- `src/Encspect.Host`: analyzer (format detection, parser orchestration) and report writers.
+- `src/Encspect.Cli`: console app, assembly name `encspect`.
+- `tests/Encspect.Tests`: xUnit tests for all of the above.
+- Format parsers, tag parsers and the Avalonia GUI are added as further projects.
+
 ## Architecture rules
 
 - Parsers depend only on `Core.Abstractions` (parser interface, result model, byte and bit readers). They never reference each other and never reference a decoder.

@@ -6,7 +6,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-Planning. No code yet. The plan is in [docs/PLAN.md](docs/PLAN.md); the first milestone is MP1/MP2/MP3 analysis at the header, side-info and metadata level.
+Early skeleton: core abstractions, host, CLI and tests, but no format parsers yet. The plan is in [docs/PLAN.md](docs/PLAN.md); the first milestone is MP1/MP2/MP3 analysis at the header, side-info and metadata level.
 
 ## Planned stack
 
