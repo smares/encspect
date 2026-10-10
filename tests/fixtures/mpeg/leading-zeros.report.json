@@ -279,10 +279,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "413 bytes",
+                  "name": "Side Info",
                   "offset": 548,
-                  "length": 413
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 548,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 549,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 549,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 549,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 550,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 550,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 550,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 550,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 552,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 553,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 554,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 554,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 554,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 556,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 557,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 557,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 557,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 557,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 557,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 557,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 559,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 560,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 561,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 562,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 562,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 564,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 564,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 564,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 565,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 565,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 565,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 565,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 565,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 566,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 567,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 568,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 569,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 569,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 571,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 571,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 572,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 572,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 572,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 572,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 572,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 574,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 575,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 576,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 576,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 576,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 578,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 579,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 579,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 579,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 579,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 580,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "381 bytes",
+                  "offset": 580,
+                  "length": 381
                 }
               ]
             },
@@ -372,10 +722,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 965,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 965,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 966,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 966,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 966,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 967,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 967,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 967,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 967,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 969,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 970,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 971,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 971,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 971,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 973,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 974,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 974,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 974,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 974,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 974,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 974,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 976,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 977,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 978,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 979,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 979,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 981,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 981,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 981,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 982,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 982,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 982,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 982,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 982,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 983,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 984,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 985,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 986,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 986,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 988,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 988,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 989,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 989,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 989,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 989,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 989,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 991,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 992,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 993,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 993,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 993,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 995,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 996,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 996,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 996,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 996,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 997,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 997,
+                  "length": 382
                 }
               ]
             },
@@ -465,10 +1165,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 1383,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 1383,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 1384,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 1384,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 1384,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 1385,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 1385,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 1385,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1385,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1387,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1388,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1389,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1389,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1389,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1391,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1392,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1392,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1392,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1392,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 1392,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1392,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1394,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1395,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1396,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1397,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1397,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1399,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1399,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1399,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1400,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1400,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 1400,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 1400,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1400,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1401,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1402,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1403,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1404,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1404,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1406,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1406,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1407,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1407,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1407,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 1407,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1407,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1409,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1410,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1411,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1411,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1411,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1413,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1414,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1414,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1414,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1414,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 1415,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 1415,
+                  "length": 382
                 }
               ]
             },
@@ -558,10 +1608,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 1801,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 1801,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 1802,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 1802,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 1802,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 1803,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 1803,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 1803,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1803,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1805,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1806,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1807,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1807,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1807,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1809,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1810,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1810,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1810,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1810,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 1810,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1810,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1812,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1813,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1814,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1815,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1815,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1817,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1817,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1817,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1818,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1818,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 1818,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 1818,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1818,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1819,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1820,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1821,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1822,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1822,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1824,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1824,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1825,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1825,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1825,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 1825,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 1825,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 1827,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 1828,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 1829,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 1829,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 1829,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 1831,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 1832,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 1832,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 1832,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 1832,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 1833,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 1833,
+                  "length": 382
                 }
               ]
             },
@@ -651,10 +2051,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 2219,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 2219,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 2220,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 2220,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 2220,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 2221,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 2221,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 2221,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2221,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2223,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2224,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2225,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2225,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2225,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2227,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2228,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2228,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2228,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2228,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 2228,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2228,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2230,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2231,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2232,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2233,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2233,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2235,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2235,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2235,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2236,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2236,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 2236,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 2236,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2236,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2237,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2238,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2239,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2240,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2240,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2242,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2242,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2243,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2243,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2243,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 2243,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2243,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2245,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2246,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2247,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2247,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2247,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2249,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2250,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2250,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2250,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2250,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 2251,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 2251,
+                  "length": 382
                 }
               ]
             },
@@ -744,10 +2494,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 2637,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 2637,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 2638,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 2638,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 2638,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 2639,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 2639,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 2639,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2639,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2641,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2642,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2643,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2643,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2643,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2645,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2646,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2646,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2646,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2646,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 2646,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2646,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2648,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2649,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2650,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2651,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2651,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2653,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2653,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2653,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2654,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2654,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 2654,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 2654,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2654,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2655,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2656,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2657,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2658,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2658,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2660,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2660,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2661,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2661,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2661,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 2661,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 2661,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 2663,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 2664,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 2665,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 2665,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 2665,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 2667,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 2668,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 2668,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 2668,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 2668,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 2669,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 2669,
+                  "length": 382
                 }
               ]
             },
@@ -837,10 +2937,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 3055,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 3055,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 3056,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 3056,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 3056,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 3057,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 3057,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 3057,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3057,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3059,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3060,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3061,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3061,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3061,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3063,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3064,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3064,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3064,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3064,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 3064,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3064,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3066,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3067,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3068,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3069,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3069,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3071,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3071,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3071,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3072,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3072,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 3072,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 3072,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3072,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3073,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3074,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3075,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3076,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3076,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3078,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3078,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3079,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3079,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3079,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 3079,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3079,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3081,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3082,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3083,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3083,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3083,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3085,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3086,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3086,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3086,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3086,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 3087,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 3087,
+                  "length": 382
                 }
               ]
             },
@@ -930,10 +3380,360 @@
                   ]
                 },
                 {
-                  "name": "Data",
-                  "value": "414 bytes",
+                  "name": "Side Info",
                   "offset": 3473,
-                  "length": 414
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Main Data Begin",
+                      "value": "0 bytes",
+                      "offset": 3473,
+                      "length": 2
+                    },
+                    {
+                      "name": "Private Bits",
+                      "value": "0",
+                      "offset": 3474,
+                      "length": 1
+                    },
+                    {
+                      "name": "SCFSI",
+                      "offset": 3474,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "value": "0000",
+                          "offset": 3474,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel 1",
+                          "value": "0000",
+                          "offset": 3475,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 0",
+                      "offset": 3475,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 3475,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3475,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3477,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3478,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3479,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3479,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3479,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3481,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3482,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3482,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3482,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3482,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 3482,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3482,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3484,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3485,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3486,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3487,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3487,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3489,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3489,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3489,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3490,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3490,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule 1",
+                      "offset": 3490,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Channel 0",
+                          "offset": 3490,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3490,
+                              "length": 2
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3491,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3492,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3493,
+                              "length": 2
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3494,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3494,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3496,
+                              "length": 1
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3496,
+                              "length": 2
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3497,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3497,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3497,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Channel 1",
+                          "offset": 3497,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Part 2 and 3 Length",
+                              "value": "0 bits",
+                              "offset": 3497,
+                              "length": 3
+                            },
+                            {
+                              "name": "Big Values",
+                              "value": "0",
+                              "offset": 3499,
+                              "length": 2
+                            },
+                            {
+                              "name": "Global Gain",
+                              "value": "0",
+                              "offset": 3500,
+                              "length": 2
+                            },
+                            {
+                              "name": "Scalefactor Compress",
+                              "value": "0",
+                              "offset": 3501,
+                              "length": 1
+                            },
+                            {
+                              "name": "Block Type",
+                              "value": "Normal",
+                              "offset": 3501,
+                              "length": 1
+                            },
+                            {
+                              "name": "Table Select",
+                              "value": "0, 0, 0",
+                              "offset": 3501,
+                              "length": 3
+                            },
+                            {
+                              "name": "Region 0 Count",
+                              "value": "0",
+                              "offset": 3503,
+                              "length": 2
+                            },
+                            {
+                              "name": "Region 1 Count",
+                              "value": "0",
+                              "offset": 3504,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasPreflag",
+                              "value": "false",
+                              "offset": 3504,
+                              "length": 1
+                            },
+                            {
+                              "name": "HasCoarseScalefactors",
+                              "value": "false",
+                              "offset": 3504,
+                              "length": 1
+                            },
+                            {
+                              "name": "Count1 Table",
+                              "value": "A",
+                              "offset": 3504,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Main Data",
+                  "value": "0 bytes",
+                  "offset": 3505,
+                  "length": 0
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": "382 bytes",
+                  "offset": 3505,
+                  "length": 382
                 }
               ]
             }

@@ -4,7 +4,10 @@ using Encspect.Core;
 namespace Encspect.Tests;
 
 // Checks every MPEG fixture against its manifest. Hand-built fixtures list every frame, gap and
-// finding; encoder-made ones list the encoder settings and the frames ffprobe found.
+// finding, and for Layer III the side information and how each frame's data splits into main data,
+// bit reservoir and ancillary data; encoder-made ones list the encoder settings, the frames
+// ffprobe found, and the side information minimp3 read. Where a manifest records mp3guessenc's
+// statistics, the same statistics computed from the report must match.
 public class MpegFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.MpegFixtures();
@@ -31,7 +34,7 @@ public class MpegFixtureTests
     public void ReportMatchesGoldenFile(string fileName)
     {
         string actual = Fixtures.ToJson(Fixtures.AnalyzeMpeg(fileName));
-        string path = Path.Combine(Fixtures.MpegDirectory, Path.GetFileNameWithoutExtension(fileName) + ".report.json");
+        string path = Fixtures.MpegCompanion(fileName, ".report.json");
 
         if (Fixtures.UpdateGolden)
         {
@@ -65,6 +68,25 @@ public class MpegFixtureTests
                 string? actual = Fixtures.Resolve(frames[i], field.Name).FirstOrDefault()?.Value;
                 Assert.True(field.Value.GetString() == actual, $"Frame {i} at {frames[i].Offset}, field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
             }
+
+            if (expectedFrames[i].TryGetProperty("side_info", out JsonElement sideInfo))
+            {
+                CheckSideInfo(frames[i], sideInfo);
+            }
+
+            if (expectedFrames[i].TryGetProperty("data", out JsonElement data))
+            {
+                IReadOnlyList<Node> children = frames[i].Children;
+                int sideInfoIndex = children.ToList().FindIndex(c => c.Name == "Side Info");
+                Assert.Equal(
+                    data.EnumerateArray().Select(d => $"{d.GetProperty("name").GetString()}@{d.GetProperty("offset").GetInt64()}+{d.GetProperty("length").GetInt64()}: {d.GetProperty("value").GetString()}"),
+                    children.Skip(sideInfoIndex + 1).Select(c => $"{c.Name}@{c.Offset}+{c.Length}: {c.Value}"));
+            }
+        }
+
+        if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
+        {
+            CheckGuessencStatistics(guessenc, frames);
         }
 
         Assert.Equal(
@@ -157,9 +179,169 @@ public class MpegFixtureTests
             }
         }
 
+        if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3))
+        {
+            Dictionary<long, Node> byOffset = frames.ToDictionary(f => f.Offset);
+            Assert.Equal(minimp3.GetArrayLength(), frames.Length);
+            foreach (JsonElement row in minimp3.EnumerateArray())
+            {
+                CheckSideInfo(byOffset[row.GetProperty("offset").GetInt64()], row);
+            }
+        }
+
+        if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
+        {
+            CheckGuessencStatistics(guessenc, audioFrames);
+        }
+
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
     }
+
+    // Side information as minimp3_side_info.c prints it: compared field by field where minimp3
+    // keeps the coded value, and skipped for frames minimp3 rejects.
+    private static void CheckSideInfo(Node frame, JsonElement expected)
+    {
+        int mainDataBegin = expected.GetProperty("main_data_begin").GetInt32();
+        if (mainDataBegin < 0)
+        {
+            return;
+        }
+
+        var actual = new Dictionary<string, string> { ["Side Info/Main Data Begin"] = $"{mainDataBegin} bytes" };
+        int channels = Value(frame, "Header/Channel Mode") == "Mono" ? 1 : 2;
+        string[] blockTypes = ["Normal", "Start", "Short", "Stop"];
+        int i = 0;
+        foreach (JsonElement g in expected.GetProperty("granules").EnumerateArray())
+        {
+            string path = $"Side Info/Granule {i / channels}/Channel {i % channels}/";
+            actual[path + "Part 2 and 3 Length"] = $"{g.GetProperty("part2_3_length").GetInt32()} bits";
+            actual[path + "Big Values"] = $"{g.GetProperty("big_values").GetInt32()}";
+            actual[path + "Global Gain"] = $"{g.GetProperty("global_gain").GetInt32()}";
+            actual[path + "Scalefactor Compress"] = $"{g.GetProperty("scalefac_compress").GetInt32()}";
+            actual[path + "Block Type"] = blockTypes[g.GetProperty("block_type").GetInt32()];
+            actual[path + "HasCoarseScalefactors"] = Flag(g.GetProperty("scalefac_scale"));
+            actual[path + "Count1 Table"] = g.GetProperty("count1_table").GetInt32() == 0 ? "A" : "B";
+            actual[path + "Table Select"] = string.Join(", ", g.GetProperty("table_select").EnumerateArray().Select(v => v.GetInt32()));
+            if (g.TryGetProperty("mixed_block_flag", out JsonElement mixed))
+            {
+                actual[path + "IsMixedBlock"] = Flag(mixed);
+                actual[path + "Subblock Gain"] = string.Join(", ", g.GetProperty("subblock_gain").EnumerateArray().Select(v => v.GetInt32()));
+            }
+            else
+            {
+                actual[path + "Region 0 Count"] = $"{g.GetProperty("region0_count").GetInt32()}";
+                actual[path + "Region 1 Count"] = $"{g.GetProperty("region1_count").GetInt32()}";
+            }
+
+            if (g.TryGetProperty("preflag", out JsonElement preflag))
+            {
+                actual[path + "HasPreflag"] = Flag(preflag);
+            }
+
+            if (g.TryGetProperty("scfsi", out JsonElement scfsi))
+            {
+                actual[$"Side Info/SCFSI/Channel {i % channels}"] = Convert.ToString(scfsi.GetInt32(), 2).PadLeft(4, '0');
+            }
+
+            i++;
+        }
+
+        foreach ((string path, string value) in actual)
+        {
+            Assert.True(Value(frame, path) == value, $"Frame at {frame.Offset}, field {path}: \"{Value(frame, path)}\", expected \"{value}\"");
+        }
+
+        static string Flag(JsonElement value) => value.GetInt32() != 0 ? "true" : "false";
+    }
+
+    // The statistics mp3guessenc prints about a Layer III stream, computed from the report. A
+    // frame's ancillary data is what follows its main data in the reservoir until the next frame's
+    // main data starts.
+    private static void CheckGuessencStatistics(JsonElement expected, Node[] frames)
+    {
+        var blocks = new Dictionary<string, int> { ["long"] = 0, ["switch"] = 0, ["short"] = 0, ["mixed"] = 0 };
+        var modes = new Dictionary<string, int>();
+        var gains = new SortedDictionary<string, List<int>>(StringComparer.Ordinal);
+        string[] extensions = ["None", "Intensity stereo", "MS stereo", "MS and intensity stereo"];
+        var ancillary = new List<long>();
+        long? previousFree = null;
+        bool scalefacScale = false;
+        bool scfsi = false;
+        int maxMainDataBegin = 0;
+
+        foreach (Node frame in frames)
+        {
+            if (Value(frame, "Header/Channel Mode") == "Joint stereo")
+            {
+                string key = $"{Array.IndexOf(extensions, Value(frame, "Header/Mode Extension"))}";
+                modes[key] = modes.GetValueOrDefault(key) + 1;
+            }
+
+            Node sideInfo = Fixtures.Resolve(frame, "Side Info").Single();
+            int mainDataBegin = int.Parse(Value(frame, "Side Info/Main Data Begin")!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+            maxMainDataBegin = Math.Max(maxMainDataBegin, mainDataBegin);
+            long bits = 0;
+            foreach (Node granule in sideInfo.Children.Where(c => c.Name.StartsWith("Granule", StringComparison.Ordinal)))
+            {
+                foreach (Node channel in granule.Children)
+                {
+                    string type = Value(channel, "Block Type")!;
+                    string kind = type == "Normal" ? "long" : type != "Short" ? "switch" : Value(channel, "IsMixedBlock") == "true" ? "mixed" : "short";
+                    blocks[kind]++;
+                    string number = channel.Name.Split(' ')[1];
+                    if (!gains.TryGetValue(number, out List<int>? list))
+                    {
+                        gains[number] = list = [];
+                    }
+
+                    list.Add(int.Parse(Value(channel, "Global Gain")!, System.Globalization.CultureInfo.InvariantCulture));
+                    bits += long.Parse(Value(channel, "Part 2 and 3 Length")!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+                    scalefacScale |= Value(channel, "HasCoarseScalefactors") == "true";
+                }
+            }
+
+            scfsi |= Fixtures.Resolve(frame, "Side Info/SCFSI").SelectMany(s => s.Children).Any(c => c.Value != "0000");
+            if (previousFree is { } free)
+            {
+                ancillary.Add(free - mainDataBegin);
+            }
+
+            previousFree = frame.End - sideInfo.End + mainDataBegin - ((bits + 7) / 8);
+        }
+
+        if (previousFree is { } last)
+        {
+            ancillary.Add(last);
+        }
+
+        long[] positive = ancillary.Where(a => a > 0).ToArray();
+        var actual = new Dictionary<string, string>
+        {
+            ["blocks"] = string.Join(", ", blocks.Select(b => $"{b.Key} {b.Value}")),
+            ["mode_extensions"] = string.Join(", ", modes.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => $"{m.Key} {m.Value}")),
+            ["global_gain"] = string.Join(", ", gains.Select(g => $"{g.Key} {g.Value.Min()}-{g.Value.Max()}")),
+            ["max_main_data_begin"] = $"{maxMainDataBegin}",
+            ["ancillary"] = positive.Length == 0 ? "0 0 0" : $"{positive.Sum()} {positive.Min()} {positive.Max()}",
+            ["scalefac_scale_used"] = $"{scalefacScale}",
+            ["scfsi_used"] = $"{scfsi}",
+        };
+        var wanted = new Dictionary<string, string>
+        {
+            ["blocks"] = string.Join(", ", expected.GetProperty("blocks").EnumerateObject().Select(b => $"{b.Name} {b.Value.GetInt32()}")),
+            ["mode_extensions"] = string.Join(", ", expected.GetProperty("mode_extensions").EnumerateObject()
+                .Where(m => m.Name != "None").OrderBy(m => m.Name, StringComparer.Ordinal).Select(m => $"{m.Name} {m.Value.GetInt32()}")),
+            ["global_gain"] = string.Join(", ", expected.GetProperty("global_gain").EnumerateObject().OrderBy(g => g.Name, StringComparer.Ordinal)
+                .Select(g => $"{g.Name} {g.Value[0].GetInt32()}-{g.Value[1].GetInt32()}")),
+            ["max_main_data_begin"] = $"{expected.GetProperty("max_main_data_begin").GetInt32()}",
+            ["ancillary"] = string.Join(" ", expected.GetProperty("ancillary").EnumerateArray().Select(a => a.GetInt64())),
+            ["scalefac_scale_used"] = $"{expected.GetProperty("scalefac_scale_used").GetBoolean()}",
+            ["scfsi_used"] = $"{expected.GetProperty("scfsi_used").GetBoolean()}",
+        };
+        Assert.Equal(wanted, actual);
+    }
+
+    private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
 
     private static IEnumerable<Node> Streams(Report report) => report.Root.Children.Where(c => c.Name == "MPEG Audio");
 

@@ -6,7 +6,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-Core abstractions, host, CLI and the tag parsers: ID3v1 (with ID3v1.1 and the Enhanced TAG), ID3v2.2, 2.3 and 2.4, APEv1 and APEv2, and Lyrics3 v1 and v2. The host finds tags by position and structure, never by signature alone (see the plan). The MPEG audio parser reads MP1, MP2 and MP3 at frame-header level: sync and resync, every header field, free format, and CRC-16 for Layers I and III. Next in the first milestone: Layer III side info, the Xing, Info, LAME and VBRI headers, and statistics. The plan is in [docs/PLAN.md](docs/PLAN.md).
+Core abstractions, host, CLI and the tag parsers: ID3v1 (with ID3v1.1 and the Enhanced TAG), ID3v2.2, 2.3 and 2.4, APEv1 and APEv2, and Lyrics3 v1 and v2. The host finds tags by position and structure, never by signature alone (see the plan). The MPEG audio parser reads MP1, MP2 and MP3 frames: sync and resync, every header field, free format, CRC-16 for Layers I and III, and for Layer III the side information of every granule and the bit reservoir, with each frame's bytes split into its own main data, other frames' main data and ancillary data. Next in the first milestone: Layer II allocation and MPEG-2 multichannel, the Xing, Info, LAME and VBRI headers, and statistics. The plan is in [docs/PLAN.md](docs/PLAN.md).
 
 ## Development
 

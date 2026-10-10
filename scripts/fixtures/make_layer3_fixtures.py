@@ -762,16 +762,17 @@ def reservoir_splice():
 def reservoir_gap():
     f = Layer3Fixture(
         "reservoir-across-gap",
-        "The reservoir chain with 40 bytes of junk between frames 1 and 2: frame 2's main data starts in frame 1, "
-        "across the junk. ffmpeg keeps the reservoir across the gap, minimp3 and libmad empty it.",
+        "The reservoir chain with 40 bytes of junk between frames 3 and 4: frame 4's main data lies in frame 3, "
+        "across the junk. ffmpeg keeps the reservoir across the gap, minimp3 and libmad empty it. Four frames come "
+        "first, because two frames before junk are not a chain.",
         crosscheck=False,
         silent=False,
         guessenc=False,
     )
     frames = reservoir_chain(CHAIN)
-    f.add_frames(frames[:2])
+    f.add_frames(frames[:4])
     f.gap(junk(40, 61))
-    f.add_frames(frames[2:])
+    f.add_frames(frames[4:])
     return f.finding("mpeg.sync-lost", "40 bytes")
 
 

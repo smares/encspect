@@ -1,5 +1,5 @@
 {
- "description": "The reservoir chain with 40 bytes of junk between frames 1 and 2: frame 2's main data starts in frame 1, across the junk. ffmpeg keeps the reservoir across the gap, minimp3 and libmad empty it.",
+ "description": "The reservoir chain with 40 bytes of junk between frames 3 and 4: frame 4's main data lies in frame 3, across the junk. ffmpeg keeps the reservoir across the gap, minimp3 and libmad empty it. Four frames come first, because two frames before junk are not a chain.",
  "length": 5055,
  "crosscheck": false,
  "regions": [
@@ -318,12 +318,12 @@
      "name": "Bit Reservoir",
      "offset": 553,
      "length": 282,
-     "value": "282 bytes of the main data of the frame at 0x36B"
+     "value": "282 bytes of the main data of the frame at 0x343"
     }
    ]
   },
   {
-   "offset": 875,
+   "offset": 835,
    "length": 418,
    "fields": {
     "Header/Version": "MPEG-1",
@@ -463,20 +463,20 @@
    "data": [
     {
      "name": "Main Data",
-     "offset": 911,
+     "offset": 871,
      "length": 278,
      "value": "560 bytes, 282 of them in earlier frames"
     },
     {
      "name": "Ancillary Data",
-     "offset": 1189,
+     "offset": 1149,
      "length": 104,
      "value": "104 bytes"
     }
    ]
   },
   {
-   "offset": 1293,
+   "offset": 1253,
    "length": 418,
    "fields": {
     "Header/Version": "MPEG-1",
@@ -616,37 +616,37 @@
    "data": [
     {
      "name": "Main Data",
-     "offset": 1329,
+     "offset": 1289,
      "length": 50,
      "value": "50 bytes"
     },
     {
      "name": "Ancillary Data",
-     "offset": 1379,
+     "offset": 1339,
      "length": 32,
      "value": "32 bytes"
     },
     {
      "name": "Bit Reservoir",
-     "offset": 1411,
+     "offset": 1371,
      "length": 20,
      "value": "20 bytes of the main data of the frame at 0x6AF"
     },
     {
      "name": "Ancillary Data",
-     "offset": 1431,
+     "offset": 1391,
      "length": 162,
      "value": "162 bytes"
     },
     {
      "name": "Bit Reservoir",
-     "offset": 1593,
+     "offset": 1553,
      "length": 10,
      "value": "10 bytes of the main data of the frame at 0x851"
     },
     {
      "name": "Ancillary Data",
-     "offset": 1603,
+     "offset": 1563,
      "length": 108,
      "value": "108 bytes"
     }
@@ -1897,7 +1897,7 @@
  ],
  "gaps": [
   {
-   "offset": 835,
+   "offset": 1671,
    "length": 40
   }
  ],
@@ -1908,7 +1908,7 @@
   },
   {
    "code": "mpeg.reservoir-across-gap",
-   "contains": "0x36B"
+   "contains": "0x6AF"
   }
  ],
  "silent": false

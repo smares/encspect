@@ -22,7 +22,7 @@ public class CorruptTagFileTests
 
             foreach (string name in Fixtures.MpegFixtures())
             {
-                data.Add(Path.Combine("mpeg", name));
+                data.Add(name);
             }
 
             return data;
