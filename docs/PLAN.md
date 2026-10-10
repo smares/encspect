@@ -154,7 +154,7 @@ GitHub Actions is the single source of truth for "does it build and pass on ever
 7. Publish self-contained CLI and GUI builds for each target (`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-arm64`, and `osx-x64` if a runner or cross-build is available) and attach them to the run.
 8. On a version tag, create a release with those builds.
 
-**Local checks.** The cloud workspace used for development had no .NET SDK, and the package mirrors were not reachable when checked. Whether the SDK and NuGet can be installed there still has to be tested; if not, CI is the only place builds and tests run, and each change goes through a pipeline run before it counts as done.
+**Local checks.** Cloud sessions install the .NET SDK through a SessionStart hook (`scripts/install-dotnet.sh`), so the CI steps can be mirrored locally before pushing. CI still covers the platforms a session cannot run.
 
 ## Format rollout
 
@@ -204,7 +204,6 @@ The largest risks are a wrong core contract and spec details that no reviewer wi
 - **Closed formats.** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
 - **Heuristic encoder detection.** Files without LAME or Xing tags can be misidentified; results carry a confidence label.
 - **Large inputs.** Multi-gigabyte files and 100,000-frame reports need streaming reads and a lazily loaded, virtualized tree in the GUI.
-- **No local .NET SDK in the development workspace** yet, so verification depends on CI until that is sorted out.
 
 **Open questions**
 
