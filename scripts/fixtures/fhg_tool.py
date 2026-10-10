@@ -25,7 +25,9 @@ SHA256 = "340ad76d932bfbef2152a9698d8e7e0c33a6cc95fe89d5d82ff8a6cf10fd9883"
 INNER = "mp3sEnc_Lin64static_FCRv15_20080530.zip"
 BINARY_SHA256 = "693f27d5224bdff2520d74349b6fdd732386e81949b11996fb23ef3dbdf9fa38"
 VERSION = "Fraunhofer IIS MP3 Surround Commandline Encoder V1.5"
-ADDRESSES = [URL, downloads.archived(URL, 2026)]
+# The Wayback Machine lists a capture of the archive but answers every request for it with an
+# error, so Rarewares is the only source; the fixtures it writes are committed.
+ADDRESSES = [URL]
 
 # The licence pages through "Press <Return>" prompts before asking for "yes".
 ACCEPTANCE = "\n" * 40 + "yes\n"

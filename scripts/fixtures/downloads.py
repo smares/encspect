@@ -1,9 +1,9 @@
 """Downloads a file that is pinned by its SHA-256 from the first of its addresses that serves it.
 
 The scripts download what the repository may not or need not hold: the ISO conformance streams,
-the mp3PRO samples, mctoolamed and Fraunhofer's encoder. Each has its original address and, as a
-fallback, the copy the Internet Archive's Wayback Machine keeps. The SHA-256 decides whether a copy
-is the right file, so any address is safe to try. check_sources.py, which a scheduled workflow
+the mp3PRO samples, mctoolamed and Fraunhofer's encoder. Each has its original address and, where
+one works, a fallback: the copy the Internet Archive's Wayback Machine keeps, or another mirror. The
+SHA-256 decides whether a copy is the right file, so any address is safe to try. check_sources.py, which a scheduled workflow
 runs, downloads every file from every address, so a source that disappears is noticed while its
 copies still work.
 """
@@ -12,19 +12,20 @@ import hashlib
 import subprocess
 import sys
 
-# The Wayback Machine serves the capture of url closest to the given year; "id_" asks for the
-# file as captured, without the archive's banner.
-WAYBACK = "https://web.archive.org/web/{year}id_/{url}"
+# The Wayback Machine serves the capture of url closest to the given timestamp, a year or a full
+# capture time; "id_" asks for the file as captured, without the archive's banner.
+WAYBACK = "https://web.archive.org/web/{timestamp}id_/{url}"
 
 
-def archived(url, year):
-    return WAYBACK.format(year=year, url=url)
+def archived(url, timestamp):
+    return WAYBACK.format(timestamp=timestamp, url=url)
 
 
 def download(url, path):
-    """Downloads url to path; returns None when it worked, else curl's error."""
-    result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "10", "--connect-timeout", "30", "-o", str(path), url],
-                            capture_output=True, text=True)
+    """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
+    refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
+    result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--retry-all-errors", "--connect-timeout", "30",
+                             "-o", str(path), url], capture_output=True, text=True)
     return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
 
 
