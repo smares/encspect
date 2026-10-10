@@ -414,11 +414,13 @@ public sealed partial class MpegAudioParser : IFormatParser
             computed = Crc16.ComputeBits(bytes, audio.AllocationStart, audio.ScalefactorStart - audio.AllocationStart, Crc16.ComputeBits(bytes, 16, 16));
         }
 
+        Node? undefined = null;
         foreach ((int ch, int sb, int _) in audio.UndefinedScalefactors().Take(1))
         {
             int bit = audio.ScalefactorBit[ch, sb] + (6 * Array.IndexOf(audio.Scalefactors[ch, sb], 63));
+            undefined = Layer2AudioData.Span("Scalefactors", position, bit, bit + 6);
             // TwoLAME writes it, and ffmpeg, mpg123 and libmad decode it.
-            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", Layer2AudioData.Span("Scalefactors", position, bit, bit + 6), count =>
+            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", undefined, count =>
                 $"{Frames(count)} use scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x{position:X}.");
         }
 
@@ -431,14 +433,17 @@ public sealed partial class MpegAudioParser : IFormatParser
         byte[] audioBytes = bytes[..Math.Min(bytes.Length, (audio.SampleStart + 7) / 8)];
         if (!header.IsMpeg1 || header.IsMono || available < length || audio.End + 32 > bytes.Length * 8)
         {
-            return new Layer2Record(audioBytes, length, null, 0, 0, 0);
+            return new Layer2Record(audioBytes, length, null, 0, 0, 0) { UndefinedScalefactor = undefined };
         }
 
         int[,] baseAllocation = BaseAllocation(audio);
         var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, baseAllocation, header.SampleRate);
         int first = audio.End / 8;
         int last = Math.Min(bytes.Length, (Math.Max(mc.SideInfoEnd, mc.CrcBit + 16) + 7) / 8);
-        return new Layer2Record(audioBytes, length, bytes[first..last], audio.End - (first * 8), (bytes.Length - first) * 8, position + first);
+        return new Layer2Record(audioBytes, length, bytes[first..last], audio.End - (first * 8), (bytes.Length - first) * 8, position + first)
+        {
+            UndefinedScalefactor = undefined,
+        };
     }
 
     private static int[,] BaseAllocation(Layer2AudioData audio)
@@ -721,6 +726,8 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         public Node? Ofl { get; set; }
 
+        public AncillaryScan? Ancillary { get; set; }
+
         public Node? Statistics { get; set; }
     }
 
@@ -738,7 +745,11 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     // A Layer II frame's bytes up to its scalefactors, and the bytes of a multichannel candidate:
     // McStart and McEnd in bits within Multichannel, which starts at McOffset in the file.
-    private sealed record Layer2Record(byte[] Audio, int FrameLength, byte[]? Multichannel, int McStart, int McEnd, long McOffset);
+    private sealed record Layer2Record(byte[] Audio, int FrameLength, byte[]? Multichannel, int McStart, int McEnd, long McOffset)
+    {
+        // The first scalefactor with index 63, which Table B.1 leaves undefined, if any.
+        public Node? UndefinedScalefactor { get; init; }
+    }
 
     // Findings of one kind are reported once per stream with a count, pointing at the first case.
     private sealed class FindingCollector
