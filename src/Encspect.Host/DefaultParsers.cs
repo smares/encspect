@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Formats.Mpeg;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
@@ -21,5 +22,5 @@ public static class DefaultParsers
         new Id3v1EnhancedTagParser(),
     ];
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [];
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [new MpegAudioParser()];
 }

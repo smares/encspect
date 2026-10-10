@@ -1,7 +1,7 @@
 {
- "description": "Free-format MPEG-1 Layer III at 48000 Hz with 1440-byte frames (480 kbps). ffmpeg does not read free format, so the cross-check counts libmad's frames.",
+ "description": "Free-format MPEG-1 Layer III at 48000 Hz with 1440-byte frames (480 kbps). ffmpeg does not read free format, so the cross-check counts the frames mpg123 decodes.",
  "length": 8640,
- "crosscheck": "madplay",
+ "crosscheck": "mpg123",
  "regions": [
   {
    "name": "MPEG Audio",

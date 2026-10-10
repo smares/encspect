@@ -76,7 +76,7 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 **Per-frame data (all layers)**
 
 - Every header field: MPEG version (1, 2, 2.5), layer, CRC protection, bitrate, sampling rate, padding, channel mode and mode extension, copyright, original, emphasis.
-- Frame offset, length, and CRC-16 verification when protection is on.
+- Frame offset, length, and CRC-16 verification when protection is on. Layer II CRCs are reported as not verified until the allocation tables exist, because their coverage depends on them.
 - Mid-stream parameter changes (sampling rate, channel mode) and free-format streams.
 
 **Layer III side info**
@@ -131,7 +131,7 @@ The first fixture needs no external tool; a script writes the exact bytes.
 Nobody will read the code line by line, so correctness comes from automated checks that do not depend on the author's judgment. The weak spot to guard against is spec details written from memory, such as field offsets and odd edge cases.
 
 1. **Known-input fixtures.** Scripts in `scripts/fixtures` write two kinds of fixture, each with a manifest of the expected result. Hand-built ones (standard library only, regenerated and compared in CI) control every byte. Encoder-written ones (LAME, TwoLAME, mutagen, ffmpeg, pinned versions) are committed, because their bytes depend on the tool version. Tests assert that the analyzer reports exactly what was built or encoded.
-2. **Cross-checks against other tools.** Where results overlap, compare with `ffprobe` and TagLib#. Disagreements fail the build until explained. For MPEG audio, a CI job checks every fixture manifest against ffprobe (frame positions and lengths) and libmad through madplay (CRC verdicts, and frame counts where ffmpeg cannot read the stream), so the expectations are confirmed by independent decoders before the parser is.
+2. **Cross-checks against other tools.** Where results overlap, compare with `ffprobe` and TagLib#. Disagreements fail the build until explained. For MPEG audio, a CI job checks every fixture manifest against ffprobe (frame positions and lengths) libmad through madplay (CRC verdicts, and frame counts where ffmpeg resyncs differently) and mpg123 (frame counts of free-format streams, which ffmpeg cannot read), so the expectations are confirmed by independent decoders before the parser is.
 3. **Golden reports.** Each fixture has a stored expected report; any output change shows up as a diff that has to be approved.
 4. **Corrupt-file tests and fuzzing.** Truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool; they must yield findings. The tag-collision cases are listed under tag detection.
 5. **Spec references in the code.** Each parsed field cites the spec section it implements, so a reviewer can check it quickly.

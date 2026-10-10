@@ -5,13 +5,14 @@ For every fixture in tests/fixtures/mpeg whose manifest has "crosscheck": true, 
 report exactly the frames the manifest lists (offset and length of each), and for protected
 frames libmad (madplay) must report a CRC failure for exactly the frames the manifest expects one
 for. libmad is used for CRCs because ffmpeg 6.1 rejects every Layer I CRC, correct or not. With
-"crosscheck": "madplay", madplay's count of decoded frames is compared instead, for free-format
-streams, which ffmpeg does not read.
+"crosscheck": "madplay" or "mpg123", that decoder's count of decoded frames is compared instead,
+where ffmpeg resyncs differently or cannot read the stream at all (free format; libmad also
+skips the first frame of a LAME free-format stream, so mpg123 counts those).
 
 External fixtures list their encoder settings instead of every frame; for them, ffprobe's sample
 rate, channel count and bitrate must match those settings.
 
-Needs ffprobe and madplay on the PATH. Exits non-zero on the first disagreement.
+Needs ffprobe, madplay and mpg123 on the PATH. Exits non-zero on the first disagreement.
 """
 
 import json
@@ -52,6 +53,17 @@ def madplay_crc_failures(path):
     return sum("CRC check failed" in line for line in madplay_output(path))
 
 
+def mpg123_frame_count(path, samples_per_frame, channels):
+    pcm = subprocess.run(["mpg123", "-q", "-s", str(path)], capture_output=True, check=True).stdout
+    return len(pcm) // (samples_per_frame * channels * 2)
+
+
+def frame_shape(fields):
+    layer = fields["Header/Layer"]
+    samples = 384 if layer == "I" else 576 if layer == "III" and fields["Header/Version"] != "MPEG-1" else 1152
+    return samples, 1 if fields["Header/Channel Mode"] == "Mono" else 2
+
+
 def madplay_frame_count(path):
     for line in madplay_output(path):
         if " frames decoded" in line:
@@ -61,10 +73,13 @@ def madplay_frame_count(path):
 
 def check(path, manifest):
     problems = []
-    if manifest["crosscheck"] == "madplay":
-        count = madplay_frame_count(path)
+    if manifest["crosscheck"] in ("madplay", "mpg123"):
+        if manifest["crosscheck"] == "madplay":
+            count = madplay_frame_count(path)
+        else:
+            count = mpg123_frame_count(path, *frame_shape(manifest["frames"][0]["fields"]))
         if count != len(manifest["frames"]):
-            problems.append(f"madplay decodes {count} frames, the manifest lists {len(manifest['frames'])}")
+            problems.append(f"{manifest['crosscheck']} decodes {count} frames, the manifest lists {len(manifest['frames'])}")
         return problems
 
     if "frames" in manifest:
@@ -87,9 +102,9 @@ def check(path, manifest):
     if "encoder" in manifest:
         settings = manifest["encoder"]
         if settings.get("free_format"):
-            count = madplay_frame_count(path)
-            if count != manifest["madplay_frames"]:
-                problems.append(f"madplay decodes {count} frames, the manifest recorded {manifest['madplay_frames']}")
+            count = mpg123_frame_count(path, 1152, CHANNELS.get(settings["channel_mode"], 2))
+            if count != manifest["mpg123_frames"]:
+                problems.append(f"mpg123 decodes {count} frames, the manifest recorded {manifest['mpg123_frames']}")
         else:
             if ffprobe_frames(path) != [tuple(f) for f in manifest["ffprobe_frames"]]:
                 problems.append("ffprobe's frames differ from the ones recorded in the manifest")

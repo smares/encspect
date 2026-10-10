@@ -1,0 +1,1160 @@
+[
+  {
+    "source": "tagged-stream.mp3",
+    "root": {
+      "name": "File",
+      "value": "MPEG Audio",
+      "offset": 0,
+      "length": 3550,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.3.0",
+          "offset": 0,
+          "length": 27,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.3.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "17",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Tagged",
+              "offset": 10,
+              "length": 17,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "7",
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Tagged",
+                  "offset": 21,
+                  "length": 6
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 27,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.3.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 17 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 10,
+                  "length": 17
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "MPEG Audio",
+          "value": "8 frames",
+          "offset": 27,
+          "length": 3343,
+          "children": [
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 27,
+              "length": 417,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 27,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 28,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 28,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 28,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 29,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 29,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "false",
+                      "offset": 29,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 29,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 30,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 30,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 30,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 30,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 30,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "413 bytes",
+                  "offset": 31,
+                  "length": 413
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 444,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 444,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 445,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 445,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 445,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 446,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 446,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 446,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 446,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 447,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 447,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 447,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 447,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 447,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 448,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 862,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 862,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 863,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 863,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 863,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 864,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 864,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 864,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 864,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 865,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 865,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 865,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 865,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 865,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 866,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 1280,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 1280,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 1281,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 1281,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 1281,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 1282,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 1282,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 1282,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 1282,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 1283,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 1283,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 1283,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 1283,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 1283,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 1284,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 1698,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 1698,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 1699,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 1699,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 1699,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 1700,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 1700,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 1700,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 1700,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 1701,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 1701,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 1701,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 1701,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 1701,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 1702,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 2116,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 2116,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 2117,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 2117,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 2117,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 2118,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 2118,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 2118,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 2118,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 2119,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 2119,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 2119,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 2119,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 2119,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 2120,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 2534,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 2534,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 2535,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 2535,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 2535,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 2536,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 2536,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 2536,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 2536,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 2537,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 2537,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 2537,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 2537,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 2537,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 2538,
+                  "length": 414
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "value": "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo",
+              "offset": 2952,
+              "length": 418,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 2952,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 2953,
+                      "length": 1
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "III",
+                      "offset": 2953,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": "false",
+                      "offset": 2953,
+                      "length": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "128 kbps",
+                      "offset": 2954,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": "44100 Hz",
+                      "offset": 2954,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": "true",
+                      "offset": 2954,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": "false",
+                      "offset": 2954,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Joint stereo",
+                      "offset": 2955,
+                      "length": 1
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "None",
+                      "offset": 2955,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": "false",
+                      "offset": 2955,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": "false",
+                      "offset": 2955,
+                      "length": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 2955,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": "414 bytes",
+                  "offset": 2956,
+                  "length": 414
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 3370,
+          "length": 52,
+          "children": [
+            {
+              "name": "Items",
+              "value": "1 items",
+              "offset": 3370,
+              "length": 20,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "Tagged",
+                  "offset": 3370,
+                  "length": 20,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "6",
+                      "offset": 3370,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 3374,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 3374,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 3374,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 3378,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Tagged",
+                      "offset": 3384,
+                      "length": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 3390,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 3390,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 3398,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "52",
+                  "offset": 3402,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "1",
+                  "offset": 3406,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00000000",
+                  "offset": 3410,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "false",
+                      "offset": 3410,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 3410,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 3410,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 3410,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 3414,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 3370,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
+                  "offset": 3390,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 items end exactly where the size says",
+                  "offset": 3370,
+                  "length": 20
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.0",
+          "offset": 3422,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 3422,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Tagged",
+              "offset": 3425,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "",
+              "offset": 3455,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "",
+              "offset": 3485,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "",
+              "offset": 3515,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "",
+              "offset": 3519,
+              "length": 30
+            },
+            {
+              "name": "Genre",
+              "value": "255 (none)",
+              "offset": 3549,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 3422,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 3422,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 3425,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": []
+  }
+]

@@ -1,5 +1,5 @@
 {
- "description": "twolame --quiet -p -b 256 -m j on a 0.5 s, 44100 Hz, 2-channel 440/660 Hz tone.",
+ "description": "twolame --quiet -p -b 256 -m s on a 0.5 s, 44100 Hz, 2-channel 440/660 Hz tone.",
  "crosscheck": true,
  "encoder": {
   "command": [
@@ -9,12 +9,12 @@
    "-b",
    "256",
    "-m",
-   "j"
+   "s"
   ],
   "version": "1",
   "layer": 2,
   "sample_rate": 44100,
-  "channel_mode": "Joint stereo",
+  "channel_mode": "Stereo",
   "bitrate": 256,
   "protected": true,
   "info_frame": false

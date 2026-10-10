@@ -14,7 +14,9 @@ headers, CRCs and the layout of frames, gaps and tags are fully under control. E
 - "findings": the findings the analyzer must produce, as a code plus a string the message has to
   contain. Findings of one kind are reported once per stream, not once per frame.
 - "crosscheck": whether crosscheck_mpeg_fixtures.py must find exactly these frames with ffprobe
-  (false where junk or damage leaves room for a decoder's own resynchronization choices).
+  (false where junk or damage leaves room for a decoder's own resynchronization choices), or
+  "madplay" or "mpg123" to compare that decoder's frame count where ffmpeg cannot read the stream
+  or resyncs differently.
 
 A header only counts as the start of a stream when two more consistent frames (same version,
 layer and sample rate) follow it, or when its frames end exactly at the end of the data.
@@ -416,8 +418,8 @@ def free_format():
         "mpeg1-layer3-free-format",
         ".mp3",
         "Free-format MPEG-1 Layer III at 48000 Hz with 1440-byte frames (480 kbps). ffmpeg does not read free format, so "
-        "the cross-check counts libmad's frames.",
-        crosscheck="madplay",
+        "the cross-check counts the frames mpg123 decodes.",
+        crosscheck="mpg123",
     )
     f.add_frames([Frame(bitrate=None, rate=48000, free_length=1440) for _ in range(6)])
     return f.finding("mpeg.free-format", "1440")

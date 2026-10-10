@@ -9,13 +9,14 @@ format, header flags, and LAME's Info/Xing frame.
 Each <name>.expected.json manifest records the exact command, the settings handed to the encoder
 (the expectations), and the frames ffprobe reports (offset and length of each) as a reference
 from an independent decoder. ffprobe does not list the Info/Xing frame LAME writes first, so the
-manifest says whether there is one. ffmpeg does not read free format; that fixture records
-madplay's frame count instead.
+manifest says whether there is one. ffmpeg does not read free format and libmad skips the first
+frame of a LAME free-format stream ("bad audio data length"), so that fixture records the frame
+count mpg123 decodes instead.
 
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
 
-    apt-get install lame twolame ffmpeg madplay
+    apt-get install lame twolame ffmpeg madplay mpg123
     python3 scripts/fixtures/make_external_mpeg_fixtures.py
 """
 
@@ -58,12 +59,10 @@ def ffprobe_frames(path):
     return [[int(f["pkt_pos"]), int(f["pkt_size"])] for f in json.loads(result.stdout).get("frames", [])]
 
 
-def madplay_frame_count(path):
-    result = subprocess.run(["madplay", "-v", "-o", "null:/dev/null", str(path)], capture_output=True, text=True)
-    for line in (result.stdout + result.stderr).replace("\r", "\n").splitlines():
-        if " frames decoded" in line:
-            return int(line.split()[0])
-    return 0
+def mpg123_frame_count(path, samples_per_frame, channels):
+    """Frames mpg123 decodes, from the length of its 16-bit PCM output."""
+    pcm = subprocess.run(["mpg123", "-q", "-s", str(path)], capture_output=True, check=True).stdout
+    return len(pcm) // (samples_per_frame * channels * 2)
 
 
 FIXTURES = [
@@ -91,8 +90,9 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, free_format=True, info_frame=False)),
     ("external-twolame-192-stereo", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False)),
-    ("external-twolame-crc-joint", ".mp2", 44100, 2, ["twolame", "--quiet", "-p", "-b", "256", "-m", "j"],
-     dict(version="1", layer=2, sample_rate=44100, channel_mode="Joint stereo", bitrate=256, protected=True, info_frame=False)),
+    # Stereo, because TwoLAME 0.4.0 with -m j picks the mode per frame (joint, then stereo).
+    ("external-twolame-crc-stereo", ".mp2", 44100, 2, ["twolame", "--quiet", "-p", "-b", "256", "-m", "s"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=256, protected=True, info_frame=False)),
     ("external-twolame-mpeg2-mono", ".mp2", 24000, 1, ["twolame", "--quiet", "-b", "64", "-m", "m"],
      dict(version="2", layer=2, sample_rate=24000, channel_mode="Mono", bitrate=64, info_frame=False)),
 ]
@@ -123,7 +123,7 @@ def main():
                 "encoder": {"command": command, **settings},
             }
             if settings.get("free_format"):
-                manifest["madplay_frames"] = madplay_frame_count(path)
+                manifest["mpg123_frames"] = mpg123_frame_count(path, 1152, channels)
             else:
                 manifest["ffprobe_frames"] = ffprobe_frames(path)
 

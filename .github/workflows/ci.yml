@@ -80,15 +80,15 @@ jobs:
           test -z "$(git status --porcelain -- tests/fixtures)"
 
   mpeg-crosscheck:
-    name: MPEG fixtures agree with ffprobe and libmad
+    name: MPEG fixtures agree with ffprobe, libmad and mpg123
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install ffmpeg and madplay
+      - name: Install ffmpeg, madplay and mpg123
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg madplay
+          sudo apt-get install -y ffmpeg madplay mpg123
 
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py

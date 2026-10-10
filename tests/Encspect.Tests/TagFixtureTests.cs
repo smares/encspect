@@ -79,7 +79,7 @@ public class TagFixtureTests
         {
             foreach (JsonProperty field in fields.EnumerateObject())
             {
-                string[] actual = Resolve(node, field.Name).Select(n => n.Value ?? string.Empty).ToArray();
+                string[] actual = Fixtures.Resolve(node, field.Name).Select(n => n.Value ?? string.Empty).ToArray();
                 string[] wanted = field.Value.ValueKind == JsonValueKind.Array
                     ? field.Value.EnumerateArray().Select(v => v.GetString()!).ToArray()
                     : [field.Value.GetString()!];
@@ -92,44 +92,6 @@ public class TagFixtureTests
                 Assert.True(wanted.SequenceEqual(actual), $"{name} at {node.Offset}, field {field.Name}: [{string.Join(", ", actual)}], expected [{string.Join(", ", wanted)}]");
             }
         }
-    }
-
-    // "A/B[1]/C": node names separated by "/", with an optional index among same-named
-    // siblings. All nodes matching the last segment are returned.
-    private static IEnumerable<Node> Resolve(Node start, string path)
-    {
-        string[] segments = path.Split('/');
-        Node current = start;
-        for (int i = 0; i < segments.Length; i++)
-        {
-            (string name, int? index) = ParseSegment(segments[i]);
-            Node[] matches = current.Children.Where(c => c.Name == name).ToArray();
-            if (i == segments.Length - 1 && index is null)
-            {
-                return matches;
-            }
-
-            int pick = index ?? 0;
-            if (pick >= matches.Length)
-            {
-                return [];
-            }
-
-            current = matches[pick];
-        }
-
-        return [current];
-    }
-
-    private static (string Name, int? Index) ParseSegment(string segment)
-    {
-        int bracket = segment.LastIndexOf('[');
-        if (bracket > 0 && segment.EndsWith(']') && int.TryParse(segment[(bracket + 1)..^1], out int index))
-        {
-            return (segment[..bracket], index);
-        }
-
-        return (segment, null);
     }
 
     private static void CheckFindings(JsonElement expected, IReadOnlyList<Finding> findings)

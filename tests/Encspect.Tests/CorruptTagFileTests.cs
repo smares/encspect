@@ -3,20 +3,37 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Truncated, byte-flipped and garbage-prefixed variants of every tag fixture must yield a
-// report, never an exception or a hang, and every node must stay inside the file and its parent.
+// Truncated, byte-flipped and garbage-prefixed variants of every tag and MPEG fixture must yield
+// a report, never an exception or a hang, and every node must stay inside the file and its parent.
 public class CorruptTagFileTests
 {
     private const int FlipsPerFixture = 300;
     private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(60);
 
-    public static TheoryData<string> Names => Fixtures.TagFixtures();
+    public static TheoryData<string> Names
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            foreach (string name in Fixtures.TagFixtureNames())
+            {
+                data.Add(Path.Combine("tags", name + ".mp3"));
+            }
+
+            foreach (string name in Fixtures.MpegFixtures())
+            {
+                data.Add(Path.Combine("mpeg", name));
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Names))]
     public async Task MutatedFixturesProduceReports(string name)
     {
-        byte[] original = File.ReadAllBytes(Fixtures.PathOf(name, ".mp3"));
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", name));
 
         Task work = Task.Run(() =>
         {
