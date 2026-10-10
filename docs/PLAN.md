@@ -100,6 +100,7 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 - LAME extension: encoder string, tag revision, VBR method, lowpass, peak, ReplayGain fields, encoding flags, ATH type, minimum or ABR bitrate, delay and padding, noise shaping, stereo mode, source sample rate, MP3 gain, preset, music length, tag CRC and music CRC (both verified).
 - VBRI (Fraunhofer): version, delay, quality, byte and frame counts, seek table.
 - Encoder detection from these tags, with a clearly labeled confidence level when it has to fall back on heuristics for files without tags.
+- A strong hint without tags: encoders fill unused bits with their name and version. LAME writes `LAME3.100` (possibly cut short to `LAME`) into ancillary data mid-stream and into the padding of the last frame, even when the Info tag is disabled; TwoLAME writes zeros. In Layer III the string can straddle frames, so it is searched in the ancillary data the bit reservoir split identifies, not in raw frame bytes. Which other encoders sign their padding, and how, is established from encoder-written fixtures before it is used.
 
 **Computed statistics**
 
