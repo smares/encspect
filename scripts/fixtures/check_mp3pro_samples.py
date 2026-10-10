@@ -17,13 +17,12 @@ With --analyzer, the analyzer's report on every file (encspect --ndjson) must ma
 instead: frame count, version and sample rate, the mp3PRO enhancement with its ancillary bytes and
 rate, the mp3PRO encoder, and no warning or error.
 
-Needs curl, ffprobe and mp3guessenc. Usage:
+Needs curl, ffprobe and a C compiler, which builds mp3guessenc from third_party. Usage:
 
     python3 scripts/fixtures/check_mp3pro_samples.py [cache directory]
     python3 scripts/fixtures/check_mp3pro_samples.py --analyzer path/to/encspect [cache directory]
 """
 
-import hashlib
 import json
 import pathlib
 import re
@@ -31,6 +30,8 @@ import subprocess
 import sys
 import urllib.parse
 
+import downloads
+import guessenc_tool
 from conformance_mpeg_audio import child, walk
 from crosscheck_mpeg_fixtures import guessenc_guess
 
@@ -43,13 +44,8 @@ def fetch(manifest, cache):
     """Downloads every file the manifest lists, checking its SHA-256."""
     cache.mkdir(parents=True, exist_ok=True)
     for sample in manifest["samples"]:
-        path = cache / sample["file"]
-        if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != sample["sha256"]:
-            url = manifest["source"] + urllib.parse.quote(sample["file"])
-            subprocess.run(["curl", "-fsSL", "--retry", "3", "-o", str(path), url], check=True)
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if digest != sample["sha256"]:
-            raise SystemExit(f"{sample['file']} has SHA-256 {digest}, expected {sample['sha256']}")
+        url = manifest["source"] + urllib.parse.quote(sample["file"])
+        downloads.fetch([url, downloads.archived(url, manifest["archive_year"])], sample["sha256"], cache / sample["file"])
 
 
 def tool_problems(path, sample):
@@ -59,7 +55,7 @@ def tool_problems(path, sample):
     stream = json.loads(result.stdout)["streams"][0]
     if (int(stream["nb_read_packets"]), int(stream["sample_rate"])) != (sample["frames"], sample["sample_rate"]):
         problems.append(f"ffprobe finds {stream['nb_read_packets']} frames at {stream['sample_rate']} Hz")
-    output = subprocess.run(["mp3guessenc", str(path)], capture_output=True, text=True).stdout
+    output = subprocess.run([guessenc_tool.binary(), str(path)], capture_output=True, text=True).stdout
     version = re.search(r"Detected MPEG stream version (\S+)", output).group(1)
     if VERSIONS[version] != sample["version"]:
         problems.append(f"mp3guessenc finds MPEG version {version}")

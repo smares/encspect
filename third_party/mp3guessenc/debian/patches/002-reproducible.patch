@@ -1,0 +1,17 @@
+Description: Remove date stamp
+ Remove the build date stamp from the -V version output to ensure builds are reproducible.
+ .
+Author: Peter Blackman <peter@pblackman.plus.com>
+Forwarded: not-needed
+Last-Update: 2020-07-16
+
+--- mp3guessenc-0.27.4+dfsg.1.orig/mp3guessenc.c
++++ mp3guessenc-0.27.4+dfsg.1/mp3guessenc.c
+@@ -2671,7 +2671,6 @@ void print_version(char verbose)
+ #endif
+ 
+         printf("\nLarge file support: %s\n",(sizeof(off_t)==SIZEOF_OFF64_T)?"yes":"no");
+-        printf("Executable built on %s.", __DATE__);
+     }
+     printf("\n");
+ }

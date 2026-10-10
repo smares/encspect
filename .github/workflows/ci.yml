@@ -100,10 +100,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install ffmpeg, madplay, mpg123 and mp3guessenc
+      # minimp3 and mp3guessenc are built from third_party.
+      - name: Install ffmpeg, madplay and mpg123
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg madplay mpg123 mp3guessenc
+          sudo apt-get install -y ffmpeg madplay mpg123
 
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py

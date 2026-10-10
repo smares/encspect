@@ -43,7 +43,7 @@ Layer II, "minimp3_side_info" holds every frame's allocation, scfsi and scalefac
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
 
-    apt-get install lame twolame ffmpeg libmp3lame0 madplay mpg123 mp3guessenc
+    apt-get install lame twolame ffmpeg libmp3lame0 madplay mpg123
     python3 scripts/fixtures/make_external_mpeg_fixtures.py
 """
 
