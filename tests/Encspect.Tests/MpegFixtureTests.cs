@@ -245,7 +245,7 @@ public class MpegFixtureTests
             : [];
         Assert.Equal(expectedFindings.Order(StringComparer.Ordinal), report.Findings.Where(f => IsVbrFinding(f.Code)).Select(f => f.Code).Order(StringComparer.Ordinal));
 
-        Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info).ToArray();
+        Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
     }
 

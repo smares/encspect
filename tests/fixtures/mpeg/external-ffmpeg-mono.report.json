@@ -7515,7 +7515,7 @@
     },
     "findings": [
       {
-        "severity": "Info",
+        "severity": "Warning",
         "code": "mpeg.lame-tag-crc-ffmpeg",
         "message": "The LAME tag CRC of 1 frame covers the frame\u0027s first 190 bytes, as ffmpeg writes it, instead of the bytes before the CRC; LAME and ffmpeg itself reject it, so readers that check it ignore the tag\u0027s encoder string and ReplayGain. The first at 0x2D.",
         "offset": 45,

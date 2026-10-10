@@ -44,7 +44,8 @@ public sealed partial class MpegAudioParser
         {
             if (vbr.StoredTagCrc == vbr.FfmpegTagCrc)
             {
-                findings.Add(Severity.Info, "mpeg.lame-tag-crc-ffmpeg", node, count =>
+                // The encoder's fault, not damage, but the CRC is still wrong and readers act on it.
+                findings.Add(Severity.Warning, "mpeg.lame-tag-crc-ffmpeg", node, count =>
                     $"The LAME tag CRC of {Frames(count)} covers the frame's first 190 bytes, as ffmpeg writes it, instead of the bytes before the CRC; LAME and ffmpeg itself reject it, so readers that check it ignore the tag's encoder string and ReplayGain. The first at 0x{position:X}.");
             }
             else
@@ -96,8 +97,10 @@ public sealed partial class MpegAudioParser
 
             if (vbr.IsNoGapContinuation)
             {
-                state.Findings.Add(Severity.Info, "mpeg.music-crc-nogap", node, count =>
-                    $"The music CRC in the LAME tag of {Frames(count)} does not match, as LAME writes it for a file that continues a gapless (--nogap) sequence: it continues the previous file's CRC, so it cannot be checked alone. The first at 0x{position:X}.");
+                // Likely LAME's doing, but the CRC is wrong all the same, and an edit of the audio
+                // after encoding would look no different.
+                state.Findings.Add(Severity.Warning, "mpeg.music-crc-nogap", node, count =>
+                    $"The music CRC in the LAME tag of {Frames(count)} does not match. The file continues a gapless (--nogap) sequence, and LAME continues the previous file's CRC there, so the CRC is probably wrong from encoding; either way it cannot confirm that the audio is unchanged. The first at 0x{position:X}.");
             }
             else
             {
