@@ -117,7 +117,7 @@ public sealed class MpegAudioParser : IFormatParser
 
         void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
         {
-            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1, null, 0, 0);
+            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1, null, 0, 0, 0);
             entries.Add(gap);
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
@@ -167,6 +167,7 @@ public sealed class MpegAudioParser : IFormatParser
         byte[]? sideInfo = null;
         int mainDataLength = 0;
         int earlier = 0;
+        int fill = 0;
         MainDataPlacement? placement = null;
         long sideInfoOffset = position + 4 + (header.IsProtected ? 2 : 0);
         if (header.Layer == 3 && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
@@ -179,13 +180,14 @@ public sealed class MpegAudioParser : IFormatParser
             placement = state.Reservoir.Add(header, position, position + available, dataOffset,
                 (int)(position + available - dataOffset), info.MainDataBegin.Value, mainDataLength, available < length);
             earlier = placement.Value.Earlier;
+            fill = (int)Math.Min(placement.Value.Reservoir, (1 << info.MainDataBegin.Length) - 1);
         }
         else
         {
             state.Reservoir.Reset();
         }
 
-        var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier);
+        var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier, fill);
         entries.Add(frame);
         if (placement is { } placed)
         {
@@ -274,7 +276,7 @@ public sealed class MpegAudioParser : IFormatParser
 
         if (frame.SideInfo is not null)
         {
-            children.Add(Layer3SideInfo.Read(frame.SideInfo, header).ToNode(dataStart));
+            children.Add(Layer3SideInfo.Read(frame.SideInfo, header).ToNode(dataStart, frame.ReservoirFill));
             AddMainData(children, frame, dataStart + frame.SideInfo.Length, runs);
         }
         else if (frame.End > dataStart)
@@ -496,9 +498,10 @@ public sealed class MpegAudioParser : IFormatParser
     // A frame or, with a zero header (never a valid one), a gap: all a region keeps per frame
     // until its nodes are asked for. Crc and ComputedCrc are -1 when absent.
     // SideInfo holds a Layer III frame's raw side information; MainDataLength and Earlier, how
-    // long its main data is and how much of it lies in earlier frames.
+    // long its main data is and how much of it lies in earlier frames; ReservoirFill, the bytes
+    // in the bit reservoir when the frame starts.
     private readonly record struct Entry(long Offset, long Length, uint Header, int Crc, int ComputedCrc, byte[]? SideInfo,
-        int MainDataLength, int Earlier)
+        int MainDataLength, int Earlier, int ReservoirFill)
     {
         public bool IsGap => Header == 0;
 

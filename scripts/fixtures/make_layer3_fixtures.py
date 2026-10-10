@@ -14,7 +14,9 @@ Manifests extend the ones from make_mpeg_fixtures.py. Per frame:
 - "fields": header and side-information fields as the report shows them, by node path.
 - "side_info": the raw side-information values, compared with minimp3 by crosscheck_mpeg_fixtures.py.
 - "reservoir": bytes left in the bit reservoir before the frame: the free bytes after the
-  previous frame's main data, the bytes main_data_begin may point back into.
+  previous frame's main data, the bytes main_data_begin may point back into. The report's
+  "Side Info/Reservoir Fill" field shows them up to what main_data_begin can reach (511 bytes in
+  MPEG-1, 255 in MPEG-2 and 2.5).
 - "data": the frame's bytes after the side information, split by owner: "Main Data" (this
   frame's own, always present, possibly empty), "Bit Reservoir" (main data of a later frame) and
   "Ancillary Data" (bytes no frame's main data uses).
@@ -383,6 +385,8 @@ class Layer3Fixture(Fixture):
             for k, (frame, entry) in enumerate(chain):
                 area_start, area_end = starts[k], starts[k] + frame.area_length()
                 entry["reservoir"] = area_start - previous_end
+                reach = 511 if frame.mpeg1() else 255
+                entry["fields"]["Side Info/Reservoir Fill"] = f"{min(entry['reservoir'], reach)} bytes"
                 entry["side_info"] = frame.raw_side_info()
                 begin = area_start - frame.main_data_begin
                 end = begin + frame.main_data_length()

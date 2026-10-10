@@ -209,6 +209,13 @@ public class MpegFixtureTests
         }
 
         var actual = new Dictionary<string, string> { ["Side Info/Main Data Begin"] = $"{mainDataBegin} bytes" };
+        if (expected.TryGetProperty("reservoir", out JsonElement reservoir))
+        {
+            // minimp3 keeps up to 511 bytes whatever the version; main_data_begin reaches 255 in MPEG-2 and 2.5.
+            int reach = Value(frame, "Header/Version") == "MPEG-1" ? 511 : 255;
+            actual["Side Info/Reservoir Fill"] = $"{Math.Min(reservoir.GetInt32(), reach)} bytes";
+        }
+
         int channels = Value(frame, "Header/Channel Mode") == "Mono" ? 1 : 2;
         string[] blockTypes = ["Normal", "Start", "Short", "Stop"];
         int i = 0;

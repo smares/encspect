@@ -224,10 +224,14 @@ internal sealed class Layer3SideInfo
         return ([z / 3, z % 3, 0, 0], 5);
     }
 
-    public Node ToNode(long offset)
+    // reservoirFill: the free bytes after the previous frame's main data that main_data_begin can
+    // reach (at most 511, or 255 in MPEG-2 and 2.5), the bit reservoir this frame can draw on. It
+    // is not stored in the file, so its node points at main_data_begin, which it bounds.
+    public Node ToNode(long offset, int reservoirFill)
     {
         Node node = new("Side Info", offset, Size(Header));
         Add(node, "Main Data Begin", MainDataBegin, $"{MainDataBegin.Value} bytes");
+        Add(node, "Reservoir Fill", MainDataBegin, $"{reservoirFill} bytes");
         Add(node, "Private Bits", PrivateBits, Number(PrivateBits.Value));
         if (Scfsi.Length > 0)
         {
