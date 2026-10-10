@@ -1,0 +1,29 @@
+{
+  "description": "ID3v1 tag whose title starts with LYRICSBEGIN and whose comment ends in LYRICSEN with genre 68 (byte D), so its own bytes form a Lyrics3 v1 block ending at EOF. The zero padding of the ID3v1 fields is not lyrics text, so the Lyrics3 candidate is rejected and ID3v1 keeps its bytes.",
+  "length": 640,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "LYRICSBEGIN Song",
+        "Comment": "Great track, play it lLYRICSEN",
+        "Genre": "68 (Rave)"
+      },
+      "offset": 512,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "Lyrics3"
+    }
+  ]
+}

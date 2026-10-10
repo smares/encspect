@@ -143,6 +143,11 @@ public sealed class Analyzer
                     continue;
                 }
 
+                if (probe.IsAccepted && parser.MustPrecede is { } required && (claims.Count == 0 || claims[0].Parser.Name != required))
+                {
+                    probe = TagProbe.Reject(probe.SignatureOffset, $"it is not directly followed by an {required} tag");
+                }
+
                 if (winner is null && probe.IsAccepted && probe.Tag!.Offset >= dataStart)
                 {
                     winner = new Claim(parser, probe);

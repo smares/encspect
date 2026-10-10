@@ -8,6 +8,10 @@ public interface ITagParser
 {
     string Name { get; }
 
+    // The name of the tag that must directly follow this one, for blocks that only extend
+    // another tag (the Enhanced TAG before ID3v1). The host rejects the candidate otherwise.
+    string? MustPrecede => null;
+
     // Probes for a tag that starts exactly at start. Returns null when the signature is absent.
     TagProbe? ProbeAt(ByteReader reader, long start) => null;
 

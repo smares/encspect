@@ -1,11 +1,24 @@
 {
-  "description": "Enhanced TAG (TAG+, 227 bytes) directly before an ID3v1.1 tag; both form one region.",
+  "description": "Enhanced TAG (TAG+, 227 bytes) directly before an ID3v1.1 tag; a separate region that only counts in front of ID3v1.",
   "length": 867,
   "regions": [
     {
       "name": "Data",
       "offset": 0,
       "length": 512
+    },
+    {
+      "name": "Enhanced TAG",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Extended title text",
+        "Speed": "3 (fast)",
+        "Genre": "Progressive Psytrance",
+        "Start Time": "001:05",
+        "End Time": "004:30"
+      },
+      "offset": 512,
+      "length": 227
     },
     {
       "name": "ID3v1",
@@ -18,15 +31,10 @@
         "Year": "2001",
         "Comment": "A comment",
         "Track": "7",
-        "Genre": "17 (Rock)",
-        "Enhanced TAG/Title": "Extended title text",
-        "Enhanced TAG/Speed": "3 (fast)",
-        "Enhanced TAG/Genre": "Progressive Psytrance",
-        "Enhanced TAG/Start Time": "001:05",
-        "Enhanced TAG/End Time": "004:30"
+        "Genre": "17 (Rock)"
       },
-      "offset": 512,
-      "length": 355
+      "offset": 739,
+      "length": 128
     }
   ],
   "findings": []

@@ -12,66 +12,86 @@
           "length": 512
         },
         {
-          "name": "ID3v1",
-          "value": "1.1",
+          "name": "Enhanced TAG",
           "offset": 512,
-          "length": 355,
+          "length": 227,
           "children": [
             {
-              "name": "Enhanced TAG",
+              "name": "Signature",
+              "value": "TAG\u002B",
+              "offset": 512,
+              "length": 4
+            },
+            {
+              "name": "Title",
+              "value": "Extended title text",
+              "offset": 516,
+              "length": 60
+            },
+            {
+              "name": "Artist",
+              "value": "Extended artist",
+              "offset": 576,
+              "length": 60
+            },
+            {
+              "name": "Album",
+              "value": "Extended album",
+              "offset": 636,
+              "length": 60
+            },
+            {
+              "name": "Speed",
+              "value": "3 (fast)",
+              "offset": 696,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "Progressive Psytrance",
+              "offset": 697,
+              "length": 30
+            },
+            {
+              "name": "Start Time",
+              "value": "001:05",
+              "offset": 727,
+              "length": 6
+            },
+            {
+              "name": "End Time",
+              "value": "004:30",
+              "offset": 733,
+              "length": 6
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
               "offset": 512,
               "length": 227,
               "children": [
                 {
-                  "name": "Signature",
-                  "value": "TAG\u002B",
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u002B\u0022 227 bytes before the anchor",
                   "offset": 512,
                   "length": 4
                 },
                 {
-                  "name": "Title",
-                  "value": "Extended title text",
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
                   "offset": 516,
-                  "length": 60
-                },
-                {
-                  "name": "Artist",
-                  "value": "Extended artist",
-                  "offset": 576,
-                  "length": 60
-                },
-                {
-                  "name": "Album",
-                  "value": "Extended album",
-                  "offset": 636,
-                  "length": 60
-                },
-                {
-                  "name": "Speed",
-                  "value": "3 (fast)",
-                  "offset": 696,
-                  "length": 1
-                },
-                {
-                  "name": "Genre",
-                  "value": "Progressive Psytrance",
-                  "offset": 697,
-                  "length": 30
-                },
-                {
-                  "name": "Start Time",
-                  "value": "001:05",
-                  "offset": 727,
-                  "length": 6
-                },
-                {
-                  "name": "End Time",
-                  "value": "004:30",
-                  "offset": 733,
-                  "length": 6
+                  "length": 223
                 }
               ]
-            },
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 739,
+          "length": 128,
+          "children": [
             {
               "name": "Signature",
               "value": "TAG",
@@ -123,20 +143,14 @@
             {
               "name": "Detection",
               "value": "Medium",
-              "offset": 512,
-              "length": 355,
+              "offset": 739,
+              "length": 128,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
                   "offset": 739,
                   "length": 3
-                },
-                {
-                  "name": "Evidence",
-                  "value": "Enhanced TAG signature \u0022TAG\u002B\u0022 directly before the tag",
-                  "offset": 512,
-                  "length": 4
                 },
                 {
                   "name": "Evidence",

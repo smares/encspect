@@ -315,7 +315,10 @@ class Fixture:
         return self
 
     def tag(self, name, version, data, confidence, fields=None):
-        region = {"name": name, "version": version, "confidence": confidence}
+        region = {"name": name}
+        if version is not None:
+            region["version"] = version
+        region["confidence"] = confidence
         if fields:
             region["fields"] = fields
         return self.add(data, region)
@@ -423,21 +426,30 @@ def id3v11_track():
 
 @fixture
 def id3v1_enhanced():
-    f = Fixture("id3v1-enhanced", "Enhanced TAG (TAG+, 227 bytes) directly before an ID3v1.1 tag; both form one region.")
+    f = Fixture("id3v1-enhanced", "Enhanced TAG (TAG+, 227 bytes) directly before an ID3v1.1 tag; a separate region that only counts in front of ID3v1.")
     f.audio()
-    data = enhanced_tag("Extended title text", "Extended artist", "Extended album", 3, "Progressive Psytrance", "001:05", "004:30")
-    data += basic_id3v1()
-    fields = dict(BASIC_ID3V1_FIELDS)
-    fields.update(
+    f.tag(
+        "Enhanced TAG",
+        None,
+        enhanced_tag("Extended title text", "Extended artist", "Extended album", 3, "Progressive Psytrance", "001:05", "004:30"),
+        "Medium",
         {
-            "Enhanced TAG/Title": "Extended title text",
-            "Enhanced TAG/Speed": "3 (fast)",
-            "Enhanced TAG/Genre": "Progressive Psytrance",
-            "Enhanced TAG/Start Time": "001:05",
-            "Enhanced TAG/End Time": "004:30",
-        }
+            "Title": "Extended title text",
+            "Speed": "3 (fast)",
+            "Genre": "Progressive Psytrance",
+            "Start Time": "001:05",
+            "End Time": "004:30",
+        },
     )
-    f.tag("ID3v1", "1.1", data, "Medium", fields)
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def enhanced_tag_without_id3v1():
+    f = Fixture("enhanced-tag-without-id3v1", "Enhanced TAG at the end of the file with no ID3v1 tag after it: rejected.")
+    f.add(filler(300) + enhanced_tag("Alone"), {"name": "Data"})
+    f.finding("tag.rejected", "not directly followed by an ID3v1 tag")
     return f
 
 
@@ -985,6 +997,73 @@ def lyrics3v2_bad_size():
 
 
 @fixture
+def lyrics3v2_invalid_byte():
+    f = Fixture("lyrics3v2-invalid-byte", "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: rejected.")
+    f.audio()
+    f.add(lyrics3v2([("LYR", "Before\x00After")]), {"name": "Data"})
+    f.regions[-2]["length"] += f.regions[-1]["length"]
+    f.regions.pop()
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("tag.rejected", "$00")
+    return f
+
+
+@fixture
+def lyrics3v2_no_fields():
+    f = Fixture(
+        "lyrics3v2-no-fields",
+        "The 26 characters LYRICSBEGIN000011LYRICS200 form a Lyrics3 v2 tag without fields, which the specification "
+        "rules out; such a string is easy to type into any text field. Rejected.",
+    )
+    f.audio()
+    f.add(b"LYRICSBEGIN000011LYRICS200", {"name": "Data"})
+    f.regions[-2]["length"] += f.regions[-1]["length"]
+    f.regions.pop()
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("tag.rejected", "no fields")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_not_first():
+    f = Fixture("lyrics3v2-ind-not-first", "Lyrics3 v2 tag with the IND field after LYR; IND must come first.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "10")]), "High", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.ind-not-first", "IND")
+    return f
+
+
+@fixture
+def lyrics3v1_invalid_byte():
+    f = Fixture("lyrics3v1-invalid-byte", "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: rejected.")
+    f.audio()
+    f.add(b"LYRICSBEGIN" + b"Sync \xff\xfb here" + b"LYRICSEND", {"name": "Data"})
+    f.regions[-2]["length"] += f.regions[-1]["length"]
+    f.regions.pop()
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("tag.rejected", "$FF")
+    return f
+
+
+@fixture
+def id3v1_forged_lyrics3v1():
+    f = Fixture(
+        "id3v1-forged-lyrics3v1",
+        "ID3v1 tag whose title starts with LYRICSBEGIN and whose comment ends in LYRICSEN with genre 68 (byte D), so "
+        "its own bytes form a Lyrics3 v1 block ending at EOF. The zero padding of the ID3v1 fields is not lyrics text, "
+        "so the Lyrics3 candidate is rejected and ID3v1 keeps its bytes.",
+    )
+    f.audio()
+    comment = "Great track, play it lo" [:22] + "LYRICSEN"
+    tag = id3v1("LYRICSBEGIN Song", "Artist", "Album", "1999", comment, genre=68)
+    assert tag[-9:] == b"LYRICSEND"
+    f.tag("ID3v1", "1.0", tag, "Medium", {"Title": "LYRICSBEGIN Song", "Comment": comment, "Genre": "68 (Rave)"})
+    f.finding("tag.near-miss", "Lyrics3")
+    return f
+
+
+@fixture
 def lyrics3_without_id3v1():
     f = Fixture("lyrics3-without-id3v1", "Lyrics3 v2 tag at the very end without the ID3v1 tag its specification requires.")
     f.audio()
@@ -1117,6 +1196,78 @@ def tags_only():
     return f
 
 
+# --- Identifier collisions in user text ------------------------------------------------------
+#
+# Every trailing probe looks for an identifier at a fixed distance before an anchor. These cases
+# put user-editable text (ID3v1 fields, an APE text item, Lyrics3 lyrics or fields, an appended
+# ID3v2 text frame) at each of those distances and fill it with each identifier. The real tags
+# must still be reported unchanged, and no forged identifier may produce a warning or an error.
+
+COLLISIONS_OUT = OUT.parent / "collisions"
+
+COLLISION_IDENTIFIERS = ["TAG", "TAG+", "ID3", "3DI", "APETAGEX", "LYRICSBEGIN", "LYRICSEND", "LYRICS200", "000040LYRICS200"]
+
+# Distances before the end of the tag at which some probe looks for an identifier: Lyrics3 end
+# markers (9), the ID3v2.4 footer (10), the Lyrics3 v2 size (15), the APE footer (32), ID3v1 (128),
+# and the Enhanced TAG in front of an ID3v1 tag that starts at the anchor (227 and 355).
+COLLISION_DISTANCES = [9, 10, 15, 32, 128, 227, 355]
+
+USER_TEXT = "q" * 400
+
+
+def collision_containers():
+    yield "id3v1", "ID3v1", id3v1("q" * 30, "q" * 30, "q" * 30, "qqqq", "q" * 30, genre=ord("q")), False
+    for follow in (False, True):
+        yield "ape", "APE", ape_tag([ape_item("Comment", USER_TEXT)]), follow
+        yield "id3v2", "ID3v2", id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", USER_TEXT))], footer=True), follow
+    # Both Lyrics3 versions require an ID3 tag after them.
+    yield "lyrics3v1", "Lyrics3", lyrics3v1(USER_TEXT), True
+    yield "lyrics3v2", "Lyrics3", lyrics3v2([("IND", "10"), ("LYR", USER_TEXT)]), True
+
+
+def collision_cases():
+    audio = filler(64, 7)
+    trailer = basic_id3v1()
+    for container_name, tag_name, container, follow in collision_containers():
+        # ID3v1 user text runs from the end of "TAG" through the genre byte.
+        start = 3 if container_name == "id3v1" else container.index(b"q" * 30)
+        end = len(container) if container_name == "id3v1" else start + len(USER_TEXT)
+        for identifier in COLLISION_IDENTIFIERS:
+            # The Lyrics3 specification forbids "LYRICSBEGIN" inside v1 lyrics, since it would make
+            # the start of the tag ambiguous.
+            if container_name == "lyrics3v1" and identifier == "LYRICSBEGIN":
+                continue
+            ident = identifier.encode("ascii")
+            for distance in COLLISION_DISTANCES:
+                pos = len(container) - distance
+                if pos < start or pos + len(ident) > end:
+                    continue
+                data = bytearray(container)
+                data[pos : pos + len(ident)] = ident
+                regions = [
+                    {"name": "Data", "offset": 0, "length": len(audio)},
+                    {"name": tag_name, "offset": len(audio), "length": len(data)},
+                ]
+                body = audio + bytes(data)
+                if follow:
+                    regions.append({"name": "ID3v1", "offset": len(body), "length": len(trailer)})
+                    body += trailer
+                suffix = "-id3v1" if follow else ""
+                yield {
+                    "name": f"{container_name}{suffix}-{identifier}-at-{distance}",
+                    "data": body.hex(),
+                    "regions": regions,
+                }
+
+
+def write_collisions():
+    COLLISIONS_OUT.mkdir(parents=True, exist_ok=True)
+    cases = list(collision_cases())
+    text = json.dumps({"description": "Identifier collisions in user text; see make_tag_fixtures.py.", "cases": cases}, indent=1) + "\n"
+    (COLLISIONS_OUT / "cases.json").write_text(text, encoding="utf-8", newline="\n")
+    return len(cases)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
@@ -1131,6 +1282,7 @@ def main():
         assert covered == f.size, (f.name, covered, f.size)
         f.write()
     print(f"Wrote {len(names)} fixtures to {OUT}", file=sys.stderr)
+    print(f"Wrote {write_collisions()} collision cases to {COLLISIONS_OUT}", file=sys.stderr)
 
 
 if __name__ == "__main__":

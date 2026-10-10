@@ -52,6 +52,18 @@ public sealed class Lyrics3TagParser : ITagParser
         }
 
         long start = windowStart + index;
+
+        // Lyrics3 v1: "A byte in the text must not have the binary value 255." $00 is ruled out
+        // as well: v1 does not say so, but its successor v2.00 restricts text to 01 to 254, and
+        // zero bytes are what padding and binary data look like, not lyrics.
+        int bad = window.AsSpan(index + Begin.Length).IndexOfAny((byte)0x00, (byte)0xFF);
+        if (bad >= 0)
+        {
+            long offset = start + Begin.Length + bad;
+            byte value = window[index + Begin.Length + bad];
+            return TagProbe.Reject(marker, $"the lyrics contain the byte ${value:X2} at 0x{offset:X}, which is not lyrics text");
+        }
+
         var tag = new Node(Name, start, end - start, "1.00");
         tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
         long lyricsStart = start + Begin.Length;
@@ -96,6 +108,11 @@ public sealed class Lyrics3TagParser : ITagParser
         var findings = new List<Finding>();
         tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
 
+        if (size == Begin.Length)
+        {
+            return TagProbe.Reject(marker, "the tag has no fields; Lyrics3 v2.00 requires at least one");
+        }
+
         int pos = Begin.Length;
         while (pos < data.Length)
         {
@@ -117,6 +134,13 @@ public sealed class Lyrics3TagParser : ITagParser
                 return TagProbe.Reject(marker, $"field {id} runs past the size field, so the fields do not end where the size says");
             }
 
+            // Lyrics3 v2.00: field data consists of characters 01 to 254.
+            int bad = data.AsSpan(pos + 8, fieldSize).IndexOfAny((byte)0x00, (byte)0xFF);
+            if (bad >= 0)
+            {
+                return TagProbe.Reject(marker, $"field {id} contains the byte ${data[pos + 8 + bad]:X2}, outside the 01 to 254 that Lyrics3 v2.00 allows");
+            }
+
             long fieldStart = start + pos;
             string value = Encoding.Latin1.GetString(data, pos + 8, fieldSize);
             Node field = tag.Add(id, fieldStart, 8 + fieldSize, value);
@@ -126,6 +150,11 @@ public sealed class Lyrics3TagParser : ITagParser
 
             if (id == "IND")
             {
+                if (pos != Begin.Length)
+                {
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-not-first", "The IND field must be the first field when it is present.", field));
+                }
+
                 // Characters: lyrics present, timestamps in the lyrics, inhibit random selection.
                 field.Add("HasLyrics", fieldStart + 8, fieldSize, Bool(value, 0));
                 field.Add("HasTimestamps", fieldStart + 8, fieldSize, Bool(value, 1));

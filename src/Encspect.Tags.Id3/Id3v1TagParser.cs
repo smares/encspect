@@ -3,17 +3,15 @@ using Encspect.Core;
 
 namespace Encspect.Tags.Id3;
 
-// ID3v1 and ID3v1.1 (id3.org, "ID3v1"), plus the Enhanced TAG ("TAG+", 227 bytes) that some
-// players write directly before it. ID3v1 has no size, version or checksum, so the only
-// structure to validate is that the fields hold text; a match is never more than Medium.
+// ID3v1 and ID3v1.1 (id3.org, "ID3v1"). ID3v1 has no size, version or checksum, so the only
+// structure to validate is that the fields hold text; a match is never more than Medium. The
+// Enhanced TAG in front of it is a separate candidate (Id3v1EnhancedTagParser), so its 4-byte
+// signature cannot claim bytes on its own.
 public sealed class Id3v1TagParser : ITagParser
 {
     public const int TagSize = 128;
-    public const int EnhancedSize = 227;
 
     private static readonly byte[] Signature = "TAG"u8.ToArray();
-    private static readonly byte[] EnhancedSignature = "TAG+"u8.ToArray();
-    private static readonly string[] SpeedNames = ["unset", "slow", "medium", "fast", "hardcore"];
 
     public string Name => "ID3v1";
 
@@ -32,21 +30,8 @@ public sealed class Id3v1TagParser : ITagParser
         // ID3v1.1: a zero byte at comment offset 28 followed by a non-zero track number.
         bool isV11 = data[125] == 0 && data[126] != 0;
 
-        long tagStart = start;
-        bool hasEnhanced = reader.MatchesAt(start - EnhancedSize, EnhancedSignature);
-        if (hasEnhanced)
-        {
-            tagStart = start - EnhancedSize;
-            evidence.Add(new Evidence("Enhanced TAG signature \"TAG+\" directly before the tag", tagStart, 4));
-        }
-
-        var tag = new Node(Name, tagStart, end - tagStart, isV11 ? "1.1" : "1.0");
+        var tag = new Node(Name, start, TagSize, isV11 ? "1.1" : "1.0");
         var nonText = new List<string>();
-
-        if (hasEnhanced)
-        {
-            ParseEnhanced(reader.ReadBytesAt(tagStart, EnhancedSize), tagStart, tag, nonText);
-        }
 
         tag.Add("Signature", start, 3, "TAG");
         AddText(tag, "Title", data, start, 3, 30, nonText);
@@ -98,25 +83,8 @@ public sealed class Id3v1TagParser : ITagParser
         return genre == 255 ? "255 (none)" : $"{genre} (unknown)";
     }
 
-    private static void ParseEnhanced(byte[] data, long start, Node tag, List<string> nonText)
-    {
-        Node enhanced = tag.Add("Enhanced TAG", start, EnhancedSize);
-        enhanced.Add("Signature", start, 4, "TAG+");
-        AddText(enhanced, "Title", data, start, 4, 60, nonText, "Enhanced TAG title");
-        AddText(enhanced, "Artist", data, start, 64, 60, nonText, "Enhanced TAG artist");
-        AddText(enhanced, "Album", data, start, 124, 60, nonText, "Enhanced TAG album");
-
-        byte speed = data[184];
-        string speedName = speed < SpeedNames.Length ? SpeedNames[speed] : "unknown";
-        enhanced.Add("Speed", start + 184, 1, $"{speed} ({speedName})");
-
-        AddText(enhanced, "Genre", data, start, 185, 30, nonText, "Enhanced TAG genre");
-        AddText(enhanced, "Start Time", data, start, 215, 6, nonText, "Enhanced TAG start time");
-        AddText(enhanced, "End Time", data, start, 221, 6, nonText, "Enhanced TAG end time");
-    }
-
     // Fields are ISO-8859-1, padded with zero bytes or spaces.
-    private static Node AddText(Node parent, string name, byte[] data, long baseOffset, int offset, int length, List<string> nonText, string? label = null)
+    internal static Node AddText(Node parent, string name, byte[] data, long baseOffset, int offset, int length, List<string> nonText, string? label = null)
     {
         ReadOnlySpan<byte> field = data.AsSpan(offset, length);
         int terminator = field.IndexOf((byte)0);

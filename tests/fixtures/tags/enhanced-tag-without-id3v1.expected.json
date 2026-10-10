@@ -1,0 +1,17 @@
+{
+  "description": "Enhanced TAG at the end of the file with no ID3v1 tag after it: rejected.",
+  "length": 527,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 527
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "not directly followed by an ID3v1 tag"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+[
+  {
+    "source": "enhanced-tag-without-id3v1.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 527,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 527
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 527
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "Enhanced TAG candidate at 0x12C (EOF-227) rejected: it is not directly followed by an ID3v1 tag.",
+        "offset": 0,
+        "length": 527
+      }
+    ]
+  }
+]

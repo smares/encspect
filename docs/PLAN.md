@@ -106,8 +106,8 @@ Tags are found by structure and byte ownership, never by signature alone, becaus
 **Rules**
 
 1. **Position-anchored search.** Each tag type is looked for only where its spec allows: ID3v1 at exactly EOF-128, APE at EOF-32 or just before an ID3v1 tag, ID3v2 at the start or directly after a previous tag. Signatures are never scanned for across the whole file.
-2. **Structural validation.** ID3v2 needs syncsafe size bytes below 0x80, known flags, frames that fit the declared size, and padding only at the end. APE needs header and footer that agree and items that parse to exactly the tag boundary. ID3v1 has almost nothing to validate, so it counts as weak evidence.
-3. **Evaluation order and ownership.** APE is checked first in every layout, then Lyrics3, then an ID3v2.4 tag found through its footer, then ID3v1, and ID3v1 only on bytes no other tag has claimed. ID3v1 goes last because it has the weakest evidence: a `TAG` at EOF-128 inside a validated APE or appended ID3v2.4 tag must not win. The host keeps a claim map, so a signature inside an already validated region (an image in an ID3v2 tag, an APE item) is rejected.
+2. **Structural validation.** ID3v2 needs syncsafe size bytes below 0x80, known flags, frames that fit the declared size, and padding only at the end. APE needs header and footer that agree and items that parse to exactly the tag boundary. Lyrics3 v2 needs a size that points at `LYRICSBEGIN`, at least one field, fields that end exactly at the size, and field bytes from 01 to 254; Lyrics3 v1 lyrics must be text, without $00 or $FF. ID3v1 has almost nothing to validate, so it counts as weak evidence.
+3. **Evaluation order and ownership.** APE is checked first in every layout, then Lyrics3, then an ID3v2.4 tag found through its footer, then ID3v1, then the Enhanced TAG, and ID3v1 only on bytes no other tag has claimed. The Enhanced TAG is a candidate of its own, accepted only directly before an ID3v1 tag, so its 4-byte `TAG+` signature cannot take bytes from a validated tag in front of it. ID3v1 goes last because it has the weakest evidence: a `TAG` at EOF-128 inside a validated APE or appended ID3v2.4 tag must not win. The host keeps a claim map, so a signature inside an already validated region (an image in an ID3v2 tag, an APE item) is rejected.
 4. **Confidence and evidence.** Every candidate carries a confidence level and its reasons. Rejected candidates become findings, such as "TAG at EOF-128 rejected: part of an APE tag header".
 5. **MPEG sync.** A frame header counts only when a chain of consecutive, consistent frames follows it. Stretches that do not fit are reported as gaps, not guessed.
 
@@ -121,6 +121,7 @@ Tags are found by structure and byte ownership, never by signature alone, becaus
 - ID3v2.4 tags found through their footer: at EOF, before APE and ID3v1, at both ends of the file, as the whole file, and with `TAG` at EOF-128 inside the tag. A tag appended without a footer cannot be found from the end (ID3v2.4 section 3.4) and stays data.
 - Tags embedded inside cover art in an ID3v2 tag.
 - Random data seeded with `TAG`, `ID3` and `APETAGEX` at random offsets: nothing is detected outside validated positions.
+- User text that spells another tag's identifier exactly where a probe looks for it: ID3v1 fields, APE text items, Lyrics3 lyrics and fields, and appended ID3v2 frames, each holding every identifier at every probe distance. The real tags must come out unchanged, without warnings.
 - Truncated tags and concatenated files.
 
 The first fixture needs no external tool; a script writes the exact bytes.
