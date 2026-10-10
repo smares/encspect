@@ -31,7 +31,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 ## Verification
 
-- Run the checks the CI workflow runs, locally, before calling a change done. Mirror the pipeline instead of picking a subset. If the .NET SDK is not available in the environment, say so and rely on the CI run.
+- Run the checks the CI workflow runs, locally, before calling a change done. Mirror the pipeline instead of picking a subset. Cloud sessions install the .NET SDK through the SessionStart hook in `.claude/settings.json` (`scripts/install-dotnet.sh`); if the SDK is still missing, a blocked host is the likely cause, so name it. If the SDK is not available, say so and rely on the CI run.
 - Parsers are verified against known-input fixtures, cross-checks with other tools, golden reports and corrupt-file tests, as described in the plan. A parser change without a fixture or golden-report update is incomplete.
 - After each milestone, an independent review agent that has not seen the author's conclusions reviews the code against the spec.
 
