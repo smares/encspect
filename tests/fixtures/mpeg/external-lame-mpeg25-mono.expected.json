@@ -1,0 +1,59 @@
+{
+ "description": "lame --quiet -t -b 16 -m m on a 0.5 s, 8000 Hz, 1-channel 440/660 Hz tone.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "lame",
+   "--quiet",
+   "-t",
+   "-b",
+   "16",
+   "-m",
+   "m"
+  ],
+  "version": "2.5",
+  "layer": 3,
+  "sample_rate": 8000,
+  "channel_mode": "Mono",
+  "bitrate": 16,
+  "info_frame": false
+ },
+ "ffprobe_frames": [
+  [
+   0,
+   144
+  ],
+  [
+   144,
+   144
+  ],
+  [
+   288,
+   144
+  ],
+  [
+   432,
+   144
+  ],
+  [
+   576,
+   144
+  ],
+  [
+   720,
+   144
+  ],
+  [
+   864,
+   144
+  ],
+  [
+   1008,
+   144
+  ],
+  [
+   1152,
+   144
+  ]
+ ]
+}

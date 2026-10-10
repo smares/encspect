@@ -1,0 +1,24 @@
+{
+ "description": "lame --quiet -t --freeformat -b 400 -m s on a 0.5 s, 44100 Hz, 2-channel 440/660 Hz tone.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "lame",
+   "--quiet",
+   "-t",
+   "--freeformat",
+   "-b",
+   "400",
+   "-m",
+   "s"
+  ],
+  "version": "1",
+  "layer": 3,
+  "sample_rate": 44100,
+  "channel_mode": "Stereo",
+  "bitrate": null,
+  "free_format": true,
+  "info_frame": false
+ },
+ "mpg123_frames": 21
+}

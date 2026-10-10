@@ -1,0 +1,99 @@
+{
+ "description": "MPEG-1 Layer II at 32 kbps in stereo, a combination the standard allows only for single channel: frames are kept, reported once.",
+ "length": 576,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 576
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 96,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 192,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 288,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 384,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 480,
+   "length": 96,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "II",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.bitrate-mode-not-allowed",
+   "contains": "32 kbps"
+  }
+ ]
+}

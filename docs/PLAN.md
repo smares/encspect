@@ -68,7 +68,7 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 
 **File layout and tags**
 
-- Leading junk and resync: find the first valid frame, report skipped bytes, and re-sync after damage.
+- Leading junk and resync: find the first valid frame, report skipped bytes, and re-sync after damage. A header starts a stream only when two more frames with the same version, layer and sample rate follow at the positions its length predicts, or when its frames end exactly at the end of the data. Everything between frames that is not a frame is a gap: junk before the first frame, lost sync between frames, data after the last one. Each stretch of data between tags is one "MPEG Audio" region, and findings of one kind are reported once per stream with a count, not once per frame.
 - ID3v2.2, 2.3 and 2.4: header, flags, extended header, footer, padding, unsynchronization, and every frame with its decoded text encoding.
 - Trailing tags: ID3v1 and v1.1, the Enhanced TAG, Lyrics3 v1 and v2, and APEv1 and v2 including every item.
 - Any gaps, overlaps or trailing garbage between regions are reported as findings.
@@ -76,7 +76,7 @@ v1 is MP1/MP2/MP3 analysis at the header, side-info and metadata level, with no 
 **Per-frame data (all layers)**
 
 - Every header field: MPEG version (1, 2, 2.5), layer, CRC protection, bitrate, sampling rate, padding, channel mode and mode extension, copyright, original, emphasis.
-- Frame offset, length, and CRC-16 verification when protection is on.
+- Frame offset, length, and CRC-16 verification when protection is on. Layer II CRCs are reported as not verified until the allocation tables exist, because their coverage depends on them.
 - Mid-stream parameter changes (sampling rate, channel mode) and free-format streams.
 
 **Layer III side info**
@@ -130,8 +130,8 @@ The first fixture needs no external tool; a script writes the exact bytes.
 
 Nobody will read the code line by line, so correctness comes from automated checks that do not depend on the author's judgment. The weak spot to guard against is spec details written from memory, such as field offsets and odd edge cases.
 
-1. **Known-input fixtures.** CI installs `lame`, `ffmpeg` and `flac`, then generates files with known settings (CBR, VBR, ABR, presets, joint stereo, with and without CRC and tags). Tests assert that the analyzer reports exactly what was encoded.
-2. **Cross-checks against other tools.** Where results overlap, compare with `ffprobe` and TagLib#. Disagreements fail the build until explained.
+1. **Known-input fixtures.** Scripts in `scripts/fixtures` write two kinds of fixture, each with a manifest of the expected result. Hand-built ones (standard library only, regenerated and compared in CI) control every byte. Encoder-written ones (LAME, TwoLAME, mutagen, ffmpeg, pinned versions) are committed, because their bytes depend on the tool version. Tests assert that the analyzer reports exactly what was built or encoded.
+2. **Cross-checks against other tools.** Where results overlap, compare with `ffprobe` and TagLib#. Disagreements fail the build until explained. For MPEG audio, a CI job checks every fixture manifest against ffprobe (frame positions and lengths) libmad through madplay (CRC verdicts, and frame counts where ffmpeg resyncs differently) and mpg123 (frame counts of free-format streams, which ffmpeg cannot read), so the expectations are confirmed by independent decoders before the parser is.
 3. **Golden reports.** Each fixture has a stored expected report; any output change shows up as a diff that has to be approved.
 4. **Corrupt-file tests and fuzzing.** Truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool; they must yield findings. The tag-collision cases are listed under tag detection.
 5. **Spec references in the code.** Each parsed field cites the spec section it implements, so a reviewer can check it quickly.

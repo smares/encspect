@@ -49,7 +49,8 @@ def write_manifest(name, description, regions):
 
 
 def data_region():
-    return {"name": "Data"}
+    # The audio is a real MP3 stream, so the format parser claims it.
+    return {"name": "MPEG Audio"}
 
 
 def mutagen_id3v23():

@@ -1,0 +1,111 @@
+{
+ "description": "MPEG-1 Layer III frames with CRC; the third frame's CRC is wrong.",
+ "length": 2507,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2507
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xC05C",
+    "CRC/Computed": "0xC05C"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x985F",
+    "CRC/Computed": "0x985F"
+   }
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x985E",
+    "CRC/Computed": "0x985F"
+   }
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x985F",
+    "CRC/Computed": "0x985F"
+   }
+  },
+  {
+   "offset": 1671,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x985F",
+    "CRC/Computed": "0x985F"
+   }
+  },
+  {
+   "offset": 2089,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x985F",
+    "CRC/Computed": "0x985F"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.crc-mismatch",
+   "contains": "1 frame"
+  }
+ ]
+}
