@@ -10,6 +10,7 @@ import json
 import pathlib
 import sys
 import tempfile
+import time
 import urllib.parse
 
 import conformance_mpeg_audio
@@ -18,6 +19,7 @@ import fhg_tool
 import mctoolamed_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+ARCHIVE_PAUSE = 5
 
 
 def sources():
@@ -42,8 +44,12 @@ def main():
         for name, digest, addresses in sources():
             for address in addresses:
                 checked += 1
-                if not downloads.download(address, path):
-                    problem = "does not serve it"
+                # The Wayback Machine limits how fast one client may download.
+                if address.startswith("https://web.archive.org/"):
+                    time.sleep(ARCHIVE_PAUSE)
+                error = downloads.download(address, path)
+                if error is not None:
+                    problem = f"does not serve it: {error}"
                 elif downloads.sha256(path) != digest:
                     problem = f"serves SHA-256 {downloads.sha256(path)}"
                 else:

@@ -22,9 +22,10 @@ def archived(url, year):
 
 
 def download(url, path):
-    """Downloads url to path; returns whether it worked."""
-    result = subprocess.run(["curl", "-fsSL", "--retry", "3", "--connect-timeout", "30", "-o", str(path), url], capture_output=True)
-    return result.returncode == 0
+    """Downloads url to path; returns None when it worked, else curl's error."""
+    result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "10", "--connect-timeout", "30", "-o", str(path), url],
+                            capture_output=True, text=True)
+    return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
 
 
 def sha256(path):
@@ -38,11 +39,11 @@ def fetch(addresses, digest, path):
         return
     failures = []
     for address in addresses:
-        served = download(address, path)
-        if served and sha256(path) == digest:
+        error = download(address, path)
+        if error is None and sha256(path) == digest:
             if failures:
                 print(f"{path.name}: fetched from {address} after {'; '.join(failures)}", file=sys.stderr)
             return
-        failures.append(f"{address} has SHA-256 {sha256(path)}" if served else f"{address} failed")
+        failures.append(f"{address} has SHA-256 {sha256(path)}" if error is None else f"{address}: {error}")
         path.unlink(missing_ok=True)
     raise SystemExit(f"{path.name}: no address serves the file with SHA-256 {digest}: {'; '.join(failures)}")
