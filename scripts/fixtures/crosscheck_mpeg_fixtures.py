@@ -323,8 +323,10 @@ def expected_mpg123(tag):
     lame = tag.get("lame")
     if lame:
         notes.append(f"Info: Encoder: {lame['encoder']}")
-        notes.append(f"Info: vbr mode {lame['method']}")
         version = re.match(r"LAME(\d+)\.(\d+)", lame["encoder"])
+        if lame["encoder"].startswith("LAME") and not version:
+            notes.append("Info: Cannot determine LAME version.")
+        notes.append(f"Info: vbr mode {lame['method']}")
         offset = 6 if version and (int(version[1]), int(version[2])) < (3, 95) else 0
         gains = [0.0, 0.0]
         for value in (lame["radio_gain"], lame["audiophile_gain"]):
@@ -370,7 +372,8 @@ def check_vbr_header(path, manifest):
             problems.append("mp3guessenc does not find the truncated VBR header")
     else:
         expected = expected_guessenc(tag, music_crc)
-        if tag["type"] != "VBRI" and tag["quality"] is not None:
+        # mp3guessenc reads 0xFFFFFFFF, as Helix writes it for CBR, as -1: its mark for no quality.
+        if tag["type"] != "VBRI" and tag["quality"] is not None and tag["quality"] != 0xFFFFFFFF:
             expected["Quality"] = str(tag["quality"])
         for key, value in expected.items():
             # mp3guessenc appends the -q and -V switches a LAME VBR quality stands for.

@@ -1025,6 +1025,55 @@ def ofl_exceeds_stream():
         **SURROUND)
 
 
+# --- Encoder traits ------------------------------------------------------------------------------
+
+
+def filled_chain(count, scalefac_scale=0, **kwargs):
+    """Frames whose main data fills their own data exactly: main_data_begin 0, long blocks, no
+    ancillary data, as Shine writes them."""
+    probe = reservoir_chain([(100, 0)] * count, **kwargs)
+    frames = reservoir_chain([(frame.area_length(), 0) for frame in probe], **kwargs)
+    for frame in frames:
+        for row in frame.granules:
+            row[0].scalefac_scale = scalefac_scale
+    return pack(frames)
+
+
+@fixture
+def shine_traits():
+    f = Layer3Fixture(
+        "shine-traits",
+        "Twenty MPEG-1 frames whose main data fills each frame without the bit reservoir, short blocks, scalefactor "
+        "scaling or ancillary data: Shine's traits in the fewest frames the analyzer guesses from.",
+    )
+    f.add_frames(filled_chain(20))
+    f.extra = {"detected_encoder": {"name": "Shine", "confidence": "Low"}}
+    return f
+
+
+@fixture
+def shine_traits_short():
+    f = Layer3Fixture(
+        "shine-traits-short",
+        "Nineteen frames with Shine's traits: too few to guess an encoder from.",
+    )
+    f.add_frames(filled_chain(19))
+    f.extra = {"detected_encoder": None}
+    return f
+
+
+@fixture
+def mpeg2_scalefactor_scaling():
+    f = Layer3Fixture(
+        "mpeg2-scalefactor-scaling",
+        "Twenty-four MPEG-2 frames that use scalefactor scaling and fill their data. MPEG-2 has no scfsi, so its absence "
+        "points to no encoder, and scaling rules out Shine.",
+    )
+    f.add_frames(filled_chain(24, scalefac_scale=1, bitrate=64, rate=22050, version="2"))
+    f.extra = {"detected_encoder": None}
+    return f
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
