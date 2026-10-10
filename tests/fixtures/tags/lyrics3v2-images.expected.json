@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v2 IMG field with three image lines: all parts, filename only, and filename plus timestamp without a description (\"||||\").",
+  "length": 750,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "IMG/Data/Image[0]/Filename": "cover.jpg",
+        "IMG/Data/Image[0]/Description": "Front cover",
+        "IMG/Data/Image[0]/Timestamp": "[00:00]",
+        "IMG/Data/Image[1]/Filename": "back.jpg",
+        "IMG/Data/Image[2]/Description": "",
+        "IMG/Data/Image[2]/Timestamp": "[01:30]"
+      },
+      "offset": 512,
+      "length": 110
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 622,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

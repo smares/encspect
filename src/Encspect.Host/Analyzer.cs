@@ -352,13 +352,18 @@ public sealed class Analyzer
     }
 
     // ID3v1 belongs in the last 128 bytes; other orders occur in the wild, so they are findings,
-    // not rejections.
+    // not rejections. Lyrics3 extended fields must agree with the ID3v1 tag after them.
     private static void CheckTrailingLayout(List<Claim> trailing, List<Finding> findings)
     {
         for (int i = 0; i < trailing.Count; i++)
         {
             Node tag = trailing[i].Tag;
             string? next = i + 1 < trailing.Count ? trailing[i + 1].Tag.Name : null;
+
+            if (tag.Name == "Lyrics3" && next == "ID3v1")
+            {
+                CheckLyrics3ExtendedFields(tag, trailing[i + 1].Tag, findings);
+            }
 
             if (tag.Name == "ID3v1" && next is not null)
             {
@@ -367,6 +372,42 @@ public sealed class Analyzer
                     "layout.id3v1-not-last",
                     $"The ID3v1 tag at 0x{tag.Offset:X} is followed by a {next} tag; readers expect ID3v1 in the last 128 bytes.",
                     tag));
+            }
+        }
+    }
+
+    // Lyrics3 v2.00: "The extended Album, Artist and Track are an extension to the fields in the
+    // ID3v1 tag ... make sure their first 30 chars are exactly the same as the ones in the ID3v1
+    // tag. If they are the same, display the extended field. If not, display the one from the ID
+    // tag." It also recommends "NOT to save extended fields at all, if they are not larger then
+    // 30 chars".
+    private static void CheckLyrics3ExtendedFields(Node lyrics, Node id3v1, List<Finding> findings)
+    {
+        foreach ((string field, string v1Field) in new[] { ("EAL", "Album"), ("EAR", "Artist"), ("ETT", "Title") })
+        {
+            Node? extended = lyrics.Children.FirstOrDefault(c => c.Name == field);
+            string? v1 = id3v1.Children.FirstOrDefault(c => c.Name == v1Field)?.Value;
+            if (extended?.Value is not { } text || v1 is null)
+            {
+                continue;
+            }
+
+            string prefix = text.Length > 30 ? text[..30] : text;
+            if (!string.Equals(prefix.TrimEnd(' '), v1, StringComparison.Ordinal))
+            {
+                findings.Add(new Finding(
+                    Severity.Warning,
+                    "lyrics3.extended-mismatch",
+                    $"The Lyrics3 {field} field does not start with the ID3v1 {v1Field.ToLowerInvariant()} \"{v1}\", so readers show the ID3v1 value.",
+                    extended));
+            }
+            else if (text.Length <= 30)
+            {
+                findings.Add(new Finding(
+                    Severity.Info,
+                    "lyrics3.extended-unneeded",
+                    $"The Lyrics3 {field} field is not longer than the 30 characters the ID3v1 {v1Field.ToLowerInvariant()} already holds.",
+                    extended));
             }
         }
     }

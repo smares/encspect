@@ -1,0 +1,308 @@
+[
+  {
+    "source": "lyrics3v2-bad-timestamps.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 738,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 98,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "IND",
+              "value": "110",
+              "offset": 523,
+              "length": 11,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "IND",
+                  "offset": 523,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "3",
+                  "offset": 526,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "110",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasLyrics",
+                  "value": "true",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasTimestamps",
+                  "value": "true",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "IsRandomSelectionInhibited",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "LYR",
+              "value": "[00:75]Too many seconds",
+              "offset": 534,
+              "length": 31,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "LYR",
+                  "offset": 534,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "23",
+                  "offset": 537,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "[00:75]Too many seconds",
+                  "offset": 542,
+                  "length": 23,
+                  "children": [
+                    {
+                      "name": "Line",
+                      "value": "[00:75]Too many seconds",
+                      "offset": 542,
+                      "length": 23,
+                      "children": [
+                        {
+                          "name": "Timestamp",
+                          "value": "00:75",
+                          "offset": 542,
+                          "length": 7
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "IMG",
+              "value": "cover.jpg||Front||0:10",
+              "offset": 565,
+              "length": 30,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "IMG",
+                  "offset": 565,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "22",
+                  "offset": 568,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "cover.jpg||Front||0:10",
+                  "offset": 573,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Image",
+                      "value": "cover.jpg||Front||0:10",
+                      "offset": 573,
+                      "length": 22,
+                      "children": [
+                        {
+                          "name": "Filename",
+                          "value": "cover.jpg",
+                          "offset": 573,
+                          "length": 9
+                        },
+                        {
+                          "name": "Description",
+                          "value": "Front",
+                          "offset": 584,
+                          "length": 5
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": "0:10",
+                          "offset": 591,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Size",
+              "value": "83",
+              "offset": 595,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 601,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 98,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 601,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 83 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 595,
+                  "length": 6
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Fields end exactly at the size field",
+                  "offset": 512,
+                  "length": 83
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 610,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 610,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 613,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 643,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 673,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 703,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 707,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 736,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 737,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 610,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 610,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 613,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "lyrics3.timestamp-invalid",
+        "message": "The timestamp [00:75] has more than 59 seconds.",
+        "offset": 542,
+        "length": 7
+      },
+      {
+        "severity": "Warning",
+        "code": "lyrics3.timestamp-invalid",
+        "message": "The IMG timestamp \u00220:10\u0022 is not [mm:ss].",
+        "offset": 591,
+        "length": 4
+      }
+    ]
+  }
+]

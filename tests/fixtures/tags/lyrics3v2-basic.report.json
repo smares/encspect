@@ -4,7 +4,7 @@
     "root": {
       "name": "File",
       "offset": 0,
-      "length": 864,
+      "length": 979,
       "children": [
         {
           "name": "Data",
@@ -15,7 +15,7 @@
           "name": "Lyrics3",
           "value": "2.00",
           "offset": 512,
-          "length": 224,
+          "length": 339,
           "children": [
             {
               "name": "Begin",
@@ -89,7 +89,37 @@
                   "name": "Data",
                   "value": "[00:01]Timed line\r\n[00:05]Another",
                   "offset": 542,
-                  "length": 33
+                  "length": 33,
+                  "children": [
+                    {
+                      "name": "Line",
+                      "value": "[00:01]Timed line",
+                      "offset": 542,
+                      "length": 17,
+                      "children": [
+                        {
+                          "name": "Timestamp",
+                          "value": "00:01",
+                          "offset": 542,
+                          "length": 7
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Line",
+                      "value": "[00:05]Another",
+                      "offset": 561,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "Timestamp",
+                          "value": "00:05",
+                          "offset": 561,
+                          "length": 7
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             },
@@ -147,9 +177,9 @@
             },
             {
               "name": "EAL",
-              "value": "Extended Album Name",
+              "value": "Extended Album Name That Runs Past Thirty Characters",
               "offset": 615,
-              "length": 27,
+              "length": 60,
               "children": [
                 {
                   "name": "ID",
@@ -159,131 +189,159 @@
                 },
                 {
                   "name": "Size",
-                  "value": "19",
+                  "value": "52",
                   "offset": 618,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "Extended Album Name",
+                  "value": "Extended Album Name That Runs Past Thirty Characters",
                   "offset": 623,
-                  "length": 19
+                  "length": 52
                 }
               ]
             },
             {
               "name": "EAR",
-              "value": "Extended Artist Name",
-              "offset": 642,
-              "length": 28,
+              "value": "Extended Artist Name That Runs Past Thirty Characters",
+              "offset": 675,
+              "length": 61,
               "children": [
                 {
                   "name": "ID",
                   "value": "EAR",
-                  "offset": 642,
+                  "offset": 675,
                   "length": 3
                 },
                 {
                   "name": "Size",
-                  "value": "20",
-                  "offset": 645,
+                  "value": "53",
+                  "offset": 678,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "Extended Artist Name",
-                  "offset": 650,
-                  "length": 20
+                  "value": "Extended Artist Name That Runs Past Thirty Characters",
+                  "offset": 683,
+                  "length": 53
                 }
               ]
             },
             {
               "name": "ETT",
-              "value": "Extended Title Name",
-              "offset": 670,
-              "length": 27,
+              "value": "Extended Track Title That Runs Past Thirty Characters",
+              "offset": 736,
+              "length": 61,
               "children": [
                 {
                   "name": "ID",
                   "value": "ETT",
-                  "offset": 670,
+                  "offset": 736,
                   "length": 3
                 },
                 {
                   "name": "Size",
-                  "value": "19",
-                  "offset": 673,
+                  "value": "53",
+                  "offset": 739,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "Extended Title Name",
-                  "offset": 678,
-                  "length": 19
+                  "value": "Extended Track Title That Runs Past Thirty Characters",
+                  "offset": 744,
+                  "length": 53
                 }
               ]
             },
             {
               "name": "IMG",
-              "value": "cover.jpg||00:00",
-              "offset": 697,
-              "length": 24,
+              "value": "cover.jpg||Front cover||[00:00]",
+              "offset": 797,
+              "length": 39,
               "children": [
                 {
                   "name": "ID",
                   "value": "IMG",
-                  "offset": 697,
+                  "offset": 797,
                   "length": 3
                 },
                 {
                   "name": "Size",
-                  "value": "16",
-                  "offset": 700,
+                  "value": "31",
+                  "offset": 800,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "cover.jpg||00:00",
-                  "offset": 705,
-                  "length": 16
+                  "value": "cover.jpg||Front cover||[00:00]",
+                  "offset": 805,
+                  "length": 31,
+                  "children": [
+                    {
+                      "name": "Image",
+                      "value": "cover.jpg||Front cover||[00:00]",
+                      "offset": 805,
+                      "length": 31,
+                      "children": [
+                        {
+                          "name": "Filename",
+                          "value": "cover.jpg",
+                          "offset": 805,
+                          "length": 9
+                        },
+                        {
+                          "name": "Description",
+                          "value": "Front cover",
+                          "offset": 816,
+                          "length": 11
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": "[00:00]",
+                          "offset": 829,
+                          "length": 7
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             },
             {
               "name": "Size",
-              "value": "209",
-              "offset": 721,
+              "value": "324",
+              "offset": 836,
               "length": 6
             },
             {
               "name": "End",
               "value": "LYRICS200",
-              "offset": 727,
+              "offset": 842,
               "length": 9
             },
             {
               "name": "Detection",
               "value": "High",
               "offset": 512,
-              "length": 224,
+              "length": 339,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "End marker \u0022LYRICS200\u0022",
-                  "offset": 727,
+                  "offset": 842,
                   "length": 9
                 },
                 {
                   "name": "Evidence",
-                  "value": "Size field 209 points at \u0022LYRICSBEGIN\u0022",
-                  "offset": 721,
+                  "value": "Size field 324 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 836,
                   "length": 6
                 },
                 {
                   "name": "Evidence",
                   "value": "Fields end exactly at the size field",
                   "offset": 512,
-                  "length": 209
+                  "length": 324
                 }
               ]
             }
@@ -292,73 +350,73 @@
         {
           "name": "ID3v1",
           "value": "1.1",
-          "offset": 736,
+          "offset": 851,
           "length": 128,
           "children": [
             {
               "name": "Signature",
               "value": "TAG",
-              "offset": 736,
+              "offset": 851,
               "length": 3
             },
             {
               "name": "Title",
-              "value": "Song Title",
-              "offset": 739,
+              "value": "Extended Track Title That Runs",
+              "offset": 854,
               "length": 30
             },
             {
               "name": "Artist",
-              "value": "Artist Name",
-              "offset": 769,
+              "value": "Extended Artist Name That Runs",
+              "offset": 884,
               "length": 30
             },
             {
               "name": "Album",
-              "value": "Album Name",
-              "offset": 799,
+              "value": "Extended Album Name That Runs",
+              "offset": 914,
               "length": 30
             },
             {
               "name": "Year",
               "value": "2001",
-              "offset": 829,
+              "offset": 944,
               "length": 4
             },
             {
               "name": "Comment",
               "value": "A comment",
-              "offset": 833,
+              "offset": 948,
               "length": 28
             },
             {
               "name": "Track",
               "value": "7",
-              "offset": 862,
+              "offset": 977,
               "length": 1
             },
             {
               "name": "Genre",
               "value": "17 (Rock)",
-              "offset": 863,
+              "offset": 978,
               "length": 1
             },
             {
               "name": "Detection",
               "value": "Medium",
-              "offset": 736,
+              "offset": 851,
               "length": 128,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
-                  "offset": 736,
+                  "offset": 851,
                   "length": 3
                 },
                 {
                   "name": "Evidence",
                   "value": "All text fields hold printable text",
-                  "offset": 739,
+                  "offset": 854,
                   "length": 124
                 }
               ]

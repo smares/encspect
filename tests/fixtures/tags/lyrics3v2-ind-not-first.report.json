@@ -4,7 +4,7 @@
     "root": {
       "name": "File",
       "offset": 0,
-      "length": 689,
+      "length": 690,
       "children": [
         {
           "name": "Data",
@@ -15,7 +15,7 @@
           "name": "Lyrics3",
           "value": "2.00",
           "offset": 512,
-          "length": 49,
+          "length": 50,
           "children": [
             {
               "name": "Begin",
@@ -45,15 +45,23 @@
                   "name": "Data",
                   "value": "Words",
                   "offset": 531,
-                  "length": 5
+                  "length": 5,
+                  "children": [
+                    {
+                      "name": "Line",
+                      "value": "Words",
+                      "offset": 531,
+                      "length": 5
+                    }
+                  ]
                 }
               ]
             },
             {
               "name": "IND",
-              "value": "10",
+              "value": "100",
               "offset": 536,
-              "length": 10,
+              "length": 11,
               "children": [
                 {
                   "name": "ID",
@@ -63,64 +71,64 @@
                 },
                 {
                   "name": "Size",
-                  "value": "2",
+                  "value": "3",
                   "offset": 539,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "10",
+                  "value": "100",
                   "offset": 544,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 544,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
                   "offset": 544,
-                  "length": 2
+                  "length": 3
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
                   "offset": 544,
-                  "length": 2
+                  "length": 3
                 }
               ]
             },
             {
               "name": "Size",
-              "value": "34",
-              "offset": 546,
+              "value": "35",
+              "offset": 547,
               "length": 6
             },
             {
               "name": "End",
               "value": "LYRICS200",
-              "offset": 552,
+              "offset": 553,
               "length": 9
             },
             {
               "name": "Detection",
               "value": "Medium",
               "offset": 512,
-              "length": 49,
+              "length": 50,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "End marker \u0022LYRICS200\u0022",
-                  "offset": 552,
+                  "offset": 553,
                   "length": 9
                 },
                 {
                   "name": "Evidence",
-                  "value": "Size field 34 points at \u0022LYRICSBEGIN\u0022",
-                  "offset": 546,
+                  "value": "Size field 35 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 547,
                   "length": 6
                 }
               ]
@@ -130,73 +138,73 @@
         {
           "name": "ID3v1",
           "value": "1.1",
-          "offset": 561,
+          "offset": 562,
           "length": 128,
           "children": [
             {
               "name": "Signature",
               "value": "TAG",
-              "offset": 561,
+              "offset": 562,
               "length": 3
             },
             {
               "name": "Title",
               "value": "Song Title",
-              "offset": 564,
+              "offset": 565,
               "length": 30
             },
             {
               "name": "Artist",
               "value": "Artist Name",
-              "offset": 594,
+              "offset": 595,
               "length": 30
             },
             {
               "name": "Album",
               "value": "Album Name",
-              "offset": 624,
+              "offset": 625,
               "length": 30
             },
             {
               "name": "Year",
               "value": "2001",
-              "offset": 654,
+              "offset": 655,
               "length": 4
             },
             {
               "name": "Comment",
               "value": "A comment",
-              "offset": 658,
+              "offset": 659,
               "length": 28
             },
             {
               "name": "Track",
               "value": "7",
-              "offset": 687,
+              "offset": 688,
               "length": 1
             },
             {
               "name": "Genre",
               "value": "17 (Rock)",
-              "offset": 688,
+              "offset": 689,
               "length": 1
             },
             {
               "name": "Detection",
               "value": "Medium",
-              "offset": 561,
+              "offset": 562,
               "length": 128,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
-                  "offset": 561,
+                  "offset": 562,
                   "length": 3
                 },
                 {
                   "name": "Evidence",
                   "value": "All text fields hold printable text",
-                  "offset": 564,
+                  "offset": 565,
                   "length": 124
                 }
               ]
@@ -218,7 +226,7 @@
         "code": "lyrics3.ind-not-first",
         "message": "The IND field must be the first field when it is present.",
         "offset": 536,
-        "length": 10
+        "length": 11
       }
     ]
   }

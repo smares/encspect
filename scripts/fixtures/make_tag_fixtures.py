@@ -397,10 +397,10 @@ BASIC_APE_FIELDS = {"Items/Title/Value": "APE Title", "Items/Artist/Value": "APE
 
 
 def basic_lyrics3v2():
-    return lyrics3v2([("IND", "10"), ("LYR", "First line\r\nSecond line"), ("ETT", "Extended Title")])
+    return lyrics3v2([("IND", "100"), ("LYR", "First line\r\nSecond line")])
 
 
-BASIC_LYRICS3V2_FIELDS = {"LYR/Data": "First line\r\nSecond line", "ETT/Data": "Extended Title"}
+BASIC_LYRICS3V2_FIELDS = {"LYR/Data": "First line\r\nSecond line", "LYR/Data/Line": ["First line", "Second line"]}
 
 
 def basic_id3v23():
@@ -1125,17 +1125,24 @@ def lyrics3v1_basic():
 
 @fixture
 def lyrics3v2_basic():
-    f = Fixture("lyrics3v2-basic", "Lyrics3 v2 tag with every field type before ID3v1.")
+    f = Fixture(
+        "lyrics3v2-basic",
+        "Lyrics3 v2 tag with every field type before ID3v1. The extended fields start with the 30 characters of the "
+        "ID3v1 fields they extend, as the specification requires.",
+    )
     f.audio()
+    album = "Extended Album Name That Runs Past Thirty Characters"
+    artist = "Extended Artist Name That Runs Past Thirty Characters"
+    title = "Extended Track Title That Runs Past Thirty Characters"
     fields = [
         ("IND", "110"),
         ("LYR", "[00:01]Timed line\r\n[00:05]Another"),
         ("INF", "Information"),
         ("AUT", "Lyrics Author"),
-        ("EAL", "Extended Album Name"),
-        ("EAR", "Extended Artist Name"),
-        ("ETT", "Extended Title Name"),
-        ("IMG", "cover.jpg||00:00"),
+        ("EAL", album),
+        ("EAR", artist),
+        ("ETT", title),
+        ("IMG", "cover.jpg||Front cover||[00:00]"),
     ]
     tag = lyrics3v2(fields)
     f.tag(
@@ -1148,13 +1155,15 @@ def lyrics3v2_basic():
             "IND/HasTimestamps": "true",
             "IND/IsRandomSelectionInhibited": "false",
             "LYR/Data": "[00:01]Timed line\r\n[00:05]Another",
+            "LYR/Data/Line[0]/Timestamp": "00:01",
             "AUT/Data": "Lyrics Author",
-            "EAL/Data": "Extended Album Name",
-            "IMG/Data": "cover.jpg||00:00",
+            "EAL/Data": album,
+            "IMG/Data/Image/Filename": "cover.jpg",
             "Size": str(len(tag) - 15),
         },
     )
-    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    v1 = id3v1(title[:30], artist[:30], album[:30], "2001", "A comment", track=7, genre=17)
+    f.tag("ID3v1", "1.1", v1, "Medium", {"Title": title[:30].rstrip(), "Album": album[:30].rstrip()})
     return f
 
 
@@ -1198,9 +1207,118 @@ def lyrics3v2_no_fields():
 def lyrics3v2_ind_not_first():
     f = Fixture("lyrics3v2-ind-not-first", "Lyrics3 v2 tag with the IND field after LYR; IND must come first.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "10")]), "Medium", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Words"), ("IND", "100")]), "Medium", {"LYR/Data": "Words", "IND/HasLyrics": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.ind-not-first", "IND")
+    return f
+
+
+@fixture
+def lyrics3v2_timestamps():
+    f = Fixture(
+        "lyrics3v2-timestamps",
+        "Lyrics3 v2 lyrics with [mm:ss] timestamps at the start of lines, several on one line, and a line without one.",
+    )
+    f.audio()
+    lyrics = "[00:01]First\r\n[00:05][00:06]Second\r\nNo stamp\r\nMid [01:30] line"
+    f.tag(
+        "Lyrics3",
+        "2.00",
+        lyrics3v2([("IND", "110"), ("LYR", lyrics)]),
+        "High",
+        {
+            "LYR/Data/Line": ["[00:01]First", "[00:05][00:06]Second", "No stamp", "Mid [01:30] line"],
+            "LYR/Data/Line[0]/Timestamp": "00:01",
+            "LYR/Data/Line[1]/Timestamp": ["00:05", "00:06"],
+            "LYR/Data/Line[3]/Timestamp": ["01:30"],
+        },
+    )
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v2_images():
+    f = Fixture(
+        "lyrics3v2-images",
+        "Lyrics3 v2 IMG field with three image lines: all parts, filename only, and filename plus timestamp without a "
+        "description (\"||||\").",
+    )
+    f.audio()
+    images = "cover.jpg||Front cover||[00:00]\r\nback.jpg\r\nbooklet.jpg||||[01:30]"
+    f.tag(
+        "Lyrics3",
+        "2.00",
+        lyrics3v2([("IND", "000"), ("IMG", images)]),
+        "High",
+        {
+            "IMG/Data/Image[0]/Filename": "cover.jpg",
+            "IMG/Data/Image[0]/Description": "Front cover",
+            "IMG/Data/Image[0]/Timestamp": "[00:00]",
+            "IMG/Data/Image[1]/Filename": "back.jpg",
+            "IMG/Data/Image[2]/Description": "",
+            "IMG/Data/Image[2]/Timestamp": "[01:30]",
+        },
+    )
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v2_bad_timestamps():
+    f = Fixture("lyrics3v2-bad-timestamps", "Lyrics3 v2 timestamps with 75 seconds and an IMG timestamp that is not [mm:ss].")
+    f.audio()
+    fields = [("IND", "110"), ("LYR", "[00:75]Too many seconds"), ("IMG", "cover.jpg||Front||0:10")]
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"LYR/Data/Line/Timestamp": "00:75"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.timestamp-invalid", "[00:75]")
+    f.finding("lyrics3.timestamp-invalid", "0:10")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_mismatch():
+    f = Fixture("lyrics3v2-ind-mismatch", "Lyrics3 v2 IND field that claims timestamps the lyrics do not have, and no lyrics field.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "010"), ("INF", "Info only")]), "High", {"IND/HasTimestamps": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.ind-mismatch", "timestamps")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_size():
+    f = Fixture("lyrics3v2-ind-size", "Lyrics3 v2 IND field with two characters instead of the three v2.00 defines.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "10"), ("LYR", "Words")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.ind-size", "2 characters")
+    return f
+
+
+@fixture
+def lyrics3v2_field_too_long():
+    f = Fixture("lyrics3v2-field-too-long", "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "000"), ("AUT", "a" * 300)]), "High", {"AUT/Size": "300"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.field-too-long", "300")
+    return f
+
+
+@fixture
+def lyrics3v2_extended_mismatch():
+    f = Fixture(
+        "lyrics3v2-extended-mismatch",
+        "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, and an EAR field no longer than the "
+        "ID3v1 artist, which the specification recommends not to save.",
+    )
+    f.audio()
+    fields = [("IND", "000"), ("ETT", "A Completely Different Long Track Title"), ("EAR", "Artist Name")]
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"ETT/Data": "A Completely Different Long Track Title"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.extended-mismatch", "ETT")
+    f.finding("lyrics3.extended-unneeded", "EAR")
     return f
 
 
@@ -1423,7 +1541,7 @@ def collision_containers():
         yield "id3v2", "ID3v2", id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", USER_TEXT))], footer=True), follow
     # Both Lyrics3 versions require an ID3 tag after them.
     yield "lyrics3v1", "Lyrics3", lyrics3v1(USER_TEXT), True
-    yield "lyrics3v2", "Lyrics3", lyrics3v2([("IND", "10"), ("LYR", USER_TEXT)]), True
+    yield "lyrics3v2", "Lyrics3", lyrics3v2([("IND", "100"), ("LYR", USER_TEXT)]), True
 
 
 def collision_cases():

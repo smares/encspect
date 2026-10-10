@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.",
+  "length": 985,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "AUT/Size": "300"
+      },
+      "offset": 512,
+      "length": 345
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 857,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.field-too-long",
+      "contains": "300"
+    }
+  ]
+}

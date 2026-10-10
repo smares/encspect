@@ -1,0 +1,231 @@
+[
+  {
+    "source": "lyrics3v2-ind-mismatch.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 694,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 54,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "IND",
+              "value": "010",
+              "offset": 523,
+              "length": 11,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "IND",
+                  "offset": 523,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "3",
+                  "offset": 526,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "010",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasLyrics",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "HasTimestamps",
+                  "value": "true",
+                  "offset": 531,
+                  "length": 3
+                },
+                {
+                  "name": "IsRandomSelectionInhibited",
+                  "value": "false",
+                  "offset": 531,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "INF",
+              "value": "Info only",
+              "offset": 534,
+              "length": 17,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "INF",
+                  "offset": 534,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "9",
+                  "offset": 537,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "Info only",
+                  "offset": 542,
+                  "length": 9
+                }
+              ]
+            },
+            {
+              "name": "Size",
+              "value": "39",
+              "offset": 551,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 557,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 54,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 557,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 39 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 551,
+                  "length": 6
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Fields end exactly at the size field",
+                  "offset": 512,
+                  "length": 39
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 566,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 566,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 569,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 599,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 629,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 659,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 663,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 692,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 693,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 566,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 566,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 569,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Info",
+        "code": "lyrics3.ind-mismatch",
+        "message": "IND says the lyrics have timestamps, but they have none.",
+        "offset": 523,
+        "length": 11
+      }
+    ]
+  }
+]
