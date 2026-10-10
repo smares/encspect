@@ -1,0 +1,43 @@
+{
+  "description": "The 26 characters LYRICSBEGIN000011LYRICS200 form a Lyrics3 v2 tag without fields, which the specification rules out: kept, low confidence.",
+  "length": 666,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "Low",
+      "fields": {
+        "Size": "11"
+      },
+      "offset": 512,
+      "length": 26
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 538,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.no-fields",
+      "contains": "no fields"
+    }
+  ]
+}

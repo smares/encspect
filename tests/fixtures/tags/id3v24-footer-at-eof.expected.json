@@ -1,0 +1,22 @@
+{
+  "description": "ID3v2.4 tag with a footer as the very last bytes of the file.",
+  "length": 549,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "At EOF"
+      },
+      "offset": 512,
+      "length": 37
+    }
+  ],
+  "findings": []
+}

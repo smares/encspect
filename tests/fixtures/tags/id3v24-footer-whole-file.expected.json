@@ -1,0 +1,22 @@
+{
+  "description": "A file that is one ID3v2.4 tag with a footer. The trailing walk finds the same tag through its footer, which is neither a second tag nor a near miss.",
+  "length": 41,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Whole File"
+      },
+      "offset": 0,
+      "length": 41
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "description": "Lyrics3 v1 block with 6000 bytes of lyrics, more than the 5100 allowed: kept, low confidence.",
+  "length": 6660,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Low",
+      "offset": 512,
+      "length": 6020
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 6532,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.too-long",
+      "contains": "6000"
+    }
+  ]
+}

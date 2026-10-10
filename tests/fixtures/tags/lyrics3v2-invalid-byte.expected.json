@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v2 tag whose LYR field holds a $00 byte, outside the allowed 01 to 254: kept, low confidence.",
+  "length": 686,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "Low",
+      "fields": {
+        "LYR/Data": "Before\u0000After"
+      },
+      "offset": 512,
+      "length": 46
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 558,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.invalid-byte",
+      "contains": "$00"
+    }
+  ]
+}

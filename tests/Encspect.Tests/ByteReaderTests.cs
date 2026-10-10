@@ -69,4 +69,44 @@ public class ByteReaderTests
 
         Assert.Throws<ArgumentException>(() => new ByteReader(stream));
     }
+
+    [Fact]
+    public void SliceKeepsAbsolutePositionsAndStopsAtItsEnd()
+    {
+        ByteReader reader = CreateReader(0, 1, 2, 3, 4, 5, 6, 7);
+
+        ByteReader slice = reader.Slice(2, 4);
+
+        Assert.Equal((2L, 6L, 4L), (slice.Start, slice.End, slice.Length));
+        Assert.Equal(2L, slice.Position);
+        Assert.Equal([2, 3, 4, 5], slice.ReadBytes(4));
+        Assert.Throws<EndOfStreamException>(() => slice.ReadByte());
+    }
+
+    [Fact]
+    public void SliceRejectsPositionsBeforeItsStart()
+    {
+        ByteReader slice = CreateReader(0, 1, 2, 3).Slice(2, 2);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => slice.Position = 1);
+    }
+
+    [Fact]
+    public void SettingPositionPastTheEndCountsAsTruncation()
+    {
+        ByteReader reader = CreateReader(1, 2, 3);
+
+        Assert.Throws<EndOfStreamException>(() => reader.Position = 4);
+    }
+
+    [Fact]
+    public void MatchesAtComparesBytesAndTreatsOutOfRangeAsNoMatch()
+    {
+        ByteReader reader = CreateReader((byte)'x', (byte)'T', (byte)'A', (byte)'G');
+
+        Assert.True(reader.MatchesAt(1, "TAG"u8));
+        Assert.False(reader.MatchesAt(0, "TAG"u8));
+        Assert.False(reader.MatchesAt(2, "TAG"u8));
+        Assert.False(reader.MatchesAt(-1, "TAG"u8));
+    }
 }

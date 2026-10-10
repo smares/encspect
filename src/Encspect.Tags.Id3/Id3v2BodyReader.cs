@@ -1,0 +1,109 @@
+using Encspect.Core;
+
+namespace Encspect.Tags.Id3;
+
+// Reads an ID3v2 tag body sequentially. For 2.2 and 2.3 tags with the unsynchronization flag,
+// unsynchronization covers the whole body (ID3v2.3 section 5), so it is undone here while
+// streaming; sizes inside the body count decoded bytes.
+internal sealed class Id3v2BodyReader
+{
+    private readonly ByteReader _reader;
+    private readonly long _end;
+    private readonly bool _unsync;
+    private bool _previousWasFF;
+
+    public Id3v2BodyReader(ByteReader reader, long start, long end, bool unsync)
+    {
+        _reader = reader;
+        _end = end;
+        _unsync = unsync;
+        FilePosition = start;
+    }
+
+    public long FilePosition { get; private set; }
+
+    public long End => _end;
+
+    public bool AtEnd => FilePosition >= _end;
+
+    // Reads up to count decoded bytes; fewer when the body ends first.
+    public DecodedBytes Read(int count)
+    {
+        long start = FilePosition;
+
+        if (!_unsync)
+        {
+            int available = (int)Math.Min(count, _end - FilePosition);
+            _reader.Position = FilePosition;
+            byte[] raw = _reader.ReadBytes(available);
+            FilePosition += available;
+            return new DecodedBytes(raw, start, FilePosition);
+        }
+
+        var data = new List<byte>(Math.Min(count, 4096));
+        var map = new List<long>(Math.Min(count, 4096));
+        _reader.Position = FilePosition;
+
+        while (data.Count < count && FilePosition < _end)
+        {
+            byte b = _reader.ReadByte();
+            long offset = FilePosition++;
+            if (_previousWasFF && b == 0x00)
+            {
+                _previousWasFF = false;
+                continue;
+            }
+
+            data.Add(b);
+            map.Add(offset);
+            _previousWasFF = b == 0xFF;
+        }
+
+        AbsorbStuffing();
+        return new DecodedBytes([.. data], start, FilePosition, [.. map]);
+    }
+
+    // Skips up to count decoded bytes and returns how many were skipped.
+    public long Skip(long count)
+    {
+        if (!_unsync)
+        {
+            long skipped = Math.Min(count, _end - FilePosition);
+            FilePosition += skipped;
+            return skipped;
+        }
+
+        long done = 0;
+        _reader.Position = FilePosition;
+        while (done < count && FilePosition < _end)
+        {
+            byte b = _reader.ReadByte();
+            FilePosition++;
+            if (_previousWasFF && b == 0x00)
+            {
+                _previousWasFF = false;
+                continue;
+            }
+
+            done++;
+            _previousWasFF = b == 0xFF;
+        }
+
+        AbsorbStuffing();
+        return done;
+    }
+
+    // A $00 inserted after the last $FF of a structure belongs to that structure's bytes.
+    private void AbsorbStuffing()
+    {
+        if (_previousWasFF && FilePosition < _end)
+        {
+            _reader.Position = FilePosition;
+            if (_reader.ReadByte() == 0x00)
+            {
+                FilePosition++;
+                _previousWasFF = false;
+            }
+        }
+    }
+}

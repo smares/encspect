@@ -1,0 +1,17 @@
+{
+  "description": "APE footer declaring a tag larger than the file: rejected.",
+  "length": 149,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 149
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "100000"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "source": "random-seeded.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 65536,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 65536
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 65536
+      }
+    ]
+  }
+]

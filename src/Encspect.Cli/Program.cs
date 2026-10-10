@@ -46,7 +46,7 @@ internal static class Program
             return 2;
         }
 
-        var analyzer = new Analyzer(Array.Empty<IFormatParser>());
+        var analyzer = Analyzer.CreateDefault();
         var reports = new List<Report>();
         int exitCode = 0;
 

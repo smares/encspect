@@ -1,0 +1,30 @@
+{
+  "description": "Leading APEv2 header declaring more bytes than the file has: kept up to EOF, with an error.",
+  "length": 47,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Low",
+      "fields": {
+        "Header/Tag Size": "5000"
+      },
+      "offset": 0,
+      "length": 47
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.truncated",
+      "contains": "5000"
+    },
+    {
+      "code": "ape.items-invalid",
+      "contains": ""
+    },
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

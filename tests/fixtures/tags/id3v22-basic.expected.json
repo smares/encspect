@@ -1,0 +1,30 @@
+{
+  "description": "ID3v2.2 tag with three-character frame IDs, UTF-16 text and a PIC frame.",
+  "length": 644,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.2.0",
+      "confidence": "High",
+      "fields": {
+        "TT2/Text": "v2.2 Title",
+        "TP1/Encoding": "UTF-16",
+        "TP1/Text": "Ärtist",
+        "COM/Language": "eng",
+        "COM/Text": "v2.2 comment",
+        "PIC/Image Format": "PNG",
+        "PIC/Picture Type": "3 (Cover (front))",
+        "PIC/Picture Data": "12 bytes",
+        "Padding": "32 bytes"
+      },
+      "offset": 0,
+      "length": 132
+    },
+    {
+      "name": "Data",
+      "offset": 132,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

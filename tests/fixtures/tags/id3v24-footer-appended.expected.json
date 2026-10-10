@@ -1,0 +1,40 @@
+{
+  "description": "ID3v2.4 tag with a footer appended after the audio and before ID3v1, found through its 3DI footer.",
+  "length": 679,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "Header/Flags/HasFooter": "true",
+        "TIT2/Text": "Appended",
+        "Footer/Identifier": "3DI"
+      },
+      "offset": 512,
+      "length": 39
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 551,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

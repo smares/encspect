@@ -1,0 +1,40 @@
+{
+  "description": "Lyrics3 v1 block whose lyrics hold a $FF byte, which the specification forbids: kept, low confidence.",
+  "length": 672,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Low",
+      "offset": 512,
+      "length": 32
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 544,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.invalid-byte",
+      "contains": "$FF"
+    }
+  ]
+}

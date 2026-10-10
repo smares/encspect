@@ -1,0 +1,29 @@
+{
+  "description": "APEv1 value with a $00 byte: APEv1 has no value lists, so it stays one value, with a finding.",
+  "length": 565,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "1.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": [
+          "One\u0000Two"
+        ]
+      },
+      "offset": 512,
+      "length": 53
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.v1-zero-byte",
+      "contains": "$00"
+    }
+  ]
+}

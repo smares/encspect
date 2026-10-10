@@ -1,0 +1,181 @@
+[
+  {
+    "source": "lyrics3v2-invalid-byte.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 686,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 46,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "LYR",
+              "value": "Before\u0000After",
+              "offset": 523,
+              "length": 20,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "LYR",
+                  "offset": 523,
+                  "length": 3
+                },
+                {
+                  "name": "Size",
+                  "value": "12",
+                  "offset": 526,
+                  "length": 5
+                },
+                {
+                  "name": "Data",
+                  "value": "Before\u0000After",
+                  "offset": 531,
+                  "length": 12
+                }
+              ]
+            },
+            {
+              "name": "Size",
+              "value": "31",
+              "offset": 543,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 549,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 46,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 549,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 31 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 543,
+                  "length": 6
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 558,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 558,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 561,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 591,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 621,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 651,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 655,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 684,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 685,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 558,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 558,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 561,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "lyrics3.invalid-byte",
+        "message": "Field LYR contains the byte $00, outside the 01 to 254 that Lyrics3 v2.00 allows.",
+        "offset": 523,
+        "length": 20
+      }
+    ]
+  }
+]

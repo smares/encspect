@@ -1,0 +1,28 @@
+{
+  "description": "Like id3v1-forged-lyrics3v1, but every ID3v1 field is filled to its last byte, so no zero padding betrays the forged Lyrics3 v1 block. It ends the file with no ID3v1 tag after it, against its specification, so its confidence drops below that of the ID3v1 tag, which keeps its bytes.",
+  "length": 640,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "LYRICSBEGIN Song Title Words!!",
+        "Comment": "A comment that fills tLYRICSEN"
+      },
+      "offset": 512,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "Lyrics3"
+    }
+  ]
+}

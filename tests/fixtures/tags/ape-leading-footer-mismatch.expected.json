@@ -1,0 +1,27 @@
+{
+  "description": "Leading APEv2 tag whose footer declares a different item count than the header: kept, with a finding.",
+  "length": 598,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/Title/Value": "Mismatch"
+      },
+      "offset": 0,
+      "length": 86
+    },
+    {
+      "name": "Data",
+      "offset": 86,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.footer-mismatch",
+      "contains": "item count 3 vs 1"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ public static class ReportTextWriter
             writer.WriteLine("Findings:");
             foreach (Finding finding in report.Findings)
             {
-                writer.WriteLine($"  [{finding.Severity}] {finding.Code}: {finding.Message}");
+                writer.WriteLine($"  [{finding.Severity}] {finding.Code}: {Escape(finding.Message)}");
             }
         }
     }
@@ -26,7 +26,7 @@ public static class ReportTextWriter
     private static void WriteNode(Node node, TextWriter writer, bool showOffsets, int depth)
     {
         string indent = new(' ', (depth + 1) * 2);
-        string value = node.Value is null ? string.Empty : $": {node.Value}";
+        string value = node.Value is null ? string.Empty : $": {Escape(node.Value)}";
         string location = showOffsets ? $" [0x{node.Offset:X}, {node.Length} bytes]" : string.Empty;
 
         writer.WriteLine($"{indent}{node.Name}{value}{location}");
@@ -35,5 +35,30 @@ public static class ReportTextWriter
         {
             WriteNode(child, writer, showOffsets, depth + 1);
         }
+    }
+
+    // Values come from the file and may hold line breaks or other control characters, which
+    // would break the one-line-per-node layout.
+    private static string Escape(string text)
+    {
+        if (!text.Any(char.IsControl))
+        {
+            return text;
+        }
+
+        var builder = new System.Text.StringBuilder(text.Length + 8);
+        foreach (char c in text)
+        {
+            builder.Append(c switch
+            {
+                '\r' => "\\r",
+                '\n' => "\\n",
+                '\t' => "\\t",
+                _ when char.IsControl(c) => $"\\x{(int)c:X2}",
+                _ => c.ToString(),
+            });
+        }
+
+        return builder.ToString();
     }
 }

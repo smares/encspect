@@ -1,0 +1,38 @@
+{
+  "description": "Two tagged files concatenated. Only the first file's ID3v2 and the second file's ID3v1 are at anchors; the inner ID3v1 and ID3v2 are inside the data and are left to the format parser.",
+  "length": 1148,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "ID3 Title"
+      },
+      "offset": 0,
+      "length": 46
+    },
+    {
+      "name": "Data",
+      "offset": 46,
+      "length": 974
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 1020,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

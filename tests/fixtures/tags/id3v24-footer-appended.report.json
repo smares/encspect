@@ -1,0 +1,357 @@
+[
+  {
+    "source": "id3v24-footer-appended.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 679,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "ID3v2",
+          "value": "2.4.0",
+          "offset": 512,
+          "length": 39,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 512,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 512,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 515,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 517,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 517,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 517,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 517,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 517,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "19",
+                  "offset": 518,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Appended",
+              "offset": 522,
+              "length": 19,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 522,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 522,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "9",
+                      "offset": 526,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 530,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 530,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 532,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Appended",
+                  "offset": 533,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 541,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "3DI",
+                  "offset": 541,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 544,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 546,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 546,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 546,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 546,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 546,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "19",
+                  "offset": 547,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 39,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.4.0",
+                  "offset": 512,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 19 bytes",
+                  "offset": 518,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 517,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 522,
+                  "length": 19
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Footer repeats the header",
+                  "offset": 541,
+                  "length": 10
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 551,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 551,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 554,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 584,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 614,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 644,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 648,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 677,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 678,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 551,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 551,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 554,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]

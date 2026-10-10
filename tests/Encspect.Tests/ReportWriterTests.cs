@@ -65,4 +65,16 @@ public class ReportWriterTests
         Assert.Equal("test.code", finding.GetProperty("code").GetString());
         Assert.Equal(4L, finding.GetProperty("length").GetInt64());
     }
+
+    [Fact]
+    public void TextOutputEscapesControlCharactersInValues()
+    {
+        var root = new Node("File", 0, 10);
+        root.Add("Lyrics", 0, 10, "one\r\ntwo\u0001");
+        var writer = new StringWriter();
+
+        ReportTextWriter.Write(new Report("test.bin", root, []), writer, showOffsets: false);
+
+        Assert.Contains("Lyrics: one\\r\\ntwo\\x01", writer.ToString());
+    }
 }

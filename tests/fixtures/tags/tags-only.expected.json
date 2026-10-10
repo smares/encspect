@@ -1,0 +1,38 @@
+{
+  "description": "ID3v2.4 tag immediately followed by an ID3v1 tag, no data between them.",
+  "length": 158,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Only Tags"
+      },
+      "offset": 0,
+      "length": 30
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 30,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

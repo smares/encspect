@@ -1,0 +1,202 @@
+[
+  {
+    "source": "id3v2-truncated.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 24,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.3.0",
+          "offset": 0,
+          "length": 24,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.3.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "5000",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Cut",
+              "offset": 10,
+              "length": 14,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "4",
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Cut",
+                  "offset": 21,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 0,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.3.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 5000 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 10,
+                  "length": 14
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Error",
+        "code": "id3v2.truncated",
+        "message": "The ID3v2 header declares 5000 bytes after the header, but the file ends 14 bytes into the tag.",
+        "offset": 0,
+        "length": 24
+      },
+      {
+        "severity": "Info",
+        "code": "layout.tags-only",
+        "message": "The file holds only tags; no bytes are left for audio data.",
+        "offset": 0,
+        "length": 24
+      }
+    ]
+  }
+]

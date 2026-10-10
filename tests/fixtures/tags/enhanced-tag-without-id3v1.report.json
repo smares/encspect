@@ -1,0 +1,108 @@
+[
+  {
+    "source": "enhanced-tag-without-id3v1.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 527,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 300
+        },
+        {
+          "name": "Enhanced TAG",
+          "offset": 300,
+          "length": 227,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG\u002B",
+              "offset": 300,
+              "length": 4
+            },
+            {
+              "name": "Title",
+              "value": "Alone",
+              "offset": 304,
+              "length": 60
+            },
+            {
+              "name": "Artist",
+              "value": "",
+              "offset": 364,
+              "length": 60
+            },
+            {
+              "name": "Album",
+              "value": "",
+              "offset": 424,
+              "length": 60
+            },
+            {
+              "name": "Speed",
+              "value": "0 (unset)",
+              "offset": 484,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "",
+              "offset": 485,
+              "length": 30
+            },
+            {
+              "name": "Start Time",
+              "value": "",
+              "offset": 515,
+              "length": 6
+            },
+            {
+              "name": "End Time",
+              "value": "",
+              "offset": 521,
+              "length": 6
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 300,
+              "length": 227,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u002B\u0022 227 bytes before the anchor",
+                  "offset": 300,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 304,
+                  "length": 223
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 300
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.enhanced-tag-without-id3v1",
+        "message": "The Enhanced TAG at 0x12C is not directly followed by an ID3v1 tag, which its specification requires.",
+        "offset": 300,
+        "length": 227
+      }
+    ]
+  }
+]

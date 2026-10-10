@@ -1,0 +1,104 @@
+[
+  {
+    "source": "id3v1-control-bytes.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 640,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.0",
+          "offset": 512,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 512,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001A\u001B\u001C\u001D\u001E",
+              "offset": 515,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "\u001F !\u0022#$%\u0026\u0027()*\u002B,-./0123456789:;\u003C",
+              "offset": 545,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "=\u003E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+              "offset": 575,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "[\\]^",
+              "offset": 605,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "_\u0060abcdefghijklmnopqrstuvwxyz{|",
+              "offset": 609,
+              "length": 30
+            },
+            {
+              "name": "Genre",
+              "value": "125 (Dance Hall)",
+              "offset": 639,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 512,
+                  "length": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Info",
+        "code": "id3v1.year-not-numeric",
+        "message": "The ID3v1 year \u0022[\\]^\u0022 is not a number.",
+        "offset": 605,
+        "length": 4
+      },
+      {
+        "severity": "Warning",
+        "code": "id3v1.not-text",
+        "message": "ID3v1 fields contain control characters, so this may not be a real tag: Title, Artist.",
+        "offset": 512,
+        "length": 128
+      }
+    ]
+  }
+]

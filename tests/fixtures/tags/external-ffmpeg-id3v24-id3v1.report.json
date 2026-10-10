@@ -1,0 +1,686 @@
+[
+  {
+    "source": "external-ffmpeg-id3v24-id3v1.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 2130,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.4.0",
+          "offset": 0,
+          "length": 122,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "112",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "FFmpeg Title",
+              "offset": 10,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "14",
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "FFmpeg Title",
+                  "offset": 21,
+                  "length": 12
+                }
+              ]
+            },
+            {
+              "name": "TPE1",
+              "value": "FFmpeg Artist",
+              "offset": 34,
+              "length": 25,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 34,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TPE1",
+                      "offset": 34,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "15",
+                      "offset": 38,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 42,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 42,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 44,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "FFmpeg Artist",
+                  "offset": 45,
+                  "length": 13
+                }
+              ]
+            },
+            {
+              "name": "TALB",
+              "value": "FFmpeg Album",
+              "offset": 59,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 59,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TALB",
+                      "offset": 59,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "14",
+                      "offset": 63,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 67,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 67,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 69,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "FFmpeg Album",
+                  "offset": 70,
+                  "length": 12
+                }
+              ]
+            },
+            {
+              "name": "TRCK",
+              "value": "4",
+              "offset": 83,
+              "length": 13,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 83,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TRCK",
+                      "offset": 83,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "3",
+                      "offset": 87,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 91,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 91,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 93,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "4",
+                  "offset": 94,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "TDRC",
+              "value": "2019",
+              "offset": 96,
+              "length": 16,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 96,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TDRC",
+                      "offset": 96,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "6",
+                      "offset": 100,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 104,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 104,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 106,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "2019",
+                  "offset": 107,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "10 bytes",
+              "offset": 112,
+              "length": 10
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 122,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.4.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 112 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 112,
+                  "length": 10
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 10,
+                  "length": 102
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 122,
+          "length": 1880
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 2002,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 2002,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "FFmpeg Title",
+              "offset": 2005,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "FFmpeg Artist",
+              "offset": 2035,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "FFmpeg Album",
+              "offset": 2065,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2019",
+              "offset": 2095,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "",
+              "offset": 2099,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "4",
+              "offset": 2128,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "255 (none)",
+              "offset": 2129,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 2002,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 2002,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 2005,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 122,
+        "length": 1880
+      }
+    ]
+  }
+]

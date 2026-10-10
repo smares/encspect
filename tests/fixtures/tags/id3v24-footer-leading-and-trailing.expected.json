@@ -1,0 +1,33 @@
+{
+  "description": "ID3v2.4 tags with footers at both the start and the end of the file.",
+  "length": 582,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Start",
+        "Footer/Identifier": "3DI"
+      },
+      "offset": 0,
+      "length": 36
+    },
+    {
+      "name": "Data",
+      "offset": 36,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "End"
+      },
+      "offset": 548,
+      "length": 34
+    }
+  ],
+  "findings": []
+}

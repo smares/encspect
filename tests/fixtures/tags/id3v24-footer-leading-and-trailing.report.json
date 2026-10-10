@@ -1,0 +1,536 @@
+[
+  {
+    "source": "id3v24-footer-leading-and-trailing.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 582,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.4.0",
+          "offset": 0,
+          "length": 36,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "16",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Start",
+              "offset": 10,
+              "length": 16,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "6",
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Start",
+                  "offset": 21,
+                  "length": 5
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 26,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "3DI",
+                  "offset": 26,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 29,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 31,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 31,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 31,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 31,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 31,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "16",
+                  "offset": 32,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 36,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.4.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 16 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 10,
+                  "length": 16
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Footer repeats the header",
+                  "offset": 26,
+                  "length": 10
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 36,
+          "length": 512
+        },
+        {
+          "name": "ID3v2",
+          "value": "2.4.0",
+          "offset": 548,
+          "length": 34,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 548,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 548,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 551,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 553,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 553,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 553,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 553,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 553,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "14",
+                  "offset": 554,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "End",
+              "offset": 558,
+              "length": 14,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 558,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 558,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "4",
+                      "offset": 562,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 566,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 566,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 568,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "End",
+                  "offset": 569,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 572,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "3DI",
+                  "offset": 572,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 575,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 577,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 577,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "false",
+                      "offset": 577,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 577,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 577,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "14",
+                  "offset": 578,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 548,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.4.0",
+                  "offset": 548,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 14 bytes",
+                  "offset": 554,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 553,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 558,
+                  "length": 14
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Footer repeats the header",
+                  "offset": 572,
+                  "length": 10
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 36,
+        "length": 512
+      }
+    ]
+  }
+]

@@ -1,0 +1,309 @@
+[
+  {
+    "source": "id3v22-basic.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 644,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.2.0",
+          "offset": 0,
+          "length": 132,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.2.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCompressed",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "122",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TT2",
+              "value": "v2.2 Title",
+              "offset": 10,
+              "length": 17,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TT2",
+                      "offset": 10,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "11",
+                      "offset": 13,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 16,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "v2.2 Title",
+                  "offset": 17,
+                  "length": 10
+                }
+              ]
+            },
+            {
+              "name": "TP1",
+              "value": "\u00C4rtist",
+              "offset": 27,
+              "length": 21,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 27,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TP1",
+                      "offset": 27,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "15",
+                      "offset": 30,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-16",
+                  "offset": 33,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "\u00C4rtist",
+                  "offset": 34,
+                  "length": 14
+                }
+              ]
+            },
+            {
+              "name": "COM",
+              "value": "v2.2 comment",
+              "offset": 48,
+              "length": 23,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 48,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "COM",
+                      "offset": 48,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "17",
+                      "offset": 51,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 54,
+                  "length": 1
+                },
+                {
+                  "name": "Language",
+                  "value": "eng",
+                  "offset": 55,
+                  "length": 3
+                },
+                {
+                  "name": "Description",
+                  "value": "",
+                  "offset": 58,
+                  "length": 0
+                },
+                {
+                  "name": "Text",
+                  "value": "v2.2 comment",
+                  "offset": 59,
+                  "length": 12
+                }
+              ]
+            },
+            {
+              "name": "PIC",
+              "value": "PNG, Cover (front), cover",
+              "offset": 71,
+              "length": 29,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 71,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "PIC",
+                      "offset": 71,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "23",
+                      "offset": 74,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 77,
+                  "length": 1
+                },
+                {
+                  "name": "Image Format",
+                  "value": "PNG",
+                  "offset": 78,
+                  "length": 3
+                },
+                {
+                  "name": "Picture Type",
+                  "value": "3 (Cover (front))",
+                  "offset": 81,
+                  "length": 1
+                },
+                {
+                  "name": "Description",
+                  "value": "cover",
+                  "offset": 82,
+                  "length": 5
+                },
+                {
+                  "name": "Picture Data",
+                  "value": "12 bytes",
+                  "offset": 88,
+                  "length": 12
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "32 bytes",
+              "offset": 100,
+              "length": 32
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 132,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.2.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 122 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 100,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 10,
+                  "length": 90
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 132,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 132,
+        "length": 512
+      }
+    ]
+  }
+]

@@ -26,9 +26,19 @@ public sealed class Node
 
     public IReadOnlyList<Node> Children => _children;
 
+    public long End => Offset + Length;
+
     public Node Add(string name, long offset, long length, string? value = null)
     {
         var child = new Node(name, offset, length, value);
+        _children.Add(child);
+        return child;
+    }
+
+    public Node Add(Node child)
+    {
+        ArgumentNullException.ThrowIfNull(child);
+
         _children.Add(child);
         return child;
     }

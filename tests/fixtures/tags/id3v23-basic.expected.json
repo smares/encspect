@@ -1,0 +1,48 @@
+{
+  "description": "ID3v2.3 tag with common frame types, both UTF-16 byte orders and padding.",
+  "length": 1037,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "Header/Size": "515",
+        "TIT2/Encoding": "ISO-8859-1",
+        "TIT2/Text": "Latin-1 Title",
+        "TPE1/Text": "Künstler",
+        "TALB/Text": "Big-endian Album",
+        "TRCK/Text": "3/12",
+        "COMM/Language": "deu",
+        "COMM/Description": "Beschreibung",
+        "COMM/Text": "Kommentar",
+        "TXXX/Description": "REPLAYGAIN_TRACK_GAIN",
+        "TXXX/Text": "-6.50 dB",
+        "WXXX/Description": "Homepage",
+        "WXXX/URL": "https://example.com/",
+        "WOAR/URL": "https://example.com/artist",
+        "APIC/MIME Type": "image/jpeg",
+        "APIC/Picture Type": "4 (Cover (back))",
+        "APIC/Description": "back",
+        "APIC/Picture Data": "11 bytes",
+        "UFID/Owner": "http://example.com/id",
+        "UFID/Identifier": "ABC-123",
+        "PRIV/Owner": "com.example.private",
+        "PRIV/Data": "4 bytes",
+        "POPM/Email": "rater@example.com",
+        "POPM/Rating": "196",
+        "POPM/Counter": "256",
+        "PCNT/Counter": "42",
+        "Padding": "64 bytes"
+      },
+      "offset": 0,
+      "length": 525
+    },
+    {
+      "name": "Data",
+      "offset": 525,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

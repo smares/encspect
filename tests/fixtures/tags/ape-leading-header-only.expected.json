@@ -1,0 +1,24 @@
+{
+  "description": "APEv2 tag at the start of the file with a header and no footer; its size covers only the items.",
+  "length": 588,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "Header Only",
+        "Header/Flags/HasFooter": "false",
+        "Header/Tag Size": "44"
+      },
+      "offset": 0,
+      "length": 76
+    },
+    {
+      "name": "Data",
+      "offset": 76,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "source": "lyrics3v2-bad-size.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 679,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 551
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 551,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 551,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 554,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 584,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 614,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 644,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 648,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 677,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 678,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 551,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 551,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 554,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 551
+      },
+      {
+        "severity": "Warning",
+        "code": "tag.rejected",
+        "message": "Lyrics3 candidate at 0x21E (EOF-137) rejected: the size field 7 does not point at LYRICSBEGIN.",
+        "offset": 0,
+        "length": 551
+      }
+    ]
+  }
+]

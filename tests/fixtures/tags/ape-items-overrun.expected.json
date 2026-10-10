@@ -1,0 +1,28 @@
+{
+  "description": "APEv2 footer whose item count (1) is smaller than the items present (2): the tag is kept, the second item is unparsed.",
+  "length": 466,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 400
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Low",
+      "fields": {
+        "Items/Title/Value": "One",
+        "Unparsed": "17 bytes"
+      },
+      "offset": 400,
+      "length": 66
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.items-invalid",
+      "contains": "bytes before the end of the items"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "description": "APEv2 tag whose header declares a different item count than the footer: kept, with a finding.",
+  "length": 486,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 400
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/Title/Value": "Mismatch",
+        "Header/Item Count": "2"
+      },
+      "offset": 400,
+      "length": 86
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.header-mismatch",
+      "contains": "item count 2 vs 1"
+    }
+  ]
+}

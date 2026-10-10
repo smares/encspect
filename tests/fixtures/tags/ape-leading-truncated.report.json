@@ -1,0 +1,137 @@
+[
+  {
+    "source": "ape-leading-truncated.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 47,
+      "children": [
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 0,
+          "length": 47,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 0,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "5000",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "1",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0xA0000000",
+                  "offset": 20,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 24,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": "1 items",
+              "offset": 32,
+              "length": 15
+            },
+            {
+              "name": "Unparsed",
+              "value": "15 bytes",
+              "offset": 32,
+              "length": 15
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 0,
+              "length": 47,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 header with version 2000",
+                  "offset": 0,
+                  "length": 32
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Error",
+        "code": "ape.truncated",
+        "message": "The header declares 5000 bytes after the header, but the file ends 15 bytes into them.",
+        "offset": 0,
+        "length": 47
+      },
+      {
+        "severity": "Warning",
+        "code": "ape.items-invalid",
+        "message": "The 3-byte value of item \u0022Title\u0022 runs past the end of the items. The remaining 15 bytes are not parsed.",
+        "offset": 32,
+        "length": 15
+      },
+      {
+        "severity": "Info",
+        "code": "layout.tags-only",
+        "message": "The file holds only tags; no bytes are left for audio data.",
+        "offset": 0,
+        "length": 47
+      }
+    ]
+  }
+]

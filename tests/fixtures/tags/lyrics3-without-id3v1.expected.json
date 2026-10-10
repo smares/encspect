@@ -1,0 +1,28 @@
+{
+  "description": "Lyrics3 v2 tag at the very end without the ID3v1 tag its specification requires: kept, one level less confidence.",
+  "length": 601,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "Medium",
+      "fields": {
+        "LYR/Data": "First line\r\nSecond line",
+        "ETT/Data": "Extended Title"
+      },
+      "offset": 512,
+      "length": 89
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.lyrics3-without-id3v1",
+      "contains": "Lyrics3"
+    }
+  ]
+}

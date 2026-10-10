@@ -1,0 +1,155 @@
+[
+  {
+    "source": "lyrics3v2-no-fields.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 666,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "2.00",
+          "offset": 512,
+          "length": 26,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Size",
+              "value": "11",
+              "offset": 523,
+              "length": 6
+            },
+            {
+              "name": "End",
+              "value": "LYRICS200",
+              "offset": 529,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICS200\u0022",
+                  "offset": 529,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Size field 11 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 523,
+                  "length": 6
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 538,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 538,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 541,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 571,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 601,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 631,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 635,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 664,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 665,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 538,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 538,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 541,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "lyrics3.no-fields",
+        "message": "The tag has no fields; Lyrics3 v2.00 requires at least one.",
+        "offset": 512,
+        "length": 26
+      }
+    ]
+  }
+]

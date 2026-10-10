@@ -1,0 +1,33 @@
+{
+  "description": "Lyrics3 v2 tag whose size field does not point at LYRICSBEGIN: rejected, ID3v1 still found.",
+  "length": 679,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 551
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 551,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "LYRICSBEGIN"
+    }
+  ]
+}

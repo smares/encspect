@@ -1,0 +1,379 @@
+[
+  {
+    "source": "id3v1-then-ape.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 752,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 512,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 512,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 515,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 545,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 575,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 605,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 609,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 638,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 639,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 512,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 512,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 515,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 640,
+          "length": 112,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 640,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 640,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 648,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "80",
+                  "offset": 652,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "2",
+                  "offset": 656,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0xA0000000",
+                  "offset": 660,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 660,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 660,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "true",
+                      "offset": 660,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 660,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 664,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": "2 items",
+              "offset": 672,
+              "length": 48,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "APE Title",
+                  "offset": 672,
+                  "length": 23,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "9",
+                      "offset": 672,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 676,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 676,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 676,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 680,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "APE Title",
+                      "offset": 686,
+                      "length": 9
+                    }
+                  ]
+                },
+                {
+                  "name": "Artist",
+                  "value": "APE Artist",
+                  "offset": 695,
+                  "length": 25,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "10",
+                      "offset": 695,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 699,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 699,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 699,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Artist",
+                      "offset": 703,
+                      "length": 6
+                    },
+                    {
+                      "name": "Value",
+                      "value": "APE Artist",
+                      "offset": 710,
+                      "length": 10
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 720,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 720,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 728,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "80",
+                  "offset": 732,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "2",
+                  "offset": 736,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x80000000",
+                  "offset": 740,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 740,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 740,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 740,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 740,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 744,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 640,
+              "length": 112,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
+                  "offset": 720,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Header agrees with the footer",
+                  "offset": 640,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "2 items end exactly where the size says",
+                  "offset": 672,
+                  "length": 48
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.id3v1-not-last",
+        "message": "The ID3v1 tag at 0x200 is followed by a APE tag; readers expect ID3v1 in the last 128 bytes.",
+        "offset": 512,
+        "length": 128
+      }
+    ]
+  }
+]

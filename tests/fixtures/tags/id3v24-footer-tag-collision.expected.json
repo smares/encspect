@@ -1,0 +1,27 @@
+{
+  "description": "Appended ID3v2.4 tag with a footer whose TXXX value puts TAG exactly at EOF-128. The tag validates by header and footer, so it owns the bytes and the ID3v1 signature is a near miss.",
+  "length": 716,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TXXX/Description": "note"
+      },
+      "offset": 512,
+      "length": 204
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "0x24C"
+    }
+  ]
+}

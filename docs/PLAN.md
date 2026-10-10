@@ -105,21 +105,23 @@ Tags are found by structure and byte ownership, never by signature alone, becaus
 
 **Rules**
 
-1. **Position-anchored search.** Each tag type is looked for only where its spec allows: ID3v1 at exactly EOF-128, APE at EOF-32 or just before an ID3v1 tag, ID3v2 at the start or directly after a previous tag. Signatures are never scanned for across the whole file.
-2. **Structural validation.** ID3v2 needs syncsafe size bytes below 0x80, known flags, frames that fit the declared size, and padding only at the end. APE needs header and footer that agree and items that parse to exactly the tag boundary. ID3v1 has almost nothing to validate, so it counts as weak evidence.
-3. **Evaluation order and ownership.** APE is checked first in every layout, then Lyrics3, then ID3v1, and ID3v1 only on bytes no other tag has claimed. The host keeps a claim map, so a signature inside an already validated region (an image in an ID3v2 tag, an APE item) is rejected.
-4. **Confidence and evidence.** Every candidate carries a confidence level and its reasons. Rejected candidates become findings, such as "TAG at EOF-128 rejected: part of an APE tag header".
+1. **Position-anchored search.** Each tag type is looked for only where its spec allows: ID3v1 at exactly EOF-128, APE through its footer at EOF-32 or just before another trailing tag, or through its header at the start or directly after a leading tag (APEv2 only, since APEv1 has no header), ID3v2 at the start or directly after a previous tag. Signatures are never scanned for across the whole file.
+2. **Structural validation decides confidence, not existence.** A candidate is rejected only when its extent cannot be determined: an ID3v2 size that is not syncsafe, an APE size that points outside the file, a Lyrics3 v2 size that does not point at `LYRICSBEGIN`, a footer without a matching header. Everything else that breaks a specification is reported the way a lost MPEG sync is: the tag stays in the report, each violation becomes a finding, and the confidence drops. Full confidence needs everything to check out: for ID3v2, known flags, frames that fit the declared size and padding only at the end; for APE, header and footer that agree and items that end exactly at the footer; for Lyrics3 v2, at least one field, fields that end exactly at the size and field bytes from 01 to 254; for Lyrics3 v1, text without $00 or $FF within 5100 bytes. ID3v1 has almost nothing to validate, so it never rises above medium confidence.
+3. **Evaluation order and ownership.** Tags are only looked for at anchors (rule 1). When several candidates claim the same anchor, the one with the strongest evidence wins and the order APE, Lyrics3, ID3v2 found through its footer, ID3v1, Enhanced TAG breaks ties. A tag that its specification places directly before another one (Lyrics3 and the Enhanced TAG before ID3v1) is reported without it too, with a finding and one level less confidence, so a correctly placed competitor wins. The host keeps a claim map, so a signature inside an already claimed region (an image in an ID3v2 tag, an APE item, an ID3v1 field) is rejected.
+4. **Confidence and evidence.** Every candidate carries a confidence level and its reasons. Losing and rejected candidates become findings, such as "TAG at EOF-128 rejected: part of an APE tag header".
 5. **MPEG sync.** A frame header counts only when a chain of consecutive, consistent frames follows it. Stretches that do not fit are reported as gaps, not guessed.
 
-**The APE and ID3v1 collision.** `APETAGEX` contains `TAG` at offset 3. An APE tag with a header that totals 131 bytes (32 header, 67 items, 32 footer) and ends the file places that `TAG` at EOF-128, exactly where ID3v1 is expected. A reader that trusts the signature reports a garbage ID3v1 tag made of the APE header, items and footer. Rule 3 prevents this: the APE tag validates fully and claims the bytes before ID3v1 is considered.
+**The APE and ID3v1 collision.** `APETAGEX` contains `TAG` at offset 3. An APE tag with a header that totals 131 bytes (32 header, 67 items, 32 footer) and ends the file places that `TAG` at EOF-128, exactly where ID3v1 is expected. A reader that trusts the signature reports a garbage ID3v1 tag made of the APE header, items and footer. Rule 3 prevents this: the APE tag validates fully, its evidence outweighs the bare `TAG`, and it claims the bytes.
 
 **Fixtures that prove it**
 
 - The 131-byte APE tag above with no ID3v1 tag: expect the APE tag only, plus a near-miss finding.
 - A real ID3v1 tag directly after an APE tag, and an APE tag after an ID3v1 tag.
 - Lyrics3 v1 and v2 before ID3v1, and every plausible stacking order of ID3v2, APE, Lyrics3 and ID3v1.
+- ID3v2.4 tags found through their footer: at EOF, before APE and ID3v1, at both ends of the file, as the whole file, and with `TAG` at EOF-128 inside the tag. A tag appended without a footer cannot be found from the end (ID3v2.4 section 3.4) and stays data.
 - Tags embedded inside cover art in an ID3v2 tag.
 - Random data seeded with `TAG`, `ID3` and `APETAGEX` at random offsets: nothing is detected outside validated positions.
+- User text that spells another tag's identifier exactly where a probe looks for it: ID3v1 fields, APE text items, Lyrics3 lyrics and fields, and appended ID3v2 frames, each holding every identifier at every probe distance. The real tags must come out unchanged, without warnings.
 - Truncated tags and concatenated files.
 
 The first fixture needs no external tool; a script writes the exact bytes.
@@ -154,7 +156,7 @@ GitHub Actions is the single source of truth for "does it build and pass on ever
 7. Publish self-contained CLI and GUI builds for each target (`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-arm64`, and `osx-x64` if a runner or cross-build is available) and attach them to the run.
 8. On a version tag, create a release with those builds.
 
-**Local checks.** The cloud workspace used for development had no .NET SDK, and the package mirrors were not reachable when checked. Whether the SDK and NuGet can be installed there still has to be tested; if not, CI is the only place builds and tests run, and each change goes through a pipeline run before it counts as done.
+**Local checks.** Cloud sessions install the .NET SDK through a SessionStart hook (`scripts/install-dotnet.sh`), so the CI steps can be mirrored locally before pushing. CI still covers the platforms a session cannot run.
 
 ## Format rollout
 
@@ -204,7 +206,6 @@ The largest risks are a wrong core contract and spec details that no reviewer wi
 - **Closed formats.** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
 - **Heuristic encoder detection.** Files without LAME or Xing tags can be misidentified; results carry a confidence label.
 - **Large inputs.** Multi-gigabyte files and 100,000-frame reports need streaming reads and a lazily loaded, virtualized tree in the GUI.
-- **No local .NET SDK in the development workspace** yet, so verification depends on CI until that is sorted out.
 
 **Open questions**
 

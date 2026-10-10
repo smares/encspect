@@ -1,0 +1,222 @@
+[
+  {
+    "source": "ape-leading-header-only.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 588,
+      "children": [
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 0,
+          "length": 76,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 0,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "44",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "2",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0xE0000000",
+                  "offset": 20,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 24,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": "2 items",
+              "offset": 32,
+              "length": 44,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "Header Only",
+                  "offset": 32,
+                  "length": 25,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "11",
+                      "offset": 32,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 36,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 36,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 36,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 40,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Header Only",
+                      "offset": 46,
+                      "length": 11
+                    }
+                  ]
+                },
+                {
+                  "name": "Album",
+                  "value": "Start",
+                  "offset": 57,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "5",
+                      "offset": 57,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 61,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 61,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 61,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Album",
+                      "offset": 65,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Start",
+                      "offset": 71,
+                      "length": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 76,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 header with version 2000",
+                  "offset": 0,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "2 items end exactly where the size says",
+                  "offset": 32,
+                  "length": 44
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 76,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 76,
+        "length": 512
+      }
+    ]
+  }
+]

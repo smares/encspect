@@ -1,0 +1,26 @@
+{
+  "description": "Enhanced TAG at the end of the file with no ID3v1 tag after it: kept, with a layout finding and lower confidence.",
+  "length": 527,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 300
+    },
+    {
+      "name": "Enhanced TAG",
+      "confidence": "Low",
+      "fields": {
+        "Title": "Alone"
+      },
+      "offset": 300,
+      "length": 227
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.enhanced-tag-without-id3v1",
+      "contains": "not directly followed by an ID3v1 tag"
+    }
+  ]
+}

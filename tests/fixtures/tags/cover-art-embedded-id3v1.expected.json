@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.3 tag that is the whole file; its APIC picture data ends with a valid ID3v1 tag. The trailing candidate lies inside the ID3v2 tag and is rejected as a near miss.",
+  "length": 390,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Has Cover",
+        "APIC/Picture Data": "336 bytes"
+      },
+      "offset": 0,
+      "length": 390
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "0x106"
+    },
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

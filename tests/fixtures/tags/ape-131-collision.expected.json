@@ -1,0 +1,27 @@
+{
+  "description": "131-byte APEv2 tag (32 header, 67 items, 32 footer) ending the file: TAG inside APETAGEX lands at EOF-128. Expect the APE tag only, plus a near-miss finding for the ID3v1 signature.",
+  "length": 643,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "offset": 512,
+      "length": 131
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "0x203"
+    }
+  ]
+}

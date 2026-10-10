@@ -1,0 +1,23 @@
+{
+  "description": "A file that is one APEv2 tag with header and footer: found through its header, and found again through its footer without being reported twice.",
+  "length": 112,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "APE Title",
+        "Items/Artist/Value": "APE Artist"
+      },
+      "offset": 0,
+      "length": 112
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

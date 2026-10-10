@@ -1,0 +1,32 @@
+{
+  "description": "APEv1 values that are not ASCII: one in ISO-8859-1 (as Windows writers produced), one in UTF-8. Both are read and reported.",
+  "length": 588,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "1.0",
+      "confidence": "High",
+      "fields": {
+        "Items/Title/Value": "Café",
+        "Items/Artist/Value": "Ünïcödé"
+      },
+      "offset": 512,
+      "length": 76
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.v1-not-ascii",
+      "contains": "ISO-8859-1"
+    },
+    {
+      "code": "ape.v1-not-ascii",
+      "contains": "UTF-8"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+[
+  {
+    "source": "id3v1-basic.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 640,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.0",
+          "offset": 512,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 512,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Title",
+              "offset": 515,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist",
+              "offset": 545,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album",
+              "offset": 575,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "1999",
+              "offset": 605,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "Thirty character comment field",
+              "offset": 609,
+              "length": 30
+            },
+            {
+              "name": "Genre",
+              "value": "13 (Pop)",
+              "offset": 639,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 512,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 512,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 515,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      }
+    ]
+  }
+]

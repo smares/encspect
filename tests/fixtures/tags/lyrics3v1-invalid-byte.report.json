@@ -1,0 +1,155 @@
+[
+  {
+    "source": "lyrics3v1-invalid-byte.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 672,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 512,
+          "length": 32,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "Sync \u00FF\u00FB here",
+              "offset": 523,
+              "length": 12
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 535,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Low",
+              "offset": 512,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICSEND\u0022",
+                  "offset": 535,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\u0022LYRICSBEGIN\u0022 23 bytes earlier",
+                  "offset": 512,
+                  "length": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 544,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 544,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 547,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 577,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 607,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 637,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 641,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 670,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 671,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 544,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 544,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 547,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "lyrics3.invalid-byte",
+        "message": "The lyrics contain the byte $FF at 0x210, which is not lyrics text.",
+        "offset": 523,
+        "length": 12
+      }
+    ]
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 tag whose padding contains non-zero bytes.",
+  "length": 579,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Padded",
+        "Padding": "40 bytes"
+      },
+      "offset": 0,
+      "length": 67
+    },
+    {
+      "name": "Data",
+      "offset": 67,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.padding-not-zero",
+      "contains": "Padding"
+    }
+  ]
+}
