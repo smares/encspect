@@ -1,0 +1,161 @@
+{
+ "description": "Five frames at 44100 Hz directly followed by five at 48000 Hz: a new stream starts, no bytes are lost.",
+ "length": 4009,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 4009
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1671,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2089,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2473,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2857,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 3241,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 3625,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.stream-changed",
+   "contains": "48000 Hz"
+  }
+ ]
+}

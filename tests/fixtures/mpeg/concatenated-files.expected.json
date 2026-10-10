@@ -1,0 +1,176 @@
+{
+ "description": "Two tagged files concatenated. The first file's ID3v1 tag and the second file's ID3v2 tag sit between the streams, away from any anchor, so they are a gap in the frames.",
+ "length": 4487,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "ID3v2",
+   "offset": 0,
+   "length": 26
+  },
+  {
+   "name": "MPEG Audio",
+   "offset": 26,
+   "length": 4333
+  },
+  {
+   "name": "ID3v1",
+   "offset": 4359,
+   "length": 128
+  }
+ ],
+ "frames": [
+  {
+   "offset": 26,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 443,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 861,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1279,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1697,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2270,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2687,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 3105,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 3523,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 3941,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "offset": 2115,
+   "length": 155
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.sync-lost",
+   "contains": "bytes"
+  }
+ ]
+}

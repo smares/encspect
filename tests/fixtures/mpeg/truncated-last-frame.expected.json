@@ -1,0 +1,106 @@
+{
+ "description": "Six frames; the file ends 100 bytes into the sixth.",
+ "length": 2189,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2189
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1671,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2089,
+   "length": 100,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   },
+   "truncated": true
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.frame-truncated",
+   "contains": "100 of"
+  }
+ ]
+}

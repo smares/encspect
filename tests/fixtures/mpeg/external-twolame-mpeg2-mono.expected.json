@@ -1,0 +1,66 @@
+{
+ "description": "twolame --quiet -b 64 -m m on a 0.5 s, 24000 Hz, 1-channel 440/660 Hz tone.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "twolame",
+   "--quiet",
+   "-b",
+   "64",
+   "-m",
+   "m"
+  ],
+  "version": "2",
+  "layer": 2,
+  "sample_rate": 24000,
+  "channel_mode": "Mono",
+  "bitrate": 64,
+  "info_frame": false
+ },
+ "ffprobe_frames": [
+  [
+   0,
+   384
+  ],
+  [
+   384,
+   384
+  ],
+  [
+   768,
+   384
+  ],
+  [
+   1152,
+   384
+  ],
+  [
+   1536,
+   384
+  ],
+  [
+   1920,
+   384
+  ],
+  [
+   2304,
+   384
+  ],
+  [
+   2688,
+   384
+  ],
+  [
+   3072,
+   384
+  ],
+  [
+   3456,
+   384
+  ],
+  [
+   3840,
+   384
+  ]
+ ]
+}

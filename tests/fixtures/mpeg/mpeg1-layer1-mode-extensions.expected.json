@@ -1,0 +1,128 @@
+{
+ "description": "Layer I joint stereo frames with each intensity stereo bound (bands 4, 8, 12 and 16 to 31).",
+ "length": 2048,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 2048
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 256,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 8 to 31"
+   }
+  },
+  {
+   "offset": 512,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 12 to 31"
+   }
+  },
+  {
+   "offset": 768,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 16 to 31"
+   }
+  },
+  {
+   "offset": 1024,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 1280,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 8 to 31"
+   }
+  },
+  {
+   "offset": 1536,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 12 to 31"
+   }
+  },
+  {
+   "offset": 1792,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 16 to 31"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": []
+}

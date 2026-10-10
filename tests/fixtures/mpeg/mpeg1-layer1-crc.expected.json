@@ -1,0 +1,112 @@
+{
+ "description": "MPEG-1 Layer I joint stereo frames (bound 8) with CRC over the header and the bit allocation.",
+ "length": 1536,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 1536
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  },
+  {
+   "offset": 256,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  },
+  {
+   "offset": 512,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  },
+  {
+   "offset": 768,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  },
+  {
+   "offset": 1024,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  },
+  {
+   "offset": 1280,
+   "length": 256,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "256 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 8 to 31",
+    "CRC": "0xC0EE",
+    "CRC/Computed": "0xC0EE"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": []
+}

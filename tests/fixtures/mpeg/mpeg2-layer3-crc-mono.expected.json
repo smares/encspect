@@ -1,0 +1,106 @@
+{
+ "description": "MPEG-2 Layer III mono frames with CRC over the header and 9 bytes of side information.",
+ "length": 629,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 629
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 104,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0xBFCA",
+    "CRC/Computed": "0xBFCA"
+   }
+  },
+  {
+   "offset": 104,
+   "length": 105,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x1549",
+    "CRC/Computed": "0x1549"
+   }
+  },
+  {
+   "offset": 209,
+   "length": 105,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x1549",
+    "CRC/Computed": "0x1549"
+   }
+  },
+  {
+   "offset": 314,
+   "length": 105,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x1549",
+    "CRC/Computed": "0x1549"
+   }
+  },
+  {
+   "offset": 419,
+   "length": 105,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x1549",
+    "CRC/Computed": "0x1549"
+   }
+  },
+  {
+   "offset": 524,
+   "length": 105,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "III",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "22050 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "true",
+    "CRC": "0x1549",
+    "CRC/Computed": "0x1549"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": []
+}

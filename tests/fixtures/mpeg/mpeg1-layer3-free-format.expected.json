@@ -1,0 +1,105 @@
+{
+ "description": "Free-format MPEG-1 Layer III at 48000 Hz with 1440-byte frames (480 kbps). ffmpeg does not read free format, so the cross-check counts libmad's frames.",
+ "length": 8640,
+ "crosscheck": "madplay",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 8640
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1440,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2880,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 4320,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 5760,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 7200,
+   "length": 1440,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.free-format",
+   "contains": "1440"
+  }
+ ]
+}
