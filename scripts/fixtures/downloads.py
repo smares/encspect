@@ -1,9 +1,9 @@
 """Downloads a file that is pinned by its SHA-256 from the first of its addresses that serves it.
 
 The scripts download what the repository may not or need not hold: the ISO conformance streams,
-the mp3PRO samples, mctoolamed and Fraunhofer's encoder. Each has its original address and, as a
-fallback, the copy the Internet Archive's Wayback Machine keeps. The SHA-256 decides whether a copy
-is the right file, so any address is safe to try. check_sources.py, which a scheduled workflow
+the mp3PRO samples, mctoolamed and Fraunhofer's encoder. Each has its original address and, where
+one works, a fallback: the copy the Internet Archive's Wayback Machine keeps, or another mirror. The
+SHA-256 decides whether a copy is the right file, so any address is safe to try. check_sources.py, which a scheduled workflow
 runs, downloads every file from every address, so a source that disappears is noticed while its
 copies still work.
 """
