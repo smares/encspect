@@ -5,9 +5,10 @@ namespace Encspect.Tests;
 
 // Checks every MPEG fixture against its manifest. Hand-built fixtures list every frame, gap and
 // finding, and for Layer III the side information and how each frame's data splits into main data,
-// bit reservoir and ancillary data; encoder-made ones list the encoder settings, the frames
-// ffprobe found, and the side information minimp3 read. Where a manifest records mp3guessenc's
-// statistics, the same statistics computed from the report must match.
+// bit reservoir and ancillary data; encoder-made ones list the encoder settings, the packets
+// ffprobe found, the side information minimp3 read, and the fields and findings of their VBR
+// header. Where a manifest records mp3guessenc's statistics, the same statistics computed from the
+// report must match, and where it names the detected encoder, so must the report.
 public class MpegFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.MpegFixtures();
@@ -26,6 +27,21 @@ public class MpegFixtureTests
         else
         {
             CheckHandBuilt(manifest, report);
+        }
+
+        if (manifest.TryGetProperty("detected_encoder", out JsonElement detected))
+        {
+            Node? node = Streams(report).SelectMany(s => s.Children).FirstOrDefault(c => c.Name == "Encoder");
+            if (detected.ValueKind == JsonValueKind.Null)
+            {
+                Assert.True(node is null, $"Unexpected encoder {node?.Value}");
+            }
+            else
+            {
+                Assert.NotNull(node);
+                Assert.Equal(detected.GetProperty("name").GetString(), node.Value);
+                Assert.Equal(detected.GetProperty("confidence").GetString(), node.Children.Single(c => c.Name == "Confidence").Value);
+            }
         }
     }
 
@@ -118,7 +134,7 @@ public class MpegFixtureTests
 
         // ffprobe does not list the Info/Xing frame LAME writes first, so it is skipped here.
         Node[] audioFrames = hasInfoFrame ? frames.Skip(1).ToArray() : frames;
-        if (manifest.TryGetProperty("ffprobe_frames", out JsonElement ffprobe))
+        if (manifest.TryGetProperty("ffprobe_packets", out JsonElement ffprobe))
         {
             Assert.Equal(
                 ffprobe.EnumerateArray().Select(f => $"{f[0].GetInt64()}+{f[1].GetInt64()}"),
@@ -126,7 +142,7 @@ public class MpegFixtureTests
         }
         else
         {
-            Assert.Equal(manifest.GetProperty("mpg123_frames").GetInt32(), frames.Length);
+            Assert.Equal(manifest.GetProperty("mpg123_frames").GetInt32(), audioFrames.Length);
         }
 
         string version = encoder.GetProperty("version").GetString() switch
@@ -187,8 +203,12 @@ public class MpegFixtureTests
         if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3))
         {
             Dictionary<long, Node> byOffset = frames.ToDictionary(f => f.Offset);
-            Assert.Equal(minimp3.GetArrayLength(), frames.Length);
-            foreach (JsonElement row in minimp3.EnumerateArray())
+            // minimp3 decodes a VBR header frame as a silent frame, except in free format, where it
+            // skips it; the report shows its header instead.
+            Assert.Equal(
+                frames.Where(f => !IsVbrHeaderFrame(f)).Select(f => f.Offset),
+                minimp3.EnumerateArray().Select(r => r.GetProperty("offset").GetInt64()).Where(o => !IsVbrHeaderFrame(byOffset[o])));
+            foreach (JsonElement row in minimp3.EnumerateArray().Where(r => !IsVbrHeaderFrame(byOffset[r.GetProperty("offset").GetInt64()])))
             {
                 Node frame = byOffset[row.GetProperty("offset").GetInt64()];
                 if (row.TryGetProperty("layer", out _))
@@ -207,7 +227,37 @@ public class MpegFixtureTests
             CheckGuessencStatistics(guessenc, audioFrames);
         }
 
-        Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info).ToArray();
+        if (manifest.TryGetProperty("vbr_header_fields", out JsonElement vbrFields))
+        {
+            foreach (JsonProperty field in vbrFields.EnumerateObject())
+            {
+                string? actual = Fixtures.Resolve(frames[0], field.Name).FirstOrDefault()?.Value;
+                Assert.True(field.Value.GetString() == actual, $"VBR header field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
+            }
+        }
+        else
+        {
+            Assert.False(IsVbrHeaderFrame(frames[0]), "The first frame holds a VBR header the manifest does not list.");
+        }
+
+        var expectedFindings = manifest.TryGetProperty("vbr_findings", out JsonElement vbrFindings)
+            ? vbrFindings.EnumerateArray().Select(f => f.GetProperty("code").GetString()!).ToList()
+            : [];
+        Assert.Equal(expectedFindings.Order(StringComparer.Ordinal), report.Findings.Where(f => IsVbrFinding(f.Code)).Select(f => f.Code).Order(StringComparer.Ordinal));
+
+        // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives that index.
+        bool hasIndex63 = manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()
+            .Where(r => r.TryGetProperty("layer", out _))
+            .SelectMany(r => r.GetProperty("subbands").EnumerateArray().SelectMany(sb => sb.EnumerateArray()))
+            .Any(ch => ch.GetProperty("class").GetInt32() > 0 && ch.GetProperty("scalefactors").EnumerateArray()
+                .Any(sf => HexFloat(sf.GetString()!) == Minimp3Scalefactor(ch.GetProperty("class").GetInt32(), 63)));
+        Assert.Equal(hasIndex63, report.Findings.Any(f => f.Code == "mpeg.scalefactor-undefined"));
+        if (hasIndex63)
+        {
+            expectedFindings.Add("mpeg.scalefactor-undefined");
+        }
+
+        Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
     }
 
@@ -421,6 +471,12 @@ public class MpegFixtureTests
     private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
 
     private static IEnumerable<Node> Streams(Report report) => report.Root.Children.Where(c => c.Name == "MPEG Audio");
+
+    private static bool IsVbrHeaderFrame(Node frame) => frame.Children.Any(c => c.Name is "Xing" or "VBRI");
+
+    private static bool IsVbrFinding(string code) =>
+        code.StartsWith("mpeg.vbr-", StringComparison.Ordinal) || code.StartsWith("mpeg.xing-", StringComparison.Ordinal)
+        || code.StartsWith("mpeg.lame-", StringComparison.Ordinal) || code.StartsWith("mpeg.music-", StringComparison.Ordinal);
 
     private static string Describe(IEnumerable<Finding> findings) =>
         string.Join("; ", findings.Select(f => $"[{f.Severity}] {f.Code}: {f.Message}"));

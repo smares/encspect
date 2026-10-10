@@ -1,0 +1,200 @@
+{
+ "description": "A VBRI header 36 bytes into the first frame, with 2-byte TOC entries, before a CRC-protected stream; Fraunhofer's encoders leave the VBRI frame unprotected.",
+ "length": 4016,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 4016
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None",
+    "VBRI/Version": "1",
+    "VBRI/Delay": "1105",
+    "VBRI/Quality": "75",
+    "VBRI/Byte Count": "4016",
+    "VBRI/Frame Count": "9",
+    "VBRI/TOC Entries": "8",
+    "VBRI/TOC Scale": "1",
+    "VBRI/TOC Entry Size": "2 bytes",
+    "VBRI/Frames Per TOC Entry": "1",
+    "VBRI/TOC": "8 entries",
+    "VBRI/TOC/Entry 0": "417 bytes",
+    "VBRI/TOC/Entry 7": "208 bytes"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x5B5F",
+    "CRC/Computed": "0x5B5F"
+   }
+  },
+  {
+   "offset": 834,
+   "length": 522,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "160 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x9B66",
+    "CRC/Computed": "0x9B66"
+   }
+  },
+  {
+   "offset": 1356,
+   "length": 313,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0xDB9F",
+    "CRC/Computed": "0xDB9F"
+   }
+  },
+  {
+   "offset": 1669,
+   "length": 626,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0xDB71",
+    "CRC/Computed": "0xDB71"
+   }
+  },
+  {
+   "offset": 2295,
+   "length": 365,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "112 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x1B48",
+    "CRC/Computed": "0x1B48"
+   }
+  },
+  {
+   "offset": 2660,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x5B5F",
+    "CRC/Computed": "0x5B5F"
+   }
+  },
+  {
+   "offset": 3077,
+   "length": 731,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "224 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x9B11",
+    "CRC/Computed": "0x9B11"
+   }
+  },
+  {
+   "offset": 3808,
+   "length": 208,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "None",
+    "CRC": "0x5BB1",
+    "CRC/Computed": "0x5BB1"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [],
+ "silent": true,
+ "vbr_header": {
+  "type": "VBRI",
+  "offset": 36,
+  "truncated": false,
+  "version": 1,
+  "delay": 1105,
+  "quality": 75,
+  "bytes": 4016,
+  "frames": 9,
+  "toc_entries": 8,
+  "toc_scale": 1,
+  "entry_size": 2,
+  "frames_per_entry": 1,
+  "toc": [
+   417,
+   522,
+   313,
+   626,
+   365,
+   417,
+   731,
+   208
+  ],
+  "frame_offset": 0
+ },
+ "detected_encoder": {
+  "name": "Fraunhofer",
+  "confidence": "High"
+ }
+}

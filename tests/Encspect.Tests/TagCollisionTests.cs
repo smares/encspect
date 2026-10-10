@@ -5,8 +5,9 @@ using Encspect.Host;
 namespace Encspect.Tests;
 
 // User text inside a valid tag that spells another tag's identifier exactly where a probe looks
-// for it must not change which tags are found, and must not produce warnings or errors; the
-// generator is in scripts/fixtures/make_tag_fixtures.py.
+// for it must not change which tags are found, and must not produce warnings or errors beyond
+// what the text itself causes, such as a year that is not a number; the generator is in
+// scripts/fixtures/make_tag_fixtures.py.
 public class TagCollisionTests
 {
     private static readonly Lazy<Dictionary<string, JsonElement>> Cases = new(() =>
@@ -42,8 +43,9 @@ public class TagCollisionTests
         string actual = string.Join(", ", report.Root.Children.Select(n => $"{n.Name}@{n.Offset}+{n.Length}"));
         Assert.True(expected == actual, $"Regions: {actual}; expected {expected}. Findings: {Describe(report.Findings)}");
 
+        string[] expectedFindings = testCase.GetProperty("findings").EnumerateArray().Select(f => f.GetString()!).ToArray();
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info).ToArray();
-        Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
+        Assert.True(serious.Select(f => f.Code).SequenceEqual(expectedFindings), $"Unexpected findings: {Describe(serious)}");
     }
 
     private static string Describe(IEnumerable<Finding> findings) =>

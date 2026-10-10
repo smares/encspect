@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.4 TIT2 frame with flag bits ID3v2.4 does not define (section 4.1: \"All unused flags MUST be cleared\").",
+  "length": 548,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Flagged"
+      },
+      "offset": 0,
+      "length": 36
+    },
+    {
+      "name": "Data",
+      "offset": 36,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-flags-unknown",
+      "contains": "Frame TIT2"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the MPEG fixtures' expected results against independent decoders.
 
-For every fixture in tests/fixtures/mpeg, layer3 and layer2 whose manifest has
+For every fixture in tests/fixtures/mpeg, layer3, layer2 and vbr whose manifest has
 "crosscheck": true, ffprobe must report exactly the frames the manifest lists (offset and length
 of each), and for protected frames libmad (madplay) must report a CRC failure for exactly the
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
@@ -27,9 +27,20 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   gap or a stream change.
 - "mp3guessenc": the statistics mp3guessenc prints about the stream.
 
-External fixtures list their encoder settings instead of every frame; for them, ffprobe's sample
-rate, channel count and bitrate must match those settings, and minimp3 and mp3guessenc must still
-report what the manifest recorded.
+- "vbr_header": the raw values of the first frame's Xing, Info, LAME or VBRI header (vbr_tags.py).
+  mp3guessenc must report the same header fields, LAME tag fields, tag CRC verdict and music CRC
+  verdict; mpg123 the same frame and byte counts, quality, encoder string, VBR method, ReplayGain,
+  delay and padding; ffprobe the duration the frame count gives, the start time the delay gives,
+  and the encoder string and ReplayGain only when the tag CRC holds. Where these tools read a
+  header differently from LAME (mp3guessenc looks for Xing in every layer and checks the music CRC
+  over every later frame, ffmpeg drops the frame count of a much longer file and reads a delay
+  after any "LAME", mpg123 prints the lowpass byte as the revision), the check follows the tool.
+  The peak is the one field no tool reports.
+- "mp3guessenc_encoder_string": the encoder string mp3guessenc finds in the tag or ancillary data.
+
+External fixtures list their encoder settings and ffprobe's packets instead of every frame; for
+them, ffprobe's sample rate, channel count and bitrate must match those settings, and minimp3 and
+mp3guessenc must still report what the manifest recorded.
 
 Needs ffprobe, madplay, mpg123, mp3guessenc, curl, make and a C compiler on the PATH. Exits
 non-zero when anything disagrees.
@@ -43,10 +54,11 @@ import sys
 
 import mctoolamed_tool
 import minimp3_tool
+import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2"]
+DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2", ROOT / "vbr"]
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
 GUESSENC_BLOCKS = {"Long block": "long", "Switch block": "switch", "Short block": "short", "Mixed block": "mixed"}
@@ -60,6 +72,16 @@ def ffprobe_frames(path):
         check=True,
     )
     return [(int(f["pkt_pos"]), int(f["pkt_size"])) for f in json.loads(result.stdout).get("frames", [])]
+
+
+def ffprobe_packets(path):
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "packet=pos,size", "-of", "json", str(path)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return [(int(p["pos"]), int(p["size"])) for p in json.loads(result.stdout).get("packets", [])]
 
 
 def ffprobe_stream(path):
@@ -82,7 +104,7 @@ def madplay_crc_failures(path):
 
 
 def mpg123_frame_count(path, samples_per_frame, channels):
-    pcm = subprocess.run(["mpg123", "-q", "-s", str(path)], capture_output=True, check=True).stdout
+    pcm = subprocess.run(["mpg123", "-q", "--no-gapless", "-s", str(path)], capture_output=True, check=True).stdout
     return len(pcm) // (samples_per_frame * channels * 2)
 
 
@@ -181,6 +203,219 @@ def check_scale_info(path, manifest, dumper):
     return problems
 
 
+GUESSENC_MODES_BY_MISC = {0: "mono", 4: "simple LR stereo", 8: "dual channel", 12: "joint stereo", 16: "forced MS stereo", 20: "auto",
+                          24: "intensity stereo"}
+
+
+def guessenc_tag_lines(path):
+    """mp3guessenc's report of the VBR header, the music CRC and the encoder string, by label (first occurrence)."""
+    output = subprocess.run(["mp3guessenc", "-v", "-r", "-s", str(path)], capture_output=True, text=True).stdout
+    lines = {}
+    for line in output.splitlines():
+        if " tag detected into the first frame" in line:
+            lines.setdefault("detected", line.split()[0])
+        elif line.startswith("Music CRC verification"):
+            lines.setdefault("music crc", line.split()[-1].rstrip("."))
+        elif ":" in line:
+            key, _, value = (part.strip() for part in line.partition(":"))
+            lines.setdefault(key, value)
+    return lines
+
+
+def guessenc_lame_recognized(encoder):
+    """mp3guessenc reads a LAME tag after "LAME", "L<digit>.<digit><digit>" or "lavc" (any case)."""
+    return encoder.startswith("LAME") or re.match(r"L\d\.\d\d", encoder) is not None or encoder[:4].lower() == "lavc"
+
+
+def guessenc_preset(value):
+    if value == 0:
+        return "No preset."
+    if value < 321:
+        return f"{value} kbps"
+    if 409 < value < 501:
+        return f"V{50 - value // 10} / VBR_{value - 400}"
+    return {1000: "R3mix.", 1001: "Standard.", 1002: "Extreme.", 1003: "Insane.", 1004: "Standard fast.", 1005: "Extreme fast.",
+            1006: "Medium.", 1007: "Medium fast."}.get(value, "Unknown preset.")
+
+
+def guessenc_strategy(method, bitrate):
+    if method in (2, 9):
+        prefix = "ABR, "
+    elif method in (1, 8):
+        prefix = "CBR, "
+    elif 2 < method < 7:
+        prefix = f"VBR method {'old/rh' if method == 3 else 'mtrh' if method == 4 else 'mt'}, min "
+    else:
+        prefix = ""
+    rate = "unknown" if bitrate == 0 else f"{bitrate} kbps" + (" or higher" if bitrate == 255 else "")
+    return prefix + rate
+
+
+def expected_guessenc(tag, music_crc):
+    expected = {}
+    if tag["type"] == "VBRI":
+        size = tag["entry_size"]
+        expected.update({"detected": "VBRI", "Tag version": str(tag["version"]), "Encoder delay": f"{tag['delay']} samples",
+                         "File size": f"{tag['bytes']} bytes", "Number of frames": str(tag["frames"]), "Quality": str(tag["quality"]),
+                         "TOC": f"{size * tag['toc_entries']} bytes ({tag['toc_entries']} entries, {size} byte{'' if size == 1 else 's'} each)"})
+        return expected
+    expected.update({"detected": "Xing", "File size": f"{tag['bytes'] or 0} bytes", "Number of frames": str(tag["frames"] or 0),
+                     "TOC": "100 bytes (100 entries, 1 byte each)" if tag["toc"] else "no"})
+    lame = tag.get("lame")
+    if lame and guessenc_lame_recognized(lame["encoder"]):
+        misc, flags, verified = lame["misc"], lame["flags"], lame["tag_crc"] == lame["tag_crc_computed"]
+        expected.update({
+            "Lame tag": "yes",
+            "Lame short string": lame["encoder"],
+            "Tag revision": "invalid!" if lame["revision"] == 15 else str(lame["revision"]),
+            "Bitrate strategy": guessenc_strategy(lame["method"], lame["bitrate"]),
+            "Lowpass value": str(lame["lowpass"] * 100) if lame["lowpass"] else "unknown",
+            "nspsytune": "yes" if flags & 0x10 else "no",
+            "nssafejoint": "yes" if flags & 0x20 else "no",
+            "nogap continued": "yes" if flags & 0x40 else "no",
+            "nogap continuation": "yes" if flags & 0x80 else "no",
+            "ATH type": str(flags & 15),
+            "Encoder delay (start)": f"{lame['delay']} samples",
+            "Encoder padding (end)": f"{lame['padding']} samples",
+            "Encoding mode": GUESSENC_MODES_BY_MISC.get(misc & 0x1C, "other"),
+            "Unwise settings": "used" if misc & 0x20 else "not used",
+            "Source frequency": ["32 kHz or below", "44.1 kHz", "48 kHz", "higher than 48 kHz"][misc >> 6],
+            "Preset": guessenc_preset(lame["preset_surround"] & 0x7FF),
+            "Originally encoded": f"{lame['music_length']} bytes",
+            "Tag verification": "passed" if verified else "failed",
+        })
+        # mp3guessenc checks the music CRC, when the tag's holds, over every frame after the tag
+        # frame, not over the music length.
+        if not verified:
+            expected["music crc"] = "performed"
+        else:
+            expected["music crc"] = "passed" if lame["music_crc"] == music_crc else "failed"
+    else:
+        expected["Lame tag"] = "no"
+    return expected
+
+
+def expected_mpg123(tag):
+    """The notes mpg123 -vvv prints about a Xing/Info header and LAME tag (libmpg123 parse.c, check_lame_tag)."""
+    notes = ["Xing/Lame/Info header detected"]
+    if tag["frames"] is not None:
+        notes.append(f"Xing: {tag['frames']} frames")
+    if tag["bytes"] is not None:
+        notes.append(f"Xing: {tag['bytes']} bytes")
+    if tag["quality"] is not None:
+        notes.append(f"Xing: quality = {tag['quality']}")
+    lame = tag.get("lame")
+    if lame:
+        notes.append(f"Info: Encoder: {lame['encoder']}")
+        notes.append(f"Info: vbr mode {lame['method']}")
+        version = re.match(r"LAME(\d+)\.(\d+)", lame["encoder"])
+        offset = 6 if version and (int(version[1]), int(version[2])) < (3, 95) else 0
+        gains = [0.0, 0.0]
+        for value in (lame["radio_gain"], lame["audiophile_gain"]):
+            name, origin = value >> 13, (value >> 10) & 7
+            if origin and name in (1, 2):
+                gains[name - 1] = (-0.1 if value & 0x200 else 0.1) * (value & 0x1FF) + (offset if origin == 3 else 0)
+        notes.append(f"Info: Radio Gain = {gains[0]:03.1f}dB")
+        notes.append(f"Info: Audiophile Gain = {gains[1]:03.1f}dB")
+        if lame["method"] in (2, 9):
+            notes.append(f"Info: ABR rate = {lame['bitrate']}")
+        notes.append(f"Encoder delay = {lame['delay']}; padding = {lame['padding']}")
+    return notes
+
+
+def frames_after_tag(manifest):
+    if "frames" in manifest:
+        return [(f["offset"], f["length"]) for f in manifest["frames"][1:] if not f.get("truncated")]
+    return [tuple(f) for f in manifest.get("ffprobe_packets", [])]
+
+
+def check_vbr_header(path, manifest):
+    """mp3guessenc, mpg123 and ffprobe must read the first frame's VBR header as the manifest records it."""
+    tag = manifest["vbr_header"]
+    problems = []
+    data = path.read_bytes()
+    frames = frames_after_tag(manifest)
+    music = b"".join(data[offset : offset + length] for offset, length in frames)
+    # Without a frame list (free format), the bytes after the tag frame, which the manifest's own CRC covers.
+    lame = tag.get("lame") if tag else None
+    music_crc = vbr_tags.crc16(music) if frames or not lame else lame["music_crc_computed"]
+    guessenc = guessenc_tag_lines(path)
+    layer3 = "frames" not in manifest or manifest["frames"][0]["fields"]["Header/Layer"] == "III"
+    if tag is None:
+        # mp3guessenc looks for Xing in every layer; LAME, ffmpeg and mpg123 only in Layer III.
+        if "detected" in guessenc and layer3:
+            problems.append(f"mp3guessenc finds a {guessenc['detected']} header the manifest does not list")
+    elif tag["truncated"]:
+        if guessenc.get("detected") != ("VBRI" if tag["type"] == "VBRI" else "Xing"):
+            problems.append("mp3guessenc does not find the truncated VBR header")
+    else:
+        expected = expected_guessenc(tag, music_crc)
+        if tag["type"] != "VBRI" and tag["quality"] is not None:
+            expected["Quality"] = str(tag["quality"])
+        for key, value in expected.items():
+            # mp3guessenc appends the -q and -V switches a LAME VBR quality stands for.
+            actual = guessenc.get(key, "").split(" (")[0] if key == "Quality" else guessenc.get(key)
+            if actual != value:
+                problems.append(f"mp3guessenc reports {key} {actual!r}, the manifest implies {value!r}")
+    if "mp3guessenc_encoder_string" in manifest and guessenc.get("Encoder string") != manifest["mp3guessenc_encoder_string"]:
+        problems.append(f"mp3guessenc finds the encoder string {guessenc.get('Encoder string')!r}, the manifest "
+                        f"{manifest['mp3guessenc_encoder_string']!r}")
+
+    notes = [line[len("Note: "):] for line in subprocess.run(["mpg123", "-vvv", "-t", str(path)], capture_output=True, text=True).stderr.splitlines()
+             if line.startswith("Note: ") and (line.startswith("Note: Xing") or line.startswith("Note: Info: ") or line.startswith("Note: Encoder delay"))]
+    # mpg123 prints the lowpass byte as "rev", never reads the peak, and compares the byte count with the file.
+    notes = [n for n in notes if not n.startswith(("Info: rev ", "Info: peak", "Xing stream size")) and "Old LAME detected" not in n]
+    if tag is None or tag["type"] == "VBRI":
+        if notes:
+            problems.append(f"mpg123 reads a header the manifest does not expect: {notes}")
+    elif not tag["truncated"] and "encoder_string" not in tag and notes != expected_mpg123(tag):
+        problems.append(f"mpg123 notes {notes}, the manifest implies {expected_mpg123(tag)}")
+
+    # ffmpeg does not read free format.
+    if tag is not None and not tag["truncated"] and not manifest.get("encoder", {}).get("free_format"):
+        stream = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)],
+                                           capture_output=True, text=True, check=True).stdout)["streams"][0]
+        rate, mpeg1 = int(stream["sample_rate"]), rate_is_mpeg1(int(stream["sample_rate"]))
+        # ffmpeg drops the frame count of a file much longer than the header's byte count, as
+        # "invalid concatenated file" (mp3dec.c, mp3_parse_info_tag).
+        size = len(data) - tag["frame_offset"] - 4
+        concatenated = tag["bytes"] and size > tag["bytes"] and size - tag["bytes"] > tag["bytes"] >> 4
+        if tag["frames"] and not concatenated:
+            duration = f"{tag['frames'] * (1152 if mpeg1 else 576) / rate:.6f}"
+            if stream.get("duration") != duration:
+                problems.append(f"ffprobe duration {stream.get('duration')}, the header's frame count implies {duration}")
+        lame = tag.get("lame")
+        delay = ffmpeg_delay(tag)
+        start = f"{(delay + 529) / rate:.6f}" if delay is not None else "0.000000"
+        if stream.get("start_time") != start:
+            problems.append(f"ffprobe start time {stream.get('start_time')}, the manifest implies {start}")
+        valid = lame is not None and lame["tag_crc"] == lame["tag_crc_computed"]
+        encoder = stream.get("tags", {}).get("encoder")
+        if encoder != (lame["encoder"] if valid else None):
+            problems.append(f"ffprobe encoder {encoder!r}, the manifest implies {lame['encoder'] if valid else None!r}")
+        gains = valid and (lame["radio_gain"] >> 13 == 1 or lame["audiophile_gain"] >> 13 == 2)
+        has_gain = any(d.get("side_data_type") == "Replay Gain" for d in stream.get("side_data_list", []))
+        if has_gain != bool(gains):
+            problems.append(f"ffprobe {'finds' if has_gain else 'does not find'} ReplayGain, the manifest implies the opposite")
+    return problems
+
+
+def ffmpeg_delay(tag):
+    """The encoder delay ffmpeg reads: after any string starting LAME, Lavf or Lavc, a full tag or not."""
+    after = bytes.fromhex(tag.get("after_fields", "")) if tag else b""
+    return (after[21] << 4 | after[22] >> 4) if len(after) >= 24 and after[:4] in (b"LAME", b"Lavf", b"Lavc") else None
+
+
+def rate_is_mpeg1(rate):
+    return rate in (32000, 44100, 48000)
+
+
+def ffprobe_skips_first(manifest):
+    """ffmpeg skips the first frame when it holds a Layer III Xing, Info or VBRI header with a frame or byte count."""
+    tag = manifest.get("vbr_header")
+    return tag is not None and bool(tag.get("frames") or tag.get("bytes"))
+
+
 def check(path, manifest, tools):
     dumper, decoder = tools
     problems = []
@@ -198,6 +433,8 @@ def check(path, manifest, tools):
         problems += check_side_info(path, manifest, dumper)
     if "minimp3_side_info" in manifest and minimp3_tool.side_info(dumper, path) != manifest["minimp3_side_info"]:
         problems.append("minimp3 reads different side information than the manifest recorded")
+    if "vbr_header" in manifest:
+        problems += check_vbr_header(path, manifest)
     if "mp3guessenc" in manifest:
         expected = dict(manifest["mp3guessenc"])
         expected["mode_extensions"] = {k: v for k, v in expected["mode_extensions"].items() if k != "None"}
@@ -218,6 +455,13 @@ def check(path, manifest, tools):
 
     if "frames" in manifest:
         expected = [(f["offset"], f["length"]) for f in manifest["frames"] if not f.get("truncated")]
+        if ffprobe_skips_first(manifest):
+            expected = expected[1:]
+            # ffmpeg skips delay + 529 samples when decoding, so frames it skips whole are not listed.
+            delay = ffmpeg_delay(manifest["vbr_header"])
+            if delay is not None:
+                samples, _ = frame_shape(manifest["frames"][0]["fields"])
+                expected = expected[(delay + 529) // samples :]
         try:
             actual = ffprobe_frames(path)
         except subprocess.CalledProcessError as error:
@@ -240,8 +484,8 @@ def check(path, manifest, tools):
             if count != manifest["mpg123_frames"]:
                 problems.append(f"mpg123 decodes {count} frames, the manifest recorded {manifest['mpg123_frames']}")
         else:
-            if ffprobe_frames(path) != [tuple(f) for f in manifest["ffprobe_frames"]]:
-                problems.append("ffprobe's frames differ from the ones recorded in the manifest")
+            if ffprobe_packets(path) != [tuple(f) for f in manifest["ffprobe_packets"]]:
+                problems.append("ffprobe's packets differ from the ones recorded in the manifest")
             stream = ffprobe_stream(path)
             if int(stream["sample_rate"]) != settings["sample_rate"]:
                 problems.append(f"ffprobe sample rate {stream['sample_rate']} differs from {settings['sample_rate']}")

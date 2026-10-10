@@ -299,7 +299,7 @@ public sealed class ApeTagParser : ITagParser
 
                 if (IsV1 && flags != 0)
                 {
-                    _findings.Add(new Finding(Severity.Info, "ape.v1-flags", $"Item \"{key}\" sets flags 0x{flags:X8}; APEv1 defines no flags, so they are ignored.", flagsNode));
+                    _findings.Add(new Finding(Severity.Warning, "ape.v1-flags", $"Item \"{key}\" sets flags 0x{flags:X8}; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread the item.", flagsNode));
                 }
                 else if (!IsV1 && (flags & UndefinedItemFlags) != 0)
                 {
@@ -374,7 +374,7 @@ public sealed class ApeTagParser : ITagParser
                 bool utf8 = Utf8.IsValid(data);
                 value = utf8 ? Encoding.UTF8.GetString(data) : Encoding.Latin1.GetString(data);
                 _findings.Add(new Finding(
-                    Severity.Info,
+                    Severity.Warning,
                     "ape.v1-not-ascii",
                     $"The APEv1 value of item \"{item.Name}\" is not ASCII; it is read as {(utf8 ? "UTF-8" : "ISO-8859-1")}.",
                     item));
@@ -384,7 +384,7 @@ public sealed class ApeTagParser : ITagParser
             if (Array.IndexOf(data, (byte)0) >= 0)
             {
                 _findings.Add(new Finding(
-                    Severity.Info,
+                    Severity.Warning,
                     "ape.v1-zero-byte",
                     $"The APEv1 value of item \"{item.Name}\" contains a $00 byte; APEv1 has no value lists, so it is kept as one value.",
                     node));
@@ -417,7 +417,7 @@ public sealed class ApeTagParser : ITagParser
             {
                 // "APE Tags 1.0 do not use any of the APE Tag flags. All are set to zero on
                 // creation and ignored on reading."
-                _findings.Add(new Finding(Severity.Info, "ape.v1-flags", $"The APEv1 {name.ToLowerInvariant()} sets flags 0x{block.Flags:X8}, which APEv1 ignores.", flags));
+                _findings.Add(new Finding(Severity.Warning, "ape.v1-flags", $"The APEv1 {name.ToLowerInvariant()} sets flags 0x{block.Flags:X8}; APEv1 writers must leave them zero, and readers ignore them.", flags));
             }
 
             Node reserved = node.Add("Reserved", offset + 24, 8);

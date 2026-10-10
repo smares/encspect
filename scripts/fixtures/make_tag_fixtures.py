@@ -629,6 +629,50 @@ def id3v23_crc_mismatch():
 
 
 @fixture
+def id3v23_padding_size_mismatch():
+    f = Fixture("id3v23-padding-size-mismatch", "ID3v2.3 tag whose extended header declares 16 bytes of padding; the tag has 4.")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Padded"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(16)), "High", {"Extended Header/Padding Size": "16", "TIT2/Text": "Padded"})
+    f.audio()
+    f.finding("id3v2.padding-size-mismatch", "declares 16 bytes of padding, but the tag has 4")
+    return f
+
+
+@fixture
+def id3v23_text_after_terminator():
+    f = Fixture(
+        "id3v23-text-after-terminator",
+        "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so "
+        "readers show only the first.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Duet"])), frame23("TPE1", text_frame_data(LATIN1, ["First", "Second"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": "First"})
+    f.audio()
+    f.finding("id3v2.text-after-terminator", "Frame TPE1")
+    return f
+
+
+@fixture
+def id3v23_frame_flags_unknown():
+    f = Fixture("id3v23-frame-flags-unknown", "ID3v2.3 TIT2 frame with flag bits ID3v2.3 does not define (section 3.3.1: \"All unused flags must be cleared\").")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Flagged"]), flags=0x1010)]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.audio()
+    f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
+    return f
+
+
+@fixture
+def id3v24_frame_flags_unknown():
+    f = Fixture("id3v24-frame-flags-unknown", "ID3v2.4 TIT2 frame with flag bits ID3v2.4 does not define (section 4.1: \"All unused flags MUST be cleared\").")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Flagged"]), status=0x81)]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.audio()
+    f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
+    return f
+
+
+@fixture
 def id3v24_crc_mismatch():
     f = Fixture("id3v24-crc-mismatch", "ID3v2.4 tag whose extended header CRC does not match its frames and padding: kept, with a finding.")
     frames = [frame24("TIT2", text_frame_data(UTF8, ["Checked"]))]
@@ -1401,6 +1445,16 @@ def lyrics3v2_ind_size():
 
 
 @fixture
+def lyrics3v2_unknown_field():
+    f = Fixture("lyrics3v2-unknown-field", "Lyrics3 v2 tag with a field ID, XYZ, that v2.00 does not define.")
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "100"), ("LYR", "Words"), ("XYZ", "Extra")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("lyrics3.unknown-field", "XYZ")
+    return f
+
+
+@fixture
 def lyrics3v2_field_too_long():
     f = Fixture("lyrics3v2-field-too-long", "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.")
     f.audio()
@@ -1624,7 +1678,8 @@ def tags_only():
 # Every trailing probe looks for an identifier at a fixed distance before an anchor. These cases
 # put user-editable text (ID3v1 fields, an APE text item, Lyrics3 lyrics or fields, an appended
 # ID3v2 text frame) at each of those distances and fill it with each identifier. The real tags
-# must still be reported unchanged, and no forged identifier may produce a warning or an error.
+# must still be reported unchanged, and no forged identifier may produce a warning or an error
+# beyond the case's "findings": an identifier written into the ID3v1 year makes it not a number.
 
 COLLISIONS_OUT = OUT.parent / "collisions"
 
@@ -1639,7 +1694,7 @@ USER_TEXT = "q" * 400
 
 
 def collision_containers():
-    yield "id3v1", "ID3v1", id3v1("q" * 30, "q" * 30, "q" * 30, "qqqq", "q" * 30, genre=ord("q")), False
+    yield "id3v1", "ID3v1", id3v1("q" * 30, "q" * 30, "q" * 30, "1999", "q" * 30, genre=ord("q")), False
     for follow in (False, True):
         yield "ape", "APE", ape_tag([ape_item("Comment", USER_TEXT)]), follow
         yield "id3v2", "ID3v2", id3v2(4, [frame24("TXXX", txxx_data(LATIN1, "note", USER_TEXT))], footer=True), follow
@@ -1676,10 +1731,12 @@ def collision_cases():
                     regions.append({"name": "ID3v1", "offset": len(body), "length": len(trailer)})
                     body += trailer
                 suffix = "-id3v1" if follow else ""
+                year = bytes(data[93:97]) if container_name == "id3v1" else b"1999"
                 yield {
                     "name": f"{container_name}{suffix}-{identifier}-at-{distance}",
                     "data": body.hex(),
                     "regions": regions,
+                    "findings": [] if year.isdigit() else ["id3v1.year-not-numeric"],
                 }
 
 

@@ -45,7 +45,7 @@ public sealed class Analyzer
 
         if (reader.Length == 0)
         {
-            findings.Add(new Finding(Severity.Info, "file.empty", "The file is empty.", root));
+            findings.Add(new Finding(Severity.Warning, "file.empty", "The file is empty.", root));
             return new Report(source, root, findings);
         }
 
@@ -68,7 +68,7 @@ public sealed class Analyzer
         }
         else
         {
-            findings.Add(new Finding(Severity.Info, "layout.tags-only", "The file holds only tags; no bytes are left for audio data.", root));
+            findings.Add(new Finding(Severity.Warning, "layout.tags-only", "The file holds only tags; no bytes are left for audio data.", root));
         }
 
         root.SortChildrenByOffset();

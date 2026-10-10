@@ -45,9 +45,14 @@ internal sealed class BlockReader(ByteReader reader)
     public byte[] Read(long offset, int count)
     {
         var data = new byte[count];
-        for (int i = 0; i < count; i++)
+        int done = 0;
+        while (done < count)
         {
-            data[i] = ByteAt(offset + i);
+            ByteAt(offset + done);
+            int start = (int)(offset + done - _blockStart);
+            int length = Math.Min(count - done, _block.Length - start);
+            Array.Copy(_block, start, data, done, length);
+            done += length;
         }
 
         return data;

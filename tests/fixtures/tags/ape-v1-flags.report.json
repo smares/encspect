@@ -146,16 +146,16 @@
         "length": 512
       },
       {
-        "severity": "Info",
+        "severity": "Warning",
         "code": "ape.v1-flags",
-        "message": "Item \u0022Title\u0022 sets flags 0x00000003; APEv1 defines no flags, so they are ignored.",
+        "message": "Item \u0022Title\u0022 sets flags 0x00000003; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread the item.",
         "offset": 516,
         "length": 4
       },
       {
-        "severity": "Info",
+        "severity": "Warning",
         "code": "ape.v1-flags",
-        "message": "The APEv1 footer sets flags 0x80000000, which APEv1 ignores.",
+        "message": "The APEv1 footer sets flags 0x80000000; APEv1 writers must leave them zero, and readers ignore them.",
         "offset": 553,
         "length": 4
       }

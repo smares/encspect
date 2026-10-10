@@ -1,0 +1,120 @@
+{
+ "description": "MPEG-2.5 Layer III mono, 8000 Hz, 8 kbps: the frame holding the Xing header is 72 bytes long, so the TOC its flags announce does not fit; the frame and byte counts before it do.",
+ "length": 648,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 648
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Xing": "Xing",
+    "Xing/Flags": "0x0000000F",
+    "Xing/Flags/HasFrameCount": "true",
+    "Xing/Flags/HasByteCount": "true",
+    "Xing/Flags/HasToc": "true",
+    "Xing/Flags/HasQuality": "true",
+    "Xing/Frame Count": "5",
+    "Xing/Byte Count": "648"
+   }
+  },
+  {
+   "offset": 72,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 144,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "16 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 288,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 360,
+   "length": 216,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "24 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 576,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.vbr-header-truncated",
+   "contains": "0x0"
+  }
+ ],
+ "silent": true,
+ "vbr_header": {
+  "type": "Xing",
+  "offset": 13,
+  "truncated": true,
+  "flags": 15,
+  "frames": 5,
+  "bytes": 648,
+  "toc": null,
+  "quality": null,
+  "frame_offset": 0
+ },
+ "detected_encoder": null
+}
