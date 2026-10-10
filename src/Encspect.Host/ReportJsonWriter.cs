@@ -29,6 +29,26 @@ public static class ReportJsonWriter
         writer.WriteEndArray();
     }
 
+    // Newline-delimited JSON: one compact report per line, so every finished line can be used on
+    // its own, even when the run stops early, and outputs can be concatenated.
+    public static void WriteLines(IEnumerable<Report> reports, Stream output)
+    {
+        ArgumentNullException.ThrowIfNull(reports);
+        ArgumentNullException.ThrowIfNull(output);
+
+        using var writer = new Utf8JsonWriter(output);
+
+        foreach (Report report in reports)
+        {
+            WriteReport(writer, report);
+            writer.Flush();
+            output.WriteByte((byte)'\n');
+
+            // A writer accepts only one top-level value until it is reset.
+            writer.Reset(output);
+        }
+    }
+
     private static void WriteReport(Utf8JsonWriter writer, Report report)
     {
         writer.WriteStartObject();

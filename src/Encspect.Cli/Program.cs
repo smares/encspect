@@ -5,11 +5,12 @@ namespace Encspect.Cli;
 
 internal static class Program
 {
-    private const string Usage = "Usage: encspect [--json] [--offsets] <file-or-folder>...";
+    private const string Usage = "Usage: encspect [--json | --ndjson] [--offsets] <file-or-folder>...";
 
     private static int Main(string[] args)
     {
         bool json = false;
+        bool ndjson = false;
         bool offsets = false;
         var paths = new List<string>();
 
@@ -19,6 +20,9 @@ internal static class Program
             {
                 case "--json":
                     json = true;
+                    break;
+                case "--ndjson":
+                    ndjson = true;
                     break;
                 case "--offsets":
                     offsets = true;
@@ -40,7 +44,7 @@ internal static class Program
             }
         }
 
-        if (paths.Count == 0)
+        if (paths.Count == 0 || (json && ndjson))
         {
             Console.Error.WriteLine(Usage);
             return 2;
@@ -54,6 +58,10 @@ internal static class Program
         {
             ReportJsonWriter.Write(Reports(), stdout);
             stdout.WriteByte((byte)'\n');
+        }
+        else if (ndjson)
+        {
+            ReportJsonWriter.WriteLines(Reports(), stdout);
         }
         else
         {
