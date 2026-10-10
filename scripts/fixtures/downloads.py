@@ -12,13 +12,13 @@ import hashlib
 import subprocess
 import sys
 
-# The Wayback Machine serves the capture of url closest to the given year; "id_" asks for the
-# file as captured, without the archive's banner.
-WAYBACK = "https://web.archive.org/web/{year}id_/{url}"
+# The Wayback Machine serves the capture of url closest to the given timestamp, a year or a full
+# capture time; "id_" asks for the file as captured, without the archive's banner.
+WAYBACK = "https://web.archive.org/web/{timestamp}id_/{url}"
 
 
-def archived(url, year):
-    return WAYBACK.format(year=year, url=url)
+def archived(url, timestamp):
+    return WAYBACK.format(timestamp=timestamp, url=url)
 
 
 def download(url, path):
