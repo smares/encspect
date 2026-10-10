@@ -47,38 +47,50 @@ internal static class Program
         }
 
         var analyzer = Analyzer.CreateDefault();
-        var reports = new List<Report>();
         int exitCode = 0;
 
-        foreach (string file in ExpandPaths(paths))
-        {
-            try
-            {
-                reports.Add(analyzer.AnalyzeFile(file));
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                Console.Error.WriteLine($"{file}: {ex.Message}");
-                exitCode = 1;
-            }
-        }
-
+        using Stream stdout = Console.OpenStandardOutput();
         if (json)
         {
-            using Stream stdout = Console.OpenStandardOutput();
-            ReportJsonWriter.Write(reports, stdout);
+            ReportJsonWriter.Write(Reports(), stdout);
             stdout.WriteByte((byte)'\n');
         }
         else
         {
-            foreach (Report report in reports)
+            // Console.Out flushes after every write, which costs a system call per node.
+            using var output = new StreamWriter(stdout, Console.OutputEncoding, 1 << 16);
+            foreach (Report report in Reports())
             {
-                ReportTextWriter.Write(report, Console.Out, offsets);
-                Console.Out.WriteLine();
+                ReportTextWriter.Write(report, output, offsets);
+                output.WriteLine();
             }
         }
 
         return exitCode;
+
+        // Each report is written as soon as its file is analyzed and is then dropped, so memory
+        // does not grow with the number of files.
+        IEnumerable<Report> Reports()
+        {
+            foreach (string file in ExpandPaths(paths))
+            {
+                Report? report = null;
+                try
+                {
+                    report = analyzer.AnalyzeFile(file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Console.Error.WriteLine($"{file}: {ex.Message}");
+                    exitCode = 1;
+                }
+
+                if (report is not null)
+                {
+                    yield return report;
+                }
+            }
+        }
     }
 
     private static IEnumerable<string> ExpandPaths(IEnumerable<string> paths)

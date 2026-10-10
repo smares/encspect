@@ -67,6 +67,47 @@ public class ReportWriterTests
     }
 
     [Fact]
+    public void JsonOutputWritesEachReportBeforeTheNextIsRequested()
+    {
+        using var output = new MemoryStream();
+        var lengthsWhenRequested = new List<long>();
+
+        IEnumerable<Report> Reports()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                lengthsWhenRequested.Add(output.Length);
+                yield return CreateReport();
+            }
+        }
+
+        ReportJsonWriter.Write(Reports(), output);
+
+        Assert.Equal(0, lengthsWhenRequested[0]);
+        Assert.True(lengthsWhenRequested[1] > lengthsWhenRequested[0]);
+        Assert.True(lengthsWhenRequested[2] > lengthsWhenRequested[1]);
+        using JsonDocument document = JsonDocument.Parse(output.ToArray());
+        Assert.Equal(3, document.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public void JsonOutputIsFlushedWhileALargeReportIsWritten()
+    {
+        var root = new Node("File", 0, 100_000);
+        for (int i = 0; i < 10_000; i++)
+        {
+            root.Add("Frame", i * 10, 10, "MPEG-1 Layer III, 128 kbps, 44100 Hz, Joint stereo");
+        }
+
+        using var output = new WriteCountingStream();
+
+        ReportJsonWriter.Write([new Report("large.bin", root, [])], output);
+
+        Assert.True(output.Writes > 2, $"{output.Writes} writes");
+        Assert.True(output.LargestWrite < 1 << 20, $"largest write {output.LargestWrite} bytes");
+    }
+
+    [Fact]
     public void TextOutputEscapesControlCharactersInValues()
     {
         var root = new Node("File", 0, 10);
@@ -76,5 +117,23 @@ public class ReportWriterTests
         ReportTextWriter.Write(new Report("test.bin", root, []), writer, showOffsets: false);
 
         Assert.Contains("Lyrics: one\\r\\ntwo\\x01", writer.ToString());
+    }
+
+    private sealed class WriteCountingStream : MemoryStream
+    {
+        public int Writes { get; private set; }
+
+        public int LargestWrite { get; private set; }
+
+        // MemoryStream.Write(ReadOnlySpan) on a derived type goes through Write(byte[], int, int),
+        // so both are counted here and neither calls the other.
+        public override void Write(ReadOnlySpan<byte> buffer) => Write(buffer.ToArray(), 0, buffer.Length);
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            Writes++;
+            LargestWrite = Math.Max(LargestWrite, count);
+            base.Write(buffer, offset, count);
+        }
     }
 }
