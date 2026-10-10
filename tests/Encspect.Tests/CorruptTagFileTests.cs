@@ -17,7 +17,7 @@ public class CorruptTagFileTests
             var data = new TheoryData<string>();
             foreach (string name in Fixtures.TagFixtureNames())
             {
-                data.Add(Path.Combine("tags", name + ".mp3"));
+                data.Add($"tags/{name}.mp3");
             }
 
             foreach (string name in Fixtures.MpegFixtures())
@@ -60,9 +60,22 @@ public class CorruptTagFileTests
         }
     }
 
+    // string.GetHashCode is randomized per process, which would test different variants on every
+    // run; FNV-1a gives each fixture the same variants everywhere, so a failure reproduces.
+    private static int StableSeed(string name)
+    {
+        uint hash = 2166136261;
+        foreach (char c in name)
+        {
+            hash = (hash ^ c) * 16777619;
+        }
+
+        return (int)hash;
+    }
+
     private static IEnumerable<byte[]> Variants(byte[] original, string name)
     {
-        var random = new Random(StringComparer.Ordinal.GetHashCode(name) ^ 0x5EED);
+        var random = new Random(StableSeed(name));
 
         // Truncations, densest near the ends where tags live.
         var lengths = new SortedSet<int>();
