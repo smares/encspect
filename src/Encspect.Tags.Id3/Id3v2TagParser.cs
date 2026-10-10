@@ -208,7 +208,7 @@ public sealed class Id3v2TagParser : ITagParser
             if (declaredPadding is { } expected && expected != padding)
             {
                 state.Findings.Add(new Finding(
-                    Severity.Info,
+                    Severity.Warning,
                     "id3v2.padding-size-mismatch",
                     $"The extended header declares {expected} bytes of padding, but the tag has {padding}.",
                     tag));
@@ -739,7 +739,7 @@ public sealed class Id3v2TagParser : ITagParser
 
         if ((flags & ~defined) != 0)
         {
-            findings.Add(new Finding(Severity.Info, "id3v2.frame-flags-unknown", $"Frame {id} sets undefined flag bits 0x{flags & ~defined:X4}.", frame));
+            findings.Add(new Finding(Severity.Warning, "id3v2.frame-flags-unknown", $"Frame {id} sets undefined flag bits 0x{flags & ~defined:X4}.", frame));
         }
     }
 

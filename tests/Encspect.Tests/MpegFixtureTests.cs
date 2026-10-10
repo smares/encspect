@@ -245,6 +245,18 @@ public class MpegFixtureTests
             : [];
         Assert.Equal(expectedFindings.Order(StringComparer.Ordinal), report.Findings.Where(f => IsVbrFinding(f.Code)).Select(f => f.Code).Order(StringComparer.Ordinal));
 
+        // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives that index.
+        bool hasIndex63 = manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()
+            .Where(r => r.TryGetProperty("layer", out _))
+            .SelectMany(r => r.GetProperty("subbands").EnumerateArray().SelectMany(sb => sb.EnumerateArray()))
+            .Any(ch => ch.GetProperty("class").GetInt32() > 0 && ch.GetProperty("scalefactors").EnumerateArray()
+                .Any(sf => HexFloat(sf.GetString()!) == Minimp3Scalefactor(ch.GetProperty("class").GetInt32(), 63)));
+        Assert.Equal(hasIndex63, report.Findings.Any(f => f.Code == "mpeg.scalefactor-undefined"));
+        if (hasIndex63)
+        {
+            expectedFindings.Add("mpeg.scalefactor-undefined");
+        }
+
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
     }

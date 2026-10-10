@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so readers show only the first.",
+  "length": 568,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TPE1/Text": "First"
+      },
+      "offset": 0,
+      "length": 56
+    },
+    {
+      "name": "Data",
+      "offset": 56,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.text-after-terminator",
+      "contains": "Frame TPE1"
+    }
+  ]
+}

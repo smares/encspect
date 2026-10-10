@@ -57,7 +57,7 @@ public sealed partial class MpegAudioParser
 
         if (midStream)
         {
-            findings.Add(Severity.Info, "mpeg.vbr-header-mid-stream", node, count =>
+            findings.Add(Severity.Warning, "mpeg.vbr-header-mid-stream", node, count =>
                 $"{Frames(count)} in the middle of a stream hold a {vbr.Type} header, probably where files were joined; players that only look at the first frame play them as silence. The first at 0x{position:X}.");
         }
 
@@ -78,7 +78,7 @@ public sealed partial class MpegAudioParser
             Node node = FindingNode(frame);
             if (end < frame.End || end > state.Blocks.End)
             {
-                state.Findings.Add(Severity.Info, "mpeg.music-crc-not-verified", node, count =>
+                state.Findings.Add(Severity.Warning, "mpeg.music-crc-not-verified", node, count =>
                     $"The LAME tag of {Frames(count)} covers more music than the file holds after it, so the music CRC is not verified; the first at 0x{position:X}.");
                 continue;
             }

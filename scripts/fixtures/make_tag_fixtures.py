@@ -629,6 +629,50 @@ def id3v23_crc_mismatch():
 
 
 @fixture
+def id3v23_padding_size_mismatch():
+    f = Fixture("id3v23-padding-size-mismatch", "ID3v2.3 tag whose extended header declares 16 bytes of padding; the tag has 4.")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Padded"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(16)), "High", {"Extended Header/Padding Size": "16", "TIT2/Text": "Padded"})
+    f.audio()
+    f.finding("id3v2.padding-size-mismatch", "declares 16 bytes of padding, but the tag has 4")
+    return f
+
+
+@fixture
+def id3v23_text_after_terminator():
+    f = Fixture(
+        "id3v23-text-after-terminator",
+        "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so "
+        "readers show only the first.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Duet"])), frame23("TPE1", text_frame_data(LATIN1, ["First", "Second"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": "First"})
+    f.audio()
+    f.finding("id3v2.text-after-terminator", "Frame TPE1")
+    return f
+
+
+@fixture
+def id3v23_frame_flags_unknown():
+    f = Fixture("id3v23-frame-flags-unknown", "ID3v2.3 TIT2 frame with flag bits ID3v2.3 does not define (section 3.3.1: \"All unused flags must be cleared\").")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Flagged"]), flags=0x1010)]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.audio()
+    f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
+    return f
+
+
+@fixture
+def id3v24_frame_flags_unknown():
+    f = Fixture("id3v24-frame-flags-unknown", "ID3v2.4 TIT2 frame with flag bits ID3v2.4 does not define (section 4.1: \"All unused flags MUST be cleared\").")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Flagged"]), status=0x81)]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.audio()
+    f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
+    return f
+
+
+@fixture
 def id3v24_crc_mismatch():
     f = Fixture("id3v24-crc-mismatch", "ID3v2.4 tag whose extended header CRC does not match its frames and padding: kept, with a finding.")
     frames = [frame24("TIT2", text_frame_data(UTF8, ["Checked"]))]

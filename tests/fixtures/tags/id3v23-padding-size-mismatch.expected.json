@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 tag whose extended header declares 16 bytes of padding; the tag has 4.",
+  "length": 553,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "Extended Header/Padding Size": "16",
+        "TIT2/Text": "Padded"
+      },
+      "offset": 0,
+      "length": 41
+    },
+    {
+      "name": "Data",
+      "offset": 41,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.padding-size-mismatch",
+      "contains": "declares 16 bytes of padding, but the tag has 4"
+    }
+  ]
+}

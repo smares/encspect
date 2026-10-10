@@ -1,0 +1,252 @@
+[
+  {
+    "source": "id3v23-padding-size-mismatch.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 553,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.3.0",
+          "offset": 0,
+          "length": 41,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.3.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x40",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "true",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "31",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Extended Header",
+              "offset": 10,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": "6",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x0000",
+                  "offset": 14,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "HasCrc",
+                      "value": "false",
+                      "offset": 14,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Padding Size",
+                  "value": "16",
+                  "offset": 16,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Padded",
+              "offset": 20,
+              "length": 17,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 20,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "7",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 28,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 28,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 30,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Padded",
+                  "offset": 31,
+                  "length": 6
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "4 bytes",
+              "offset": 37,
+              "length": 4
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 41,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022ID3\u0022 with version 2.3.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 31 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 37,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 20,
+                  "length": 17
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 41,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "id3v2.padding-size-mismatch",
+        "message": "The extended header declares 16 bytes of padding, but the tag has 4.",
+        "offset": 0,
+        "length": 41
+      },
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 41,
+        "length": 512
+      }
+    ]
+  }
+]

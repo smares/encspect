@@ -399,7 +399,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         {
             int bit = audio.ScalefactorBit[ch, sb] + (6 * Array.IndexOf(audio.Scalefactors[ch, sb], 63));
             // TwoLAME writes it, and ffmpeg, mpg123 and libmad decode it.
-            findings.Add(Severity.Info, "mpeg.scalefactor-undefined", Layer2AudioData.Span("Scalefactors", position, bit, bit + 6), count =>
+            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", Layer2AudioData.Span("Scalefactors", position, bit, bit + 6), count =>
                 $"{Frames(count)} use scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x{position:X}.");
         }
 

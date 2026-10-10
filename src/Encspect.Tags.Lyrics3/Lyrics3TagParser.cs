@@ -217,7 +217,7 @@ public sealed class Lyrics3TagParser : ITagParser
                 field.Add("IsRandomSelectionInhibited", fieldStart + 8, fieldSize, Bool(value, 2));
                 if (fieldSize != 3)
                 {
-                    findings.Add(new Finding(Severity.Info, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines exactly 3.", field));
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines exactly 3.", field));
                 }
 
                 indications = (value, field);
@@ -248,12 +248,12 @@ public sealed class Lyrics3TagParser : ITagParser
         {
             if ((Bool(flags, 0) == "true") != hasLyricsField)
             {
-                findings.Add(new Finding(Severity.Info, "lyrics3.ind-mismatch", $"IND says the tag {(hasLyricsField ? "has no" : "has a")} LYR field, but it {(hasLyricsField ? "has one" : "has none")}.", indNode));
+                findings.Add(new Finding(Severity.Warning, "lyrics3.ind-mismatch", $"IND says the tag {(hasLyricsField ? "has no" : "has a")} LYR field, but it {(hasLyricsField ? "has one" : "has none")}.", indNode));
             }
 
             if ((Bool(flags, 1) == "true") != hasTimestamps)
             {
-                findings.Add(new Finding(Severity.Info, "lyrics3.ind-mismatch", $"IND says the lyrics {(hasTimestamps ? "have no" : "have")} timestamps, but they {(hasTimestamps ? "have some" : "have none")}.", indNode));
+                findings.Add(new Finding(Severity.Warning, "lyrics3.ind-mismatch", $"IND says the lyrics {(hasTimestamps ? "have no" : "have")} timestamps, but they {(hasTimestamps ? "have some" : "have none")}.", indNode));
             }
         }
 
