@@ -290,11 +290,11 @@ def report_fields(tag, toc_entries=(0, 1, 50, 99)):
     if "encoder_string" in tag:
         fields["Encoder String"] = tag["encoder_string"]
     if "lame" in tag:
-        fields.update(lame_fields(tag["lame"]))
+        fields.update(lame_fields(tag["lame"], tag["quality"]))
     return fields
 
 
-def lame_fields(lame):
+def lame_fields(lame, quality):
     p = "LAME Tag"
     fields = {
         p: lame["encoder"],
@@ -346,7 +346,7 @@ def lame_fields(lame):
     })
     if lame["music_crc_computed"] is not None:
         fields[f"{p}/Music CRC/Computed"] = f"0x{lame['music_crc_computed']:04X}"
-    preset = old_preset(lame, tag["quality"])
+    preset = old_preset(lame, quality)
     if preset and lame["preset_surround"] & 0x7FF == 0:
         fields[f"{p}/Preset/Settings Match"] = (f"{preset}; LAME 3.90 to 3.92 leave the preset out, but the VBR method, Xing quality, noise "
                                                 "shaping, stereo mode, ATH type and lowpass this tag holds are the ones it sets")
