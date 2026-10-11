@@ -25,6 +25,7 @@ internal sealed class VbrHeader
     public const int LameTagSize = 36;
     private const int VbriOffset = 36;
     private const int VbriFixedSize = 26;
+    private const uint GogoQuality = 0x474F474F;
 
     private static readonly string[] VbrMethods = ["Unknown", "CBR", "ABR", "VBR method 1 (rh)", "VBR method 2 (mtrh)", "VBR method 3 (mt)", "VBR method 4",
         "Reserved (7)", "CBR, two-pass", "ABR, two-pass"];
@@ -92,6 +93,9 @@ internal sealed class VbrHeader
     public int TocLength { get; private set; }
 
     public uint? Quality { get; private set; }
+
+    // Gogo-no-coda writes "GOGO" where the quality belongs (as mp3guessenc reads it, tags.c).
+    public bool HasGogoSignature => Quality == GogoQuality;
 
     public bool IsTocDecreasing { get; private set; }
 
@@ -463,7 +467,7 @@ internal sealed class VbrHeader
 
         if (Quality is { } quality)
         {
-            node.Add(Field("Quality", xingEnd - 4, 4, Number(quality)));
+            node.Add(Field("Quality", xingEnd - 4, 4, HasGogoSignature ? "\"GOGO\", which Gogo writes instead of a quality" : Number(quality)));
         }
 
         return node;
@@ -522,7 +526,12 @@ internal sealed class VbrHeader
         int presetSurround = UInt16At(p + 26);
         int surround = (presetSurround >> 11) & 7;
         node.Add(Field("Surround", 26, 2, surround < Surround.Length ? Surround[surround] : $"Reserved ({Number(surround)})"));
-        node.Add(Field("Preset", 26, 2, PresetName(presetSurround & 0x7FF)));
+        Node preset = node.Add(Field("Preset", 26, 2, PresetName(presetSurround & 0x7FF)));
+        if ((presetSurround & 0x7FF) == 0 && AltPreset(method, b[p + 10], flags, bitrate) is { } altPreset)
+        {
+            preset.Add(Field("Settings Match", 26, 2,
+                $"{altPreset}; LAME 3.90 to 3.92 leave the preset out, but its VBR method, lowpass, ATH type and nspsytune flags are the ones this tag holds"));
+        }
 
         node.Add(Field("Music Length", 28, 4, $"{Number(MusicLength)} bytes"));
         Node musicCrcNode = node.Add(Field("Music CRC", 32, 2, $"0x{StoredMusicCrc:X4}"));
@@ -559,6 +568,33 @@ internal sealed class VbrHeader
         }
 
         Node Field(string name, int offset, int length, string? value) => new(name, frameOffset + p + offset, length, value);
+    }
+
+    // The --alt-preset whose settings LAME 3.90 to 3.92 wrote, where the tag holds no preset (3.93
+    // added it). Each preset sets nspsytune; the VBR ones and insane also nssafejoint, a fixed
+    // lowpass (whatever the sample rate) and their ATH type, the ABR and CBR ones ATH type 2,
+    // which nspsytune alone does not set. Checked on encodes of the 3.90, 3.91 and 3.92 releases;
+    // 3.90.2 and 3.90.3, HydrogenAudio's releases of the 3.90 line, are not covered.
+    private string? AltPreset(int method, byte lowpass, byte flags, byte bitrate)
+    {
+        if (LameEncoder.TrimEnd(' ') is not ("LAME3.90" or "LAME3.91" or "LAME3.92") || (flags & 0x10) == 0)
+        {
+            return null;
+        }
+
+        bool safeJoint = (flags & 0x20) != 0;
+        int ath = flags & 15;
+        return (method, lowpass, ath) switch
+        {
+            (3, 190, 4) when safeJoint => "--alt-preset standard",
+            (4, 190, 4) when safeJoint => "--alt-preset fast standard",
+            (3, 195, 2) when safeJoint => "--alt-preset extreme",
+            (4, 195, 2) when safeJoint => "--alt-preset fast extreme",
+            (1, 205, 2) when safeJoint && bitrate == 255 => "--alt-preset insane",
+            (2, _, 2) when bitrate is > 0 and < 255 => $"--alt-preset {Number(bitrate)}",
+            (1, _, 2) when bitrate is > 0 and < 255 => $"--alt-preset cbr {Number(bitrate)}",
+            _ => null,
+        };
     }
 
     private static string PresetName(int value) => value switch
