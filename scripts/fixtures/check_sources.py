@@ -17,8 +17,10 @@ import check_mp3pro_samples
 import conformance_mpeg_audio
 import downloads
 import fhg_tool
+import gogo_tool
 import helix_tool
 import mctoolamed_tool
+import old_lame_tool
 import xing_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -39,6 +41,9 @@ def sources():
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
     yield "bladeenc-0.94.2-src-stable.tar.gz", blade_tool.SHA256, blade_tool.ADDRESSES
     yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
+    yield "gogo3.12.zip", gogo_tool.SHA256, gogo_tool.ADDRESSES
+    for version, digest in old_lame_tool.RELEASES.items():
+        yield f"lame-{version}.tar.gz", digest, old_lame_tool.addresses(version)
 
 
 def main():
@@ -67,6 +72,18 @@ def main():
                 print(f"{name}: {address} {problem}")
                 path.unlink(missing_ok=True)
     note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
+    # LAME 3.94 beta 1 is a tree of files in svn, checked by its digest.
+    with tempfile.TemporaryDirectory() as temp:
+        checked += 1
+        tree = pathlib.Path(temp)
+        try:
+            old_lame_tool.fetch_tree(old_lame_tool.BETA_URL, tree)
+            digest = old_lame_tool.tree_digest(tree)
+        except OSError as error:
+            digest = f"unreachable ({error})"
+        if digest != old_lame_tool.BETA_TREE_SHA256:
+            problems += 1
+            print(f"lame3_94beta: {old_lame_tool.BETA_URL} holds tree digest {digest}")
     print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 
