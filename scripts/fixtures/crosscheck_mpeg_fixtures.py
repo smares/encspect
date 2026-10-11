@@ -360,8 +360,17 @@ def expected_mpg123(tag):
 
 
 def frames_after_tag(manifest):
+    """The complete frames of the tag's stream after its frame, up to a change of version or sample
+    rate, where mp3guessenc stops checking the music CRC."""
     if "frames" in manifest:
-        return [(f["offset"], f["length"]) for f in manifest["frames"][1:] if not f.get("truncated")]
+        stream = [manifest["frames"][0]["fields"][k] for k in ("Header/Version", "Header/Sample Rate")]
+        frames = []
+        for f in manifest["frames"][1:]:
+            if [f["fields"][k] for k in ("Header/Version", "Header/Sample Rate")] != stream:
+                break
+            if not f.get("truncated"):
+                frames.append((f["offset"], f["length"]))
+        return frames
     return [tuple(f) for f in manifest.get("ffprobe_packets", [])]
 
 
@@ -419,7 +428,9 @@ def check_vbr_header(path, manifest):
     if ffmpeg_reads(tag) and not tag["truncated"] and not manifest.get("encoder", {}).get("free_format"):
         stream = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)],
                                            capture_output=True, text=True, check=True).stdout)["streams"][0]
-        rate, mpeg1 = int(stream["sample_rate"]), rate_is_mpeg1(int(stream["sample_rate"]))
+        # ffprobe reports the rate of the last stream of joined files, but reads the tag with its own.
+        rate = int(manifest["frames"][0]["fields"]["Header/Sample Rate"].split()[0]) if "frames" in manifest else int(stream["sample_rate"])
+        mpeg1 = rate_is_mpeg1(rate)
         # ffmpeg drops the frame count of a file much longer than the header's byte count, as
         # "invalid concatenated file" (mp3dec.c, mp3_parse_info_tag).
         size = len(data) - tag["frame_offset"] - 4
@@ -598,7 +609,11 @@ def check_statistics(path, manifest):
     regions = [r for r in manifest["regions"] if "statistics" in r]
     if guessenc_counts_like_us(path, manifest):
         problems += guessenc_problems(guessenc_stream(path), regions[0]["statistics"], stream_stats.exact(region_infos(manifest, regions[0])))
-    consistent = not any(f["code"] in ("mpeg.vbr-frame-count-mismatch", "mpeg.vbr-header-mid-stream") for f in manifest["findings"])
+    # Decoders play the frames of a joined stream too, and differ on a truncated last frame, which
+    # ffmpeg decodes as far as it goes and mpg123 leaves out.
+    consistent = not any(f["code"] in ("mpeg.vbr-frame-count-mismatch", "mpeg.vbr-header-mid-stream", "mpeg.stream-changed")
+                         for f in manifest["findings"])
+    truncated = any(f["code"] == "mpeg.frame-truncated" for f in manifest["findings"])
     for region in regions:
         count = region["statistics"].get("Statistics/Gapless/Sample Count")
         padding = int(region["statistics"].get("Statistics/Gapless/Encoder Padding", "0 samples").split()[0])
@@ -607,7 +622,7 @@ def check_statistics(path, manifest):
         if count is not None and consistent and padding >= DECODER_DELAY:
             channels = 1 if manifest["frames"][0]["fields"]["Header/Channel Mode"] == "Mono" else 2
             for decoder, samples in decoded_samples(path, channels).items():
-                if samples != int(count):
+                if samples != int(count) and not (truncated and decoder == "mpg123"):
                     problems.append(f"{decoder} decodes {samples} samples with gapless trimming, the manifest {count}")
     return problems
 

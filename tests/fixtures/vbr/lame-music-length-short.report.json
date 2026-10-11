@@ -1080,7 +1080,7 @@
                     },
                     {
                       "name": "Music Length",
-                      "value": "0 bytes",
+                      "value": "100 bytes",
                       "offset": 184,
                       "length": 4
                     },
@@ -1092,13 +1092,13 @@
                     },
                     {
                       "name": "Tag CRC",
-                      "value": "0xB73E",
+                      "value": "0x687F",
                       "offset": 190,
                       "length": 2,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0xB73E",
+                          "value": "0x687F",
                           "offset": 190,
                           "length": 2
                         }
@@ -3816,7 +3816,7 @@
       {
         "severity": "Warning",
         "code": "mpeg.music-length-short",
-        "message": "The LAME tag of 1 frame gives a music length of 0 bytes, shorter than its own frame, so the music CRC is not verified; the first at 0x0.",
+        "message": "The LAME tag of 1 frame gives a music length of 100 bytes, shorter than its own frame, so the music CRC is not verified; the first at 0x0.",
         "offset": 0,
         "length": 417
       }

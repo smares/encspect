@@ -16,21 +16,26 @@ public sealed partial class MpegAudioParser
 {
     private const int MaxClaimedName = 64;
 
-    // Encoders by what their names and claims contain, lowercase.
+    // Encoders by the words their names and claims hold, lowercase: a marker counts where no
+    // letter comes before it, and none after it but where it is a prefix (a "*"), so "Flame" does
+    // not name LAME nor "Remixing" Xing. "TwoLAME" and Helix's "LAMEH" do not name LAME.
     private static readonly (string Family, string[] Markers)[] Families =
     [
         ("TwoLAME", ["twolame"]),
-        ("Helix", ["helix", "lameh"]),
+        ("Helix", ["helix", "lameh*"]),
         ("LAME", ["lame"]),
         ("Xing", ["xing"]),
-        ("BladeEnc", ["blade"]),
-        ("Shine", ["shine"]),
-        ("Gogo", ["gogo"]),
+        ("BladeEnc", ["blade*"]),
+        ("Shine", ["shine*"]),
+        ("Gogo", ["gogo*"]),
         ("Fraunhofer", ["fraunhofer", "fhg", "mp3senc", "l3enc", "mp3enc", "mp3pro"]),
         ("FFmpeg", ["ffmpeg", "lavf", "lavc"]),
     ];
 
-    [GeneratedRegex(@"LAME(?:\s*\d+bits)?(?:\s*version)?\s*(\d+\.\d+[\w.]*)", RegexOptions.IgnoreCase)]
+    private static readonly Dictionary<string, Regex> MarkerPatterns = Families.SelectMany(f => f.Markers).ToDictionary(m => m, m =>
+        new Regex(m.EndsWith('*') ? $"(?<![a-z]){m[..^1]}" : $"(?<![a-z]){m}(?![a-z])", RegexOptions.CultureInvariant));
+
+    [GeneratedRegex(@"(?<![a-z])LAME(?![a-z])(?:\s*\d+bits)?(?:\s*version)?\s*(\d+\.\d+[\w.]*)", RegexOptions.IgnoreCase)]
     private static partial Regex LameVersion();
 
     private static Node? WeighClaims(StreamState state, RegionState region, Node? encoder, IReadOnlyList<EncoderClaim> claims)
@@ -42,6 +47,12 @@ public sealed partial class MpegAudioParser
             string evidence = $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
             if (encoder is null)
             {
+                // ffmpeg's muxer writes its own version whatever encoded the stream.
+                if (claimed.SetEquals(["FFmpeg"]))
+                {
+                    continue;
+                }
+
                 List<Entry> audio = region.Entries.Where(IsAudio).ToList();
                 if (audio.Count > 0)
                 {
@@ -83,29 +94,16 @@ public sealed partial class MpegAudioParser
     private static HashSet<string> FamiliesOf(string text)
     {
         string lower = text.ToLowerInvariant();
-        var families = Families.Where(f => f.Markers.Any(m => lower.Contains(m, StringComparison.Ordinal))).Select(f => f.Family).ToHashSet();
-
-        // "TwoLAME" and Helix's "LAMEH" contain "lame" without naming LAME.
-        if (!lower.Replace("twolame", string.Empty, StringComparison.Ordinal).Replace("lameh", string.Empty, StringComparison.Ordinal).Contains("lame", StringComparison.Ordinal))
-        {
-            families.Remove("LAME");
-        }
-
-        return families;
+        return Families.Where(f => f.Markers.Any(m => MarkerPatterns[m].IsMatch(lower))).Select(f => f.Family).ToHashSet();
     }
 
     // LAME's front end writes "LAME 64bits version 3.100 (http://lame.sf.net)", named here as the
-    // LAME tag names it; ffmpeg's version names the muxer; anything else is kept as written.
+    // LAME tag names it; anything else is kept as written.
     private static string ClaimedName(string text, HashSet<string> families)
     {
         if (families.Contains("LAME") && LameVersion().Match(text) is { Success: true } match)
         {
             return $"LAME {match.Groups[1].Value}";
-        }
-
-        if (families.Contains("FFmpeg") && families.Count == 1)
-        {
-            return $"FFmpeg ({text})";
         }
 
         return text.Length > MaxClaimedName ? text[..MaxClaimedName] : text;

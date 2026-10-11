@@ -17,18 +17,24 @@
               "name": "Encoder",
               "value": "LAME 3.100",
               "offset": 156,
-              "length": 36,
+              "length": 2542,
               "children": [
                 {
                   "name": "Confidence",
                   "value": "High",
                   "offset": 156,
-                  "length": 36
+                  "length": 2542
                 },
                 {
                   "name": "Evidence",
                   "value": "LAME tag",
                   "offset": 156,
+                  "length": 36
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag at 0x9CA, which names the same encoder for the frames after it",
+                  "offset": 2662,
                   "length": 36
                 }
               ]
@@ -115,63 +121,129 @@
                 },
                 {
                   "name": "VBR Header",
+                  "value": "5 frames after the Info header at 0x0",
                   "offset": 417,
-                  "length": 4595,
+                  "length": 2089,
                   "children": [
                     {
                       "name": "Claimed Frames",
                       "value": "5",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Counted Frames",
                       "value": "5",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Claimed Bytes",
                       "value": "2506",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Counted Bytes",
                       "value": "2506",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     }
                   ]
                 },
                 {
                   "name": "Gapless",
+                  "value": "5 frames after the Info header at 0x0",
                   "offset": 417,
-                  "length": 4595,
+                  "length": 2089,
                   "children": [
                     {
                       "name": "Encoder Delay",
                       "value": "576 samples",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Encoder Padding",
                       "value": "1566 samples",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Sample Count",
                       "value": "3618",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
                     },
                     {
                       "name": "Duration",
                       "value": "0.082 s",
                       "offset": 417,
-                      "length": 4595
+                      "length": 2089
+                    }
+                  ]
+                },
+                {
+                  "name": "VBR Header",
+                  "value": "5 frames after the Info header at 0x9CA",
+                  "offset": 2923,
+                  "length": 2089,
+                  "children": [
+                    {
+                      "name": "Claimed Frames",
+                      "value": "5",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Counted Frames",
+                      "value": "5",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Claimed Bytes",
+                      "value": "2506",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Counted Bytes",
+                      "value": "2506",
+                      "offset": 2923,
+                      "length": 2089
+                    }
+                  ]
+                },
+                {
+                  "name": "Gapless",
+                  "value": "5 frames after the Info header at 0x9CA",
+                  "offset": 2923,
+                  "length": 2089,
+                  "children": [
+                    {
+                      "name": "Encoder Delay",
+                      "value": "576 samples",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Encoder Padding",
+                      "value": "1566 samples",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Sample Count",
+                      "value": "3618",
+                      "offset": 2923,
+                      "length": 2089
+                    },
+                    {
+                      "name": "Duration",
+                      "value": "0.082 s",
+                      "offset": 2923,
+                      "length": 2089
                     }
                   ]
                 }
@@ -6565,7 +6637,7 @@
       {
         "severity": "Warning",
         "code": "mpeg.vbr-header-mid-stream",
-        "message": "1 frame in the middle of a stream holds a Info header, probably where files were joined; players that only look at the first frame play it as silence. The first at 0x9CA.",
+        "message": "1 frame in the middle of a stream holds an Info header, probably where files were joined; players that only look at the first frame play it as silence. The first at 0x9CA.",
         "offset": 2506,
         "length": 417
       }

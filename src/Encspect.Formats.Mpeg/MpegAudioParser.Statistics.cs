@@ -12,9 +12,11 @@ public sealed partial class MpegAudioParser
 {
     private const long Clock = 14_112_000;
 
+    private static FrameList AllFrames(StreamState state) => new(state.Regions.SelectMany(r => r.Entries).Where(e => !e.IsGap).ToList());
+
     private static void AddStatistics(StreamState state)
     {
-        var all = new FrameList(state.Regions.SelectMany(r => r.Entries).Where(e => !e.IsGap).ToList());
+        FrameList all = AllFrames(state);
         foreach (RegionState region in state.Regions)
         {
             region.Statistics = Statistics(region.Entries, all);
@@ -80,8 +82,11 @@ public sealed partial class MpegAudioParser
             Add("Reservoir Fill Over Time", string.Join(',', seconds.Values.Select(s => Number(RoundHalfEven(s.Fill, s.Count)))));
         }
 
-        Entry headerFrame = entries.FirstOrDefault(e => e.VbrFrame is not null);
-        if (headerFrame.VbrFrame is not null)
+        // Each header's figures cover the frames it describes; where those are not all of the
+        // region's (files were joined), the node says which.
+        var regionAudio = audio.Select(e => e.Offset).ToHashSet();
+        long firstFrame = entries.First(e => !e.IsGap).Offset;
+        foreach (Entry headerFrame in entries.Where(e => e.VbrFrame is not null))
         {
             AddHeaderComparison(headerFrame, all);
         }
@@ -94,29 +99,33 @@ public sealed partial class MpegAudioParser
         {
             VbrHeader header = VbrHeader.TryRead(frame.VbrFrame!, new MpegHeader(frame.Header))!;
             List<Entry> covered = Covered(frame, frames);
-            Node? counts = header.FrameCount is null && header.ByteCount is null ? null : node.Add(new Node("VBR Header", start, length));
+            List<Entry> inside = covered.Where(e => regionAudio.Contains(e.Offset)).ToList();
+            (long from, long span) = inside.Count > 0 ? (inside[0].Offset, inside[^1].End - inside[0].Offset) : (node.Offset, node.Length);
+            string? scope = frame.Offset == firstFrame && inside.Count == audio.Count ? null
+                : $"{FramesText(covered.Count)} after the {header.Type} header at 0x{frame.Offset:X}";
+            Node? counts = header.FrameCount is null && header.ByteCount is null ? null : node.Add(new Node("VBR Header", from, span, scope));
             if (header.FrameCount is { } claimedFrames)
             {
-                counts!.Add("Claimed Frames", start, length, Number(claimedFrames));
-                counts.Add("Counted Frames", start, length, Number(covered.Count));
+                counts!.Add("Claimed Frames", from, span, Number(claimedFrames));
+                counts.Add("Counted Frames", from, span, Number(covered.Count));
             }
 
             if (header.ByteCount is { } claimedBytes)
             {
-                counts!.Add("Claimed Bytes", start, length, Number(claimedBytes));
-                counts.Add("Counted Bytes", start, length, Number(frame.Length + covered.Sum(e => e.Length)));
+                counts!.Add("Claimed Bytes", from, span, Number(claimedBytes));
+                counts.Add("Counted Bytes", from, span, Number(frame.Length + covered.Sum(e => e.Length)));
             }
 
             if (header.HasLameTag)
             {
-                Node gapless = node.Add(new Node("Gapless", start, length));
-                gapless.Add("Encoder Delay", start, length, $"{Number(header.EncoderDelay)} samples");
-                gapless.Add("Encoder Padding", start, length, $"{Number(header.EncoderPadding)} samples");
+                Node gapless = node.Add(new Node("Gapless", from, span, scope));
+                gapless.Add("Encoder Delay", from, span, $"{Number(header.EncoderDelay)} samples");
+                gapless.Add("Encoder Padding", from, span, $"{Number(header.EncoderPadding)} samples");
                 long count = covered.Sum(e => (long)new MpegHeader(e.Header).Samples) - header.EncoderDelay - header.EncoderPadding;
                 if (count >= 0)
                 {
-                    gapless.Add("Sample Count", start, length, Number(count));
-                    gapless.Add("Duration", start, length, DurationText(count * (Clock / new MpegHeader(frame.Header).SampleRate)));
+                    gapless.Add("Sample Count", from, span, Number(count));
+                    gapless.Add("Duration", from, span, DurationText(count * (Clock / new MpegHeader(frame.Header).SampleRate)));
                 }
             }
         }
@@ -124,6 +133,7 @@ public sealed partial class MpegAudioParser
 
     // Xing's and Fraunhofer's encoders count the header's own frame, LAME does not; byte counts
     // include it, and LAME's leave out what is not its own, such as a tag added between frames.
+    // A truncated last frame was written whole, so it counts.
     private static void CheckHeaderCounts(FindingCollector findings, Entry frame, FrameList all)
     {
         VbrHeader header = VbrHeader.TryRead(frame.VbrFrame!, new MpegHeader(frame.Header))!;
@@ -160,8 +170,13 @@ public sealed partial class MpegAudioParser
         }
     }
 
-    // The complete frames a VBR header describes: from its frame to the end of its stream, the next
-    // VBR header or a change of version, layer or sample rate, across gaps and tags.
+    // Whether the stream after a VBR header holds less than the header claims: its last frame is
+    // truncated, or the counts are more than the frames and bytes there.
+    private static bool IsCutShort(Entry frame, VbrHeader header, List<Entry> covered) =>
+        covered.Any(e => e.IsTruncated) || header.FrameCount > covered.Count + 1 || header.ByteCount > frame.Length + covered.Sum(e => e.Length);
+
+    // The frames a VBR header describes: from its frame to the end of its stream, the next VBR
+    // header or a change of version, layer or sample rate, across gaps and tags.
     private static List<Entry> Covered(Entry headerFrame, FrameList all)
     {
         var header = new MpegHeader(headerFrame.Header);
@@ -176,10 +191,7 @@ public sealed partial class MpegAudioParser
                 break;
             }
 
-            if (!frame.IsTruncated)
-            {
-                covered.Add(frame);
-            }
+            covered.Add(frame);
         }
 
         return covered;

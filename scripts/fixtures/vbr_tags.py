@@ -29,7 +29,7 @@ METHODS = {0: "Unknown", 1: "CBR", 2: "ABR", 3: "VBR method 1 (rh)", 4: "VBR met
            6: "VBR method 4", 8: "CBR, two-pass", 9: "ABR, two-pass"}
 GAIN_NAMES = {0: "Not set", 1: "Radio", 2: "Audiophile"}
 GAIN_ORIGINATORS = {0: "Not set", 1: "Set by artist", 2: "Set by user", 3: "Determined automatically", 4: "Simple RMS average"}
-STEREO_MODES = ["Mono", "Stereo", "Dual channel", "Joint stereo", "Forced MS stereo", "Auto", "Intensity stereo", "Undefined"]
+STEREO_MODES = ["Mono", "Stereo", "Dual channel", "Joint stereo", "Forced mid/side stereo", "Auto", "Intensity stereo", "Undefined"]
 SOURCE_RATES = ["32 kHz or lower", "44.1 kHz", "48 kHz", "Higher than 48 kHz"]
 SURROUND = {0: "None", 1: "DPL", 2: "DPL2", 3: "Ambisonic"}
 NAMED_PRESETS = {1000: "R3mix", 1001: "Standard", 1002: "Extreme", 1003: "Insane", 1004: "Standard fast", 1005: "Extreme fast",
@@ -62,6 +62,14 @@ def is_old_lame(text):
     if not text.startswith("LAME3.") or len(text) < 8 or not text[6:8].isdigit():
         return False
     return text[6] < "9" and (len(text) == 8 or not text[8].isdigit())
+
+
+def is_lame_tag_start(text):
+    """The encoder strings readers take a LAME tag after: "LAME" (Helix's "LAMEH" too) and "L" with a
+    version, as LAME 3.99 alphas wrote it ("L3.99a12"), which mp3guessenc accepts (tags.c,
+    parse_xing_tag), and ffmpeg's "Lavc" and "Lavf", the only ones ffmpeg reads delay and padding
+    after (mp3dec.c, mp3_parse_info_tag)."""
+    return text.startswith(("LAME", "Lavc", "Lavf")) or re.match(r"L\d\.\d\d", text) is not None
 
 
 def printable(data):
@@ -114,7 +122,8 @@ def read_xing(frame, offset, music):
     string = frame[position : position + 9]
     if len(string) == 9 and printable(string):
         text = string.rstrip(b"\0").decode("ascii")
-        if is_old_lame(text):
+        # Text that does not start a LAME tag is kept as a string, as LAME before 3.90 wrote its version.
+        if is_old_lame(text) or not is_lame_tag_start(text):
             end = position
             while end < len(frame) and end - position < 20 and 32 <= frame[end] < 127:
                 end += 1
@@ -140,7 +149,8 @@ def read_lame(frame, start, music):
         "delay": (b[21] << 4) | (b[22] >> 4),
         "padding": ((b[22] & 15) << 8) | b[23],
         "misc": b[24],
-        "mp3_gain": struct.unpack(">b", b[25:26])[0],
+        # A sign bit and seven bits of 1.5 dB steps (Mp3 Info Tag, MP3 Gain).
+        "mp3_gain": -(b[25] & 0x7F) if b[25] & 0x80 else b[25],
         "preset_surround": struct.unpack(">H", b[26:28])[0],
         "music_length": struct.unpack(">I", b[28:32])[0],
         "music_crc": struct.unpack(">H", b[32:34])[0],
@@ -154,8 +164,9 @@ def read_lame(frame, start, music):
         zeroed[start + 34 : start + 36] = b"\0\0"
     lame["tag_crc_ffmpeg"] = crc16(bytes(zeroed))
     covered = lame["music_length"] - len(frame)
-    lame["music_length_short"] = covered < 0
-    if music is not None and 0 <= covered <= len(music):
+    # 0 means not set (Mp3 Info Tag, MusicLength).
+    lame["music_length_short"] = covered < 0 and lame["music_length"] != 0
+    if music is not None and 0 <= covered <= len(music) and lame["music_length"] != 0:
         lame["music_crc_computed"] = crc16(music[:covered])
     else:
         lame["music_crc_computed"] = None
@@ -206,8 +217,8 @@ def lame_bytes(encoder="LAME3.100", revision=0, method=1, lowpass=0, peak=0, rad
                bitrate=0, delay=576, padding=0, misc=0, mp3_gain=0, preset_surround=0, music_length=0, music_crc=0):
     """The LAME tag without its CRC, which covers the frame bytes before it."""
     return (encoder.encode().ljust(9, b"\0") + bytes([revision << 4 | method, lowpass]) + struct.pack(">IHH", peak, radio_gain, audiophile_gain)
-            + bytes([flags, bitrate, delay >> 4, (delay & 15) << 4 | padding >> 8, padding & 255, misc]) + struct.pack(">bHIH", mp3_gain,
-            preset_surround, music_length, music_crc))
+            + bytes([flags, bitrate, delay >> 4, (delay & 15) << 4 | padding >> 8, padding & 255, misc, 0x80 | -mp3_gain if mp3_gain < 0 else mp3_gain])
+            + struct.pack(">HIH", preset_surround, music_length, music_crc))
 
 
 def vbri_bytes(version=1, delay=0, quality=75, byte_count=0, frames=0, toc=(), toc_scale=1, entry_size=2, frames_per_entry=1):
@@ -339,7 +350,7 @@ def lame_fields(lame, quality):
         f"{p}/MP3 Gain": f"{'-' if lame['mp3_gain'] < 0 else '+'}{abs(lame['mp3_gain']) * 3 // 2}.{abs(lame['mp3_gain']) * 15 % 10} dB",
         f"{p}/Surround": SURROUND.get((lame["preset_surround"] >> 11) & 7, f"Reserved ({(lame['preset_surround'] >> 11) & 7})"),
         f"{p}/Preset": preset_text(lame["preset_surround"] & 0x7FF),
-        f"{p}/Music Length": f"{lame['music_length']} bytes",
+        f"{p}/Music Length": f"{lame['music_length']} bytes" if lame["music_length"] else "Not set",
         f"{p}/Music CRC": f"0x{lame['music_crc']:04X}",
         f"{p}/Tag CRC": f"0x{lame['tag_crc']:04X}",
         f"{p}/Tag CRC/Computed": f"0x{lame['tag_crc_computed']:04X}",
@@ -392,8 +403,10 @@ def old_preset(lame, quality):
     return None
 
 
-def findings(tag, frame_offset):
-    """The findings the analyzer reports about the tag: (code, text the message contains)."""
+def findings(tag, frame_offset, cut=True):
+    """The findings the analyzer reports about the tag: (code, text the message contains). cut says
+    whether the stream after the tag holds less than its header counts, which explains a music
+    length that runs past the end of the file."""
     result = []
     at = f"0x{frame_offset:X}"
     if tag["truncated"]:
@@ -411,11 +424,83 @@ def findings(tag, frame_offset):
                 result.append(("mpeg.lame-tag-crc-ffmpeg", at))
             else:
                 result.append(("mpeg.lame-tag-crc-mismatch", at))
-        if lame["music_length_short"]:
+        if lame["music_length"] == 0:
+            result.append(("mpeg.music-length-not-set", at))
+        elif lame["music_length_short"]:
             result.append(("mpeg.music-length-short", f"music length of {lame['music_length']} bytes"))
         elif lame["music_crc_computed"] is None:
-            result.append(("mpeg.music-crc-not-verified", at))
+            result.append(("mpeg.music-crc-not-verified", at) if cut else ("mpeg.music-length-long", f"music length of {lame['music_length']} bytes"))
         elif lame["music_crc"] != lame["music_crc_computed"]:
             # With --nogap, LAME continues the music CRC from the previous file.
             result.append(("mpeg.music-crc-nogap" if lame["flags"] & 0x80 else "mpeg.music-crc-mismatch", at))
     return result
+
+
+# --- LAME's version ---------------------------------------------------------------------------
+
+
+def lame_release(text):
+    """A LAME version as the tag (get_lame_very_short_version: "LAME3.98b", "LAME3.99r", "L3.99a12",
+    "LAME3.100") or the ancillary data (get_lame_short_version after "LAME": "LAME3.98 (beta 8)",
+    "LAME3.99.5") holds it, as a dict of major, minor, kind ("alpha", "beta", "release" for a patch
+    level above 0, "plain" without a marker), patch (or None) and whether nine bytes left no room for
+    a marker; None for anything else."""
+    raw = text.rstrip("\0")
+    match = re.fullmatch(r"(?:LAME|L(?=\d))(\d+)\.(\d+)(.*)", raw.rstrip(" "))
+    if not match:
+        return None
+    major, minor, tail = match.groups()
+    if not tail:
+        return {"major": major, "minor": minor, "kind": "plain", "patch": None, "full": len(raw) >= 9 and not raw.endswith(" ")}
+    for kind, pattern in [("release", r"\.(\d*)|r(\d*)"), ("alpha", r"a(\d*)| \(alpha(?: (\d+))?\)"), ("beta", r"b(\d*)| \(beta(?: (\d+))?\)")]:
+        marker = re.fullmatch(pattern, tail)
+        if marker:
+            digits = next((g for g in marker.groups() if g), "")
+            return {"major": major, "minor": minor, "kind": kind, "patch": int(digits) if 0 < len(digits) < 6 else None, "full": False}
+    return None
+
+
+def release_name(release):
+    version = f"LAME {release['major']}.{release['minor']}"
+    if release["kind"] == "plain":
+        return version
+    if release["kind"] == "release":
+        return f"{version}.{release['patch'] if release['patch'] is not None else 'x'}"
+    return f"{version} ({release['kind']}{'' if release['patch'] is None else ' ' + str(release['patch'])})"
+
+
+def releases_agree(tag, drained):
+    """Whether the version in the ancillary data can be the one the tag's stands for."""
+    if (tag["major"], tag["minor"]) != (drained["major"], drained["minor"]):
+        return False
+    if tag["full"] and tag["kind"] == "plain":
+        return True
+    return tag["kind"] == drained["kind"] and (tag["patch"] is None or drained["patch"] is None or tag["patch"] == drained["patch"])
+
+
+def lame_name(text):
+    """The encoder name for LAME's version text: "LAME 3.98 (beta)", "LAME 3.99.x", or as written."""
+    release = lame_release(text)
+    if release:
+        return release_name(release)
+    text = text.rstrip("\0 ")
+    if text.startswith("LAME"):
+        return f"LAME {text[4:]}" if len(text) > 4 else "LAME"
+    return f"LAME {text[1:]}"
+
+
+def tag_and_ancillary_name(tag_text, drained_text):
+    """The name from a LAME tag's version and the whole version LAME wrote into the ancillary data
+    (or None): the more specific of the two where they agree, the tag's otherwise. Also whether
+    they disagree, and whether the ancillary version is evidence too, which it is where it agrees
+    and has a marker (alpha, beta or a release's patch level)."""
+    tag = lame_release(tag_text)
+    drained = lame_release(drained_text) if drained_text else None
+    if tag is None or drained is None:
+        return lame_name(tag_text), False, False
+    if not releases_agree(tag, drained):
+        return release_name(tag), True, False
+    if drained["kind"] == "plain":
+        return release_name(tag), False, False
+    more = (drained["patch"] is not None and tag["patch"] is None) or (tag["full"] and tag["kind"] == "plain")
+    return release_name(drained if more else tag), False, True

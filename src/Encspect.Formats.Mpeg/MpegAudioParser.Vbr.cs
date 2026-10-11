@@ -34,7 +34,7 @@ public sealed partial class MpegAudioParser
         if (vbr.IsTruncated)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-truncated", node, count =>
-                $"{Frames(count, "holds", "hold")} a {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} {Article(vbr.Type)} {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
         }
 
         if (vbr.InvalidEntrySize is { } entrySize)
@@ -73,7 +73,7 @@ public sealed partial class MpegAudioParser
         if (midStream)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-mid-stream", node, count =>
-                $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} a {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
+                $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} {Article(vbr.Type)} {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
         }
 
         if (vbr.HasLameTag)
@@ -87,11 +87,19 @@ public sealed partial class MpegAudioParser
     private static void CheckMusicCrcs(StreamState state)
     {
         Dictionary<long, int> running = RunningCrcs(state);
+        FrameList? all = null;
         foreach ((Entry frame, VbrHeader vbr) in state.LameTags)
         {
             long position = frame.Offset;
             long end = frame.Offset + vbr.MusicLength;
             Node node = FindingNode(frame);
+            if (vbr.MusicLength == 0)
+            {
+                state.Findings.Add(Severity.Info, "mpeg.music-length-not-set", node, count =>
+                    $"The LAME tag of {Frames(count)} leaves the music length unset, which the tag's specification allows, so the music CRC is not verified; the first at 0x{position:X}.");
+                continue;
+            }
+
             if (end < frame.End)
             {
                 long musicLength = vbr.MusicLength;
@@ -102,8 +110,20 @@ public sealed partial class MpegAudioParser
 
             if (end > state.Blocks.End)
             {
-                state.Findings.Add(Severity.Warning, "mpeg.music-crc-not-verified", node, count =>
-                    $"The LAME tag of {Frames(count)} covers more music than the file holds after it, so the music CRC is not verified; the first at 0x{position:X}.");
+                // A stream cut short is reported by its own findings; otherwise the tag is wrong.
+                all ??= AllFrames(state);
+                if (IsCutShort(frame, vbr, Covered(frame, all)))
+                {
+                    state.Findings.Add(Severity.Info, "mpeg.music-crc-not-verified", node, count =>
+                        $"The LAME tag of {Frames(count)} covers more music than the file holds after it, which is cut short, so the music CRC is not verified; the first at 0x{position:X}.");
+                }
+                else
+                {
+                    long musicLength = vbr.MusicLength;
+                    state.Findings.Add(Severity.Warning, "mpeg.music-length-long", node, count =>
+                        $"The LAME tag of {Frames(count)} gives a music length of {Number(musicLength)} bytes, more than the file holds after it, though the stream holds every frame its header counts; the music CRC is not verified. The first at 0x{position:X}.");
+                }
+
                 continue;
             }
 
@@ -160,133 +180,327 @@ public sealed partial class MpegAudioParser
         return running;
     }
 
-    // The encoder a region's frames point to: the encoder string of a LAME tag, Fraunhofer for a
-    // VBRI header, and "LAME" with its version where LAME wrote them into ancillary data, which it
-    // does with the bits no frame uses (libmp3lame/bitstream.c, drain_into_ancillary). The
-    // ancillary data alone is low confidence; ffmpeg's tag names ffmpeg, which leaves the encoder
-    // behind it to the ancillary data. MP3 Surround is Fraunhofer's, mp3PRO encoders came from
-    // several licensees, and the OFL block is written by Fraunhofer's encoders.
+    // The encoder a region's frames point to. A VBR header names the encoder of the frames it
+    // describes (Covered: up to the next header or a change of stream), so only a header in the
+    // region's first frame names the region's encoder from its tag: a LAME tag (high confidence
+    // when its CRC holds, medium when not), Fraunhofer for a VBRI header. Where the region also
+    // holds frames that header does not describe, or later headers that name another encoder,
+    // files were joined and the name is at most medium confidence. A header further on names no
+    // more than the frames after it: the region's encoder comes from the other evidence, which a
+    // header that names the same encoder supports, or, without any, from that header with low
+    // confidence. LAME writes "LAME" and its version into the bits no frame uses
+    // (libmp3lame/bitstream.c, drain_into_ancillary): alone low confidence, together with the tag
+    // the more specific of the two versions. ffmpeg writes a LAME tag into every MP3 it muxes, with
+    // the encoder string of the stream it copies or its own: "Lavc" when libavcodec encoded, which
+    // it does with libmp3lame or libshine, and "Lavf" when it only muxed, which names no encoder.
+    // MP3 Surround is Fraunhofer's, mp3PRO encoders came from several licensees, and the OFL block
+    // is written by Fraunhofer's encoders.
     private static Node? DetectEncoder(StreamState state, RegionState region)
     {
         List<Entry> entries = region.Entries;
-        Entry tagFrame = entries.FirstOrDefault(e => e.VbrFrame is not null);
-        VbrHeader? vbr = tagFrame.VbrFrame is null ? null : VbrHeader.TryRead(tagFrame.VbrFrame, new MpegHeader(tagFrame.Header));
-        List<Node> vbrNodes = vbr?.ToNodes(tagFrame.Offset, 0, null).ToList() ?? [];
-        Node? tagNode = vbrNodes.FirstOrDefault(n => n.Name is "VBRI" or "LAME Tag" or "Encoder String");
-        string? enhancement = region.Enhancement?.Value;
-        var ancillaryEvidence = new List<Node>();
-        if (region.Enhancement is { } enhanced)
+        var headers = entries.Where(e => e.VbrFrame is not null)
+            .Select(e => new HeaderFrame(e, VbrHeader.TryRead(e.VbrFrame!, new MpegHeader(e.Header))!)).ToList();
+        var context = new EncoderContext(state, region, FindSignature(state, entries));
+        if (headers.Count == 0)
         {
-            ancillaryEvidence.Add(Evidence(enhanced, $"{enhanced.Value} signature in the ancillary data of every frame"));
+            return StreamEncoder(context);
         }
 
-        if (region.Ofl is { } ofl)
+        FrameList all = AllFrames(state);
+        Entry first = entries.First(e => !e.IsGap);
+        if (headers[0].Frame.Offset != first.Offset)
         {
-            ancillaryEvidence.Add(Evidence(ofl, "Original File Length block"));
+            Node? found = StreamEncoder(context);
+            var named = headers.Where(h => TagEncoder(h) is not null).ToList();
+            if (named.Count == 0)
+            {
+                return found;
+            }
+
+            string name = found?.Value ?? TagEncoder(named[0])!.Value.Name;
+            var same = named.Where(h => TagEncoder(h)!.Value.Name == name || FamiliesOf(name).Overlaps(FamiliesOf(TagEncoder(h)!.Value.Name))).ToList();
+            if (same.Count == 0)
+            {
+                return found;
+            }
+
+            string what = $"{TagEncoder(same[0])!.Value.What} at 0x{same[0].Frame.Offset:X}";
+            Node evidence = Evidence(same[0].TagNode, same[^1].TagNode, same.Count == 1
+                ? $"{what}, which describes only the {FramesText(Covered(same[0].Frame, all).Count)} after it"
+                : $"{what} and {Number(same.Count - 1)} more headers, which describe only the frames after them");
+            return found is null ? Encoder(name, "Low", evidence) : WithEvidence(found, evidence, null);
         }
 
-        if (vbr is { IsVbri: true })
+        HeaderFrame leading = headers[0];
+        Node? encoder = HeaderEncoder(context, leading);
+        if (encoder is null)
         {
-            string name = enhancement switch
+            return null;
+        }
+
+        var described = new HashSet<long>(headers.SelectMany(h => Covered(h.Frame, all)).Select(e => e.Offset));
+        List<Entry> audio = entries.Where(e => !e.IsGap && e.VbrFrame is null).ToList();
+        string? leadingName = TagEncoder(leading)?.Name;
+        bool joined = headers.Skip(1).Any(h => TagEncoder(h)?.Name != leadingName);
+        if (!joined && audio.All(e => described.Contains(e.Offset)))
+        {
+            // Headers without a tag (Xing's, ffmpeg's "Lavf") name nothing to agree on.
+            if (headers.Count == 1 || leadingName is null)
+            {
+                return encoder;
+            }
+
+            // Files of one encoder joined, each with its header.
+            HeaderFrame next = headers[1];
+            string what = $"{TagEncoder(next)?.What ?? next.Vbr.Type + " header"} at 0x{next.Frame.Offset:X}";
+            bool damaged = headers.Skip(1).Any(h => h.Vbr.HasLameTag && !h.Vbr.IsTagCrcValid);
+            return WithEvidence(encoder, Evidence(next.TagNode, headers[^1].TagNode, headers.Count == 2
+                ? $"{what}, which names the same encoder for the frames after it"
+                : $"{what} and {Number(headers.Count - 2)} more headers, which name the same encoder for the frames after them"), damaged ? "Medium" : null);
+        }
+
+        var inRegion = audio.Select(e => e.Offset).ToHashSet();
+        List<Entry> own = Covered(leading.Frame, all).Where(e => inRegion.Contains(e.Offset) && IsAudio(e)).ToList();
+        Node scope = own.Count > 0 ? new Node("Evidence", own[0].Offset, own[^1].End - own[0].Offset) : leading.TagNode;
+        return WithEvidence(encoder, Evidence(scope, $"The {leading.Vbr.Type} header describes only the {FramesText(Covered(leading.Frame, all).Count)} after it; the region holds {FramesText(audio.Count)}, so files were probably joined"),
+            "Medium");
+    }
+
+    // The encoder node with more evidence, spanning it too, and its confidence at most cap.
+    private static Node WithEvidence(Node encoder, Node evidence, string? cap)
+    {
+        string confidence = encoder.Children.First(c => c.Name == "Confidence").Value!;
+        if (cap == "Medium" && confidence == "High")
+        {
+            confidence = "Medium";
+        }
+
+        return Encoder(encoder.Value!, confidence, [.. encoder.Children.Where(c => c.Name == "Evidence"), evidence]);
+    }
+
+    // The encoder named by the header in the region's first frame, with the stream's evidence.
+    private static Node? HeaderEncoder(EncoderContext context, HeaderFrame header)
+    {
+        VbrHeader vbr = header.Vbr;
+        Node tagNode = header.TagNode;
+        if (vbr.IsVbri)
+        {
+            string name = context.Enhancement switch
             {
                 "MP3 Surround" => "Fraunhofer MP3 Surround encoder",
                 "mp3PRO" => "Fraunhofer mp3PRO encoder",
                 _ => "Fraunhofer",
             };
-            return Encoder(name, "High", [Evidence(tagNode!, "VBRI header"), .. ancillaryEvidence]);
+            return Encoder(name, "High", [Evidence(tagNode, "VBRI header"), .. context.AncillaryEvidence]);
         }
 
-        (long Offset, int Length, string Text)? signature = FindSignature(state, entries);
-        Node? ancillary = signature is { } found ? new Node("Evidence", found.Offset, found.Length, $"\"{found.Text}\" in ancillary data") : null;
+        if (vbr is { HasLameTag: true } && !IsFfmpeg(vbr.LameEncoder))
+        {
+            Node tagEvidence = vbr.IsTagCrcValid ? Evidence(tagNode, "LAME tag") : Evidence(tagNode, "LAME tag, whose CRC fails");
+            string confidence = vbr.IsTagCrcValid ? "High" : "Medium";
+            string text = vbr.LameEncoder.TrimEnd(' ');
+            if (text.StartsWith("LAMEH", StringComparison.Ordinal))
+            {
+                return Encoder(text.Length > 5 ? $"Helix MP3 Encoder {text[5..]}" : "Helix MP3 Encoder", confidence, tagEvidence);
+            }
+
+            LameRelease? tagged = LameRelease.Parse(vbr.LameEncoder);
+            if (tagged is not null && context.Signature is { IsCut: false } signature && LameRelease.Parse(signature.Text) is { } drained)
+            {
+                if (tagged.Agrees(drained))
+                {
+                    // The tag holds nine bytes, too few for some versions ("LAME3.99r" of 3.99.5); the
+                    // ancillary data holds LAME's whole short version. Where it has a marker, it
+                    // confirms the tag's alpha, beta or release.
+                    if (drained.Kind != "plain")
+                    {
+                        return Encoder(drained.IsMoreSpecificThan(tagged) ? drained.Name : tagged.Name, confidence, tagEvidence, context.Ancillary!);
+                    }
+                }
+                else
+                {
+                    string tagName = tagged.Name;
+                    long position = header.Frame.Offset;
+                    context.State.Findings.Add(Severity.Warning, "mpeg.lame-version-differs", FindingNode(header.Frame), count =>
+                        $"The LAME tag at 0x{position:X} names {tagName}, but the version LAME wrote into the ancillary data names {drained.Name}: the frames and the tag may come from different encoders. The tag's version is shown.");
+                }
+            }
+
+            return Encoder(tagged?.Name ?? LameName(text) ?? text, confidence, tagEvidence);
+        }
 
         if (vbr is { HasLameTag: true })
         {
-            string text = vbr.LameEncoder;
-            if (LameName(text) is { } name)
+            // libavcodec encodes MP3 only with libmp3lame or libshine, so "Lavc" supports either; a
+            // remux ("Lavf") names no encoder, and the stream's evidence stands as it would alone.
+            string text = vbr.LameEncoder.TrimEnd(' ');
+            bool encoded = text.StartsWith("Lavc", StringComparison.Ordinal);
+            Node support = Evidence(tagNode, $"LAME tag written by FFmpeg ({text})");
+            if (StreamEncoder(context) is { } behind)
             {
-                Node tagEvidence = vbr.IsTagCrcValid ? Evidence(tagNode!, "LAME tag") : Evidence(tagNode!, "LAME tag, whose CRC fails");
-                string confidence = vbr.IsTagCrcValid ? "High" : "Medium";
-
-                // A version longer than the tag's nine bytes ends in a cut-off "." there
-                // ("LAME3.90." of HydrogenAudio's 3.90.3); the padding holds it whole, as getID3 reads it.
-                if (text.EndsWith('.') && signature is { Text: var whole } && whole.Length > text.Length
-                    && whole.StartsWith(text, StringComparison.Ordinal) && whole[text.Length..].All(char.IsAsciiDigit))
+                behind = WithEvidence(behind, support, null);
+                Node confidence = behind.Children.First(c => c.Name == "Confidence");
+                if (encoded && confidence.Value == "Low" && (behind.Value == "Shine" || behind.Value!.StartsWith("LAME", StringComparison.Ordinal)))
                 {
-                    return Encoder(LameName(whole)!, confidence, tagEvidence, ancillary!);
+                    confidence.Value = "Medium";
                 }
 
-                return Encoder(name, confidence, tagEvidence);
+                return behind;
             }
 
-            bool ffmpeg = text.StartsWith("Lavc", StringComparison.Ordinal) || text.StartsWith("Lavf", StringComparison.Ordinal);
-            string writer = ffmpeg ? $"FFmpeg ({text})" : text;
-            if (ffmpeg && ancillary is not null)
-            {
-                return Encoder(SignatureName(signature!.Value.Text), "Medium", ancillary, Evidence(tagNode!, $"LAME tag written by {writer}"));
-            }
-
-            // ffmpeg encodes MP3 with libmp3lame or libshine, so Shine's traits behind its tag name Shine.
-            if (ffmpeg && TraitEncoder(region) is { Value: "Shine" } shine)
-            {
-                return Encoder("Shine", "Medium", shine.Children.Single(c => c.Name == "Evidence"), Evidence(tagNode!, $"LAME tag written by {writer}"));
-            }
-
-            return Encoder(writer, "Medium", Evidence(tagNode!, "LAME tag"));
+            return encoded ? Encoder($"FFmpeg ({text})", "Medium", Evidence(tagNode, "LAME tag")) : null;
         }
 
         if (vbr is { HasGogoSignature: true })
         {
-            Node quality = vbrNodes.First(n => n.Name is "Xing" or "Info").Children.First(c => c.Name == "Quality");
+            Node quality = header.Nodes.First(n => n.Name is "Xing" or "Info").Children.First(c => c.Name == "Quality");
             Node xing = Evidence(quality, "\"GOGO\" in the Xing header's quality field");
-            return signature is { Text: "GOGO" } ? Encoder("Gogo", "Medium", xing, ancillary!) : Encoder("Gogo", "Medium", xing);
+            return context.Signature is { Text: "GOGO" } ? Encoder("Gogo", "Medium", xing, context.Ancillary!) : Encoder("Gogo", "Medium", xing);
         }
 
-        if (vbr?.EncoderString is { } old && LameName(old) is { } oldName)
+        if (vbr.EncoderString is { } old && LameName(old) is { } oldName)
         {
-            return Encoder(oldName, "Medium", Evidence(tagNode!, "Version string after the Xing header"));
+            return Encoder(oldName, "Medium", Evidence(tagNode, "Version string after the Xing header"));
         }
 
-        if (ancillaryEvidence.Count > 0)
+        return StreamEncoder(context);
+    }
+
+    // The encoder named by the stream's own evidence, without its VBR headers.
+    private static Node? StreamEncoder(EncoderContext context)
+    {
+        if (context.AncillaryEvidence.Count > 0)
         {
-            string name = enhancement switch
+            string name = context.Enhancement switch
             {
                 "MP3 Surround" => "Fraunhofer MP3 Surround encoder",
                 "mp3PRO" => "mp3PRO encoder",
                 _ => "Fraunhofer",
             };
-            return Encoder(name, "Medium", [.. ancillaryEvidence]);
+            return Encoder(name, "Medium", [.. context.AncillaryEvidence]);
         }
 
-        return ancillary is null ? TraitEncoder(region) : Encoder(SignatureName(signature!.Value.Text), "Low", ancillary);
-
-        static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
-
-        static Node Encoder(string name, string confidence, params Node[] evidence)
-        {
-            long start = evidence.Min(e => e.Offset);
-            long end = evidence.Max(e => e.End);
-            Node node = new("Encoder", start, end - start, name);
-            node.Add("Confidence", start, end - start, confidence);
-            foreach (Node item in evidence)
-            {
-                node.Add(item);
-            }
-
-            return node;
-        }
+        return context.Signature is { } signature ? Encoder(SignatureName(signature), "Low", context.Ancillary!) : TraitEncoder(context.Region);
     }
 
-    private static string SignatureName(string text) => text == "GOGO" ? "Gogo" : LameName(text)!;
+    // What a header's tag alone names, or null: a LAME tag but ffmpeg's "Lavf", a VBRI header, or
+    // a LAME version string after the Xing header.
+    private static (string Name, string What)? TagEncoder(HeaderFrame header)
+    {
+        VbrHeader vbr = header.Vbr;
+        if (vbr.IsVbri)
+        {
+            return ("Fraunhofer", "VBRI header");
+        }
 
-    // "LAME3.100" as "LAME 3.100"; LAME 3.99 alphas wrote "L3.99" without "AME". The maintained Helix
-    // encoder writes a LAME tag with "LAMEH" and its version (hmp3 5.2.4: "LAMEH5.24"). LAME pads a
-    // short version to the field's nine bytes with spaces ("LAME3.91 ").
+        if (vbr.HasLameTag)
+        {
+            string text = vbr.LameEncoder.TrimEnd(' ');
+            if (text.StartsWith("Lavf", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            string name = text.StartsWith("Lavc", StringComparison.Ordinal) ? $"FFmpeg ({text})"
+                : text.StartsWith("LAMEH", StringComparison.Ordinal) ? (text.Length > 5 ? $"Helix MP3 Encoder {text[5..]}" : "Helix MP3 Encoder")
+                : LameRelease.Parse(text)?.Name ?? LameName(text) ?? text;
+            return (name, "LAME tag");
+        }
+
+        return vbr.EncoderString is { } old && LameName(old) is { } oldName ? (oldName, "Version string") : null;
+    }
+
+    private static bool IsFfmpeg(string text) => text.StartsWith("Lavc", StringComparison.Ordinal) || text.StartsWith("Lavf", StringComparison.Ordinal);
+
+    private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
+
+    private static Node Evidence(Node from, Node to, string text) => new("Evidence", from.Offset, to.End - from.Offset, text);
+
+    private static Node Encoder(string name, string confidence, params Node[] evidence)
+    {
+        long start = evidence.Min(e => e.Offset);
+        long end = evidence.Max(e => e.End);
+        Node node = new("Encoder", start, end - start, name);
+        node.Add("Confidence", start, end - start, confidence);
+        foreach (Node item in evidence)
+        {
+            node.Add(item);
+        }
+
+        return node;
+    }
+
+    // Whether a frame holding a VBR header follows an earlier frame of its stream: in its region,
+    // across gaps, or in an earlier region, as streams continue across tags.
+    private static bool IsMidStream(StreamState state, List<Entry> entries) =>
+        entries.Take(entries.Count - 1).Any(e => !e.IsGap) || state.Regions.Any(r => r.Entries != entries && r.Entries.Any(e => !e.IsGap));
+
+    private sealed class HeaderFrame(Entry frame, VbrHeader vbr)
+    {
+        private List<Node>? _nodes;
+
+        public Entry Frame => frame;
+
+        public VbrHeader Vbr => vbr;
+
+        public List<Node> Nodes => _nodes ??= vbr.ToNodes(frame.Offset, 0, null);
+
+        // The node that names the encoder: the VBRI header, the LAME tag or the version string, or
+        // the Xing header.
+        public Node TagNode => Nodes.FirstOrDefault(n => n.Name is "VBRI" or "LAME Tag" or "Encoder String") ?? Nodes.First(n => n.Name == "Xing");
+    }
+
+    // What the region's frames carry besides their headers: the LAME or Gogo signature in the
+    // ancillary data, and mp3PRO, MP3 Surround or an OFL block.
+    private sealed class EncoderContext
+    {
+        public EncoderContext(StreamState state, RegionState region, Signature? signature)
+        {
+            State = state;
+            Region = region;
+            Signature = signature;
+            Ancillary = signature is { } found
+                ? new Node("Evidence", found.Offset, found.Length, found.IsCut ? $"\"{found.Text}\" in ancillary data, cut off where the ancillary data ends" : $"\"{found.Text}\" in ancillary data")
+                : null;
+            if (region.Enhancement is { } enhanced)
+            {
+                AncillaryEvidence.Add(Evidence(enhanced, $"{enhanced.Value} signature in the ancillary data of every frame"));
+            }
+
+            if (region.Ofl is { } ofl)
+            {
+                AncillaryEvidence.Add(Evidence(ofl, "Original File Length block"));
+            }
+        }
+
+        public StreamState State { get; }
+
+        public RegionState Region { get; }
+
+        public Signature? Signature { get; }
+
+        public Node? Ancillary { get; }
+
+        public List<Node> AncillaryEvidence { get; } = [];
+
+        public string? Enhancement => Region.Enhancement?.Value;
+    }
+
+    // A version string in ancillary data; IsCut when it runs to the end of the data, where LAME may
+    // have run out of bits to write it whole.
+    private readonly record struct Signature(long Offset, int Length, string Text, bool IsCut);
+
+    // A signature names Gogo, or LAME with its version unless that may be cut short.
+    private static string SignatureName(Signature signature) =>
+        signature.Text == "GOGO" ? "Gogo" : signature.IsCut ? "LAME" : LameRelease.Parse(signature.Text)?.Name ?? LameName(signature.Text)!;
+
+    // "LAME3.88 (beta)" as "LAME 3.88 (beta)" where the version is not one LameRelease reads.
     private static string? LameName(string text)
     {
         text = text.TrimEnd(' ');
-        if (text.StartsWith("LAMEH", StringComparison.Ordinal))
+        if (LameRelease.Parse(text) is { } release)
         {
-            return text.Length > 5 ? $"Helix MP3 Encoder {text[5..]}" : "Helix MP3 Encoder";
+            return release.Name;
         }
 
         if (text.StartsWith("LAME", StringComparison.Ordinal))
@@ -297,12 +511,12 @@ public sealed partial class MpegAudioParser
         return text.Length >= 5 && text[0] == 'L' && char.IsAsciiDigit(text[1]) && text[2] == '.' ? $"LAME {text[1..]}" : null;
     }
 
-    // The first "LAME" with a version in the ancillary data of the region's Layer III frames, at
-    // any bit position: ancillary data starts where the main data ends, which need not be a byte
+    // The first "LAME" with a whole version in the ancillary data of the region's Layer III frames,
+    // at any bit position: ancillary data starts where the main data ends, which need not be a byte
     // boundary, and runs on into the next frame's data when that frame's main data starts later, so
-    // the pieces are searched joined. Without one, the first "LAME" alone, which LAME writes when
-    // fewer than 32 bits follow it.
-    private static (long Offset, int Length, string Text)? FindSignature(StreamState state, List<Entry> entries)
+    // the pieces are searched joined. Without one, the longest version that runs to the end of the
+    // data, then the first "LAME" alone, which LAME writes when fewer than 32 bits follow it.
+    private static Signature? FindSignature(StreamState state, List<Entry> entries)
     {
         List<MainDataRun> runs = state.Build.Runs;
         var ancillary = new AncillaryStream();
@@ -327,7 +541,7 @@ public sealed partial class MpegAudioParser
                     long from = cursor > dataStart ? cursor - 1 : cursor;
                     if (cursor != dataStart || !ancillary.EndsFrame)
                     {
-                        ancillary.Search();
+                        ancillary.Search(final: true);
                         if ((ancillary.Found ?? ancillary.Gogo) is { } found)
                         {
                             return found;
@@ -348,8 +562,8 @@ public sealed partial class MpegAudioParser
             }
         }
 
-        ancillary.Search();
-        return ancillary.Found ?? ancillary.Gogo ?? ancillary.Plain;
+        ancillary.Search(final: true);
+        return ancillary.Found ?? ancillary.Gogo ?? ancillary.Cut ?? ancillary.Plain;
     }
 
     // Ancillary bytes that follow each other in the main-data byte stream, with where each piece
@@ -364,12 +578,15 @@ public sealed partial class MpegAudioParser
         // Whether the last piece reaches the end of its frame, so the next frame's data continues it.
         public bool EndsFrame { get; private set; }
 
-        // The first "LAME" with a version, and the first without one.
-        public (long Offset, int Length, string Text)? Found { get; private set; }
+        // The first "LAME" with a whole version, the longest with a version that may be cut, and
+        // the first without one.
+        public Signature? Found { get; private set; }
 
-        public (long Offset, int Length, string Text)? Plain { get; private set; }
+        public Signature? Cut { get; private set; }
 
-        public (long Offset, int Length, string Text)? Gogo { get; private set; }
+        public Signature? Plain { get; private set; }
+
+        public Signature? Gogo { get; private set; }
 
         public void Append(byte[] data, long offset, bool endsFrame)
         {
@@ -378,7 +595,8 @@ public sealed partial class MpegAudioParser
             EndsFrame = endsFrame;
             if (_bytes.Count > SliceLength)
             {
-                Search();
+                // A version at the slice's end is found whole once the next slice follows.
+                Search(final: false);
                 Keep(LameSignature.Length + 20);
             }
         }
@@ -390,7 +608,8 @@ public sealed partial class MpegAudioParser
             EndsFrame = false;
         }
 
-        public void Search()
+        // final: the data ends here, so a version that runs to its end may be cut short.
+        public void Search(bool final)
         {
             if (_bytes.Count < LameSignature.Length)
             {
@@ -400,30 +619,36 @@ public sealed partial class MpegAudioParser
             byte[] data = _bytes.ToArray();
             if (Gogo is null && SearchFill(data, GogoSignature) is { } gogo)
             {
-                Gogo = Locate(gogo.Offset, gogo.Length, "GOGO");
+                Gogo = Locate(gogo.Offset, gogo.Length, "GOGO", false);
             }
 
-            if (Found is not null || MpegAudioParser.Search(data, 0) is not { } found)
+            if (Found is not null)
             {
                 return;
             }
 
-            var located = Locate(found.Offset, found.Length, found.Text);
-            if (found.Text.Length > LameSignature.Length)
+            (var whole, var cut, var plain) = MpegAudioParser.Search(data);
+            if (whole is { } found)
             {
-                Found = located;
+                Found = Locate(found.Offset, found.Length, found.Text, false);
             }
-            else
+
+            if (final && cut is { } partial && (Cut is null || partial.Text.Length > Cut.Value.Text.Length))
             {
-                Plain ??= located;
+                Cut = Locate(partial.Offset, partial.Length, partial.Text, true);
+            }
+
+            if (plain is { } bare)
+            {
+                Plain ??= Locate(bare.Offset, bare.Length, bare.Text, false);
             }
         }
 
-        private (long Offset, int Length, string Text) Locate(long index, int length, string text)
+        private Signature Locate(long index, int length, string text, bool isCut)
         {
             long start = FileOffset((int)index);
             long end = FileOffset((int)index + length - 1) + 1;
-            return (start, (int)(end - start), text);
+            return new Signature(start, (int)(end - start), text, isCut);
         }
 
         private long FileOffset(int index)
@@ -445,8 +670,11 @@ public sealed partial class MpegAudioParser
         }
     }
 
-    private static (long Offset, int Length, string Text)? Search(byte[] data, long offset)
+    // In data, at any bit position: the first "LAME" with a version that ends before the data does,
+    // the longest with a version that runs to the end of the data, and the first without a version.
+    private static ((long Offset, int Length, string Text)? Whole, (long Offset, int Length, string Text)? Cut, (long Offset, int Length, string Text)? Plain) Search(byte[] data)
     {
+        (long Offset, int Length, string Text)? cut = null;
         (long Offset, int Length, string Text)? plain = null;
         for (int shift = 0; shift < 8; shift++)
         {
@@ -462,19 +690,30 @@ public sealed partial class MpegAudioParser
                 }
 
                 int bits = shift + (8 * (end - start));
-                var found = (offset + start, (bits + 7) / 8, Encoding.ASCII.GetString(shifted, start, end - start));
+                var found = ((long)start, (bits + 7) / 8, Encoding.ASCII.GetString(shifted, start, end - start));
                 if (end - start > LameSignature.Length)
                 {
-                    return found;
+                    if (end < shifted.Length)
+                    {
+                        return (found, cut, plain);
+                    }
+
+                    if (cut is null || found.Item3.Length > cut.Value.Text.Length)
+                    {
+                        cut = found;
+                    }
+                }
+                else
+                {
+                    plain ??= found;
                 }
 
-                plain ??= found;
                 int next = shifted.AsSpan(start + 1).IndexOf(LameSignature);
                 start = next < 0 ? -1 : start + 1 + next;
             }
         }
 
-        return plain;
+        return (null, cut, plain);
     }
 
     // The first place pattern starts in data at any bit position: its byte index and the number of
@@ -505,4 +744,7 @@ public sealed partial class MpegAudioParser
 
         return shifted;
     }
+
+    // "an Info header", "a Xing header", "a VBRI header".
+    private static string Article(string headerType) => headerType == "Info" ? "an" : "a";
 }

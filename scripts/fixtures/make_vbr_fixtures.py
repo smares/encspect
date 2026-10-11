@@ -45,10 +45,10 @@ class VbrFixture(Fixture):
         self.headers = []
         self.extra = {}
 
-    def add_stream(self, tag_frame, audio):
+    def add_stream(self, tag_frame, audio, truncate_last=None):
         """Adds a frame holding a VBR header, then the audio frames, and records the header."""
         start = len(self.data)
-        self.add_frames([tag_frame] + audio)
+        self.add_frames([tag_frame] + audio, truncate_last=truncate_last)
         frame_bytes = bytes(self.data[start : start + tag_frame.length()])
         music = bytes(self.data[start + tag_frame.length() :])
         tag = vbr_tags.read(frame_bytes, music)
@@ -58,14 +58,15 @@ class VbrFixture(Fixture):
         tag["frame_offset"] = start
         self.layout[-len(audio) - 1]["header"] = tag
         self.headers.append(tag)
-        for code, contains in vbr_tags.findings(tag, start):
+        for code, contains in vbr_tags.findings(tag, start, cut_short(tag, self.frames[-len(audio) - 1 :])):
             self.finding(code, contains)
         return self
 
     def manifest(self):
         manifest = super().manifest()
         manifest["silent"] = self.silent
-        manifest["vbr_header"] = self.headers[0] if self.headers else None
+        # The tools read the header in the file's first frame only.
+        manifest["vbr_header"] = self.headers[0] if self.headers and self.headers[0]["frame_offset"] == self.frames[0]["offset"] else None
         manifest["detected_encoder"] = self.encoder
         manifest.update(self.extra)
         return manifest
@@ -94,7 +95,7 @@ class VbrLayer3Fixture(Layer3Fixture):
         tag["frame_offset"] = start
         self.layout[-len(audio) - 1]["header"] = tag
         self.headers.append(tag)
-        for code, contains in vbr_tags.findings(tag, start):
+        for code, contains in vbr_tags.findings(tag, start, cut_short(tag, self.frames[-len(audio) - 1 :])):
             self.finding(code, contains)
         return self
 
@@ -103,6 +104,14 @@ class VbrLayer3Fixture(Layer3Fixture):
         manifest["vbr_header"] = self.headers[0] if self.headers else None
         manifest["detected_encoder"] = self.encoder
         return manifest
+
+
+def cut_short(tag, entries):
+    """Whether the stream after a header (entries: its frame and the frames after it) holds less than
+    the header counts: a truncated frame, or fewer frames or bytes."""
+    counted = sum(e["length"] for e in entries)
+    return (any(e.get("truncated") for e in entries) or (tag.get("frames") or 0) > len(entries)
+            or (tag.get("bytes") or 0) > counted)
 
 
 def tag_end(tag):
@@ -267,7 +276,8 @@ def lame_every_field():
     f = VbrFixture("lame-every-field", "An Info header and a LAME tag with every field set to a distinctive value: revision 1, "
                    "lowpass 16 kHz, peak 0.5, radio and audiophile ReplayGain, all four encoding flags but one, delay and "
                    "padding, noise shaping 2, unwise settings, 48 kHz source, MP3 gain -3 dB, DPL2 surround and the Standard "
-                   "preset.", encoder=encoder("LAME 3.99r", "High"))
+                   "preset. \"LAME3.99r\" is a release of 3.99 with a patch level the tag has no room for.",
+                   encoder=encoder("LAME 3.99.x", "High"))
     return f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_EVERY_FIELD), audio)
 
 
@@ -371,9 +381,38 @@ def lame_mid_stream():
 @fixture
 def lame_music_length_short():
     audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
-    f = VbrFixture("lame-music-length-short", "A LAME tag whose music length is 0, shorter than its own frame, as when the "
-                   "encoder could not fill it in: the music CRC is not verified.", encoder=encoder("LAME 3.100", "High"))
+    f = VbrFixture("lame-music-length-short", "A LAME tag whose music length is 100 bytes, shorter than its own frame: the music "
+                   "CRC is not verified.", encoder=encoder("LAME 3.100", "High"))
+    return f.add_stream(xing_frame(audio, tag_id="Info", lame=dict(LAME_CBR, music_length=100), music_crc=0), audio)
+
+
+@fixture
+def lame_music_length_not_set():
+    audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-music-length-not-set", "A LAME tag whose music length is 0, which the Mp3 Info Tag specification "
+                   "defines as not set: no warning, and the music CRC is not verified.", encoder=encoder("LAME 3.100", "High"))
     return f.add_stream(xing_frame(audio, tag_id="Info", lame=dict(LAME_CBR, music_length=0), music_crc=0), audio)
+
+
+@fixture
+def lame_music_length_long():
+    audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-music-length-long", "A LAME tag whose music length runs 1000 bytes past the end of the file, though "
+                   "the stream holds every frame and byte its Info header counts: the length is wrong, and the music CRC is "
+                   "not verified.", encoder=encoder("LAME 3.100", "High"))
+    length = Frame(bitrate=128, rate=44100, mode="Joint stereo").length() * 7 + 1000
+    return f.add_stream(xing_frame(audio, tag_id="Info", lame=dict(LAME_CBR, music_length=length)), audio)
+
+
+@fixture
+def lame_truncated_last_frame():
+    audio = mpeg.stream(8, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-truncated-last-frame", "A LAME stream whose file ends 100 bytes into the last of the eight frames its "
+                   "Info header counts. The frame was written whole, so the frame count and the gapless sample count include "
+                   "it; bytes are missing, so the byte count does not match and the music CRC is not verified.",
+                   encoder=encoder("LAME 3.100", "High"), crosscheck=False)
+    f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_CBR), audio, truncate_last=100)
+    return f.finding("mpeg.frame-truncated", "100 of")
 
 
 @fixture
@@ -384,6 +423,89 @@ def lame_old_gain_reference():
                    "it against 83 dB instead of 89 dB, so the gain reads 6 dB lower than a later version's, which the report "
                    "says. The audiophile gain, set by the user, is shown as stored.", encoder=encoder("LAME 3.94", "High"))
     return f.add_stream(xing_frame(audio, lame=lame), audio)
+
+
+@fixture
+def lame_after_gap():
+    first = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    second = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-after-gap", "Two LAME files joined with 300 bytes of junk between them: the second Info frame follows "
+                   "a gap, but players that resync play it as silence all the same, so it is in the middle of the stream.",
+                   encoder=encoder("LAME 3.100", "High"), silent=False, crosscheck=False)
+    f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
+    junk = bytes(range(1, 256))[:300] + bytes(range(1, 46))
+    f.gap(junk)
+    f.finding("mpeg.sync-lost", f"{len(junk)} bytes")
+    f.add_stream(xing_frame(second, tag_id="Info", lame=LAME_CBR), second)
+    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+
+
+@fixture
+def lame_after_joined_frames():
+    first = mpeg.stream(6, bitrate=112, rate=48000, mode="Stereo")
+    second = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-after-joined-frames", "Six frames at 48 kHz without a header, then a LAME file at 44.1 kHz, as when "
+                   "files are joined: the LAME tag describes only the five frames after it, so it does not name the region's "
+                   "encoder with its own confidence, and its gapless figures say which frames they cover.",
+                   encoder=encoder("LAME 3.100", "Low"))
+    f.add_frames(first)
+    f.add_stream(xing_frame(second, tag_id="Info", lame=LAME_CBR), second)
+    f.finding("mpeg.stream-changed", "48000 Hz")
+    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+
+
+@fixture
+def lame_before_joined_frames():
+    first = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    second = mpeg.stream(6, bitrate=112, rate=48000, mode="Stereo")
+    f = VbrFixture("lame-before-joined-frames", "A LAME file at 44.1 kHz, then six frames at 48 kHz without a header: the LAME "
+                   "tag describes only the first five audio frames, so it names the region's encoder with medium confidence, "
+                   "and its gapless figures say which frames they cover.", encoder=encoder("LAME 3.100", "Medium"))
+    f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
+    f.add_frames(second)
+    return f.finding("mpeg.stream-changed", "44100 Hz")
+
+
+@fixture
+def lame_joined_other_version():
+    first = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    second = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-joined-other-version", "Two LAME files joined, the second with a LAME 3.99 tag: the region holds frames "
+                   "of two encoders, so the first tag names its encoder with medium confidence.",
+                   encoder=encoder("LAME 3.100", "Medium"))
+    f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
+    f.add_stream(xing_frame(second, tag_id="Info", lame=dict(LAME_CBR, encoder="LAME3.99r")), second)
+    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+
+
+@fixture
+def lame_tag_text():
+    audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-tag-text", "An Info header followed by other text where a LAME tag would start: only \"LAME\", "
+                   "\"L\" with a version and ffmpeg's \"Lavc\" and \"Lavf\" start one, as mp3guessenc and ffmpeg read it, so "
+                   "the text is no tag, names no encoder and gives no gapless figures.")
+    lame = vbr_tags.lame_bytes(**dict(LAME_CBR, encoder="Converted"))
+    return f.add_stream(xing_frame(audio, tag_id="Info", after_xing=b"Converted by SomeTool" + lame[9:]), audio)
+
+
+@fixture
+def lame_tag_lavf_remux():
+    audio = mpeg.stream(24, bitrate=128, rate=44100, mode="Joint stereo", original=1)
+    f = VbrFixture("lame-tag-lavf-remux", "An Info header and a LAME tag with ffmpeg's \"Lavf\", as ffmpeg -c copy writes them "
+                   "for a stream whose encoder it does not know, before 24 frames that show Xing's habits: a remux names no "
+                   "encoder, so the frames do, with low confidence and the tag as support.",
+                   encoder=encoder("Xing", "Low"))
+    lame = dict(encoder="Lavf", method=0, delay=576, padding=1566)
+    return f.add_stream(xing_frame(audio, tag_id="Info", quality=0, lame=lame), audio)
+
+
+@fixture
+def lame_tag_lavf_alone():
+    audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-tag-lavf-alone", "An Info header and a LAME tag with ffmpeg's \"Lavf\" before frames that show no "
+                   "encoder's habits: a remux names no encoder, and nothing else does.")
+    lame = dict(encoder="Lavf", method=0, delay=576, padding=1566)
+    return f.add_stream(xing_frame(audio, tag_id="Info", quality=0, lame=lame), audio)
 
 
 # The Info frame of an MPEG-1 joint stereo frame at 128 kbps holds 381 bytes after its side
@@ -525,7 +647,8 @@ def signature_frames(count, signature, granule_bits):
 @fixture
 def lame_signature():
     f = VbrFixture("lame-signature", "No VBR header, but every frame's ancillary data starts with \"LAME3.99r\" on a byte "
-                   "boundary, as LAME pads unused bits.", encoder=encoder("LAME 3.99r", "Low"))
+                   "boundary, as LAME pads unused bits; the 3.99 release whose patch level that does not say.",
+                   encoder=encoder("LAME 3.99.x", "Low"))
     f.extra["mp3guessenc_encoder_string"] = "LAME3.99r"
     return f.add_frames(signature_frames(6, b"LAME3.99r", 2))
 
@@ -534,7 +657,7 @@ def lame_signature():
 def lame_signature_tsse():
     f = VbrFixture("lame-signature-tsse", "LAME's version in ancillary data and in an ID3v2.3 TSSE frame, as LAME writes it with "
                    "tags: the frames and the tag agree, which together make medium confidence.",
-                   encoder=encoder("LAME 3.99r", "Medium"))
+                   encoder=encoder("LAME 3.99.x", "Medium"))
     f.extra["mp3guessenc_encoder_string"] = "LAME3.99r"
     f.tag("ID3v2", mpeg.id3v2("Signed", extra_frames=mpeg.tsse_frame("LAME 32bits version 3.99.5 (http://lame.sf.net)")))
     return f.add_frames(signature_frames(6, b"LAME3.99r", 2))
@@ -568,6 +691,59 @@ def lame_signature_across_frames():
     f.extra["mp3guessenc_encoder_string"] = None
     frames = [ancillary_frame(2, tail=b"LAM"), ancillary_frame(0, lead=b"E3.100")] + [ancillary_frame(0) for _ in range(4)]
     return f.add_frames(frames)
+
+
+@fixture
+def lame_signature_cut():
+    f = VbrFixture("lame-signature-cut", "No VBR header; only the last frame's ancillary data holds LAME's version, and it ends "
+                   "with the data after \"LAME3.10\", where LAME ran out of bits: the version may be cut short, so only LAME "
+                   "is named.", encoder=encoder("LAME", "Low"))
+    f.extra["mp3guessenc_encoder_string"] = "LAME3.10"
+    return f.add_frames([ancillary_frame(2) for _ in range(5)] + [ancillary_frame(2, tail=b"LAME3.10")])
+
+
+@fixture
+def lame_signature_tsse_flame():
+    f = VbrFixture("lame-signature-tsse-flame", "LAME's version in ancillary data and an ID3v2.3 TSSE frame naming \"Flame 2.5\": "
+                   "a name that only contains \"lame\" does not name LAME, so the claim does not raise the confidence and is "
+                   "reported as naming another encoder.", encoder=encoder("LAME 3.100", "Low"))
+    f.extra["mp3guessenc_encoder_string"] = "LAME3.100"
+    f.tag("ID3v2", mpeg.id3v2("Flamed", extra_frames=mpeg.tsse_frame("Flame 2.5")))
+    f.add_frames(signature_frames(6, b"LAME3.100", 2))
+    return f.finding("mpeg.encoder-claim-differs", "\"Flame 2.5\", but the stream points to LAME 3.100")
+
+
+@fixture
+def tsse_lavf_alone():
+    audio = mpeg.stream(24, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("tsse-lavf-alone", "An ID3v2.3 TSSE frame with ffmpeg's version, which its muxer writes whatever encoded "
+                   "the stream, before frames without a header that show no encoder's habits: no encoder is named.")
+    f.tag("ID3v2", mpeg.id3v2("Muxed", extra_frames=mpeg.tsse_frame("Lavf60.16.100")))
+    return f.add_frames(audio)
+
+
+# --- LAME's version in the tag and in ancillary data --------------------------------------------
+
+
+@fixture
+def lame_version_tag_and_ancillary():
+    frames = signature_frames(6, b"LAME3.98 (beta 8)", 2)
+    f = VbrFixture("lame-version-tag-and-ancillary", "A LAME tag with \"LAME3.98b\" before frames whose ancillary data holds "
+                   "\"LAME3.98 (beta 8)\", as LAME 3.98 beta 8 writes both: they agree, and the ancillary data says which beta.",
+                   encoder=encoder("LAME 3.98 (beta 8)", "High"))
+    f.extra["mp3guessenc_encoder_string"] = "LAME3.98 (beta 8)"
+    return f.add_stream(xing_frame(frames, tag_id="Info", lame=dict(LAME_CBR, encoder="LAME3.98b")), frames)
+
+
+@fixture
+def lame_version_differs():
+    frames = signature_frames(6, b"LAME3.98 (beta 8)", 2)
+    f = VbrFixture("lame-version-differs", "A LAME tag with \"LAME3.99r\" before frames whose ancillary data holds "
+                   "\"LAME3.98 (beta 8)\": the tag and the frames name different versions, so the tag's is shown and the "
+                   "report says so.", encoder=encoder("LAME 3.99.x", "High"))
+    f.extra["mp3guessenc_encoder_string"] = "LAME3.98 (beta 8)"
+    f.add_stream(xing_frame(frames, tag_id="Info", lame=dict(LAME_CBR, encoder="LAME3.99r")), frames)
+    return f.finding("mpeg.lame-version-differs", "LAME 3.99.x, but the version LAME wrote into the ancillary data names LAME 3.98 (beta 8)")
 
 
 def main():

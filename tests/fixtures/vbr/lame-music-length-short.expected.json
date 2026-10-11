@@ -1,5 +1,5 @@
 {
- "description": "A LAME tag whose music length is 0, shorter than its own frame, as when the encoder could not fill it in: the music CRC is not verified.",
+ "description": "A LAME tag whose music length is 100 bytes, shorter than its own frame: the music CRC is not verified.",
  "length": 2924,
  "crosscheck": true,
  "regions": [
@@ -82,10 +82,10 @@
     "LAME Tag/MP3 Gain": "+0.0 dB",
     "LAME Tag/Surround": "None",
     "LAME Tag/Preset": "128 kbps",
-    "LAME Tag/Music Length": "0 bytes",
+    "LAME Tag/Music Length": "100 bytes",
     "LAME Tag/Music CRC": "0x0000",
-    "LAME Tag/Tag CRC": "0xB73E",
-    "LAME Tag/Tag CRC/Computed": "0xB73E"
+    "LAME Tag/Tag CRC": "0x687F",
+    "LAME Tag/Tag CRC/Computed": "0x687F"
    }
   },
   {
@@ -177,7 +177,7 @@
  "findings": [
   {
    "code": "mpeg.music-length-short",
-   "contains": "music length of 0 bytes"
+   "contains": "music length of 100 bytes"
   }
  ],
  "detected_encoder": {
@@ -295,7 +295,7 @@
    213
   ],
   "quality": 57,
-  "after_fields": "4c414d45332e31303001aa0000000000000000148024061e44000080000000000000b73e",
+  "after_fields": "4c414d45332e31303001aa0000000000000000148024061e44000080000000640000687f",
   "lame": {
    "offset": 156,
    "encoder": "LAME3.100",
@@ -312,11 +312,11 @@
    "misc": 68,
    "mp3_gain": 0,
    "preset_surround": 128,
-   "music_length": 0,
+   "music_length": 100,
    "music_crc": 0,
-   "tag_crc": 46910,
-   "tag_crc_computed": 46910,
-   "tag_crc_ffmpeg": 46910,
+   "tag_crc": 26751,
+   "tag_crc_computed": 26751,
+   "tag_crc_ffmpeg": 26751,
    "music_length_short": true,
    "music_crc_computed": null
   },

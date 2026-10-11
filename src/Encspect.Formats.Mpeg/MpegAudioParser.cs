@@ -253,7 +253,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         entries.Add(frame);
         if (vbr is not null)
         {
-            ReportVbrHeader(state, frame, vbr, entries.Count > 1 && !entries[^2].IsGap);
+            ReportVbrHeader(state, frame, vbr, IsMidStream(state, entries));
         }
 
         if (layer2?.Multichannel is not null)

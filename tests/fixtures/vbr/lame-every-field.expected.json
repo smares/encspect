@@ -1,5 +1,5 @@
 {
- "description": "An Info header and a LAME tag with every field set to a distinctive value: revision 1, lowpass 16 kHz, peak 0.5, radio and audiophile ReplayGain, all four encoding flags but one, delay and padding, noise shaping 2, unwise settings, 48 kHz source, MP3 gain -3 dB, DPL2 surround and the Standard preset.",
+ "description": "An Info header and a LAME tag with every field set to a distinctive value: revision 1, lowpass 16 kHz, peak 0.5, radio and audiophile ReplayGain, all four encoding flags but one, delay and padding, noise shaping 2, unwise settings, 48 kHz source, MP3 gain -3 dB, DPL2 surround and the Standard preset. \"LAME3.99r\" is a release of 3.99 with a patch level the tag has no room for.",
  "length": 4596,
  "crosscheck": true,
  "regions": [
@@ -88,8 +88,8 @@
     "LAME Tag/Preset": "Standard",
     "LAME Tag/Music Length": "4596 bytes",
     "LAME Tag/Music CRC": "0x0037",
-    "LAME Tag/Tag CRC": "0x1156",
-    "LAME Tag/Tag CRC/Computed": "0x1156",
+    "LAME Tag/Tag CRC": "0xD366",
+    "LAME Tag/Tag CRC/Computed": "0xD366",
     "LAME Tag/Music CRC/Computed": "0x0037"
    }
   },
@@ -237,7 +237,7 @@
  "gaps": [],
  "findings": [],
  "detected_encoder": {
-  "name": "LAME 3.99r",
+  "name": "LAME 3.99.x",
   "confidence": "High"
  },
  "silent": true,
@@ -351,7 +351,7 @@
    230
   ],
   "quality": 57,
-  "after_fields": "4c414d45332e39397211a0004000002e22440cd3802404d2a6fe13e9000011f400371156",
+  "after_fields": "4c414d45332e39397211a0004000002e22440cd3802404d2a68213e9000011f40037d366",
   "lame": {
    "offset": 156,
    "encoder": "LAME3.99r",
@@ -370,9 +370,9 @@
    "preset_surround": 5097,
    "music_length": 4596,
    "music_crc": 55,
-   "tag_crc": 4438,
-   "tag_crc_computed": 4438,
-   "tag_crc_ffmpeg": 4438,
+   "tag_crc": 54118,
+   "tag_crc_computed": 54118,
+   "tag_crc_ffmpeg": 54118,
    "music_length_short": false,
    "music_crc_computed": 55
   },
