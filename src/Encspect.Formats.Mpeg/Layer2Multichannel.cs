@@ -85,8 +85,15 @@ internal sealed class Layer2Multichannel
 
     public int ScfsiStart { get; private set; }
 
+    // Whether the multichannel header and its CRC lie within the base frame.
+    public bool HeaderFits { get; private set; }
+
+    // Whether n_ad_bytes declares more MPEG-1 ancillary data than the frame holds after the
+    // multichannel header and CRC; the multichannel data then ends after the CRC.
+    public bool HasAncillaryOverflow { get; private set; }
+
     // Whether the side information lies within the base frame, so its CRC can be checked.
-    public bool Fits => SideInfoEnd <= End;
+    public bool Fits => SideInfoEnd <= End && !HasAncillaryOverflow;
 
     public bool IsCrcValid => Fits && StoredCrc == ComputedCrc;
 
@@ -141,7 +148,9 @@ internal sealed class Layer2Multichannel
         mc.CrcBit = bits.Position;
         mc.StoredCrc = bits.Read(16);
         int statusStart = bits.Position;
-        mc.End = Math.Max(end - (8 * mc.AncillaryBytes), start);
+        mc.HeaderFits = statusStart <= end;
+        mc.HasAncillaryOverflow = end - (8 * mc.AncillaryBytes) < statusStart;
+        mc.End = Math.Max(end - (8 * mc.AncillaryBytes), Math.Min(statusStart, end));
 
         (int channels, int tcBits, int dynBits, int predictionRow) = Shapes[mc.Surround][mc.Center & 1];
         int tcSelect = bits.Read(1);
@@ -302,6 +311,11 @@ internal sealed class Layer2Multichannel
         }
 
         Node crc = node.Add(Span("CRC", fileOffset, CrcBit, CrcBit + 16, $"0x{StoredCrc:X4}"));
+        if (HasAncillaryOverflow)
+        {
+            return node;
+        }
+
         if (!Fits)
         {
             node.Add(Span("Data", fileOffset, CrcBit + 16, End, $"{(End - CrcBit - 16 + 7) / 8} bytes; the side information continues in the extension bitstream"));

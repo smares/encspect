@@ -469,7 +469,7 @@ public class MpegFixtureTests
         var blocks = new Dictionary<string, int> { ["long"] = 0, ["switch"] = 0, ["short"] = 0, ["mixed"] = 0 };
         var modes = new Dictionary<string, int>();
         var gains = new SortedDictionary<string, List<int>>(StringComparer.Ordinal);
-        string[] extensions = ["None", "Intensity stereo", "MS stereo", "MS and intensity stereo"];
+        string[] extensions = ["None", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"];
         var ancillary = new List<long>();
         long? previousFree = null;
         bool scalefacScale = false;

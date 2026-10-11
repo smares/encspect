@@ -1,0 +1,20 @@
+{
+ "description": "Junk, then two MPEG-1 Layer I mono frames at 128 kbps and 44100 Hz that end exactly at the end of the file; the second uses the forbidden bit allocation 15. A chain that short only counts where every frame holds what its header promises, so no MPEG audio is recognized.",
+ "length": 572,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "Data",
+   "offset": 0,
+   "length": 572
+  }
+ ],
+ "frames": [],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "format.unrecognized",
+   "contains": "No format parser"
+  }
+ ]
+}

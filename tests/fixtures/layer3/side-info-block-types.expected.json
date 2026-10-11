@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer III joint stereo with CRC: start, short, mixed and stop blocks next to normal ones, subblock gains, and scfsi only on channels without short blocks. Frames with MS stereo give both channels the same block type; the others mix block types (libmad rejects both otherwise). The CRC covers the side information.",
+ "description": "MPEG-1 Layer III joint stereo with CRC: start, short, mixed and stop blocks next to normal ones, subblock gains, and scfsi only on channels without short blocks. Frames with mid/side stereo give both channels the same block type; the others mix block types (libmad rejects both otherwise). The CRC covers the side information.",
  "length": 2089,
  "crosscheck": true,
  "regions": [
@@ -36,7 +36,7 @@
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
     "Header/IsProtected": "true",
-    "Header/Mode Extension": "MS stereo",
+    "Header/Mode Extension": "Mid/side stereo",
     "CRC": "0x2AD5",
     "CRC/Computed": "0x2AD5",
     "Side Info/Main Data Begin": "0 bytes",
@@ -527,7 +527,7 @@
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
     "Header/IsProtected": "true",
-    "Header/Mode Extension": "MS stereo",
+    "Header/Mode Extension": "Mid/side stereo",
     "CRC": "0x29C4",
     "CRC/Computed": "0x29C4",
     "Side Info/Main Data Begin": "0 bytes",

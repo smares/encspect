@@ -34,25 +34,25 @@ public sealed partial class MpegAudioParser
         if (vbr.IsTruncated)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-truncated", node, count =>
-                $"{Frames(count)} hold a {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} a {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
         }
 
         if (vbr.InvalidEntrySize is { } entrySize)
         {
             findings.Add(Severity.Warning, "mpeg.vbri-entry-size-invalid", node, count =>
-                $"{Frames(count)} hold a VBRI header whose TOC entries are {entrySize} bytes long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} a VBRI header whose TOC entries are {entrySize} bytes long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
         }
 
         if (vbr.VbriVersion is { } version and not 1)
         {
             findings.Add(Severity.Warning, "mpeg.vbri-version-unknown", node, count =>
-                $"{Frames(count)} hold a VBRI header of version {version}, where only version 1 is known; ffmpeg ignores the header. The first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} a VBRI header of version {version}, where only version 1 is known; ffmpeg ignores the header. The first at 0x{position:X}.");
         }
 
         if (vbr.IsTocDecreasing)
         {
             findings.Add(Severity.Warning, "mpeg.xing-toc-decreasing", node, count =>
-                $"{Frames(count)} hold a Xing TOC that decreases, so seeking by it goes backwards; the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} a Xing TOC that decreases, so seeking by it goes backwards; the first at 0x{position:X}.");
         }
 
         if (vbr.HasLameTag && !vbr.IsTagCrcValid)
@@ -73,7 +73,7 @@ public sealed partial class MpegAudioParser
         if (midStream)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-mid-stream", node, count =>
-                $"{Frames(count)} in the middle of a stream hold a {vbr.Type} header, probably where files were joined; players that only look at the first frame play them as silence. The first at 0x{position:X}.");
+                $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} a {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
         }
 
         if (vbr.HasLameTag)

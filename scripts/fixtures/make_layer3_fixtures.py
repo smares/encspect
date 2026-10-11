@@ -22,12 +22,14 @@ Manifests extend the ones from make_mpeg_fixtures.py. Per frame:
   "Ancillary Data" (bytes no frame's main data uses).
 
 The reservoir model, which the analyzer must follow: main data runs through the data of
-consecutive frames of one stream (same version, layer and sample rate), skipping headers and
-side information, and continues across junk and tags between frames; a stream change starts an
-empty reservoir. A frame's main data starts main_data_begin bytes before its own data and is
-ceil(sum of part2_3_length / 8) bytes long. Where main data starts before the stream, overlaps the
-previous frame's main data, reaches back across a gap, or does not fit the frame, the bytes are
-kept with the earlier owner and the analyzer reports a finding.
+consecutive frames of one stream (same version, layer and sample rate, and free format or not),
+skipping headers and side information, and continues across junk and tags between frames; a
+stream change starts an empty reservoir. A frame's main data starts main_data_begin bytes before
+its own data and is ceil(sum of part2_3_length / 8) bytes long. Where main data starts before the
+stream, overlaps the previous frame's main data, reaches back across a gap, or does not fit the
+frame, the bytes are kept with the earlier owner and the analyzer reports a finding. So it does
+where main_data_begin and the frame's length together exceed the length of a frame at the highest
+bitrate (bitrate_index 14) at the stream's sample rate, the decoder buffer ISO/IEC 11172-3 sets.
 
 The Huffman code of the pair (0, 0) for each table is in ZERO_PAIR_CODE (Table B.7). Where the
 regions of a granule use different tables, every table of the granule has the same (0, 0) code,
@@ -325,7 +327,7 @@ def pack(frames, ancillary=b"\x00"):
         data = frame.main_data()
         end = start + frame.main_data_length()
         if not frame.is_rejected_by_minimp3():
-            assert start >= previous_end, f"main data of frame {frames.index(frame)} overlaps the previous frame's"
+            assert start >= previous_end or start < 0, f"main data of frame {frames.index(frame)} overlaps the previous frame's"
             assert end <= position + frame.area_length(), f"main data of frame {frames.index(frame)} does not fit"
         for i, byte in enumerate(data):
             if 0 <= start + i < position + frame.area_length():
@@ -409,7 +411,6 @@ class Layer3Fixture(Fixture):
             owner = [None] * position
             previous_end = 0
             ancillary_after = []
-            audio_frames = 0
             for k, (frame, entry) in enumerate(chain):
                 area_start, area_end = starts[k], starts[k] + area_length(frame)
                 begin = area_start - main_data_begin(frame)
@@ -419,16 +420,16 @@ class Layer3Fixture(Fixture):
                     reach = 511 if frame.mpeg1() else 255
                     entry["fields"]["Side Info/Reservoir Fill"] = f"{min(entry['reservoir'], reach)} bytes"
                     entry["side_info"] = frame.raw_side_info()
-                    if frame.main_data_begin > entry["reservoir"]:
-                        if audio_frames == 0:
-                            self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
-                        else:
-                            self.finding("mpeg.main-data-overlap", f"0x{entry['offset']:X}")
+                    if begin < 0:
+                        self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
+                    elif frame.main_data_begin > entry["reservoir"]:
+                        self.finding("mpeg.main-data-overlap", f"0x{entry['offset']:X}")
                     elif begin < area_start and crosses_gap(chain, starts, begin, k):
                         self.finding("mpeg.reservoir-across-gap", f"0x{entry['offset']:X}")
                     elif begin < area_start and any(is_header(f) and begin < starts[j] + area_length(f) for j, (f, _) in enumerate(chain[:k])):
                         self.finding("mpeg.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
-                    audio_frames += 1
+                    if 0 < frame.main_data_begin and frame.main_data_begin + frame.length() > iso_buffer(frame):
+                        self.finding("mpeg.main-data-begin-exceeds-buffer", f"0x{entry['offset']:X}")
                 if end > area_end:
                     self.finding("mpeg.main-data-overflow", f"0x{entry['offset']:X}")
                 for p in range(max(begin, previous_end, 0), min(end, area_end)):
@@ -514,13 +515,13 @@ class Layer3Fixture(Fixture):
         result = {}
         stream, previous, previous_end, key = bytearray(), None, None, None
         for frame, entry in self.layer3 + [(None, None)]:
-            if frame is None or entry.get("truncated") or key != (frame.version, frame.rate):
+            if frame is None or entry.get("truncated") or key != stream_key(frame):
                 if previous is not None:
                     result[previous] = None if previous_end is None else bytes(stream[previous_end:])
                 stream, previous, previous_end, key = bytearray(), None, None, None
                 if frame is None or entry.get("truncated"):
                     continue
-                key = (frame.version, frame.rate)
+                key = stream_key(frame)
             start = len(stream)
             stream += area(frame)
             if is_header(frame):
@@ -585,8 +586,19 @@ class Layer3Fixture(Fixture):
         return manifest
 
 
+def stream_key(frame):
+    """The analyzer's stream identity (IsSameStream) among Layer III frames."""
+    return frame.version, frame.rate, frame.bitrate is None
+
+
 def same_stream(a, b):
-    return a.version == b.version and a.rate == b.rate
+    return stream_key(a) == stream_key(b)
+
+
+def iso_buffer(frame):
+    """The length of a frame at bitrate_index 14 (320 kbps in MPEG-1, 160 kbps in MPEG-2 and 2.5) at
+    the frame's sample rate, without padding."""
+    return mpeg.frame_length(frame.version, 3, 320 if frame.mpeg1() else 160, frame.rate, 0)
 
 
 def crosses_gap(chain, starts, begin, k):
@@ -693,7 +705,7 @@ def block_types():
     f = Layer3Fixture(
         "side-info-block-types",
         "MPEG-1 Layer III joint stereo with CRC: start, short, mixed and stop blocks next to normal ones, subblock "
-        "gains, and scfsi only on channels without short blocks. Frames with MS stereo give both channels the same "
+        "gains, and scfsi only on channels without short blocks. Frames with mid/side stereo give both channels the same "
         "block type; the others mix block types (libmad rejects both otherwise). The CRC covers the side "
         "information.",
     )
@@ -728,7 +740,7 @@ def block_types():
 def mpeg2_intensity():
     f = Layer3Fixture(
         "side-info-mpeg2-intensity",
-        "MPEG-2 Layer III joint stereo at 22050 Hz with MS and intensity stereo: 9-bit scalefac_compress values from "
+        "MPEG-2 Layer III joint stereo at 22050 Hz with mid/side and intensity stereo: 9-bit scalefac_compress values from "
         "each scalefactor partition table, including the intensity stereo right channel, one granule per frame, and "
         "two private bits.",
     )
@@ -767,7 +779,7 @@ def invalid_side_info():
         "side-info-invalid",
         "MPEG-1 Layer III joint stereo with six broken frames between valid ones: big_values 300 (above 288), window "
         "switching with the reserved block type 0, the Huffman tables 4 and 14 that do not exist, scalefactors "
-        "longer than part2_3_length, and two that libmad rejects: scfsi on a channel with short blocks, and MS "
+        "longer than part2_3_length, and two that libmad rejects: scfsi on a channel with short blocks, and mid/side "
         "stereo with different block types in the two channels. Frames stay frames; each problem is reported once.",
         crosscheck=False,
         silent=False,
@@ -911,6 +923,67 @@ def reservoir_stream_change():
 
 
 @fixture
+def reservoir_before_stream_later():
+    f = Layer3Fixture(
+        "reservoir-before-stream-later",
+        "MPEG-1 Layer III stereo whose first frame starts its own main data at main_data_begin 0, and whose second "
+        "frame's main_data_begin of 500 reaches back past the start of the stream, so its main data lies entirely "
+        "before the file: it begins before the stream, as for a first frame, and overlaps nothing.",
+        silent=False,
+        guessenc=False,
+    )
+    return f.add_frames(reservoir_chain([(100, 0), (50, 500), (100, 0), (100, 0)]))
+
+
+@fixture
+def reservoir_free_to_fixed():
+    f = Layer3Fixture(
+        "reservoir-free-to-fixed",
+        "Five free-format MPEG-1 Layer III frames of 400 bytes at 44100 Hz, then 128 kbps frames at the same version "
+        "and rate whose first main_data_begin is 100. Leaving free format is a stream change, so the reservoir starts "
+        "empty and that main data begins before the stream.",
+        crosscheck=False,
+        silent=False,
+        guessenc=False,
+    )
+    free = [Layer3Frame(bitrate=None, free_length=400, rate=44100, mode="Joint stereo", main_data_begin=0,
+                        granules=stereo_granules(50 * 8 - 3)) for _ in range(5)]
+    fixed = reservoir_chain([(50, 100), (50, 0), (50, 0), (50, 0)], ancillary=b"\x00")
+    pack(free)
+    f.add_frames(free + fixed)
+    f.finding("mpeg.free-format", "400 bytes")
+    return f.finding("mpeg.stream-changed", "free format to MPEG-1 Layer III, 44100 Hz")
+
+
+@fixture
+def reservoir_iso_buffer():
+    f = Layer3Fixture(
+        "reservoir-iso-buffer",
+        "MPEG-1 Layer III stereo at 48000 Hz, where a frame at 320 kbps, the highest bitrate, is 960 bytes long: the "
+        "decoder buffer ISO/IEC 11172-3 sets. Frames at 256 kbps (768 bytes) may reach back 192 bytes; the second "
+        "frame does, the third reaches back 250, and a 320 kbps frame reaches back 10 where ISO allows none. LAME "
+        "has written such files since 3.81, and decoders accept them.",
+    )
+    specs = [(256, 100, 0), (256, 300, 192), (256, 300, 250), (320, 100, 10), (256, 100, 0)]
+    frames = [Layer3Frame(bitrate=bitrate, rate=48000, mode="Joint stereo", main_data_begin=begin,
+                          granules=stereo_granules(length * 8 - 3)) for bitrate, length, begin in specs]
+    f.add_frames(pack(frames, b"Ancillary data. "))
+    return f
+
+
+@fixture
+def reservoir_iso_buffer_mpeg2():
+    f = Layer3Fixture(
+        "reservoir-iso-buffer-mpeg2",
+        "MPEG-2 Layer III joint stereo at 22050 Hz and 128 kbps: a frame at 160 kbps, the highest MPEG-2 bitrate, is "
+        "522 bytes long, so 417-byte frames may reach back 105 bytes and padded ones 104. The second frame reaches "
+        "back 100, the third 200.",
+    )
+    return f.add_frames(reservoir_chain([(100, 0), (150, 100), (200, 200), (50, 0), (60, 0)], bitrate=128, rate=22050,
+                                        version="2"))
+
+
+@fixture
 def main_data_overflow():
     f = Layer3Fixture(
         "main-data-overflow",
@@ -925,6 +998,43 @@ def main_data_overflow():
     for frame in frames:
         frame.area[:] = bytes(len(frame.area))
     return f.add_frames(pack(frames))
+
+
+@fixture
+def lone_frame_invalid_side_info():
+    f = Layer3Fixture(
+        "lone-frame-invalid-side-info",
+        "Junk, then a single MPEG-1 Layer III frame that ends exactly at the end of the file and whose side "
+        "information gives 300 big_values pairs, more than 288. Without a chain to follow, a frame only counts where "
+        "its side information is valid, so no MPEG audio is recognized.",
+        crosscheck=False,
+        silent=False,
+        guessenc=False,
+    )
+    frame = Layer3Frame(bitrate=128, rate=44100, mode="Joint stereo",
+                        granules=[[Granule(big_values=300), Granule()], [Granule(), Granule()]])
+    f.data += junk(400, 71) + frame.bytes()
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    return f.finding("format.unrecognized", "No format parser")
+
+
+@fixture
+def free_format_no_main_data():
+    f = Layer3Fixture(
+        "free-format-no-main-data",
+        "Free-format MPEG-1 Layer III stereo frames of 36 bytes, the header and side information and nothing else, "
+        "with 37-byte frames in between: the frames without data hold no bytes of the bit reservoir, which still "
+        "runs through the others. libmad rejects frames this short (\"bad frame length\"), so only minimp3 and "
+        "mpg123 read them.",
+        crosscheck="mpg123",
+        silent=False,
+    )
+    frames = []
+    for i in range(12):
+        frames.append(Layer3Frame(bitrate=None, free_length=36, padding=i % 3 == 2, rate=44100, mode="Stereo",
+                                  granules=[[Granule(global_gain=i), Granule()], [Granule(), Granule()]]))
+    f.add_frames(pack(frames, b"\x00"))
+    return f.finding("mpeg.free-format", "36 bytes")
 
 
 # --- mp3PRO, MP3 Surround and OFL -------------------------------------------------------------------

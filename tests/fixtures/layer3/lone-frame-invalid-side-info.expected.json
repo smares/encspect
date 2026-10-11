@@ -1,0 +1,21 @@
+{
+ "description": "Junk, then a single MPEG-1 Layer III frame that ends exactly at the end of the file and whose side information gives 300 big_values pairs, more than 288. Without a chain to follow, a frame only counts where its side information is valid, so no MPEG audio is recognized.",
+ "length": 817,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "Data",
+   "offset": 0,
+   "length": 817
+  }
+ ],
+ "frames": [],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "format.unrecognized",
+   "contains": "No format parser"
+  }
+ ],
+ "silent": false
+}

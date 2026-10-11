@@ -12,10 +12,13 @@ script confirms the manifest with independent tools:
 - ffprobe finds the listed number of frames, version and sample rate.
 - mp3guessenc counts the same ancillary bytes and rate, and guesses Fraunhofer's mp3PRO encoder
   from the signature those bytes carry.
+- The side information, read at the frames ffprobe lists (make_external_mpeg_fixtures.py,
+  main_data_findings), breaks the bit reservoir's rules exactly as "findings" lists: the Thomson
+  encoder reaches back further than the decoder buffer of ISO/IEC 13818-3 allows in one file.
 
 With --analyzer, the analyzer's report on every file (encspect --ndjson) must match the manifest
 instead: frame count, version and sample rate, the mp3PRO enhancement with its ancillary bytes and
-rate, the mp3PRO encoder, and no warning or error.
+rate, the mp3PRO encoder, and no warning or error but those "findings" lists.
 
 Needs curl, ffprobe and a C compiler, which builds mp3guessenc from third_party. Usage:
 
@@ -32,6 +35,7 @@ import urllib.parse
 
 import downloads
 import guessenc_tool
+import make_external_mpeg_fixtures
 from conformance_mpeg_audio import child, walk
 from crosscheck_mpeg_fixtures import guessenc_guess
 
@@ -70,6 +74,9 @@ def tool_problems(path, sample):
         problems.append(f"mp3guessenc counts {total} bytes of ancillary data at {rate}")
     if guessenc_guess(path) != sample["mp3guessenc_guess"]:
         problems.append(f"mp3guessenc guesses {guessenc_guess(path)!r}")
+    findings = make_external_mpeg_fixtures.main_data_findings(path, make_external_mpeg_fixtures.ffprobe_packets(path), [])
+    if findings != sample.get("findings", []):
+        problems.append(f"the side information shows {findings}")
     return problems
 
 
@@ -95,7 +102,7 @@ def analyzer_problems(analyzer, path, sample):
     if encoder is None or encoder["value"] != "mp3PRO encoder":
         problems.append(f"the analyzer names the encoder {encoder and encoder['value']}")
     serious = sorted(f["code"] for f in report["findings"] if f["severity"] != "Info")
-    if serious:
+    if serious != sample.get("findings", []):
         problems.append(f"the analyzer reports {serious}")
     return problems
 

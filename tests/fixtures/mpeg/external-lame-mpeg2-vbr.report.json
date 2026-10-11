@@ -280,7 +280,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 3,
                       "length": 1
                     },
@@ -1239,7 +1239,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 211,
                       "length": 1
                     },
@@ -6906,7 +6906,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 5393,
                       "length": 1
                     },
@@ -7114,6 +7114,14 @@
         }
       ]
     },
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg.main-data-begin-exceeds-buffer",
+        "message": "3 frames reach back further for main data than the decoder buffer of ISO/IEC 11172-3 and 13818-3 allows, which holds one frame at the highest bitrate: the first at 0x2DA has a main_data_begin of 226 bytes where at most 52 are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.",
+        "offset": 734,
+        "length": 1
+      }
+    ]
   }
 ]
