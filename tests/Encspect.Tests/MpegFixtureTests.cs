@@ -225,13 +225,14 @@ public class MpegFixtureTests
             }
         }
 
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
         if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3))
         {
             Dictionary<long, Node> byOffset = frames.ToDictionary(f => f.Offset);
             // minimp3 decodes a VBR header frame as a silent frame, except in free format, where it
-            // skips it; the report shows its header instead.
+            // skips it; the report shows its header instead. It skips a truncated frame.
             Assert.Equal(
-                frames.Where(f => !IsVbrHeaderFrame(f)).Select(f => f.Offset),
+                frames.Where(f => !IsVbrHeaderFrame(f) && !truncated.Contains(f.Offset)).Select(f => f.Offset),
                 minimp3.EnumerateArray().Select(r => r.GetProperty("offset").GetInt64()).Where(o => !IsVbrHeaderFrame(byOffset[o])));
             foreach (JsonElement row in minimp3.EnumerateArray().Where(r => !IsVbrHeaderFrame(byOffset[r.GetProperty("offset").GetInt64()])))
             {
@@ -249,7 +250,8 @@ public class MpegFixtureTests
 
         if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
         {
-            CheckGuessencStatistics(guessenc, audioFrames);
+            // mp3guessenc leaves a truncated frame out of its statistics.
+            CheckGuessencStatistics(guessenc, audioFrames.Where(f => !truncated.Contains(f.Offset)).ToArray());
         }
 
         if (manifest.TryGetProperty("vbr_header_fields", out JsonElement vbrFields))
@@ -269,6 +271,12 @@ public class MpegFixtureTests
             ? vbrFindings.EnumerateArray().Select(f => f.GetProperty("code").GetString()!).ToList()
             : [];
         Assert.Equal(expectedFindings.Order(StringComparer.Ordinal), report.Findings.Where(f => IsVbrFinding(f.Code)).Select(f => f.Code).Order(StringComparer.Ordinal));
+        if (manifest.TryGetProperty("findings", out JsonElement findings))
+        {
+            List<string> codes = findings.EnumerateArray().Select(f => f.GetString()!).ToList();
+            Assert.True(codes.All(code => report.Findings.Any(f => f.Code == code)), $"Missing findings {string.Join(", ", codes)}: {Describe(report.Findings)}");
+            expectedFindings.AddRange(codes);
+        }
 
         // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives that index.
         bool hasIndex63 = manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()

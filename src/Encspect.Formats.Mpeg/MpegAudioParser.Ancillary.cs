@@ -22,6 +22,7 @@ public sealed partial class MpegAudioParser
         }
 
         scan.Close();
+        region.Ancillary = scan;
         List<Entry> audio = region.Entries.Where(IsAudio).ToList();
         if (scan.First is not { } first || audio.Count == 0)
         {

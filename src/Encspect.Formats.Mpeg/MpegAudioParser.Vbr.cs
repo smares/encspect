@@ -160,6 +160,12 @@ public sealed partial class MpegAudioParser
                 return Encoder(LameName(signature!.Value.Text)!, "Medium", ancillary, Evidence(tagNode!, $"LAME tag written by {writer}"));
             }
 
+            // ffmpeg encodes MP3 with libmp3lame or libshine, so Shine's traits behind its tag name Shine.
+            if (ffmpeg && TraitEncoder(region) is { Value: "Shine" } shine)
+            {
+                return Encoder("Shine", "Medium", shine.Children.Single(c => c.Name == "Evidence"), Evidence(tagNode!, $"LAME tag written by {writer}"));
+            }
+
             return Encoder(writer, "Medium", Evidence(tagNode!, "LAME tag"));
         }
 
@@ -179,7 +185,7 @@ public sealed partial class MpegAudioParser
             return Encoder(name, "Medium", [.. ancillaryEvidence]);
         }
 
-        return ancillary is null ? null : Encoder(LameName(signature!.Value.Text)!, "Low", ancillary);
+        return ancillary is null ? TraitEncoder(region) : Encoder(LameName(signature!.Value.Text)!, "Low", ancillary);
 
         static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
 
@@ -198,9 +204,15 @@ public sealed partial class MpegAudioParser
         }
     }
 
-    // "LAME3.100" as "LAME 3.100"; LAME 3.99 alphas wrote "L3.99" without "AME".
+    // "LAME3.100" as "LAME 3.100"; LAME 3.99 alphas wrote "L3.99" without "AME". The maintained Helix
+    // encoder writes a LAME tag with "LAMEH" and its version (hmp3 5.2.4: "LAMEH5.24").
     private static string? LameName(string text)
     {
+        if (text.StartsWith("LAMEH", StringComparison.Ordinal))
+        {
+            return text.Length > 5 ? $"Helix MP3 Encoder {text[5..]}" : "Helix MP3 Encoder";
+        }
+
         if (text.StartsWith("LAME", StringComparison.Ordinal))
         {
             return text.Length > 4 ? $"LAME {text[4..]}" : "LAME";
