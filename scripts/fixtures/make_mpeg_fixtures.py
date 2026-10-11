@@ -271,6 +271,19 @@ def id3v2(title, major=3, footer=False, extra_frames=b""):
     return tag
 
 
+def tsse_frame(text, major=3):
+    """A TSSE text frame in ISO-8859-1, "the used audio encoder and its settings" (ID3v2.3 4.2.1)."""
+    data = b"\x00" + text.encode("latin-1")
+    size = syncsafe(len(data)) if major == 4 else struct.pack(">I", len(data))
+    return b"TSSE" + size + b"\x00\x00" + data
+
+
+def id3v22(frames):
+    """An ID3v2.2 tag of (three-letter ID, text) frames in ISO-8859-1."""
+    body = b"".join(fid.encode("ascii") + struct.pack(">I", len(text) + 1)[1:] + b"\x00" + text.encode("latin-1") for fid, text in frames)
+    return b"ID3" + bytes([2, 0, 0]) + syncsafe(len(body)) + body
+
+
 def seek_frame(offset):
     return b"SEEK" + syncsafe(4) + b"\x00\x00" + struct.pack(">I", offset)
 
@@ -325,6 +338,8 @@ class Fixture:
         # Per frame, what the statistics need beyond the manifest entry; "header" is set for a
         # frame that holds a VBR header.
         self.layout = []
+        # The encoder the analyzer must name, when the fixture states one.
+        self.encoder = None
 
     def tag(self, name, data):
         self.end_audio()
@@ -405,6 +420,7 @@ class Fixture:
             "frames": self.frames,
             "gaps": self.gaps,
             "findings": self.findings,
+            **({"detected_encoder": self.encoder} if self.encoder else {}),
         }
 
     def write(self):
@@ -853,6 +869,34 @@ def channel_mode_change():
 
 
 # --- Streams with tags ------------------------------------------------------------------------
+
+
+@fixture
+def tss_names_encoder():
+    f = Fixture(
+        "id3v22-tss-names-encoder",
+        ".mp3",
+        "ID3v2.2 tag whose TSS frame says \"Xing MP3 Encoder 1.5\" before frames that show no encoder's habits: the tag "
+        "alone names the encoder, with low confidence.",
+    )
+    f.tag("ID3v2", id3v22([("TT2", "Claimed"), ("TSS", "Xing MP3 Encoder 1.5")]))
+    f.add_frames(stream(8))
+    f.encoder = {"name": "Xing MP3 Encoder 1.5", "confidence": "Low"}
+    return f
+
+
+@fixture
+def tsse_names_ffmpeg():
+    f = Fixture(
+        "id3v24-tsse-ffmpeg",
+        ".mp3",
+        "ID3v2.4 tag whose TSSE frame holds ffmpeg's version, as ffmpeg's muxer writes it, before frames that show no "
+        "encoder's habits: ffmpeg is named, with low confidence.",
+    )
+    f.tag("ID3v2", id3v2("Muxed", major=4, extra_frames=tsse_frame("Lavf58.76.100", major=4)))
+    f.add_frames(stream(8))
+    f.encoder = {"name": "FFmpeg (Lavf58.76.100)", "confidence": "Low"}
+    return f
 
 
 @fixture

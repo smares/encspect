@@ -49,7 +49,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         foreach (RegionState region in stream.Regions)
         {
             ScanAncillary(stream, region);
-            region.Encoder = DetectEncoder(stream, region);
+            region.Encoder = WeighClaims(stream, region, DetectEncoder(stream, region), context.EncoderClaims);
         }
 
         AddStatistics(stream);

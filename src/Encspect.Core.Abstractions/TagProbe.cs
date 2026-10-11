@@ -10,6 +10,10 @@ public enum Confidence
 // One reason a candidate was accepted, pointing at the bytes that support it.
 public sealed record Evidence(string Description, long Offset, long Length);
 
+// What a tag says about the software that encoded the audio (an ID3v2 TSSE frame), and the node
+// that holds it. Format parsers weigh it against what the audio itself shows.
+public sealed record EncoderClaim(string Text, Node Source, string Description);
+
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature
 // that was found but failed structural validation.
 public sealed class TagProbe
@@ -50,13 +54,16 @@ public sealed class TagProbe
     // frame), or null.
     public long? NextTagOffset { get; private init; }
 
+    public IReadOnlyList<EncoderClaim> EncoderClaims { get; private init; } = [];
+
     public static TagProbe Accept(
         Node tag,
         long signatureOffset,
         Confidence confidence,
         IReadOnlyList<Evidence> evidence,
         IReadOnlyList<Finding> findings,
-        long? nextTagOffset = null)
+        long? nextTagOffset = null,
+        IReadOnlyList<EncoderClaim>? encoderClaims = null)
     {
         ArgumentNullException.ThrowIfNull(tag);
         ArgumentNullException.ThrowIfNull(evidence);
@@ -66,7 +73,11 @@ public sealed class TagProbe
             throw new ArgumentException("An accepted tag must cover at least one byte.", nameof(tag));
         }
 
-        return new TagProbe(signatureOffset, tag, confidence, evidence, findings, null) { NextTagOffset = nextTagOffset };
+        return new TagProbe(signatureOffset, tag, confidence, evidence, findings, null)
+        {
+            NextTagOffset = nextTagOffset,
+            EncoderClaims = encoderClaims ?? [],
+        };
     }
 
     public static TagProbe Reject(long signatureOffset, string reason)
