@@ -51,9 +51,9 @@ MANIFEST = ROOT / "tests" / "conformance" / "mpeg2-audio.json"
 
 
 def addresses(manifest, name):
-    """ISO's address of a file, then the Wayback Machine's copy."""
+    """ISO's address of a file, then the Wayback Machine's copy, then the private repository's."""
     url = manifest["source"] + name
-    return [url, downloads.archived(url, manifest["archive_year"])]
+    return [url, downloads.archived(url, manifest["archive_year"]), downloads.private(f"conformance/mpeg2-audio/{name}")]
 
 
 def fetch(manifest, cache):

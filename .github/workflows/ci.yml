@@ -117,7 +117,10 @@ jobs:
           path: .cache/conformance
           key: iso-13818-4-audio-${{ hashFiles('tests/conformance/mpeg2-audio.json') }}
 
+      # The private repository's copy is the last address tried, with a read-only token.
       - name: Check the conformance manifest against the ISO streams
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/conformance_mpeg_audio.py .cache/conformance
 
       # The mp3PRO samples are commercial music, so they are fetched, checked against their SHA-256
@@ -129,6 +132,8 @@ jobs:
           key: mp3pro-samples-${{ hashFiles('tests/conformance/mp3pro-samples.json') }}
 
       - name: Check the mp3PRO manifest against the samples
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
       - uses: actions/setup-dotnet@v5
