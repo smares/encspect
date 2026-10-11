@@ -11,12 +11,16 @@ public sealed partial class MpegAudioParser
     // A short stream has too few frames to show an encoder's habits.
     private const int MinTraitFrames = 20;
 
-    private static Node? TraitEncoder(RegionState region)
+    private static Node? TraitEncoder(StreamState state, RegionState region)
     {
         List<Entry> layer3 = region.Entries.Where(e => IsAudio(e) && e.SideInfo is not null).ToList();
         if (layer3.Count >= MinTraitFrames)
         {
-            Layer3SideInfo[] infos = layer3.Select(e => Layer3SideInfo.Read(e.SideInfo!, new MpegHeader(e.Header))).ToArray();
+            Layer3SideInfo[] infos = layer3.Select((e, i) =>
+            {
+                state.CheckCancellation(i);
+                return Layer3SideInfo.Read(e.SideInfo!, new MpegHeader(e.Header));
+            }).ToArray();
             var granules = infos.SelectMany(i => i.All.Select(g => g.Info)).ToList();
             bool scaling = granules.Any(g => g.ScalefacScale.Value == 1);
             bool scfsi = infos.Any(i => i.Scfsi.Any(f => f.Value != 0));

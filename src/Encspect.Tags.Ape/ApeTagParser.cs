@@ -33,8 +33,9 @@ public sealed class ApeTagParser : ITagParser
 
     // A tag at the start of a file "must have at least a header", which only APEv2 has. The size
     // in the header covers the items and the footer if there is one, never the header itself.
-    public TagProbe? ProbeAt(ByteReader reader, long start)
+    public TagProbe? ProbeAt(TagProbeContext context, long start)
     {
+        ByteReader reader = context.Reader;
         if (!reader.MatchesAt(start, Preamble))
         {
             return null;
@@ -102,8 +103,9 @@ public sealed class ApeTagParser : ITagParser
         return builder.Build(start, end, itemsStart, itemsEnd);
     }
 
-    public TagProbe? ProbeBefore(ByteReader reader, long end)
+    public TagProbe? ProbeBefore(TagProbeContext context, long end)
     {
+        ByteReader reader = context.Reader;
         long footerStart = end - BlockSize;
         if (!reader.MatchesAt(footerStart, Preamble))
         {

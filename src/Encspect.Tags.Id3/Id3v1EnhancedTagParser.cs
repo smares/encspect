@@ -17,8 +17,9 @@ public sealed class Id3v1EnhancedTagParser : ITagParser
 
     public string? MustPrecede => "ID3v1";
 
-    public TagProbe? ProbeBefore(ByteReader reader, long end)
+    public TagProbe? ProbeBefore(TagProbeContext context, long end)
     {
+        ByteReader reader = context.Reader;
         long start = end - TagSize;
         if (!reader.MatchesAt(start, Signature))
         {

@@ -18,8 +18,9 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 - Parsers depend only on `Core.Abstractions` (parser interface, result model, byte and bit readers). They never reference each other and never reference a decoder.
 - Tag parsers (ID3, APE, Lyrics3) are separate from format parsers. The host orchestrates detection and assembles one report.
-- The result model is a node tree; every node carries a name, value, byte offset and length. Findings carry a severity and point to a node.
-- Malformed or damaged input produces findings, never an unhandled exception and never a hang. Files are read as streams, not loaded whole.
+- The result model is a node tree; every node carries a name, value, byte offset and length, and a field that does not cover whole bytes also its bit position (`Node.FromBits`). Findings carry a severity and point to a node. Trees nest at most `Node.MaxDepth` levels; deeper nesting is a finding.
+- Malformed or damaged input produces findings, never an unhandled exception and never a hang. Files are read as streams, not loaded whole. Parsers throw only `EndOfStreamException` (truncation), `InvalidDataException` and, when the analysis is canceled, `OperationCanceledException`; the host reports anything else as `parse.failed`, which is a bug, never an acceptable result.
+- One parser instance serves every analysis and thread: keep no per-call state in fields. Loops that only compute over every frame or packet check `ParseContext.CancellationToken` every few thousand iterations; reads check it already.
 - Tag detection uses position, structural validation and byte-range ownership, never a signature match alone. When candidates compete for the same bytes, the strongest evidence wins; the order APE, Lyrics3, ID3v2, ID3v1 only breaks ties. A tag that breaks its specification is reported with findings, not dropped. See "Tag detection and false positives" in the plan.
 - A frame header only counts as MPEG sync when a chain of consistent frames follows it.
 

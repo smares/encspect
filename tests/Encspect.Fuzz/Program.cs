@@ -6,7 +6,8 @@ using Encspect.Host;
 namespace Encspect.Fuzz;
 
 // Mutates the fixtures for a fixed time and analyzes every mutant, so each CI run tries inputs the
-// deterministic corrupt-file tests do not. An exception, a hang or a report whose nodes leave the
+// deterministic corrupt-file tests do not. An exception, a hang, a parser exception that the host
+// caught (parse.failed, or children that could not be built) or a report whose nodes leave the
 // file fails the run; the input is saved, and the seed and iteration reproduce it.
 internal static class Program
 {
@@ -98,6 +99,11 @@ internal static class Program
         }
 
         Report report = task.Result;
+        if (report.Findings.FirstOrDefault(f => f.Code == "parse.failed") is { } failed)
+        {
+            return failed.Message;
+        }
+
         if (report.Root.Length != input.Length)
         {
             return $"the root covers {report.Root.Length} bytes of {input.Length}.";
@@ -121,6 +127,11 @@ internal static class Program
     {
         foreach (Node child in parent.Children)
         {
+            if (child is { Name: "Error", Value: { } error } && error.StartsWith("The children could not be built", StringComparison.Ordinal))
+            {
+                return $"{error} (under {parent.Name} at {parent.Offset})";
+            }
+
             if (child.Offset < parent.Offset || child.End > parent.End)
             {
                 return $"{child.Name} [{child.Offset}, {child.End}) is outside {parent.Name} [{parent.Offset}, {parent.End}).";

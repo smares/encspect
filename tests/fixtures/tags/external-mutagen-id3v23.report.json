@@ -850,73 +850,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 1544,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 1544,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 1544,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 1545,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 1545,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 1545,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 1545,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 1546,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 1546,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 1546,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 1546,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 1546,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -929,30 +953,40 @@
                       "name": "Main Data Begin",
                       "value": "0 bytes",
                       "offset": 1547,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "0 bytes",
                       "offset": 1547,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 1548,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 1548,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0000",
                           "offset": 1548,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -960,77 +994,103 @@
                       "name": "Granule 0",
                       "offset": 1549,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1549,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "651 bits",
                               "offset": 1549,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "33",
                               "offset": 1550,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "151",
                               "offset": 1551,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "2",
                               "offset": 1552,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Start",
                               "offset": 1553,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 1553,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "25, 9",
                               "offset": 1553,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 1555,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1556,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1556,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1556,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1040,77 +1100,103 @@
                       "name": "Granule 1",
                       "offset": 1556,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1556,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "770 bits",
                               "offset": 1556,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "85",
                               "offset": 1558,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "152",
                               "offset": 1559,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "8",
                               "offset": 1560,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Short",
                               "offset": 1560,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 1561,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "29, 13",
                               "offset": 1561,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 1562,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1563,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1563,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1563,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1147,73 +1233,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 1752,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 1752,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 1752,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 1753,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 1753,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 1753,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 1753,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 1754,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 1754,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 1754,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 1754,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 1754,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1226,30 +1336,40 @@
                       "name": "Main Data Begin",
                       "value": "9 bytes",
                       "offset": 1755,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "9 bytes",
                       "offset": 1755,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 1756,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 1756,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1000",
                           "offset": 1756,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1257,77 +1377,103 @@
                       "name": "Granule 0",
                       "offset": 1757,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1757,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "664 bits",
                               "offset": 1757,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "16",
                               "offset": 1758,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "136",
                               "offset": 1759,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "5",
                               "offset": 1760,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Stop",
                               "offset": 1761,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 1761,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "31, 2",
                               "offset": 1761,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 1763,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1764,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1764,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1764,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1337,77 +1483,103 @@
                       "name": "Granule 1",
                       "offset": 1764,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1764,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "663 bits",
                               "offset": 1764,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "18",
                               "offset": 1766,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "134",
                               "offset": 1767,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "8",
                               "offset": 1768,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 1768,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "28, 31, 27",
                               "offset": 1768,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 1770,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 1771,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1771,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1771,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1771,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1444,73 +1616,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 1961,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 1961,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 1961,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 1962,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 1962,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 1962,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 1962,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 1963,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 1963,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 1963,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 1963,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 1963,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1523,30 +1719,40 @@
                       "name": "Main Data Begin",
                       "value": "31 bytes",
                       "offset": 1964,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "31 bytes",
                       "offset": 1964,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 1965,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 1965,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1111",
                           "offset": 1965,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1554,77 +1760,103 @@
                       "name": "Granule 0",
                       "offset": 1966,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1966,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "717 bits",
                               "offset": 1966,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "43",
                               "offset": 1967,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "133",
                               "offset": 1968,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "0",
                               "offset": 1969,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 1970,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "31, 27, 2",
                               "offset": 1970,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "3",
                               "offset": 1972,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "3",
                               "offset": 1972,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1973,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1973,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1973,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1634,77 +1866,103 @@
                       "name": "Granule 1",
                       "offset": 1973,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 1973,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "794 bits",
                               "offset": 1973,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "43",
                               "offset": 1975,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "132",
                               "offset": 1976,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "0",
                               "offset": 1977,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 1977,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "28, 31, 21",
                               "offset": 1977,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 1979,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 1980,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 1980,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 1980,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 1980,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1741,73 +1999,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 2170,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 2170,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 2170,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 2171,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 2171,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 2171,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 2171,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 2172,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 2172,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 2172,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 2172,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 2172,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1820,30 +2102,40 @@
                       "name": "Main Data Begin",
                       "value": "30 bytes",
                       "offset": 2173,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "30 bytes",
                       "offset": 2173,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 2174,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 2174,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1000",
                           "offset": 2174,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1851,77 +2143,103 @@
                       "name": "Granule 0",
                       "offset": 2175,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2175,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "627 bits",
                               "offset": 2175,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "17",
                               "offset": 2176,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "136",
                               "offset": 2177,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "6",
                               "offset": 2178,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2179,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "27, 31, 26",
                               "offset": 2179,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2181,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2181,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 2182,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2182,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2182,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -1931,77 +2249,103 @@
                       "name": "Granule 1",
                       "offset": 2182,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2182,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "698 bits",
                               "offset": 2182,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "43",
                               "offset": 2184,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "134",
                               "offset": 2185,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "5",
                               "offset": 2186,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2186,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "31, 27, 2",
                               "offset": 2186,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "3",
                               "offset": 2188,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "3",
                               "offset": 2189,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 2189,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2189,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2189,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2038,73 +2382,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 2379,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 2379,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 2379,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 2380,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 2380,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 2380,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 2380,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 2381,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 2381,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 2381,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 2381,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 2381,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -2117,30 +2485,40 @@
                       "name": "Main Data Begin",
                       "value": "52 bytes",
                       "offset": 2382,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "52 bytes",
                       "offset": 2382,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 2383,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 2383,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1010",
                           "offset": 2383,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -2148,77 +2526,103 @@
                       "name": "Granule 0",
                       "offset": 2384,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2384,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "672 bits",
                               "offset": 2384,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "18",
                               "offset": 2385,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "134",
                               "offset": 2386,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "5",
                               "offset": 2387,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2388,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "28, 31, 27",
                               "offset": 2388,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2390,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2390,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 2391,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2391,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2391,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2228,77 +2632,103 @@
                       "name": "Granule 1",
                       "offset": 2391,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2391,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "742 bits",
                               "offset": 2391,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "43",
                               "offset": 2393,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "133",
                               "offset": 2394,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "0",
                               "offset": 2395,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2395,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "28, 31, 21",
                               "offset": 2395,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2397,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2398,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 2398,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2398,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2398,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2335,73 +2765,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 2588,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 2588,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 2588,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 2589,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 2589,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 2589,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 2589,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 2590,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 2590,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 2590,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 2590,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 2590,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -2414,30 +2868,40 @@
                       "name": "Main Data Begin",
                       "value": "63 bytes",
                       "offset": 2591,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "63 bytes",
                       "offset": 2591,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 2592,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 2592,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1000",
                           "offset": 2592,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -2445,77 +2909,103 @@
                       "name": "Granule 0",
                       "offset": 2593,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2593,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "507 bits",
                               "offset": 2593,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "15",
                               "offset": 2594,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "144",
                               "offset": 2595,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "13",
                               "offset": 2596,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2597,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "26, 30, 24",
                               "offset": 2597,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2599,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2599,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "true",
                               "offset": 2600,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2600,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2600,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2525,77 +3015,103 @@
                       "name": "Granule 1",
                       "offset": 2600,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2600,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "517 bits",
                               "offset": 2600,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "14",
                               "offset": 2602,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "148",
                               "offset": 2603,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "13",
                               "offset": 2604,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2604,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "24, 29, 24",
                               "offset": 2604,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2606,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2607,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "true",
                               "offset": 2607,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2607,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2607,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2632,73 +3148,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 2797,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 2797,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 2797,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 2798,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 2798,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 2798,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 2798,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 2799,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 2799,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 2799,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 2799,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 2799,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -2711,30 +3251,40 @@
                       "name": "Main Data Begin",
                       "value": "123 bytes",
                       "offset": 2800,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "123 bytes",
                       "offset": 2800,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 2801,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 2801,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1000",
                           "offset": 2801,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -2742,77 +3292,103 @@
                       "name": "Granule 0",
                       "offset": 2802,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2802,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "577 bits",
                               "offset": 2802,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "17",
                               "offset": 2803,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "136",
                               "offset": 2804,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "8",
                               "offset": 2805,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2806,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "28, 31, 26",
                               "offset": 2806,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2808,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2808,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 2809,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2809,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2809,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2822,77 +3398,103 @@
                       "name": "Granule 1",
                       "offset": 2809,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 2809,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "522 bits",
                               "offset": 2809,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "15",
                               "offset": 2811,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "141",
                               "offset": 2812,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "9",
                               "offset": 2813,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 2813,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "26, 30, 26",
                               "offset": 2813,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 2815,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 2816,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "true",
                               "offset": 2816,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 2816,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 2816,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -2935,73 +3537,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 3006,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 3006,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 3006,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 3007,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 3007,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 3007,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 3007,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 3008,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 3008,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 3008,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 3008,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 3008,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -3014,30 +3640,40 @@
                       "name": "Main Data Begin",
                       "value": "173 bytes",
                       "offset": 3009,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "173 bytes",
                       "offset": 3009,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 3010,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 3010,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1000",
                           "offset": 3010,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -3045,77 +3681,103 @@
                       "name": "Granule 0",
                       "offset": 3011,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 3011,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "491 bits",
                               "offset": 3011,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "16",
                               "offset": 3012,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "141",
                               "offset": 3013,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "13",
                               "offset": 3014,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Normal",
                               "offset": 3015,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "26, 30, 25",
                               "offset": 3015,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 15
                             },
                             {
                               "name": "Region 0 Count",
                               "value": "1",
                               "offset": 3017,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
                             },
                             {
                               "name": "Region 1 Count",
                               "value": "1",
                               "offset": 3017,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 3018,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 3018,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 3018,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -3125,77 +3787,103 @@
                       "name": "Granule 1",
                       "offset": 3018,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 3018,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "617 bits",
                               "offset": 3018,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "44",
                               "offset": 3020,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "136",
                               "offset": 3021,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "0",
                               "offset": 3022,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Start",
                               "offset": 3022,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 3023,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "30, 3",
                               "offset": 3023,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 3024,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 3025,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 3025,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 3025,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -3238,73 +3926,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 3215,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "III",
                       "offset": 3215,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "false",
                       "offset": 3215,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "64 kbps",
                       "offset": 3216,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "44100 Hz",
                       "offset": 3216,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "true",
                       "offset": 3216,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 3216,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 3217,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 3217,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 3217,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "true",
                       "offset": 3217,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 3217,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -3317,30 +4029,40 @@
                       "name": "Main Data Begin",
                       "value": "222 bytes",
                       "offset": 3218,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Reservoir Fill",
                       "value": "222 bytes",
                       "offset": 3218,
-                      "length": 2
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 9
                     },
                     {
                       "name": "Private Bits",
                       "value": "0",
                       "offset": 3219,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
                     },
                     {
                       "name": "SCFSI",
                       "offset": 3219,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0000",
                           "offset": 3219,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -3348,77 +4070,103 @@
                       "name": "Granule 0",
                       "offset": 3220,
                       "length": 8,
+                      "bitOffset": 2,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 3220,
                           "length": 8,
+                          "bitOffset": 2,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "1135 bits",
                               "offset": 3220,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "92",
                               "offset": 3221,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "152",
                               "offset": 3222,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "13",
                               "offset": 3223,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Short",
                               "offset": 3224,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 3224,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "29, 24",
                               "offset": 3224,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 3226,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "false",
                               "offset": 3227,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 3227,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 3227,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
                             }
                           ]
                         }
@@ -3428,77 +4176,103 @@
                       "name": "Granule 1",
                       "offset": 3227,
                       "length": 8,
+                      "bitOffset": 5,
+                      "bitLength": 59,
                       "children": [
                         {
                           "name": "Channel 0",
                           "offset": 3227,
                           "length": 8,
+                          "bitOffset": 5,
+                          "bitLength": 59,
                           "children": [
                             {
                               "name": "Part 2 and 3 Length",
                               "value": "0 bits",
                               "offset": 3227,
-                              "length": 3
+                              "length": 3,
+                              "bitOffset": 5,
+                              "bitLength": 12
                             },
                             {
                               "name": "Big Values",
                               "value": "0",
                               "offset": 3229,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 9
                             },
                             {
                               "name": "Global Gain",
                               "value": "210",
                               "offset": 3230,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8
                             },
                             {
                               "name": "Scalefactor Compress",
                               "value": "0",
                               "offset": 3231,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
                             },
                             {
                               "name": "Block Type",
                               "value": "Stop",
                               "offset": 3231,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 3
                             },
                             {
                               "name": "IsMixedBlock",
                               "value": "false",
                               "offset": 3232,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
                             },
                             {
                               "name": "Table Select",
                               "value": "0, 0",
                               "offset": 3232,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 10
                             },
                             {
                               "name": "Subblock Gain",
                               "value": "0, 0, 0",
                               "offset": 3233,
-                              "length": 2
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 9
                             },
                             {
                               "name": "HasPreflag",
                               "value": "true",
                               "offset": 3234,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
                             },
                             {
                               "name": "HasCoarseScalefactors",
                               "value": "false",
                               "offset": 3234,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
                             },
                             {
                               "name": "Count1 Table",
                               "value": "A",
                               "offset": 3234,
-                              "length": 1
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
                             }
                           ]
                         }

@@ -17,6 +17,10 @@ public sealed class ParseContext
 
     public ByteReader Reader { get; }
 
+    // Reads check it already; loops that only compute, over every frame or packet, check it every
+    // few thousand iterations.
+    public CancellationToken CancellationToken => Reader.CancellationToken;
+
     public Node Root { get; }
 
     // Tags inside the reader's range (found through an ID3v2.4 SEEK frame) that the format

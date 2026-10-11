@@ -17,11 +17,11 @@ public class AnalyzerTagTests
 
         public List<(long From, long Limit)> Searches { get; } = [];
 
-        public TagProbe? ProbeAt(ByteReader reader, long start) => at?.Invoke(reader, start);
+        public TagProbe? ProbeAt(TagProbeContext context, long start) => at?.Invoke(context.Reader, start);
 
-        public TagProbe? ProbeBefore(ByteReader reader, long end) => before?.Invoke(reader, end);
+        public TagProbe? ProbeBefore(TagProbeContext context, long end) => before?.Invoke(context.Reader, end);
 
-        public TagProbe? FindFrom(ByteReader reader, long from, long limit)
+        public TagProbe? FindFrom(TagProbeContext context, long from, long limit)
         {
             Searches.Add((from, limit));
             return find?.Invoke(from, limit);
@@ -36,8 +36,9 @@ public class AnalyzerTagTests
 
         public IReadOnlyList<Node>? Embedded { get; private set; }
 
-        public int Sniff(ByteReader reader)
+        public int Sniff(SniffContext context)
         {
+            ByteReader reader = context.Reader;
             Seen = (reader.Start, reader.End, reader.Position);
             return confidence;
         }
@@ -74,6 +75,65 @@ public class AnalyzerTagTests
         Assert.Equal(["Data", "B", "A"], report.Root.Children.Select(c => c.Name));
         Assert.Equal(70, report.Root.Children[0].Length);
         Assert.Equal(70, report.Root.Children[1].Offset);
+    }
+
+    // A probe that throws is a rejected candidate and a parser failure; the other parsers still
+    // probe the anchor.
+    [Fact]
+    public void ProbeExceptionRejectsTheCandidate()
+    {
+        var buggy = new FakeTagParser("Buggy", before: (_, end) => end == 100 ? throw new ArgumentOutOfRangeException("size") : null);
+
+        Report report = Analyze(100, [buggy, Trailing("Good", 10, 100)]);
+
+        Assert.Equal(["Data", "Good"], report.Root.Children.Select(c => c.Name));
+        Finding failed = Assert.Single(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal(Severity.Error, failed.Severity);
+        Assert.StartsWith("The Buggy parser failed probing for a tag at 0x64: ArgumentOutOfRangeException:", failed.Message);
+        Assert.Contains("Buggy signature at 0x64 (EOF-0) rejected: the candidate overlaps the Good tag", Assert.Single(report.Findings, f => f.Code == "tag.near-miss").Message);
+    }
+
+    [Fact]
+    public void SearchExceptionIsAParserFailure()
+    {
+        var seeking = new FakeTagParser(
+            "Seek",
+            at: (_, start) => start == 0 ? TagProbe.Accept(new Node("Seek", 0, 10), 0, Confidence.High, [], [], nextTagOffset: 20) : null,
+            find: (_, _) => throw new InvalidOperationException("bug"));
+
+        Report report = Analyze(100, [seeking]);
+
+        Assert.Contains(report.Findings, f => f.Code == "parse.failed" && f.Message.StartsWith("The Seek parser failed searching for a tag from 0x14", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "tag.next-missing");
+    }
+
+    [Fact]
+    public void TagOutsideTheFileIsRejected()
+    {
+        var parser = new FakeTagParser("Long", at: (_, start) => start == 0 ? TagProbe.Accept(new Node("Long", 0, 120), 0, Confidence.High, [], []) : null);
+
+        Report report = Analyze(100, [parser]);
+
+        Assert.Equal(["Data"], report.Root.Children.Select(c => c.Name));
+        Assert.Contains("does not fit the file", Assert.Single(report.Findings, f => f.Code == "tag.rejected").Message);
+    }
+
+    // The host shows Detection next to the parser's children without changing the parser's node,
+    // so a tag whose children are built on demand is accepted.
+    [Fact]
+    public void TagWithChildrenBuiltOnDemandIsAccepted()
+    {
+        var lazy = new Node("Lazy", 0, 10, "v", () => [new Node("Field", 0, 4)]);
+        var finding = new Finding(Severity.Warning, "lazy.odd", "Odd.", lazy);
+        var parser = new FakeTagParser("Lazy", at: (_, start) => start == 0 ? TagProbe.Accept(lazy, 0, Confidence.High, [], [finding]) : null);
+
+        Report report = Analyze(20, [parser]);
+
+        Node shown = report.Root.Children[0];
+        Assert.Equal(("Lazy", 0L, 10L, "v"), (shown.Name, shown.Offset, shown.Length, shown.Value));
+        Assert.Equal(["Field", "Detection"], shown.Children.Select(c => c.Name));
+        Assert.Equal(["Field"], lazy.Children.Select(c => c.Name));
+        Assert.Same(shown, Assert.Single(report.Findings, f => f.Code == "lazy.odd").Node);
     }
 
     [Fact]

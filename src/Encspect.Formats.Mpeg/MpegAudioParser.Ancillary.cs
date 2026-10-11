@@ -19,8 +19,10 @@ public sealed partial class MpegAudioParser
     private static void ScanAncillary(StreamState state, RegionState region)
     {
         var scan = new AncillaryScan(state.Blocks);
+        int count = 0;
         foreach (Entry entry in region.Entries.Where(e => !e.IsGap))
         {
+            state.CheckCancellation(count++);
             scan.Add(entry);
         }
 

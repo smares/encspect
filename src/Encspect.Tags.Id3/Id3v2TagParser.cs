@@ -19,8 +19,9 @@ public sealed class Id3v2TagParser : ITagParser
 
     public string Name => "ID3v2";
 
-    public TagProbe? ProbeAt(ByteReader reader, long start)
+    public TagProbe? ProbeAt(TagProbeContext context, long start)
     {
+        ByteReader reader = context.Reader;
         if (!reader.MatchesAt(start, HeaderId))
         {
             return null;
@@ -38,8 +39,9 @@ public sealed class Id3v2TagParser : ITagParser
 
     // ID3v2.4 section 5: "If a SEEK frame was found, use its values to guide further searching."
     // The frame only gives a minimum offset, so the tag is searched for from there.
-    public TagProbe? FindFrom(ByteReader reader, long from, long limit)
+    public TagProbe? FindFrom(TagProbeContext context, long from, long limit)
     {
+        ByteReader reader = context.Reader;
         const int Chunk = 1 << 16;
         limit = Math.Min(limit, reader.End);
         int probed = 0;
@@ -61,7 +63,7 @@ public sealed class Id3v2TagParser : ITagParser
                 // those are parsed, and at most MaxSearchProbes of them: a crafted window full of
                 // "ID3" would otherwise parse the rest of the file once per match.
                 if (IsCompleteCandidate(reader, candidate) && ++probed <= MaxSearchProbes
-                    && ProbeAt(reader, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
+                    && ProbeAt(context, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
                 {
                     return probe;
                 }
@@ -94,8 +96,9 @@ public sealed class Id3v2TagParser : ITagParser
 
     // ID3v2.4 section 3.4: a tag appended at the end of a file has a footer, "3DI" followed by
     // the same version, flags and size as the header, so it can be found from the end.
-    public TagProbe? ProbeBefore(ByteReader reader, long end)
+    public TagProbe? ProbeBefore(TagProbeContext context, long end)
     {
+        ByteReader reader = context.Reader;
         long footerStart = end - HeaderSize;
         if (!reader.MatchesAt(footerStart, FooterId))
         {

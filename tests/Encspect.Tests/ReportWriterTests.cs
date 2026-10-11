@@ -180,6 +180,103 @@ public class ReportWriterTests
         Assert.Contains("Lyrics: one\\r\\ntwo\\x01", writer.ToString());
     }
 
+    private static Report BitFieldReport()
+    {
+        var root = new Node("File", 0, 4);
+        Node header = root.Add("Header", 0, 4);
+        header.Add(Node.FromBits("Layer", 0, 13, 15, "III"));
+        header.Add(Node.FromBits("IsOriginal", 0, 29, 30, "true"));
+        return new Report("bits.mp3", root, []);
+    }
+
+    [Fact]
+    public void JsonOutputHasBitPositionsWhereANodeHasThem()
+    {
+        using var output = new MemoryStream();
+
+        ReportJsonWriter.Write([BitFieldReport()], output);
+
+        using JsonDocument document = JsonDocument.Parse(output.ToArray());
+        JsonElement header = document.RootElement[0].GetProperty("root").GetProperty("children")[0];
+        Assert.False(header.TryGetProperty("bitOffset", out _));
+        Assert.False(header.TryGetProperty("bitLength", out _));
+        JsonElement layer = header.GetProperty("children")[0];
+        Assert.Equal((1L, 1L, 5, 2), (layer.GetProperty("offset").GetInt64(), layer.GetProperty("length").GetInt64(),
+            layer.GetProperty("bitOffset").GetInt32(), layer.GetProperty("bitLength").GetInt32()));
+        Assert.Equal(["name", "value", "offset", "length", "bitOffset", "bitLength"], layer.EnumerateObject().Select(p => p.Name));
+    }
+
+    [Fact]
+    public void TextOutputShowsBitPositionsWithOffsets()
+    {
+        var writer = new StringWriter();
+
+        ReportTextWriter.Write(BitFieldReport(), writer, showOffsets: true);
+
+        string text = writer.ToString();
+        Assert.Contains("    Header [0x0, 4 bytes]" + Environment.NewLine, text);
+        Assert.Contains("      Layer: III [0x1+5, 2 bits]" + Environment.NewLine, text);
+        Assert.Contains("      IsOriginal: true [0x3+5, 1 bit]" + Environment.NewLine, text);
+    }
+
+    // A damaged container can nest boxes thousands deep. Writers stop at Node.MaxDepth instead of
+    // failing (JSON) or overflowing the stack (text), which ends the process.
+    [Theory]
+    [InlineData(Node.MaxDepth)]
+    [InlineData(Node.MaxDepth + 1)]
+    [InlineData(999)]
+    [InlineData(200_000)]
+    public void DeepTreesAreCutAtTheDepthLimit(int depth)
+    {
+        var root = new Node("File", 0, depth * 8L);
+        Node current = root;
+        for (int i = 0; i < depth; i++)
+        {
+            current = current.Add("Box", i * 8L, (depth - i) * 8L);
+        }
+
+        var report = new Report("deep.mp4", root, []);
+        using var json = new MemoryStream();
+        using var lines = new MemoryStream();
+        var text = new StringWriter();
+
+        ReportJsonWriter.Write([report], json);
+        ReportJsonWriter.WriteLines([report], lines);
+        ReportTextWriter.Write(report, text, showOffsets: true);
+
+        using JsonDocument document = JsonDocument.Parse(json.ToArray(), new JsonDocumentOptions { MaxDepth = 1000 });
+        JsonElement node = document.RootElement[0].GetProperty("root");
+        int levels = 0;
+        while (node.TryGetProperty("children", out JsonElement children))
+        {
+            node = children[0];
+            levels++;
+        }
+
+        Assert.Equal(Math.Min(depth, Node.MaxDepth), levels);
+        Assert.Equal(depth > Node.MaxDepth, node.TryGetProperty("hasOmittedChildren", out JsonElement omitted) && omitted.GetBoolean());
+
+        string[] textLines = text.ToString().Split(Environment.NewLine);
+        Assert.Equal(Math.Min(depth, Node.MaxDepth) + 1, textLines.Count(l => l.TrimStart().StartsWith("Box", StringComparison.Ordinal) || l.TrimStart().StartsWith("File", StringComparison.Ordinal)));
+        Assert.Equal(depth > Node.MaxDepth, text.ToString().Contains($"(children nested deeper than {Node.MaxDepth} levels are not shown)", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ChildrenThatFailToBuildAreWrittenAsAnError()
+    {
+        var root = new Node("File", 0, 10);
+        root.Add(new Node("Packets", 0, 10, null, () => throw new IndexOutOfRangeException("bug in a deferred builder")));
+        var report = new Report("broken.bin", root, []);
+        using var json = new MemoryStream();
+        var text = new StringWriter();
+
+        ReportJsonWriter.Write([report], json);
+        ReportTextWriter.Write(report, text, showOffsets: false);
+
+        Assert.Contains("\"name\": \"Error\"", System.Text.Encoding.UTF8.GetString(json.ToArray()));
+        Assert.Contains("Error: The children could not be built: IndexOutOfRangeException: bug in a deferred builder", text.ToString());
+    }
+
     private sealed class WriteCountingStream : MemoryStream
     {
         public int Writes { get; private set; }
