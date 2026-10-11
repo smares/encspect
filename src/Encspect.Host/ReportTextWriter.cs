@@ -15,7 +15,7 @@ public static class ReportTextWriter
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(filter);
 
-        writer.WriteLine(report.Source);
+        writer.WriteLine(Escape(report.Source));
         WriteNode(report.Root, writer, showOffsets, filter, 0);
 
         if (report.Findings.Count > 0)
@@ -24,7 +24,13 @@ public static class ReportTextWriter
             writer.WriteLine("Findings:");
             foreach (Finding finding in report.Findings)
             {
-                writer.WriteLine($"  [{finding.Severity}] {finding.Code}: {Escape(finding.Message)}");
+                writer.Write($"  [{finding.Severity}] {finding.Code}: {Escape(finding.Message)}");
+                if (showOffsets && finding.Node is not null)
+                {
+                    WriteLocation(finding.Node, writer);
+                }
+
+                writer.WriteLine();
             }
         }
     }
@@ -47,11 +53,7 @@ public static class ReportTextWriter
 
         if (showOffsets)
         {
-            writer.Write(" [0x");
-            writer.Write(node.Offset.ToString("X", CultureInfo.InvariantCulture));
-            writer.Write(", ");
-            writer.Write(node.Length.ToString(CultureInfo.InvariantCulture));
-            writer.Write(" bytes]");
+            WriteLocation(node, writer);
         }
 
         writer.WriteLine();
@@ -65,8 +67,17 @@ public static class ReportTextWriter
         }
     }
 
-    // Values come from the file and may hold line breaks or other control characters, which
-    // would break the one-line-per-node layout.
+    private static void WriteLocation(Node node, TextWriter writer)
+    {
+        writer.Write(" [0x");
+        writer.Write(node.Offset.ToString("X", CultureInfo.InvariantCulture));
+        writer.Write(", ");
+        writer.Write(node.Length.ToString(CultureInfo.InvariantCulture));
+        writer.Write(" bytes]");
+    }
+
+    // Values come from the file and paths from the file system; either may hold line breaks or
+    // other control characters, which would break the one-line-per-node layout.
     private static string Escape(string text)
     {
         if (!text.Any(char.IsControl))

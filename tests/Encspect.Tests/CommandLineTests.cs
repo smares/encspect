@@ -13,6 +13,9 @@ public class CommandLineTests
     // BladeEnc 0.80 writes frames whose main data overflows: three warnings, no errors.
     private static readonly string Broken = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade080-stereo.mp3");
 
+    // How long a run that could block on a FIFO or loop through links gets before the test fails.
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
+
     private static (int Code, string Output, string Errors) Run(params string[] args)
     {
         using var stdout = new MemoryStream();
@@ -84,10 +87,32 @@ public class CommandLineTests
     [Fact]
     public void UnreadableFilesExitWithThree()
     {
-        (int code, _, string errors) = Run("--csv", Path.Combine(Fixtures.FixtureDirectory, "no-such-file.mp3"), Tagged);
+        (int code, string output, string errors) = Run("--csv", Path.Combine(Fixtures.FixtureDirectory, "no-such-file.mp3"), Tagged);
 
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Contains("no-such-file.mp3", errors);
+
+        // The file still has its row, with one error.
+        string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(3, lines.Length);
+        Assert.Contains("no-such-file.mp3,,0,", lines[1]);
+        Assert.EndsWith(",1,0,0", lines[1]);
+    }
+
+    [Fact]
+    public void UnreadableFilesHaveAReportInJson()
+    {
+        string missing = Path.Combine(Fixtures.FixtureDirectory, "no-such-file.mp3");
+
+        (int code, string output, _) = Run("--json", missing, Tagged);
+
+        JsonElement reports = JsonDocument.Parse(output).RootElement;
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.Equal(2, reports.GetArrayLength());
+        Assert.Equal(missing, reports[0].GetProperty("source").GetString());
+        JsonElement finding = Assert.Single(reports[0].GetProperty("findings").EnumerateArray());
+        Assert.Equal("file.unreadable", finding.GetProperty("code").GetString());
+        Assert.Equal("Error", finding.GetProperty("severity").GetString());
     }
 
     [Fact]
@@ -101,12 +126,12 @@ public class CommandLineTests
 
             string all = Run("--csv", folder).Output;
             string mpeg = Run("--csv", "--only-format", "mpeg", folder).Output;
-            string other = Run("--csv", "--only-format", "flac", folder).Output;
+            string named = Run("--csv", "--only-format", "MPEG Audio", folder).Output;
 
             Assert.Contains("b.bin", all);
             Assert.Contains("a.mp3", mpeg);
             Assert.DoesNotContain("b.bin", mpeg);
-            Assert.Single(other.Split("\r\n", StringSplitOptions.RemoveEmptyEntries));
+            Assert.Equal(mpeg, named);
         }
         finally
         {
@@ -121,6 +146,17 @@ public class CommandLineTests
     [InlineData("--fail-on", "1")]
     [InlineData("--fail-on")]
     [InlineData("--json=yes")]
+    [InlineData("--only-format", "flac")]
+    [InlineData("--only-format", "mpeg,flac")]
+    [InlineData("--only-format", ",")]
+    [InlineData("--hide", "")]
+    [InlineData("--hide", " , ")]
+    [InlineData("--offsets", "--json")]
+    [InlineData("--ndjson", "--offsets")]
+    [InlineData("--offsets", "--csv")]
+    [InlineData("--csv", "--hide", "frames")]
+    [InlineData("-")]
+    [InlineData("--", "-")]
     public void WrongUsageExitsWithTwo(params string[] options)
     {
         (int code, string output, string errors) = Run([.. options, Tagged]);
@@ -178,6 +214,269 @@ public class CommandLineTests
 
         Assert.Equal(CommandLine.Success, code);
         Assert.StartsWith("Usage: encspect", output);
+        Assert.Contains("4 the output could not be written", output);
+    }
+
+    [Fact]
+    public void DoubleDashEndsTheOptions()
+    {
+        (int code, string output, string errors) = Run("--csv", "--", "--json", Tagged);
+
+        // "--json" is a file name here, one that does not exist.
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.StartsWith("Path,", output);
+        Assert.StartsWith("--json:", errors);
+    }
+
+    [Fact]
+    public void OffsetsLocateFindingsInTheTextTree()
+    {
+        string withOffsets = Run("--offsets", Broken).Output;
+        string without = Run(Broken).Output;
+
+        Assert.Contains("frame-truncated: The last frame at 0x7C15 has 405 of its 418 bytes. [0x7C15, 405 bytes]", withOffsets);
+        Assert.Contains("frame-truncated: The last frame at 0x7C15 has 405 of its 418 bytes." + Environment.NewLine, without);
+    }
+
+    [Theory]
+    [InlineData("--help")]
+    [InlineData("--csv")]
+    [InlineData("--json")]
+    [InlineData("--ndjson")]
+    [InlineData("--offsets")]
+    public void AFailedWriteExitsWithFour(string option)
+    {
+        var stderr = new StringWriter();
+
+        int code = CommandLine.Run([option, Tagged], new FullStream(), stderr);
+
+        Assert.Equal(CommandLine.OutputFailed, code);
+        Assert.Equal("Could not write the output: No space left on device" + Environment.NewLine, stderr.ToString());
+    }
+
+    [Fact]
+    public void FoldersIncludeHiddenEntriesInPathOrder()
+    {
+        using var folder = new TempFolder();
+        folder.Copy(Tagged, "z.mp3");
+        folder.Copy(Tagged, ".hidden.mp3");
+        folder.Copy(Tagged, ".hiddendir/x.mp3");
+        folder.Copy(Tagged, "sub/x.mp3");
+        folder.Copy(Tagged, "sub.mp3");
+
+        (int code, string output, _) = Run("--csv", folder.Path);
+
+        string[] paths = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(l => l[..l.IndexOf(",MPEG", StringComparison.Ordinal)]).ToArray();
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Equal(new[] { ".hidden.mp3", ".hiddendir/x.mp3", "sub.mp3", "sub/x.mp3", "z.mp3" }.Select(p => folder[p]), paths);
+    }
+
+    [Fact]
+    public async Task FolderLinksLeadingIntoOrAboveTheTreeAreNotFollowed()
+    {
+        // Creating symbolic links on Windows needs developer mode or administrator rights.
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        folder.Copy(Tagged, "root/a.mp3");
+        folder.Copy(Tagged, "root/sub/b.mp3");
+        folder.Copy(Tagged, "outside/c.mp3");
+        Directory.CreateSymbolicLink(folder["root/sub/loop"], "..");
+        Directory.CreateSymbolicLink(folder["root/sub/up"], "../..");
+        Directory.CreateSymbolicLink(folder["root/sub/self"], ".");
+        Directory.CreateSymbolicLink(folder["root/alias"], "sub");
+        Directory.CreateSymbolicLink(folder["root/top"], "/");
+        Directory.CreateSymbolicLink(folder["root/x1"], folder["outside"]);
+        Directory.CreateSymbolicLink(folder["root/x2"], "../outside");
+        Directory.CreateSymbolicLink(folder["outside/back"], "../root/sub");
+
+        (int code, string output, _) = await Task.Run(() => Run("--csv", folder["root"])).WaitAsync(Timeout);
+
+        string[] paths = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(l => l[..l.IndexOf(',', StringComparison.Ordinal)]).ToArray();
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Equal(new[] { "root/a.mp3", "root/sub/b.mp3", "root/x1/c.mp3" }.Select(p => folder[p]), paths);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FifosAreReportedWithoutBeingOpened(bool withWriter)
+    {
+        // Windows has no FIFOs in the file system.
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        folder.Copy(Tagged, "a.mp3");
+        string fifo = folder.MakeFifo("sub/pipe");
+
+        // A writer's open blocks until a reader comes, which the cleanup provides.
+        Task writer = withWriter ? Task.Run(() => File.WriteAllBytes(fifo, File.ReadAllBytes(Tagged))) : Task.CompletedTask;
+        try
+        {
+            var (csv, filtered, text) = await Task.Run(() => (Run("--csv", folder.Path), Run("--csv", "--only-format", "mpeg", folder.Path), Run(fifo))).WaitAsync(Timeout);
+
+            foreach ((int code, string output, string errors) in new[] { csv, filtered })
+            {
+                string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+                Assert.Equal(CommandLine.UnreadableFile, code);
+                Assert.Equal(3, lines.Length);
+                Assert.StartsWith(folder["a.mp3"] + ",MPEG Audio,", lines[1]);
+                Assert.Equal(fifo + ",,0,,,,,,,,,1,0,0", lines[2]);
+                Assert.Equal($"{fifo}: This is a named pipe (FIFO), not a regular file, so it was not read.{Environment.NewLine}", errors);
+            }
+
+            Assert.Equal(CommandLine.UnreadableFile, text.Code);
+            Assert.Contains("[Error] file.not-regular: This is a named pipe (FIFO)", text.Output);
+        }
+        finally
+        {
+            if (withWriter)
+            {
+                using (var reader = new FileStream(fifo, FileMode.Open, FileAccess.Read))
+                {
+                    reader.CopyTo(Stream.Null);
+                }
+
+                await writer;
+            }
+        }
+    }
+
+    [Fact]
+    public void DevicesAreReportedWithoutBeingRead()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        (int code, string output, string errors) = Run("--csv", "/dev/zero", Tagged);
+
+        string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.Equal("/dev/zero,,0,,,,,,,,,1,0,0", lines[1]);
+        Assert.Contains(",MPEG Audio,", lines[2]);
+        Assert.StartsWith("/dev/zero: This is a character device, not a regular file", errors);
+    }
+
+    [Fact]
+    public void UnreadableFoldersAreReported()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        folder.Copy(Tagged, "locked/a.mp3");
+        folder.Copy(Tagged, "ok/a.mp3");
+        File.SetUnixFileMode(folder["locked"], UnixFileMode.None);
+
+        // Root, or a user with CAP_DAC_READ_SEARCH, reads the folder anyway.
+        if (CanList(folder["locked"]))
+        {
+            return;
+        }
+
+        (int code, string output, string errors) = Run("--csv", folder.Path);
+
+        string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.Equal(3, lines.Length);
+        Assert.Equal(folder["locked"] + ",,0,,,,,,,,,1,0,0", lines[1]);
+        Assert.StartsWith(folder["ok/a.mp3"] + ",MPEG Audio,", lines[2]);
+        Assert.StartsWith(folder["locked"] + ": ", errors);
+    }
+
+    [Fact]
+    public void FilesWithoutReadPermissionAreReported()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        string locked = folder.Copy(Tagged, "locked.mp3");
+        File.SetUnixFileMode(locked, UnixFileMode.None);
+        if (CanRead(locked))
+        {
+            return;
+        }
+
+        (int code, string output, string errors) = Run("--ndjson", folder.Path);
+
+        using JsonDocument report = JsonDocument.Parse(output);
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.Equal("file.unreadable", report.RootElement.GetProperty("findings")[0].GetProperty("code").GetString());
+        Assert.StartsWith(locked + ": ", errors);
+    }
+
+    // .NET decodes such names lossily, so the name it lists opens nothing; see the README.
+    [Fact]
+    public void NamesThatAreNotUtf8AreReportedAsUnreadable()
+    {
+        // macOS and Windows file systems store only valid Unicode names.
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        folder.Copy(Tagged, "a.mp3");
+        Assert.True(TempFolder.Exec("sh", "-c", "cp \"$1\" \"$2/$(printf 'bad\\377.mp3')\" && mkdir \"$2/$(printf 'dir\\376')\"", "sh", Tagged, folder.Path));
+
+        (int code, string output, string errors) = Run("--csv", folder.Path);
+
+        string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(CommandLine.UnreadableFile, code);
+        Assert.Equal(4, lines.Length);
+        Assert.Contains(",MPEG Audio,", lines[1]);
+        Assert.EndsWith(",,0,,,,,,,,,1,0,0", lines[2]);
+        Assert.EndsWith(",,0,,,,,,,,,1,0,0", lines[3]);
+        Assert.Equal(2, errors.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Length);
+    }
+
+    private static bool CanList(string folder)
+    {
+        try
+        {
+            Directory.EnumerateFileSystemEntries(folder).ToList();
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private static bool CanRead(string file)
+    {
+        try
+        {
+            File.OpenRead(file).Dispose();
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    // Standard output on a full disk.
+    private sealed class FullStream : MemoryStream
+    {
+        public override void Write(byte[] buffer, int offset, int count) => throw new IOException("No space left on device");
+
+        public override void Write(ReadOnlySpan<byte> buffer) => throw new IOException("No space left on device");
+
+        public override void WriteByte(byte value) => throw new IOException("No space left on device");
     }
 }
 

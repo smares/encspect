@@ -139,4 +139,100 @@ public class AnalyzerTests
         Assert.Equal("parse.invalid", finding.Code);
         Assert.Equal("bad header", finding.Message);
     }
+
+    [Fact]
+    public void StreamThatCannotSeekBecomesErrorFinding()
+    {
+        var parser = new FakeParser("any", _ => 100);
+        var analyzer = new Analyzer([parser]);
+
+        Report report = analyzer.Analyze("pipe", new ForwardOnlyStream(new byte[8]));
+
+        Finding finding = Assert.Single(report.Findings);
+        Assert.Equal("file.not-seekable", finding.Code);
+        Assert.Equal(Severity.Error, finding.Severity);
+        Assert.Equal(0, parser.ParseCalls);
+    }
+
+    [Fact]
+    public void StreamThatCannotBeReadBecomesErrorFinding()
+    {
+        Report report = new Analyzer([]).Analyze("output", new WriteOnlyStream());
+
+        Assert.Equal("file.unreadable", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void DevicesAreNotOpened()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var analyzer = Analyzer.CreateDefault();
+
+        Report report = analyzer.AnalyzeFile("/dev/zero");
+
+        Finding finding = Assert.Single(report.Findings);
+        Assert.Equal("file.not-regular", finding.Code);
+        Assert.Equal(Severity.Error, finding.Severity);
+        Assert.Equal("This is a character device, not a regular file, so it was not read.", finding.Message);
+        Assert.Null(analyzer.DetectFormat("/dev/zero"));
+    }
+
+    [Fact]
+    public async Task FifosAreNotOpened()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var folder = new TempFolder();
+        string fifo = folder.MakeFifo("pipe");
+        var analyzer = Analyzer.CreateDefault();
+
+        (Report report, string? format) = await Task.Run(() => (analyzer.AnalyzeFile(fifo), analyzer.DetectFormat(fifo))).WaitAsync(TimeSpan.FromSeconds(60));
+
+        Assert.Equal("This is a named pipe (FIFO), not a regular file, so it was not read.", Assert.Single(report.Findings).Message);
+        Assert.Null(format);
+    }
+
+    // procfs files report a size of 0, so they used to read as empty files.
+    [Fact]
+    public void KernelPseudoFilesAreNotOpened()
+    {
+        if (!OperatingSystem.IsLinux() || !File.Exists("/proc/self/status"))
+        {
+            return;
+        }
+
+        Report report = Analyzer.CreateDefault().AnalyzeFile("/proc/self/status");
+
+        Finding finding = Assert.Single(report.Findings);
+        Assert.Equal("file.not-regular", finding.Code);
+        Assert.Equal("This is a file of the kernel's proc file system, not a regular file, so it was not read.", finding.Message);
+    }
+
+    [Fact]
+    public void EmptyRegularFileIsStillEmpty()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllBytes(folder["empty.mp3"], []);
+
+        Report report = Analyzer.CreateDefault().AnalyzeFile(folder["empty.mp3"]);
+
+        Assert.Equal("file.empty", Assert.Single(report.Findings).Code);
+    }
+
+    private sealed class ForwardOnlyStream(byte[] data) : MemoryStream(data)
+    {
+        public override bool CanSeek => false;
+    }
+
+    private sealed class WriteOnlyStream : MemoryStream
+    {
+        public override bool CanRead => false;
+    }
 }

@@ -10,19 +10,26 @@ internal static class CommandLine
     public const int FindingsFound = 1;
     public const int UsageError = 2;
     public const int UnreadableFile = 3;
+    public const int OutputFailed = 4;
 
     public const string Usage = """
-        Usage: encspect [options] <file-or-folder>...
+        Usage: encspect [options] [--] <file-or-folder>...
 
-        Analyzes each file, and every file in each folder and its subfolders.
+        Analyzes each file, and every file in each folder and its subfolders, hidden ones
+        included. A link to a folder is followed only when it leads outside the folder named and
+        not above it, so each folder is analyzed once. Anything that is not a regular file, such
+        as a pipe or a device, is reported without being read. Standard input is not read.
+        After --, every argument is a file or folder, even one that starts with a dash.
 
         Output (text tree by default):
           --json                One JSON array of reports.
           --ndjson              One compact JSON report per line.
           --csv                 One summary row per file.
-          --offsets             Show each node's byte offset and length in the text tree.
+          --offsets             Show the byte offset and length of each node and finding in the
+                                text tree. Not with --json or --ndjson, which always have them,
+                                or --csv.
           --hide <sections>     Leave out sections of the text tree or JSON, comma-separated:
-                                tags, frames, side-info, statistics.
+                                tags, frames, side-info, statistics. Not with --csv.
 
         Selection:
           --only-format <names> Analyze only files of these formats, comma-separated, by the
@@ -31,7 +38,8 @@ internal static class CommandLine
         Exit code:
           --fail-on <severity>  Exit with 1 when a finding of this severity or worse is found:
                                 info, warning or error.
-          0 success, 1 findings as --fail-on says, 2 wrong usage, 3 a file could not be read.
+          0 success, 1 findings as --fail-on says, 2 wrong usage, 3 a file or folder could not be
+          read or is not a regular file, 4 the output could not be written.
         """;
 
     private enum Output
@@ -54,10 +62,22 @@ internal static class CommandLine
         var formats = new List<string>();
         Severity? failOn = null;
         var paths = new List<string>();
+        bool optionsEnded = false;
 
         for (int i = 0; i < args.Count; i++)
         {
             string arg = args[i];
+            if (arg == "-")
+            {
+                return Fail(stderr, "Reading standard input (-) is not supported; name a file, as ./- for a file named -.");
+            }
+
+            if (optionsEnded)
+            {
+                paths.Add(arg);
+                continue;
+            }
+
             string? inline = null;
             if (arg.StartsWith("--", StringComparison.Ordinal) && arg.IndexOf('=', StringComparison.Ordinal) is > 2 and var equals)
             {
@@ -79,8 +99,11 @@ internal static class CommandLine
                 case "--offsets" when inline is null:
                     offsets = true;
                     break;
+                case "--":
+                    optionsEnded = true;
+                    break;
                 case "--hide":
-                    if (Value(arg) is not { } sections)
+                    if (Value(arg) is not { } sections || !List(sections).Any())
                     {
                         return Fail(stderr, "--hide needs a list of sections.");
                     }
@@ -97,12 +120,21 @@ internal static class CommandLine
 
                     break;
                 case "--only-format":
-                    if (Value(arg) is not { } names)
+                    if (Value(arg) is not { } names || !List(names).Any())
                     {
                         return Fail(stderr, "--only-format needs a list of formats.");
                     }
 
-                    formats.AddRange(List(names).Select(Normalize));
+                    foreach (string name in List(names))
+                    {
+                        if (!KnownFormats.Any(known => Normalize(known).StartsWith(Normalize(name), StringComparison.Ordinal)))
+                        {
+                            return Fail(stderr, $"Unknown format: {name}. Formats: {string.Join(", ", KnownFormats)}.");
+                        }
+
+                        formats.Add(Normalize(name));
+                    }
+
                     break;
                 case "--fail-on":
                     failOn = Value(arg)?.ToLowerInvariant() switch
@@ -119,14 +151,13 @@ internal static class CommandLine
 
                     break;
                 case "--help" or "-h":
-                    using (var help = new StreamWriter(stdout, new UTF8Encoding(false), leaveOpen: true))
+                    return Write(new GuardedStream(stdout), stderr, stream =>
                     {
+                        using var help = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true);
                         help.Write(Usage);
-                    }
-
-                    return Success;
+                    });
                 default:
-                    if (arg.StartsWith('-') && arg != "-" && !File.Exists(arg) && !Directory.Exists(arg))
+                    if (arg.StartsWith('-') && !File.Exists(arg) && !Directory.Exists(arg))
                     {
                         return Fail(stderr, $"Unknown option: {args[i]}");
                     }
@@ -152,42 +183,60 @@ internal static class CommandLine
             return Fail(stderr, "Name at least one file or folder.");
         }
 
+        Output chosenOutput = output ?? Output.Text;
+        if (offsets && chosenOutput != Output.Text)
+        {
+            return Fail(stderr, chosenOutput == Output.Csv ? "--offsets is for the text tree; CSV has no offsets." : "--offsets is for the text tree; JSON always has offsets.");
+        }
+
+        if (hidden != ReportSections.None && chosenOutput == Output.Csv)
+        {
+            return Fail(stderr, "--hide does not apply to --csv, which writes one summary row per file.");
+        }
+
         var analyzer = Analyzer.CreateDefault();
         var filter = new ReportFilter(hidden);
         bool unreadable = false;
         Severity? worst = null;
 
-        switch (output ?? Output.Text)
+        int written = Write(new GuardedStream(stdout), stderr, stream =>
         {
-            case Output.Json:
-                ReportJsonWriter.Write(Reports(), stdout, filter);
-                stdout.WriteByte((byte)'\n');
-                break;
-            case Output.Ndjson:
-                ReportJsonWriter.WriteLines(Reports(), stdout, filter);
-                break;
-            case Output.Csv:
-                using (var writer = new StreamWriter(stdout, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
-                {
-                    ReportCsvWriter.Write(Reports(), writer);
-                }
-
-                break;
-            default:
-                // Console.Out flushes after every write, which costs a system call per node.
-                using (var writer = new StreamWriter(stdout, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
-                {
-                    foreach (Report report in Reports())
+            switch (chosenOutput)
+            {
+                case Output.Json:
+                    ReportJsonWriter.Write(Reports(), stream, filter);
+                    stream.WriteByte((byte)'\n');
+                    break;
+                case Output.Ndjson:
+                    ReportJsonWriter.WriteLines(Reports(), stream, filter);
+                    break;
+                case Output.Csv:
+                    using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
                     {
-                        ReportTextWriter.Write(report, writer, offsets, filter);
-                        writer.WriteLine();
+                        ReportCsvWriter.Write(Reports(), writer);
                     }
-                }
 
-                break;
+                    break;
+                default:
+                    // Console.Out flushes after every write, which costs a system call per node.
+                    using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
+                    {
+                        foreach (Report report in Reports())
+                        {
+                            ReportTextWriter.Write(report, writer, offsets, filter);
+                            writer.WriteLine();
+                        }
+                    }
+
+                    break;
+            }
+        });
+
+        if (written != Success)
+        {
+            return written;
         }
 
-        stdout.Flush();
         if (unreadable)
         {
             return UnreadableFile;
@@ -196,37 +245,74 @@ internal static class CommandLine
         return failOn is { } threshold && worst >= threshold ? FindingsFound : Success;
 
         // Each report is written as soon as its file is analyzed and is then dropped, so memory
-        // does not grow with the number of files.
+        // does not grow with the number of files. Inputs that are not analyzed still get a report,
+        // so batch outputs list every one, and a line on stderr.
         IEnumerable<Report> Reports()
         {
-            foreach (string file in ExpandPaths(paths))
+            foreach (Input input in InputWalker.Expand(paths))
             {
-                Report? report = null;
-                try
+                if (Analyze(input) is not { } report)
                 {
-                    if (formats.Count > 0 && !(analyzer.DetectFormat(file) is { } format && formats.Any(Normalize(format).StartsWith)))
-                    {
-                        continue;
-                    }
-
-                    report = analyzer.AnalyzeFile(file);
+                    continue;
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+
+                if (FileReports.IsNotAnalyzed(report))
                 {
-                    stderr.WriteLine($"{file}: {ex.Message}");
+                    stderr.WriteLine($"{input.Path}: {report.Findings[0].Message}");
                     unreadable = true;
                 }
 
-                if (report is not null)
+                foreach (Finding finding in report.Findings)
                 {
-                    foreach (Finding finding in report.Findings)
-                    {
-                        worst = worst is null || finding.Severity > worst ? finding.Severity : worst;
-                    }
-
-                    yield return report;
+                    worst = worst is null || finding.Severity > worst ? finding.Severity : worst;
                 }
+
+                yield return report;
             }
+        }
+
+        // The input's report, or null when --only-format skips it.
+        Report? Analyze(Input input)
+        {
+            if (input.FolderError is { } error)
+            {
+                return FileReports.UnreadableFolder(input.Path, error);
+            }
+
+            try
+            {
+                // What is not a regular file has no format to match and is reported, like a file
+                // that cannot be read.
+                if (formats.Count > 0 && FileReports.NotRegular(input.Path) is null
+                    && !(analyzer.DetectFormat(input.Path) is { } format && formats.Any(Normalize(format).StartsWith)))
+                {
+                    return null;
+                }
+
+                return analyzer.AnalyzeFile(input.Path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return FileReports.Unreadable(input.Path, ex.Message);
+            }
+        }
+    }
+
+    // Runs what writes to stdout. A failed write, such as to a full disk, ends the run with one
+    // line on stderr. A closed pipe, as with "| head", never gets here: .NET's console stream
+    // ignores EPIPE.
+    private static int Write(GuardedStream output, TextWriter stderr, Action<Stream> write)
+    {
+        try
+        {
+            write(output);
+            output.Flush();
+            return Success;
+        }
+        catch (GuardedStream.WriteFailedException ex)
+        {
+            stderr.WriteLine($"Could not write the output: {ex.Message}");
+            return OutputFailed;
         }
     }
 
@@ -237,28 +323,10 @@ internal static class CommandLine
         return UsageError;
     }
 
+    private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
+
     private static IEnumerable<string> List(string value) => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg".
     private static string Normalize(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
-
-    private static IEnumerable<string> ExpandPaths(IEnumerable<string> paths)
-    {
-        foreach (string path in paths)
-        {
-            if (Directory.Exists(path))
-            {
-                var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true };
-                IEnumerable<string> files = Directory.EnumerateFiles(path, "*", options);
-                foreach (string file in files.Order(StringComparer.Ordinal))
-                {
-                    yield return file;
-                }
-            }
-            else
-            {
-                yield return path;
-            }
-        }
-    }
 }

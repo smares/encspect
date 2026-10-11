@@ -25,11 +25,26 @@ public sealed class Analyzer
 
     public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats);
 
+    // Anything that is not a regular file gets a report with a file.not-regular finding without
+    // being opened, since opening a FIFO blocks and a device can be read forever. A file that
+    // cannot be opened or read throws IOException or UnauthorizedAccessException.
     public Report AnalyzeFile(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
+        if (FileReports.NotRegular(path) is { } notRegular)
+        {
+            return notRegular;
+        }
+
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        // Where the type could not be checked before opening, as on Windows: a pipe or a console.
+        if (!stream.CanSeek)
+        {
+            return FileReports.NotRegular(path, "a stream that cannot seek");
+        }
+
         return Analyze(path, stream);
     }
 
@@ -39,7 +54,17 @@ public sealed class Analyzer
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
+        if (FileType.DescribeNonRegular(path) is not null)
+        {
+            return null;
+        }
+
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (!stream.CanSeek)
+        {
+            return null;
+        }
+
         var reader = new ByteReader(stream);
         if (reader.Length == 0)
         {
@@ -58,6 +83,17 @@ public sealed class Analyzer
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(stream);
+
+        if (!stream.CanRead)
+        {
+            return FileReports.Create(source, FileReports.UnreadableCode, "The stream cannot be read.");
+        }
+
+        // Tags are found from both ends of the file and parsers jump to the offsets fields point at.
+        if (!stream.CanSeek)
+        {
+            return FileReports.Create(source, FileReports.NotSeekableCode, "The stream cannot seek, so it was not analyzed.");
+        }
 
         var reader = new ByteReader(stream);
         var root = new Node("File", 0, reader.Length);
