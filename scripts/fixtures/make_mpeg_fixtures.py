@@ -890,12 +890,11 @@ def tsse_names_ffmpeg():
     f = Fixture(
         "id3v24-tsse-ffmpeg",
         ".mp3",
-        "ID3v2.4 tag whose TSSE frame holds ffmpeg's version, as ffmpeg's muxer writes it, before frames that show no "
-        "encoder's habits: ffmpeg is named, with low confidence.",
+        "ID3v2.4 tag whose TSSE frame holds ffmpeg's version, as ffmpeg's muxer writes it whatever encoded the stream, "
+        "before frames that show no encoder's habits: no encoder is named.",
     )
     f.tag("ID3v2", id3v2("Muxed", major=4, extra_frames=tsse_frame("Lavf58.76.100", major=4)))
     f.add_frames(stream(8))
-    f.encoder = {"name": "FFmpeg (Lavf58.76.100)", "confidence": "Low"}
     return f
 
 

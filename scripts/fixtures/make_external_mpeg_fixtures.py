@@ -3,8 +3,8 @@
 libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
-source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1, 3.101 and 4.0 built from source
-(old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
+source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1, 3.98 beta 8, 3.99 alpha 12,
+3.99.5, 3.101 and 4.0 built from source (old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
 (lame_win_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
 
@@ -53,10 +53,11 @@ ancillary data, scalefactor scaling and scfsi), both from frames that are not th
 Layer II, "minimp3_side_info" holds every frame's allocation, scfsi and scalefactors.
 
 The output is committed. CI does not run this script, because the result depends on the encoder
-versions; rerun it by hand when a fixture needs to change:
+versions; rerun it by hand when a fixture needs to change, naming the fixtures to write only those
+(and build only the encoders they need):
 
     apt-get install lame twolame shineenc ffmpeg libmp3lame0 madplay mpg123 gcc-multilib wine p7zip-full
-    python3 scripts/fixtures/make_external_mpeg_fixtures.py
+    python3 scripts/fixtures/make_external_mpeg_fixtures.py [name ...]
 """
 
 import json
@@ -209,6 +210,10 @@ FIXTURES = [
     # source's encoder string but ffmpeg's fields.
     ("external-ffmpeg-remux", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{lame -V 2}", "-c", "copy", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
+    # A BladeEnc fixture remuxed by ffmpeg, which writes a LAME tag with "Lavf" when it knows no
+    # encoder: a remux names none, so the frames still point to BladeEnc.
+    ("external-ffmpeg-remux-blade", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{fixture external-blade-stereo.mp3}", "-c", "copy", "{out}"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=True, signal="music")),
     ("external-fhg-surround-cbr", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "192000"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=False, enhancement="MP3 Surround")),
     ("external-fhg-surround-ofl", ".mp3", 44100, 6, ["mp3sEncoder", "-br", "192000", "-ofl"],
@@ -333,6 +338,20 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame394b-no-info", ".mp3", 44100, 2, ["lame-3.94b1", "--quiet", "-t", "-b", "128"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    # LAME writes its version into the tag ("LAME3.98b", "L3.99a12", "LAME3.99r") and whole into the
+    # padding it drains into ancillary data ("3.98 (beta)", "3.99 (alpha 12)", "3.99.5").
+    ("external-lame398b-vbr", ".mp3", 44100, 2, ["lame-3.98b8", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame398b-cbr", ".mp3", 44100, 2, ["lame-3.98b8", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame399a-vbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame399a-cbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame3995-vbr", ".mp3", 44100, 2, ["lame-3.99.5", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3995-cbr", ".mp3", 44100, 2, ["lame-3.99.5", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
     # LAME 3.101 writes "LAME3.101", with no room left for the release marker; 4.0 bumped the
     # major version to make room and writes "LAME4.0 " and a NUL byte.
     ("external-lame3101-vbr", ".mp3", 44100, 2, ["lame-3.101", "--quiet", "-V", "2"],
@@ -600,7 +619,8 @@ def detected_encoder(command, tag, settings, rows, path):
     and all set the original bit (low). BladeEnc switches to short blocks without scalefactor
     scaling, codes plain stereo or mono, and leaves ancillary data at most in its last
     frame, as mp3guessenc counts it (low). Old LAME releases are named by their tag as LAME 3.100
-    is, or without it by the version string mp3guessenc finds in ancillary data (low). Gogo's
+    is, with the version spelled out ("LAME 3.98 (beta)", "LAME 3.99.x") and completed from the one
+    mp3guessenc finds in ancillary data where the two agree, or without a tag by that one (low). Gogo's
     "GOGO", which mp3guessenc finds, names it: with its Xing header, which holds "GOGO" as the
     quality, medium, from ancillary data alone low."""
     if command[0] == "gogo":
@@ -611,12 +631,10 @@ def detected_encoder(command, tag, settings, rows, path):
         lame = tag.get("lame") if tag else None
         string = guessenc_tag_lines(path).get("Encoder string")
         if lame is None:
-            return {"name": f"LAME {string[4:]}", "confidence": "Low"} if string and string.startswith("LAME") else None
-        version = lame["encoder"].rstrip(" ")
-        # A version cut off in the tag ("LAME3.90.") stands whole in the padding, where mp3guessenc finds it.
-        if version.endswith(".") and string and string.startswith(version) and string[len(version):].isdigit():
-            version = string
-        return {"name": f"LAME {version[4:]}", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
+            return {"name": vbr_tags.lame_name(string), "confidence": "Low"} if string and string.startswith("LAME") else None
+        # A version cut off in the tag ("LAME3.90.", "LAME3.99r") stands whole in the padding, where mp3guessenc finds it.
+        name, _, _ = vbr_tags.tag_and_ancillary_name(lame["encoder"], string)
+        return {"name": name, "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
     if command[0] in ("twolame", "tompg") and settings["layer"] == 2:
         return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "tompg":
@@ -640,6 +658,11 @@ def detected_encoder(command, tag, settings, rows, path):
         return {"name": "Shine", "confidence": "Medium"}
     if command[0] == "ffmpeg" and "mp2" in command:
         return None
+    remuxed = next((a[len("{fixture ") : -1] for a in command if a.startswith("{fixture ")), None)
+    if remuxed is not None:
+        # ffmpeg writes "Lavf" for a stream whose encoder it does not know, which names none.
+        assert tag["lame"]["encoder"].startswith("Lavf")
+        return json.loads((OUT / f"{pathlib.Path(remuxed).stem}.expected.json").read_text(encoding="utf-8"))["detected_encoder"]
     if command[0] == "tomp3":
         return {"name": "Helix MP3 Encoder", "confidence": "Low"}
     if command[0] == "hmp3":
@@ -694,10 +717,12 @@ def weigh_tsse(encoder, claim):
     if claim is None:
         return encoder
     if encoder is None:
-        lame = re.search(r"LAME(?:\s*\d+bits)?(?:\s*version)?\s*(\d+\.\d+[\w.]*)", claim)
-        name = f"LAME {lame.group(1)}" if lame else f"FFmpeg ({claim})" if claim.startswith(("Lavf", "Lavc")) else claim
-        return {"name": name, "confidence": "Low"}
-    if encoder["confidence"] == "Low" and "lame" in claim.lower() and encoder["name"].startswith("LAME"):
+        # ffmpeg's muxer writes its own version whatever encoded the stream, which names no encoder.
+        if claim.startswith(("Lavf", "Lavc")):
+            return None
+        lame = re.search(r"(?<![a-z])LAME(?![a-z])(?:\s*\d+bits)?(?:\s*version)?\s*(\d+\.\d+[\w.]*)", claim, re.IGNORECASE)
+        return {"name": f"LAME {lame.group(1)}" if lame else claim, "confidence": "Low"}
+    if encoder["confidence"] == "Low" and re.search(r"(?<![a-z])lame(?![a-z])", claim.lower()) and encoder["name"].startswith("LAME"):
         return {**encoder, "confidence": "Medium"}
     return encoder
 
@@ -716,6 +741,8 @@ def describe_tag(path, command, manifest):
         if tag.get("lame") and packets and tag.get("frames") == len(packets) + 1:
             samples = 1152 if manifest["encoder"]["version"] == "1" else 576
             manifest["vbr_findings"].append({"code": "mpeg.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
+        if tag.get("lame") and vbr_tags.tag_and_ancillary_name(tag["lame"]["encoder"], guessenc_tag_lines(path).get("Encoder string"))[1]:
+            manifest["vbr_findings"].append({"code": "mpeg.lame-version-differs", "contains": "the version LAME wrote into the ancillary data"})
     manifest["vbr_header"] = tag
     manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
@@ -756,6 +783,8 @@ def encode(command, source, path, temp):
             argument = str(source)
         elif argument == "{out}":
             argument = str(path)
+        elif argument.startswith("{fixture "):
+            argument = str(OUT / argument[len("{fixture ") : -1])
         elif argument.startswith("{lame "):
             encoded = pathlib.Path(temp) / f"{path.stem}.lame.mp3"
             subprocess.run(["lame", "--quiet", *argument[1:-1].split()[1:], str(source), str(encoded)], check=True)
@@ -814,23 +843,38 @@ OLD_LAME = {}
 WIN_LAME = {}
 
 
-def main():
+def main(names):
+    """Writes every fixture, or only the named ones."""
     check_versions()
     OUT.mkdir(parents=True, exist_ok=True)
+    known = {f[0] for f in FIXTURES} | {name for name, _ in NOGAP}
+    if set(names) - known:
+        sys.exit(f"Unknown fixtures: {', '.join(sorted(set(names) - known))}")
+    fixtures = [f for f in FIXTURES if not names or f[0] in names]
+    nogap = not names or any(name in names for name, _ in NOGAP)
+    heads = {command[0] for _, _, _, _, command, _ in fixtures}
     dumper = minimp3_tool.build()
-    FHG_ENCODER.append(fhg_tool.fetch())
-    HELIX_ENCODER.append(helix_tool.build())
-    HELIX_R11_ENCODER.append(helix_tool.build_r11())
-    XING_ENCODER.append(xing_tool.fetch())
+    if "mp3sEncoder" in heads:
+        FHG_ENCODER.append(fhg_tool.fetch())
+    if "hmp3" in heads:
+        HELIX_ENCODER.append(helix_tool.build())
+    if "tomp3" in heads:
+        HELIX_R11_ENCODER.append(helix_tool.build_r11())
+    if "tompg" in heads:
+        XING_ENCODER.append(xing_tool.fetch())
     for version in blade_tool.RELEASES:
-        BLADE_ENCODERS[version] = blade_tool.build(version)
-    GOGO_ENCODER.append(gogo_tool.fetch())
-    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.101", "4.0"):
-        OLD_LAME[version] = old_lame_tool.build(version)
+        if ("bladeenc-" + version if version != "0.94.2" else "bladeenc") in heads:
+            BLADE_ENCODERS[version] = blade_tool.build(version)
+    if "gogo" in heads:
+        GOGO_ENCODER.append(gogo_tool.fetch())
+    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
+        if "lame-" + version in heads:
+            OLD_LAME[version] = old_lame_tool.build(version)
     for version in lame_win_tool.BUILDS:
-        WIN_LAME[version] = lame_win_tool.fetch(version)
+        if "lame-win-" + version in heads:
+            WIN_LAME[version] = lame_win_tool.fetch(version)
     with tempfile.TemporaryDirectory() as temp:
-        for name, extension, rate, channels, command, settings in FIXTURES:
+        for name, extension, rate, channels, command, settings in fixtures:
             source = pathlib.Path(temp) / f"{name}.wav"
             write_tone(source, rate, channels, signal=settings.get("signal", "tone"))
             path = OUT / f"{name}{extension}"
@@ -838,18 +882,19 @@ def main():
             write_manifest(name, path, rate, channels, command, settings, dumper)
 
         sources = []
-        for name, rate in NOGAP:
+        for name, rate in NOGAP if nogap else []:
             sources.append(pathlib.Path(temp) / f"{name}.wav")
             write_tone(sources[-1], rate, 2)
-        nogap = pathlib.Path(temp) / "nogap"
-        nogap.mkdir()
-        subprocess.run(NOGAP_COMMAND[:3] + ["--nogapout", str(nogap)] + NOGAP_COMMAND[3:] + [str(s) for s in sources], check=True)
-        for (name, rate), source in zip(NOGAP, sources):
-            path = OUT / f"{name}.mp3"
-            (nogap / f"{name}.mp3").replace(path)
-            write_manifest(name, path, rate, 2, NOGAP_COMMAND, NOGAP_SETTINGS, dumper)
-    print(f"Wrote {len(FIXTURES) + len(NOGAP)} external fixtures to {OUT}", file=sys.stderr)
+        if nogap:
+            directory = pathlib.Path(temp) / "nogap"
+            directory.mkdir()
+            subprocess.run(NOGAP_COMMAND[:3] + ["--nogapout", str(directory)] + NOGAP_COMMAND[3:] + [str(s) for s in sources], check=True)
+            for (name, rate), source in zip(NOGAP, sources):
+                path = OUT / f"{name}.mp3"
+                (directory / f"{name}.mp3").replace(path)
+                write_manifest(name, path, rate, 2, NOGAP_COMMAND, NOGAP_SETTINGS, dumper)
+    print(f"Wrote {len(fixtures) + (len(NOGAP) if nogap else 0)} external fixtures to {OUT}", file=sys.stderr)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

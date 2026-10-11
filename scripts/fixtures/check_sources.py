@@ -76,18 +76,19 @@ def main():
                 print(f"{name}: {address} {problem}")
                 path.unlink(missing_ok=True)
     note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
-    # LAME 3.94 beta 1 is a tree of files in svn, checked by its digest.
-    with tempfile.TemporaryDirectory() as temp:
-        checked += 1
-        tree = pathlib.Path(temp)
-        try:
-            old_lame_tool.fetch_tree(old_lame_tool.BETA_URL, tree)
-            digest = old_lame_tool.tree_digest(tree)
-        except OSError as error:
-            digest = f"unreachable ({error})"
-        if digest != old_lame_tool.BETA_TREE_SHA256:
-            problems += 1
-            print(f"lame3_94beta: {old_lame_tool.BETA_URL} holds tree digest {digest}")
+    # LAME's betas, its alpha and 3.99.5 are trees of files in svn, checked by their digests.
+    for version, (tag, expected) in old_lame_tool.SVN_TREES.items():
+        with tempfile.TemporaryDirectory() as temp:
+            checked += 1
+            tree = pathlib.Path(temp)
+            try:
+                old_lame_tool.fetch_tree(old_lame_tool.svn_url(version), tree)
+                digest = old_lame_tool.tree_digest(tree)
+            except OSError as error:
+                digest = f"unreachable ({error})"
+            if digest != expected:
+                problems += 1
+                print(f"{tag}: {old_lame_tool.svn_url(version)} holds tree digest {digest}")
     print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 

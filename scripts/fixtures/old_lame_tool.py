@@ -13,13 +13,19 @@ It is the release that computes ReplayGain into the tag against 83 dB: its gain_
 PINK_REF from 64.82 to 58.82, which 3.95 reverted, so its gains read 6 dB lower than those of
 later versions.
 
+LAME 3.98 beta 8, 3.99 alpha 12 and 3.99.5 come from the same repository, from the tags
+lame3_98beta8, lame3_99alpha12 and RELEASE__3_99_5, for LAME's version markers: each writes its
+version twice, into the LAME tag (libmp3lame/version.c, get_lame_very_short_version) and into the
+padding it drains into ancillary data (get_lame_short_version): "LAME3.98b" and "3.98 (beta)",
+"L3.99a12" and "3.99 (alpha 12)", "LAME3.99r" and "3.99.5".
+
 LAME 3.101 and 4.0 (July 2026) come from their release tarballs too. 3.101 has no room left for the
 release marker in the tag's nine bytes of version, "LAME3.101"; 4.0 bumped the major version to
 make room and writes "LAME4.0 " and a NUL byte. Both compute the tag's CRCs with a new
 slicing-by-8 routine, which gives the same values.
 
 3.90.1, 3.91 and 3.92 predate a libtool that knows x86-64, so they are built with the Makefile.unix their
-releases include (3.92's misses presets.c); 3.94 beta 1, 3.101 and 4.0 with their configure scripts.
+releases include (3.92's misses presets.c); the others with their configure scripts.
 """
 
 import hashlib
@@ -28,6 +34,7 @@ import re
 import subprocess
 import tarfile
 import tempfile
+import time
 import urllib.request
 
 import downloads
@@ -41,11 +48,16 @@ RELEASES = {
     "4.0": "3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb",
 }
 BANNERS = {"3.90.1": "LAME version 3.90 ", "3.91": "LAME version 3.91 ", "3.92": "LAME version 3.92 ", "3.93.1": "LAME version 3.93 ", "3.94b1": "LAME version 3.94 (beta 1",
+           "3.98b8": "version 3.98 (beta 8,", "3.99a12": "version 3.99 (alpha 12,", "3.99.5": "version 3.99.5 (",
            "3.101": "version 3.101 (", "4.0": "version 4.0 ("}
 
-# svn's HTTP interface lists a directory as HTML; "!svn/bc/<revision>" fixes the revision.
-BETA_URL = "https://svn.code.sf.net/p/lame/svn/!svn/bc/7051/tags/lame3_94beta/lame/"
-BETA_TREE_SHA256 = "c928fb4faa8f9de9b5acfc09c08fab88088079fbf2240c6681223c162fa78e0a"
+# The versions built from a tag of the Subversion repository: the tag and the digest of its tree.
+SVN_TREES = {
+    "3.94b1": ("lame3_94beta", "c928fb4faa8f9de9b5acfc09c08fab88088079fbf2240c6681223c162fa78e0a"),
+    "3.98b8": ("lame3_98beta8", "0506dadf68187a0d1e8bb5316de6dbe4558745f2cfa99c1327c121ee5577e669"),
+    "3.99a12": ("lame3_99alpha12", "cdfb47c52615be075703158c1fec4fe98ec96d8fe332fc1ec7fabbdf3956555c"),
+    "3.99.5": ("RELEASE__3_99_5", "3866504e16f3919cd744fdb8362c5771b981a8516f71155ef3455d2be356f53a"),
+}
 
 CFLAGS = "-O2 -w -fcommon -std=gnu89"
 
@@ -58,6 +70,12 @@ def addresses(version):
             f"https://sourceforge.net/projects/lame/files/lame/{version}/lame-{version}.tar.gz/download"]
 
 
+def svn_url(version):
+    """The pinned tree of version in svn; its HTTP interface lists a directory as HTML, and
+    "!svn/bc/<revision>" fixes the revision."""
+    return f"https://svn.code.sf.net/p/lame/svn/!svn/bc/7051/tags/{SVN_TREES[version][0]}/lame/"
+
+
 def tree_digest(directory):
     """SHA-256 over every file's path and SHA-256, in path order."""
     digest = hashlib.sha256()
@@ -66,10 +84,21 @@ def tree_digest(directory):
     return digest.hexdigest()
 
 
+def read_url(url, attempts=4):
+    """The body at url; a tree is a few thousand requests, so a dropped connection is tried again."""
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                return response.read()
+        except OSError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(2 ** attempt)
+
+
 def fetch_tree(url, directory):
     """Downloads the files under the svn directory url into directory."""
-    with urllib.request.urlopen(url, timeout=60) as response:
-        listing = response.read().decode("utf-8", "replace")
+    listing = read_url(url).decode("utf-8", "replace")
     for name in re.findall(r'<li><a href="([^"]+)">', listing):
         if name == "../":
             continue
@@ -77,20 +106,19 @@ def fetch_tree(url, directory):
             (directory / name).mkdir(parents=True, exist_ok=True)
             fetch_tree(url + name, directory / name)
         else:
-            with urllib.request.urlopen(url + name, timeout=60) as response:
-                (directory / name).write_bytes(response.read())
+            (directory / name).write_bytes(read_url(url + name))
 
 
 def build(version):
-    """Builds the lame front end of version ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.101" or "4.0")
-    in a temporary directory and returns its path."""
+    """Builds the lame front end of version (a key of RELEASES or SVN_TREES) in a temporary directory
+    and returns its path."""
     directory = pathlib.Path(tempfile.mkdtemp(prefix=f"lame-{version}-"))
-    if version == "3.94b1":
+    if version in SVN_TREES:
         source = directory / "lame"
         source.mkdir()
-        fetch_tree(BETA_URL, source)
-        if tree_digest(source) != BETA_TREE_SHA256:
-            raise SystemExit(f"{BETA_URL} holds a tree with digest {tree_digest(source)}, expected {BETA_TREE_SHA256}")
+        fetch_tree(svn_url(version), source)
+        if tree_digest(source) != SVN_TREES[version][1]:
+            raise SystemExit(f"{svn_url(version)} holds a tree with digest {tree_digest(source)}, expected {SVN_TREES[version][1]}")
         for script in ("configure", "config.guess", "config.sub", "install-sh", "depcomp", "missing", "mkinstalldirs", "ltmain.sh"):
             if (source / script).exists():
                 (source / script).chmod(0o755)

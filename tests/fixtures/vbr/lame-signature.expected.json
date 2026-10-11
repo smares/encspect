@@ -1,5 +1,5 @@
 {
- "description": "No VBR header, but every frame's ancillary data starts with \"LAME3.99r\" on a byte boundary, as LAME pads unused bits.",
+ "description": "No VBR header, but every frame's ancillary data starts with \"LAME3.99r\" on a byte boundary, as LAME pads unused bits; the 3.99 release whose patch level that does not say.",
  "length": 2502,
  "crosscheck": true,
  "regions": [
@@ -395,7 +395,7 @@
  "gaps": [],
  "findings": [],
  "detected_encoder": {
-  "name": "LAME 3.99r",
+  "name": "LAME 3.99.x",
   "confidence": "Low"
  },
  "silent": true,

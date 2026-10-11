@@ -58,7 +58,7 @@ internal sealed class VbrHeader
 
     private static readonly string[] GainOriginators = ["Not set", "Set by artist", "Set by user", "Determined automatically", "Simple RMS average"];
 
-    private static readonly string[] StereoModes = ["Mono", "Stereo", "Dual channel", "Joint stereo", "Forced MS stereo", "Auto", "Intensity stereo", "Undefined"];
+    private static readonly string[] StereoModes = ["Mono", "Stereo", "Dual channel", "Joint stereo", "Forced mid/side stereo", "Auto", "Intensity stereo", "Undefined"];
 
     private static readonly string[] SourceRates = ["32 kHz or lower", "44.1 kHz", "48 kHz", "Higher than 48 kHz"];
 
@@ -123,7 +123,7 @@ internal sealed class VbrHeader
 
     public bool IsTocDecreasing { get; private set; }
 
-    // Pre-3.90 LAME version string, without the tag fields.
+    // Pre-3.90 LAME's version string, or text that does not start a LAME tag, without tag fields.
     public string? EncoderString { get; private set; }
 
     public int LameOffset { get; private set; } = -1;
@@ -142,6 +142,7 @@ internal sealed class VbrHeader
 
     public bool IsTagCrcValid => StoredTagCrc == ComputedTagCrc;
 
+    // 0 when not set (Mp3 Info Tag, MusicLength: "not set / unknown / larger than 4G").
     public uint MusicLength { get; private set; }
 
     public int StoredMusicCrc { get; private set; }
@@ -335,7 +336,7 @@ internal sealed class VbrHeader
         }
 
         string text = Encoding.ASCII.GetString(_frame, position, 9).TrimEnd('\0');
-        if (IsOldLame(text))
+        if (IsOldLame(text) || !IsLameTagStart(text))
         {
             int end = position;
             while (end < _frame.Length && end - position < 20 && _frame[end] is >= 32 and < 127)
@@ -351,6 +352,15 @@ internal sealed class VbrHeader
             ReadLame(position, text);
         }
     }
+
+    // The encoder strings readers take a LAME tag after: "LAME" (and Helix's "LAMEH"), "L" and a
+    // version as LAME 3.99 alphas wrote it ("L3.99a12"), as mp3guessenc reads it (tags.c,
+    // parse_xing_tag), and ffmpeg's "Lavc" and "Lavf", the only ones ffmpeg reads delay and padding
+    // after (mp3dec.c, mp3_parse_info_tag). Other text is not taken for a tag.
+    private static bool IsLameTagStart(string text) =>
+        text.StartsWith("LAME", StringComparison.Ordinal) || text.StartsWith("Lavc", StringComparison.Ordinal)
+        || text.StartsWith("Lavf", StringComparison.Ordinal)
+        || (text.Length >= 5 && text[0] == 'L' && char.IsAsciiDigit(text[1]) && text[2] == '.' && char.IsAsciiDigit(text[3]) && char.IsAsciiDigit(text[4]));
 
     // Printable ASCII, padded with zero bytes, not empty.
     private static bool IsEncoderString(ReadOnlySpan<byte> data) =>
@@ -542,10 +552,11 @@ internal sealed class VbrHeader
         node.Add(Field("HasUnwiseSettings", 24, 1, Bool((misc & 0x20) != 0)));
         node.Add(Field("Source Sample Rate", 24, 1, SourceRates[misc >> 6]));
 
-        // A signed number of 1.5 dB steps.
-        int gain = (sbyte)b[p + 25];
-        int tenths = Math.Abs(gain) * 15;
-        node.Add(Field("MP3 Gain", 25, 1, $"{(gain < 0 ? "-" : "+")}{Number(tenths / 10)}.{Number(tenths % 10)} dB"));
+        // A sign bit and seven bits of 1.5 dB steps (Mp3 Info Tag, MP3 Gain: [10000001] = -1 = -1.5 dB).
+        int steps = b[p + 25] & 0x7F;
+        int tenths = steps * 15;
+        bool negative = (b[p + 25] & 0x80) != 0 && steps != 0;
+        node.Add(Field("MP3 Gain", 25, 1, $"{(negative ? "-" : "+")}{Number(tenths / 10)}.{Number(tenths % 10)} dB"));
 
         int presetSurround = UInt16At(p + 26);
         int surround = (presetSurround >> 11) & 7;
@@ -557,7 +568,7 @@ internal sealed class VbrHeader
                 $"{oldPreset}; LAME 3.90 to 3.92 leave the preset out, but the VBR method, Xing quality, noise shaping, stereo mode, ATH type and lowpass this tag holds are the ones it sets"));
         }
 
-        node.Add(Field("Music Length", 28, 4, $"{Number(MusicLength)} bytes"));
+        node.Add(Field("Music Length", 28, 4, MusicLength == 0 ? "Not set" : $"{Number(MusicLength)} bytes"));
         Node musicCrcNode = node.Add(Field("Music CRC", 32, 2, $"0x{StoredMusicCrc:X4}"));
         if (musicCrc is { } computed)
         {

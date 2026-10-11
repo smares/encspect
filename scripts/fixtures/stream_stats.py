@@ -13,10 +13,14 @@ confirms both with mp3guessenc, mpg123 and ffmpeg. Its definitions:
   Both are comma-separated, for regions of Layer III frames only in the case of the reservoir.
 - "Gapless": with a LAME tag, the samples of the frames the tag covers minus its encoder delay and
   padding (LAME and ffmpeg's convention; decoders that trim by them output exactly that many).
-- "VBR Header": the frame and byte counts the first frame's header claims, and the ones counted
-  from that frame to the end of its stream: the next VBR header, a change of version, layer or
-  sample rate, or the end of the file, across gaps and tags. Xing's and Fraunhofer's encoders count
-  the header's own frame and LAME does not, so either count is consistent; byte counts include it.
+- "VBR Header": the frame and byte counts a header claims, and the ones counted from its frame to
+  the end of its stream: the next VBR header, a change of version, layer or sample rate, or the end
+  of the file, across gaps and tags. Xing's and Fraunhofer's encoders count the header's own frame
+  and LAME does not, so either count is consistent; byte counts include it. A truncated last frame
+  was written whole, so it counts here too.
+- Each header of a region has its own "VBR Header" and "Gapless" ("VBR Header[1]" for the second).
+  Where a header is not in the region's first frame or does not describe all its frames (files were
+  joined), their value says which frames they cover.
 """
 
 from fractions import Fraction
@@ -148,9 +152,26 @@ def region_fields(frames, all_frames):
         fields["Statistics/Reservoir Fill Over Time"] = ",".join(
             str(rounded(Fraction(per_second[s][2], per_second[s][3]))) if s in per_second else "0" for s in seconds)
 
-    first = next((f for f in frames if f.header is not None), None)
-    if first is not None:
-        fields.update(header_fields(first, all_frames))
+    counts = lames = 0
+    for header_frame in (f for f in frames if f.header is not None):
+        described = covered(header_frame, all_frames)
+        whole = header_frame is frames[0] and all(f in described for f in audio)
+        scope = None if whole else (f"{frames_text(len(described))} after the {header_frame.header['type']} header at "
+                                    f"0x{header_frame.offset:X}")
+        tag = header_frame.header
+        has_counts = tag.get("frames") is not None or tag.get("bytes") is not None
+        has_lame = tag.get("lame") is not None
+        for path, value in header_fields(header_frame, all_frames).items():
+            path = path.replace("/VBR Header", f"/VBR Header[{counts}]" if counts else "/VBR Header")
+            path = path.replace("/Gapless", f"/Gapless[{lames}]" if lames else "/Gapless")
+            fields[path] = value
+        if scope is not None:
+            if has_counts:
+                fields["Statistics/VBR Header" + (f"[{counts}]" if counts else "")] = scope
+            if has_lame:
+                fields["Statistics/Gapless" + (f"[{lames}]" if lames else "")] = scope
+        counts += has_counts
+        lames += has_lame
     return fields
 
 
@@ -194,7 +215,7 @@ def covered(header_frame, all_frames):
 
 def header_fields(header_frame, all_frames):
     tag = header_frame.header
-    frames = [f for f in covered(header_frame, all_frames) if not f.truncated]
+    frames = covered(header_frame, all_frames)
     fields = {}
     claimed_frames, claimed_bytes = tag.get("frames"), tag.get("bytes")
     if claimed_frames is not None:
@@ -218,7 +239,7 @@ def header_fields(header_frame, all_frames):
 def header_findings(header_frame, all_frames):
     """Findings about a VBR header's counts and gapless values: (code, text the message contains)."""
     tag = header_frame.header
-    frames = [f for f in covered(header_frame, all_frames) if not f.truncated]
+    frames = covered(header_frame, all_frames)
     at = f"0x{header_frame.offset:X}"
     result = []
     if tag.get("frames") is not None and tag["frames"] not in (len(frames), len(frames) + 1):

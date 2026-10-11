@@ -1,5 +1,5 @@
 {
- "description": "ID3v2.4 tag whose TSSE frame holds ffmpeg's version, as ffmpeg's muxer writes it, before frames that show no encoder's habits: ffmpeg is named, with low confidence.",
+ "description": "ID3v2.4 tag whose TSSE frame holds ffmpeg's version, as ffmpeg's muxer writes it whatever encoded the stream, before frames that show no encoder's habits: no encoder is named.",
  "length": 3393,
  "crosscheck": true,
  "regions": [
@@ -144,9 +144,5 @@
   }
  ],
  "gaps": [],
- "findings": [],
- "detected_encoder": {
-  "name": "FFmpeg (Lavf58.76.100)",
-  "confidence": "Low"
- }
+ "findings": []
 }

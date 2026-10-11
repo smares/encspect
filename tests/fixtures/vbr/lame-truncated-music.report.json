@@ -3814,9 +3814,9 @@
     },
     "findings": [
       {
-        "severity": "Warning",
+        "severity": "Info",
         "code": "mpeg.music-crc-not-verified",
-        "message": "The LAME tag of 1 frame covers more music than the file holds after it, so the music CRC is not verified; the first at 0x0.",
+        "message": "The LAME tag of 1 frame covers more music than the file holds after it, which is cut short, so the music CRC is not verified; the first at 0x0.",
         "offset": 0,
         "length": 417
       },
