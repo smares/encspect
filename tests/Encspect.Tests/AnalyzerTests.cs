@@ -177,7 +177,7 @@ public class AnalyzerTests
         Finding finding = Assert.Single(report.Findings);
         Assert.Equal("file.not-regular", finding.Code);
         Assert.Equal(Severity.Error, finding.Severity);
-        Assert.Equal("This is a character device, not a regular file, so it was not read.", finding.Message);
+        Assert.Equal("This is a device or kernel file that reports a size of 0 but yields data, not a regular file, so it was not read.", finding.Message);
         Assert.Null(analyzer.DetectFormat("/dev/zero"));
     }
 
@@ -195,7 +195,7 @@ public class AnalyzerTests
 
         (Report report, string? format) = await Task.Run(() => (analyzer.AnalyzeFile(fifo), analyzer.DetectFormat(fifo))).WaitAsync(TimeSpan.FromSeconds(60));
 
-        Assert.Equal("This is a named pipe (FIFO), not a regular file, so it was not read.", Assert.Single(report.Findings).Message);
+        Assert.Equal("This is a named pipe, socket or terminal, not a regular file, so it was not read.", Assert.Single(report.Findings).Message);
         Assert.Null(format);
     }
 
@@ -212,7 +212,7 @@ public class AnalyzerTests
 
         Finding finding = Assert.Single(report.Findings);
         Assert.Equal("file.not-regular", finding.Code);
-        Assert.Equal("This is a file of the kernel's proc file system, not a regular file, so it was not read.", finding.Message);
+        Assert.Equal("This is a device or kernel file that reports a size of 0 but yields data, not a regular file, so it was not read.", finding.Message);
     }
 
     [Fact]
