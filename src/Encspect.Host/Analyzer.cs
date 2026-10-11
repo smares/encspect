@@ -33,6 +33,27 @@ public sealed class Analyzer
         return Analyze(path, stream);
     }
 
+    // The format parser that would analyze the file, or null: the same tag scan and sniffing as
+    // Analyze, without parsing the data, so a batch can skip files of other formats cheaply.
+    public string? DetectFormat(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var reader = new ByteReader(stream);
+        if (reader.Length == 0)
+        {
+            return null;
+        }
+
+        var pending = new List<PendingFinding>();
+        List<Claim> leading = FindLeadingTags(reader, pending);
+        long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
+        long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
+        return dataEnd > dataStart ? FindParser(reader.Slice(dataStart, dataEnd - dataStart))?.Name : null;
+    }
+
     public Report Analyze(string source, Stream stream)
     {
         ArgumentNullException.ThrowIfNull(source);
