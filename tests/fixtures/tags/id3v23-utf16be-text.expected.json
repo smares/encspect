@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 TIT2 frame in UTF-16BE without a BOM (encoding $02), which only ID3v2.4 defines. The text is decoded as UTF-16BE.",
+  "length": 572,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Björk",
+        "TPE1/Text": "Jóga"
+      },
+      "offset": 0,
+      "length": 60
+    },
+    {
+      "name": "Data",
+      "offset": 60,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.encoding-not-allowed",
+      "contains": "UTF-16BE, which ID3v2.3 does not define"
+    }
+  ]
+}

@@ -956,6 +956,48 @@ def id3v23_utf16_second_string_without_bom():
 
 
 @fixture
+def id3v23_utf8_text():
+    f = Fixture(
+        "id3v23-utf8-text",
+        "ID3v2.3 TIT2 frame in UTF-8 (encoding $03), which only ID3v2.4 defines; taggers write it anyway. The text is "
+        "decoded as UTF-8.",
+    )
+    frames = [frame23("TIT2", text_frame_data(UTF8, ["Björk – Jóga"])), frame23("TPE1", text_frame_data(LATIN1, ["Künstler"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Text": "Björk – Jóga", "TPE1/Text": "Künstler"})
+    f.finding("id3v2.encoding-not-allowed", "UTF-8, which ID3v2.3 does not define")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_utf16be_text():
+    f = Fixture(
+        "id3v23-utf16be-text",
+        "ID3v2.3 TIT2 frame in UTF-16BE without a BOM (encoding $02), which only ID3v2.4 defines. The text is decoded "
+        "as UTF-16BE.",
+    )
+    frames = [frame23("TIT2", text_frame_data(UTF16BE, ["Björk"])), frame23("TPE1", text_frame_data(UTF16, ["Jóga"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Text": "Björk", "TPE1/Text": "Jóga"})
+    f.finding("id3v2.encoding-not-allowed", "UTF-16BE, which ID3v2.3 does not define")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_undefined_encoding():
+    f = Fixture(
+        "id3v24-undefined-encoding",
+        "ID3v2.4 TIT2 frame whose encoding byte is $04, which no version defines (ID3v2.4 main structure, section 4). "
+        "The text is shown as ISO-8859-1.",
+    )
+    frames = [frame24("TIT2", b"\x04" + "Café".encode("latin-1")), frame24("TPE1", text_frame_data(UTF8, ["Jóga"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TIT2/Text": "Café", "TPE1/Text": "Jóga"})
+    f.finding("id3v2.encoding-invalid", "undefined text encoding 4")
+    f.audio()
+    return f
+
+
+@fixture
 def id3v24_seek_to_appended():
     f = Fixture(
         "id3v24-seek-to-appended",
