@@ -1,5 +1,5 @@
-"""Builds old LAME releases (LGPL) from source, for encoder-written fixtures of the LAME tag as its
-first versions wrote it.
+"""Builds LAME releases (LGPL) other than the system's 3.100 from source, for encoder-written fixtures
+of the LAME tag as its first versions and its releases after 3.100 wrote it.
 
 LAME 3.90.1, 3.91, 3.92 and 3.93.1 come from their release tarballs on SourceForge, each checked against a
 pinned SHA-256. They write the LAME tag (since 3.90) with both ReplayGain fields zero: 3.93.1 still
@@ -13,8 +13,13 @@ It is the release that computes ReplayGain into the tag against 83 dB: its gain_
 PINK_REF from 64.82 to 58.82, which 3.95 reverted, so its gains read 6 dB lower than those of
 later versions.
 
+LAME 3.101 and 4.0 (July 2026) come from their release tarballs too. 3.101 has no room left for the
+release marker in the tag's nine bytes of version, "LAME3.101"; 4.0 bumped the major version to
+make room and writes "LAME4.0 " and a NUL byte. Both compute the tag's CRCs with a new
+slicing-by-8 routine, which gives the same values.
+
 3.90.1, 3.91 and 3.92 predate a libtool that knows x86-64, so they are built with the Makefile.unix their
-releases include (3.92's misses presets.c); 3.94 beta 1 with its configure script.
+releases include (3.92's misses presets.c); 3.94 beta 1, 3.101 and 4.0 with their configure scripts.
 """
 
 import hashlib
@@ -32,14 +37,20 @@ RELEASES = {
     "3.91": "55c54edd5d819699dad68949e6080358a2c6e390a118c0f2b57c09950d63050f",
     "3.92": "303c1e5bffa2f3358629d5022e910cb48e9691d6b8d923ad7d649a41c7df8100",
     "3.93.1": "cc19feb74b7b194667719af438f7cef361acc24f9c3f7c348f12e08d071fa65d",
+    "3.101": "7578af6eebd578b2bd64e468fac4ae1f03670a7e028166e67f855674b9b6aeac",
+    "4.0": "3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb",
 }
-BANNERS = {"3.90.1": "LAME version 3.90 ", "3.91": "LAME version 3.91 ", "3.92": "LAME version 3.92 ", "3.93.1": "LAME version 3.93 ", "3.94b1": "LAME version 3.94 (beta 1"}
+BANNERS = {"3.90.1": "LAME version 3.90 ", "3.91": "LAME version 3.91 ", "3.92": "LAME version 3.92 ", "3.93.1": "LAME version 3.93 ", "3.94b1": "LAME version 3.94 (beta 1",
+           "3.101": "version 3.101 (", "4.0": "version 4.0 ("}
 
 # svn's HTTP interface lists a directory as HTML; "!svn/bc/<revision>" fixes the revision.
 BETA_URL = "https://svn.code.sf.net/p/lame/svn/!svn/bc/7051/tags/lame3_94beta/lame/"
 BETA_TREE_SHA256 = "c928fb4faa8f9de9b5acfc09c08fab88088079fbf2240c6681223c162fa78e0a"
 
 CFLAGS = "-O2 -w -fcommon -std=gnu89"
+
+# The releases after 3.100, built with their own configure scripts.
+CONFIGURED = ("3.101", "4.0")
 
 
 def addresses(version):
@@ -71,8 +82,8 @@ def fetch_tree(url, directory):
 
 
 def build(version):
-    """Builds the lame front end of version ("3.90.1", "3.91", "3.92", "3.93.1" or "3.94b1") in a temporary
-    directory and returns its path."""
+    """Builds the lame front end of version ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.101" or "4.0")
+    in a temporary directory and returns its path."""
     directory = pathlib.Path(tempfile.mkdtemp(prefix=f"lame-{version}-"))
     if version == "3.94b1":
         source = directory / "lame"
@@ -93,10 +104,15 @@ def build(version):
             tar.extractall(directory, filter="data")
         # The 3.90.1 tarball unpacks as lame-3.90 and its sources call themselves 3.90.
         source = directory / ("lame-3.90" if version == "3.90.1" else f"lame-{version}")
-        if version == "3.92":
-            makefile = source / "Makefile.unix"
-            makefile.write_text(makefile.read_text().replace("libmp3lame/set_get.c \\", "libmp3lame/set_get.c libmp3lame/presets.c \\", 1))
-        subprocess.run(["make", "-f", "Makefile.unix", f"CC_OPTS={CFLAGS}"], cwd=source, check=True, capture_output=True)
+        if version in CONFIGURED:
+            # Their decoder needs libmpg123, which encoding does not.
+            subprocess.run(["./configure", "--disable-shared", "--disable-decoder"], cwd=source, check=True, capture_output=True)
+            subprocess.run(["make", "-j8"], cwd=source, check=True, capture_output=True)
+        else:
+            if version == "3.92":
+                makefile = source / "Makefile.unix"
+                makefile.write_text(makefile.read_text().replace("libmp3lame/set_get.c \\", "libmp3lame/set_get.c libmp3lame/presets.c \\", 1))
+            subprocess.run(["make", "-f", "Makefile.unix", f"CC_OPTS={CFLAGS}"], cwd=source, check=True, capture_output=True)
     binary = source / "frontend" / "lame"
     banner = subprocess.run([str(binary), "--version"], capture_output=True, text=True).stdout
     if BANNERS[version] not in banner:
