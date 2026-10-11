@@ -290,7 +290,8 @@ def expected_guessenc(tag, music_crc):
         misc, flags, verified = lame["misc"], lame["flags"], lame["tag_crc"] == lame["tag_crc_computed"]
         expected.update({
             "Lame tag": "yes",
-            "Lame short string": lame["encoder"],
+            # mp3guessenc drops the spaces LAME pads a short version with.
+            "Lame short string": lame["encoder"].rstrip(" "),
             "Tag revision": "invalid!" if lame["revision"] == 15 else str(lame["revision"]),
             "Bitrate strategy": guessenc_strategy(lame["method"], lame["bitrate"]),
             "Lowpass value": str(lame["lowpass"] * 100) if lame["lowpass"] else "unknown",
@@ -380,8 +381,11 @@ def check_vbr_header(path, manifest):
             problems.append("mp3guessenc does not find the truncated VBR header")
     else:
         expected = expected_guessenc(tag, music_crc)
-        # mp3guessenc reads 0xFFFFFFFF, as Helix writes it for CBR, as -1: its mark for no quality.
-        if tag["type"] != "VBRI" and tag["quality"] is not None and tag["quality"] != 0xFFFFFFFF:
+        # mp3guessenc reads 0xFFFFFFFF, as Helix writes it for CBR, as -1: its mark for no quality,
+        # and marks Gogo's "GOGO" in that place the same way (tags.c).
+        if tag["type"] != "VBRI" and tag["quality"] == int.from_bytes(b"GOGO", "big"):
+            expected["Quality"] = ""
+        elif tag["type"] != "VBRI" and tag["quality"] is not None and tag["quality"] != 0xFFFFFFFF:
             expected["Quality"] = str(tag["quality"])
         for key, value in expected.items():
             # mp3guessenc appends the -q and -V switches a LAME VBR quality stands for.

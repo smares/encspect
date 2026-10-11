@@ -577,7 +577,9 @@ public class MpegFixtureTests
             long padding = long.Parse(Field(statistics, "Gapless/Encoder Padding")!.Split(' ')[0], CultureInfo.InvariantCulture);
             if (ffmpeg == decoded.GetProperty("mpg123").GetInt64() && padding >= 529)
             {
-                Assert.Equal(ffmpeg.ToString(CultureInfo.InvariantCulture), Field(statistics, "Gapless/Sample Count"));
+                // Both take the length from a frame count that includes the header, and play a frame more.
+                long extra = report.Findings.Any(f => f.Code == "mpeg.vbr-frame-count-includes-header") ? SamplesOf(audio[0]) : 0;
+                Assert.Equal((ffmpeg - extra).ToString(CultureInfo.InvariantCulture), Field(statistics, "Gapless/Sample Count"));
             }
         }
 

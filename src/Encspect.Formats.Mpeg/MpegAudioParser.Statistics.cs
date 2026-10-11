@@ -136,6 +136,15 @@ public sealed partial class MpegAudioParser
                 $"The {header.Type} header of {Frames(count)} claims a frame count the stream after it does not have, the first at 0x{position:X}: {Number(claimedFrames)} claimed, {Number(covered.Count)} counted.");
         }
 
+        // The LAME tag's delay and padding count from the frames after its own, so a count that
+        // includes the header (LAME 3.94 beta 1 writes one) moves the end of the music by a frame.
+        if (header.HasLameTag && header.FrameCount is { } counted && counted == covered.Count + 1 && covered.Count > 0)
+        {
+            int frameSamples = new MpegHeader(covered[0].Header).Samples;
+            findings.Add(Severity.Warning, "mpeg.vbr-frame-count-includes-header", node, count =>
+                $"The Xing header of {Frames(count)} counts its own frame, though the LAME tag after it counts its delay and padding from the frames that follow; decoders that take the length from the count, such as ffmpeg and mpg123, play {Number(frameSamples)} samples more than were encoded. The first at 0x{position:X}.");
+        }
+
         long bytes = frame.Length + covered.Sum(e => e.Length);
         if (header.ByteCount is { } claimedBytes && claimedBytes != bytes && claimedBytes != bytes - frame.Length)
         {

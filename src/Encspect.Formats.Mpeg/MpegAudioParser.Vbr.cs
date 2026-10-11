@@ -10,6 +10,9 @@ public sealed partial class MpegAudioParser
 
     private static readonly byte[] LameSignature = "LAME"u8.ToArray();
 
+    // Gogo-no-coda fills the bits no frame uses with "GOGO" over and over; two in a row rule out chance.
+    private static readonly byte[] GogoSignature = "GOGOGOGO"u8.ToArray();
+
     private static bool HasVbrMagic(BlockReader blocks, long position, long available, MpegHeader header)
     {
         if (header.Layer != 3)
@@ -168,7 +171,8 @@ public sealed partial class MpegAudioParser
         List<Entry> entries = region.Entries;
         Entry tagFrame = entries.FirstOrDefault(e => e.VbrFrame is not null);
         VbrHeader? vbr = tagFrame.VbrFrame is null ? null : VbrHeader.TryRead(tagFrame.VbrFrame, new MpegHeader(tagFrame.Header));
-        Node? tagNode = vbr?.ToNodes(tagFrame.Offset, 0, null).FirstOrDefault(n => n.Name is "VBRI" or "LAME Tag" or "Encoder String");
+        List<Node> vbrNodes = vbr?.ToNodes(tagFrame.Offset, 0, null).ToList() ?? [];
+        Node? tagNode = vbrNodes.FirstOrDefault(n => n.Name is "VBRI" or "LAME Tag" or "Encoder String");
         string? enhancement = region.Enhancement?.Value;
         var ancillaryEvidence = new List<Node>();
         if (region.Enhancement is { } enhanced)
@@ -209,7 +213,7 @@ public sealed partial class MpegAudioParser
             string writer = ffmpeg ? $"FFmpeg ({text})" : text;
             if (ffmpeg && ancillary is not null)
             {
-                return Encoder(LameName(signature!.Value.Text)!, "Medium", ancillary, Evidence(tagNode!, $"LAME tag written by {writer}"));
+                return Encoder(SignatureName(signature!.Value.Text), "Medium", ancillary, Evidence(tagNode!, $"LAME tag written by {writer}"));
             }
 
             // ffmpeg encodes MP3 with libmp3lame or libshine, so Shine's traits behind its tag name Shine.
@@ -219,6 +223,13 @@ public sealed partial class MpegAudioParser
             }
 
             return Encoder(writer, "Medium", Evidence(tagNode!, "LAME tag"));
+        }
+
+        if (vbr is { HasGogoSignature: true })
+        {
+            Node quality = vbrNodes.First(n => n.Name is "Xing" or "Info").Children.First(c => c.Name == "Quality");
+            Node xing = Evidence(quality, "\"GOGO\" in the Xing header's quality field");
+            return signature is { Text: "GOGO" } ? Encoder("Gogo", "Medium", xing, ancillary!) : Encoder("Gogo", "Medium", xing);
         }
 
         if (vbr?.EncoderString is { } old && LameName(old) is { } oldName)
@@ -237,7 +248,7 @@ public sealed partial class MpegAudioParser
             return Encoder(name, "Medium", [.. ancillaryEvidence]);
         }
 
-        return ancillary is null ? TraitEncoder(region) : Encoder(LameName(signature!.Value.Text)!, "Low", ancillary);
+        return ancillary is null ? TraitEncoder(region) : Encoder(SignatureName(signature!.Value.Text), "Low", ancillary);
 
         static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
 
@@ -256,10 +267,14 @@ public sealed partial class MpegAudioParser
         }
     }
 
+    private static string SignatureName(string text) => text == "GOGO" ? "Gogo" : LameName(text)!;
+
     // "LAME3.100" as "LAME 3.100"; LAME 3.99 alphas wrote "L3.99" without "AME". The maintained Helix
-    // encoder writes a LAME tag with "LAMEH" and its version (hmp3 5.2.4: "LAMEH5.24").
+    // encoder writes a LAME tag with "LAMEH" and its version (hmp3 5.2.4: "LAMEH5.24"). LAME pads a
+    // short version to the field's nine bytes with spaces ("LAME3.91 ").
     private static string? LameName(string text)
     {
+        text = text.TrimEnd(' ');
         if (text.StartsWith("LAMEH", StringComparison.Ordinal))
         {
             return text.Length > 5 ? $"Helix MP3 Encoder {text[5..]}" : "Helix MP3 Encoder";
@@ -304,7 +319,7 @@ public sealed partial class MpegAudioParser
                     if (cursor != dataStart || !ancillary.EndsFrame)
                     {
                         ancillary.Search();
-                        if (ancillary.Found is { } found)
+                        if ((ancillary.Found ?? ancillary.Gogo) is { } found)
                         {
                             return found;
                         }
@@ -325,7 +340,7 @@ public sealed partial class MpegAudioParser
         }
 
         ancillary.Search();
-        return ancillary.Found ?? ancillary.Plain;
+        return ancillary.Found ?? ancillary.Gogo ?? ancillary.Plain;
     }
 
     // Ancillary bytes that follow each other in the main-data byte stream, with where each piece
@@ -344,6 +359,8 @@ public sealed partial class MpegAudioParser
         public (long Offset, int Length, string Text)? Found { get; private set; }
 
         public (long Offset, int Length, string Text)? Plain { get; private set; }
+
+        public (long Offset, int Length, string Text)? Gogo { get; private set; }
 
         public void Append(byte[] data, long offset, bool endsFrame)
         {
@@ -366,14 +383,23 @@ public sealed partial class MpegAudioParser
 
         public void Search()
         {
-            if (Found is not null || _bytes.Count < LameSignature.Length || MpegAudioParser.Search(_bytes.ToArray(), 0) is not { } found)
+            if (_bytes.Count < LameSignature.Length)
             {
                 return;
             }
 
-            long start = FileOffset((int)found.Offset);
-            long end = FileOffset((int)found.Offset + found.Length - 1) + 1;
-            var located = (start, (int)(end - start), found.Text);
+            byte[] data = _bytes.ToArray();
+            if (Gogo is null && SearchFill(data, GogoSignature) is { } gogo)
+            {
+                Gogo = Locate(gogo.Offset, gogo.Length, "GOGO");
+            }
+
+            if (Found is not null || MpegAudioParser.Search(data, 0) is not { } found)
+            {
+                return;
+            }
+
+            var located = Locate(found.Offset, found.Length, found.Text);
             if (found.Text.Length > LameSignature.Length)
             {
                 Found = located;
@@ -382,6 +408,13 @@ public sealed partial class MpegAudioParser
             {
                 Plain ??= located;
             }
+        }
+
+        private (long Offset, int Length, string Text) Locate(long index, int length, string text)
+        {
+            long start = FileOffset((int)index);
+            long end = FileOffset((int)index + length - 1) + 1;
+            return (start, (int)(end - start), text);
         }
 
         private long FileOffset(int index)
@@ -433,6 +466,23 @@ public sealed partial class MpegAudioParser
         }
 
         return plain;
+    }
+
+    // The first place pattern starts in data at any bit position: its byte index and the number of
+    // bytes it touches.
+    private static (long Offset, int Length)? SearchFill(byte[] data, byte[] pattern)
+    {
+        for (int shift = 0; shift < 8 && data.Length > pattern.Length; shift++)
+        {
+            byte[] shifted = shift == 0 ? data : Shift(data, shift);
+            int start = shifted.AsSpan().IndexOf(pattern);
+            if (start >= 0)
+            {
+                return (start, (shift + (8 * pattern.Length) + 7) / 8);
+            }
+        }
+
+        return null;
     }
 
     // The bytes of data read from bit shift onwards.

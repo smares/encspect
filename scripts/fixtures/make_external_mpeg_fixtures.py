@@ -3,7 +3,8 @@
 libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
-source of Layer I here, and BladeEnc 0.94.2 (blade_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
+source of Layer I here, BladeEnc 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
+(old_lame_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
 
 The hand-built fixtures from make_mpeg_fixtures.py have zero payloads. These come from encoders
@@ -70,8 +71,10 @@ import wave
 
 import blade_tool
 import fhg_tool
+import gogo_tool
 import helix_tool
 import minimp3_tool
+import old_lame_tool
 import vbr_tags
 import xing_tool
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
@@ -279,6 +282,33 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Stereo", bitrate=96, protected=True, info_frame=False, signal="music")),
     ("external-blade-flags", ".mp3", 44100, 2, ["bladeenc", "-320", "-p", "-c", "-copy"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=320, info_frame=False, signal="music")),
+    # LAME 3.90 to 3.92 have Dibrom's --alt-presets but no preset field in the tag; 3.93 added it.
+    ("external-lame390-alt-standard", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame390-alt-extreme", ".mp3", 48000, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "extreme"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame390-alt-insane", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "insane"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=320, info_frame=True, signal="music")),
+    ("external-lame390-alt-abr", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame391-cbr", ".mp3", 44100, 2, ["lame-3.91", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame392-alt-fast-standard", ".mp3", 44100, 2, ["lame-3.92", "--quiet", "--alt-preset", "fast", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame393-alt-standard", ".mp3", 44100, 2, ["lame-3.93.1", "--quiet", "--alt-preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    # LAME 3.94 beta 1 computes ReplayGain against 83 dB.
+    ("external-lame394b-vbr", ".mp3", 44100, 2, ["lame-3.94b1", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame394b-no-info", ".mp3", 44100, 2, ["lame-3.94b1", "--quiet", "-t", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    # Gogo fills unused bits with "GOGO" and writes it where the Xing header's quality belongs.
+    ("external-gogo-cbr", ".mp3", 44100, 2, ["gogo", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-gogo-vbr", ".mp3", 44100, 2, ["gogo", "-v", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-gogo-mpeg2-mono", ".mp3", 22050, 1, ["gogo", "-b", "64", "-m", "m"],
+     dict(version="2", layer=3, sample_rate=22050, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
     ("external-twolame-music", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
     ("external-ffmpeg-mp2", ".mp2", 48000, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "mp2", "-b:a", "192k", "{out}"],
@@ -462,7 +492,20 @@ def detected_encoder(command, tag, settings, rows, path):
     MP2 encoder leaves no trace. Xing's Layer III frames never switch to short blocks or use scfsi
     and all set the original bit (low). BladeEnc switches to short blocks without scalefactor
     scaling, codes plain stereo or mono, and leaves ancillary data at most in its last
-    frame, as mp3guessenc counts it (low)."""
+    frame, as mp3guessenc counts it (low). Old LAME releases are named by their tag as LAME 3.100
+    is, or without it by the version string mp3guessenc finds in ancillary data (low). Gogo's
+    "GOGO", which mp3guessenc finds, names it: with its Xing header, which holds "GOGO" as the
+    quality, medium, from ancillary data alone low."""
+    if command[0] == "gogo":
+        if guessenc_tag_lines(path).get("Encoder string") != "GOGO":
+            return None
+        return {"name": "Gogo", "confidence": "Medium" if tag is not None and tag.get("quality") == int.from_bytes(b"GOGO", "big") else "Low"}
+    if command[0].startswith("lame-"):
+        lame = tag.get("lame") if tag else None
+        if lame is None:
+            string = guessenc_tag_lines(path).get("Encoder string")
+            return {"name": f"LAME {string[4:]}", "confidence": "Low"} if string and string.startswith("LAME") else None
+        return {"name": f"LAME {lame['encoder'][4:].rstrip(' ')}", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
     if command[0] in ("twolame", "tompg") and settings["layer"] == 2:
         return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "tompg":
@@ -555,6 +598,11 @@ def describe_tag(path, command, manifest):
         tag["frame_offset"] = start
         manifest["vbr_header_fields"] = vbr_tags.report_fields(tag)
         manifest["vbr_findings"] = [{"code": code, "contains": contains} for code, contains in vbr_tags.findings(tag, start)]
+        # ffprobe lists the frames after the header; LAME 3.94 beta 1 counts the header too.
+        packets = manifest.get("ffprobe_packets")
+        if tag.get("lame") and packets and tag.get("frames") == len(packets) + 1:
+            samples = 1152 if manifest["encoder"]["version"] == "1" else 576
+            manifest["vbr_findings"].append({"code": "mpeg.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
     manifest["vbr_header"] = tag
     manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
@@ -575,6 +623,12 @@ def encode(command, source, path, temp):
         return
     if command[0] == "bladeenc":
         blade_tool.encode(BLADE_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "gogo":
+        gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
+        return
+    if command[0].startswith("lame-"):
+        subprocess.run([str(OLD_LAME[command[0][len("lame-"):]]), *command[1:], str(source), str(path)], check=True)
         return
     if command[0] != "ffmpeg":
         subprocess.run(command + [str(source), str(path)], check=True)
@@ -636,6 +690,8 @@ HELIX_ENCODER = []
 HELIX_R11_ENCODER = []
 XING_ENCODER = []
 BLADE_ENCODER = []
+GOGO_ENCODER = []
+OLD_LAME = {}
 
 
 def main():
@@ -647,6 +703,9 @@ def main():
     HELIX_R11_ENCODER.append(helix_tool.build_r11())
     XING_ENCODER.append(xing_tool.fetch())
     BLADE_ENCODER.append(blade_tool.build())
+    GOGO_ENCODER.append(gogo_tool.fetch())
+    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1"):
+        OLD_LAME[version] = old_lame_tool.build(version)
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in FIXTURES:
             source = pathlib.Path(temp) / f"{name}.wav"

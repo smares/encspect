@@ -284,7 +284,9 @@ def report_fields(tag, toc_entries=(0, 1, 50, 99)):
         for i in toc_entries:
             fields[f"Xing/TOC/Entry {i}"] = str(tag["toc"][i])
     if tag["quality"] is not None:
-        fields["Xing/Quality"] = str(tag["quality"])
+        # Gogo-no-coda writes its name where the quality belongs.
+        fields["Xing/Quality"] = ('"GOGO", which Gogo writes instead of a quality' if tag["quality"] == int.from_bytes(b"GOGO", "big")
+                                  else str(tag["quality"]))
     if "encoder_string" in tag:
         fields["Encoder String"] = tag["encoder_string"]
     if "lame" in tag:
@@ -344,7 +346,28 @@ def lame_fields(lame):
     })
     if lame["music_crc_computed"] is not None:
         fields[f"{p}/Music CRC/Computed"] = f"0x{lame['music_crc_computed']:04X}"
+    preset = alt_preset(lame)
+    if preset and lame["preset_surround"] & 0x7FF == 0:
+        fields[f"{p}/Preset/Settings Match"] = (f"{preset}; LAME 3.90 to 3.92 leave the preset out, but its VBR method, lowpass, ATH type "
+                                                "and nspsytune flags are the ones this tag holds")
     return fields
+
+
+def alt_preset(lame):
+    """The --alt-preset of LAME 3.90 to 3.92 whose settings the tag holds, as encodes with each
+    preset show them, or None."""
+    flags, method, lowpass, bitrate = lame["flags"], lame["method"], lame["lowpass"], lame["bitrate"]
+    if lame["encoder"].rstrip(" ") not in ("LAME3.90", "LAME3.91", "LAME3.92") or not flags & 0x10:
+        return None
+    safe_joint = bool(flags & 0x20)
+    vbr = {(3, 190, 4): "standard", (4, 190, 4): "fast standard", (3, 195, 2): "extreme", (4, 195, 2): "fast extreme"}
+    if safe_joint and (method, lowpass, flags & 15) in vbr:
+        return f"--alt-preset {vbr[method, lowpass, flags & 15]}"
+    if safe_joint and (method, lowpass, flags & 15, bitrate) == (1, 205, 2, 255):
+        return "--alt-preset insane"
+    if flags & 15 == 2 and 0 < bitrate < 255 and method in (1, 2):
+        return f"--alt-preset {'cbr ' if method == 1 else ''}{bitrate}"
+    return None
 
 
 def findings(tag, frame_offset):
