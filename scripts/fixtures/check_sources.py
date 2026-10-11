@@ -13,10 +13,13 @@ import tempfile
 import time
 import urllib.parse
 
+import blade_tool
 import conformance_mpeg_audio
 import downloads
 import fhg_tool
+import helix_tool
 import mctoolamed_tool
+import xing_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARCHIVE_PAUSE = 5
@@ -34,6 +37,9 @@ def sources():
         yield sample["file"], sample["sha256"], [url, downloads.archived(url, mp3pro["archive_year"])]
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
+    yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
+    yield "bladeenc-0.94.2-src-stable.tar.gz", blade_tool.SHA256, blade_tool.ADDRESSES
+    yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
 
 
 def main():

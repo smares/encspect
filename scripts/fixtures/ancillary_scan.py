@@ -17,6 +17,10 @@ it follows, confirms both (crosscheck_mpeg_fixtures.py). The definitions:
   high byte, being 0x04 (plain MP3) or 0x08 (MP3 Surround, whose signature then follows at bytes
   10 and 11). The delay counts the samples before the audio in a plain decoder's output, its own
   529 included; mp3guessenc adds 576 for MP3 Surround, the analyzer reports the value as stored.
+- In MPEG-2 and 2.5, the first segment may hold mp3PRO's OFL block instead: more than 20 bytes
+  starting 0xE0 0xBA, with a 16-bit delay at byte 14 and a 32-bit length at byte 16, counted at
+  twice the core's sample rate, the rate an mp3PRO decoder outputs. Its first two bytes keep the
+  mp3PRO signature, so they count towards it like any segment's.
 - Unlike mp3guessenc, the analyzer requires at least MIN_SEGMENTS scanned segments, so a short
   stream does not match a signature by chance (1 in 8 per frame for mp3PRO's three bits).
 """
@@ -27,11 +31,20 @@ MP3PRO = "mp3PRO"
 SURROUND = "MP3 Surround"
 
 
+PLAIN, SURROUND_OFL, MP3PRO_OFL = "plain", "surround", "mp3pro"
+
+
 def ofl(segment, version):
-    """The OFL block at the start of a stream's first segment: (delay, original length, surround)."""
-    if version != "MPEG-1" or segment is None or len(segment) <= 9 or segment[0] != 0xB4 or segment[1] not in (0x04, 0x08):
+    """The OFL block at the start of a stream's first segment: (delay, original length, kind)."""
+    if segment is None:
         return None
-    return int.from_bytes(segment[1:3], "big"), int.from_bytes(segment[3:7], "big"), segment[1] == 0x08
+    if version != "MPEG-1":
+        if len(segment) <= 20 or segment[0] != 0xE0 or segment[1] != 0xBA:
+            return None
+        return int.from_bytes(segment[14:16], "big"), int.from_bytes(segment[16:20], "big"), MP3PRO_OFL
+    if len(segment) <= 9 or segment[0] != 0xB4 or segment[1] not in (0x04, 0x08):
+        return None
+    return int.from_bytes(segment[1:3], "big"), int.from_bytes(segment[3:7], "big"), SURROUND_OFL if segment[1] == 0x08 else PLAIN
 
 
 def scan(segments, version, rate):
@@ -48,8 +61,8 @@ def scan(segments, version, rate):
         total += len(segment)
         if not segment:
             signature = [0, 0]
-        elif k == 0 and block is not None:
-            if block[2]:
+        elif k == 0 and block is not None and block[2] != MP3PRO_OFL:
+            if block[2] == SURROUND_OFL:
                 for i in (0, 1):
                     if len(segment) > 10 + i:
                         signature[i] &= segment[10 + i]

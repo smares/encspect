@@ -8,6 +8,9 @@ namespace Encspect.Formats.Mpeg;
 // runs from the end of its main data, rounded up to a byte, to where the next frame's main data
 // starts in the bit reservoir, and the last frame's to the end of its data. mp3PRO and MP3 Surround
 // encoders start every segment with signature bits; an OFL block starts the first frame's segment.
+// In mp3PRO, the OFL block counts samples at the rate an mp3PRO decoder outputs, twice the core's:
+// Thomson's mp3PRO Encoder 1.1 stores 88200 samples for two seconds at 44100 Hz in a 22050 Hz
+// stream (checked by hand; check_restricted_encoders.py).
 public sealed partial class MpegAudioParser
 {
     // A short stream would match mp3PRO's three signature bits by chance: 1 in 8 per frame.
@@ -60,12 +63,14 @@ public sealed partial class MpegAudioParser
 
         if (scan.Ofl is { } ofl)
         {
+            int rate = ofl.IsMp3Pro ? header.SampleRate * 2 : header.SampleRate;
             Node node = new("Original File Length", ofl.Offset, ofl.Length, $"{Number(ofl.Samples)} samples");
             node.Add("Delay", ofl.Offset, ofl.Length, $"{Number(ofl.Delay)} samples");
             node.Add("Original Length", ofl.Offset, ofl.Length, $"{Number(ofl.Samples)} samples");
-            node.Add("Duration", ofl.Offset, ofl.Length, DurationText(ofl.Samples * (Clock / header.SampleRate)));
+            node.Add("Sample Rate", ofl.Offset, ofl.Length, $"{Number(rate)} Hz");
+            node.Add("Duration", ofl.Offset, ofl.Length, DurationText(ofl.Samples * (Clock / rate)));
             region.Ofl = node;
-            long samples = audio.Sum(e => (long)new MpegHeader(e.Header).Samples);
+            long samples = audio.Sum(e => (long)new MpegHeader(e.Header).Samples) * (rate / header.SampleRate);
             if (ofl.Delay + ofl.Samples > samples)
             {
                 state.Findings.AddNow(Severity.Warning, "mpeg.ofl-exceeds-stream",
@@ -93,10 +98,13 @@ public sealed partial class MpegAudioParser
 
         public long Bytes { get; private set; }
 
+        // The bytes of the last segment, the last frame's ancillary data.
+        public long LastSegmentBytes { get; private set; }
+
         // The AND of the first two bytes of every segment.
         public byte[] Signature { get; } = [0xFF, 0xFF];
 
-        public (long Offset, int Length, int Delay, long Samples)? Ofl { get; private set; }
+        public (long Offset, int Length, int Delay, long Samples, bool IsMp3Pro)? Ofl { get; private set; }
 
         public void Add(Entry entry)
         {
@@ -160,6 +168,7 @@ public sealed partial class MpegAudioParser
         {
             Segments++;
             Bytes += to - from;
+            LastSegmentBytes = to - from;
             if (to == from)
             {
                 Signature[0] = 0;
@@ -167,8 +176,17 @@ public sealed partial class MpegAudioParser
                 return;
             }
 
-            byte[] head = Read(from, (int)Math.Min(to - from, 12));
+            byte[] head = Read(from, (int)Math.Min(to - from, 20));
             var header = new MpegHeader(First!.Value.Header);
+
+            // mp3PRO: 0xE0 0xBA, then at byte 14 a 16-bit delay and a 32-bit length, in a segment of
+            // more than 20 bytes; its first two bytes still carry the mp3PRO signature.
+            if (_previousIsFirst && !header.IsMpeg1 && to - from > 20 && head[0] == 0xE0 && head[1] == 0xBA)
+            {
+                long offset = FileOffset(from);
+                Ofl = (offset, (int)(FileOffset(from + 19) + 1 - offset), (head[14] << 8) | head[15],
+                    ((long)head[16] << 24) | ((long)head[17] << 16) | ((long)head[18] << 8) | head[19], true);
+            }
 
             // 0xB4, a 16-bit delay and a 32-bit length; mp3guessenc recognizes the block by the
             // delay's high byte, 0x04 for plain MP3 and 0x08 for MP3 Surround, whose signature
@@ -177,7 +195,7 @@ public sealed partial class MpegAudioParser
             {
                 long offset = FileOffset(from);
                 Ofl = (offset, (int)(FileOffset(from + 6) + 1 - offset), (head[1] << 8) | head[2],
-                    ((long)head[3] << 24) | ((long)head[4] << 16) | ((long)head[5] << 8) | head[6]);
+                    ((long)head[3] << 24) | ((long)head[4] << 16) | ((long)head[5] << 8) | head[6], false);
                 if (head[1] == 0x08)
                 {
                     for (int i = 0; i < 2 && 10 + i < head.Length; i++)

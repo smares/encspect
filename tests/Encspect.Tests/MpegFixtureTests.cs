@@ -278,14 +278,16 @@ public class MpegFixtureTests
             expectedFindings.AddRange(codes);
         }
 
-        // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives that index.
-        bool hasIndex63 = manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()
+        // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives
+        // that index; minimp3 does not dump Layer I, whose manifest lists the finding itself.
+        bool listed63 = expectedFindings.Contains("mpeg.scalefactor-undefined");
+        bool hasIndex63 = listed63 || manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()
             .Where(r => r.TryGetProperty("layer", out _))
             .SelectMany(r => r.GetProperty("subbands").EnumerateArray().SelectMany(sb => sb.EnumerateArray()))
             .Any(ch => ch.GetProperty("class").GetInt32() > 0 && ch.GetProperty("scalefactors").EnumerateArray()
                 .Any(sf => HexFloat(sf.GetString()!) == Minimp3Scalefactor(ch.GetProperty("class").GetInt32(), 63)));
         Assert.Equal(hasIndex63, report.Findings.Any(f => f.Code == "mpeg.scalefactor-undefined"));
-        if (hasIndex63)
+        if (hasIndex63 && !listed63)
         {
             expectedFindings.Add("mpeg.scalefactor-undefined");
         }

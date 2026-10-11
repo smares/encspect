@@ -1,0 +1,6963 @@
+{
+ "description": "tomp3 -V60 on 2 s of tones, noise with clicks and a chord, 44100 Hz, 2 channels.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "tomp3",
+   "-V60"
+  ],
+  "version": "1",
+  "layer": 3,
+  "sample_rate": 44100,
+  "channel_mode": "Joint stereo",
+  "bitrate": null,
+  "info_frame": false,
+  "signal": "music"
+ },
+ "ffprobe_packets": [
+  [
+   0,
+   261
+  ],
+  [
+   261,
+   417
+  ],
+  [
+   678,
+   208
+  ],
+  [
+   886,
+   208
+  ],
+  [
+   1094,
+   182
+  ],
+  [
+   1276,
+   208
+  ],
+  [
+   1484,
+   182
+  ],
+  [
+   1666,
+   182
+  ],
+  [
+   1848,
+   182
+  ],
+  [
+   2030,
+   208
+  ],
+  [
+   2238,
+   182
+  ],
+  [
+   2420,
+   182
+  ],
+  [
+   2602,
+   182
+  ],
+  [
+   2784,
+   182
+  ],
+  [
+   2966,
+   182
+  ],
+  [
+   3148,
+   182
+  ],
+  [
+   3330,
+   182
+  ],
+  [
+   3512,
+   182
+  ],
+  [
+   3694,
+   182
+  ],
+  [
+   3876,
+   182
+  ],
+  [
+   4058,
+   182
+  ],
+  [
+   4240,
+   182
+  ],
+  [
+   4422,
+   182
+  ],
+  [
+   4604,
+   182
+  ],
+  [
+   4786,
+   182
+  ],
+  [
+   4968,
+   182
+  ],
+  [
+   5150,
+   208
+  ],
+  [
+   5358,
+   313
+  ],
+  [
+   5671,
+   626
+  ],
+  [
+   6297,
+   417
+  ],
+  [
+   6714,
+   417
+  ],
+  [
+   7131,
+   417
+  ],
+  [
+   7548,
+   417
+  ],
+  [
+   7965,
+   417
+  ],
+  [
+   8382,
+   417
+  ],
+  [
+   8799,
+   417
+  ],
+  [
+   9216,
+   417
+  ],
+  [
+   9633,
+   417
+  ],
+  [
+   10050,
+   417
+  ],
+  [
+   10467,
+   417
+  ],
+  [
+   10884,
+   417
+  ],
+  [
+   11301,
+   417
+  ],
+  [
+   11718,
+   417
+  ],
+  [
+   12135,
+   417
+  ],
+  [
+   12552,
+   417
+  ],
+  [
+   12969,
+   417
+  ],
+  [
+   13386,
+   417
+  ],
+  [
+   13803,
+   417
+  ],
+  [
+   14220,
+   417
+  ],
+  [
+   14637,
+   417
+  ],
+  [
+   15054,
+   365
+  ],
+  [
+   15419,
+   417
+  ],
+  [
+   15836,
+   417
+  ],
+  [
+   16253,
+   417
+  ],
+  [
+   16670,
+   417
+  ],
+  [
+   17087,
+   313
+  ],
+  [
+   17400,
+   104
+  ],
+  [
+   17504,
+   104
+  ],
+  [
+   17608,
+   104
+  ],
+  [
+   17712,
+   104
+  ],
+  [
+   17816,
+   104
+  ],
+  [
+   17920,
+   104
+  ],
+  [
+   18024,
+   104
+  ],
+  [
+   18128,
+   104
+  ],
+  [
+   18232,
+   104
+  ],
+  [
+   18336,
+   104
+  ],
+  [
+   18440,
+   104
+  ],
+  [
+   18544,
+   104
+  ],
+  [
+   18648,
+   104
+  ],
+  [
+   18752,
+   104
+  ],
+  [
+   18856,
+   104
+  ],
+  [
+   18960,
+   104
+  ],
+  [
+   19064,
+   104
+  ],
+  [
+   19168,
+   104
+  ],
+  [
+   19272,
+   104
+  ],
+  [
+   19376,
+   104
+  ],
+  [
+   19480,
+   104
+  ],
+  [
+   19584,
+   365
+  ],
+  [
+   19949,
+   208
+  ],
+  [
+   20157,
+   104
+  ],
+  [
+   20261,
+   104
+  ],
+  [
+   20365,
+   104
+  ],
+  [
+   20469,
+   104
+  ],
+  [
+   20573,
+   104
+  ]
+ ],
+ "findings": [
+  "mpeg.scalefactors-exceed-granule"
+ ],
+ "minimp3_side_info": [
+  {
+   "offset": 0,
+   "reservoir": 0,
+   "main_data_begin": 0,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 261,
+   "reservoir": 225,
+   "main_data_begin": 225,
+   "granules": [
+    {
+     "part2_3_length": 1842,
+     "big_values": 204,
+     "global_gain": 165,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 1,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      25
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 286,
+     "big_values": 33,
+     "global_gain": 162,
+     "scalefac_compress": 4,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      13
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      1,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 736,
+     "big_values": 60,
+     "global_gain": 174,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      20
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 266,
+     "big_values": 18,
+     "global_gain": 172,
+     "scalefac_compress": 4,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    }
+   ]
+  },
+  {
+   "offset": 678,
+   "reservoir": 214,
+   "main_data_begin": 214,
+   "granules": [
+    {
+     "part2_3_length": 411,
+     "big_values": 48,
+     "global_gain": 167,
+     "scalefac_compress": 12,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      21
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 265,
+     "big_values": 18,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      1,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 335,
+     "big_values": 47,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 226,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      9
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 886,
+   "reservoir": 231,
+   "main_data_begin": 231,
+   "granules": [
+    {
+     "part2_3_length": 418,
+     "big_values": 48,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      16,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 260,
+     "big_values": 18,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 366,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 220,
+     "big_values": 16,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      9
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 1094,
+   "reservoir": 245,
+   "main_data_begin": 245,
+   "granules": [
+    {
+     "part2_3_length": 425,
+     "big_values": 48,
+     "global_gain": 168,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 254,
+     "big_values": 18,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 354,
+     "big_values": 48,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 212,
+     "big_values": 16,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 1276,
+   "reservoir": 235,
+   "main_data_begin": 235,
+   "granules": [
+    {
+     "part2_3_length": 393,
+     "big_values": 47,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      28,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 258,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 371,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      13,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 209,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 1484,
+   "reservoir": 253,
+   "main_data_begin": 253,
+   "granules": [
+    {
+     "part2_3_length": 407,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 252,
+     "big_values": 16,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      11
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 391,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      13,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 198,
+     "big_values": 17,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      25,
+      9
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 1666,
+   "reservoir": 243,
+   "main_data_begin": 243,
+   "granules": [
+    {
+     "part2_3_length": 382,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 256,
+     "big_values": 17,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      28,
+      11
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 346,
+     "big_values": 47,
+     "global_gain": 172,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 216,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 1848,
+   "reservoir": 239,
+   "main_data_begin": 239,
+   "granules": [
+    {
+     "part2_3_length": 409,
+     "big_values": 48,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 250,
+     "big_values": 17,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      27,
+      9
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 350,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 13,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      18,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 5
+    },
+    {
+     "part2_3_length": 214,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 2030,
+   "reservoir": 232,
+   "main_data_begin": 232,
+   "granules": [
+    {
+     "part2_3_length": 378,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 243,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      6
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 359,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 207,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 2238,
+   "reservoir": 255,
+   "main_data_begin": 255,
+   "granules": [
+    {
+     "part2_3_length": 343,
+     "big_values": 47,
+     "global_gain": 172,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 247,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      27,
+      12
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 381,
+     "big_values": 48,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 185,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 2420,
+   "reservoir": 256,
+   "main_data_begin": 256,
+   "granules": [
+    {
+     "part2_3_length": 360,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 257,
+     "big_values": 16,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 366,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 210,
+     "big_values": 17,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 2602,
+   "reservoir": 252,
+   "main_data_begin": 252,
+   "granules": [
+    {
+     "part2_3_length": 362,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 244,
+     "big_values": 16,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 361,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 211,
+     "big_values": 16,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 2784,
+   "reservoir": 250,
+   "main_data_begin": 250,
+   "granules": [
+    {
+     "part2_3_length": 388,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      28,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 258,
+     "big_values": 17,
+     "global_gain": 167,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 370,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 224,
+     "big_values": 17,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 2966,
+   "reservoir": 241,
+   "main_data_begin": 241,
+   "granules": [
+    {
+     "part2_3_length": 356,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 256,
+     "big_values": 17,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 354,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 206,
+     "big_values": 16,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 3148,
+   "reservoir": 240,
+   "main_data_begin": 240,
+   "granules": [
+    {
+     "part2_3_length": 373,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      13,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 248,
+     "big_values": 17,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 379,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 205,
+     "big_values": 16,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 3330,
+   "reservoir": 235,
+   "main_data_begin": 235,
+   "granules": [
+    {
+     "part2_3_length": 369,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 255,
+     "big_values": 17,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      27,
+      24
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 369,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 193,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      11
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 3512,
+   "reservoir": 232,
+   "main_data_begin": 232,
+   "granules": [
+    {
+     "part2_3_length": 330,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 249,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 353,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 191,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      11
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 3694,
+   "reservoir": 237,
+   "main_data_begin": 237,
+   "granules": [
+    {
+     "part2_3_length": 362,
+     "big_values": 48,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 244,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 379,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 185,
+     "big_values": 16,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      7
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 3876,
+   "reservoir": 236,
+   "main_data_begin": 236,
+   "granules": [
+    {
+     "part2_3_length": 367,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 253,
+     "big_values": 17,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 322,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 198,
+     "big_values": 16,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      27,
+      11
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 4058,
+   "reservoir": 239,
+   "main_data_begin": 239,
+   "granules": [
+    {
+     "part2_3_length": 357,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 249,
+     "big_values": 17,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 379,
+     "big_values": 48,
+     "global_gain": 171,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 200,
+     "big_values": 16,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      27,
+      9
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 4240,
+   "reservoir": 236,
+   "main_data_begin": 236,
+   "granules": [
+    {
+     "part2_3_length": 363,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 255,
+     "big_values": 18,
+     "global_gain": 168,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      24,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 360,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 175,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 4422,
+   "reservoir": 237,
+   "main_data_begin": 237,
+   "granules": [
+    {
+     "part2_3_length": 323,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 258,
+     "big_values": 18,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 366,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 179,
+     "big_values": 17,
+     "global_gain": 170,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 4604,
+   "reservoir": 242,
+   "main_data_begin": 242,
+   "granules": [
+    {
+     "part2_3_length": 372,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      27,
+      11,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 262,
+     "big_values": 18,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      24,
+      27,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 388,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 205,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      25,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 4786,
+   "reservoir": 234,
+   "main_data_begin": 234,
+   "granules": [
+    {
+     "part2_3_length": 367,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      15,
+      21
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 263,
+     "big_values": 17,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      28,
+      12
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 328,
+     "big_values": 47,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      25,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 205,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 4968,
+   "reservoir": 234,
+   "main_data_begin": 234,
+   "granules": [
+    {
+     "part2_3_length": 362,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      15,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 244,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      27,
+      8
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 366,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 207,
+     "big_values": 17,
+     "global_gain": 171,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 5150,
+   "reservoir": 232,
+   "main_data_begin": 232,
+   "granules": [
+    {
+     "part2_3_length": 384,
+     "big_values": 48,
+     "global_gain": 169,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      28,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 239,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      28,
+      6
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 347,
+     "big_values": 48,
+     "global_gain": 170,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      25,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 208,
+     "big_values": 17,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      15
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 5358,
+   "reservoir": 256,
+   "main_data_begin": 256,
+   "granules": [
+    {
+     "part2_3_length": 352,
+     "big_values": 47,
+     "global_gain": 170,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      28,
+      13,
+      20
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 245,
+     "big_values": 16,
+     "global_gain": 169,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      28,
+      6
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1000,
+     "big_values": 128,
+     "global_gain": 162,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      28,
+      13
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 846,
+     "big_values": 137,
+     "global_gain": 162,
+     "scalefac_compress": 15,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      9,
+      5
+     ],
+     "region0_count": 5,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 5671,
+   "reservoir": 227,
+   "main_data_begin": 227,
+   "granules": [
+    {
+     "part2_3_length": 1678,
+     "big_values": 209,
+     "global_gain": 173,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      25,
+      24,
+      12
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1596,
+     "big_values": 209,
+     "global_gain": 172,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      24,
+      15,
+      12
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 789,
+     "big_values": 201,
+     "global_gain": 180,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 807,
+     "big_values": 123,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 6297,
+   "reservoir": 208,
+   "main_data_begin": 208,
+   "granules": [
+    {
+     "part2_3_length": 743,
+     "big_values": 112,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 734,
+     "big_values": 89,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 736,
+     "big_values": 67,
+     "global_gain": 183,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      9,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 693,
+     "big_values": 58,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 6714,
+   "reservoir": 225,
+   "main_data_begin": 225,
+   "granules": [
+    {
+     "part2_3_length": 917,
+     "big_values": 125,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      15,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 614,
+     "big_values": 4,
+     "global_gain": 184,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      3,
+      3,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 761,
+     "big_values": 67,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 772,
+     "big_values": 112,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 7131,
+   "reservoir": 223,
+   "main_data_begin": 223,
+   "granules": [
+    {
+     "part2_3_length": 718,
+     "big_values": 87,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 744,
+     "big_values": 71,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 702,
+     "big_values": 112,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 771,
+     "big_values": 98,
+     "global_gain": 183,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 7548,
+   "reservoir": 237,
+   "main_data_begin": 237,
+   "granules": [
+    {
+     "part2_3_length": 782,
+     "big_values": 92,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 860,
+     "big_values": 204,
+     "global_gain": 180,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 763,
+     "big_values": 80,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 771,
+     "big_values": 89,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 7965,
+   "reservoir": 221,
+   "main_data_begin": 221,
+   "granules": [
+    {
+     "part2_3_length": 816,
+     "big_values": 196,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 794,
+     "big_values": 192,
+     "global_gain": 180,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 796,
+     "big_values": 143,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 5,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 728,
+     "big_values": 110,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 8382,
+   "reservoir": 210,
+   "main_data_begin": 210,
+   "granules": [
+    {
+     "part2_3_length": 774,
+     "big_values": 208,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 744,
+     "big_values": 183,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 901,
+     "big_values": 107,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      12,
+      6
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 711,
+     "big_values": 165,
+     "global_gain": 182,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      2
+     ],
+     "region0_count": 5,
+     "region1_count": 7,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 8799,
+   "reservoir": 199,
+   "main_data_begin": 199,
+   "granules": [
+    {
+     "part2_3_length": 833,
+     "big_values": 100,
+     "global_gain": 182,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      9,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 659,
+     "big_values": 108,
+     "global_gain": 184,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      5,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 707,
+     "big_values": 92,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 720,
+     "big_values": 38,
+     "global_gain": 181,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 9216,
+   "reservoir": 215,
+   "main_data_begin": 215,
+   "granules": [
+    {
+     "part2_3_length": 803,
+     "big_values": 92,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      9,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 856,
+     "big_values": 178,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      5
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 737,
+     "big_values": 85,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 753,
+     "big_values": 94,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 9633,
+   "reservoir": 202,
+   "main_data_begin": 202,
+   "granules": [
+    {
+     "part2_3_length": 781,
+     "big_values": 204,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      8,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 818,
+     "big_values": 207,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 751,
+     "big_values": 119,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      6,
+      3
+     ],
+     "region0_count": 2,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 759,
+     "big_values": 95,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 10050,
+   "reservoir": 194,
+   "main_data_begin": 194,
+   "granules": [
+    {
+     "part2_3_length": 758,
+     "big_values": 91,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 808,
+     "big_values": 141,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 759,
+     "big_values": 102,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 779,
+     "big_values": 165,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 7,
+     "preflag": 0,
+     "scfsi": 2
+    }
+   ]
+  },
+  {
+   "offset": 10467,
+   "reservoir": 187,
+   "main_data_begin": 187,
+   "granules": [
+    {
+     "part2_3_length": 698,
+     "big_values": 40,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 773,
+     "big_values": 209,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      8,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 909,
+     "big_values": 77,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      15,
+      6
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 640,
+     "big_values": 44,
+     "global_gain": 185,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      2,
+      1,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 10884,
+   "reservoir": 190,
+   "main_data_begin": 190,
+   "granules": [
+    {
+     "part2_3_length": 746,
+     "big_values": 128,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 780,
+     "big_values": 178,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 2,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 745,
+     "big_values": 119,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 791,
+     "big_values": 168,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 11301,
+   "reservoir": 188,
+   "main_data_begin": 188,
+   "granules": [
+    {
+     "part2_3_length": 742,
+     "big_values": 109,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 744,
+     "big_values": 97,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 753,
+     "big_values": 100,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      8,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 1
+    },
+    {
+     "part2_3_length": 754,
+     "big_values": 208,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      8,
+      3,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 11718,
+   "reservoir": 194,
+   "main_data_begin": 194,
+   "granules": [
+    {
+     "part2_3_length": 736,
+     "big_values": 80,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 735,
+     "big_values": 88,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 5,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 715,
+     "big_values": 52,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      2,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 735,
+     "big_values": 68,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 12135,
+   "reservoir": 209,
+   "main_data_begin": 209,
+   "granules": [
+    {
+     "part2_3_length": 763,
+     "big_values": 142,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 725,
+     "big_values": 67,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 775,
+     "big_values": 200,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 2,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 775,
+     "big_values": 150,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 7,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 12552,
+   "reservoir": 210,
+   "main_data_begin": 210,
+   "granules": [
+    {
+     "part2_3_length": 899,
+     "big_values": 170,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      15,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 676,
+     "big_values": 47,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 823,
+     "big_values": 102,
+     "global_gain": 182,
+     "scalefac_compress": 8,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      12,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 622,
+     "big_values": 72,
+     "global_gain": 184,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      1,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 5,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 12969,
+   "reservoir": 213,
+   "main_data_begin": 213,
+   "granules": [
+    {
+     "part2_3_length": 751,
+     "big_values": 82,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 709,
+     "big_values": 65,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 759,
+     "big_values": 92,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 776,
+     "big_values": 170,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 13386,
+   "reservoir": 219,
+   "main_data_begin": 219,
+   "granules": [
+    {
+     "part2_3_length": 757,
+     "big_values": 205,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 710,
+     "big_values": 79,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 5,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 760,
+     "big_values": 139,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 693,
+     "big_values": 37,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 13803,
+   "reservoir": 235,
+   "main_data_begin": 235,
+   "granules": [
+    {
+     "part2_3_length": 749,
+     "big_values": 188,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 773,
+     "big_values": 140,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 694,
+     "big_values": 84,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 739,
+     "big_values": 65,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 4,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 14220,
+   "reservoir": 246,
+   "main_data_begin": 246,
+   "granules": [
+    {
+     "part2_3_length": 773,
+     "big_values": 117,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 812,
+     "big_values": 151,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 727,
+     "big_values": 78,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 746,
+     "big_values": 98,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 14637,
+   "reservoir": 244,
+   "main_data_begin": 244,
+   "granules": [
+    {
+     "part2_3_length": 925,
+     "big_values": 103,
+     "global_gain": 182,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      24,
+      15,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 639,
+     "big_values": 12,
+     "global_gain": 183,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      1,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 694,
+     "big_values": 62,
+     "global_gain": 183,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      9,
+      6,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 717,
+     "big_values": 46,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 15054,
+   "reservoir": 253,
+   "main_data_begin": 253,
+   "granules": [
+    {
+     "part2_3_length": 727,
+     "big_values": 81,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 749,
+     "big_values": 120,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 786,
+     "big_values": 170,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 747,
+     "big_values": 86,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 15419,
+   "reservoir": 205,
+   "main_data_begin": 205,
+   "granules": [
+    {
+     "part2_3_length": 759,
+     "big_values": 83,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 756,
+     "big_values": 164,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 767,
+     "big_values": 150,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 781,
+     "big_values": 109,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      12,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 15836,
+   "reservoir": 203,
+   "main_data_begin": 203,
+   "granules": [
+    {
+     "part2_3_length": 754,
+     "big_values": 91,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 4,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 803,
+     "big_values": 172,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 776,
+     "big_values": 140,
+     "global_gain": 182,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      3,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 725,
+     "big_values": 98,
+     "global_gain": 183,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 16253,
+   "reservoir": 201,
+   "main_data_begin": 201,
+   "granules": [
+    {
+     "part2_3_length": 791,
+     "big_values": 164,
+     "global_gain": 181,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 2,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 764,
+     "big_values": 80,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      3
+     ],
+     "region0_count": 3,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 883,
+     "big_values": 139,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      6,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 3,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 925,
+     "big_values": 163,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      12,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 2,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 16670,
+   "reservoir": 161,
+   "main_data_begin": 161,
+   "granules": [
+    {
+     "part2_3_length": 885,
+     "big_values": 157,
+     "global_gain": 182,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      9,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 605,
+     "big_values": 83,
+     "global_gain": 184,
+     "scalefac_compress": 9,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      3,
+      3,
+      3
+     ],
+     "region0_count": 4,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 760,
+     "big_values": 172,
+     "global_gain": 183,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      3
+     ],
+     "region0_count": 6,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 780,
+     "big_values": 137,
+     "global_gain": 181,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      6,
+      3
+     ],
+     "region0_count": 5,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 1
+    }
+   ]
+  },
+  {
+   "offset": 17087,
+   "reservoir": 163,
+   "main_data_begin": 163,
+   "granules": [
+    {
+     "part2_3_length": 861,
+     "big_values": 119,
+     "global_gain": 175,
+     "scalefac_compress": 12,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      9,
+      6,
+      6
+     ],
+     "region0_count": 5,
+     "region1_count": 6,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 991,
+     "big_values": 203,
+     "global_gain": 173,
+     "scalefac_compress": 11,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      3,
+      6
+     ],
+     "region0_count": 6,
+     "region1_count": 7,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 0
+    }
+   ]
+  },
+  {
+   "offset": 17400,
+   "reservoir": 208,
+   "main_data_begin": 208,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 17504,
+   "reservoir": 276,
+   "main_data_begin": 276,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 17608,
+   "reservoir": 344,
+   "main_data_begin": 344,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 17712,
+   "reservoir": 412,
+   "main_data_begin": 412,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 17816,
+   "reservoir": 480,
+   "main_data_begin": 480,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 17920,
+   "reservoir": 511,
+   "main_data_begin": 511,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 18024,
+   "reservoir": 511,
+   "main_data_begin": 511,
+   "granules": [
+    {
+     "part2_3_length": 186,
+     "big_values": 19,
+     "global_gain": 145,
+     "scalefac_compress": 9,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      3,
+      3
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 67,
+     "big_values": 18,
+     "global_gain": 143,
+     "scalefac_compress": 8,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      1,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      1,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1883,
+     "big_values": 204,
+     "global_gain": 169,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      24
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 401,
+     "big_values": 33,
+     "global_gain": 170,
+     "scalefac_compress": 11,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      27,
+      6
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    }
+   ]
+  },
+  {
+   "offset": 18128,
+   "reservoir": 261,
+   "main_data_begin": 261,
+   "granules": [
+    {
+     "part2_3_length": 170,
+     "big_values": 18,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 155,
+     "big_values": 18,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      1,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 130,
+     "big_values": 6,
+     "global_gain": 178,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      24,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 111,
+     "big_values": 7,
+     "global_gain": 178,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      6,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18232,
+   "reservoir": 258,
+   "main_data_begin": 258,
+   "granules": [
+    {
+     "part2_3_length": 130,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 174,
+     "big_values": 13,
+     "global_gain": 175,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 114,
+     "big_values": 6,
+     "global_gain": 178,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      26,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 7
+    },
+    {
+     "part2_3_length": 104,
+     "big_values": 6,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      12,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18336,
+   "reservoir": 260,
+   "main_data_begin": 260,
+   "granules": [
+    {
+     "part2_3_length": 154,
+     "big_values": 13,
+     "global_gain": 173,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      25,
+      24,
+      2
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 125,
+     "big_values": 13,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      26,
+      2
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 152,
+     "big_values": 7,
+     "global_gain": 174,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 125,
+     "big_values": 7,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      15,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18440,
+   "reservoir": 258,
+   "main_data_begin": 258,
+   "granules": [
+    {
+     "part2_3_length": 138,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 120,
+     "big_values": 7,
+     "global_gain": 177,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      12,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 140,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 104,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      12,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 18544,
+   "reservoir": 263,
+   "main_data_begin": 263,
+   "granules": [
+    {
+     "part2_3_length": 163,
+     "big_values": 6,
+     "global_gain": 176,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 109,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      11,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 144,
+     "big_values": 10,
+     "global_gain": 178,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      6
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 123,
+     "big_values": 13,
+     "global_gain": 178,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      2,
+      25,
+      6
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18648,
+   "reservoir": 263,
+   "main_data_begin": 263,
+   "granules": [
+    {
+     "part2_3_length": 166,
+     "big_values": 6,
+     "global_gain": 178,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 120,
+     "big_values": 9,
+     "global_gain": 177,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      24,
+      6
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 140,
+     "big_values": 9,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      26,
+      6
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 126,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      9,
+      15,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18752,
+   "reservoir": 262,
+   "main_data_begin": 262,
+   "granules": [
+    {
+     "part2_3_length": 132,
+     "big_values": 7,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      2,
+      25,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 155,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      12,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 134,
+     "big_values": 6,
+     "global_gain": 177,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 91,
+     "big_values": 7,
+     "global_gain": 177,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      11,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 18856,
+   "reservoir": 266,
+   "main_data_begin": 266,
+   "granules": [
+    {
+     "part2_3_length": 166,
+     "big_values": 6,
+     "global_gain": 176,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      27,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 125,
+     "big_values": 13,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      7,
+      27,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 143,
+     "big_values": 9,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      27,
+      3
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 145,
+     "big_values": 13,
+     "global_gain": 175,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      25,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 18960,
+   "reservoir": 261,
+   "main_data_begin": 261,
+   "granules": [
+    {
+     "part2_3_length": 140,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 120,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      15,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 123,
+     "big_values": 7,
+     "global_gain": 177,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 7
+    },
+    {
+     "part2_3_length": 110,
+     "big_values": 7,
+     "global_gain": 180,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      3,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 19064,
+   "reservoir": 267,
+   "main_data_begin": 267,
+   "granules": [
+    {
+     "part2_3_length": 169,
+     "big_values": 9,
+     "global_gain": 176,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      3
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 137,
+     "big_values": 10,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      25,
+      6
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 140,
+     "big_values": 6,
+     "global_gain": 176,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 128,
+     "big_values": 13,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      11,
+      26,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 19168,
+   "reservoir": 263,
+   "main_data_begin": 263,
+   "granules": [
+    {
+     "part2_3_length": 139,
+     "big_values": 7,
+     "global_gain": 172,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      27,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 134,
+     "big_values": 13,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      27,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 129,
+     "big_values": 7,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      3,
+      26,
+      27
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 122,
+     "big_values": 13,
+     "global_gain": 173,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      15,
+      26,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 19272,
+   "reservoir": 265,
+   "main_data_begin": 265,
+   "granules": [
+    {
+     "part2_3_length": 120,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      26,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 119,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      12,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 123,
+     "big_values": 9,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      25,
+      6
+     ],
+     "region0_count": 0,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 7
+    },
+    {
+     "part2_3_length": 131,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      15,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 19376,
+   "reservoir": 271,
+   "main_data_begin": 271,
+   "granules": [
+    {
+     "part2_3_length": 138,
+     "big_values": 6,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 127,
+     "big_values": 6,
+     "global_gain": 177,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      1,
+      7,
+      24
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 155,
+     "big_values": 11,
+     "global_gain": 173,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      26,
+      24,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 138,
+     "big_values": 13,
+     "global_gain": 176,
+     "scalefac_compress": 14,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      2,
+      26,
+      3
+     ],
+     "region0_count": 1,
+     "region1_count": 1,
+     "preflag": 0,
+     "scfsi": 3
+    }
+   ]
+  },
+  {
+   "offset": 19480,
+   "reservoir": 269,
+   "main_data_begin": 269,
+   "granules": [
+    {
+     "part2_3_length": 133,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      12,
+      25,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 118,
+     "big_values": 7,
+     "global_gain": 176,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      15,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 139,
+     "big_values": 7,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      15,
+      26,
+      26
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 3
+    },
+    {
+     "part2_3_length": 109,
+     "big_values": 7,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 1,
+     "table_select": [
+      6,
+      12,
+      25
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 7
+    }
+   ]
+  },
+  {
+   "offset": 19584,
+   "reservoir": 274,
+   "main_data_begin": 274,
+   "granules": [
+    {
+     "part2_3_length": 174,
+     "big_values": 18,
+     "global_gain": 174,
+     "scalefac_compress": 4,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      25,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      2,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 174,
+     "big_values": 18,
+     "global_gain": 175,
+     "scalefac_compress": 4,
+     "block_type": 1,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      1,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1032,
+     "big_values": 204,
+     "global_gain": 164,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      20
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1420,
+     "big_values": 204,
+     "global_gain": 164,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      28,
+      20
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    }
+   ]
+  },
+  {
+   "offset": 19949,
+   "reservoir": 253,
+   "main_data_begin": 253,
+   "granules": [
+    {
+     "part2_3_length": 689,
+     "big_values": 99,
+     "global_gain": 170,
+     "scalefac_compress": 13,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      26,
+      10
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 1011,
+     "big_values": 204,
+     "global_gain": 166,
+     "scalefac_compress": 9,
+     "block_type": 2,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      20,
+      18
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 13,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 13,
+     "block_type": 3,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0
+     ],
+     "mixed_block_flag": 0,
+     "subblock_gain": [
+      0,
+      0,
+      0
+     ],
+     "preflag": 0
+    }
+   ]
+  },
+  {
+   "offset": 20157,
+   "reservoir": 212,
+   "main_data_begin": 212,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 20261,
+   "reservoir": 280,
+   "main_data_begin": 280,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 20365,
+   "reservoir": 348,
+   "main_data_begin": 348,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 20469,
+   "reservoir": 416,
+   "main_data_begin": 416,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  },
+  {
+   "offset": 20573,
+   "reservoir": 484,
+   "main_data_begin": 484,
+   "granules": [
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    },
+    {
+     "part2_3_length": 0,
+     "big_values": 0,
+     "global_gain": 0,
+     "scalefac_compress": 0,
+     "block_type": 0,
+     "scalefac_scale": 0,
+     "count1_table": 0,
+     "table_select": [
+      0,
+      0,
+      0
+     ],
+     "region0_count": 0,
+     "region1_count": 0,
+     "preflag": 0,
+     "scfsi": 15
+    }
+   ]
+  }
+ ],
+ "mp3guessenc": {
+  "blocks": {
+   "long": 314,
+   "switch": 12,
+   "short": 10,
+   "mixed": 0
+  },
+  "mode_extensions": {
+   "0": 7,
+   "2": 77
+  },
+  "global_gain": {
+   "0": [
+    0,
+    183
+   ],
+   "1": [
+    0,
+    185
+   ]
+  },
+  "ancillary": [
+   657,
+   37,
+   552
+  ],
+  "max_main_data_begin": 511,
+  "scalefac_scale_used": true,
+  "scfsi_used": true
+ },
+ "vbr_header": null,
+ "detected_encoder": {
+  "name": "Helix MP3 Encoder",
+  "confidence": "Low"
+ },
+ "mp3guessenc_encoder_string": null,
+ "mp3guessenc_stream": {
+  "histogram": {
+   "32": [
+    26,
+    "31.0"
+   ],
+   "56": [
+    20,
+    "23.8"
+   ],
+   "64": [
+    6,
+    "7.1"
+   ],
+   "80": [
+    1,
+    "1.2"
+   ],
+   "96": [
+    2,
+    "2.4"
+   ],
+   "112": [
+    2,
+    "2.4"
+   ],
+   "128": [
+    26,
+    "31.0"
+   ],
+   "192": [
+    1,
+    "1.2"
+   ]
+  },
+  "Length": "0:00:02.194",
+  "Data rate": "75.4 kbps",
+  "Number of frames": "84"
+ },
+ "mp3guessenc_guess": "Helix",
+ "enhancement": null
+}

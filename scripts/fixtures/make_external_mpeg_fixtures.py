@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Writes MPEG audio fixtures with real encoders: LAME 3.100, TwoLAME 0.4.0, Shine 3.1.1, ffmpeg 6.1 with
-libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 (helix_tool.py), and
+libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
-Original File Length (OFL) blocks. Besides a tone, some encode two seconds of tones, noise, clicks
+Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
+source of Layer I here, and BladeEnc 0.94.2 (blade_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
 
 The hand-built fixtures from make_mpeg_fixtures.py have zero payloads. These come from encoders
@@ -33,7 +34,9 @@ sample at which the encoded tone starts in ffmpeg's output, which shows what the
 "enhancement" names the extension the analyzer must find in the ancillary data, or is null.
 
 "findings" lists findings beyond the VBR header's that the file must cause: Shine 3.1.1 writes the
-last frame of a stereo stream two bytes short.
+last frame of a stereo stream two bytes short, and Xing's tompg 3.0 writes Layer I frames with the
+forbidden bit allocation 15, which libmad rejects, and with scalefactor index 63; Helix 5.0 r11
+writes granules whose scalefactors are longer than their part2_3_length.
 
 For the statistics, "mp3guessenc_stream" records mp3guessenc's frame count, length, average bitrate
 and bitrate histogram, and, where a LAME tag gives an encoder delay and padding, "decoded_samples"
@@ -62,10 +65,12 @@ import sys
 import tempfile
 import wave
 
+import blade_tool
 import fhg_tool
 import helix_tool
 import minimp3_tool
 import vbr_tags
+import xing_tool
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
                                       guessenc_tag_lines)
 
@@ -235,6 +240,37 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
     ("external-helix-no-tag-mono", ".mp3", 32000, 1, ["hmp3", "-B48", "-X0"],
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Mono", bitrate=48, info_frame=False, signal="music")),
+    # Helix 5.0 r11 writes no Xing header in any mode, so only the frames point to it.
+    ("external-helix-r11-cbr", ".mp3", 44100, 2, ["tomp3", "-B64"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-helix-r11-vbr", ".mp3", 44100, 2, ["tomp3", "-V60"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=False, signal="music")),
+    ("external-helix-r11-mono", ".mp3", 32000, 1, ["tomp3", "-B48", "-M3"],
+     dict(version="1", layer=3, sample_rate=32000, channel_mode="Mono", bitrate=48, info_frame=False, signal="music")),
+    # Xing's tompg takes the bitrate per channel. It never switches to short blocks, never uses
+    # scfsi and sets the original bit in every frame; in joint stereo it codes intensity stereo.
+    ("external-xing-joint", ".mp3", 44100, 2, ["tompg", "-L3", "-B64", "-M1"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-xing-stereo", ".mp3", 48000, 2, ["tompg", "-L3", "-B56", "-M0"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Stereo", bitrate=112, info_frame=False, signal="music")),
+    ("external-xing-mono", ".mp3", 44100, 1, ["tompg", "-L3", "-B56", "-M3"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=56, info_frame=False, signal="music")),
+    ("external-xing-mpeg2", ".mp3", 22050, 2, ["tompg", "-L3", "-B32", "-M1"],
+     dict(version="2", layer=3, sample_rate=22050, channel_mode="Joint stereo", bitrate=64, info_frame=False, signal="music")),
+    ("external-xing-layer2", ".mp2", 44100, 2, ["tompg", "-L2", "-B96", "-M0"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
+    ("external-xing-layer1", ".mp1", 44100, 2, ["tompg", "-L1", "-B192", "-M0"],
+     dict(version="1", layer=1, sample_rate=44100, channel_mode="Stereo", bitrate=384, info_frame=False, signal="music")),
+    # BladeEnc codes plain stereo or mono, switches to short blocks, never uses scalefactor
+    # scaling and leaves ancillary data at most in its last frame.
+    ("external-blade-stereo", ".mp3", 44100, 2, ["bladeenc", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade-mono", ".mp3", 48000, 1, ["bladeenc"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
+    ("external-blade-crc", ".mp3", 32000, 2, ["bladeenc", "-96", "-crc"],
+     dict(version="1", layer=3, sample_rate=32000, channel_mode="Stereo", bitrate=96, protected=True, info_frame=False, signal="music")),
+    ("external-blade-flags", ".mp3", 44100, 2, ["bladeenc", "-320", "-p", "-c", "-copy"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=320, info_frame=False, signal="music")),
     ("external-twolame-music", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
     ("external-ffmpeg-mp2", ".mp2", 48000, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "mp2", "-b:a", "192k", "{out}"],
@@ -290,11 +326,16 @@ def first_frame(data):
 
 
 def frame_length(header):
-    """The length a Layer II or III frame header gives (ISO/IEC 11172-3 2.4.3.1), or None for free format."""
+    """The length a frame header gives (ISO/IEC 11172-3 2.4.3.1), or None for free format."""
     mpeg1 = (header[1] >> 3) & 1
     layer = 4 - ((header[1] >> 1) & 3)
     rates = [44100, 48000, 32000] if mpeg1 else [22050, 24000, 16000]
     rate = rates[(header[2] >> 2) & 3] // (1 if (header[1] >> 4) & 1 else 2)
+    if layer == 1:
+        bitrates = ([0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448] if mpeg1
+                    else [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256])
+        index = header[2] >> 4
+        return None if index == 0 else (12 * bitrates[index] * 1000 // rate + ((header[2] >> 1) & 1)) * 4
     if mpeg1 and layer == 2:
         bitrates = [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384]
     elif mpeg1:
@@ -315,6 +356,64 @@ def truncated_last(path, packets):
     offset, length = packets[-1]
     expected = frame_length(data[offset : offset + 4])
     return expected is not None and length < expected
+
+
+def layer1_findings(path, packets):
+    """What breaks ISO/IEC 11172-3 in the Layer I audio data (2.4.1.5), read here independently of
+    the analyzer: the forbidden allocation 15 and scalefactor index 63. libmad must reject the
+    frames with allocation 15, which confirms the reading."""
+    data = path.read_bytes()
+    forbidden = undefined = 0
+    for offset, length in packets:
+        frame = data[offset : offset + length]
+        bits = "".join(f"{b:08b}" for b in frame)
+        position = 32 + (0 if frame[1] & 1 else 16)
+        mode, extension = frame[3] >> 6, (frame[3] >> 4) & 3
+        channels = 1 if mode == 3 else 2
+        bound = (extension + 1) * 4 if mode == 1 else 32
+        allocation = [[0] * 32 for _ in range(channels)]
+        for sb in range(32):
+            for ch in range(channels if sb < bound else 1):
+                allocation[ch][sb] = int(bits[position : position + 4], 2)
+                position += 4
+            if sb >= bound and channels == 2:
+                allocation[1][sb] = allocation[0][sb]
+        scalefactors = []
+        for sb in range(32):
+            for ch in range(channels):
+                if allocation[ch][sb]:
+                    scalefactors.append(int(bits[position : position + 6], 2))
+                    position += 6
+        forbidden += any(15 in row for row in allocation)
+        undefined += 63 in scalefactors
+    rejected = "forbidden bit allocation value" in subprocess.run(["madplay", "-o", "null:/dev/null", str(path)], capture_output=True,
+                                                                  text=True).stderr
+    if rejected != (forbidden > 0):
+        raise SystemExit(f"{path.name}: libmad {'rejects' if rejected else 'accepts'} the allocations, {forbidden} frames use 15")
+    return (["mpeg.allocation-forbidden"] if forbidden else []) + (["mpeg.scalefactor-undefined"] if undefined else [])
+
+
+SLEN1 = [0, 0, 0, 0, 3, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4]
+SLEN2 = [0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 1, 2, 3, 2, 3]
+
+
+def scalefactors_exceed(rows, channels):
+    """Whether an MPEG-1 granule's scalefactors (part2, ISO/IEC 11172-3 2.4.2.7: slen1 and slen2
+    from scalefac_compress, groups of 6, 5, 5 and 5 bands that scfsi reuses in granule 1, 18 or
+    17 short-block bands of each) take more bits than its part2_3_length, from minimp3's reading.
+    Helix 5.0 r11 writes such granules with a part2_3_length of 0, in its official Windows build
+    as in the build here."""
+    for row in rows:
+        for i, g in enumerate(row.get("granules", [])):
+            s1, s2 = SLEN1[g["scalefac_compress"]], SLEN2[g["scalefac_compress"]]
+            if g["block_type"] == 2:
+                part2 = (17 if g.get("mixed_block_flag") else 18) * s1 + 18 * s2
+            else:
+                scfsi = g.get("scfsi", 0) if i >= channels else 0
+                part2 = sum(n * s for k, (n, s) in enumerate([(6, s1), (5, s1), (5, s2), (5, s2)]) if not scfsi >> (3 - k) & 1)
+            if part2 > g["part2_3_length"]:
+                return True
+    return False
 
 
 def float32(value):
@@ -340,26 +439,45 @@ def granules(rows):
     return [g for row in rows if "granules" in row for g in row["granules"]]
 
 
-def detected_encoder(command, tag, settings, rows):
+def detected_encoder(command, tag, settings, rows, path):
     """The encoder the analyzer must name, from what each encoder is known to write.
 
     LAME's own tag names it; ffmpeg's tag names ffmpeg, or copies the encoder string of the file it
     remuxes; without a LAME string in the tag, LAME is known from the "LAME3.100" it writes into
     ancillary data. Fraunhofer's encoder is known from its VBRI header (high confidence), the MP3
     Surround data in every frame or its OFL block (medium), and otherwise, with low confidence, from
-    using scalefactor scaling but never scfsi, as minimp3 reads the side information. Helix's tag
+    using scalefactor scaling and short blocks but never scfsi, as minimp3 reads the side information. Helix's tag
     names it in a LAME tag ("LAMEH5.24"); without the tag, the copyright and original bits it sets
     in every frame together with scfsi and scalefactor scaling point to it (low). Shine is known
-    from its frames alone (low), and from them behind ffmpeg's tag (medium). TwoLAME is known from
-    scalefactor index 63 where it writes one (low); ffmpeg's MP2 encoder leaves no trace."""
-    if command[0] == "twolame":
-        return {"name": "TwoLAME", "confidence": "Low"} if uses_index63(rows) else None
+    from its frames alone (low), and from them behind ffmpeg's tag (medium). TwoLAME and Xing's
+    encoder both write scalefactor index 63 into Layer II, which names them together (low); ffmpeg's
+    MP2 encoder leaves no trace. Xing's Layer III frames never switch to short blocks or use scfsi
+    and all set the original bit (low). BladeEnc switches to short blocks without scalefactor
+    scaling, codes plain stereo or mono, and leaves ancillary data at most in its last
+    frame, as mp3guessenc counts it (low)."""
+    if command[0] in ("twolame", "tompg") and settings["layer"] == 2:
+        return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
+    if command[0] == "tompg":
+        found = granules(rows)
+        original = all(path.read_bytes()[offset + 3] & 4 for offset, _ in ffprobe_packets(path))
+        if settings["layer"] == 3 and not any(g["block_type"] for g in found) and not any(g.get("scfsi") for g in found) and original:
+            return {"name": "Xing", "confidence": "Low"}
+        return None
+    if command[0] == "bladeenc":
+        found = granules(rows)
+        ancillary = guessenc_summary(path)["ancillary"]
+        if (any(g["block_type"] for g in found) and not any(g["scalefac_scale"] for g in found)
+                and ancillary[0] == ancillary[2]):
+            return {"name": "BladeEnc", "confidence": "Low"}
+        return None
     if command[0] == "shineenc":
         return {"name": "Shine", "confidence": "Low"}
     if command[0] == "ffmpeg" and "libshine" in command:
         return {"name": "Shine", "confidence": "Medium"}
     if command[0] == "ffmpeg" and "mp2" in command:
         return None
+    if command[0] == "tomp3":
+        return {"name": "Helix MP3 Encoder", "confidence": "Low"}
     if command[0] == "hmp3":
         lame = tag.get("lame") if tag else None
         if lame is None:
@@ -374,7 +492,8 @@ def detected_encoder(command, tag, settings, rows):
         if surround or "-ofl" in command:
             return {"name": name, "confidence": "Medium"}
         found = granules(rows)
-        if settings["version"] == "1" and any(g["scalefac_scale"] for g in found) and not any(g.get("scfsi") for g in found):
+        if (settings["version"] == "1" and any(g["scalefac_scale"] for g in found) and not any(g.get("scfsi") for g in found)
+                and any(g["block_type"] for g in found)):
             return {"name": "Fraunhofer", "confidence": "Low"}
         return None
     lame = tag.get("lame") if tag else None
@@ -395,7 +514,7 @@ def describe_tag(path, command, manifest):
         manifest["vbr_header_fields"] = vbr_tags.report_fields(tag)
         manifest["vbr_findings"] = [{"code": code, "contains": contains} for code, contains in vbr_tags.findings(tag, start)]
     manifest["vbr_header"] = tag
-    manifest["detected_encoder"] = detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []))
+    manifest["detected_encoder"] = detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path)
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
 
 
@@ -405,6 +524,15 @@ def encode(command, source, path, temp):
         return
     if command[0] == "hmp3":
         helix_tool.encode(HELIX_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "tomp3":
+        helix_tool.encode_r11(HELIX_R11_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "tompg":
+        xing_tool.encode(XING_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "bladeenc":
+        blade_tool.encode(BLADE_ENCODER[0], command[1:], source, path)
         return
     if command[0] != "ffmpeg":
         subprocess.run(command + [str(source), str(path)], check=True)
@@ -439,8 +567,12 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["ffprobe_packets"] = ffprobe_packets(path)
         # Findings beyond the VBR header's that the analyzer must report.
         manifest["findings"] = ["mpeg.frame-truncated"] if truncated_last(path, manifest["ffprobe_packets"]) else []
+        if settings["layer"] == 1:
+            manifest["findings"] += layer1_findings(path, manifest["ffprobe_packets"])
     if settings["layer"] in (2, 3):
         manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
+    if settings["layer"] == 3 and settings["version"] == "1" and scalefactors_exceed(manifest["minimp3_side_info"], channels):
+        manifest.setdefault("findings", []).append("mpeg.scalefactors-exceed-granule")
     if settings["layer"] == 3:
         manifest["mp3guessenc"] = guessenc_summary(path)
     describe_tag(path, command, manifest)
@@ -459,6 +591,9 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
 
 FHG_ENCODER = []
 HELIX_ENCODER = []
+HELIX_R11_ENCODER = []
+XING_ENCODER = []
+BLADE_ENCODER = []
 
 
 def main():
@@ -467,6 +602,9 @@ def main():
     dumper = minimp3_tool.build()
     FHG_ENCODER.append(fhg_tool.fetch())
     HELIX_ENCODER.append(helix_tool.build())
+    HELIX_R11_ENCODER.append(helix_tool.build_r11())
+    XING_ENCODER.append(xing_tool.fetch())
+    BLADE_ENCODER.append(blade_tool.build())
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in FIXTURES:
             source = pathlib.Path(temp) / f"{name}.wav"

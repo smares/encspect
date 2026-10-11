@@ -20,6 +20,8 @@ public sealed partial class MpegAudioParser
             var granules = infos.SelectMany(i => i.All.Select(g => g.Info)).ToList();
             bool scaling = granules.Any(g => g.ScalefacScale.Value == 1);
             bool scfsi = infos.Any(i => i.Scfsi.Any(f => f.Value != 0));
+            bool switching = granules.Any(g => g.IsSwitched);
+            MpegHeader[] headers = layer3.Select(e => new MpegHeader(e.Header)).ToArray();
             Node span = new("Evidence", layer3[0].Offset, layer3[^1].End - layer3[0].Offset);
 
             if (IsShine(region, infos, granules, scaling))
@@ -33,10 +35,25 @@ public sealed partial class MpegAudioParser
                 return TraitNode("Helix MP3 Encoder", "Copyright and original bits set in every frame, with scfsi and scalefactor scaling, as the Helix encoder writes them without its tag");
             }
 
-            // scfsi only exists in MPEG-1.
-            if (new MpegHeader(layer3[0].Header).IsMpeg1 && scaling && !scfsi)
+            // mp3guessenc: "the Xing encoder never uses short blocks"; the Helix encoder that grew out of
+            // it does, as do LAME, Fraunhofer's encoders and BladeEnc, even at the onset of a tone.
+            if (!switching && !scfsi && headers.All(h => h.IsOriginal))
             {
-                return TraitNode("Fraunhofer", "Scalefactor scaling but no scfsi in any frame, as Fraunhofer's encoders write them");
+                return TraitNode("Xing", "No short blocks or scfsi in any frame and the original bit in every one, as Xing's encoder writes them");
+            }
+
+            // BladeEnc codes plain stereo or mono at a constant bitrate, MPEG-1 only, never uses
+            // scalefactor scaling, and leaves ancillary data at most in its last frame (mp3guessenc).
+            if (headers[0].IsMpeg1 && switching && !scaling && headers.All(h => h.ChannelModeBits is 0 or 3 && h.BitrateIndex == headers[0].BitrateIndex)
+                && region.Ancillary is { } ancillary && ancillary.Bytes == ancillary.LastSegmentBytes)
+            {
+                return TraitNode("BladeEnc", "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, and ancillary data at most in the last frame, as BladeEnc writes them");
+            }
+
+            // scfsi only exists in MPEG-1.
+            if (headers[0].IsMpeg1 && scaling && !scfsi && switching)
+            {
+                return TraitNode("Fraunhofer", "Scalefactor scaling and short blocks but no scfsi in any frame, as Fraunhofer's encoders write them");
             }
 
             Node TraitNode(string name, string evidence)
@@ -49,11 +66,12 @@ public sealed partial class MpegAudioParser
         }
 
         List<Entry> layer2 = region.Entries.Where(e => IsAudio(e) && e.Layer2 is not null).ToList();
+        // TwoLAME and Xing's tompg both write it.
         if (layer2.Count >= MinTraitFrames && layer2.Select(e => e.Layer2!.UndefinedScalefactor).FirstOrDefault(n => n is not null) is { } undefined)
         {
-            Node node = new("Encoder", undefined.Offset, undefined.Length, "TwoLAME");
+            Node node = new("Encoder", undefined.Offset, undefined.Length, "TwoLAME or Xing");
             node.Add("Confidence", undefined.Offset, undefined.Length, "Low");
-            node.Add("Evidence", undefined.Offset, undefined.Length, "Scalefactor index 63, which TwoLAME writes and Table B.1 of ISO/IEC 11172-3 leaves undefined");
+            node.Add("Evidence", undefined.Offset, undefined.Length, "Scalefactor index 63, which TwoLAME and Xing's encoder write and Table B.1 of ISO/IEC 11172-3 leaves undefined");
             return node;
         }
 
