@@ -298,7 +298,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 3,
                       "length": 1
                     },
@@ -1257,7 +1257,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 420,
                       "length": 1
                     },
@@ -13536,7 +13536,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 11266,
                       "length": 1
                     },
@@ -14434,7 +14434,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 12832,
                       "length": 1
                     },
@@ -16230,7 +16230,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 15232,
                       "length": 1
                     },
@@ -16679,7 +16679,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 15858,
                       "length": 1
                     },
@@ -18475,7 +18475,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 18154,
                       "length": 1
                     },
@@ -20720,7 +20720,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 20972,
                       "length": 1
                     },
@@ -22965,7 +22965,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 23894,
                       "length": 1
                     },
@@ -25659,7 +25659,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 27338,
                       "length": 1
                     },
@@ -26114,7 +26114,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 27860,
                       "length": 1
                     },
@@ -26563,7 +26563,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 27964,
                       "length": 1
                     },
@@ -27012,7 +27012,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 28068,
                       "length": 1
                     },
@@ -27461,7 +27461,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 28172,
                       "length": 1
                     },
@@ -27910,7 +27910,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 28276,
                       "length": 1
                     },
@@ -28359,7 +28359,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 28380,
                       "length": 1
                     },
@@ -29724,7 +29724,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 29736,
                       "length": 1
                     },
@@ -31544,7 +31544,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 30780,
                       "length": 1
                     },
@@ -33819,7 +33819,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 32085,
                       "length": 1
                     },
@@ -34274,7 +34274,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 32346,
                       "length": 1
                     },
@@ -36076,7 +36076,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 33598,
                       "length": 1
                     },
@@ -36468,6 +36468,14 @@
         }
       ]
     },
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg.main-data-begin-exceeds-buffer",
+        "message": "10 frames reach back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x2BFF has a main_data_begin of 485 bytes where at most 0 are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.",
+        "offset": 11267,
+        "length": 2
+      }
+    ]
   }
 ]

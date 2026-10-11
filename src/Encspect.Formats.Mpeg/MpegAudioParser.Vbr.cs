@@ -34,7 +34,7 @@ public sealed partial class MpegAudioParser
         if (vbr.IsTruncated)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-truncated", node, count =>
-                $"{Frames(count, "holds", "hold")} a {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} {Article(vbr.Type)} {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
         }
 
         if (vbr.InvalidEntrySize is { } entrySize)
@@ -73,7 +73,7 @@ public sealed partial class MpegAudioParser
         if (midStream)
         {
             findings.Add(Severity.Warning, "mpeg.vbr-header-mid-stream", node, count =>
-                $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} a {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
+                $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} {Article(vbr.Type)} {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
         }
 
         if (vbr.HasLameTag)
@@ -744,4 +744,7 @@ public sealed partial class MpegAudioParser
 
         return shifted;
     }
+
+    // "an Info header", "a Xing header", "a VBRI header".
+    private static string Article(string headerType) => headerType == "Info" ? "an" : "a";
 }
