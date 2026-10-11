@@ -71,9 +71,13 @@ PREDICTORS = [6, 4, 2, 4, 2, 0]  # predictors per subband group without dynamic 
 
 
 def table_for(version, rate, bitrate, channels):
-    """Table B.2a to B.2d by bitrate per channel and sample rate (2.4.3.3.1), B.1 for MPEG-2."""
+    """Table B.2a to B.2d by bitrate per channel and sample rate (2.4.3.3.1), B.1 for MPEG-2. The
+    captions of Tables 3-B.2a and 3-B.2b give free format (bitrate None) B.2a at 48000 Hz and B.2b
+    at the other rates, as libmad reads it."""
     if version != "1":
         return 4
+    if bitrate is None:
+        return 0 if rate == 48000 else 1
     per = bitrate // channels
     if (rate == 48000 and per >= 56) or 56 <= per <= 80:
         return 0
@@ -398,6 +402,7 @@ class Layer2Frame(Frame):
         for (ch, sb), values in scalefactors.items():
             fields[f"Scalefactors/Subband {sb}/Channel {ch}"] = ", ".join(map(str, values))
         fields["Samples"] = f"{samples_end - scale_end} bits"
+        fields["Bit Allocation"] = f"Table {TABLE_NAMES[self.table_index].split()[0]}"
 
         subbands = []
         for sb in range(self.sblimit):
@@ -697,6 +702,61 @@ def mc_crc_mismatch():
     )
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, seed=i, bad_crc=i == 3)))
     return f.finding("mpeg.multichannel-crc-mismatch", "1 frame")
+
+
+@fixture
+def mc_center_reserved():
+    f = Layer2Fixture(
+        "mc-center-reserved",
+        "Multichannel at 48000 Hz whose header uses the reserved center value 2 in every frame, with valid "
+        "multichannel CRCs: read as no center, so 2/2, and reported.",
+    )
+    f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=2, surround=2, seed=i)))
+    return f.finding("mpeg.multichannel-center-reserved", "6 frames")
+
+
+@fixture
+def mc_chance_crc():
+    f = Layer2Fixture(
+        "mc-chance-crc",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps whose ancillary data reads as a multichannel extension in all 20 "
+        "frames, but whose multichannel CRC holds in only two, as random data passes it about once in 65,536 frames: "
+        "two passes among 20 frames are chance, so no multichannel extension is reported.",
+    )
+    frames = mc_stream(20, 384, 48000, lambda i: Multichannel(center=1, surround=2, seed=i, bad_crc=i not in (4, 13)))
+    f.add_frames(frames)
+    for frame, entry in zip(frames, f.frames):
+        del entry["mc_crc"]
+        fields = entry["fields"]
+        for key in [k for k in fields if k.startswith("Multichannel")]:
+            del fields[key]
+        fields["Ancillary Data"] = f"{frame.length() - 4 - (frame.offsets[3] + 7) // 8} bytes"
+    return f
+
+
+@fixture
+def free_format_48000():
+    f = Layer2Fixture(
+        "free-format-48000",
+        "Free-format MPEG-1 Layer II stereo at 48000 Hz with 240-byte frames (40 kbps per channel) and CRC. Free format "
+        "takes table B.2a at 48000 Hz whatever the frame length, where the fixed bitrate rules would give B.2c. ffmpeg "
+        "does not read free format, so the cross-check counts libmad's frames.",
+        crosscheck="madplay",
+    )
+    f.add_frames([Layer2Frame(bitrate=None, free_length=240, rate=48000, mode="Stereo", protected=True, seed=i) for i in range(6)])
+    return f.finding("mpeg.free-format", "240")
+
+
+@fixture
+def free_format_44100():
+    f = Layer2Fixture(
+        "free-format-44100",
+        "Free-format MPEG-1 Layer II stereo at 44100 Hz with 555-byte frames (85 kbps per channel) and CRC: table "
+        "B.2b, where the fixed bitrate rules would give B.2d.",
+        crosscheck="madplay",
+    )
+    f.add_frames([Layer2Frame(bitrate=None, free_length=555, rate=44100, mode="Stereo", protected=True, seed=i) for i in range(6)])
+    return f.finding("mpeg.free-format", "555")
 
 
 @fixture

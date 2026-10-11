@@ -18,6 +18,7 @@ ffprobe confirm what this module reads; see crosscheck_mpeg_fixtures.py.
 All values are kept raw here; report_fields() formats them the way the analyzer reports them.
 """
 
+import re
 import struct
 
 XING_OFFSETS = {(True, False): 36, (True, True): 21, (False, False): 21, (False, True): 13}
@@ -153,6 +154,7 @@ def read_lame(frame, start, music):
         zeroed[start + 34 : start + 36] = b"\0\0"
     lame["tag_crc_ffmpeg"] = crc16(bytes(zeroed))
     covered = lame["music_length"] - len(frame)
+    lame["music_length_short"] = covered < 0
     if music is not None and 0 <= covered <= len(music):
         lame["music_crc_computed"] = crc16(music[:covered])
     else:
@@ -170,8 +172,10 @@ def read_vbri(frame):
      tag["entry_size"], tag["frames_per_entry"]) = struct.unpack(">HHHIIHHHH", fixed)
     toc = []
     position = VBRI_OFFSET + 26
-    for _ in range(tag["toc_entries"]):
-        if tag["entry_size"] < 1 or tag["entry_size"] > 4 or position + tag["entry_size"] > len(frame):
+    # Fraunhofer's reader knows TOC entries of 1 to 4 bytes; with another size the TOC is not read.
+    tag["entry_size_invalid"] = tag["toc_entries"] > 0 and not 1 <= tag["entry_size"] <= 4
+    for _ in range(0 if tag["entry_size_invalid"] else tag["toc_entries"]):
+        if position + tag["entry_size"] > len(frame):
             tag["truncated"] = True
             break
         toc.append(int.from_bytes(frame[position : position + tag["entry_size"]], "big"))
@@ -306,6 +310,12 @@ def lame_fields(lame):
         fields[f"{p}/{name}"] = gain_text(value)
         fields[f"{p}/{name}/Name"] = GAIN_NAMES.get(value >> 13, f"Reserved ({value >> 13})")
         fields[f"{p}/{name}/Originator"] = GAIN_ORIGINATORS.get((value >> 10) & 7, f"Reserved ({(value >> 10) & 7})")
+        # LAME before 3.95 computed ReplayGain against 83 dB, later versions against 89 dB
+        # (mpg123, parse.c).
+        old = re.fullmatch(r"LAME3\.(\d\d)(\D.*)?", lame["encoder"])
+        if (value >> 10) & 7 == 3 and old and int(old.group(1)) < 95:
+            fields[f"{p}/{name}/Reference Level"] = ("83 dB, as LAME before 3.95 computed it; later versions use 89 dB, so this "
+                                                     "gain is 6 dB lower than theirs")
     flags = lame["flags"]
     fields.update({
         f"{p}/Encoding Flags/UsesNsPsytune": "true" if flags & 0x10 else "false",
@@ -343,6 +353,10 @@ def findings(tag, frame_offset):
     at = f"0x{frame_offset:X}"
     if tag["truncated"]:
         result.append(("mpeg.vbr-header-truncated", at))
+    if tag.get("entry_size_invalid"):
+        result.append(("mpeg.vbri-entry-size-invalid", f"{tag['entry_size']} bytes long"))
+    if tag["type"] == "VBRI" and tag.get("version", 1) != 1:
+        result.append(("mpeg.vbri-version-unknown", f"version {tag['version']}"))
     if tag["type"] != "VBRI" and tag.get("toc") and any(b < a for a, b in zip(tag["toc"], tag["toc"][1:])):
         result.append(("mpeg.xing-toc-decreasing", at))
     lame = tag.get("lame")
@@ -352,7 +366,9 @@ def findings(tag, frame_offset):
                 result.append(("mpeg.lame-tag-crc-ffmpeg", at))
             else:
                 result.append(("mpeg.lame-tag-crc-mismatch", at))
-        if lame["music_crc_computed"] is None:
+        if lame["music_length_short"]:
+            result.append(("mpeg.music-length-short", f"music length of {lame['music_length']} bytes"))
+        elif lame["music_crc_computed"] is None:
             result.append(("mpeg.music-crc-not-verified", at))
         elif lame["music_crc"] != lame["music_crc_computed"]:
             # With --nogap, LAME continues the music CRC from the previous file.

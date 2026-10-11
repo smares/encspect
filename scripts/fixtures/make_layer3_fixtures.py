@@ -342,6 +342,30 @@ def pack(frames, ancillary=b"\x00"):
 # --- Expectations -------------------------------------------------------------------------------
 
 
+def is_header(frame):
+    """Whether the frame holds a Xing, Info or VBRI header: a frame without main data that keeps its
+    place in the reservoir, as minimp3 and mp3guessenc keep it, and has no ancillary segment."""
+    return getattr(frame, "is_header", False)
+
+
+def area_length(frame):
+    if is_header(frame):
+        return frame.length() - 4 - (2 if frame.protected else 0) - side_info_size(frame.version, frame.mode)
+    return frame.area_length()
+
+
+def area(frame):
+    return frame.bytes()[frame.length() - area_length(frame):] if is_header(frame) else frame.area
+
+
+def main_data_begin(frame):
+    return 0 if is_header(frame) else frame.main_data_begin
+
+
+def main_data_length(frame):
+    return 0 if is_header(frame) else frame.main_data_length()
+
+
 class Layer3Fixture(Fixture):
     out = OUT
 
@@ -381,25 +405,30 @@ class Layer3Fixture(Fixture):
             starts, position = [], 0
             for frame, _ in chain:
                 starts.append(position)
-                position += frame.area_length()
+                position += area_length(frame)
             owner = [None] * position
             previous_end = 0
             ancillary_after = []
+            audio_frames = 0
             for k, (frame, entry) in enumerate(chain):
-                area_start, area_end = starts[k], starts[k] + frame.area_length()
-                entry["reservoir"] = area_start - previous_end
-                reach = 511 if frame.mpeg1() else 255
-                entry["fields"]["Side Info/Reservoir Fill"] = f"{min(entry['reservoir'], reach)} bytes"
-                entry["side_info"] = frame.raw_side_info()
-                begin = area_start - frame.main_data_begin
-                end = begin + frame.main_data_length()
-                if frame.main_data_begin > entry["reservoir"]:
-                    if k == 0:
-                        self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
-                    else:
-                        self.finding("mpeg.main-data-overlap", f"0x{entry['offset']:X}")
-                elif begin < area_start and crosses_gap(chain, starts, begin, k):
-                    self.finding("mpeg.reservoir-across-gap", f"0x{entry['offset']:X}")
+                area_start, area_end = starts[k], starts[k] + area_length(frame)
+                begin = area_start - main_data_begin(frame)
+                end = begin + main_data_length(frame)
+                if not is_header(frame):
+                    entry["reservoir"] = area_start - previous_end
+                    reach = 511 if frame.mpeg1() else 255
+                    entry["fields"]["Side Info/Reservoir Fill"] = f"{min(entry['reservoir'], reach)} bytes"
+                    entry["side_info"] = frame.raw_side_info()
+                    if frame.main_data_begin > entry["reservoir"]:
+                        if audio_frames == 0:
+                            self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
+                        else:
+                            self.finding("mpeg.main-data-overlap", f"0x{entry['offset']:X}")
+                    elif begin < area_start and crosses_gap(chain, starts, begin, k):
+                        self.finding("mpeg.reservoir-across-gap", f"0x{entry['offset']:X}")
+                    elif begin < area_start and any(is_header(f) and begin < starts[j] + area_length(f) for j, (f, _) in enumerate(chain[:k])):
+                        self.finding("mpeg.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
+                    audio_frames += 1
                 if end > area_end:
                     self.finding("mpeg.main-data-overflow", f"0x{entry['offset']:X}")
                 for p in range(max(begin, previous_end, 0), min(end, area_end)):
@@ -407,11 +436,25 @@ class Layer3Fixture(Fixture):
                 if k:
                     ancillary_after.append(max(begin, 0) - previous_end if begin > previous_end else 0)
                 previous_end = max(previous_end, min(end, area_end))
-                entry["main_data_length"] = frame.main_data_length()
+                entry["main_data_length"] = main_data_length(frame)
             ancillary_after.append(position - previous_end)
 
             for k, (frame, entry) in enumerate(chain):
-                file_start = entry["offset"] + entry["length"] - frame.area_length()
+                file_start = entry["offset"] + entry["length"] - area_length(frame)
+                if is_header(frame):
+                    # After its header, the frame's bytes are unused or main data of later frames.
+                    tag_end = frame.tag_end - (entry["length"] - area_length(frame))
+                    for p in range(starts[k] + tag_end, starts[k] + area_length(frame)):
+                        if owner[p] is not None:
+                            name, value = "Bit Reservoir", f"of the main data of the frame at 0x{chain[owner[p]][1]['offset']:X}"
+                        else:
+                            name, value = "Unused", ""
+                        length = 1
+                        while p + length < starts[k] + area_length(frame) and owner[p + length] == owner[p]:
+                            length += 1
+                        if name not in entry["fields"]:
+                            entry["fields"][name] = f"{length} bytes {value}".strip()
+                    continue
                 own = sum(1 for p in range(starts[k], starts[k] + frame.area_length()) if owner[p] == k)
                 earlier = sum(1 for p in range(starts[k]) if owner[p] == k)
                 value = f"{frame.main_data_length()} bytes" + (f", {earlier} of them in earlier frames" if earlier else "")
@@ -444,6 +487,8 @@ class Layer3Fixture(Fixture):
         modes = {}
         gains = {}
         for frame, entry in self.layer3:
+            if is_header(frame):
+                continue
             ext = frame.mode_ext if frame.mode == "Joint stereo" else None
             modes[str(ext)] = modes.get(str(ext), 0) + 1
             for row in frame.granules:
@@ -456,10 +501,10 @@ class Layer3Fixture(Fixture):
             "blocks": blocks,
             "mode_extensions": modes,
             "global_gain": {str(ch): [min(v), max(v)] for ch, v in gains.items()},
-            "max_main_data_begin": max(frame.main_data_begin for frame, _ in self.layer3),
+            "max_main_data_begin": max(main_data_begin(frame) for frame, _ in self.layer3),
             "ancillary": [sum(ancillary), min(ancillary), max(ancillary)] if ancillary else [0, 0, 0],
-            "scalefac_scale_used": any(g.scalefac_scale for f, _ in self.layer3 for row in f.granules for g in row),
-            "scfsi_used": any(f.mpeg1() and any(f.scfsi) for f, _ in self.layer3),
+            "scalefac_scale_used": any(g.scalefac_scale for f, _ in self.layer3 if not is_header(f) for row in f.granules for g in row),
+            "scfsi_used": any(f.mpeg1() and any(f.scfsi) for f, _ in self.layer3 if not is_header(f)),
         }
 
     def segments(self):
@@ -477,7 +522,9 @@ class Layer3Fixture(Fixture):
                     continue
                 key = (frame.version, frame.rate)
             start = len(stream)
-            stream += frame.area
+            stream += area(frame)
+            if is_header(frame):
+                continue
             begin = start - frame.main_data_begin
             end = begin + frame.main_data_length()
             if previous is not None:
@@ -501,7 +548,8 @@ class Layer3Fixture(Fixture):
             version = mpeg.VERSION_NAMES[first.version]
             enhancement, total, block = ancillary_scan.scan([segments[entry["offset"]] for _, entry in inside], version, first.rate)
             audio = [frame for frame, entry in self.layer3
-                     if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and not entry.get("truncated")]
+                     if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and not entry.get("truncated")
+                     and not is_header(frame)]
             ticks = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") * (stream_stats.CLOCK // f.rate) for f in audio)
             fields = {}
             if enhancement:

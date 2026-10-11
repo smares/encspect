@@ -1,0 +1,179 @@
+{
+ "description": "Five MPEG-1 Layer III frames at 44100 Hz, 37 bytes of junk, then five MPEG-2 Layer II mono frames at 24000 Hz: sync is lost, and the stream found again is a different one.",
+ "length": 4046,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 4046,
+   "statistics": {
+    "Statistics": "10 frames, 0.371 s",
+    "Statistics/Frames": "10",
+    "Statistics/Samples": "11520",
+    "Statistics/Duration": "0.371 s",
+    "Statistics/IsVbr": "true",
+    "Statistics/Average Bitrate": "86.5 kbps",
+    "Statistics/Minimum Bitrate": "64 kbps",
+    "Statistics/Maximum Bitrate": "128 kbps",
+    "Statistics/Bitrate Distribution": "2 bitrates",
+    "Statistics/Bitrate Distribution/64 kbps": "5 frames (50.0%)",
+    "Statistics/Bitrate Distribution/128 kbps": "5 frames (50.0%)",
+    "Statistics/Bitrate Over Time": "87"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1671,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 2126,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2510,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2894,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3278,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3662,
+   "length": 384,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "offset": 2089,
+   "length": 37
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.sync-lost",
+   "contains": "37 bytes"
+  },
+  {
+   "code": "mpeg.stream-changed",
+   "contains": "MPEG-2 Layer II, 24000 Hz"
+  }
+ ]
+}

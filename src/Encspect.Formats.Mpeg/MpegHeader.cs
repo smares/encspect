@@ -123,7 +123,7 @@ internal readonly record struct MpegHeader(uint Raw)
 
     public string Summary => $"{VersionName} Layer {LayerName}, {BitrateName}, {SampleRate} Hz, {ChannelMode}";
 
-    public string StreamName => $"{VersionName} Layer {LayerName}, {SampleRate} Hz";
+    public string StreamName => $"{VersionName} Layer {LayerName}, {SampleRate} Hz" + (IsFreeFormat ? ", free format" : string.Empty);
 
     // Frames of one stream share version, layer, sample rate and whether they are free format.
     public bool IsSameStream(MpegHeader other) =>
@@ -145,6 +145,11 @@ internal readonly record struct MpegHeader(uint Raw)
         int coefficient = Layer == 3 && !IsMpeg1 ? 72 : 144;
         return (coefficient * Bitrate * 1000 / SampleRate) + Padding;
     }
+
+    // The bytes every frame holds, whatever it codes: the header, the CRC, and the Layer III side
+    // information or the Layer I and II bit allocation. mpg123 rejects shorter frames.
+    public int MinimumLength =>
+        4 + (IsProtected ? 2 : 0) + (Layer == 2 ? (Layer2AudioData.AllocationBits(this) + 7) / 8 : CrcCoverage);
 
     // Bytes after the CRC that the CRC covers, or -1 when not known here. Layer III: the side
     // information (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7). Layer I: the bit allocation, 4 bits

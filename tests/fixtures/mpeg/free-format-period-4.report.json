@@ -1,0 +1,26 @@
+[
+  {
+    "source": "free-format-period-4.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 4000,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 4000
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 4000
+      }
+    ]
+  }
+]

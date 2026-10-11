@@ -1,0 +1,167 @@
+{
+ "description": "A VBRI header with 5-byte TOC entries; Fraunhofer's reader knows 1 to 4 bytes, so the TOC is not read, although it fits the frame.",
+ "length": 3077,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 3077,
+   "statistics": {
+    "Statistics": "6 frames, 0.157 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "6912",
+    "Statistics/Duration": "0.157 s",
+    "Statistics/IsVbr": "true",
+    "Statistics/Average Bitrate": "135.8 kbps",
+    "Statistics/Minimum Bitrate": "96 kbps",
+    "Statistics/Maximum Bitrate": "192 kbps",
+    "Statistics/Bitrate Distribution": "5 bitrates",
+    "Statistics/Bitrate Distribution/96 kbps": "1 frame (16.7%)",
+    "Statistics/Bitrate Distribution/112 kbps": "1 frame (16.7%)",
+    "Statistics/Bitrate Distribution/128 kbps": "2 frames (33.3%)",
+    "Statistics/Bitrate Distribution/160 kbps": "1 frame (16.7%)",
+    "Statistics/Bitrate Distribution/192 kbps": "1 frame (16.7%)",
+    "Statistics/Bitrate Over Time": "136",
+    "Statistics/Maximum Reservoir Fill": "511 bytes",
+    "Statistics/Reservoir Fill Over Time": "394",
+    "Statistics/VBR Header/Claimed Frames": "7",
+    "Statistics/VBR Header/Counted Frames": "6",
+    "Statistics/VBR Header/Claimed Bytes": "3077",
+    "Statistics/VBR Header/Counted Bytes": "3077"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "VBRI/Version": "1",
+    "VBRI/Delay": "1105",
+    "VBRI/Quality": "75",
+    "VBRI/Byte Count": "3077",
+    "VBRI/Frame Count": "7",
+    "VBRI/TOC Entries": "6",
+    "VBRI/TOC Scale": "1",
+    "VBRI/TOC Entry Size": "5 bytes",
+    "VBRI/Frames Per TOC Entry": "1",
+    "VBRI/TOC": "0 entries"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 834,
+   "length": 522,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "160 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1356,
+   "length": 313,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "96 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1669,
+   "length": 626,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "192 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2295,
+   "length": 365,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "112 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2660,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.vbri-entry-size-invalid",
+   "contains": "5 bytes long"
+  }
+ ],
+ "silent": true,
+ "vbr_header": {
+  "type": "VBRI",
+  "offset": 36,
+  "truncated": false,
+  "version": 1,
+  "delay": 1105,
+  "quality": 75,
+  "bytes": 3077,
+  "frames": 7,
+  "toc_entries": 6,
+  "toc_scale": 1,
+  "entry_size": 5,
+  "frames_per_entry": 1,
+  "entry_size_invalid": true,
+  "toc": [],
+  "frame_offset": 0
+ },
+ "detected_encoder": {
+  "name": "Fraunhofer",
+  "confidence": "High"
+ }
+}

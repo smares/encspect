@@ -12,6 +12,7 @@ internal enum MainDataProblem
     BeforeStream,
     Overlap,
     AcrossGap,
+    InHeaderFrame,
 }
 
 internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, MainDataProblem Problem, bool Overflows);
@@ -20,7 +21,10 @@ internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, M
 // through the data of consecutive frames of one stream, the bytes after each frame's side
 // information, as one byte stream. A frame's main data starts main_data_begin bytes before its own
 // data. The stream continues across junk and tags between frames, which decoders disagree on, so
-// main data that reaches back across them is reported; a new stream starts it empty.
+// main data that reaches back across them is reported; a new stream starts it empty. A Xing, Info
+// or VBRI header frame is a valid frame without main data: minimp3 and mp3guessenc keep its bytes
+// in the reservoir, as here, while mpg123 and ffmpeg skip the frame, so main data that reaches
+// back into it is reported too.
 //
 // Every main-data byte is recorded as a run owned by its frame. Where main data overlaps the
 // previous frame's or does not fit its frame, the earlier owner keeps the bytes.
@@ -33,7 +37,7 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
     private (int Version, int SampleRate)? _stream;
     private long _position;
     private long _previousEnd;
-    private int _frames;
+    private int _audioFrames;
 
     public void Reset()
     {
@@ -41,11 +45,11 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
         _recent.Clear();
         _position = 0;
         _previousEnd = 0;
-        _frames = 0;
+        _audioFrames = 0;
     }
 
     public MainDataPlacement Add(MpegHeader header, long frameOffset, long frameEnd, long dataOffset, int dataLength,
-        int mainDataBegin, int mainDataLength, bool truncated)
+        int mainDataBegin, int mainDataLength, bool truncated, bool isHeaderFrame = false)
     {
         if (_stream != (header.VersionBits, header.SampleRateIndex))
         {
@@ -58,16 +62,20 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
         long reservoir = start - _previousEnd;
         long begin = start - mainDataBegin;
         long mainEnd = begin + mainDataLength;
-        _recent.Add(new Area(start, dataLength, dataOffset, frameOffset, frameEnd));
+        _recent.Add(new Area(start, dataLength, dataOffset, frameOffset, frameEnd, isHeaderFrame));
 
         MainDataProblem problem = MainDataProblem.None;
         if (mainDataBegin > reservoir)
         {
-            problem = _frames == 0 ? MainDataProblem.BeforeStream : MainDataProblem.Overlap;
+            problem = _audioFrames == 0 ? MainDataProblem.BeforeStream : MainDataProblem.Overlap;
         }
         else if (begin < start && CrossesGap(begin))
         {
             problem = MainDataProblem.AcrossGap;
+        }
+        else if (begin < start && _recent.Any(a => a.IsHeaderFrame && begin < a.Start + a.Length))
+        {
+            problem = MainDataProblem.InHeaderFrame;
         }
 
         long ownStart = Math.Max(Math.Max(begin, _previousEnd), 0);
@@ -86,7 +94,7 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
 
         _previousEnd = Math.Max(_previousEnd, ownEnd);
         _position = end;
-        _frames++;
+        _audioFrames += isHeaderFrame ? 0 : 1;
         _recent.RemoveAll(a => a.Start + a.Length <= _position - Reach);
 
         return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated);
@@ -112,5 +120,5 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
     }
 
     // A frame's data in the reservoir's byte stream and in the file.
-    private readonly record struct Area(long Start, int Length, long FileOffset, long FrameOffset, long FrameEnd);
+    private readonly record struct Area(long Start, int Length, long FileOffset, long FrameOffset, long FrameEnd, bool IsHeaderFrame);
 }

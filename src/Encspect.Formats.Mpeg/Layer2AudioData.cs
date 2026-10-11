@@ -84,15 +84,21 @@ internal sealed class Layer2AudioData
     public static int SubbandCount(int table) => Tables[table].Length;
 
     // ISO/IEC 11172-3 2.4.3.3.1: the table follows from the bitrate per channel and the sample rate.
-    public static int TableFor(MpegHeader header, int frameLength)
+    // The captions of Tables 3-B.2a and 3-B.2b assign free format to B.2a at 48 kHz and to B.2b at
+    // the other rates, whatever the frame length; libmad does the same.
+    public static int TableFor(MpegHeader header)
     {
         if (!header.IsMpeg1)
         {
             return 4;
         }
 
-        int bitrate = header.IsFreeFormat ? (int)((long)frameLength * header.SampleRate / 144 / 1000) : header.Bitrate;
-        int perChannel = bitrate / (header.IsMono ? 1 : 2);
+        if (header.IsFreeFormat)
+        {
+            return header.SampleRate == 48000 ? 0 : 1;
+        }
+
+        int perChannel = header.Bitrate / (header.IsMono ? 1 : 2);
         if ((header.SampleRate == 48000 && perChannel >= 56) || (perChannel >= 56 && perChannel <= 80))
         {
             return 0;
@@ -123,10 +129,20 @@ internal sealed class Layer2AudioData
         _ => 2,
     };
 
-    // data starts at the frame header and must reach at least to the end of the scalefactors.
-    public static Layer2AudioData Read(byte[] data, MpegHeader header, int frameLength)
+    // The bits of the bit allocation, which every frame holds whatever it allocates.
+    public static int AllocationBits(MpegHeader header)
     {
-        int table = TableFor(header, frameLength);
+        int table = TableFor(header);
+        int subbands = Tables[table].Length;
+        int bound = header.ChannelModeBits == 1 ? Math.Min((header.ModeExtension + 1) * 4, subbands) : subbands;
+        int channels = header.IsMono ? 1 : 2;
+        return Enumerable.Range(0, subbands).Sum(sb => AllocationWidth(Tables[table][sb]) * (sb < bound ? channels : 1));
+    }
+
+    // data starts at the frame header and must reach at least to the end of the scalefactors.
+    public static Layer2AudioData Read(byte[] data, MpegHeader header)
+    {
+        int table = TableFor(header);
         int channels = header.IsMono ? 1 : 2;
         int subbands = Tables[table].Length;
         int bound = header.ChannelModeBits == 1 ? Math.Min((header.ModeExtension + 1) * 4, subbands) : subbands;
