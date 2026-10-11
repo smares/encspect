@@ -104,7 +104,7 @@ jobs:
       - name: Install ffmpeg, madplay and mpg123
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg madplay mpg123
+          sudo apt-get install -y ffmpeg madplay mpg123 php-cli
 
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py

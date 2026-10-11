@@ -290,11 +290,11 @@ def report_fields(tag, toc_entries=(0, 1, 50, 99)):
     if "encoder_string" in tag:
         fields["Encoder String"] = tag["encoder_string"]
     if "lame" in tag:
-        fields.update(lame_fields(tag["lame"]))
+        fields.update(lame_fields(tag["lame"], tag["quality"]))
     return fields
 
 
-def lame_fields(lame):
+def lame_fields(lame, quality):
     p = "LAME Tag"
     fields = {
         p: lame["encoder"],
@@ -346,19 +346,41 @@ def lame_fields(lame):
     })
     if lame["music_crc_computed"] is not None:
         fields[f"{p}/Music CRC/Computed"] = f"0x{lame['music_crc_computed']:04X}"
-    preset = alt_preset(lame)
+    preset = old_preset(lame, quality)
     if preset and lame["preset_surround"] & 0x7FF == 0:
-        fields[f"{p}/Preset/Settings Match"] = (f"{preset}; LAME 3.90 to 3.92 leave the preset out, but its VBR method, lowpass, ATH type "
-                                                "and nspsytune flags are the ones this tag holds")
+        fields[f"{p}/Preset/Settings Match"] = (f"{preset}; LAME 3.90 to 3.92 leave the preset out, but the VBR method, Xing quality, noise "
+                                                "shaping, stereo mode, ATH type and lowpass this tag holds are the ones it sets")
     return fields
 
 
-def alt_preset(lame):
-    """The --alt-preset of LAME 3.90 to 3.92 whose settings the tag holds, as encodes with each
-    preset show them, or None."""
-    flags, method, lowpass, bitrate = lame["flags"], lame["method"], lame["lowpass"], lame["bitrate"]
-    if lame["encoder"].rstrip(" ") not in ("LAME3.90", "LAME3.91", "LAME3.92") or not flags & 0x10:
+# The settings each preset of LAME 3.90 to 3.92 and HydrogenAudio's 3.90.3 writes, as encodes with
+# 3.90 and 3.92 built from source and the Windows builds of 3.91 and 3.90.3 show them: (bitrate field,
+# None for VBR; Xing quality; VBR method; noise shaping; stereo mode; ATH type; lowpass in 100 Hz).
+OLD_PRESETS = {
+    (None, 78, 3, 2, 3, 4, 190): "--alt-preset standard", (None, 78, 3, 1, 3, 4, 190): "--alt-preset standard",
+    (None, 78, 4, 2, 3, 4, 190): "--alt-preset fast standard",
+    (None, 78, 3, 2, 3, 2, 195): "--alt-preset extreme", (None, 78, 3, 2, 3, 2, 196): "--alt-preset extreme",
+    (None, 78, 3, 1, 3, 2, 196): "--alt-preset extreme",
+    (None, 78, 4, 2, 3, 2, 195): "--alt-preset fast extreme", (None, 78, 4, 2, 3, 2, 196): "--alt-preset fast extreme",
+    (255, 58, 1, 1, 3, 2, 205): "--alt-preset insane", (255, 58, 1, 1, 3, 2, 206): "--alt-preset insane",
+    (None, 88, 4, 1, 3, 3, 195): "--r3mix", (None, 88, 4, 1, 3, 3, 196): "--r3mix",
+    (255, 99, 1, 1, 1, 2, 0): "--preset studio", (192, 88, 1, 1, 1, 2, 0): "--preset cd", (160, 78, 1, 1, 3, 2, 180): "--preset hifi",
+    (128, 67, 1, 1, 3, 2, 180): "--preset tape", (128, 67, 1, 1, 3, 2, 150): "--preset radio", (112, 67, 1, 1, 3, 2, 150): "--preset fm",
+    (40, 65, 1, 1, 0, 2, 75): "--preset mw-us", (40, 65, 1, 1, 0, 2, 76): "--preset mw-us",
+}
+
+
+def old_preset(lame, quality):
+    """The preset of LAME 3.90 to 3.92 whose settings the tag holds, or None."""
+    if lame["encoder"].rstrip(" ") not in ("LAME3.90", "LAME3.90.", "LAME3.91", "LAME3.92") or quality is None:
         return None
+    method, bitrate, misc, ath = lame["method"], lame["bitrate"], lame["misc"], lame["flags"] & 15
+    key = (None if method in (3, 4) else bitrate, quality, method, misc & 3, (misc >> 2) & 7, ath, lame["lowpass"])
+    if key in OLD_PRESETS:
+        return OLD_PRESETS[key]
+    if (quality, misc & 3, (misc >> 2) & 7, ath) == (58, 2, 3, 2) and 0 < bitrate < 255 and method in (1, 2):
+        return f"--alt-preset {'cbr ' if method == 1 else ''}{bitrate}"
+    return None
     safe_joint = bool(flags & 0x20)
     vbr = {(3, 190, 4): "standard", (4, 190, 4): "fast standard", (3, 195, 2): "extreme", (4, 195, 2): "fast extreme"}
     if safe_joint and (method, lowpass, flags & 15) in vbr:
