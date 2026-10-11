@@ -559,12 +559,14 @@ class Layer3Fixture(Fixture):
                 code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
                 self.finding(code, f"{total} bytes")
             if block:
-                delay, length, _ = block
+                delay, length, kind = block
+                rate = first.rate * (2 if kind == ancillary_scan.MP3PRO_OFL else 1)
                 fields["Original File Length"] = f"{length} samples"
                 fields["Original File Length/Delay"] = f"{delay} samples"
                 fields["Original File Length/Original Length"] = f"{length} samples"
-                fields["Original File Length/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // first.rate))
-                samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio)
+                fields["Original File Length/Sample Rate"] = f"{rate} Hz"
+                fields["Original File Length/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // rate))
+                samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio) * (rate // first.rate)
                 if delay + length > samples:
                     self.finding("mpeg.ofl-exceeds-stream", f"{delay + length} samples")
             if fields:
@@ -1071,6 +1073,37 @@ def ofl_exceeds_stream():
         "the twelve frames, as when a file is cut after encoding.",
         segments, OLD_XING, {"name": "Fraunhofer", "confidence": "Medium"}, {"delay": 1201, "length": 20000},
         **SURROUND)
+
+
+def mp3pro_ofl_block(delay, length):
+    """mp3PRO's OFL block as mp3guessenc reads it: 0xE0 0xBA, twelve bytes it does not read (zero
+    here), a 16-bit delay and a 32-bit length."""
+    return b"\xe0\xba" + bytes(12) + delay.to_bytes(2, "big") + length.to_bytes(4, "big") + b"\x00"
+
+
+@fixture
+def mp3pro_ofl():
+    segments = signatures(12, 0xC0, 0x08)
+    segments[0] = mp3pro_ofl_block(1500, 12000)
+    return enhancement_fixture(
+        "mp3pro-ofl",
+        "mp3PRO with an Original File Length block in the first frame's ancillary data: a delay of 1500 and 12000 "
+        "samples at 44100 Hz, twice the 22050 Hz core, as Thomson's mp3PRO encoder counts them. The twelve frames "
+        "hold 13824 samples at that rate, so the block fits, though it would not at the core's rate.",
+        segments, "Fraunhofer IIS mp3PRO encoder with OFL", {"name": "mp3PRO encoder", "confidence": "Medium"},
+        {"delay": 1500, "length": 12000}, **MP3PRO)
+
+
+@fixture
+def mp3pro_ofl_exceeds_stream():
+    segments = signatures(12, 0xC0, 0x08)
+    segments[0] = mp3pro_ofl_block(1500, 13000)
+    return enhancement_fixture(
+        "mp3pro-ofl-exceeds-stream",
+        "mp3PRO with an Original File Length block that claims 13000 samples after a delay of 1500, more than the 13824 "
+        "samples at twice the core rate that the twelve frames hold.",
+        segments, "Fraunhofer IIS mp3PRO encoder with OFL", {"name": "mp3PRO encoder", "confidence": "Medium"},
+        {"delay": 1500, "length": 13000}, **MP3PRO)
 
 
 # --- Encoder traits ------------------------------------------------------------------------------
