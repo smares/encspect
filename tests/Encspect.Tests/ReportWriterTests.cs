@@ -32,6 +32,26 @@ public class ReportWriterTests
     }
 
     [Fact]
+    public void TextOutputLocatesFindingsWithOffsets()
+    {
+        var writer = new StringWriter();
+
+        ReportTextWriter.Write(CreateReport(), writer, showOffsets: true);
+
+        Assert.Contains("  [Warning] test.code: Something odd [0x0, 4 bytes]" + Environment.NewLine, writer.ToString());
+    }
+
+    [Fact]
+    public void TextOutputEscapesTheSource()
+    {
+        var writer = new StringWriter();
+
+        ReportTextWriter.Write(new Report("new\nline\t.mp3", new Node("File", 0, 0), []), writer, showOffsets: false);
+
+        Assert.StartsWith("new\\nline\\t.mp3" + Environment.NewLine + "  File", writer.ToString());
+    }
+
+    [Fact]
     public void TextOutputOmitsOffsetsUnlessRequested()
     {
         var writer = new StringWriter();

@@ -11,15 +11,19 @@ Core abstractions, host, the CLI (text, JSON and CSV output, section filters, fo
 ## Command line
 
 ```sh
-encspect [options] <file-or-folder>...
+encspect [options] [--] <file-or-folder>...
 ```
 
-Each folder is analyzed with its subfolders. The output is a text tree by default; `encspect --help` lists the options.
+Each folder is analyzed with its subfolders, hidden files and folders included, in the order of their paths; output starts with the first file. A symbolic link to a folder is followed only when it leads outside the folder named on the command line and not above it, so every folder is analyzed once and link loops end. Anything that is not a regular file (a FIFO, a device, a socket, or a file of a kernel pseudo-file system such as `/proc` or `/sys`) is reported without being opened, so a FIFO cannot block the run. Standard input is not read: `-` is wrong usage, and a file named `-` is given as `./-`. After `--`, every argument is a file or folder, even one that starts with a dash. The output is a text tree by default; `encspect --help` lists the options.
 
 - `--json` writes one JSON array of reports, `--ndjson` one compact report per line, which stays usable line by line if a long run stops early, and `--csv` one summary row per file: format, streams, codec, duration, average bitrate, sample rate, channel mode, encoder and its confidence, tags, and the number of errors, warnings and infos. Reports are written as each file is analyzed.
-- `--offsets` adds each node's byte offset and length to the text tree. `--hide tags,frames,side-info,statistics` leaves those sections out of the text tree and JSON.
-- `--only-format mpeg` analyzes only files whose detected format starts with that name and skips the rest; detection looks at the bytes, not the extension.
-- `--fail-on info|warning|error` makes the exit code 1 when a finding of that severity or worse turns up. Otherwise the exit code is 0, 2 for wrong usage and 3 when a file could not be read.
+- `--offsets` adds the byte offset and length of each node, and of the node each finding points to, to the text tree. JSON always has them and CSV has none, so `--offsets` with `--json`, `--ndjson` or `--csv` is wrong usage. `--hide tags,frames,side-info,statistics` leaves those sections out of the text tree and JSON; it does not apply to `--csv`.
+- `--only-format mpeg` analyzes only files whose detected format starts with that name and skips the rest; detection looks at the bytes, not the extension. A name that starts no known format is wrong usage.
+- `--fail-on info|warning|error` makes the exit code 1 when a finding of that severity or worse turns up.
+
+Exit codes: 0 success, 1 findings as `--fail-on` says, 2 wrong usage, 3 a file or folder could not be read or is not a regular file, and 4 the output could not be written, as on a full disk; the run stops there. A closed pipe, as with `| head`, is not an error. A file or folder that cannot be read, and anything that is not a regular file, still gets a report with one error finding (`file.unreadable`, `folder.unreadable` or `file.not-regular`), so JSON, NDJSON and CSV list every input, and a line on stderr.
+
+On Linux, a file or folder whose name is not valid UTF-8 cannot be opened: .NET decodes such names lossily, so the name it lists no longer leads to the file. It is reported as unreadable.
 
 All output is UTF-8 without a byte order mark, text from files included: JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula.
 
