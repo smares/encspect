@@ -205,7 +205,7 @@ public sealed class Analyzer
             $"layout.{Slug(parser.Name)}-without-{Slug(required)}",
             $"The {TagLabel(parser.Name)} at 0x{tag.Offset:X} is not directly followed by an {TagLabel(required)}, which its specification requires.",
             tag);
-        Confidence lowered = probe.Confidence == Confidence.High ? Confidence.Medium : Confidence.Low;
+        Confidence lowered = Effective(probe) == Confidence.High ? Confidence.Medium : Confidence.Low;
         return new Claim(parser, probe, lowered, [finding]);
     }
 
@@ -607,10 +607,15 @@ public sealed class Analyzer
 
     private static bool Contains(Node node, Node target) => node == target || node.Children.Any(c => Contains(c, target));
 
+    // Full confidence needs everything to check out, so a tag with a warning or error is at most
+    // medium, whatever its parser says (plan, rule 2).
+    private static Confidence Effective(TagProbe probe) =>
+        probe.Confidence == Confidence.High && probe.Findings.Any(f => f.Severity >= Severity.Warning) ? Confidence.Medium : probe.Confidence;
+
     private sealed record Claim(ITagParser Parser, TagProbe Probe, Confidence Confidence, IReadOnlyList<Finding> LayoutFindings)
     {
         public Claim(ITagParser parser, TagProbe probe)
-            : this(parser, probe, probe.Confidence, [])
+            : this(parser, probe, Effective(probe), [])
         {
         }
 

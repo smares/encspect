@@ -632,7 +632,7 @@ def id3v23_crc_mismatch():
 def id3v23_padding_size_mismatch():
     f = Fixture("id3v23-padding-size-mismatch", "ID3v2.3 tag whose extended header declares 16 bytes of padding; the tag has 4.")
     frames = [frame23("TIT2", text_frame_data(LATIN1, ["Padded"]))]
-    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(16)), "High", {"Extended Header/Padding Size": "16", "TIT2/Text": "Padded"})
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=4, extended_header=ext_header23(16)), "Medium", {"Extended Header/Padding Size": "16", "TIT2/Text": "Padded"})
     f.audio()
     f.finding("id3v2.padding-size-mismatch", "declares 16 bytes of padding, but the tag has 4")
     return f
@@ -656,7 +656,7 @@ def id3v23_text_after_terminator():
 def id3v23_frame_flags_unknown():
     f = Fixture("id3v23-frame-flags-unknown", "ID3v2.3 TIT2 frame with flag bits ID3v2.3 does not define (section 3.3.1: \"All unused flags must be cleared\").")
     frames = [frame23("TIT2", text_frame_data(LATIN1, ["Flagged"]), flags=0x1010)]
-    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Text": "Flagged"})
     f.audio()
     f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
     return f
@@ -666,7 +666,7 @@ def id3v23_frame_flags_unknown():
 def id3v24_frame_flags_unknown():
     f = Fixture("id3v24-frame-flags-unknown", "ID3v2.4 TIT2 frame with flag bits ID3v2.4 does not define (section 4.1: \"All unused flags MUST be cleared\").")
     frames = [frame24("TIT2", text_frame_data(UTF8, ["Flagged"]), status=0x81)]
-    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High", {"TIT2/Text": "Flagged"})
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TIT2/Text": "Flagged"})
     f.audio()
     f.finding("id3v2.frame-flags-unknown", "Frame TIT2")
     return f
@@ -944,6 +944,57 @@ def id3v24_seek_duplicate():
 
 
 @fixture
+def id3v24_itunes_plain_sizes():
+    f = Fixture(
+        "id3v24-itunes-plain-sizes",
+        "ID3v2.4 tag whose frame sizes are all plain integers, as old iTunes versions wrote them, with no byte that "
+        "rules out syncsafe: TIT2's 300 bytes are $00 00 01 2C. Walking the frames both ways, as mutagen does, only the "
+        "plain reading finds TPE1; read as syncsafe, TIT2 would end after 172 bytes.",
+    )
+    title = "t" * 299
+    frames = [
+        frame24("TIT2", text_frame_data(LATIN1, [title]), plain_size=True),
+        frame24("TPE1", text_frame_data(LATIN1, ["Artist"]), plain_size=True),
+    ]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=20), "Medium", {"TIT2/Text": title, "TPE1/Text": "Artist"})
+    f.finding("id3v2.frame-size-not-syncsafe", "TIT2")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_extended_flag_without_header():
+    f = Fixture(
+        "id3v23-extended-flag-without-header",
+        "ID3v2.3 tag that sets the extended header flag but starts with a frame, as some taggers wrote it; mutagen "
+        "reads it without an extended header, and so does the analyzer, with a finding.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"])), frame23("TPE1", text_frame_data(LATIN1, ["Artist"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, flags=0x40, padding=16), "Medium", {"TIT2/Text": "Title", "TPE1/Text": "Artist"})
+    f.finding("id3v2.extended-header-missing", "follows it directly")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v2_size_beyond_file():
+    f = Fixture(
+        "id3v2-size-beyond-file",
+        "ID3v2.3 tag whose header declares 5,000,000 bytes in a much shorter file, followed by data, an APEv2 tag and "
+        "ID3v1. The size cannot say where the tag ends, so it ends where its frames stop, and the tags at the end keep "
+        "their bytes.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, size_override=5_000_000), "Low", {"TIT2/Text": "Title"})
+    f.finding("id3v2.truncated", "declares 5000000 bytes")
+    f.finding("id3v2.ends-before-size", "taken to end there")
+    f.audio()
+    f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
 def id3v24_plain_frame_sizes():
     f = Fixture(
         "id3v24-plain-frame-sizes",
@@ -1078,7 +1129,7 @@ def ape_v1_flags():
     f.audio()
     items = [raw_ape_item("Title", b"Flagged", flags=0x00000003)]
     tag = ape_tag(items, version=1000, item_bytes=b"".join(items), footer_overrides={"flags": 0x80000000})
-    f.tag("APE", "1.0", tag, "High", {"Items/Title/Value": "Flagged", "Items/Title/Flags/Item Type": "Text", "Items/Title/Flags/IsReadOnly": "false"})
+    f.tag("APE", "1.0", tag, "Medium", {"Items/Title/Value": "Flagged", "Items/Title/Flags/Item Type": "Text", "Items/Title/Flags/IsReadOnly": "false"})
     f.finding("ape.v1-flags", "footer sets flags 0x80000000")
     f.finding("ape.v1-flags", "Item \"Title\" sets flags 0x00000003")
     return f
@@ -1092,7 +1143,7 @@ def ape_v1_not_ascii():
     )
     f.audio()
     items = [raw_ape_item("Title", "Café".encode("latin-1")), raw_ape_item("Artist", "Ünïcödé".encode("utf-8"))]
-    f.tag("APE", "1.0", ape_tag(items, version=1000), "High", {"Items/Title/Value": "Café", "Items/Artist/Value": "Ünïcödé"})
+    f.tag("APE", "1.0", ape_tag(items, version=1000), "Medium", {"Items/Title/Value": "Café", "Items/Artist/Value": "Ünïcödé"})
     f.finding("ape.v1-not-ascii", "ISO-8859-1")
     f.finding("ape.v1-not-ascii", "UTF-8")
     return f
@@ -1103,7 +1154,7 @@ def ape_v1_zero_byte():
     f = Fixture("ape-v1-zero-byte", "APEv1 value with a $00 byte: APEv1 has no value lists, so it stays one value, with a finding.")
     f.audio()
     items = [raw_ape_item("Title", b"One\x00Two")]
-    f.tag("APE", "1.0", ape_tag(items, version=1000), "High", {"Items/Title/Value": ["One\x00Two"]})
+    f.tag("APE", "1.0", ape_tag(items, version=1000), "Medium", {"Items/Title/Value": ["One\x00Two"]})
     f.finding("ape.v1-zero-byte", "$00")
     return f
 
@@ -1417,7 +1468,7 @@ def lyrics3v2_bad_timestamps():
     f = Fixture("lyrics3v2-bad-timestamps", "Lyrics3 v2 timestamps with 75 seconds and an IMG timestamp that is not [mm:ss].")
     f.audio()
     fields = [("IND", "110"), ("LYR", "[00:75]Too many seconds"), ("IMG", "cover.jpg||Front||0:10")]
-    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"LYR/Data/Line/Timestamp": "00:75"})
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "Medium", {"LYR/Data/Line/Timestamp": "00:75"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.timestamp-invalid", "[00:75]")
     f.finding("lyrics3.timestamp-invalid", "0:10")
@@ -1428,7 +1479,7 @@ def lyrics3v2_bad_timestamps():
 def lyrics3v2_ind_mismatch():
     f = Fixture("lyrics3v2-ind-mismatch", "Lyrics3 v2 IND field that claims timestamps the lyrics do not have, and no lyrics field.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "010"), ("INF", "Info only")]), "High", {"IND/HasTimestamps": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "010"), ("INF", "Info only")]), "Medium", {"IND/HasTimestamps": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.ind-mismatch", "timestamps")
     return f
@@ -1436,11 +1487,24 @@ def lyrics3v2_ind_mismatch():
 
 @fixture
 def lyrics3v2_ind_size():
-    f = Fixture("lyrics3v2-ind-size", "Lyrics3 v2 IND field with two characters instead of the three v2.00 defines.")
+    f = Fixture("lyrics3v2-ind-size", "Lyrics3 v2 IND field with four characters; v2.00 defines two, a later revision three.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "10"), ("LYR", "Words")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "1000"), ("LYR", "Words")]), "Medium", {"IND/HasLyrics": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("lyrics3.ind-size", "2 characters")
+    f.finding("lyrics3.ind-size", "4 characters")
+    return f
+
+
+@fixture
+def lyrics3v2_ind_two_characters():
+    f = Fixture(
+        "lyrics3v2-ind-two-characters",
+        "Lyrics3 v2 IND field with the two characters the 1998 v2.00 text defines (lyrics, timestamps); id3.org's later "
+        "text adds a third. Both are valid.",
+    )
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "10"), ("LYR", "Words")]), "High", {"IND/HasLyrics": "true", "IND/HasTimestamps": "false"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     return f
 
 
@@ -1448,7 +1512,7 @@ def lyrics3v2_ind_size():
 def lyrics3v2_unknown_field():
     f = Fixture("lyrics3v2-unknown-field", "Lyrics3 v2 tag with a field ID, XYZ, that v2.00 does not define.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "100"), ("LYR", "Words"), ("XYZ", "Extra")]), "High", {"IND/HasLyrics": "true"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "100"), ("LYR", "Words"), ("XYZ", "Extra")]), "Medium", {"IND/HasLyrics": "true"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.unknown-field", "XYZ")
     return f
@@ -1458,7 +1522,7 @@ def lyrics3v2_unknown_field():
 def lyrics3v2_field_too_long():
     f = Fixture("lyrics3v2-field-too-long", "Lyrics3 v2 AUT field with 300 characters; the specification allows 250.")
     f.audio()
-    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "000"), ("AUT", "a" * 300)]), "High", {"AUT/Size": "300"})
+    f.tag("Lyrics3", "2.00", lyrics3v2([("IND", "000"), ("AUT", "a" * 300)]), "Medium", {"AUT/Size": "300"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.field-too-long", "300")
     return f

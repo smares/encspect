@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 tag that sets the extended header flag but starts with a frame, as some taggers wrote it; mutagen reads it without an extended header, and so does the analyzer, with a finding.",
+  "length": 571,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Title",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 59
+    },
+    {
+      "name": "Data",
+      "offset": 59,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.extended-header-missing",
+      "contains": "follows it directly"
+    }
+  ]
+}

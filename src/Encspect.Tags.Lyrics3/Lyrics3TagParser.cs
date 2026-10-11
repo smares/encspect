@@ -215,9 +215,10 @@ public sealed class Lyrics3TagParser : ITagParser
                 field.Add("HasLyrics", fieldStart + 8, fieldSize, Bool(value, 0));
                 field.Add("HasTimestamps", fieldStart + 8, fieldSize, Bool(value, 1));
                 field.Add("IsRandomSelectionInhibited", fieldStart + 8, fieldSize, Bool(value, 2));
-                if (fieldSize != 3)
+                // The 1998 Lyrics3 v2.00 text defines 2 characters, id3.org's later one 3.
+                if (fieldSize is not (2 or 3))
                 {
-                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines exactly 3.", field));
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines 2, and a later revision 3.", field));
                 }
 
                 indications = (value, field);

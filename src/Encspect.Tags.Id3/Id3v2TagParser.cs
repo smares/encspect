@@ -220,7 +220,17 @@ public sealed class Id3v2TagParser : ITagParser
             // 2.4 unsynchronizes frame by frame instead (ID3v2.4 section 6.1).
             var body = new Id3v2BodyReader(reader, bodyStart, bodyEnd, unsync && major < 4);
             long? declaredPadding = null;
-            if (major >= 3 && (flags & 0x40) != 0)
+            if (major >= 3 && (flags & 0x40) != 0 && FollowsDirectly(reader, bodyStart, bodyEnd))
+            {
+                // Some taggers set the flag without writing an extended header (mutagen, _tags.py).
+                state.Findings.Add(new Finding(
+                    Severity.Warning,
+                    "id3v2.extended-header-missing",
+                    "The header sets the extended header flag, but a frame follows it directly; the tag is read without an extended header.",
+                    tag));
+                state.HasProblems = true;
+            }
+            else if (major >= 3 && (flags & 0x40) != 0)
             {
                 declaredPadding = major == 3 ? ParseExtendedHeader23(body, state) : ParseExtendedHeader24(body, state);
                 state.ExtendedHeaderEnd = body.FilePosition;
@@ -252,6 +262,27 @@ public sealed class Id3v2TagParser : ITagParser
 
         Confidence confidence = truncated ? Confidence.Low : state.HasProblems ? Confidence.Medium : Confidence.High;
         long? next = state.SeekOffset is { } seek ? declaredEnd + seek : null;
+
+        // A size that runs past the end of the file does not say where the tag ends, so it ends
+        // where its frames stop: what follows them is left to the other parsers rather than
+        // claimed as unparsed tag bytes (plan, rule 2).
+        if (truncated && state.Unparsed is { } unparsed)
+        {
+            state.Findings.RemoveAll(f => f.Node == unparsed);
+            var cut = new Node(tag.Name, tag.Offset, unparsed.Offset - tag.Offset, tag.Value);
+            foreach (Node child in tag.Children.Where(c => c != unparsed))
+            {
+                cut.Add(child);
+            }
+
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.ends-before-size",
+                $"The frames of the ID3v2 tag stop at 0x{unparsed.Offset:X}, where its declared size cannot end; the tag is taken to end there.",
+                cut));
+            return TagProbe.Accept(cut, signatureOffset, confidence, state.Evidence, state.Findings.Select(f => f.Node == tag ? f with { Node = cut } : f).ToList(), next);
+        }
+
         return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings, next);
     }
 
@@ -533,6 +564,7 @@ public sealed class Id3v2TagParser : ITagParser
         int idLength = major == 2 ? 3 : 4;
         int headerLength = major == 2 ? 6 : 10;
         long framesStart = body.FilePosition;
+        state.PlainSizes = major == 4 && HasPlainFrameSizes(body.Reader, framesStart, body.End);
 
         while (!body.AtEnd)
         {
@@ -591,12 +623,13 @@ public sealed class Id3v2TagParser : ITagParser
         {
             frameSize = (header.Data[3] << 16) | (header.Data[4] << 8) | header.Data[5];
         }
-        else if (major == 3 || header.Data.AsSpan(4, 4).ContainsAnyInRange((byte)0x80, (byte)0xFF))
+        else if (major == 3 || state.PlainSizes || header.Data.AsSpan(4, 4).ContainsAnyInRange((byte)0x80, (byte)0xFF))
         {
             // 2.3 sizes are plain integers. A 2.4 size with a high bit set cannot be syncsafe,
             // which is what some writers (old iTunes versions) produced; read it as plain too.
             frameSize = BinaryPrimitives.ReadUInt32BigEndian(header.Data.AsSpan(4));
-            plainSize = major == 4;
+            // Below 128 both readings agree, so only a size that differs shows the plain integer.
+            plainSize = major == 4 && frameSize != Syncsafe(header.Data, 4);
         }
         else
         {
@@ -808,6 +841,7 @@ public sealed class Id3v2TagParser : ITagParser
         Node node = state.Tag.Add("Unparsed", start, end - start, $"{end - start} bytes");
         state.Findings.Add(new Finding(Severity.Warning, code, message, node));
         state.HasProblems = true;
+        state.Unparsed ??= node;
     }
 
     private static void ParseFooter(ByteReader reader, long offset, byte[] header, ParseState state)
@@ -878,6 +912,58 @@ public sealed class Id3v2TagParser : ITagParser
         public (ulong Value, Node Node)? StoredCrc { get; set; }
 
         public long? SeekOffset { get; set; }
+
+        // ID3v2.4 frame sizes read as plain integers throughout, as old iTunes versions wrote them.
+        public bool PlainSizes { get; set; }
+
+        // The first bytes the frames could not be read from.
+        public Node? Unparsed { get; set; }
+    }
+
+    // The frame IDs ID3v2.3 and 2.4 declare, and those common writers add (mutagen, _frames.py).
+    private static readonly HashSet<string> FrameIds =
+    [
+        "AENC", "APIC", "ASPI", "CHAP", "COMM", "COMR", "CTOC", "ENCR", "EQU2", "EQUA", "ETCO", "GEOB", "GRID", "GRP1",
+        "IPLS", "LINK", "MCDI", "MLLT", "MVIN", "MVNM", "OWNE", "PCNT", "PCST", "POPM", "POSS", "PRIV", "RBUF", "RVA2",
+        "RVAD", "RVRB", "SEEK", "SIGN", "SYLT", "SYTC", "TALB", "TBPM", "TCAT", "TCMP", "TCOM", "TCON", "TCOP", "TDAT",
+        "TDEN", "TDES", "TDLY", "TDOR", "TDRC", "TDRL", "TDTG", "TENC", "TEXT", "TFLT", "TGID", "TIME", "TIPL", "TIT1",
+        "TIT2", "TIT3", "TKEY", "TKWD", "TLAN", "TLEN", "TMCL", "TMED", "TMOO", "TOAL", "TOFN", "TOLY", "TOPE", "TORY",
+        "TOWN", "TPE1", "TPE2", "TPE3", "TPE4", "TPOS", "TPRO", "TPUB", "TRCK", "TRDA", "TRSN", "TRSO", "TSIZ", "TSO2",
+        "TSOA", "TSOC", "TSOP", "TSOT", "TSRC", "TSSE", "TSST", "TXXX", "TYER", "UFID", "USER", "USLT", "WCOM", "WCOP",
+        "WFED", "WOAF", "WOAR", "WOAS", "WORS", "WPAY", "WPUB", "WXXX",
+    ];
+
+    private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd) =>
+        bodyEnd - bodyStart >= 4 && FrameIds.Contains(Encoding.Latin1.GetString(reader.ReadBytesAt(bodyStart, 4)));
+
+    // Old iTunes versions wrote ID3v2.4 frame sizes as plain integers. The frames are walked with
+    // both readings, counting the declared frame IDs each finds; plain wins with more of them, or
+    // with as many when the syncsafe walk overshoots the tag and the plain one does not
+    // (mutagen, _tags.py, determine_bpi).
+    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end)
+    {
+        (int syncsafeFound, long syncsafeOver) = Walk(syncsafe: true);
+        (int plainFound, long plainOver) = Walk(syncsafe: false);
+        return plainFound > syncsafeFound || (plainFound == syncsafeFound && syncsafeOver >= 1 && plainOver <= 1);
+
+        (int Found, long Overshoot) Walk(bool syncsafe)
+        {
+            int found = 0;
+            long at = start;
+            while (at < end - 10)
+            {
+                byte[] header = reader.ReadBytesAt(at, 10);
+                if (header.All(b => b == 0))
+                {
+                    return (found, -((end - at) % 10));
+                }
+
+                at += 10 + (syncsafe ? Syncsafe(header, 4) : BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(4)));
+                found += FrameIds.Contains(Encoding.Latin1.GetString(header, 0, 4)) ? 1 : 0;
+            }
+
+            return (found, at - end);
+        }
     }
 
     private readonly struct FrameExtras

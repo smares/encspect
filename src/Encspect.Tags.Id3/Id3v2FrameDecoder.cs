@@ -290,8 +290,9 @@ internal sealed class Id3v2FrameDecoder
 
         if (_major < 4 && ranges.Count > 1)
         {
+            // ID3v2.3 section 4.2 allows it: "all the following information should be ignored".
             _findings.Add(new Finding(
-                Severity.Warning,
+                Severity.Info,
                 "id3v2.text-after-terminator",
                 $"Frame {_id} has data after its terminated string, which ID3v2.{_major} says to ignore.",
                 _frame));

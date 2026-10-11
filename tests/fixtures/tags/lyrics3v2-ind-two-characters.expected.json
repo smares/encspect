@@ -1,0 +1,39 @@
+{
+  "description": "Lyrics3 v2 IND field with the two characters the 1998 v2.00 text defines (lyrics, timestamps); id3.org's later text adds a third. Both are valid.",
+  "length": 689,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "2.00",
+      "confidence": "High",
+      "fields": {
+        "IND/HasLyrics": "true",
+        "IND/HasTimestamps": "false"
+      },
+      "offset": 512,
+      "length": 49
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 561,
+      "length": 128
+    }
+  ],
+  "findings": []
+}

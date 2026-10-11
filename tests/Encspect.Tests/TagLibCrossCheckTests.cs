@@ -27,6 +27,8 @@ public class TagLibCrossCheckTests
         ("external-mutagen-id3v24-id3v1", "WXXX", WxxxReason),
         ("id3v24-plain-frame-sizes", "TIT2[0] text", "TagLib# reads the non-syncsafe size as syncsafe and cuts TIT2 short; mutagen 1.47 agrees with Encspect."),
         ("id3v24-plain-frame-sizes", "frame count", "TagLib# loses TPE1 after misreading the TIT2 size; mutagen 1.47 finds both frames."),
+        ("id3v24-itunes-plain-sizes", "TIT2[0] text", "TagLib# reads plain frame sizes without a high bit as syncsafe and cuts TIT2 short; mutagen 1.47 agrees with Encspect."),
+        ("id3v24-itunes-plain-sizes", "frame count", "TagLib# loses TPE1 after misreading the TIT2 size; mutagen 1.47 finds both frames."),
         ("id3v2-unknown-flags", "ID3v2:", "TagLib# (and mutagen 1.47) refuse an ID3v2 tag with undefined header flags; Encspect reports the tag with a finding."),
         ("ape-v1-flags", "APE Title", "TagLib# applies APEv2 item flags to an APEv1 item; APEv1 flags are \"ignored on reading\" per the specification."),
         ("ape-v1-not-ascii", "APE Title value", "TagLib# reads every APE value as UTF-8; Encspect reads APEv1 values that are not valid UTF-8 as ISO-8859-1, with a finding."),
