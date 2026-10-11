@@ -40,7 +40,8 @@ def sources():
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
-    yield "bladeenc-0.94.2-src-stable.tar.gz", blade_tool.SHA256, blade_tool.ADDRESSES
+    for release in blade_tool.RELEASES.values():
+        yield release["archive"], release["sha256"], blade_tool.addresses(release)
     yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
     yield "gogo3.12.zip", gogo_tool.SHA256, gogo_tool.ADDRESSES
     for build in lame_win_tool.BUILDS.values():

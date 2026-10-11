@@ -3,7 +3,7 @@
 libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
-source of Layer I here, BladeEnc 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
+source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
 (old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
 (lame_win_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
@@ -55,7 +55,7 @@ Layer II, "minimp3_side_info" holds every frame's allocation, scfsi and scalefac
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
 
-    apt-get install lame twolame shineenc ffmpeg libmp3lame0 madplay mpg123
+    apt-get install lame twolame shineenc ffmpeg libmp3lame0 madplay mpg123 gcc-multilib wine p7zip-full
     python3 scripts/fixtures/make_external_mpeg_fixtures.py
 """
 
@@ -284,6 +284,21 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Stereo", bitrate=96, protected=True, info_frame=False, signal="music")),
     ("external-blade-flags", ".mp3", 44100, 2, ["bladeenc", "-320", "-p", "-c", "-copy"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=320, info_frame=False, signal="music")),
+    # One encode per older release that writes other bytes. 0.80 and 0.81 drain the bit reservoir
+    # into ancillary data mid-stream, as the ISO dist10 encoder does, so neither the analyzer nor
+    # mp3guessenc names the encoder of this one.
+    ("external-blade080-stereo", ".mp3", 44100, 2, ["bladeenc-0.80", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade082-stereo", ".mp3", 44100, 2, ["bladeenc-0.82", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade084-stereo", ".mp3", 44100, 2, ["bladeenc-0.84", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0920-stereo", ".mp3", 44100, 2, ["bladeenc-0.92.0", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0927-stereo", ".mp3", 44100, 2, ["bladeenc-0.92.7", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0936-stereo", ".mp3", 44100, 2, ["bladeenc-0.93.6", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
     # LAME 3.90 to 3.92 have Dibrom's --alt-presets but no preset field in the tag; 3.93 added it.
     ("external-lame390-alt-standard", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "standard"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
@@ -534,7 +549,7 @@ def detected_encoder(command, tag, settings, rows, path):
         if settings["layer"] == 3 and not any(g["block_type"] for g in found) and not any(g.get("scfsi") for g in found) and original:
             return {"name": "Xing", "confidence": "Low"}
         return None
-    if command[0] == "bladeenc":
+    if command[0].startswith("bladeenc"):
         found = granules(rows)
         ancillary = guessenc_summary(path)["ancillary"]
         if (any(g["block_type"] for g in found) and not any(g["scalefac_scale"] for g in found)
@@ -641,8 +656,9 @@ def encode(command, source, path, temp):
     if command[0] == "tompg":
         xing_tool.encode(XING_ENCODER[0], command[1:], source, path)
         return
-    if command[0] == "bladeenc":
-        blade_tool.encode(BLADE_ENCODER[0], command[1:], source, path)
+    if command[0].startswith("bladeenc"):
+        version = command[0][len("bladeenc-"):] or "0.94.2"
+        blade_tool.encode(BLADE_ENCODERS[version], version, command[1:], source, path)
         return
     if command[0] == "gogo":
         gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
@@ -712,7 +728,7 @@ FHG_ENCODER = []
 HELIX_ENCODER = []
 HELIX_R11_ENCODER = []
 XING_ENCODER = []
-BLADE_ENCODER = []
+BLADE_ENCODERS = {}
 GOGO_ENCODER = []
 OLD_LAME = {}
 WIN_LAME = {}
@@ -726,7 +742,8 @@ def main():
     HELIX_ENCODER.append(helix_tool.build())
     HELIX_R11_ENCODER.append(helix_tool.build_r11())
     XING_ENCODER.append(xing_tool.fetch())
-    BLADE_ENCODER.append(blade_tool.build())
+    for version in blade_tool.RELEASES:
+        BLADE_ENCODERS[version] = blade_tool.build(version)
     GOGO_ENCODER.append(gogo_tool.fetch())
     for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1"):
         OLD_LAME[version] = old_lame_tool.build(version)
