@@ -238,6 +238,7 @@ public sealed class Id3v2TagParser : ITagParser
 
             long padding = ParseFrames(body, state, unsync);
             VerifyCrc(reader, state, unsync, bodyEnd, declaredPadding, truncated);
+            CheckFrameSet(state);
 
             if (declaredPadding is { } expected && expected != padding)
             {
@@ -457,6 +458,7 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         DecodedBytes data = body.Read((int)Math.Min(size - 4, MaxDecodedFrameBytes));
+        body.Skip(size - 4 - data.Length);
         Node ext = state.Tag.Add("Extended Header", start, body.FilePosition - start);
         ext.Add("Size", sizeBytes.OffsetOf(0), 4, size.ToString(CultureInfo.InvariantCulture));
         if (data.Length < 2)
@@ -465,15 +467,28 @@ public sealed class Id3v2TagParser : ITagParser
             return null;
         }
 
-        ext.Add("Flag Bytes", data.OffsetOf(0), 1, data.Data[0].ToString(CultureInfo.InvariantCulture));
+        int flagBytes = data.Data[0];
+        ext.Add("Flag Bytes", data.OffsetOf(0), 1, flagBytes.ToString(CultureInfo.InvariantCulture));
         int flags = data.Data[1];
         Node flagsNode = ext.Add("Flags", data.OffsetOf(1), 1, $"0x{flags:X2}");
         flagsNode.Add("IsUpdate", data.OffsetOf(1), 1, Bool(flags & 0x40));
         flagsNode.Add("HasCrc", data.OffsetOf(1), 1, Bool(flags & 0x20));
         flagsNode.Add("HasRestrictions", data.OffsetOf(1), 1, Bool(flags & 0x10));
 
-        int i = 2;
-        foreach ((int flag, string name) in new[] { (0x40, "Update"), (0x20, "CRC"), (0x10, "Restrictions") })
+        // "Number of flag bytes $01"; the flag data follows all flag bytes.
+        if (flagBytes != 1)
+        {
+            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header has {flagBytes} flag bytes; ID3v2.4 defines 1.");
+        }
+
+        // "%0bcd0000 ... All unknown flags MUST be unset".
+        if ((flags & ~0x70) != 0)
+        {
+            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header sets undefined flags (0x{flags & ~0x70:X2}), which ID3v2.4 requires to be unset.");
+        }
+
+        int i = 1 + Math.Max(flagBytes, 1);
+        foreach ((int flag, string name, int expected) in new[] { (0x40, "Update", 0), (0x20, "CRC", 5), (0x10, "Restrictions", 1) })
         {
             if ((flags & flag) == 0)
             {
@@ -489,6 +504,11 @@ public sealed class Id3v2TagParser : ITagParser
             int length = data.Data[i];
             ReadOnlySpan<byte> value = data.Data.AsSpan(i + 1, length);
             Node node = ext.Add(name, data.OffsetOf(i), data.FileLength(i, i + 1 + length), FormatExtendedValue(name, value));
+            if (length != expected)
+            {
+                AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header's {name.ToLowerInvariant()} data is {length} bytes; ID3v2.4 defines {expected}.");
+            }
+
             if (name == "Restrictions" && length == 1)
             {
                 AddRestrictions(node, value[0]);
@@ -499,6 +519,12 @@ public sealed class Id3v2TagParser : ITagParser
             }
 
             i += 1 + length;
+        }
+
+        // "Extended header size ... is the size of the whole extended header".
+        if (4 + i < size)
+        {
+            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header declares {size} bytes, but its flags and their data take {4 + i}.");
         }
 
         return null;
@@ -556,6 +582,54 @@ public sealed class Id3v2TagParser : ITagParser
         state.Findings.Add(new Finding(Severity.Warning, "id3v2.extended-header-invalid", message, node));
         state.HasProblems = true;
     }
+
+    // "A tag MUST contain at least one frame" (ID3v2.4 section 4, 2.3 section 3.3), and of most
+    // kinds a tag may hold only one frame (ID3v2.3 section 4, ID3v2.4 frames section 4): text and
+    // URL frames of each kind except the user-defined ones and WCOM and WOAR, the frames listed
+    // in SingleFrameIds, and a picture of type 1 or 2 each. SEEK has its own finding.
+    private static void CheckFrameSet(ParseState state)
+    {
+        if (state.Frames.Count == 0 && state.Unparsed is null)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.no-frames", "The tag holds no frame; ID3v2 requires at least one.", state.Tag));
+            state.HasProblems = true;
+            return;
+        }
+
+        foreach (IGrouping<string, Node> group in state.Frames.GroupBy(UniqueKind).Where(g => g.Key.Length > 0 && g.Count() > 1))
+        {
+            Node second = group.ElementAt(1);
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.frame-duplicate",
+                $"The tag holds {group.Count()} {group.Key} frames, where ID3v2.{state.Major} allows one; the second at 0x{second.Offset:X}.",
+                second));
+            state.HasProblems = true;
+        }
+    }
+
+    // What makes a frame one of a kind that may occur once, or empty where it may repeat.
+    private static string UniqueKind(Node frame)
+    {
+        string id = frame.Name;
+        if (id is "APIC" or "PIC")
+        {
+            string? type = frame.Children.FirstOrDefault(c => c.Name == "Picture Type")?.Value;
+            return type is not null && (type.StartsWith("1 ", StringComparison.Ordinal) || type.StartsWith("2 ", StringComparison.Ordinal))
+                ? $"{id} picture type {type}"
+                : string.Empty;
+        }
+
+        bool repeatable = id is "TXXX" or "TXX" or "WXXX" or "WXX" or "WCOM" or "WCM" or "WOAR" or "WAR";
+        return !repeatable && (id[0] is 'T' or 'W' || SingleFrameIds.Contains(id)) ? id : string.Empty;
+    }
+
+    // Frames other than text and URL frames that ID3v2.2, 2.3 or 2.4 allow only once per tag.
+    private static readonly HashSet<string> SingleFrameIds =
+    [
+        "MCDI", "ETCO", "MLLT", "SYTC", "RVAD", "EQUA", "RVRB", "PCNT", "RBUF", "POSS", "OWNE", "ASPI", "IPLS",
+        "MCI", "ETC", "MLL", "STC", "RVA", "EQU", "REV", "CNT", "BUF", "IPL",
+    ];
 
     // Returns the number of padding bytes after the last frame.
     private static long ParseFrames(Id3v2BodyReader body, ParseState state, bool tagUnsync)
@@ -644,6 +718,7 @@ public sealed class Id3v2TagParser : ITagParser
 
         var frame = new Node(id, frameStart, frameEnd - frameStart);
         state.Tag.Add(frame);
+        state.Frames.Add(frame);
 
         FrameExtras extras = major switch
         {
@@ -682,6 +757,18 @@ public sealed class Id3v2TagParser : ITagParser
         if (major >= 3)
         {
             AddFrameFlags(headerNode, header, flags, major, id, findings, frame);
+        }
+
+        // ID3v2.4 section 4.1.2 k: "If set, this requires the 'Data Length Indicator' bit to be
+        // set as well."
+        if (major == 4 && (flags & 0x0008) != 0 && (flags & 0x0001) == 0)
+        {
+            findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.compressed-without-data-length",
+                $"Frame {id} at 0x{frameStart:X} is compressed without a data length indicator, which ID3v2.4 requires.",
+                frame));
+            state.HasProblems = true;
         }
 
         // Extra header data follows the frame header in flag order (2.3 section 3.3.1, 2.4
@@ -918,6 +1005,8 @@ public sealed class Id3v2TagParser : ITagParser
 
         // The first bytes the frames could not be read from.
         public Node? Unparsed { get; set; }
+
+        public List<Node> Frames { get; } = [];
     }
 
     // The frame IDs ID3v2.3 and 2.4 declare, and those common writers add (mutagen, _frames.py).

@@ -1,0 +1,178 @@
+[
+  {
+    "source": "ape-header-before-file.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 51,
+      "children": [
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 0,
+          "length": 51,
+          "children": [
+            {
+              "name": "Items",
+              "value": "1 items",
+              "offset": 0,
+              "length": 19,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "Title",
+                  "offset": 0,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": "5",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x00000000",
+                      "offset": 4,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 4,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 4,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 8,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Title",
+                      "offset": 14,
+                      "length": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 19,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 19,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 27,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "51",
+                  "offset": 31,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "1",
+                  "offset": 35,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x80000000",
+                  "offset": 39,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "true",
+                      "offset": 39,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 39,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 39,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 39,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 43,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 0,
+              "length": 51,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\u0022APETAGEX\u0022 footer with version 2000 and a size that fits the file",
+                  "offset": 19,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 items end exactly where the size says",
+                  "offset": 0,
+                  "length": 19
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "ape.header-missing",
+        "message": "The footer announces a header, which would start 32 bytes before the start of the file.",
+        "offset": 0,
+        "length": 51
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.tags-only",
+        "message": "The file holds only tags; no bytes are left for audio data.",
+        "offset": 0,
+        "length": 51
+      }
+    ]
+  }
+]

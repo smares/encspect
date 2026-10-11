@@ -1,0 +1,43 @@
+{
+  "description": "Lyrics3 v1 block whose lyrics mention LYRICSBEGIN: the tag starts at the first one, after which only text follows, and the second is reported.",
+  "length": 697,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Medium",
+      "fields": {
+        "Lyrics": "How to start: write LYRICSBEGIN first"
+      },
+      "offset": 512,
+      "length": 57
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 569,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.begin-in-lyrics",
+      "contains": "the tag starts at the first one"
+    }
+  ]
+}

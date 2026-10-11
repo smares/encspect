@@ -1,0 +1,32 @@
+{
+  "description": "ID3v2.4 extended header that declares 16 bytes, of which its flags take 6, followed by zeros, and sets the undefined flags 0x8F, which section 3.2 requires to be unset. The frames follow at the declared size.",
+  "length": 561,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/Flags": "0x8F",
+        "TIT2/Text": "Size"
+      },
+      "offset": 0,
+      "length": 49
+    },
+    {
+      "name": "Data",
+      "offset": 49,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "undefined flags (0x8F)"
+    },
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "declares 16 bytes, but its flags and their data take 6"
+    }
+  ]
+}

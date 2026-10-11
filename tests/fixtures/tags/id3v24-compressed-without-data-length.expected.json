@@ -1,0 +1,32 @@
+{
+  "description": "ID3v2.4 TIT2 frame compressed with zlib without a data length indicator, which section 4.1.2 requires with compression.",
+  "length": 572,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Compressed Data": "15 bytes",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 60
+    },
+    {
+      "name": "Data",
+      "offset": 60,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-compressed",
+      "contains": "Frame TIT2"
+    },
+    {
+      "code": "id3v2.compressed-without-data-length",
+      "contains": "Frame TIT2"
+    }
+  ]
+}
