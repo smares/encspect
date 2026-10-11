@@ -1,0 +1,34 @@
+{
+  "description": "ID3v2.3 extended header of 10 bytes with the undefined flag $4000 and without the CRC flag; section 3.2 defines only the CRC flag, and only a CRC makes the header 10 bytes. The 4 unexplained bytes get their own node.",
+  "length": 560,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/Flags": "0x4000",
+        "Extended Header/Flags/HasCrc": "false",
+        "Extended Header/Data": "4 bytes",
+        "TIT2/Text": "Title"
+      },
+      "offset": 0,
+      "length": 48
+    },
+    {
+      "name": "Data",
+      "offset": 48,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "undefined flags (0x4000)"
+    },
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "its CRC flag is clear"
+    }
+  ]
+}

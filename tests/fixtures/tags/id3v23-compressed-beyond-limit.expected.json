@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.3 PRIV frame whose 2 KB of zlib data inflate to 2 MiB of zeros. Decompression stops past the 1 MiB the analyzer decodes of one frame, so the frame cannot exhaust memory; its content is not decoded.",
+  "length": 2615,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "PRIV/Header/Decompressed Size": "2097152"
+      },
+      "offset": 0,
+      "length": 2103
+    },
+    {
+      "name": "Data",
+      "offset": 2103,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-compressed",
+      "contains": "decompresses to more than the decode limit"
+    }
+  ]
+}

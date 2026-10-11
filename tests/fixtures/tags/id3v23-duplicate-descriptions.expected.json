@@ -1,0 +1,56 @@
+{
+  "description": "ID3v2.3 frames that may repeat, but not with the same description, language and description, owner, email or contents (section 4): two of each TXXX, WXXX, COMM, USLT, APIC, UFID, POPM and PRIV.",
+  "length": 1046,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TXXX[0]/Text": "value 1",
+        "TXXX[1]/Text": "value 2"
+      },
+      "offset": 0,
+      "length": 534
+    },
+    {
+      "name": "Data",
+      "offset": 534,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 TXXX frames with the same description, \"key\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 WXXX frames with the same description, \"site\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 COMM frames with the same language and description, eng, \"\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 USLT frames with the same language and description, eng, \"lyrics\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 APIC frames with the same description, \"cover\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 UFID frames with the same owner, \"http://example.com/id\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 POPM frames with the same email, \"rater@example.com\""
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 PRIV frames with the same contents"
+    }
+  ]
+}

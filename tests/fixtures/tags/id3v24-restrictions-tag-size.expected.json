@@ -1,0 +1,35 @@
+{
+  "description": "ID3v2.4 extended header with restrictions $C1: at most 32 frames and 4 KB, images of at most 256x256 pixels. The tag holds 33 TXXX frames, is larger than 4 KB, and holds a 300x200 JPEG.",
+  "length": 5118,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/Restrictions/Tag Size": "No more than 32 frames and 4 KB"
+      },
+      "offset": 0,
+      "length": 4606
+    },
+    {
+      "name": "Data",
+      "offset": 4606,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "the tag to 32 frames and 4 KB, but it holds 34 frames"
+    },
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "the tag to 32 frames and 4 KB, but it is 4606 bytes long"
+    },
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "images to 256x256 pixels or less, but frame APIC"
+    }
+  ]
+}

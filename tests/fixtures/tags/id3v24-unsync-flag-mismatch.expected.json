@@ -1,0 +1,29 @@
+{
+  "description": "ID3v2.4 tag with the unsynchronization flag in its header, where TIT2 is unsynchronized but TPE1 is not; section 6.1 says the header flag MUST NOT be set then. TPE1 is still read as unsynchronized.",
+  "length": 562,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Header/Flags/IsUnsynchronized": "true",
+        "TIT2/Text": "AÿàB",
+        "TPE1/Text": "Plain"
+      },
+      "offset": 0,
+      "length": 50
+    },
+    {
+      "name": "Data",
+      "offset": 50,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.unsync-flag-mismatch",
+      "contains": "frame TPE1 at 0x1A is not"
+    }
+  ]
+}

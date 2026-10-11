@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 tag with the unsynchronization flag whose TIT2 still holds $FF $E0, a false synchronization that unsynchronization removes (section 5).",
+  "length": 562,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "AÿàB",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 50
+    },
+    {
+      "name": "Data",
+      "offset": 50,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.false-sync",
+      "contains": "The tag is marked as unsynchronized, but holds a false synchronization at 0x16"
+    }
+  ]
+}

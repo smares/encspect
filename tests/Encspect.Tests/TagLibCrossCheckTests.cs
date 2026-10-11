@@ -20,6 +20,9 @@ public class TagLibCrossCheckTests
         "TagLib# 2.3 loses every frame after an extended header with a CRC in this layout, whether or not the CRC " +
         "matches (checked with a correct CRC as well); mutagen 1.47 reads the frame, as Encspect does.";
 
+    private const string CompressionReason =
+        "TagLib# drops zlib-compressed frames; mutagen 1.47 decompresses them, as Encspect does.";
+
     // Each entry: fixture, a substring of the difference, and why the tools legitimately differ.
     private static readonly (string Fixture, string Difference, string Reason)[] Explained =
     [
@@ -41,6 +44,14 @@ public class TagLibCrossCheckTests
         ("ape-size-too-large", "TagLib# fails", "TagLib# seeks before the start of the file and throws; Encspect rejects the candidate with a finding."),
         ("id3v24-compressed-without-data-length", "frame count", "TagLib# drops a compressed ID3v2.4 frame without a data length indicator; mutagen 1.48 decompresses it, and Encspect keeps it as compressed data, with a finding."),
         ("id3v24-extended-header-size-and-flags", "frame count", "TagLib# finds no frame after an extended header that declares more bytes than its flags use; mutagen 1.48 reads TIT2 at the declared size, as Encspect does."),
+        ("id3v23-compressed-frame", "frame count", CompressionReason),
+        ("id3v24-compressed-frame", "frame count", CompressionReason),
+        ("id3v24-decompressed-size-mismatch", "frame count", CompressionReason),
+        ("id3v23-compressed-beyond-limit", "frame count", "TagLib# drops zlib-compressed frames. mutagen 1.47 decompresses the frame; Encspect keeps it undecoded, with a finding, because it inflates past the decode limit."),
+        ("id3v23-decompression-failed", "frame count", "TagLib# and mutagen 1.47 drop frames whose zlib data does not decompress; Encspect reports them undecoded, with a finding, as the plan has it for frames that break their specification."),
+        ("id3v23-extended-header-undefined-flags", "frame count", "TagLib# finds no frame after an ID3v2.3 extended header with an undefined flag; mutagen 1.47 reads TIT2 after its 10 bytes, as Encspect does."),
+        ("id3v23-duplicate-descriptions", "WXXX", WxxxReason),
+        ("id3v24-text-cut", "USLT[0] text", "Encspect decodes at most 1 MiB of a frame, a memory bound, and states the text's full length in a finding; TagLib# and mutagen 1.47 read the whole text, 1,048,587 bytes, the length the finding states."),
         ("ape-header-before-file", "APE:", "TagLib# (and mutagen 1.48) refuse an APE footer whose header would start before the file; Encspect reports the tag with a finding."),
         ("stack-id3v2-ape-lyrics3-id3v1", "APE:", LyricsStack),
         ("stack-id3v2-ape-id3v1-lyrics3", "APE:", LyricsStack),
