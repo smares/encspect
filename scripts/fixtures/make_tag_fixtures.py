@@ -148,8 +148,11 @@ def frame23(frame_id, data, flags=0):
     return frame_id.encode("ascii") + struct.pack(">IH", len(data), flags) + data
 
 
-def frame24(frame_id, data, status=0, unsync=False, data_length_indicator=False, plain_size=False):
-    """An ID3v2.4 frame. With unsync the data is unsynchronized and the flag set (section 4.1.2)."""
+def frame24(frame_id, data, status=0, unsync=False, data_length_indicator=False, plain_size=False, data_length=None):
+    """An ID3v2.4 frame. With unsync the data is unsynchronized and the flag set (section 4.1.2).
+
+    data_length overrides the value of the data length indicator, which is otherwise len(data).
+    """
     fmt = 0
     body = data
     if unsync:
@@ -157,7 +160,7 @@ def frame24(frame_id, data, status=0, unsync=False, data_length_indicator=False,
         body = unsynchronize(data)
     if data_length_indicator:
         fmt |= 0x01
-        body = syncsafe(len(data)) + body
+        body = syncsafe(len(data) if data_length is None else data_length) + body
     size = len(body).to_bytes(4, "big") if plain_size else syncsafe(len(body))
     return frame_id.encode("ascii") + size + bytes([status, fmt]) + body
 
@@ -717,7 +720,7 @@ def id3v24_basic():
         frame24("APIC", apic_data(UTF8, "image/png", 3, "Front", b"\x89PNG\xff\xe2\xff\x00end"), unsync=True, data_length_indicator=True),
         frame24("TCOP", text_frame_data(LATIN1, ["Read-only"]), status=0x10),
     ]
-    restrictions = 0b01_1_10_1_01
+    restrictions = 0b01_0_10_1_01
     # ID3v2.4 section 3.2: the CRC covers everything after the extended header up to the end of
     # the tag size, padding included, as stored.
     crc = zlib.crc32(b"".join(frames) + b"\x00" * 20)
@@ -734,7 +737,7 @@ def id3v24_basic():
             "Extended Header/CRC": f"0x{crc:X}",
             "Extended Header/CRC/Computed": f"0x{crc:X}",
             "Extended Header/Restrictions/Tag Size": "No more than 64 frames and 128 KB",
-            "Extended Header/Restrictions/Text Encoding": "ISO-8859-1 or UTF-8 only",
+            "Extended Header/Restrictions/Text Encoding": "No restrictions",
             "Extended Header/Restrictions/Text Size": "No more than 128 characters",
             "Extended Header/Restrictions/Image Encoding": "PNG or JPEG only",
             "Extended Header/Restrictions/Image Size": "256x256 pixels or less",
@@ -912,12 +915,12 @@ def id3v24_compressed_without_data_length():
     f = Fixture(
         "id3v24-compressed-without-data-length",
         "ID3v2.4 TIT2 frame compressed with zlib without a data length indicator, which section 4.1.2 requires with "
-        "compression.",
+        "compression. It is decompressed anyway, as mutagen does.",
     )
     compressed = zlib.compress(text_frame_data(UTF8, ["Packed"]))
     frame = b"TIT2" + syncsafe(len(compressed)) + b"\x00\x08" + compressed
     f.tag("ID3v2", "2.4.0", id3v2(4, [frame, frame24("TPE1", text_frame_data(UTF8, ["Artist"]))], padding=8), "Medium",
-          {"TIT2/Compressed Data": f"{len(compressed)} bytes", "TPE1/Text": "Artist"})
+          {"TIT2/Compressed Data": f"{len(compressed)} bytes", "TIT2/Text": "Packed", "TPE1/Text": "Artist"})
     f.finding("id3v2.frame-compressed", "Frame TIT2")
     f.finding("id3v2.compressed-without-data-length", "Frame TIT2")
     f.audio()
@@ -1234,6 +1237,374 @@ def id3v2_unknown_flags():
     f.tag("ID3v2", "2.3.0", bytes(tag), "Medium", BASIC_ID3V23_FIELDS)
     f.audio(300)
     f.finding("id3v2.header-flags-unknown", "$01")
+    return f
+
+
+@fixture
+def id3v2_truncated_padding():
+    f = Fixture(
+        "id3v2-truncated-padding",
+        "ID3v2.3 tag whose header declares 100,000 bytes in a much shorter file: one frame and 64 bytes of zero "
+        "padding, then data. The size cannot say where the tag ends, so it ends where its zero padding stops, and the "
+        "data after it is not swallowed as padding.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=64, size_override=100_000), "Low", {"TIT2/Text": "Title", "Padding": "64 bytes"})
+    f.finding("id3v2.truncated", "declares 100000 bytes")
+    f.finding("id3v2.ends-before-size", f"frames and zero padding of the ID3v2 tag stop at {hex_offset(f.size)}")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_data_length_mismatch():
+    f = Fixture(
+        "id3v24-data-length-mismatch",
+        "ID3v2.4 frames whose data length indicator (section 4.1.2 p) disagrees with their data: an unsynchronized TIT2 "
+        "and a PRIV frame that both claim 99 bytes. The sizes shown are the measured ones.",
+    )
+    text = text_frame_data(LATIN1, ["A\xff\xe0B"])
+    private = b"com.example\x00\x01\xff\xe0\x02"
+    frames = [
+        frame24("TIT2", text, unsync=True, data_length_indicator=True, data_length=99),
+        frame24("PRIV", private, data_length_indicator=True, data_length=99),
+    ]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium",
+          {"TIT2/Header/Data Length": "99", "TIT2/Text": "A\xff\xe0B", "PRIV/Header/Data Length": "99", "PRIV/Data": "4 bytes"})
+    f.finding("id3v2.data-length-mismatch", f"Frame TIT2 at 0xA has a data length indicator of 99 bytes, but its data is {len(text)} bytes")
+    f.finding("id3v2.data-length-mismatch", f"data length indicator of 99 bytes, but its data is {len(private)} bytes")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_text_invalid_utf8():
+    f = Fixture(
+        "id3v24-text-invalid-utf8",
+        "ID3v2.4 TIT2 frame in UTF-8 holding the bytes $FF $FE, which UTF-8 does not allow. Readers show them as "
+        "U+FFFD, and so does the report, with a finding.",
+    )
+    frames = [frame24("TIT2", b"\x03ab\xff\xfecd"), frame24("TPE1", text_frame_data(UTF8, ["Artist"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TIT2/Text": "ab��cd", "TPE1/Text": "Artist"})
+    f.finding("id3v2.text-invalid", "Frame TIT2 has text that is not valid UTF-8")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_text_invalid_utf16():
+    f = Fixture(
+        "id3v23-text-invalid-utf16",
+        "ID3v2.3 TIT2 frame in UTF-16 with an unpaired surrogate ($D800), which UCS-2 and UTF-16 do not allow. It is "
+        "shown as U+FFFD, with a finding.",
+    )
+    frames = [frame23("TIT2", b"\x01\xff\xfeA\x00\x00\xd8B\x00"), frame23("TPE1", text_frame_data(LATIN1, ["Artist"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Text": "A�B", "TPE1/Text": "Artist"})
+    f.finding("id3v2.text-invalid", "Frame TIT2 has text that is not valid UTF-16")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_unsync_flag_mismatch():
+    f = Fixture(
+        "id3v24-unsync-flag-mismatch",
+        "ID3v2.4 tag with the unsynchronization flag in its header, where TIT2 is unsynchronized but TPE1 is not; "
+        "section 6.1 says the header flag MUST NOT be set then. TPE1 is still read as unsynchronized.",
+    )
+    frames = [frame24("TIT2", text_frame_data(LATIN1, ["A\xff\xe0B"]), unsync=True), frame24("TPE1", text_frame_data(LATIN1, ["Plain"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8, unsync=True), "Medium",
+          {"Header/Flags/IsUnsynchronized": "true", "TIT2/Text": "A\xff\xe0B", "TPE1/Text": "Plain"})
+    f.finding("id3v2.unsync-flag-mismatch", f"frame TPE1 at {hex_offset(10 + len(frames[0]))} is not")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_false_sync():
+    f = Fixture(
+        "id3v23-false-sync",
+        "ID3v2.3 tag with the unsynchronization flag whose TIT2 still holds $FF $E0, a false synchronization that "
+        "unsynchronization removes (section 5).",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["A\xff\xe0B"])), frame23("TPE1", text_frame_data(LATIN1, ["Artist"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, flags=0x80, padding=8), "Medium", {"TIT2/Text": "A\xff\xe0B", "TPE1/Text": "Artist"})
+    f.finding("id3v2.false-sync", "The tag is marked as unsynchronized, but holds a false synchronization at 0x16")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_false_sync():
+    f = Fixture(
+        "id3v24-false-sync",
+        "ID3v2.4 TIT2 frame with the unsynchronization flag whose data still holds $FF $FB, a false synchronization "
+        "(section 6.1: \"A completely unsynchronised tag has no false synchonisations in it\").",
+    )
+    data = text_frame_data(LATIN1, ["A\xff\xfbB"])
+    frames = [b"TIT2" + syncsafe(len(data)) + b"\x00\x02" + data, frame24("TPE1", text_frame_data(LATIN1, ["Artist"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TIT2/Header/Flags/IsUnsynchronized": "true", "TIT2/Text": "A\xff\xfbB"})
+    f.finding("id3v2.false-sync", "Frame TIT2 is unsynchronized, but holds a false synchronization at 0x16")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_text_cut():
+    # A frame is decoded up to 1 MiB (the analyzer's memory bound). The text starts 5 bytes in, so
+    # the limit falls inside the "é" placed there.
+    limit = 1 << 20
+    text = "x" * (limit - 6) + "é" + "y" * 15
+    data = comm_data(UTF8, "eng", "", text)
+    assert data[limit - 1 : limit + 1] == "é".encode("utf-8")
+    f = Fixture(
+        "id3v24-text-cut",
+        "ID3v2.4 USLT frame whose UTF-8 text runs past the 1 MiB the analyzer decodes of one frame. The text is shown "
+        "up to there, without the character the limit cuts, its node spans the whole text, and an info finding gives "
+        "both lengths.",
+    )
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Lyrics"])), frame24("USLT", data)]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High", {"TIT2/Text": "Lyrics", "USLT/Language": "eng"})
+    f.finding("id3v2.frame-text-cut", f"Frame USLT holds {len(text.encode('utf-8'))} bytes of text; the first {limit - 5} are decoded")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_extended_header_undefined_flags():
+    f = Fixture(
+        "id3v23-extended-header-undefined-flags",
+        "ID3v2.3 extended header of 10 bytes with the undefined flag $4000 and without the CRC flag; section 3.2 defines "
+        "only the CRC flag, and only a CRC makes the header 10 bytes. The 4 unexplained bytes get their own node.",
+    )
+    ext = struct.pack(">IHII", 10, 0x4000, 8, 0)
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8, extended_header=ext), "Medium",
+          {"Extended Header/Flags": "0x4000", "Extended Header/Flags/HasCrc": "false", "Extended Header/Data": "4 bytes", "TIT2/Text": "Title"})
+    f.finding("id3v2.extended-header-invalid", "undefined flags (0x4000)")
+    f.finding("id3v2.extended-header-invalid", "its CRC flag is clear")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v22_utf16_without_bom():
+    f = Fixture(
+        "id3v22-utf16-without-bom",
+        "ID3v2.2 TT2 frame in UCS-2 without a byte order mark. ID3v2.2 does not ask for one (unlike 2.3 and 2.4), so "
+        "the assumed byte order is an info finding, not a violation.",
+    )
+    frames = [frame22("TT2", b"\x01" + "Hi".encode("utf-16-le")), frame22("TP1", text_frame_data(LATIN1, ["Artist"]))]
+    f.tag("ID3v2", "2.2.0", id3v2(2, frames, padding=8), "High", {"TT2/Text": "Hi", "TP1/Text": "Artist"})
+    f.finding("id3v2.utf16-byte-order-assumed", "Frame TT2 has UCS-2 text without a byte order mark")
+    f.audio()
+    return f
+
+
+def png_header(width, height):
+    """PNG signature and IHDR chunk (PNG section 11.2.2), enough to give the picture size."""
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + struct.pack(">I", len(ihdr)) + b"IHDR" + ihdr + struct.pack(">I", zlib.crc32(b"IHDR" + ihdr))
+
+
+def jpeg_header(width, height):
+    """SOI, a JFIF APP0 segment and a baseline SOF0 frame header (ITU-T T.81 B.2.2), then EOI."""
+    app0 = b"JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+    sof0 = struct.pack(">BHHB", 8, height, width, 1) + b"\x01\x11\x00"
+    return b"\xff\xd8" + b"\xff\xe0" + struct.pack(">H", len(app0) + 2) + app0 + b"\xff\xc0" + struct.pack(">H", len(sof0) + 2) + sof0 + b"\xff\xd9"
+
+
+@fixture
+def id3v24_restrictions_violated():
+    f = Fixture(
+        "id3v24-restrictions-violated",
+        "ID3v2.4 extended header with restrictions $3E: ISO-8859-1 or UTF-8 only, strings of at most 30 characters, "
+        "PNG or JPEG images of at most 64x64 pixels (section 3.2). The tag breaks each: a UTF-16 title of 40 "
+        "characters, a GIF picture and a 100x80 PNG.",
+    )
+    title = "t" * 40
+    frames = [
+        frame24("TIT2", text_frame_data(UTF16, [title])),
+        frame24("APIC", apic_data(LATIN1, "image/gif", 3, "gif", b"GIF89a" + bytes(10))),
+        frame24("APIC", apic_data(LATIN1, "image/png", 4, "png", png_header(100, 80))),
+    ]
+    ext = ext_header24(restrictions=0b00_1_11_1_10)
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8, extended_header=ext), "Medium",
+          {"Extended Header/Restrictions": "0x3E", "TIT2/Text": title, "APIC[1]/Picture Type": "4 (Cover (back))"})
+    at = [10 + len(ext) + sum(len(x) for x in frames[:i]) for i in range(len(frames))]
+    f.finding("id3v2.restriction-violated", f"text to ISO-8859-1 and UTF-8, but frame TIT2 at {hex_offset(at[0])} uses UTF-16")
+    f.finding("id3v2.restriction-violated", f"strings to 30 characters, but frame TIT2 at {hex_offset(at[0])} holds one of 40")
+    f.finding("id3v2.restriction-violated", f"images to PNG and JPEG, but frame APIC at {hex_offset(at[1])} holds image/gif")
+    f.finding("id3v2.restriction-violated", f"images to 64x64 pixels or less, but frame APIC at {hex_offset(at[2])} holds one of 100x80")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_restrictions_tag_size():
+    f = Fixture(
+        "id3v24-restrictions-tag-size",
+        "ID3v2.4 extended header with restrictions $C1: at most 32 frames and 4 KB, images of at most 256x256 pixels. "
+        "The tag holds 33 TXXX frames, is larger than 4 KB, and holds a 300x200 JPEG.",
+    )
+    frames = [frame24("TXXX", txxx_data(LATIN1, f"key{i:02}", "v" * 120)) for i in range(33)]
+    frames.append(frame24("APIC", apic_data(LATIN1, "image/jpeg", 3, "", jpeg_header(300, 200))))
+    ext = ext_header24(restrictions=0b11_0_00_0_01)
+    data = id3v2(4, frames, padding=8, extended_header=ext)
+    f.tag("ID3v2", "2.4.0", data, "Medium", {"Extended Header/Restrictions/Tag Size": "No more than 32 frames and 4 KB"})
+    f.finding("id3v2.restriction-violated", "the tag to 32 frames and 4 KB, but it holds 34 frames")
+    f.finding("id3v2.restriction-violated", f"the tag to 32 frames and 4 KB, but it is {len(data)} bytes long")
+    f.finding("id3v2.restriction-violated", "images to 256x256 pixels or less, but frame APIC")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_seek_to_tag_with_warnings():
+    f = Fixture(
+        "id3v24-seek-to-tag-with-warnings",
+        "ID3v2.4 SEEK frame pointing at a tag that sets an undefined frame flag. The guided search accepts only a fully "
+        "validated tag (plan, tag detection rule 1), so the tag stays data and the SEEK frame finds nothing.",
+    )
+    f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300), "High", {"SEEK/Minimum Offset": "300"})
+    flagged = id3v2(4, [frame24("TIT2", text_frame_data(UTF8, ["Flagged"]), status=0x80)])
+    f.add(filler(300, 2) + flagged + filler(200, 3), {"name": "Data"})
+    f.finding("tag.next-missing", "none was found")
+    return f
+
+
+@fixture
+def id3v23_compressed_frame():
+    f = Fixture(
+        "id3v23-compressed-frame",
+        "ID3v2.3 TSSE frame compressed with zlib (section 3.3.1 i), with its decompressed size. It is decompressed, so "
+        "its text and encoder claim are reported; its fields point at the compressed bytes.",
+    )
+    raw = text_frame_data(LATIN1, ["LAME 3.100"])
+    compressed = struct.pack(">I", len(raw)) + zlib.compress(raw)
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"])), frame23("TSSE", compressed, flags=0x0080)]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High",
+          {"TSSE/Header/Decompressed Size": str(len(raw)), "TSSE/Compressed Data": f"{len(compressed) - 4} bytes", "TSSE/Text": "LAME 3.100"})
+    f.finding("id3v2.frame-compressed", "Frame TSSE is zlib-compressed; its content is shown decompressed")
+    f.audio()
+    return f
+
+
+def compressed24(frame_id, data, data_length=None, payload=None):
+    """An ID3v2.4 frame compressed with zlib, with a data length indicator (section 4.1.2 k and p)."""
+    body = zlib.compress(data) if payload is None else payload
+    size = len(data) if data_length is None else data_length
+    return frame_id.encode("ascii") + syncsafe(4 + len(body)) + b"\x00\x09" + syncsafe(size) + body
+
+
+@fixture
+def id3v24_compressed_frame():
+    f = Fixture(
+        "id3v24-compressed-frame",
+        "ID3v2.4 COMM frame compressed with zlib with a data length indicator; it is shown decompressed.",
+    )
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Title"])), compressed24("COMM", comm_data(UTF8, "eng", "Note", "Packed comment " * 8))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High",
+          {"COMM/Language": "eng", "COMM/Description": "Note", "COMM/Text": "Packed comment " * 8})
+    f.finding("id3v2.frame-compressed", "Frame COMM is zlib-compressed")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_decompressed_size_mismatch():
+    f = Fixture(
+        "id3v24-decompressed-size-mismatch",
+        "ID3v2.4 TIT2 frame compressed with zlib whose data length indicator says 50 bytes; it decompresses to 8.",
+    )
+    data = text_frame_data(UTF8, ["Packed"])
+    frames = [compressed24("TIT2", data, data_length=50), frame24("TPE1", text_frame_data(UTF8, ["Artist"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TIT2/Text": "Packed", "TPE1/Text": "Artist"})
+    f.finding("id3v2.frame-compressed", "Frame TIT2 is zlib-compressed")
+    f.finding("id3v2.decompressed-size-mismatch", f"declares 50 bytes in its data length indicator, but decompresses to {len(data)}")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_decompression_failed():
+    f = Fixture(
+        "id3v23-decompression-failed",
+        "ID3v2.3 TIT2 frame marked as compressed whose data is not zlib, and a TPE1 frame whose zlib stream is cut "
+        "short. Neither is decoded.",
+    )
+    text = text_frame_data(LATIN1, ["Artist " * 20])
+    frames = [
+        frame23("TIT2", struct.pack(">I", 6) + b"not zlib data", flags=0x0080),
+        frame23("TPE1", struct.pack(">I", len(text)) + zlib.compress(text)[:-6], flags=0x0080),
+    ]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Compressed Data": "13 bytes"})
+    f.finding("id3v2.frame-decompression-failed", "Frame TIT2 at 0xA is marked as zlib-compressed")
+    f.finding("id3v2.frame-decompression-failed", "Frame TPE1")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_compressed_beyond_limit():
+    f = Fixture(
+        "id3v23-compressed-beyond-limit",
+        "ID3v2.3 PRIV frame whose 2 KB of zlib data inflate to 2 MiB of zeros. Decompression stops past the 1 MiB the "
+        "analyzer decodes of one frame, so the frame cannot exhaust memory; its content is not decoded.",
+    )
+    size = 2 << 20
+    payload = zlib.compress(b"\x00" * size, 9)
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Title"])), frame23("PRIV", struct.pack(">I", size) + payload, flags=0x0080)]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"PRIV/Header/Decompressed Size": str(size)})
+    f.finding("id3v2.frame-compressed", "decompresses to more than the decode limit")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_duplicate_descriptions():
+    f = Fixture(
+        "id3v23-duplicate-descriptions",
+        "ID3v2.3 frames that may repeat, but not with the same description, language and description, owner, email or "
+        "contents (section 4): two of each TXXX, WXXX, COMM, USLT, APIC, UFID, POPM and PRIV.",
+    )
+    frames = []
+    for i in (1, 2):
+        frames += [
+            frame23("TXXX", txxx_data(LATIN1, "key", f"value {i}")),
+            frame23("WXXX", wxxx_data(LATIN1, "site", f"https://example.com/{i}")),
+            frame23("COMM", comm_data(LATIN1, "eng", "", f"Comment {i}")),
+            frame23("USLT", comm_data(UTF16, "eng", "lyrics", f"Line {i}")),
+            frame23("APIC", apic_data(LATIN1, "image/png", 3 + i, "cover", bytes([i]) * 8)),
+            frame23("UFID", f"http://example.com/id\x00ID-{i}".encode("latin-1")),
+            frame23("POPM", b"rater@example.com\x00" + bytes([i * 50]) + struct.pack(">I", i)),
+            frame23("PRIV", b"com.example\x00same"),
+        ]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TXXX[0]/Text": "value 1", "TXXX[1]/Text": "value 2"})
+    f.finding("id3v2.frame-duplicate", "2 TXXX frames with the same description, \"key\"")
+    f.finding("id3v2.frame-duplicate", "2 WXXX frames with the same description, \"site\"")
+    f.finding("id3v2.frame-duplicate", "2 COMM frames with the same language and description, eng, \"\"")
+    f.finding("id3v2.frame-duplicate", "2 USLT frames with the same language and description, eng, \"lyrics\"")
+    f.finding("id3v2.frame-duplicate", "2 APIC frames with the same description, \"cover\"")
+    f.finding("id3v2.frame-duplicate", "2 UFID frames with the same owner, \"http://example.com/id\"")
+    f.finding("id3v2.frame-duplicate", "2 POPM frames with the same email, \"rater@example.com\"")
+    f.finding("id3v2.frame-duplicate", "2 PRIV frames with the same contents")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_utf16_byte_order_mixed():
+    f = Fixture(
+        "id3v24-utf16-byte-order-mixed",
+        "ID3v2.4 TXXX frame in UTF-16 whose description is little-endian and whose value is big-endian; section 4 says "
+        "\"All strings in the same frame SHALL have the same byteorder.\"",
+    )
+    data = b"\x01" + encode(UTF16, "key") + terminator(UTF16) + encode(UTF16, "value", big_endian_bom=True)
+    frames = [frame24("TXXX", data), frame24("TIT2", text_frame_data(UTF8, ["Title"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "Medium", {"TXXX/Description": "key", "TXXX/Text": "value"})
+    f.finding("id3v2.utf16-byte-order-mixed", "Frame TXXX has UTF-16 strings in both byte orders")
+    f.audio()
     return f
 
 

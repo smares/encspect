@@ -1,0 +1,32 @@
+{
+  "description": "ID3v2.4 TIT2 frame compressed with zlib whose data length indicator says 50 bytes; it decompresses to 8.",
+  "length": 576,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Packed",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 64
+    },
+    {
+      "name": "Data",
+      "offset": 64,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-compressed",
+      "contains": "Frame TIT2 is zlib-compressed"
+    },
+    {
+      "code": "id3v2.decompressed-size-mismatch",
+      "contains": "declares 50 bytes in its data length indicator, but decompresses to 7"
+    }
+  ]
+}

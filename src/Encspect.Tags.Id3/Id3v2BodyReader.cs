@@ -28,6 +28,10 @@ internal sealed class Id3v2BodyReader
 
     public bool AtEnd => FilePosition >= _end;
 
+    // The file offset of the first $FF followed by %111xxxxx, a false sync that an
+    // unsynchronized tag cannot hold (ID3v2.3 section 5).
+    public long? FalseSync { get; private set; }
+
     // Reads up to count decoded bytes; fewer when the body ends first.
     public DecodedBytes Read(int count)
     {
@@ -56,6 +60,7 @@ internal sealed class Id3v2BodyReader
                 continue;
             }
 
+            NoteFalseSync(b, offset);
             data.Add(b);
             map.Add(offset);
             _previousWasFF = b == 0xFF;
@@ -80,19 +85,29 @@ internal sealed class Id3v2BodyReader
         while (done < count && FilePosition < _end)
         {
             byte b = _reader.ReadByte();
-            FilePosition++;
+            long offset = FilePosition++;
             if (_previousWasFF && b == 0x00)
             {
                 _previousWasFF = false;
                 continue;
             }
 
+            NoteFalseSync(b, offset);
             done++;
             _previousWasFF = b == 0xFF;
         }
 
         AbsorbStuffing();
         return done;
+    }
+
+    // The $FF that set _previousWasFF is always the file byte directly before offset.
+    private void NoteFalseSync(byte b, long offset)
+    {
+        if (_previousWasFF && b >= 0xE0)
+        {
+            FalseSync ??= offset - 1;
+        }
     }
 
     // A $00 inserted after the last $FF of a structure belongs to that structure's bytes.

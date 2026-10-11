@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.3 TIT2 frame in UTF-16 with an unpaired surrogate ($D800), which UCS-2 and UTF-16 do not allow. It is shown as U+FFFD, with a finding.",
+  "length": 566,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "A�B",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 54
+    },
+    {
+      "name": "Data",
+      "offset": 54,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.text-invalid",
+      "contains": "Frame TIT2 has text that is not valid UTF-16"
+    }
+  ]
+}

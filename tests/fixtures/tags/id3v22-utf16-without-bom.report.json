@@ -1,0 +1,208 @@
+[
+  {
+    "source": "id3v22-utf16-without-bom.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 554,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.2.0",
+          "offset": 0,
+          "length": 42,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.2.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsCompressed",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "32",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TT2",
+              "value": "Hi",
+              "offset": 10,
+              "length": 11,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TT2",
+                      "offset": 10,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "5",
+                      "offset": 13,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-16",
+                  "offset": 16,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Hi",
+                  "offset": 17,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TP1",
+              "value": "Artist",
+              "offset": 21,
+              "length": 13,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 21,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TP1",
+                      "offset": 21,
+                      "length": 3
+                    },
+                    {
+                      "name": "Size",
+                      "value": "7",
+                      "offset": 24,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 27,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Artist",
+                  "offset": 28,
+                  "length": 6
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "8 bytes",
+              "offset": 34,
+              "length": 8
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 42,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"ID3\" with version 2.2.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 32 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 34,
+                  "length": 8
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 10,
+                  "length": 24
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 42,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "id3v2.utf16-byte-order-assumed",
+        "message": "Frame TT2 has UCS-2 text without a byte order mark, which ID3v2.2 does not require; little-endian is assumed.",
+        "offset": 10,
+        "length": 11
+      },
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 42,
+        "length": 512
+      }
+    ]
+  }
+]

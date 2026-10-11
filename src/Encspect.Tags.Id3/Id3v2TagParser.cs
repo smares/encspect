@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Globalization;
+using System.IO.Compression;
 using System.Text;
 using Encspect.Core;
 
@@ -168,7 +169,8 @@ public sealed class Id3v2TagParser : ITagParser
         long declaredEnd = start + HeaderSize + size + (hasFooter ? HeaderSize : 0);
         long end = Math.Min(declaredEnd, reader.End);
         var tag = new Node(Name, start, end - start, $"2.{major}.{revision}");
-        var state = new ParseState(tag, major);
+        bool truncated = declaredEnd > reader.End;
+        var state = new ParseState(tag, major) { IsTruncated = truncated };
 
         state.Evidence.Add(new Evidence($"Signature \"ID3\" with version 2.{major}.{revision}", start, 5));
         state.Evidence.Add(new Evidence($"Syncsafe size of {size} bytes", start + 6, 4));
@@ -179,21 +181,18 @@ public sealed class Id3v2TagParser : ITagParser
         if (revision == 0xFF)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.revision-invalid", "The header revision is $FF, which the specification rules out.", headerNode));
-            state.HasProblems = true;
         }
 
         int undefined = flags & ~DefinedHeaderFlags(major);
         if (undefined != 0)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.header-flags-unknown", $"The header sets undefined flag bits ${undefined:X2}.", headerNode));
-            state.HasProblems = true;
         }
         else
         {
             state.Evidence.Add(new Evidence("Only defined header flags are set", start + 5, 1));
         }
 
-        bool truncated = declaredEnd > reader.End;
         if (truncated)
         {
             state.Findings.Add(new Finding(
@@ -213,7 +212,6 @@ public sealed class Id3v2TagParser : ITagParser
             long length = bodyEnd - bodyStart;
             tag.Add("Compressed Data", bodyStart, length, $"{length} bytes");
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.compressed-tag", "The ID3v2.2 tag is marked as compressed, which no specification defines; its content is not parsed.", tag));
-            state.HasProblems = true;
         }
         else
         {
@@ -228,7 +226,6 @@ public sealed class Id3v2TagParser : ITagParser
                     "id3v2.extended-header-missing",
                     "The header sets the extended header flag, but a frame follows it directly; the tag is read without an extended header.",
                     tag));
-                state.HasProblems = true;
             }
             else if (major >= 3 && (flags & 0x40) != 0)
             {
@@ -239,6 +236,8 @@ public sealed class Id3v2TagParser : ITagParser
             long padding = ParseFrames(body, state, unsync);
             VerifyCrc(reader, state, unsync, bodyEnd, declaredPadding, truncated);
             CheckFrameSet(state);
+            CheckUnsynchronization(state, body, unsync);
+            CheckRestrictions(state, declaredEnd - start);
 
             if (declaredPadding is { } expected && expected != padding)
             {
@@ -252,7 +251,6 @@ public sealed class Id3v2TagParser : ITagParser
             if (hasFooter && padding > 0)
             {
                 state.Findings.Add(new Finding(Severity.Warning, "id3v2.padding-with-footer", "The tag has both padding and a footer; ID3v2.4 section 3.3 forbids padding when a footer is present.", tag));
-                state.HasProblems = true;
             }
         }
 
@@ -265,21 +263,23 @@ public sealed class Id3v2TagParser : ITagParser
         long? next = state.SeekOffset is { } seek ? declaredEnd + seek : null;
 
         // A size that runs past the end of the file does not say where the tag ends, so it ends
-        // where its frames stop: what follows them is left to the other parsers rather than
-        // claimed as unparsed tag bytes (plan, rule 2).
-        if (truncated && state.Unparsed is { } unparsed)
+        // where its frames and zero padding stop: what follows them is left to the other parsers
+        // rather than claimed as unparsed tag bytes or padding (plan, rule 2).
+        Node? unparsed = truncated ? state.Unparsed : null;
+        if ((unparsed?.Offset ?? (truncated ? state.PaddingEnd : null)) is { } stop)
         {
-            state.Findings.RemoveAll(f => f.Node == unparsed);
-            var cut = new Node(tag.Name, tag.Offset, unparsed.Offset - tag.Offset, tag.Value);
+            state.Findings.RemoveAll(f => unparsed is not null && f.Node == unparsed);
+            var cut = new Node(tag.Name, tag.Offset, stop - tag.Offset, tag.Value);
             foreach (Node child in tag.Children.Where(c => c != unparsed))
             {
                 cut.Add(child);
             }
 
+            string what = unparsed is null ? "frames and zero padding" : "frames";
             state.Findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.ends-before-size",
-                $"The frames of the ID3v2 tag stop at 0x{unparsed.Offset:X}, where its declared size cannot end; the tag is taken to end there.",
+                $"The {what} of the ID3v2 tag stop at 0x{stop:X}, where its declared size cannot end; the tag is taken to end there.",
                 cut));
             return TagProbe.Accept(cut, signatureOffset, confidence, state.Evidence, state.Findings.Select(f => f.Node == tag ? f with { Node = cut } : f).ToList(), next,
                 EncoderClaims(state));
@@ -362,7 +362,6 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.crc-mismatch",
                 $"The extended header stores CRC-32 0x{stored.Value:X}, but the data from {covered} gives {text}.",
                 stored.Node));
-            state.HasProblems = true;
         }
     }
 
@@ -429,7 +428,19 @@ public sealed class Id3v2TagParser : ITagParser
         uint padding = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(2));
         ext.Add("Padding Size", data.OffsetOf(2), data.FileLength(2, 6), padding.ToString(CultureInfo.InvariantCulture));
 
-        if ((flags & 0x8000) != 0)
+        // "%x0000000 00000000": the CRC flag is the only one defined.
+        if ((flags & 0x7FFF) != 0)
+        {
+            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header sets undefined flags (0x{flags & 0x7FFF:X4}); ID3v2.3 defines only the CRC flag.");
+        }
+
+        if ((flags & 0x8000) == 0 && size == 10)
+        {
+            // "If this flag is set four bytes of CRC-32 data is appended", so 10 bytes need it.
+            ext.Add("Data", data.OffsetOf(6), data.FileLength(6, 10), "4 bytes");
+            AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header is 10 bytes, the size with a CRC, but its CRC flag is clear; its last 4 bytes are unexplained.");
+        }
+        else if ((flags & 0x8000) != 0)
         {
             if (size < 10)
             {
@@ -520,6 +531,7 @@ public sealed class Id3v2TagParser : ITagParser
             if (name == "Restrictions" && length == 1)
             {
                 AddRestrictions(node, value[0]);
+                state.Restrictions = value[0];
             }
             else if (name == "CRC" && length == 5)
             {
@@ -588,7 +600,6 @@ public sealed class Id3v2TagParser : ITagParser
     {
         Node node = state.Tag.Children.LastOrDefault(c => c.Name == "Extended Header") ?? state.Tag.Add("Extended Header", start, end - start);
         state.Findings.Add(new Finding(Severity.Warning, "id3v2.extended-header-invalid", message, node));
-        state.HasProblems = true;
     }
 
     // "A tag MUST contain at least one frame" (ID3v2.4 section 4, 2.3 section 3.3), and of most
@@ -600,7 +611,6 @@ public sealed class Id3v2TagParser : ITagParser
         if (state.Frames.Count == 0 && state.Unparsed is null)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.no-frames", "The tag holds no frame; ID3v2 requires at least one.", state.Tag));
-            state.HasProblems = true;
             return;
         }
 
@@ -612,9 +622,149 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.frame-duplicate",
                 $"The tag holds {group.Count()} {group.Key} frames, where ID3v2.{state.Major} allows one; the second at 0x{second.Offset:X}.",
                 second));
-            state.HasProblems = true;
+        }
+
+        foreach (var group in state.RepeatKeys.GroupBy(k => k.Key).Where(g => g.Count() > 1))
+        {
+            var second = group.ElementAt(1);
+            string same = second.Shown is null ? $"the same {second.Field}" : $"the same {second.Field}, {second.Shown}";
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.frame-duplicate",
+                $"The tag holds {group.Count()} {second.Frame.Name} frames with {same}, where ID3v2.{state.Major} allows one; the second at 0x{second.Frame.Offset:X}.",
+                second.Frame));
         }
     }
+
+    private static void CheckUnsynchronization(ParseState state, Id3v2BodyReader body, bool unsync)
+    {
+        // ID3v2.3 section 5 (and ID3v2.2 section 5): the flag says every false sync was corrected.
+        if (state.Major < 4 && unsync && body.FalseSync is { } falseSync)
+        {
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.false-sync",
+                $"The tag is marked as unsynchronized, but holds a false synchronization at 0x{falseSync:X}, which unsynchronization removes.",
+                state.Tag.Children.LastOrDefault(c => c.Offset <= falseSync && falseSync < c.End) ?? state.Tag));
+        }
+
+        // ID3v2.4 section 6.1: the header flag "MUST NOT be set if the tag has a frame which is not
+        // unsynchronised". Such frames are still read as unsynchronized, as mutagen reads them.
+        if (state.NotUnsynchronized.Count > 0)
+        {
+            Node first = state.NotUnsynchronized[0];
+            string which = state.NotUnsynchronized.Count == 1
+                ? $"frame {first.Name} at 0x{first.Offset:X} is not"
+                : $"{state.NotUnsynchronized.Count} frames are not, the first {first.Name} at 0x{first.Offset:X}";
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.unsync-flag-mismatch",
+                $"The header sets the unsynchronization flag, but {which}; ID3v2.4 allows the flag only when every frame is unsynchronized.",
+                first));
+        }
+    }
+
+    // ID3v2.4 section 3.2, restrictions %ppqrrstt: "the tag is restricted as follows". What the
+    // decoded frames show is checked; frames this tool does not decode are not.
+    private static void CheckRestrictions(ParseState state, long tagLength)
+    {
+        if (state.Restrictions is not { } restrictions)
+        {
+            return;
+        }
+
+        void Violation(string message, Node node) =>
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.restriction-violated", $"The extended header restricts {message}.", node));
+
+        (int Frames, int Bytes, string Text) size = (restrictions >> 6) switch
+        {
+            0 => (128, 1 << 20, "128 frames and 1 MB"),
+            1 => (64, 128 << 10, "64 frames and 128 KB"),
+            2 => (32, 40 << 10, "32 frames and 40 KB"),
+            _ => (32, 4 << 10, "32 frames and 4 KB"),
+        };
+        if (state.Frames.Count > size.Frames)
+        {
+            Violation($"the tag to {size.Text}, but it holds {state.Frames.Count} frames", state.Tag);
+        }
+
+        if (tagLength > size.Bytes)
+        {
+            Violation($"the tag to {size.Text}, but it is {tagLength} bytes long", state.Tag);
+        }
+
+        bool latin1OrUtf8 = (restrictions & 0x20) != 0;
+        int maxCharacters = ((restrictions >> 3) & 0x03) switch
+        {
+            0 => int.MaxValue,
+            1 => 1024,
+            2 => 128,
+            _ => 30,
+        };
+        bool pngOrJpeg = (restrictions & 0x04) != 0;
+        int imageSize = restrictions & 0x03;
+
+        foreach (Node frame in state.Frames)
+        {
+            string? encoding = Child(frame, "Encoding");
+            if (latin1OrUtf8 && encoding is not (null or "ISO-8859-1" or "UTF-8"))
+            {
+                Violation($"text to ISO-8859-1 and UTF-8, but frame {frame.Name} at 0x{frame.Offset:X} uses {encoding}", frame);
+            }
+
+            // "If a text frame consists of more than one string, the sum of the strungs is
+            // restricted as stated."
+            int text = frame.Children.Where(c => c.Name == "Text").Sum(c => Characters(c.Value));
+            int longest = frame.Children.Where(c => c.Name == "Description").Select(c => Characters(c.Value)).Append(text).Max();
+            if (longest > maxCharacters)
+            {
+                Violation($"strings to {maxCharacters} characters, but frame {frame.Name} at 0x{frame.Offset:X} holds one of {longest}", frame);
+            }
+
+            // "-->" links to an image instead of holding one (ID3v2.4 frames section 4.14).
+            if (frame.Name != "APIC" || Child(frame, "MIME Type") is not { } mime || mime == "-->")
+            {
+                continue;
+            }
+
+            ImageInfo? image = state.Images.TryGetValue(frame, out ImageInfo found) ? found : null;
+            string? format = image?.Format ?? FormatOfMimeType(mime);
+            if (pngOrJpeg && format is not ("PNG" or "JPEG"))
+            {
+                Violation($"images to PNG and JPEG, but frame APIC at 0x{frame.Offset:X} holds {(mime.Length > 0 ? mime : "an image of no stated type")}", frame);
+            }
+
+            // "Exactly 64x64 pixels, unless required otherwise": a picture of type 1 is 32x32.
+            bool isIcon = Child(frame, "Picture Type")?.StartsWith("1 ", StringComparison.Ordinal) == true;
+            if (image is { Width: int width, Height: int height } && imageSize != 0)
+            {
+                (bool fits, string limit) = imageSize switch
+                {
+                    1 => (width <= 256 && height <= 256, "256x256 pixels or less"),
+                    2 => (width <= 64 && height <= 64, "64x64 pixels or less"),
+                    _ => ((width == 64 && height == 64) || isIcon, "exactly 64x64 pixels"),
+                };
+                if (!fits)
+                {
+                    Violation($"images to {limit}, but frame APIC at 0x{frame.Offset:X} holds one of {width}x{height}", frame);
+                }
+            }
+        }
+    }
+
+    private static string? Child(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value;
+
+    private static int Characters(string? text) => text?.EnumerateRunes().Count() ?? 0;
+
+    // ID3v2.4 frames section 4.14: "In the event that the MIME media type name is omitted,
+    // "image/" will be implied."
+    private static string? FormatOfMimeType(string mime) =>
+        (mime.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ? mime[6..] : mime).ToLowerInvariant() switch
+        {
+            "png" => "PNG",
+            "jpeg" or "jpg" => "JPEG",
+            _ => null,
+        };
 
     // What makes a frame one of a kind that may occur once, or empty where it may repeat.
     private static string UniqueKind(Node frame)
@@ -749,7 +899,6 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.frame-size-not-syncsafe",
                 $"Frame {id} at 0x{frameStart:X} stores its size as a plain integer instead of a syncsafe one, as old iTunes versions did.",
                 frame));
-            state.HasProblems = true;
         }
 
         if (readTotal < frameSize)
@@ -759,12 +908,16 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.frame-too-large",
                 $"Frame {id} at 0x{frameStart:X} declares {frameSize} bytes, but only {readTotal} remain in the tag.",
                 frame));
-            state.HasProblems = true;
         }
 
         if (major >= 3)
         {
             AddFrameFlags(headerNode, header, flags, major, id, findings, frame);
+        }
+
+        if (major == 4 && tagUnsync && !extras.IsUnsynchronized)
+        {
+            state.NotUnsynchronized.Add(frame);
         }
 
         // ID3v2.4 section 4.1.2 k: "If set, this requires the 'Data Length Indicator' bit to be
@@ -776,7 +929,6 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.compressed-without-data-length",
                 $"Frame {id} at 0x{frameStart:X} is compressed without a data length indicator, which ID3v2.4 requires.",
                 frame));
-            state.HasProblems = true;
         }
 
         // Extra header data follows the frame header in flag order (2.3 section 3.3.1, 2.4
@@ -788,7 +940,6 @@ public sealed class Id3v2TagParser : ITagParser
             if (raw.Length < pos + length)
             {
                 findings.Add(new Finding(Severity.Warning, "id3v2.frame-content-truncated", $"Frame {id} ends before its {name.ToLowerInvariant()}.", frame));
-                state.HasProblems = true;
                 return;
             }
 
@@ -811,30 +962,68 @@ public sealed class Id3v2TagParser : ITagParser
         if (frameSize == 0)
         {
             findings.Add(new Finding(Severity.Warning, "id3v2.frame-empty", $"Frame {id} at 0x{frameStart:X} is empty; a frame must hold at least one byte.", frame));
-            state.HasProblems = true;
             return;
         }
 
+        // Nodes and values use the measured length; a data length indicator only states it.
         DecodedBytes content = raw.Slice(pos);
-        long decodedSize = frameSize - pos;
+        long decodedSize = readTotal - pos;
         if (major == 4 && (extras.IsUnsynchronized || tagUnsync))
         {
-            content = content.Resynchronize();
-            decodedSize = dataLength ?? (raw.Length == frameSize ? content.Length : decodedSize);
+            content = content.Resynchronize(out long? falseSync);
+            decodedSize = content.Length;
+            if (raw.Length < readTotal)
+            {
+                (long rest, long? restFalseSync) = DecodedBytes.MeasureResynchronized(body.Reader, raw.OffsetOf(raw.Length), frameEnd, raw.Length > pos && raw.Data[^1] == 0xFF);
+                decodedSize += rest;
+                falseSync ??= restFalseSync;
+            }
+
+            // ID3v2.4 section 6.1: "A completely unsynchronised tag has no false synchonisations in it."
+            if (falseSync is { } at)
+            {
+                findings.Add(new Finding(
+                    Severity.Warning,
+                    "id3v2.false-sync",
+                    $"Frame {id} is unsynchronized, but holds a false synchronization at 0x{at:X}, which unsynchronization removes.",
+                    frame));
+            }
         }
 
-        if (extras.IsCompressed || extras.IsEncrypted)
+        if (extras.IsEncrypted)
         {
-            string what = extras.IsCompressed ? "Compressed Data" : "Encrypted Data";
             long offset = raw.OffsetOf(pos);
-            frame.Add(what, offset, frameEnd - offset, $"{frameEnd - offset} bytes");
-            findings.Add(new Finding(
-                Severity.Info,
-                extras.IsCompressed ? "id3v2.frame-compressed" : "id3v2.frame-encrypted",
-                $"Frame {id} is {(extras.IsCompressed ? "zlib-compressed" : "encrypted")}; its content is not decoded.",
-                frame));
+            frame.Add("Encrypted Data", offset, frameEnd - offset, $"{frameEnd - offset} bytes");
+            findings.Add(new Finding(Severity.Info, "id3v2.frame-encrypted", $"Frame {id} is encrypted; its content is not decoded.", frame));
             return;
         }
+
+        if (extras.IsCompressed)
+        {
+            long offset = raw.OffsetOf(pos);
+            frame.Add("Compressed Data", offset, frameEnd - offset, $"{frameEnd - offset} bytes");
+            DecodedBytes? inflated = Decompress(state, frame, content, raw.Length < readTotal, dataLength, offset, frameEnd);
+            if (inflated is null)
+            {
+                return;
+            }
+
+            content = inflated;
+            decodedSize = inflated.Length;
+        }
+        else if (major == 4 && dataLength is { } indicated && readTotal == frameSize && indicated != decodedSize)
+        {
+            // ID3v2.4 section 4.1.2 p: "the value one would write as the 'Frame length' if all of
+            // the frame format flags were zeroed".
+            findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.data-length-mismatch",
+                $"Frame {id} at 0x{frameStart:X} has a data length indicator of {indicated} bytes, but its data is {decodedSize} bytes.",
+                frame));
+        }
+
+        state.RepeatKeys.AddRange(Id3v2RepeatKeys.For(major, id, content.Data, isWhole: content.Length == decodedSize)
+            .Select(k => (frame, k.Field, k.Shown, k.Key)));
 
         if (major == 4 && id == "SEEK")
         {
@@ -842,7 +1031,99 @@ public sealed class Id3v2TagParser : ITagParser
             return;
         }
 
-        frame.Value = Id3v2FrameDecoder.Decode(major, id, frame, content, decodedSize, frameEnd, findings);
+        frame.Value = Id3v2FrameDecoder.Decode(major, id, frame, content, decodedSize, frameEnd, findings, out ImageInfo? image);
+        if (image is { } info)
+        {
+            state.Images[frame] = info;
+        }
+    }
+
+    // ID3v2.3 section 3.3.1 i and ID3v2.4 section 4.1.2 k: zlib (RFC 1950). Decompression stops
+    // one byte past the decode limit, so a small frame cannot expand into unbounded memory or time.
+    private static DecodedBytes? Decompress(ParseState state, Node frame, DecodedBytes compressed, bool isCut, long? declared, long start, long end)
+    {
+        string id = frame.Name;
+        string field = state.Major == 3 ? "decompressed size" : "data length indicator";
+        if (isCut)
+        {
+            state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed and larger than the decode limit for one frame; its content is not decoded.", frame));
+            return null;
+        }
+
+        byte[]? output = Inflate(compressed.Data, MaxDecodedFrameBytes + 1);
+        if (output is null)
+        {
+            state.Findings.Add(new Finding(
+                Severity.Warning,
+                "id3v2.frame-decompression-failed",
+                $"Frame {id} at 0x{frame.Offset:X} is marked as zlib-compressed, but its data is not one complete zlib stream; its content is not decoded.",
+                frame));
+            return null;
+        }
+
+        if (output.Length > MaxDecodedFrameBytes)
+        {
+            state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed and decompresses to more than the decode limit of {MaxDecodedFrameBytes} bytes; its content is not decoded.", frame));
+            if (declared is { } small && small <= MaxDecodedFrameBytes)
+            {
+                state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {small} bytes in its {field}, but decompresses to more than {MaxDecodedFrameBytes}.", frame));
+            }
+
+            return null;
+        }
+
+        if (declared is { } size && size != output.Length)
+        {
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {size} bytes in its {field}, but decompresses to {output.Length}.", frame));
+        }
+
+        state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed; its content is shown decompressed, with every field pointing at the compressed data.", frame));
+        return DecodedBytes.Opaque(output, start, end);
+    }
+
+    // Up to limit bytes of the zlib stream in data, or null when data is not one complete stream.
+    private static byte[]? Inflate(byte[] data, int limit)
+    {
+        var output = new MemoryStream();
+        try
+        {
+            using var zlib = new ZLibStream(new MemoryStream(data), CompressionMode.Decompress);
+            byte[] buffer = new byte[1 << 16];
+            int read;
+            while (output.Length < limit && (read = zlib.Read(buffer, 0, (int)Math.Min(buffer.Length, limit - output.Length))) > 0)
+            {
+                output.Write(buffer, 0, read);
+            }
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException)
+        {
+            // Damaged data raises InvalidDataException or, from zlib itself, ZLibException.
+            return null;
+        }
+
+        // ZLibStream returns what it has when the stream breaks off, so the Adler-32 that ends a
+        // complete stream (RFC 1950 section 2.2) must be the frame's last four bytes.
+        byte[] result = output.ToArray();
+        if (result.Length < limit && (data.Length < 4 || BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(data.Length - 4)) != Adler32(result)))
+        {
+            return null;
+        }
+
+        return result;
+    }
+
+    // RFC 1950 section 8.2.
+    private static uint Adler32(byte[] data)
+    {
+        uint a = 1;
+        uint b = 0;
+        foreach (byte value in data)
+        {
+            a = (a + value) % 65521;
+            b = (b + a) % 65521;
+        }
+
+        return (b << 16) | a;
     }
 
     // ID3v2.4 frames section 4.29: "Minimum offset to next tag $xx xx xx xx", "calculated from
@@ -854,7 +1135,6 @@ public sealed class Id3v2TagParser : ITagParser
         {
             frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), $"{content.Length} bytes");
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {content.Length} bytes instead of 4.", frame));
-            state.HasProblems = true;
             return;
         }
 
@@ -865,7 +1145,6 @@ public sealed class Id3v2TagParser : ITagParser
         if (state.SeekOffset is not null)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-duplicate", "The tag has more than one SEEK frame; the first one is used.", frame));
-            state.HasProblems = true;
             return;
         }
 
@@ -899,8 +1178,8 @@ public sealed class Id3v2TagParser : ITagParser
     {
         // Reading stops at the first non-zero byte, so a tag declaring a huge padding costs no more
         // than its zero bytes.
-        bool nonZero = first.Data.Any(b => b != 0);
-        while (!nonZero && !body.AtEnd)
+        long? nonZero = FirstNonZero(first);
+        while (nonZero is null && !body.AtEnd)
         {
             DecodedBytes chunk = body.Read(1 << 16);
             if (chunk.Length == 0)
@@ -908,15 +1187,22 @@ public sealed class Id3v2TagParser : ITagParser
                 break;
             }
 
-            nonZero = chunk.Data.Any(b => b != 0);
+            nonZero = FirstNonZero(chunk);
         }
 
-        long length = body.End - start;
+        // Padding is zero bytes (ID3v2.3 section 3.0, ID3v2.4 section 3.3), so the padding of a tag
+        // whose size runs past the end of the file stops at the first byte that is not zero.
+        if (state.IsTruncated && nonZero is { } stop)
+        {
+            state.PaddingEnd = stop;
+            nonZero = null;
+        }
+
+        long length = (state.PaddingEnd ?? body.End) - start;
         Node padding = state.Tag.Add("Padding", start, length, $"{length} bytes");
-        if (nonZero)
+        if (nonZero is not null)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.padding-not-zero", "Padding of the ID3v2 tag contains non-zero bytes.", padding));
-            state.HasProblems = true;
         }
         else
         {
@@ -931,11 +1217,16 @@ public sealed class Id3v2TagParser : ITagParser
         return length;
     }
 
+    private static long? FirstNonZero(DecodedBytes bytes)
+    {
+        int index = Array.FindIndex(bytes.Data, b => b != 0);
+        return index < 0 ? null : bytes.OffsetOf(index);
+    }
+
     private static void AddUnparsed(ParseState state, long start, long end, string code, string message)
     {
         Node node = state.Tag.Add("Unparsed", start, end - start, $"{end - start} bytes");
         state.Findings.Add(new Finding(Severity.Warning, code, message, node));
-        state.HasProblems = true;
         state.Unparsed ??= node;
     }
 
@@ -957,7 +1248,6 @@ public sealed class Id3v2TagParser : ITagParser
         {
             Node node = state.Tag.Children[^1];
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.footer-mismatch", "The footer does not repeat the header's version, flags and size after \"3DI\".", node));
-            state.HasProblems = true;
         }
     }
 
@@ -1000,7 +1290,23 @@ public sealed class Id3v2TagParser : ITagParser
 
         public List<Evidence> Evidence { get; } = [];
 
-        public bool HasProblems { get; set; }
+        // Whether the tag has any warning or error, the decoders' findings included.
+        public bool HasProblems => Findings.Any(f => f.Severity >= Severity.Warning);
+
+        public bool IsTruncated { get; init; }
+
+        // Where the zero padding of a truncated tag stops, if data follows it.
+        public long? PaddingEnd { get; set; }
+
+        // The restrictions byte of an ID3v2.4 extended header.
+        public byte? Restrictions { get; set; }
+
+        public Dictionary<Node, ImageInfo> Images { get; } = [];
+
+        public List<(Node Frame, string Field, string? Shown, string Key)> RepeatKeys { get; } = [];
+
+        // ID3v2.4 frames without the unsynchronization flag in a tag that sets it in its header.
+        public List<Node> NotUnsynchronized { get; } = [];
 
         public long ExtendedHeaderEnd { get; set; }
 

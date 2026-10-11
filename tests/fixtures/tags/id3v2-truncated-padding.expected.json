@@ -1,0 +1,32 @@
+{
+  "description": "ID3v2.3 tag whose header declares 100,000 bytes in a much shorter file: one frame and 64 bytes of zero padding, then data. The size cannot say where the tag ends, so it ends where its zero padding stops, and the data after it is not swallowed as padding.",
+  "length": 602,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Low",
+      "fields": {
+        "TIT2/Text": "Title",
+        "Padding": "64 bytes"
+      },
+      "offset": 0,
+      "length": 90
+    },
+    {
+      "name": "Data",
+      "offset": 90,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.truncated",
+      "contains": "declares 100000 bytes"
+    },
+    {
+      "code": "id3v2.ends-before-size",
+      "contains": "frames and zero padding of the ID3v2 tag stop at 0x5A"
+    }
+  ]
+}

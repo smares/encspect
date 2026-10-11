@@ -1,0 +1,29 @@
+{
+  "description": "ID3v2.4 COMM frame compressed with zlib with a data length indicator; it is shown decompressed.",
+  "length": 594,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "COMM/Language": "eng",
+        "COMM/Description": "Note",
+        "COMM/Text": "Packed comment Packed comment Packed comment Packed comment Packed comment Packed comment Packed comment Packed comment "
+      },
+      "offset": 0,
+      "length": 82
+    },
+    {
+      "name": "Data",
+      "offset": 82,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-compressed",
+      "contains": "Frame COMM is zlib-compressed"
+    }
+  ]
+}

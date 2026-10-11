@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 TXXX frame in UTF-16 whose description is little-endian and whose value is big-endian; section 4 says \"All strings in the same frame SHALL have the same byteorder.\"",
+  "length": 579,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TXXX/Description": "key",
+        "TXXX/Text": "value"
+      },
+      "offset": 0,
+      "length": 67
+    },
+    {
+      "name": "Data",
+      "offset": 67,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.utf16-byte-order-mixed",
+      "contains": "Frame TXXX has UTF-16 strings in both byte orders"
+    }
+  ]
+}

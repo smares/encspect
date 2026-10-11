@@ -1,0 +1,567 @@
+[
+  {
+    "source": "id3v24-restrictions-violated.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 732,
+      "children": [
+        {
+          "name": "ID3v2",
+          "value": "2.4.0",
+          "offset": 0,
+          "length": 220,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x40",
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": "true",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "false",
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": "210",
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Extended Header",
+              "offset": 10,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": "8",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Flag Bytes",
+                  "value": "1",
+                  "offset": 14,
+                  "length": 1
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x10",
+                  "offset": 15,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUpdate",
+                      "value": "false",
+                      "offset": 15,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasCrc",
+                      "value": "false",
+                      "offset": 15,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasRestrictions",
+                      "value": "true",
+                      "offset": 15,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Restrictions",
+                  "value": "0x3E",
+                  "offset": 16,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Tag Size",
+                      "value": "No more than 128 frames and 1 MB",
+                      "offset": 17,
+                      "length": 1
+                    },
+                    {
+                      "name": "Text Encoding",
+                      "value": "ISO-8859-1 or UTF-8 only",
+                      "offset": 17,
+                      "length": 1
+                    },
+                    {
+                      "name": "Text Size",
+                      "value": "No more than 30 characters",
+                      "offset": 17,
+                      "length": 1
+                    },
+                    {
+                      "name": "Image Encoding",
+                      "value": "PNG or JPEG only",
+                      "offset": 17,
+                      "length": 1
+                    },
+                    {
+                      "name": "Image Size",
+                      "value": "64x64 pixels or less",
+                      "offset": 17,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "tttttttttttttttttttttttttttttttttttttttt",
+              "offset": 18,
+              "length": 93,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 18,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "83",
+                      "offset": 22,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 26,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 26,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-16",
+                  "offset": 28,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "tttttttttttttttttttttttttttttttttttttttt",
+                  "offset": 29,
+                  "length": 82
+                }
+              ]
+            },
+            {
+              "name": "APIC",
+              "value": "image/gif, Cover (front), gif",
+              "offset": 111,
+              "length": 42,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 111,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "APIC",
+                      "offset": 111,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "32",
+                      "offset": 115,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 119,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 119,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 121,
+                  "length": 1
+                },
+                {
+                  "name": "MIME Type",
+                  "value": "image/gif",
+                  "offset": 122,
+                  "length": 9
+                },
+                {
+                  "name": "Picture Type",
+                  "value": "3 (Cover (front))",
+                  "offset": 132,
+                  "length": 1
+                },
+                {
+                  "name": "Description",
+                  "value": "gif",
+                  "offset": 133,
+                  "length": 3
+                },
+                {
+                  "name": "Picture Data",
+                  "value": "16 bytes",
+                  "offset": 137,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "APIC",
+              "value": "image/png, Cover (back), png",
+              "offset": 153,
+              "length": 59,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 153,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "APIC",
+                      "offset": 153,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": "49",
+                      "offset": 157,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": "0x0000",
+                      "offset": 161,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": "false",
+                          "offset": 161,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 163,
+                  "length": 1
+                },
+                {
+                  "name": "MIME Type",
+                  "value": "image/png",
+                  "offset": 164,
+                  "length": 9
+                },
+                {
+                  "name": "Picture Type",
+                  "value": "4 (Cover (back))",
+                  "offset": 174,
+                  "length": 1
+                },
+                {
+                  "name": "Description",
+                  "value": "png",
+                  "offset": 175,
+                  "length": 3
+                },
+                {
+                  "name": "Picture Data",
+                  "value": "33 bytes",
+                  "offset": 179,
+                  "length": 33
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": "8 bytes",
+              "offset": 212,
+              "length": 8
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 0,
+              "length": 220,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"ID3\" with version 2.4.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 210 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Padding is all zero bytes",
+                  "offset": 212,
+                  "length": 8
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag up to the padding",
+                  "offset": 18,
+                  "length": 194
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "offset": 220,
+          "length": 512
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "id3v2.restriction-violated",
+        "message": "The extended header restricts text to ISO-8859-1 and UTF-8, but frame TIT2 at 0x12 uses UTF-16.",
+        "offset": 18,
+        "length": 93
+      },
+      {
+        "severity": "Warning",
+        "code": "id3v2.restriction-violated",
+        "message": "The extended header restricts strings to 30 characters, but frame TIT2 at 0x12 holds one of 40.",
+        "offset": 18,
+        "length": 93
+      },
+      {
+        "severity": "Warning",
+        "code": "id3v2.restriction-violated",
+        "message": "The extended header restricts images to PNG and JPEG, but frame APIC at 0x6F holds image/gif.",
+        "offset": 111,
+        "length": 42
+      },
+      {
+        "severity": "Warning",
+        "code": "id3v2.restriction-violated",
+        "message": "The extended header restricts images to 64x64 pixels or less, but frame APIC at 0x99 holds one of 100x80.",
+        "offset": 153,
+        "length": 59
+      },
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 220,
+        "length": 512
+      }
+    ]
+  }
+]
