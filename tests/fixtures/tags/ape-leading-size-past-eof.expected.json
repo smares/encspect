@@ -1,0 +1,17 @@
+{
+  "description": "A complete leading APEv2 tag with header and footer whose header size points past the end of the file, then data: the candidate is rejected and its bytes, with the data after them, are left to the format parser.",
+  "length": 703,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 703
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.rejected",
+      "contains": "1000000"
+    }
+  ]
+}

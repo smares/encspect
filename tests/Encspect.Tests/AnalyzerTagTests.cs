@@ -89,6 +89,52 @@ public class AnalyzerTagTests
     }
 
     [Fact]
+    public void OfTwoCandidatesWithTheSameConfidenceTheContainingOneWins()
+    {
+        Report report = Analyze(100, [Trailing("Inner", 10, 100), Trailing("Outer", 30, 100)]);
+
+        Assert.Equal(["Data", "Outer"], report.Root.Children.Select(c => c.Name));
+        Finding nearMiss = Assert.Single(report.Findings, f => f.Code == "tag.near-miss");
+        Assert.Contains("Inner signature at 0x5A (EOF-10) rejected: part of Outer", nearMiss.Message);
+    }
+
+    [Fact]
+    public void HigherConfidenceWinsOverContainment()
+    {
+        var outer = new FakeTagParser("Outer", before: (_, end) => end == 100 ? TagProbe.Accept(new Node("Outer", 70, 30), 70, Confidence.Medium, [], []) : null);
+
+        Report report = Analyze(100, [Trailing("Inner", 10, 100), outer]);
+
+        Assert.Equal(["Data", "Inner"], report.Root.Children.Select(c => c.Name));
+    }
+
+    [Fact]
+    public void LeadingRejectionInsideATrailingTagOfTheSameKindIsNotReported()
+    {
+        var parser = new FakeTagParser(
+            "Footer",
+            at: (_, start) => start == 0 ? TagProbe.Reject(0, "a footer starts no tag") : null,
+            before: (_, end) => end == 40 ? Accept("Footer", 0, 40) : null);
+
+        Report report = Analyze(40, [parser]);
+
+        Assert.Equal(["Footer"], report.Root.Children.Select(c => c.Name));
+        Assert.Equal("layout.tags-only", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void LeadingRejectionInsideATrailingTagOfAnotherKindIsANearMiss()
+    {
+        var lead = new FakeTagParser("Lead", at: (_, start) => start == 0 ? TagProbe.Reject(0, "bad size") : null);
+
+        Report report = Analyze(40, [lead, Trailing("Tail", 40, 40)]);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "tag.rejected");
+        Finding nearMiss = Assert.Single(report.Findings, f => f.Code == "tag.near-miss");
+        Assert.Contains("Lead signature at 0x0 (EOF-40) rejected: part of Tail", nearMiss.Message);
+    }
+
+    [Fact]
     public void RejectedCandidateIsAWarningOnTheDataItSitsIn()
     {
         var parser = new FakeTagParser("Broken", before: (_, end) => TagProbe.Reject(end - 4, "bad checksum"));

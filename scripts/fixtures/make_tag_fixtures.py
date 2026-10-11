@@ -460,6 +460,24 @@ def id3v1_enhanced():
 
 
 @fixture
+def id3v1_enhanced_tag_in_artist():
+    f = Fixture(
+        "id3v1-enhanced-tag-in-artist",
+        "Enhanced TAG whose artist holds TAG exactly 128 bytes before the end of the Enhanced TAG, then an ID3v1 tag. "
+        "At that anchor the Enhanced TAG and a forged ID3v1 tag inside its artist tie on confidence; the forged tag "
+        "lies inside the Enhanced TAG, so the Enhanced TAG wins.",
+    )
+    f.audio()
+    artist = "The Band Who Played Too Loud Again TAG Team"
+    tag = enhanced_tag("Long title", artist, "Long album", 0, "Genre", "001:00", "003:30")
+    assert tag[99:102] == b"TAG"
+    f.tag("Enhanced TAG", None, tag, "Medium", {"Artist": artist})
+    f.finding("tag.near-miss", "part of Enhanced TAG > Artist")
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
 def enhanced_tag_without_id3v1():
     f = Fixture(
         "enhanced-tag-without-id3v1",
@@ -1625,6 +1643,7 @@ def ape_v2_full():
         },
     )
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("ape.items-unsorted", "Related")
     return f
 
 
@@ -1634,6 +1653,7 @@ def ape_v1():
     f.audio()
     tag = ape_tag([ape_item("Title", "Version One"), ape_item("Track", "5")], version=1000)
     f.tag("APE", "1.0", tag, "High", {"Footer/Version": "1000", "Items/Title/Value": "Version One", "Items/Track/Value": "5"})
+    f.finding("ape.items-unsorted", "Track")
     return f
 
 
@@ -1695,6 +1715,7 @@ def ape_leading():
     f.tag("APE", "2.0", basic_ape(), "High", dict(BASIC_APE_FIELDS, **{"Header/Flags/IsHeader": "true", "Footer/Flags/IsHeader": "false"}))
     f.audio()
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("ape.at-start", "strongly unrecommended")
     return f
 
 
@@ -1707,6 +1728,8 @@ def ape_leading_header_only():
     tag = ape_tag([ape_item("Title", "Header Only"), ape_item("Album", "Start")], footer=False)
     f.tag("APE", "2.0", tag, "High", {"Items/Title/Value": "Header Only", "Header/Flags/HasFooter": "false", "Header/Tag Size": str(len(tag) - 32)})
     f.audio()
+    f.finding("ape.items-unsorted", "Album")
+    f.finding("ape.at-start", "strongly unrecommended")
     return f
 
 
@@ -1716,6 +1739,7 @@ def ape_leading_after_id3v2():
     f.tag("ID3v2", "2.3.0", basic_id3v23(), "High", BASIC_ID3V23_FIELDS)
     f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
     f.audio()
+    f.finding("ape.at-start", "strongly unrecommended")
     return f
 
 
@@ -1728,6 +1752,7 @@ def ape_leading_whole_file():
     )
     f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
     f.finding("layout.tags-only", "")
+    f.finding("ape.at-start", "strongly unrecommended")
     return f
 
 
@@ -1737,17 +1762,32 @@ def ape_leading_footer_mismatch():
     f.tag("APE", "2.0", ape_tag([ape_item("Title", "Mismatch")], footer_overrides={"count": 3}), "Medium", {"Items/Title/Value": "Mismatch"})
     f.audio()
     f.finding("ape.footer-mismatch", "item count 3 vs 1")
+    f.finding("ape.at-start", "strongly unrecommended")
     return f
 
 
 @fixture
 def ape_leading_truncated():
-    f = Fixture("ape-leading-truncated", "Leading APEv2 header declaring more bytes than the file has: kept up to EOF, with an error.")
-    tag = ape_tag([ape_item("Title", "Cut")], header_overrides={"size": 5000})[:32 + 15]
-    f.tag("APE", "2.0", tag, "Low", {"Header/Tag Size": "5000"})
-    f.finding("ape.truncated", "5000")
-    f.finding("ape.items-invalid", "")
-    f.finding("layout.tags-only", "")
+    f = Fixture(
+        "ape-leading-truncated",
+        "Leading APEv2 header declaring more bytes than the file has: its size points outside the file, so the extent "
+        "is unknown and the candidate is rejected (plan, rule 2).",
+    )
+    f.add(ape_tag([ape_item("Title", "Cut")], header_overrides={"size": 5000})[:32 + 15], {"name": "Data"})
+    f.finding("tag.rejected", "size points outside the file")
+    return f
+
+
+@fixture
+def ape_leading_size_past_eof():
+    f = Fixture(
+        "ape-leading-size-past-eof",
+        "A complete leading APEv2 tag with header and footer whose header size points past the end of the file, then "
+        "data: the candidate is rejected and its bytes, with the data after them, are left to the format parser.",
+    )
+    tag = ape_tag([ape_item("Title", "Leading"), ape_item("Album", "Lost")], header_overrides={"size": 1000000})
+    f.add(tag + filler(600), {"name": "Data"})
+    f.finding("tag.rejected", "1000000")
     return f
 
 
@@ -1792,7 +1832,39 @@ def id3v1_then_ape():
     f.audio()
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
-    f.finding("layout.id3v1-not-last", "ID3v1")
+    f.finding("layout.id3v1-not-last", f"is followed by the APE tag at {hex_offset(f.size - len(basic_ape()))};")
+    return f
+
+
+@fixture
+def ape_footer_only_whole_file():
+    f = Fixture(
+        "ape-footer-only-whole-file",
+        "A file that is one APEv2 tag without a header and without items: the leading probe sees a footer, which "
+        "starts no tag, but the trailing probe accepts it, so no rejection is reported.",
+    )
+    f.tag("APE", "2.0", ape_tag([], header=False), "High", {"Items": "0 items"})
+    f.finding("layout.tags-only", "")
+    return f
+
+
+@fixture
+def ape_key_case():
+    f = Fixture(
+        "ape-key-case",
+        "APEv2 item with the key \"Tag\": keys are case sensitive and only \"TAG\" is forbidden, so the tag is valid.",
+    )
+    f.audio()
+    f.tag("APE", "2.0", ape_tag([ape_item("Tag", "Live")]), "High", {"Items/Tag/Value": "Live"})
+    return f
+
+
+@fixture
+def ape_key_forbidden():
+    f = Fixture("ape-key-forbidden", "APEv2 item with the key \"TAG\", which the specification forbids: kept, with a finding.")
+    f.audio()
+    f.tag("APE", "2.0", ape_tag([ape_item("TAG", "Live")]), "Medium", {"Items/TAG/Value": "Live"})
+    f.finding("ape.key-forbidden", "TAG")
     return f
 
 
@@ -1881,9 +1953,9 @@ def ape_header_before_file():
 
 @fixture
 def lyrics3v1_basic():
-    f = Fixture("lyrics3v1-basic", "Lyrics3 v1 block before ID3v1.")
+    f = Fixture("lyrics3v1-basic", "Lyrics3 v1 block before ID3v1: text only within 5100 bytes, so full confidence.")
     f.audio()
-    f.tag("Lyrics3", "1.00", lyrics3v1("Some lyrics\r\nMore lyrics"), "Medium", {"Lyrics": "Some lyrics\r\nMore lyrics"})
+    f.tag("Lyrics3", "1.00", lyrics3v1("Some lyrics\r\nMore lyrics"), "High", {"Lyrics": "Some lyrics\r\nMore lyrics"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     return f
 
@@ -1892,14 +1964,85 @@ def lyrics3v1_basic():
 def lyrics3v1_begin_in_lyrics():
     f = Fixture(
         "lyrics3v1-begin-in-lyrics",
-        "Lyrics3 v1 block whose lyrics mention LYRICSBEGIN: the tag starts at the first one, after which only text "
-        "follows, and the second is reported.",
+        "Lyrics3 v1 block whose lyrics mention LYRICSBEGIN, which the specification forbids: the tag starts at the "
+        "first one, after which only text follows, and the second is a warning.",
     )
     f.audio()
     lyrics = "How to start: write LYRICSBEGIN first"
     f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Medium", {"Lyrics": lyrics})
     f.finding("lyrics3.begin-in-lyrics", "the tag starts at the first one")
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v1_end_in_lyrics():
+    f = Fixture(
+        "lyrics3v1-end-in-lyrics",
+        "Lyrics3 v1 block whose lyrics mention LYRICSEND, which the specification forbids: the tag still starts at its "
+        "only LYRICSBEGIN, with a warning.",
+    )
+    f.audio()
+    lyrics = "He sang LYRICSEND loudly"
+    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Medium", {"Lyrics": lyrics})
+    f.finding("lyrics3.end-in-lyrics", "LYRICSEND")
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+def space_padded_id3v1():
+    """ID3v1.0 padded with spaces, as Winamp writes it: no $00 or $FF anywhere in the tag."""
+    tag = b"TAG" + pad("Old title", 30, b" ") + pad("Old artist", 30, b" ") + pad("Old album", 30, b" ") + b"1999" + b" " * 30 + bytes([12])
+    assert len(tag) == 128 and b"\x00" not in tag and b"\xff" not in tag
+    return tag
+
+
+@fixture
+def lyrics3v1_stacked_after_lyrics3v1():
+    f = Fixture(
+        "lyrics3v1-stacked-after-lyrics3v1",
+        "Two Lyrics3 v1 and ID3v1 pairs, the first ID3v1 tag padded with spaces, so only text lies between the two "
+        "LYRICSBEGIN markers. The second tag's start search stops at the first tag's LYRICSEND, which lyrics cannot "
+        "contain, so both pairs are found.",
+    )
+    f.audio()
+    f.tag("Lyrics3", "1.00", lyrics3v1("Old lyrics\r\nline two"), "High", {"Lyrics": "Old lyrics\r\nline two"})
+    f.tag("ID3v1", "1.0", space_padded_id3v1(), "Medium", {"Title": "Old title"})
+    f.tag("Lyrics3", "1.00", lyrics3v1("New lyrics\r\nline two"), "High", {"Lyrics": "New lyrics\r\nline two"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 tag")
+    return f
+
+
+@fixture
+def lyrics3v1_stacked_after_lyrics3v2():
+    f = Fixture(
+        "lyrics3v1-stacked-after-lyrics3v2",
+        "A Lyrics3 v2 tag, a space-padded ID3v1 tag, then a Lyrics3 v1 tag and an ID3v1 tag: the v1 start search stops "
+        "at LYRICS200 and does not swallow the tags in front of it.",
+    )
+    f.audio()
+    f.tag("Lyrics3", "2.00", lyrics3v2([("LYR", "Old lyrics")]), "High", {"LYR/Data": "Old lyrics"})
+    f.tag("ID3v1", "1.0", space_padded_id3v1(), "Medium", {"Title": "Old title"})
+    f.tag("Lyrics3", "1.00", lyrics3v1("New lyrics"), "High", {"Lyrics": "New lyrics"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 tag")
+    return f
+
+
+@fixture
+def lyrics3v1_after_id3v2_text():
+    f = Fixture(
+        "lyrics3v1-after-id3v2-text",
+        "An ID3v2.3 tag without padding whose last frame ends in the text LYRICSBEGIN, directly followed by a Lyrics3 v1 "
+        "tag and an ID3v1 tag. The earliest LYRICSBEGIN after which only text follows lies in the ID3v2 tag; the "
+        "Lyrics3 tag is found again within the bytes the ID3v2 tag leaves, from its own LYRICSBEGIN.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Lead"])), frame23("TXXX", txxx_data(LATIN1, "note", "write LYRICSBEGIN"))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames), "High", {"TIT2/Text": "Lead"})
+    f.tag("Lyrics3", "1.00", lyrics3v1("Only these lyrics"), "High", {"Lyrics": "Only these lyrics"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    f.finding("layout.tags-only", "")
     return f
 
 
@@ -2113,12 +2256,13 @@ def lyrics3v2_field_too_long():
 def lyrics3v2_extended_mismatch():
     f = Fixture(
         "lyrics3v2-extended-mismatch",
-        "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, and an EAR field no longer than the "
-        "ID3v1 artist, which the specification recommends not to save.",
+        "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, a warning that leaves the tag at "
+        "medium confidence, and an EAR field no longer than the ID3v1 artist, which the specification recommends not "
+        "to save.",
     )
     f.audio()
     fields = [("IND", "000"), ("ETT", "A Completely Different Long Track Title"), ("EAR", "Artist Name")]
-    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "High", {"ETT/Data": "A Completely Different Long Track Title"})
+    f.tag("Lyrics3", "2.00", lyrics3v2(fields), "Medium", {"ETT/Data": "A Completely Different Long Track Title"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.extended-mismatch", "ETT")
     f.finding("lyrics3.extended-unneeded", "EAR")
@@ -2137,12 +2281,31 @@ def lyrics3v1_invalid_byte():
 
 @fixture
 def lyrics3v1_too_long():
-    f = Fixture("lyrics3v1-too-long", "Lyrics3 v1 block with 6000 bytes of lyrics, more than the 5100 allowed: kept, low confidence.")
+    f = Fixture("lyrics3v1-too-long", "Lyrics3 v1 block with 6000 bytes of lyrics, more than the 5100 allowed: kept, medium confidence.")
     f.audio()
     lyrics = ("La la la\r\n" * 600)[:6000]
-    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Low")
+    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Medium")
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.finding("lyrics3.too-long", "6000")
+    return f
+
+
+@fixture
+def lyrics3v1_tag_in_long_lyrics():
+    f = Fixture(
+        "lyrics3v1-tag-in-long-lyrics",
+        "Lyrics3 v1 block with 5200 bytes of lyrics, too long but otherwise valid, with TAG 128 bytes before its end. "
+        "The forged ID3v1 tag lies inside the lyrics and ties with the Lyrics3 tag on confidence, so the Lyrics3 tag, "
+        "which contains it, wins.",
+    )
+    f.audio()
+    lyrics = bytearray((b"la " * 2000)[:5200])
+    pos = len(lyrics) - (128 - 9)
+    lyrics[pos : pos + 3] = b"TAG"
+    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics.decode("latin-1")), "Medium")
+    f.finding("lyrics3.too-long", "5200")
+    f.finding("tag.near-miss", "part of Lyrics3 > Lyrics")
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     return f
 
 
@@ -2356,9 +2519,10 @@ def collision_cases():
         start = 3 if container_name == "id3v1" else container.index(b"q" * 30)
         end = len(container) if container_name == "id3v1" else start + len(USER_TEXT)
         for identifier in COLLISION_IDENTIFIERS:
-            # The Lyrics3 specification forbids "LYRICSBEGIN" inside v1 lyrics, since it would make
-            # the start of the tag ambiguous.
-            if container_name == "lyrics3v1" and identifier == "LYRICSBEGIN":
+            # The Lyrics3 specification forbids "LYRICSBEGIN" and "LYRICSEND" inside v1 lyrics, since
+            # they would make the extent of the tag ambiguous; lyrics3v1-begin-in-lyrics and
+            # lyrics3v1-end-in-lyrics cover them as spec violations.
+            if container_name == "lyrics3v1" and identifier in ("LYRICSBEGIN", "LYRICSEND"):
                 continue
             ident = identifier.encode("ascii")
             for distance in COLLISION_DISTANCES:

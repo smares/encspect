@@ -583,19 +583,19 @@
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 817,
-                  "length": 3
+                  "length": 1
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
-                  "offset": 817,
-                  "length": 3
+                  "offset": 818,
+                  "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
-                  "offset": 817,
-                  "length": 3
+                  "offset": 819,
+                  "length": 1
                 }
               ]
             },
@@ -692,7 +692,7 @@
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
-        "message": "The ID3v1 tag at 0x29E is followed by a Lyrics3 tag; readers expect ID3v1 in the last 128 bytes.",
+        "message": "The ID3v1 tag at 0x29E is followed by the Lyrics3 tag at 0x31E; readers expect ID3v1 in the last 128 bytes.",
         "offset": 670,
         "length": 128
       },

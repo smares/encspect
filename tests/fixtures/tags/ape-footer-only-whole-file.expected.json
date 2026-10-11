@@ -1,0 +1,22 @@
+{
+  "description": "A file that is one APEv2 tag without a header and without items: the leading probe sees a footer, which starts no tag, but the trailing probe accepts it, so no rejection is reported.",
+  "length": 32,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items": "0 items"
+      },
+      "offset": 0,
+      "length": 32
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}

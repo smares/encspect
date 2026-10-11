@@ -1,0 +1,27 @@
+{
+  "description": "APEv2 item with the key \"TAG\", which the specification forbids: kept, with a finding.",
+  "length": 592,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/TAG/Value": "Live"
+      },
+      "offset": 512,
+      "length": 80
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.key-forbidden",
+      "contains": "TAG"
+    }
+  ]
+}
