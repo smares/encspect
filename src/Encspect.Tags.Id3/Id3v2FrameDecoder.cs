@@ -335,13 +335,16 @@ internal sealed class Id3v2FrameDecoder
 
     private string AddText(string name, int start, int end, byte encoding)
     {
+        bool hasByteOrder = _bigEndian is not null;
         string text = Id3v2Text.Decode(Data, start, end, encoding, ref _bigEndian, out bool missingBom);
         if (missingBom)
         {
             _findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.utf16-without-bom",
-                $"Frame {_id} has UTF-16 text without a byte order mark; little-endian is assumed.",
+                hasByteOrder
+                    ? $"Frame {_id} has a UTF-16 string without a byte order mark after one with it; the earlier byte order is assumed."
+                    : $"Frame {_id} has UTF-16 text without a byte order mark; little-endian is assumed.",
                 _frame));
         }
 

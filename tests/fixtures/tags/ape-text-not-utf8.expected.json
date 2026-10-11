@@ -1,0 +1,28 @@
+{
+  "description": "APEv2 Artist item in Windows-1252, not the UTF-8 APEv2 requires of text items.",
+  "length": 617,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/Title/Value": "Title",
+        "Items/Artist/Value": "Bj�rk �"
+      },
+      "offset": 512,
+      "length": 105
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.text-not-utf8",
+      "contains": "Item \"Artist\""
+    }
+  ]
+}

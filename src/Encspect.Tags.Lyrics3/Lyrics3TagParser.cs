@@ -52,16 +52,22 @@ public sealed class Lyrics3TagParser : ITagParser
     }
 
     // v1 has no size field: the lyrics run from LYRICSBEGIN to LYRICSEND and should hold at most
-    // 5100 bytes, so the nearest LYRICSBEGIN before the end marker starts the tag.
+    // 5100 bytes. Lyrics may mention LYRICSBEGIN themselves, so the earliest one in that window
+    // after which only text follows starts the tag; audio before the tag holds $FF bytes. Without
+    // one, the nearest LYRICSBEGIN does.
     private TagProbe ParseV1(ByteReader reader, long end, long marker)
     {
         long windowStart = Math.Max(reader.Start, marker - MaxV1Search - Begin.Length);
         byte[] window = reader.ReadBytesAt(windowStart, (int)(marker - windowStart));
-        int index = window.AsSpan().LastIndexOf(Begin);
-        if (index < 0)
+        int nearest = window.AsSpan().LastIndexOf(Begin);
+        if (nearest < 0)
         {
             return TagProbe.Reject(marker, "there is no LYRICSBEGIN before LYRICSEND");
         }
+
+        int lastBad = window.AsSpan().LastIndexOfAny((byte)0x00, (byte)0xFF);
+        int first = window.AsSpan(lastBad + 1).IndexOf(Begin);
+        int index = first >= 0 ? lastBad + 1 + first : nearest;
 
         long start = windowStart + index;
         long lyricsStart = start + Begin.Length;
@@ -98,7 +104,16 @@ public sealed class Lyrics3TagParser : ITagParser
                 lyricsNode));
         }
 
-        Confidence confidence = findings.Count > 0 ? Confidence.Low : Confidence.Medium;
+        if (index < nearest)
+        {
+            findings.Add(new Finding(
+                Severity.Info,
+                "lyrics3.begin-in-lyrics",
+                $"The lyrics contain \"LYRICSBEGIN\" at 0x{windowStart + nearest:X}; the tag starts at the first one, at 0x{start:X}.",
+                lyricsNode));
+        }
+
+        Confidence confidence = findings.Any(f => f.Severity >= Severity.Warning) ? Confidence.Low : Confidence.Medium;
         return TagProbe.Accept(tag, marker, confidence, evidence, findings);
     }
 

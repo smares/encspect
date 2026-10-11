@@ -40,7 +40,8 @@ internal static class Id3v2Text
     }
 
     // bigEndian carries the byte order of the last UTF-16 BOM into later strings of the same
-    // frame. missingBom reports a non-empty UTF-16 string without any BOM to go by.
+    // frame. missingBom reports a non-empty UTF-16 string without a BOM, which ID3v2.3 section 3.3
+    // and ID3v2.4 section 4 require of every string.
     public static string Decode(byte[] data, int start, int end, byte encoding, ref bool? bigEndian, out bool missingBom)
     {
         missingBom = false;
@@ -59,10 +60,10 @@ internal static class Id3v2Text
                     bigEndian = true;
                     start += 2;
                 }
-                else if (length > 0 && bigEndian is null)
+                else if (length > 0)
                 {
                     missingBom = true;
-                    bigEndian = false;
+                    bigEndian ??= false;
                 }
 
                 length = end - start;

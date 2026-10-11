@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 extended header with 2 flag bytes; section 3.2 defines \"Number of flag bytes $01\".",
+  "length": 553,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/Flag Bytes": "2",
+        "TIT2/Text": "Flags"
+      },
+      "offset": 0,
+      "length": 41
+    },
+    {
+      "name": "Data",
+      "offset": 41,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "2 flag bytes"
+    }
+  ]
+}

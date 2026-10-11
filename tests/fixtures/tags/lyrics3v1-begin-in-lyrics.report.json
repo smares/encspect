@@ -1,0 +1,155 @@
+[
+  {
+    "source": "lyrics3v1-begin-in-lyrics.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 697,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 512,
+          "length": 57,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "How to start: write LYRICSBEGIN first",
+              "offset": 523,
+              "length": 37
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 560,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 512,
+              "length": 57,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \u0022LYRICSEND\u0022",
+                  "offset": 560,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\u0022LYRICSBEGIN\u0022 48 bytes earlier",
+                  "offset": 512,
+                  "length": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 569,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 569,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 572,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 602,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 632,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 662,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 666,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 695,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 696,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 569,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
+                  "offset": 569,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 572,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Info",
+        "code": "lyrics3.begin-in-lyrics",
+        "message": "The lyrics contain \u0022LYRICSBEGIN\u0022 at 0x21F; the tag starts at the first one, at 0x200.",
+        "offset": 523,
+        "length": 37
+      }
+    ]
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 extended header whose CRC data is 4 bytes; section 3.2 defines 5, so the CRC is not verified.",
+  "length": 555,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/CRC": "4 bytes",
+        "TIT2/Text": "CRC"
+      },
+      "offset": 0,
+      "length": 43
+    },
+    {
+      "name": "Data",
+      "offset": 43,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.extended-header-invalid",
+      "contains": "crc data is 4 bytes; ID3v2.4 defines 5"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "description": "APEv2 tag whose footer sets the contains-no-footer flag, so it also disagrees with its header, which does not; header and footer may differ only in the is-header flag.",
+  "length": 595,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/Title/Value": "Title"
+      },
+      "offset": 512,
+      "length": 83
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.footer-flags",
+      "contains": "contains-no-footer flag set"
+    },
+    {
+      "code": "ape.header-mismatch",
+      "contains": "the contains-no-footer flag is not set"
+    }
+  ]
+}

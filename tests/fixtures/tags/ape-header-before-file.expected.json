@@ -1,0 +1,26 @@
+{
+  "description": "A file that is only an APEv2 tag without a header, whose footer announces one: it would start 32 bytes before the start of the file.",
+  "length": 51,
+  "regions": [
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "Medium",
+      "fields": {
+        "Items/Title/Value": "Title"
+      },
+      "offset": 0,
+      "length": 51
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.header-missing",
+      "contains": "32 bytes before the start of the file"
+    },
+    {
+      "code": "layout.tags-only",
+      "contains": "only tags"
+    }
+  ]
+}

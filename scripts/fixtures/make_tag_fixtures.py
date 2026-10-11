@@ -852,6 +852,110 @@ def plain_id3v24(title):
 
 
 @fixture
+def id3v24_extended_header_flag_bytes():
+    f = Fixture("id3v24-extended-header-flag-bytes", "ID3v2.4 extended header with 2 flag bytes; section 3.2 defines \"Number of flag bytes $01\".")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Flags"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8, extended_header=syncsafe(7) + b"\x02\x00\x00"), "Medium",
+          {"Extended Header/Flag Bytes": "2", "TIT2/Text": "Flags"})
+    f.finding("id3v2.extended-header-invalid", "2 flag bytes")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_extended_header_crc_length():
+    f = Fixture("id3v24-extended-header-crc-length", "ID3v2.4 extended header whose CRC data is 4 bytes; section 3.2 defines 5, so the CRC is not verified.")
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["CRC"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8, extended_header=syncsafe(11) + b"\x01\x20\x04\x01\x02\x03\x04"), "Medium",
+          {"Extended Header/CRC": "4 bytes", "TIT2/Text": "CRC"})
+    f.finding("id3v2.extended-header-invalid", "crc data is 4 bytes; ID3v2.4 defines 5")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_extended_header_size_and_flags():
+    f = Fixture(
+        "id3v24-extended-header-size-and-flags",
+        "ID3v2.4 extended header that declares 16 bytes, of which its flags take 6, followed by zeros, and sets the "
+        "undefined flags 0x8F, which section 3.2 requires to be unset. The frames follow at the declared size.",
+    )
+    frames = [frame24("TIT2", text_frame_data(UTF8, ["Size"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8, extended_header=syncsafe(16) + b"\x01\x8f" + bytes(10)), "Medium",
+          {"Extended Header/Flags": "0x8F", "TIT2/Text": "Size"})
+    f.finding("id3v2.extended-header-invalid", "undefined flags (0x8F)")
+    f.finding("id3v2.extended-header-invalid", "declares 16 bytes, but its flags and their data take 6")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_compressed_without_data_length():
+    f = Fixture(
+        "id3v24-compressed-without-data-length",
+        "ID3v2.4 TIT2 frame compressed with zlib without a data length indicator, which section 4.1.2 requires with "
+        "compression.",
+    )
+    compressed = zlib.compress(text_frame_data(UTF8, ["Packed"]))
+    frame = b"TIT2" + syncsafe(len(compressed)) + b"\x00\x08" + compressed
+    f.tag("ID3v2", "2.4.0", id3v2(4, [frame, frame24("TPE1", text_frame_data(UTF8, ["Artist"]))], padding=8), "Medium",
+          {"TIT2/Compressed Data": f"{len(compressed)} bytes", "TPE1/Text": "Artist"})
+    f.finding("id3v2.frame-compressed", "Frame TIT2")
+    f.finding("id3v2.compressed-without-data-length", "Frame TIT2")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_no_frames():
+    f = Fixture("id3v24-no-frames", "ID3v2.4 tag of 64 padding bytes and no frame; section 4: \"A tag MUST contain at least one frame.\"")
+    f.tag("ID3v2", "2.4.0", id3v2(4, [], padding=64), "Medium")
+    f.finding("id3v2.no-frames", "no frame")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_duplicate_frames():
+    f = Fixture(
+        "id3v23-duplicate-frames",
+        "ID3v2.3 tag with two TIT2 frames and two APIC frames of picture type 1, each allowed only once (sections 4.2 "
+        "and 4.15), next to two TXXX and two COMM frames with different descriptions, which may repeat.",
+    )
+    icon = bytes(range(16))
+    frames = [
+        frame23("TIT2", text_frame_data(LATIN1, ["One"])),
+        frame23("TXXX", txxx_data(LATIN1, "A", "1")),
+        frame23("TXXX", txxx_data(LATIN1, "B", "2")),
+        frame23("COMM", comm_data(LATIN1, "eng", "A", "First")),
+        frame23("COMM", comm_data(LATIN1, "eng", "B", "Second")),
+        frame23("APIC", apic_data(LATIN1, "image/png", 1, "Icon", icon)),
+        frame23("APIC", apic_data(LATIN1, "image/png", 1, "Another icon", icon)),
+        frame23("TIT2", text_frame_data(LATIN1, ["Two"])),
+    ]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"TIT2/Text": "One"})
+    f.finding("id3v2.frame-duplicate", "2 TIT2 frames")
+    f.finding("id3v2.frame-duplicate", "2 APIC picture type 1 (32x32 pixels file icon (PNG only)) frames")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v23_utf16_second_string_without_bom():
+    f = Fixture(
+        "id3v23-utf16-second-string-without-bom",
+        "ID3v2.3 COMM frame in UTF-16 whose description has a BOM and whose text has none; section 3.3 requires one on "
+        "every Unicode string. The description's byte order is used.",
+    )
+    data = b"\x01eng" + encode(UTF16, "Description") + terminator(UTF16) + "Text".encode("utf-16-le")
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["BOM"])), frame23("COMM", data)]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "Medium", {"COMM/Description": "Description", "COMM/Text": "Text"})
+    f.finding("id3v2.utf16-without-bom", "after one with it")
+    f.audio()
+    return f
+
+
+@fixture
 def id3v24_seek_to_appended():
     f = Fixture(
         "id3v24-seek-to-appended",
@@ -1314,10 +1418,74 @@ def ape_size_too_large():
 
 
 @fixture
+def ape_text_not_utf8():
+    f = Fixture("ape-text-not-utf8", "APEv2 Artist item in Windows-1252, not the UTF-8 APEv2 requires of text items.")
+    f.audio()
+    items = [ape_item("Title", "Title"), raw_ape_item("Artist", b"Bj\xf6rk \xff")]
+    f.tag("APE", "2.0", ape_tag(items), "Medium", {"Items/Title/Value": "Title", "Items/Artist/Value": "Bj�rk �"})
+    f.finding("ape.text-not-utf8", "Item \"Artist\"")
+    return f
+
+
+@fixture
+def ape_footer_says_no_footer():
+    f = Fixture(
+        "ape-footer-says-no-footer",
+        "APEv2 tag whose footer sets the contains-no-footer flag, so it also disagrees with its header, which does not; "
+        "header and footer may differ only in the is-header flag.",
+    )
+    f.audio()
+    f.tag("APE", "2.0", ape_tag([ape_item("Title", "Title")], footer_overrides={"flags": (1 << 31) | (1 << 30)}), "Medium",
+          {"Items/Title/Value": "Title"})
+    f.finding("ape.footer-flags", "contains-no-footer flag set")
+    f.finding("ape.header-mismatch", "the contains-no-footer flag is not set")
+    return f
+
+
+@fixture
+def ape_header_says_no_footer():
+    f = Fixture("ape-header-says-no-footer", "APEv2 tag whose header sets the contains-no-footer flag although a matching footer follows.")
+    f.audio()
+    f.tag("APE", "2.0", ape_tag([ape_item("Title", "Title")], header_overrides={"flags": (1 << 31) | (1 << 30) | (1 << 29)}), "Medium",
+          {"Items/Title/Value": "Title"})
+    f.finding("ape.header-mismatch", "the contains-no-footer flag is set")
+    return f
+
+
+@fixture
+def ape_header_before_file():
+    f = Fixture(
+        "ape-header-before-file",
+        "A file that is only an APEv2 tag without a header, whose footer announces one: it would start 32 bytes before "
+        "the start of the file.",
+    )
+    f.tag("APE", "2.0", ape_tag([ape_item("Title", "Title")], header=False, footer_overrides={"flags": 1 << 31}), "Medium",
+          {"Items/Title/Value": "Title"})
+    f.finding("ape.header-missing", "32 bytes before the start of the file")
+    f.finding("layout.tags-only", "only tags")
+    return f
+
+
+@fixture
 def lyrics3v1_basic():
     f = Fixture("lyrics3v1-basic", "Lyrics3 v1 block before ID3v1.")
     f.audio()
     f.tag("Lyrics3", "1.00", lyrics3v1("Some lyrics\r\nMore lyrics"), "Medium", {"Lyrics": "Some lyrics\r\nMore lyrics"})
+    f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
+    return f
+
+
+@fixture
+def lyrics3v1_begin_in_lyrics():
+    f = Fixture(
+        "lyrics3v1-begin-in-lyrics",
+        "Lyrics3 v1 block whose lyrics mention LYRICSBEGIN: the tag starts at the first one, after which only text "
+        "follows, and the second is reported.",
+    )
+    f.audio()
+    lyrics = "How to start: write LYRICSBEGIN first"
+    f.tag("Lyrics3", "1.00", lyrics3v1(lyrics), "Medium", {"Lyrics": lyrics})
+    f.finding("lyrics3.begin-in-lyrics", "the tag starts at the first one")
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     return f
 

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Globalization;
 using System.Text;
@@ -136,10 +137,19 @@ public sealed class ApeTagParser : ITagParser
             builder.Problem(null, "ape.footer-flags", "The footer has the is-header flag set.", Confidence.Medium);
         }
 
+        if (footer.Version == 2000 && !footer.HasFooter)
+        {
+            builder.Problem(null, "ape.footer-flags", "The footer has the contains-no-footer flag set.", Confidence.Medium);
+        }
+
         if (footer.Version == 2000 && footer.HasHeader)
         {
             long headerStart = itemsStart - BlockSize;
-            if (!reader.MatchesAt(headerStart, Preamble))
+            if (headerStart < 0)
+            {
+                builder.Problem(null, "ape.header-missing", $"The footer announces a header, which would start {-headerStart} bytes before the start of the file.", Confidence.Medium);
+            }
+            else if (!reader.MatchesAt(headerStart, Preamble))
             {
                 builder.Problem(null, "ape.header-missing", $"The footer announces a header, but there is no \"APETAGEX\" header at 0x{headerStart:X}.", Confidence.Medium);
             }
@@ -189,6 +199,9 @@ public sealed class ApeTagParser : ITagParser
                 : other.Size != anchor.Size ? $"tag size {other.Size} vs {anchor.Size}"
                 : other.ItemCount != anchor.ItemCount ? $"item count {other.ItemCount} vs {anchor.ItemCount}"
                 : other.IsHeader != expectHeader ? $"the is-header flag is {(other.IsHeader ? "set" : "not set")}"
+                // "Header and Footer are different in 1 bit in the Tags Flags to distinguish between them."
+                : other.HasHeader != anchor.HasHeader ? $"the has-header flag is {(other.HasHeader ? "set" : "not set")}"
+                : other.HasFooter != anchor.HasFooter ? $"the contains-no-footer flag is {(other.HasFooter ? "not set" : "set")}"
                 : null;
             if (mismatch is null)
             {
@@ -295,7 +308,7 @@ public sealed class ApeTagParser : ITagParser
                 flagsNode.Add("Item Type", pos + 4, 4, ItemTypes[type]);
                 item.Add("Key", pos + 8, keyLength, key);
 
-                item.Value = IsV1 ? AddV1Value(item, valueStart, valueSize) : AddValue(item, valueStart, valueSize, type);
+                item.Value = IsV1 ? AddV1Value(item, valueStart, valueSize) : AddValue(item, key, valueStart, valueSize, type);
 
                 if (IsV1 && flags != 0)
                 {
@@ -329,7 +342,7 @@ public sealed class ApeTagParser : ITagParser
         }
 
         // APEv2 text and external values are UTF-8; text may hold several values separated by $00.
-        private string AddValue(Node item, long start, uint size, int type)
+        private string AddValue(Node item, string key, long start, uint size, int type)
         {
             if (type is 1 or 3)
             {
@@ -339,6 +352,12 @@ public sealed class ApeTagParser : ITagParser
             }
 
             byte[] data = reader.ReadBytesAt(start, (int)Math.Min(size, MaxDecodedValueBytes));
+            // A value read only in part may end inside a character.
+            if (Utf8.ToUtf16(data, new char[data.Length], out _, out _, replaceInvalidSequences: false, isFinalBlock: data.Length == size) == OperationStatus.InvalidData)
+            {
+                _findings.Add(new Finding(Severity.Warning, "ape.text-not-utf8", $"Item \"{key}\" holds text that is not valid UTF-8, which APEv2 requires; the invalid bytes are shown as U+FFFD.", item));
+            }
+
             var values = new List<string>();
             int i = 0;
             while (true)

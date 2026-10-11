@@ -1,0 +1,31 @@
+{
+  "description": "ID3v2.3 tag with two TIT2 frames and two APIC frames of picture type 1, each allowed only once (sections 4.2 and 4.15), next to two TXXX and two COMM frames with different descriptions, which may repeat.",
+  "length": 723,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "One"
+      },
+      "offset": 0,
+      "length": 211
+    },
+    {
+      "name": "Data",
+      "offset": 211,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 TIT2 frames"
+    },
+    {
+      "code": "id3v2.frame-duplicate",
+      "contains": "2 APIC picture type 1 (32x32 pixels file icon (PNG only)) frames"
+    }
+  ]
+}

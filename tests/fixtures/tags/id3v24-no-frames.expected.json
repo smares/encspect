@@ -1,0 +1,24 @@
+{
+  "description": "ID3v2.4 tag of 64 padding bytes and no frame; section 4: \"A tag MUST contain at least one frame.\"",
+  "length": 586,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "offset": 0,
+      "length": 74
+    },
+    {
+      "name": "Data",
+      "offset": 74,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.no-frames",
+      "contains": "no frame"
+    }
+  ]
+}
