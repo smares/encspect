@@ -1,115 +1,123 @@
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace Encspect.Host;
 
-// Tells a regular file from anything else before the file is opened. .NET has no API for a file's
-// type on Unix: FileSystemInfo reports a FIFO, a device or a socket like a regular file of length
-// 0, and opening a FIFO for reading blocks until a writer appears.
+// Opens a path for analysis only when it is a regular file. .NET has no public API for a file's
+// type on Unix: FileSystemInfo reports a FIFO, a device, a socket and a procfs file alike as a
+// regular file of length 0, and opening a FIFO for reading blocks until a writer appears. So the
+// file is opened with POSIX open(2) and O_NONBLOCK, which returns at once for a FIFO, and what the
+// open file does tells the rest: a FIFO or a terminal cannot seek, and a device or a kernel file
+// reports a size of 0 yet yields data.
 internal static class FileType
 {
-    // The S_IF* values of System.Native's FileStatus.Mode, the same on every Unix .NET runs on.
-    private const int TypeMask = 0xF000;
-    private const int Fifo = 0x1000;
-    private const int CharacterDevice = 0x2000;
-    private const int Directory = 0x4000;
-    private const int BlockDevice = 0x6000;
-    private const int Regular = 0x8000;
-    private const int Socket = 0xC000;
+    private static readonly Lazy<OpenFunction?> NonBlockingOpen = new(FindOpen);
 
-    // Kernel file systems whose files report a size of 0 or a fixed 4096 bytes and whose content
-    // is made up when read; some block on read, like tracefs's trace_pipe. Names as DriveInfo
-    // gives them on Linux, with the kernel's spelling where the two may differ.
-    private static readonly HashSet<string> PseudoFileSystems = new(
-        ["proc", "sysfs", "debugfs", "tracefs", "securityfs", "configfs", "cgroup", "cgroupfs", "cgroup2", "cgroup2fs",
-         "pstore", "pstorefs", "efivarfs", "bpf", "bpf_fs", "fusectl", "binfmt_misc", "selinux", "selinuxfs", "mqueue"],
-        StringComparer.Ordinal);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, SetLastError = true)]
+    private delegate int OpenFunction([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int flags);
 
-    private static readonly Lazy<bool> StatWorks = new(CheckStat);
-
-    // What the path names when that is not a regular file, as "a named pipe (FIFO)", or null for a
-    // regular file and for a path whose type cannot be told, which opening it then decides.
-    public static string? DescribeNonRegular(string path)
+    // The open file, or null and what the path names when that is not a regular file. Throws
+    // IOException or UnauthorizedAccessException when the file cannot be opened.
+    public static FileStream? Open(string path, out string? notRegular)
     {
-        if (OperatingSystem.IsWindows())
+        notRegular = null;
+        if (Directory.Exists(path))
+        {
+            notRegular = "a folder";
+            return null;
+        }
+
+        FileStream? stream = OpenNonBlocking(path, out notRegular);
+        if (notRegular is not null)
         {
             return null;
         }
 
-        if (StatWorks.Value && Stat(path) is { } mode)
+        stream ??= new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        try
         {
-            string? kind = (mode & TypeMask) switch
+            notRegular = !stream.CanSeek ? "a named pipe, socket or terminal"
+                : stream.Length == 0 && YieldsData(stream) ? "a device or kernel file that reports a size of 0 but yields data"
+                : null;
+        }
+        catch (IOException)
+        {
+            notRegular = "a file that cannot be read like a regular file";
+        }
+
+        if (notRegular is null)
+        {
+            return stream;
+        }
+
+        stream.Dispose();
+        return null;
+    }
+
+    private static bool YieldsData(FileStream stream)
+    {
+        Span<byte> buffer = stackalloc byte[1];
+        int read = stream.Read(buffer);
+        stream.Position = 0;
+        return read > 0;
+    }
+
+    // Null without a stream where open(2) is not available, so the caller opens the file as .NET
+    // does.
+    private static FileStream? OpenNonBlocking(string path, out string? notRegular)
+    {
+        notRegular = null;
+        if (NonBlockingOpen.Value is not { } open || Flags() is not { } flags)
+        {
+            return null;
+        }
+
+        int descriptor = open(path, flags);
+        if (descriptor < 0)
+        {
+            int error = Marshal.GetLastPInvokeError();
+            string message = $"{Marshal.GetPInvokeErrorMessage(error)}: {path}";
+
+            // The error numbers below are the same on Linux, macOS and FreeBSD. ENXIO: a socket, or
+            // a device without a driver behind it.
+            if (error == 6)
             {
-                Regular => null,
-                Fifo => "a named pipe (FIFO)",
-                CharacterDevice => "a character device",
-                BlockDevice => "a block device",
-                Socket => "a socket",
-                Directory => "a folder",
-                _ => "a special file",
-            };
-            if (kind is not null)
-            {
-                return kind;
+                notRegular = "a socket or a device that cannot be opened";
+                return null;
             }
+
+            throw error switch
+            {
+                // ENOENT and ENOTDIR.
+                2 or 20 => new FileNotFoundException(message, path),
+                // EACCES and EPERM.
+                13 or 1 => new UnauthorizedAccessException(message),
+                _ => new IOException(message, error),
+            };
         }
 
-        return OperatingSystem.IsLinux() && PseudoFileSystem(path) is { } system ? $"a file of the kernel's {system} file system" : null;
+        return new FileStream(new SafeFileHandle(descriptor, ownsHandle: true), FileAccess.Read);
     }
 
-    private static int? Stat(string path)
+    // O_RDONLY (0) | O_NONBLOCK | O_CLOEXEC, from each system's fcntl.h. O_NONBLOCK does not
+    // change how a regular file is read.
+    private static int? Flags() =>
+        OperatingSystem.IsLinux() ? 0x800 | 0x80000
+        : OperatingSystem.IsMacOS() ? 0x4 | 0x1000000
+        : OperatingSystem.IsFreeBSD() ? 0x4 | 0x100000
+        : null;
+
+    // libc's open, looked up in the running process, which has loaded the C library on every Unix
+    // .NET runs on, whatever the library's file is called (glibc, musl, macOS's libSystem).
+    private static OpenFunction? FindOpen()
     {
-        try
-        {
-            return SystemNativeStat(path, out FileStatus status) == 0 ? status.Mode : null;
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        if (OperatingSystem.IsWindows() || Flags() is null)
         {
             return null;
         }
-    }
 
-    // System.Native is the runtime's own shim, present in every Unix build of .NET, framework-
-    // dependent, self-contained or single-file. libc's stat is not used because struct stat differs
-    // by platform and glibc before 2.33 exports no stat symbol. The shim is internal to .NET, so its
-    // answers for a known folder and a known regular file are checked once before it is trusted;
-    // without it, a FIFO is still caught after opening as a stream that cannot seek, if it has a
-    // writer.
-    private static bool CheckStat()
-    {
-        try
-        {
-            return Stat(AppContext.BaseDirectory) is { } folder && (folder & TypeMask) == Directory
-                && Environment.ProcessPath is { } process && Stat(process) is { } file && (file & TypeMask) == Regular;
-        }
-        catch (Exception ex) when (ex is MarshalDirectiveException or BadImageFormatException)
-        {
-            return false;
-        }
-    }
-
-    // statfs(2) on the path itself, which need not be a mount point.
-    private static string? PseudoFileSystem(string path)
-    {
-        try
-        {
-            string format = new DriveInfo(path).DriveFormat;
-            return PseudoFileSystems.Contains(format) ? format : null;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-        {
-            return null;
-        }
-    }
-
-    [DllImport("libSystem.Native", EntryPoint = "SystemNative_Stat")]
-    private static extern int SystemNativeStat([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out FileStatus status);
-
-    // Only Mode, after a 32-bit Flags field, is read. The size leaves room for the whole native
-    // struct (about 130 bytes in .NET 10) should it grow.
-    [StructLayout(LayoutKind.Explicit, Size = 256)]
-    private struct FileStatus
-    {
-        [FieldOffset(4)]
-        public int Mode;
+        return NativeLibrary.TryGetExport(NativeLibrary.GetMainProgramHandle(), "open", out IntPtr address)
+            ? Marshal.GetDelegateForFunctionPointer<OpenFunction>(address)
+            : null;
     }
 }

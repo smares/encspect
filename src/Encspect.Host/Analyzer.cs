@@ -26,26 +26,14 @@ public sealed class Analyzer
     public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats);
 
     // Anything that is not a regular file gets a report with a file.not-regular finding without
-    // being opened, since opening a FIFO blocks and a device can be read forever. A file that
-    // cannot be opened or read throws IOException or UnauthorizedAccessException.
+    // being read, since a FIFO blocks and a device can be read forever. A file that cannot be
+    // opened or read throws IOException or UnauthorizedAccessException.
     public Report AnalyzeFile(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
-        if (FileReports.NotRegular(path) is { } notRegular)
-        {
-            return notRegular;
-        }
-
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-        // Where the type could not be checked before opening, as on Windows: a pipe or a console.
-        if (!stream.CanSeek)
-        {
-            return FileReports.NotRegular(path, "a stream that cannot seek");
-        }
-
-        return Analyze(path, stream);
+        using FileStream? stream = FileType.Open(path, out string? notRegular);
+        return stream is null ? FileReports.NotRegular(path, notRegular!) : Analyze(path, stream);
     }
 
     // The format parser that would analyze the file, or null: the same tag scan and sniffing as
@@ -54,13 +42,8 @@ public sealed class Analyzer
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
-        if (FileType.DescribeNonRegular(path) is not null)
-        {
-            return null;
-        }
-
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (!stream.CanSeek)
+        using FileStream? stream = FileType.Open(path, out _);
+        if (stream is null)
         {
             return null;
         }
