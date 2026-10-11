@@ -315,7 +315,7 @@ public class CommandLineTests
         folder.Copy(Tagged, "a.mp3");
         string fifo = folder.MakeFifo("sub/pipe");
 
-        // A writer's open blocks until a reader comes, which the cleanup provides.
+        // A writer's open blocks until a reader comes: the analyzer's look at the FIFO or the cleanup.
         Task writer = withWriter ? Task.Run(() => File.WriteAllBytes(fifo, File.ReadAllBytes(Tagged))) : Task.CompletedTask;
         try
         {
@@ -328,22 +328,29 @@ public class CommandLineTests
                 Assert.Equal(3, lines.Length);
                 Assert.StartsWith(folder["a.mp3"] + ",MPEG Audio,", lines[1]);
                 Assert.Equal(fifo + ",,0,,,,,,,,,1,0,0", lines[2]);
-                Assert.Equal($"{fifo}: This is a named pipe (FIFO), not a regular file, so it was not read.{Environment.NewLine}", errors);
+                Assert.Equal($"{fifo}: This is a named pipe, socket or terminal, not a regular file, so it was not read.{Environment.NewLine}", errors);
             }
 
             Assert.Equal(CommandLine.UnreadableFile, text.Code);
-            Assert.Contains("[Error] file.not-regular: This is a named pipe (FIFO)", text.Output);
+            Assert.Contains("[Error] file.not-regular: This is a named pipe, socket or terminal", text.Output);
         }
         finally
         {
             if (withWriter)
             {
-                using (var reader = new FileStream(fifo, FileMode.Open, FileAccess.Read))
+                // Opened for reading and writing, a FIFO never blocks, and it lets a writer that is
+                // still waiting finish; the tagged file fits the pipe's buffer. A writer that the
+                // analyzer's look at the FIFO let through has lost its reader since: a broken pipe.
+                using (new FileStream(fifo, FileMode.Open, FileAccess.ReadWrite))
                 {
-                    reader.CopyTo(Stream.Null);
+                    try
+                    {
+                        await writer.WaitAsync(Timeout);
+                    }
+                    catch (IOException)
+                    {
+                    }
                 }
-
-                await writer;
             }
         }
     }
@@ -362,7 +369,7 @@ public class CommandLineTests
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Equal("/dev/zero,,0,,,,,,,,,1,0,0", lines[1]);
         Assert.Contains(",MPEG Audio,", lines[2]);
-        Assert.StartsWith("/dev/zero: This is a character device, not a regular file", errors);
+        Assert.StartsWith("/dev/zero: This is a device or kernel file that reports a size of 0 but yields data, not a regular file", errors);
     }
 
     [Fact]

@@ -16,13 +16,15 @@ public static class FileReports
 
     public static Report UnreadableFolder(string source, string message) => Create(source, UnreadableFolderCode, message);
 
-    // The report for a path that names a FIFO, a device, a socket, a folder or a kernel pseudo-
-    // file, found without opening it; null for a regular file.
+    // The report for a path that names a FIFO, a device, a socket, a folder or a kernel file,
+    // without reading it; null for a regular file. Throws IOException or
+    // UnauthorizedAccessException when the path cannot be opened.
     public static Report? NotRegular(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
-        return FileType.DescribeNonRegular(path) is { } kind ? NotRegular(path, kind) : null;
+        using FileStream? stream = FileType.Open(path, out string? kind);
+        return kind is not null ? NotRegular(path, kind) : null;
     }
 
     public static bool IsNotAnalyzed(Report report)
