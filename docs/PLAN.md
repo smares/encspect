@@ -177,8 +177,8 @@ GitHub Actions is the single source of truth for "does it build and pass on ever
 4. Install `lame`, `ffmpeg` and `flac`, generate fixtures, run integration tests and the cross-checks.
 5. Corrupt-file and fuzz smoke tests.
 6. Headless GUI tests using Avalonia's headless mode.
-7. Publish self-contained CLI and GUI builds for each target (`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-arm64`, and `osx-x64` if a runner or cross-build is available) and attach them to the run.
-8. On a version tag, create a release with those builds.
+7. Publish self-contained CLI and GUI builds for each target (`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-arm64`, and `osx-x64`), each on a runner of its own platform, and run them there.
+8. No public version until development ends: the repository is public, so builds are not attached to runs, and there is no release on a version tag yet. Both are added at the end.
 
 **Local checks.** Cloud sessions install the .NET SDK through a SessionStart hook (`scripts/install-dotnet.sh`), so the CI steps can be mirrored locally before pushing. CI still covers the platforms a session cannot run.
 
