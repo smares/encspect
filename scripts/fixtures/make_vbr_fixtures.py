@@ -29,7 +29,8 @@ import sys
 
 import make_mpeg_fixtures as mpeg
 import vbr_tags
-from make_layer3_fixtures import Bits, Granule, Layer3Frame
+import make_layer3_fixtures as layer3
+from make_layer3_fixtures import Bits, Granule, Layer3Fixture, Layer3Frame
 from make_mpeg_fixtures import Fixture, Frame
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "vbr"
@@ -68,6 +69,48 @@ class VbrFixture(Fixture):
         manifest["detected_encoder"] = self.encoder
         manifest.update(self.extra)
         return manifest
+
+
+class VbrLayer3Fixture(Layer3Fixture):
+    """A VBR header frame before Layer III frames whose main data the reservoir model follows
+    (make_layer3_fixtures.py), the header frame included."""
+
+    out = OUT
+
+    def __init__(self, name, description, encoder=None, silent=True, crosscheck=True):
+        super().__init__(name, description, crosscheck=crosscheck, silent=silent, guessenc=False)
+        self.encoder = encoder
+        self.headers = []
+
+    def add_stream(self, tag_frame, audio):
+        tag_frame.is_header = True
+        start = len(self.data)
+        self.add_frames([tag_frame] + audio)
+        frame_bytes = bytes(self.data[start : start + tag_frame.length()])
+        tag = vbr_tags.read(frame_bytes, bytes(self.data[start + tag_frame.length() :]))
+        tag_frame.tag_end = tag_end(tag)
+        entry = self.frames[-len(audio) - 1]
+        entry["fields"].update(vbr_tags.report_fields(tag))
+        tag["frame_offset"] = start
+        self.layout[-len(audio) - 1]["header"] = tag
+        self.headers.append(tag)
+        for code, contains in vbr_tags.findings(tag, start):
+            self.finding(code, contains)
+        return self
+
+    def manifest(self):
+        manifest = super().manifest()
+        manifest["vbr_header"] = self.headers[0] if self.headers else None
+        manifest["detected_encoder"] = self.encoder
+        return manifest
+
+
+def tag_end(tag):
+    """Where the analyzer's VBR header nodes end in the frame, before what is unused."""
+    if tag["type"] == "VBRI":
+        return vbr_tags.VBRI_OFFSET + 26 + len(tag["toc"]) * tag["entry_size"]
+    assert "lame" in tag, "only VBRI and LAME tags are placed in a reservoir chain here"
+    return tag["lame"]["offset"] + vbr_tags.LAME_TAG_SIZE
 
 
 FIXTURES = []
@@ -129,7 +172,7 @@ def xing_frame(audio, tag_id="Xing", bitrate=128, fields="FBTQ", quality=57, fra
     return frame
 
 
-def vbri_frame(audio, bitrate, entry_size=2, toc_scale=1, frames_per_entry=1, delay=1105, quality=75, entries=None):
+def vbri_frame(audio, bitrate, entry_size=2, toc_scale=1, frames_per_entry=1, delay=1105, quality=75, entries=None, version=1):
     a = audio[0]
     frame = Frame(version=a.version, layer=3, bitrate=bitrate, rate=a.rate, mode=a.mode)
     lengths = [f.length() for f in audio]
@@ -137,7 +180,7 @@ def vbri_frame(audio, bitrate, entry_size=2, toc_scale=1, frames_per_entry=1, de
     if entries is not None:
         segments = (segments * (entries // len(segments) + 1))[:entries]
     # Fraunhofer's encoders count the VBRI frame itself, as mp3guessenc notes.
-    data = vbr_tags.vbri_bytes(delay=delay, quality=quality, byte_count=frame.length() + sum(lengths), frames=len(audio) + 1,
+    data = vbr_tags.vbri_bytes(version=version, delay=delay, quality=quality, byte_count=frame.length() + sum(lengths), frames=len(audio) + 1,
                                toc=segments, toc_scale=toc_scale, entry_size=entry_size, frames_per_entry=frames_per_entry)
     put(frame, vbr_tags.VBRI_OFFSET, data)
     return frame
@@ -325,6 +368,61 @@ def lame_mid_stream():
     return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
 
 
+@fixture
+def lame_music_length_short():
+    audio = mpeg.stream(6, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-music-length-short", "A LAME tag whose music length is 0, shorter than its own frame, as when the "
+                   "encoder could not fill it in: the music CRC is not verified.", encoder=encoder("LAME 3.100", "High"))
+    return f.add_stream(xing_frame(audio, tag_id="Info", lame=dict(LAME_CBR, music_length=0), music_crc=0), audio)
+
+
+@fixture
+def lame_old_gain_reference():
+    audio = vbr_audio([128, 160, 96, 192, 128, 112], rate=44100, mode="Joint stereo")
+    lame = dict(LAME_VBR, encoder="LAME3.94", radio_gain=vbr_tags.gain(1, 3, -5.2), audiophile_gain=vbr_tags.gain(2, 2, 1.0))
+    f = VbrFixture("lame-old-gain-reference", "A LAME 3.94 tag with ReplayGain it determined itself: before 3.95, LAME computed "
+                   "it against 83 dB instead of 89 dB, so the gain reads 6 dB lower than a later version's, which the report "
+                   "says. The audiophile gain, set by the user, is shown as stored.", encoder=encoder("LAME 3.94", "High"))
+    return f.add_stream(xing_frame(audio, lame=lame), audio)
+
+
+# The Info frame of an MPEG-1 joint stereo frame at 128 kbps holds 381 bytes after its side
+# information, 156 of them the Xing fields and the LAME tag.
+INFO_AREA = 381
+
+
+@fixture
+def main_data_in_header_frame():
+    f = VbrLayer3Fixture(
+        "main-data-in-header-frame",
+        "An Info frame with a LAME tag before frames whose first main_data_begin is 200, as ffmpeg -ss -c copy writes a "
+        "cut: its main data begins in the Info frame's unused bytes. minimp3 decodes it from them, mpg123 and ffmpeg skip "
+        "the Info frame, so the frame is decoded with data missing.",
+        encoder=encoder("LAME 3.100", "High"), silent=False, crosscheck=False,
+    )
+    chain = layer3.reservoir_chain([(0, 0), (300, 200), (100, 0), (250, 50), (80, 0), (120, 0)])
+    assert chain[0].area_length() == INFO_AREA and chain[0].length() == 417
+    audio = chain[1:]
+    info = xing_frame(audio, tag_id="Info", lame=LAME_CBR)
+    start, tag = info.payload
+    reservoir = bytes(chain[0].area[INFO_AREA - 200 :])
+    info.payload = (start, tag + bytes(INFO_AREA - 200 - len(tag)) + reservoir)
+    return f.add_stream(info, audio)
+
+
+@fixture
+def main_data_before_header_frame():
+    f = VbrLayer3Fixture(
+        "main-data-before-header-frame",
+        "An Info frame with a LAME tag before frames whose first main_data_begin is 450, more than the Info frame's 381 "
+        "bytes: the main data begins before the stream, which was cut.",
+        encoder=encoder("LAME 3.100", "High"), silent=False, crosscheck=False,
+    )
+    chain = layer3.reservoir_chain([(0, 0), (0, 381), (300, 450), (100, 0), (250, 50), (80, 0), (120, 0)])
+    audio = chain[2:]
+    return f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_CBR), audio)
+
+
 # --- VBRI -------------------------------------------------------------------------------------
 
 
@@ -367,6 +465,34 @@ def vbri_truncated():
     f = VbrFixture("vbri-truncated", "A VBRI header whose TOC announces 200 entries of 2 bytes, more than the 417-byte frame "
                    "holds.", encoder=encoder("Fraunhofer", "High"))
     return f.add_stream(vbri_frame(audio, bitrate=128, entries=200), audio)
+
+
+@fixture
+def vbri_entry_size_invalid():
+    audio = vbr_audio([128, 160, 96, 192, 112, 128], rate=44100, mode="Stereo")
+    f = VbrFixture("vbri-entry-size-invalid", "A VBRI header with 5-byte TOC entries; Fraunhofer's reader knows 1 to 4 bytes, so "
+                   "the TOC is not read, although it fits the frame.", encoder=encoder("Fraunhofer", "High"))
+    return f.add_stream(vbri_frame(audio, bitrate=128, entry_size=5), audio)
+
+
+@fixture
+def vbri_version_unknown():
+    audio = vbr_audio([128, 160, 96, 192, 112, 128], rate=44100, mode="Stereo")
+    f = VbrFixture("vbri-version-unknown", "A VBRI header of version 7, where only version 1 is known; ffmpeg ignores the header.",
+                   encoder=encoder("Fraunhofer", "High"))
+    return f.add_stream(vbri_frame(audio, bitrate=128, version=7), audio)
+
+
+@fixture
+def vbri_mp3pro():
+    f = VbrLayer3Fixture(
+        "vbri-mp3pro",
+        "A VBRI header before twelve MPEG-2 frames at 22050 Hz with the mp3PRO signature in their ancillary data: "
+        "Fraunhofer's mp3PRO encoder.",
+        encoder=encoder("Fraunhofer mp3PRO encoder", "High"),
+    )
+    audio = layer3.enhanced_chain(layer3.signatures(12, 0xC0, 0x08), **layer3.MP3PRO)
+    return f.add_stream(vbri_frame(audio, bitrate=64), audio)
 
 
 # --- Encoder names in ancillary data ----------------------------------------------------------

@@ -20,7 +20,8 @@ public sealed partial class MpegAudioParser : IFormatParser
     public int Sniff(ByteReader reader)
     {
         var blocks = new BlockReader(reader);
-        long limit = Math.Min(reader.End, reader.Start + SniffLimit);
+        // Zero bytes before the audio are common padding and cheap to skip.
+        long limit = Math.Min(reader.End, ZeroRunEnd(blocks, reader.Start, reader.End) + SniffLimit);
         return FindStreamStart(blocks, reader.Start, limit, reader.End, out _) >= 0 ? 90 : 0;
     }
 
@@ -76,7 +77,27 @@ public sealed partial class MpegAudioParser : IFormatParser
             {
                 if (header.IsSameStream(current))
                 {
-                    Entry frame = AddFrame(state, entries, at, end, header, freeLength);
+                    // A header is only taken as a frame while a frame follows it. Otherwise a
+                    // free-format stream may have changed its frame length, or a stream that starts
+                    // inside the frame cuts it short, where it was cut or its header is damaged.
+                    long frameEnd = at + header.FrameLength(freeLength);
+                    long frameLimit = end;
+                    if (frameEnd < end && !StartsFrame(blocks, frameEnd, header, end))
+                    {
+                        if (header.IsFreeFormat && FindStreamStart(blocks, at, at + 1, end, out int changed) == at && changed != freeLength)
+                        {
+                            int previous = freeLength;
+                            freeLength = changed;
+                            findings.Add(Severity.Warning, "mpeg.free-format-length-changed", new Node("Frame", at, header.FrameLength(changed), header.Summary), count =>
+                                $"The free-format frame length changes {Times(count)}, first from {previous} to {changed} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
+                        }
+                        else if (FindStreamStart(blocks, at + 1, frameEnd, end, out _) is var cut and >= 0)
+                        {
+                            frameLimit = cut;
+                        }
+                    }
+
+                    Entry frame = AddFrame(state, entries, at, frameLimit, header, freeLength, frameLimit < end);
                     if (header.ChannelModeBits != current.ChannelModeBits)
                     {
                         findings.Add(Severity.Info, "mpeg.channel-mode-changed", FindingNode(frame), count =>
@@ -94,8 +115,8 @@ public sealed partial class MpegAudioParser : IFormatParser
                     freeLength = newFreeLength;
                     stream = header;
                     Entry frame = AddFrame(state, entries, at, end, header, freeLength);
-                    findings.Add(Severity.Warning, "mpeg.stream-changed", FindingNode(frame), count =>
-                        $"The stream changes {Times(count)}, first from {current.StreamName} to {header.StreamName} at 0x{at:X}.");
+                    StreamChanged(current, header, FindingNode(frame));
+                    FreeFormat(header, freeLength);
                     position = frame.End;
                     frames++;
                     continue;
@@ -116,16 +137,30 @@ public sealed partial class MpegAudioParser : IFormatParser
 
             position = next;
             blocks.TryReadUInt32(position, out uint first);
-            stream = new MpegHeader(first);
-            freeLength = foundFreeLength;
-            if (stream.Value.IsFreeFormat)
+            var found = new MpegHeader(first);
+            if (stream is { } before && !found.IsSameStream(before))
             {
-                findings.Add(Severity.Info, "mpeg.free-format", null, _ =>
-                    $"The stream is free format: frames of {foundFreeLength} bytes plus padding.");
+                StreamChanged(before, found, new Node("Frame", next, found.FrameLength(foundFreeLength), found.Summary));
             }
+
+            stream = found;
+            freeLength = foundFreeLength;
+            FreeFormat(found, foundFreeLength);
         }
 
         region.Value = $"{frames} frames";
+
+        void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
+            findings.Add(Severity.Warning, "mpeg.stream-changed", node, count =>
+                $"The stream changes {Times(count)}, first from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}.");
+
+        void FreeFormat(MpegHeader header, int length)
+        {
+            if (header.IsFreeFormat)
+            {
+                findings.Add(Severity.Info, "mpeg.free-format", null, _ => $"The stream is free format: frames of {length} bytes plus padding.");
+            }
+        }
 
         void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
         {
@@ -134,8 +169,7 @@ public sealed partial class MpegAudioParser : IFormatParser
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
             {
-                bool zero = Enumerable.Range(0, (int)Math.Min(length, 1 << 20)).All(i => blocks.ByteAt(gapStart + i) == 0);
-                string what = zero ? " (all zero bytes)" : string.Empty;
+                string what = ZeroRunEnd(blocks, gapStart, gapEnd) == gapEnd ? " (all zero bytes)" : string.Empty;
                 findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{length} bytes before the first frame are not audio{what}.", GapNode(gap));
             }
             else if (leading)
@@ -155,7 +189,8 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     // Records the frame at position, with what checking it needs the bytes for, and reports its
     // problems. Its nodes are built from the record when the report is read.
-    private static Entry AddFrame(StreamState state, List<Entry> entries, long position, long end, MpegHeader header, int freeLength)
+    // A cut frame ends where the next frame starts, before the length its header gives.
+    private static Entry AddFrame(StreamState state, List<Entry> entries, long position, long end, MpegHeader header, int freeLength, bool isCut = false)
     {
         (BlockReader blocks, FindingCollector findings) = (state.Blocks, state.Findings);
         int length = header.FrameLength(freeLength);
@@ -177,6 +212,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         }
 
         Layer2Record? layer2 = header.Layer == 2 ? ReadLayer2(blocks, position, available, length, header, ref computed, findings) : null;
+        byte[]? layer1 = header.Layer == 1 ? ReadLayer1(blocks, position, available, length, header, findings) : null;
         byte[]? vbrFrame = HasVbrMagic(blocks, position, available, header) ? blocks.Read(position, (int)available) : null;
         VbrHeader? vbr = vbrFrame is null ? null : VbrHeader.TryRead(vbrFrame, header);
         vbrFrame = vbr is null ? null : vbrFrame;
@@ -201,10 +237,9 @@ public sealed partial class MpegAudioParser : IFormatParser
         }
         else if (vbr is not null && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
         {
-            // A VBR header frame is a valid frame without main data, so decoders that do not skip it
-            // keep its bytes in the bit reservoir (ISO/IEC 11172-3 2.4.2.7).
             long dataOffset = sideInfoOffset + Layer3SideInfo.Size(header);
-            state.Reservoir.Add(header, position, position + available, dataOffset, (int)(position + available - dataOffset), 0, 0, available < length);
+            state.Reservoir.Add(header, position, position + available, dataOffset, (int)(position + available - dataOffset), 0, 0, available < length,
+                isHeaderFrame: true);
         }
         else
         {
@@ -212,7 +247,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         }
 
         var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier, fill, layer2, vbrFrame,
-            available < length);
+            available < length, layer1);
         entries.Add(frame);
         if (vbr is not null)
         {
@@ -234,6 +269,14 @@ public sealed partial class MpegAudioParser : IFormatParser
                 $"{Frames(count)} use the reserved emphasis value, the first at 0x{position:X}.");
         }
 
+        // MPEG 2.5 is Fraunhofer's extension of Layer III; mpg123, libmad and ffmpeg decode the
+        // other layers at its rates all the same.
+        if (header.VersionBits == 0 && header.Layer != 3)
+        {
+            findings.Add(Severity.Warning, "mpeg.mpeg25-layer", FindingNode(frame), count =>
+                $"{Frames(count)} are MPEG-2.5 Layer {header.LayerName}, which no standard defines: MPEG 2.5 extends only Layer III. The first at 0x{position:X}.");
+        }
+
         if (!header.IsLayer2BitrateModeAllowed)
         {
             findings.Add(Severity.Warning, "mpeg.bitrate-mode-not-allowed", FindingNode(frame), count =>
@@ -250,7 +293,12 @@ public sealed partial class MpegAudioParser : IFormatParser
             }
         }
 
-        if (available < length)
+        if (available < length && isCut)
+        {
+            findings.Add(Severity.Warning, "mpeg.frame-cut", FindingNode(frame), count =>
+                $"{Frames(count)} end where the next frame starts, before the length their header gives: the frame was cut or its header is damaged. The first at 0x{position:X} has {available} of its {length} bytes.");
+        }
+        else if (available < length)
         {
             findings.AddNow(Severity.Warning, "mpeg.frame-truncated", $"The last frame at 0x{position:X} has {available} of its {length} bytes.", FindingNode(frame));
         }
@@ -330,7 +378,14 @@ public sealed partial class MpegAudioParser : IFormatParser
         if (frame.VbrFrame is not null)
         {
             VbrHeader vbr = VbrHeader.TryRead(frame.VbrFrame, header)!;
-            children.AddRange(vbr.ToNodes(position, (int)(dataStart - position), build.MusicCrcs.TryGetValue(position, out int crc) ? crc : null));
+            List<Node> nodes = vbr.ToNodes(position, (int)(dataStart - position), build.MusicCrcs.TryGetValue(position, out int crc) ? crc : null);
+            if (nodes[^1] is { Name: "Unused" } unused)
+            {
+                nodes.RemoveAt(nodes.Count - 1);
+                nodes.AddRange(ReservoirPieces(unused.Offset, unused.End, build.Runs, "Unused"));
+            }
+
+            children.AddRange(nodes);
         }
         else if (frame.SideInfo is not null)
         {
@@ -341,12 +396,54 @@ public sealed partial class MpegAudioParser : IFormatParser
         {
             AddLayer2(children, frame, header, layer2, build.HasMultichannel);
         }
+        else if (frame.Layer1 is { } layer1)
+        {
+            var audio = Layer1AudioData.Read(layer1, header);
+            children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
+            long ancillary = frame.Offset + ((audio.End + 7) / 8);
+            if (frame.End > ancillary)
+            {
+                children.Add(new Node("Ancillary Data", ancillary, frame.End - ancillary, $"{frame.End - ancillary} bytes"));
+            }
+        }
         else if (frame.End > dataStart)
         {
             children.Add(new Node("Data", dataStart, frame.End - dataStart, $"{frame.End - dataStart} bytes"));
         }
 
         return children;
+    }
+
+    // The bytes from start to end in the main data of later frames, as "Bit Reservoir" nodes, and
+    // the bytes between them as nodes named rest.
+    private static IEnumerable<Node> ReservoirPieces(long start, long end, List<MainDataRun> runs, string rest)
+    {
+        long cursor = start;
+        int low = 0;
+        int high = runs.Count;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            (low, high) = runs[middle].End <= start ? (middle + 1, high) : (low, middle);
+        }
+
+        for (int i = low; i < runs.Count && runs[i].Offset < end; i++)
+        {
+            long from = Math.Max(runs[i].Offset, start);
+            long to = Math.Min(runs[i].End, end);
+            if (from > cursor)
+            {
+                yield return new Node(rest, cursor, from - cursor, $"{from - cursor} bytes");
+            }
+
+            yield return new Node("Bit Reservoir", from, to - from, $"{to - from} bytes of the main data of the frame at 0x{runs[i].Owner:X}");
+            cursor = to;
+        }
+
+        if (end > cursor)
+        {
+            yield return new Node(rest, cursor, end - cursor, $"{end - cursor} bytes");
+        }
     }
 
     // Splits a Layer III frame's bytes after the side information by owner: its own main data,
@@ -397,13 +494,47 @@ public sealed partial class MpegAudioParser : IFormatParser
         }
     }
 
+    // Reads a Layer I frame's audio data and reports what breaks ISO/IEC 11172-3 in it.
+    private static byte[]? ReadLayer1(BlockReader blocks, long position, long available, int length, MpegHeader header, FindingCollector findings)
+    {
+        byte[] bytes = blocks.Read(position, (int)available);
+        var audio = Layer1AudioData.Read(bytes, header);
+        if (audio.SampleStart > bytes.Length * 8)
+        {
+            return null;
+        }
+
+        foreach ((int ch, int sb) in audio.Coded().Where(c => audio.Allocation[c.Channel, c.Subband] == Layer1AudioData.ForbiddenAllocation).Take(1))
+        {
+            int bit = audio.AllocationBit[ch, sb];
+            findings.Add(Severity.Warning, "mpeg.allocation-forbidden", Layer2AudioData.Span("Bit Allocation", position, bit, bit + 4), count =>
+                $"{Frames(count)} use the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at 0x{position:X}.");
+        }
+
+        foreach ((int ch, int sb) in Enumerable.Range(0, audio.Channels).SelectMany(ch => Enumerable.Range(0, Layer1AudioData.Subbands).Select(sb => (ch, sb)))
+            .Where(c => audio.Scalefactor[c.ch, c.sb] == 63).Take(1))
+        {
+            int bit = audio.ScalefactorBit[ch, sb];
+            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", Layer2AudioData.Span("Scalefactors", position, bit, bit + 6), count =>
+                $"{Frames(count)} use scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x{position:X}.");
+        }
+
+        if (audio.End > bytes.Length * 8 && available == length)
+        {
+            findings.Add(Severity.Warning, "mpeg.audio-data-overflow", new Node("Frame", position, available), count =>
+                $"{Frames(count)} need more bits for their Layer I audio data than they hold, the first at 0x{position:X}.");
+        }
+
+        return bytes[..Math.Min(bytes.Length, (audio.SampleStart + 7) / 8)];
+    }
+
     // Reads a Layer II frame's audio data, verifies its CRC over the header bits, the bit allocation
     // and scfsi (ISO/IEC 11172-3 2.4.3.1), and reads a multichannel candidate after the samples.
     private static Layer2Record? ReadLayer2(BlockReader blocks, long position, long available, int length, MpegHeader header,
         ref int computed, FindingCollector findings)
     {
         byte[] bytes = blocks.Read(position, (int)available);
-        var audio = Layer2AudioData.Read(bytes, header, length);
+        var audio = Layer2AudioData.Read(bytes, header);
         if (audio.SampleStart > bytes.Length * 8)
         {
             return null;
@@ -427,20 +558,20 @@ public sealed partial class MpegAudioParser : IFormatParser
         if (audio.End > bytes.Length * 8 && available == length)
         {
             findings.Add(Severity.Warning, "mpeg.audio-data-overflow", new Node("Frame", position, available), count =>
-                $"{Frames(count)} need more bits for their Layer II audio data than they hold, the first at 0x{position:X}.");
+                $"{Frames(count)} need more bits for their Layer {header.LayerName} audio data than they hold, the first at 0x{position:X}.");
         }
 
         byte[] audioBytes = bytes[..Math.Min(bytes.Length, (audio.SampleStart + 7) / 8)];
         if (!header.IsMpeg1 || header.IsMono || available < length || audio.End + 32 > bytes.Length * 8)
         {
-            return new Layer2Record(audioBytes, length, null, 0, 0, 0) { UndefinedScalefactor = undefined };
+            return new Layer2Record(audioBytes, null, 0, 0, 0) { UndefinedScalefactor = undefined };
         }
 
         int[,] baseAllocation = BaseAllocation(audio);
         var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, baseAllocation, header.SampleRate);
         int first = audio.End / 8;
         int last = Math.Min(bytes.Length, (Math.Max(mc.SideInfoEnd, mc.CrcBit + 16) + 7) / 8);
-        return new Layer2Record(audioBytes, length, bytes[first..last], audio.End - (first * 8), (bytes.Length - first) * 8, position + first)
+        return new Layer2Record(audioBytes, bytes[first..last], audio.End - (first * 8), (bytes.Length - first) * 8, position + first)
         {
             UndefinedScalefactor = undefined,
         };
@@ -460,17 +591,20 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     private static Layer2Multichannel ReadMultichannel(Layer2Record record, MpegHeader header) =>
         Layer2Multichannel.Read(record.Multichannel!, record.McStart, record.McEnd,
-            BaseAllocation(Layer2AudioData.Read(record.Audio, header, record.FrameLength)), header.SampleRate);
+            BaseAllocation(Layer2AudioData.Read(record.Audio, header)), header.SampleRate);
 
     // The ancillary data of MPEG-1 Layer II frames carries the multichannel extension only by
-    // convention, so a file counts as multichannel once two frames' multichannel CRCs hold;
-    // random ancillary data passes a 16-bit CRC once in 65,536 frames. Where every frame's side
-    // information continues in an extension bitstream, no CRC can be checked: the same header in
-    // nearly every frame is then reported as a possible extension, not as one.
+    // convention, so a file counts as multichannel once at least two frames' multichannel CRCs
+    // hold, and at least half of those whose side information fits the frame: random ancillary
+    // data passes a 16-bit CRC about once in 65,536 frames, so a long file passes it a few times
+    // by chance. Where every frame's side information continues in an extension bitstream, no CRC
+    // can be checked: the same header in nearly every frame is then reported as a possible
+    // extension, not as one.
     private static void DecideMultichannel(StreamState state)
     {
         var read = state.Candidates.Select(e => (Frame: e, Mc: ReadMultichannel(e.Layer2!, new MpegHeader(e.Header)))).ToList();
-        if (read.Count(r => r.Mc.IsCrcValid) < 2)
+        int verified = read.Count(r => r.Mc.IsCrcValid);
+        if (verified < 2 || verified * 2 < read.Count(r => r.Mc.Fits))
         {
             var continued = read.Where(r => !r.Mc.Fits && r.Mc.HasExtension).ToList();
             if (continued.Count >= 2 && continued.Count * 10 >= read.Count * 9 && continued.Select(r => r.Mc.HeaderKey).Distinct().Count() == 1)
@@ -487,6 +621,12 @@ public sealed partial class MpegAudioParser : IFormatParser
         foreach ((Entry frame, Layer2Multichannel mc) in read)
         {
             Node node = FindingNode(frame);
+            if (mc.Center == 2)
+            {
+                state.Findings.Add(Severity.Warning, "mpeg.multichannel-center-reserved", node, count =>
+                    $"{Frames(count)} use the reserved center value in their multichannel header, read as no center, the first at 0x{frame.Offset:X}.");
+            }
+
             if (mc.Fits && !mc.IsCrcValid)
             {
                 state.Findings.Add(Severity.Warning, "mpeg.multichannel-crc-mismatch", node, count =>
@@ -507,7 +647,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     private static void AddLayer2(List<Node> children, Entry frame, MpegHeader header, Layer2Record record, bool hasMultichannel)
     {
-        var audio = Layer2AudioData.Read(record.Audio, header, record.FrameLength);
+        var audio = Layer2AudioData.Read(record.Audio, header);
         children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
         long end = frame.End;
         if (hasMultichannel && record.Multichannel is not null)
@@ -594,6 +734,10 @@ public sealed partial class MpegAudioParser : IFormatParser
                 findings.Add(Severity.Warning, "mpeg.main-data-overlap", frame, count =>
                     $"{Frames(count)} have main data that overlaps the previous frame's, the first at 0x{position:X}; frames are probably missing.");
                 break;
+            case MainDataProblem.InHeaderFrame:
+                findings.Add(Severity.Warning, "mpeg.main-data-in-vbr-header-frame", frame, count =>
+                    $"{Frames(count)} have main data that reaches back into the Xing, Info or VBRI header frame before them, the first at 0x{position:X}. minimp3 decodes them from its bytes, mpg123 and ffmpeg skip that frame and decode them with data missing; the stream was probably cut and the header frame written afterwards.");
+                break;
             case MainDataProblem.AcrossGap:
                 findings.Add(Severity.Warning, "mpeg.reservoir-across-gap", frame, count =>
                     $"{Frames(count)} take main data from before a gap, the first at 0x{position:X}; decoders differ on whether it is still there.");
@@ -638,8 +782,27 @@ public sealed partial class MpegAudioParser : IFormatParser
         return -1;
     }
 
-    // Possible unpadded lengths of a free-format frame: distances to later headers of the same
-    // stream. For other frames the length comes from the header, so there is one dummy value.
+    // Whether a frame starts at position: a header of the same stream, or a new stream.
+    private static bool StartsFrame(BlockReader blocks, long position, MpegHeader stream, long end) =>
+        blocks.TryReadUInt32(position, out uint raw) && new MpegHeader(raw) is { IsValid: true } next
+        && (next.IsSameStream(stream) || FindStreamStart(blocks, position, position + 1, end, out _) == position);
+
+    // Where the run of zero bytes from start ends, at most at end.
+    private static long ZeroRunEnd(BlockReader blocks, long start, long end)
+    {
+        long position = start;
+        while (position < end && blocks.ByteAt(position) == 0)
+        {
+            position++;
+        }
+
+        return position;
+    }
+
+    // The possible unpadded length of a free-format frame: the distance to the next header of the
+    // same stream, as mpg123 finds it, if that leaves room for what every frame holds, in whole
+    // slots. Data with a header every few bytes would otherwise chain at any multiple of its
+    // period. For other frames the length comes from the header, so there is one dummy value.
     private static IEnumerable<int> FreeLengths(BlockReader blocks, long position, MpegHeader header, long end)
     {
         if (!header.IsFreeFormat)
@@ -654,7 +817,13 @@ public sealed partial class MpegAudioParser : IFormatParser
             if (blocks.ByteAt(next) == 0xFF && blocks.TryReadUInt32(next, out uint raw)
                 && new MpegHeader(raw) is { IsValid: true } candidate && candidate.IsSameStream(header))
             {
-                yield return (int)(next - position) - (header.Padding * header.SlotSize);
+                int length = (int)(next - position) - (header.Padding * header.SlotSize);
+                if (length >= header.MinimumLength && length % header.SlotSize == 0)
+                {
+                    yield return length;
+                }
+
+                yield break;
             }
         }
     }
@@ -696,8 +865,9 @@ public sealed partial class MpegAudioParser : IFormatParser
     // long its main data is and how much of it lies in earlier frames; ReservoirFill, the bytes
     // in the bit reservoir when the frame starts. VbrFrame holds the bytes of a frame that carries
     // a Xing, Info or VBRI header, which is not audio. IsTruncated marks a frame the data ends inside.
+    // Layer1 holds a Layer I frame's bytes up to its samples.
     private readonly record struct Entry(long Offset, long Length, uint Header, int Crc, int ComputedCrc, byte[]? SideInfo,
-        int MainDataLength, int Earlier, int ReservoirFill, Layer2Record? Layer2, byte[]? VbrFrame, bool IsTruncated)
+        int MainDataLength, int Earlier, int ReservoirFill, Layer2Record? Layer2, byte[]? VbrFrame, bool IsTruncated, byte[]? Layer1 = null)
     {
         public bool IsGap => Header == 0;
 
@@ -745,7 +915,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     // A Layer II frame's bytes up to its scalefactors, and the bytes of a multichannel candidate:
     // McStart and McEnd in bits within Multichannel, which starts at McOffset in the file.
-    private sealed record Layer2Record(byte[] Audio, int FrameLength, byte[]? Multichannel, int McStart, int McEnd, long McOffset)
+    private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, int McStart, int McEnd, long McOffset)
     {
         // The first scalefactor with index 63, which Table B.1 leaves undefined, if any.
         public Node? UndefinedScalefactor { get; init; }

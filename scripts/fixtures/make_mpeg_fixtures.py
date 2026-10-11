@@ -97,6 +97,52 @@ def crc16(data, crc=0xFFFF):
     return crc
 
 
+class Layer1Audio:
+    """Layer I audio data (ISO/IEC 11172-3 2.4.1.5): allocation[ch][sb] (one row above the joint
+    stereo bound), a scalefactor per allocated subband and channel, and twelve samples of
+    allocation + 1 bits coded as zero, then ancillary bytes. Allocation 15 is forbidden; mpg123
+    reads it as 16-bit samples, which the analyzer follows."""
+
+    def __init__(self, allocation, scalefactors=None, ancillary=b""):
+        self.allocation, self.scalefactors, self.ancillary = allocation, scalefactors or {}, ancillary
+
+    def payload(self, mode, mode_ext):
+        channels = 1 if mode == "Mono" else 2
+        bound = (mode_ext + 1) * 4 if mode == "Joint stereo" else 32
+        bits, fields = [], {}
+
+        def put(value, count):
+            bits.extend((value >> (count - 1 - i)) & 1 for i in range(count))
+
+        def alloc(ch, sb):
+            return self.allocation[ch if sb < bound else 0][sb]
+
+        for sb in range(32):
+            coded = channels if sb < bound else 1
+            for ch in range(coded):
+                put(alloc(ch, sb), 4)
+                value = alloc(ch, sb)
+                name = "Channels 0 and 1" if coded < channels else f"Channel {ch}"
+                fields[f"Bit Allocation/Subband {sb}/{name}"] = "None" if value == 0 else "Forbidden" if value == 15 else f"{value + 1} bits per sample"
+        for sb in range(32):
+            for ch in range(channels):
+                if alloc(ch, sb):
+                    value = self.scalefactors.get((ch, sb), (sb * 5 + ch * 3) % 63)
+                    put(value, 6)
+                    fields[f"Scalefactors/Subband {sb}/Channel {ch}"] = str(value)
+        sample_start = len(bits)
+        for _ in range(12):
+            for sb in range(32):
+                for ch in range(channels if sb < bound else 1):
+                    n = alloc(ch, sb)
+                    if n:
+                        put((1 << n) - 1, n + 1)
+        fields["Samples"] = f"{len(bits) - sample_start} bits"
+        bits.extend([0] * (-len(bits) % 8))
+        data = bytes(int("".join(map(str, bits[i:i + 8])), 2) for i in range(0, len(bits), 8))
+        return data, fields
+
+
 def mode_extension_name(layer, mode, mode_ext):
     if mode != "Joint stereo":
         return None
@@ -115,6 +161,7 @@ class Frame:
         self.padding, self.mode, self.mode_ext, self.protected = padding, mode, mode_ext, protected
         self.private, self.copyright, self.original, self.emphasis = private, copyright, original, emphasis
         self.bad_crc, self.free_length, self.payload = bad_crc, free_length, payload
+        self.audio_fields = {}
 
     def header(self):
         index = 0 if self.bitrate is None else bitrate_table(self.version, self.layer).index(self.bitrate)
@@ -139,7 +186,14 @@ class Frame:
     def bytes(self):
         header = self.header()
         body = bytearray(self.length() - 4 - (2 if self.protected else 0))
-        if self.payload is not None:
+        if isinstance(self.payload, Layer1Audio):
+            # Everything after the samples is ancillary data.
+            data, self.audio_fields = self.payload.payload(self.mode, self.mode_ext)
+            if len(body) > len(data):
+                self.audio_fields["Ancillary Data"] = f"{len(body) - len(data)} bytes"
+            data = (data + self.payload.ancillary)[: len(body)]
+            body[: len(data)] = data
+        elif self.payload is not None:
             offset, data = self.payload
             body[offset : offset + len(data)] = data
         if not self.protected:
@@ -172,6 +226,7 @@ class Frame:
         if self.protected:
             fields["CRC"] = f"0x{self.crc:04X}"
             fields["CRC/Computed"] = f"0x{self.crc ^ (0x0001 if self.bad_crc else 0):04X}"
+        fields.update(self.audio_fields)
         return fields
 
 
@@ -287,12 +342,15 @@ class Fixture:
         self.audio_start = None
 
     def add_frames(self, frames, truncate_last=None):
+        """Adds frames; a frame with a cut_to attribute keeps only that many bytes, where the next
+        frame starts."""
         self.begin_audio()
         for i, frame in enumerate(frames):
             data = frame.bytes()
             entry = {"offset": len(self.data), "length": len(data), "fields": frame.fields()}
-            if truncate_last is not None and i == len(frames) - 1:
-                data = data[:truncate_last]
+            cut = truncate_last if truncate_last is not None and i == len(frames) - 1 else getattr(frame, "cut_to", None)
+            if cut is not None:
+                data = data[:cut]
                 entry["length"] = len(data)
                 entry["truncated"] = True
             self.frames.append(entry)
@@ -477,6 +535,86 @@ def free_format():
     return f.finding("mpeg.free-format", "1440")
 
 
+@fixture
+def mpeg25_layer2():
+    f = Fixture(
+        "mpeg25-layer2-mono",
+        ".mp2",
+        "MPEG-2.5 Layer II mono at 8000 Hz and 64 kbps. MPEG 2.5 is Fraunhofer's extension of Layer III only, so no "
+        "standard defines these frames; decoders play them, and they are reported.",
+        crosscheck="madplay",
+    )
+    f.add_frames(stream(6, version="2.5", layer=2, bitrate=64, rate=8000, mode="Mono"))
+    return f.finding("mpeg.mpeg25-layer", "Layer II")
+
+
+@fixture
+def free_format_period():
+    f = Fixture(
+        "free-format-period-4",
+        ".mp3",
+        "The free-format header FF FB 00 00 repeated 1000 times. The next header is 4 bytes on, too close for a "
+        "frame's header and side information, so there is no frame, as mpg123, libmad and ffmpeg find.",
+        crosscheck=False,
+    )
+    f.data += bytes.fromhex("FFFB0000") * 1000
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    return f.finding("format.unrecognized", "No format parser")
+
+
+# --- Layer I audio data ------------------------------------------------------------------------
+
+
+@fixture
+def layer1_audio_data():
+    f = Fixture(
+        "mpeg1-layer1-audio-data",
+        ".mp1",
+        "MPEG-1 Layer I joint stereo at 48000 Hz and 256 kbps (bound 8) with CRC, allocations below and above the "
+        "bound, scalefactors, zero-coded samples and ancillary text; the third frame uses scalefactor index 63, which "
+        "Table B.1 does not define.",
+    )
+    frames = []
+    for i in range(6):
+        allocation = [[(sb * 3 + i + ch) % 6 if sb < 20 else 0 for sb in range(32)] for ch in range(2)]
+        scalefactors = {(1, 2): 63} if i == 2 else {}
+        frames.append(Frame(layer=1, bitrate=256, rate=48000, mode="Joint stereo", mode_ext=1, protected=True,
+                            payload=Layer1Audio(allocation, scalefactors, b"Layer I ancillary data.")))
+    f.add_frames(frames)
+    return f.finding("mpeg.scalefactor-undefined", "1 frame")
+
+
+@fixture
+def layer1_forbidden_allocation():
+    f = Fixture(
+        "mpeg1-layer1-forbidden-allocation",
+        ".mp1",
+        "MPEG-1 Layer I mono at 44100 Hz and 128 kbps with CRC whose subband 0 has the forbidden bit allocation 15 in "
+        "every frame. libmad rejects these frames; mpg123 reads 16-bit samples, as the analyzer does.",
+        crosscheck=False,
+    )
+    allocation = [[15] + [0] * 31]
+    f.add_frames([Frame(layer=1, bitrate=128, rate=44100, mode="Mono", protected=True, payload=Layer1Audio(allocation))
+                  for _ in range(6)])
+    return f.finding("mpeg.allocation-forbidden", "6 frames")
+
+
+@fixture
+def layer1_overflow():
+    f = Fixture(
+        "mpeg1-layer1-overflow",
+        ".mp1",
+        "MPEG-1 Layer I mono at 44100 Hz and 128 kbps whose allocations need far more bits than the 136-byte frames "
+        "hold.",
+        crosscheck=False,
+    )
+    frames = [Frame(layer=1, bitrate=128, rate=44100, mode="Mono", payload=Layer1Audio([[14] * 32])) for _ in range(6)]
+    f.add_frames(frames)
+    for entry in f.frames:
+        entry["fields"]["Samples"] = f"{(136 - 4) * 8 - 128 - 32 * 6} bits"
+    return f.finding("mpeg.audio-data-overflow", "Layer I")
+
+
 # --- CRC ---------------------------------------------------------------------------------------
 
 
@@ -606,6 +744,56 @@ def no_frames():
     return f.finding("format.unrecognized", "No format parser")
 
 
+@fixture
+def cut_frame():
+    f = Fixture(
+        "cut-frame-stream-change",
+        ".mp3",
+        "Five frames at 44100 Hz, the first 200 bytes of a sixth, then ten frames at 48000 Hz: the cut frame ends where "
+        "the new stream starts, so no frame is lost.",
+        crosscheck=False,
+    )
+    f.add_frames(stream(5))
+    cut = Frame(mode="Joint stereo")
+    cut.cut_to = 200
+    f.add_frames([cut])
+    f.add_frames(stream(10, rate=48000))
+    f.finding("mpeg.frame-cut", "200 of its 417 bytes")
+    return f.finding("mpeg.stream-changed", "48000 Hz")
+
+
+@fixture
+def damaged_bitrate():
+    f = Fixture(
+        "damaged-bitrate",
+        ".mp3",
+        "Eight frames at 128 kbps; the fourth frame's bitrate index is damaged to 192 kbps, which would make it 627 bytes "
+        "long. The fifth frame starts 418 bytes in, so the damaged frame ends there and no frame is lost.",
+        crosscheck=False,
+    )
+    frames = stream(8)
+    real = frames[3].length()
+    frames[3].bitrate = 192
+    frames[3].cut_to = real
+    f.add_frames(frames)
+    return f.finding("mpeg.frame-cut", f"{real} of its {frames[3].length()} bytes")
+
+
+@fixture
+def free_format_length_change():
+    f = Fixture(
+        "free-format-length-change",
+        ".mp3",
+        "Five free-format MPEG-1 Layer III frames of 500 bytes, then five of 600 bytes: the same stream with another "
+        "frame length, which ISO/IEC 11172-3 does not allow, reported.",
+        crosscheck=False,
+    )
+    f.add_frames([Frame(bitrate=None, free_length=500) for _ in range(5)])
+    f.add_frames([Frame(bitrate=None, free_length=600) for _ in range(5)])
+    f.finding("mpeg.free-format", "500 bytes")
+    return f.finding("mpeg.free-format-length-changed", "from 500 to 600 bytes")
+
+
 # --- Stream changes ----------------------------------------------------------------------------
 
 
@@ -623,6 +811,37 @@ def layer_change():
     f.add_frames(stream(5, rate=48000))
     f.add_frames(stream(5, layer=2, bitrate=192, rate=48000, mode="Stereo"))
     return f.finding("mpeg.stream-changed", "Layer II")
+
+
+@fixture
+def stream_change_after_gap():
+    f = Fixture(
+        "stream-change-after-gap",
+        ".mp3",
+        "Five MPEG-1 Layer III frames at 44100 Hz, 37 bytes of junk, then five MPEG-2 Layer II mono frames at 24000 Hz: "
+        "sync is lost, and the stream found again is a different one.",
+        crosscheck=False,
+    )
+    f.add_frames(stream(5))
+    f.gap(junk(37, 61))
+    f.add_frames(stream(5, version="2", layer=2, bitrate=64, rate=24000, mode="Mono"))
+    f.finding("mpeg.sync-lost", "37 bytes")
+    return f.finding("mpeg.stream-changed", "MPEG-2 Layer II, 24000 Hz")
+
+
+@fixture
+def free_to_fixed():
+    f = Fixture(
+        "free-format-to-fixed",
+        ".mp3",
+        "Five free-format MPEG-1 Layer III frames of 500 bytes at 44100 Hz directly followed by five at 128 kbps: the "
+        "same version, layer and rate, but a new stream, which the message names as free format.",
+        crosscheck=False,
+    )
+    f.add_frames([Frame(bitrate=None, free_length=500) for _ in range(5)])
+    f.add_frames(stream(5))
+    f.finding("mpeg.free-format", "500 bytes")
+    return f.finding("mpeg.stream-changed", "44100 Hz, free format to MPEG-1 Layer III, 44100 Hz at")
 
 
 @fixture

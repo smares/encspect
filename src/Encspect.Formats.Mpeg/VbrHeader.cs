@@ -75,6 +75,12 @@ internal sealed class VbrHeader
 
     public bool IsTruncated { get; private set; }
 
+    // The VBRI version, of which only 1 is known; ffmpeg ignores the header otherwise.
+    public int? VbriVersion { get; private set; }
+
+    // A VBRI TOC entry size other than the 1 to 4 bytes Fraunhofer's reader supports, with entries.
+    public int? InvalidEntrySize { get; private set; }
+
     public uint? Flags { get; private set; }
 
     public uint? FrameCount { get; private set; }
@@ -327,6 +333,13 @@ internal sealed class VbrHeader
         text.StartsWith("LAME3.", StringComparison.Ordinal) && text.Length >= 8 && char.IsAsciiDigit(text[6]) && char.IsAsciiDigit(text[7])
         && text[6] < '9' && (text.Length == 8 || !char.IsAsciiDigit(text[8]));
 
+    // LAME before 3.95 computed ReplayGain against an 83 dB reference (mpg123, parse.c, and LAME's
+    // ChangeLog of 2004-01-13: "ReplayGain ->89dB").
+    private bool HasOldGainReference =>
+        LameEncoder.StartsWith("LAME3.", StringComparison.Ordinal) && LameEncoder.Length >= 8 && char.IsAsciiDigit(LameEncoder[6])
+        && char.IsAsciiDigit(LameEncoder[7]) && (LameEncoder.Length == 8 || !char.IsAsciiDigit(LameEncoder[8]))
+        && int.Parse(LameEncoder.AsSpan(6, 2), CultureInfo.InvariantCulture) < 95;
+
     private void ReadLame(int position, string encoder)
     {
         LameOffset = position;
@@ -371,9 +384,10 @@ internal sealed class VbrHeader
         int entrySize = UInt16At(position + 18);
         TocOffset = Offset + VbriFixedSize;
         int length = entrySize is >= 1 and <= 4 ? entries * entrySize : 0;
-        if (entrySize is < 1 or > 4)
+        VbriVersion = UInt16At(position);
+        if (entrySize is < 1 or > 4 && entries > 0)
         {
-            IsTruncated = entries > 0;
+            InvalidEntrySize = entrySize;
         }
 
         Fits(TocOffset, length);
@@ -538,6 +552,10 @@ internal sealed class VbrHeader
             int originator = (value >> 10) & 7;
             gain.Add(Field("Name", offset, 2, gainName < GainNames.Length ? GainNames[gainName] : $"Reserved ({Number(gainName)})"));
             gain.Add(Field("Originator", offset, 2, originator < GainOriginators.Length ? GainOriginators[originator] : $"Reserved ({Number(originator)})"));
+            if (originator == 3 && HasOldGainReference)
+            {
+                gain.Add(Field("Reference Level", offset, 2, "83 dB, as LAME before 3.95 computed it; later versions use 89 dB, so this gain is 6 dB lower than theirs"));
+            }
         }
 
         Node Field(string name, int offset, int length, string? value) => new(name, frameOffset + p + offset, length, value);

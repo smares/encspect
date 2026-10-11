@@ -34,6 +34,18 @@ public sealed partial class MpegAudioParser
                 $"{Frames(count)} hold a {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
         }
 
+        if (vbr.InvalidEntrySize is { } entrySize)
+        {
+            findings.Add(Severity.Warning, "mpeg.vbri-entry-size-invalid", node, count =>
+                $"{Frames(count)} hold a VBRI header whose TOC entries are {entrySize} bytes long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
+        }
+
+        if (vbr.VbriVersion is { } version and not 1)
+        {
+            findings.Add(Severity.Warning, "mpeg.vbri-version-unknown", node, count =>
+                $"{Frames(count)} hold a VBRI header of version {version}, where only version 1 is known; ffmpeg ignores the header. The first at 0x{position:X}.");
+        }
+
         if (vbr.IsTocDecreasing)
         {
             findings.Add(Severity.Warning, "mpeg.xing-toc-decreasing", node, count =>
@@ -77,7 +89,15 @@ public sealed partial class MpegAudioParser
             long position = frame.Offset;
             long end = frame.Offset + vbr.MusicLength;
             Node node = FindingNode(frame);
-            if (end < frame.End || end > state.Blocks.End)
+            if (end < frame.End)
+            {
+                long musicLength = vbr.MusicLength;
+                state.Findings.Add(Severity.Warning, "mpeg.music-length-short", node, count =>
+                    $"The LAME tag of {Frames(count)} gives a music length of {Number(musicLength)} bytes, shorter than its own frame, so the music CRC is not verified; the first at 0x{position:X}.");
+                continue;
+            }
+
+            if (end > state.Blocks.End)
             {
                 state.Findings.Add(Severity.Warning, "mpeg.music-crc-not-verified", node, count =>
                     $"The LAME tag of {Frames(count)} covers more music than the file holds after it, so the music CRC is not verified; the first at 0x{position:X}.");
@@ -163,7 +183,12 @@ public sealed partial class MpegAudioParser
 
         if (vbr is { IsVbri: true })
         {
-            string name = enhancement == "MP3 Surround" ? "Fraunhofer MP3 Surround encoder" : "Fraunhofer";
+            string name = enhancement switch
+            {
+                "MP3 Surround" => "Fraunhofer MP3 Surround encoder",
+                "mp3PRO" => "Fraunhofer mp3PRO encoder",
+                _ => "Fraunhofer",
+            };
             return Encoder(name, "High", [Evidence(tagNode!, "VBRI header"), .. ancillaryEvidence]);
         }
 

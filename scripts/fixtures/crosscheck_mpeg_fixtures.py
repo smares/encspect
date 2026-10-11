@@ -164,13 +164,21 @@ def guessenc_summary(path):
     return summary
 
 
-def decodes_to_silence(path):
+def decodes_to_silence(path, manifest):
     problems = []
     commands = {
         "ffmpeg": ["ffmpeg", "-v", "error", "-i", str(path), "-f", "s16le", "-"],
         "mpg123": ["mpg123", "-q", "-s", str(path)],
         "madplay": ["madplay", "-q", "--no-dither", "--stereo", "-o", "raw:-", str(path)],
     }
+    first = manifest["frames"][0]["fields"]
+    if first["Header/Bitrate"] == "free":
+        # ffmpeg does not read free format, and mpg123 reads free-format Layer II with table B.2a
+        # at every rate (layer2.c, II_select_table), where the captions of Tables 3-B.2a and
+        # 3-B.2b give B.2b below 48000 Hz, as libmad reads it.
+        del commands["ffmpeg"]
+        if first["Header/Layer"] == "II" and first["Header/Sample Rate"] != "48000 Hz":
+            del commands["mpg123"]
     for name, command in commands.items():
         result = subprocess.run(command, capture_output=True)
         if not result.stdout or any(result.stdout) or result.stderr.strip():
@@ -395,7 +403,7 @@ def check_vbr_header(path, manifest):
         problems.append(f"mpg123 notes {notes}, the manifest implies {expected_mpg123(tag)}")
 
     # ffmpeg does not read free format.
-    if tag is not None and not tag["truncated"] and not manifest.get("encoder", {}).get("free_format"):
+    if ffmpeg_reads(tag) and not tag["truncated"] and not manifest.get("encoder", {}).get("free_format"):
         stream = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)],
                                            capture_output=True, text=True, check=True).stdout)["streams"][0]
         rate, mpeg1 = int(stream["sample_rate"]), rate_is_mpeg1(int(stream["sample_rate"]))
@@ -433,10 +441,16 @@ def rate_is_mpeg1(rate):
     return rate in (32000, 44100, 48000)
 
 
+def ffmpeg_reads(tag):
+    """Whether ffmpeg reads the header: it ignores a VBRI header of a version other than 1 (mp3dec.c,
+    mp3_parse_vbri_tag)."""
+    return tag is not None and (tag["type"] != "VBRI" or tag.get("version") == 1)
+
+
 def ffprobe_skips_first(manifest):
     """ffmpeg skips the first frame when it holds a Layer III Xing, Info or VBRI header with a frame or byte count."""
     tag = manifest.get("vbr_header")
-    return tag is not None and bool(tag.get("frames") or tag.get("bytes"))
+    return ffmpeg_reads(tag) and bool(tag.get("frames") or tag.get("bytes"))
 
 
 def guessenc_stream(path):
@@ -544,7 +558,9 @@ def decoded_samples(path, channels):
 
 
 # Findings about frames mp3guessenc skips or reads differently; the others leave its counts alone.
-GUESSENC_NEUTRAL = ("mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-", "mpeg.free-format")
+GUESSENC_NEUTRAL = ("mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-")
+# mp3guessenc reads free format, but takes every frame to be as long as the first.
+GUESSENC_NEUTRAL_CODES = ("mpeg.free-format",)
 VARIABLE_HEADER_FIELDS = {"Header/Bitrate", "Header/HasPadding", "Header/Mode Extension"}
 
 
@@ -557,7 +573,7 @@ def guessenc_counts_like_us(path, manifest):
     headers = sum(1 for f in frames if "Xing" in f["fields"] or "VBRI/Version" in f["fields"] or "VBRI" in f["fields"])
     return (sum(1 for r in manifest["regions"] if "statistics" in r) == 1 and not manifest["gaps"]
             and all(c == constant[0] for c in constant) and headers <= 1
-            and all(f["code"].startswith(GUESSENC_NEUTRAL) for f in manifest["findings"])
+            and all(f["code"].startswith(GUESSENC_NEUTRAL) or f["code"] in GUESSENC_NEUTRAL_CODES for f in manifest["findings"])
             and ("detected" in guessenc_tag_lines(path)) == (manifest.get("vbr_header") is not None))
 
 
@@ -587,7 +603,7 @@ def check(path, manifest, tools):
     dumper, decoder = tools
     problems = []
     if manifest.get("silent"):
-        problems += decodes_to_silence(path)
+        problems += decodes_to_silence(path, manifest)
     if manifest.get("frames") and "scale_info" in manifest["frames"][0]:
         problems += check_scale_info(path, manifest, dumper)
     if "mctoolamed" in manifest:
