@@ -11,9 +11,9 @@ import pathlib
 import sys
 import tempfile
 import time
-import urllib.parse
 
 import blade_tool
+import check_mp3pro_samples
 import conformance_mpeg_audio
 import downloads
 import fhg_tool
@@ -33,8 +33,7 @@ def sources():
         yield name, stream["archive_sha256"], conformance_mpeg_audio.addresses(iso, name)
     mp3pro = json.loads((ROOT / "tests" / "conformance" / "mp3pro-samples.json").read_text(encoding="utf-8"))
     for sample in mp3pro["samples"]:
-        url = mp3pro["source"] + urllib.parse.quote(sample["file"])
-        yield sample["file"], sample["sha256"], [url, downloads.archived(url, mp3pro["archive_year"])]
+        yield sample["file"], sample["sha256"], check_mp3pro_samples.addresses(mp3pro, sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
@@ -45,10 +44,14 @@ def sources():
 def main():
     problems = 0
     checked = 0
+    skipped = 0
     with tempfile.TemporaryDirectory() as temp:
         path = pathlib.Path(temp) / "download"
         for name, digest, addresses in sources():
             for address in addresses:
+                if not downloads.has_token(address):
+                    skipped += 1
+                    continue
                 checked += 1
                 # The Wayback Machine limits how fast one client may download.
                 if address.startswith("https://web.archive.org/"):
@@ -63,7 +66,8 @@ def main():
                 problems += 1
                 print(f"{name}: {address} {problem}")
                 path.unlink(missing_ok=True)
-    print(f"Checked {checked} addresses, {problems} problems.", file=sys.stderr)
+    note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
+    print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 
 

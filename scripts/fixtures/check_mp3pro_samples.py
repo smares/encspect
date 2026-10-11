@@ -40,12 +40,17 @@ MANIFEST = ROOT / "tests" / "conformance" / "mp3pro-samples.json"
 VERSIONS = {"1": "MPEG-1", "2": "MPEG-2", "2.5": "MPEG-2.5"}
 
 
+def addresses(manifest, sample):
+    """The archive's address of a sample, then the Wayback Machine's copy, then the private repository's."""
+    url = manifest["source"] + urllib.parse.quote(sample["file"])
+    return [url, downloads.archived(url, manifest["archive_year"]), downloads.private(f"mp3pro/{urllib.parse.quote(sample['file'])}")]
+
+
 def fetch(manifest, cache):
     """Downloads every file the manifest lists, checking its SHA-256."""
     cache.mkdir(parents=True, exist_ok=True)
     for sample in manifest["samples"]:
-        url = manifest["source"] + urllib.parse.quote(sample["file"])
-        downloads.fetch([url, downloads.archived(url, manifest["archive_year"])], sample["sha256"], cache / sample["file"])
+        downloads.fetch(addresses(manifest, sample), sample["sha256"], cache / sample["file"])
 
 
 def tool_problems(path, sample):
