@@ -20,6 +20,7 @@ import tempfile
 import zipfile
 
 import downloads
+import xing_tool
 
 CACHE = pathlib.Path(__file__).resolve().parents[2] / ".cache" / "encoders"
 
@@ -61,8 +62,7 @@ def fetch(version):
 
 
 def run(binary, arguments, directory):
-    # Not under the repository: a Wine prefix links z: to /, which tools walking the tree would follow.
-    environment = dict(os.environ, WINEPREFIX=str(pathlib.Path(tempfile.gettempdir()) / "encspect-lame-wine"), WINEDEBUG="-all")
+    environment = dict(os.environ, WINEPREFIX=str(xing_tool.WINE_PREFIX), WINEDEBUG="-all")
     return subprocess.run(["wine", str(binary), *arguments], cwd=directory, env=environment, capture_output=True, text=True,
                           stdin=subprocess.DEVNULL, timeout=600, errors="replace")
 

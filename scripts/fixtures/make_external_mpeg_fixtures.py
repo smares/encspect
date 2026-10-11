@@ -3,7 +3,7 @@
 libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
-source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
+source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1, 3.101 and 4.0 built from source
 (old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
 (lame_win_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
@@ -333,6 +333,16 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame394b-no-info", ".mp3", 44100, 2, ["lame-3.94b1", "--quiet", "-t", "-b", "128"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    # LAME 3.101 writes "LAME3.101", with no room left for the release marker; 4.0 bumped the
+    # major version to make room and writes "LAME4.0 " and a NUL byte.
+    ("external-lame3101-vbr", ".mp3", 44100, 2, ["lame-3.101", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3101-cbr", ".mp3", 44100, 2, ["lame-3.101", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame40-vbr", ".mp3", 44100, 2, ["lame-4.0", "--quiet", "-V", "2"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame40-cbr", ".mp3", 44100, 2, ["lame-4.0", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
     # Gogo fills unused bits with "GOGO" and writes it where the Xing header's quality belongs.
     ("external-gogo-cbr", ".mp3", 44100, 2, ["gogo", "-b", "128"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
@@ -815,7 +825,7 @@ def main():
     for version in blade_tool.RELEASES:
         BLADE_ENCODERS[version] = blade_tool.build(version)
     GOGO_ENCODER.append(gogo_tool.fetch())
-    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1"):
+    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.101", "4.0"):
         OLD_LAME[version] = old_lame_tool.build(version)
     for version in lame_win_tool.BUILDS:
         WIN_LAME[version] = lame_win_tool.fetch(version)
