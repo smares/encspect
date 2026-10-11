@@ -225,6 +225,15 @@ public sealed class Analyzer
         var embedded = new List<Claim>();
         var queue = new Queue<Claim>(leading.Concat(trailing));
 
+        // Every tag in offset order, overall and per parser, so each step finds its neighbors by
+        // binary search; a file with thousands of chained tags would otherwise take minutes.
+        var embeddedIndex = new ClaimIndex();
+        var byParser = new Dictionary<ITagParser, ClaimIndex>();
+        foreach (Claim known in leading.Concat(trailing))
+        {
+            ParserIndex(known.Parser).Add(known);
+        }
+
         while (queue.Count > 0)
         {
             Claim claim = queue.Dequeue();
@@ -241,10 +250,7 @@ public sealed class Analyzer
                 continue;
             }
 
-            Claim? next = leading.Concat(embedded).Concat(trailing)
-                .Where(c => c.Parser == claim.Parser && c.Tag.Offset >= tag.End)
-                .OrderBy(c => c.Tag.Offset)
-                .FirstOrDefault();
+            Claim? next = ParserIndex(claim.Parser).FirstFrom(tag.End);
             if (next is not null && next.Tag.Offset < target)
             {
                 findings.Add(new Finding(Severity.Warning, "tag.next-too-early", $"{label}, but the next one starts at 0x{next.Tag.Offset:X}.", tag));
@@ -253,7 +259,7 @@ public sealed class Analyzer
 
             long from = Math.Max(target, dataStart);
             long limit = Math.Min(Math.Min(dataEnd, next?.Tag.Offset ?? dataEnd), from + MaxNextTagSearch);
-            limit = embedded.Where(e => e.Tag.Offset >= from).Select(e => e.Tag.Offset).DefaultIfEmpty(limit).Min();
+            limit = Math.Min(limit, embeddedIndex.FirstFrom(from)?.Tag.Offset ?? limit);
 
             TagProbe? found = null;
             if (from < limit)
@@ -272,6 +278,8 @@ public sealed class Analyzer
             {
                 var foundClaim = new Claim(claim.Parser, found);
                 embedded.Add(foundClaim);
+                embeddedIndex.Add(foundClaim);
+                ParserIndex(claim.Parser).Add(foundClaim);
                 queue.Enqueue(foundClaim);
             }
             else if (next is null)
@@ -286,6 +294,44 @@ public sealed class Analyzer
 
         embedded.Sort((a, b) => a.Tag.Offset.CompareTo(b.Tag.Offset));
         return embedded;
+
+        ClaimIndex ParserIndex(ITagParser parser)
+        {
+            if (!byParser.TryGetValue(parser, out ClaimIndex? index))
+            {
+                byParser[parser] = index = new ClaimIndex();
+            }
+
+            return index;
+        }
+    }
+
+    // Claims sorted by offset.
+    private sealed class ClaimIndex
+    {
+        private readonly List<Claim> _claims = [];
+
+        public void Add(Claim claim) => _claims.Insert(LowerBound(claim.Tag.Offset), claim);
+
+        // The first claim at or after offset.
+        public Claim? FirstFrom(long offset)
+        {
+            int index = LowerBound(offset);
+            return index < _claims.Count ? _claims[index] : null;
+        }
+
+        private int LowerBound(long offset)
+        {
+            int low = 0;
+            int high = _claims.Count;
+            while (low < high)
+            {
+                int middle = (low + high) / 2;
+                (low, high) = _claims[middle].Tag.Offset < offset ? (middle + 1, high) : (low, middle);
+            }
+
+            return low;
+        }
     }
 
     // An ID3v2.4 tag with a footer that ends where the leading tags end is found again from the
@@ -501,7 +547,11 @@ public sealed class Analyzer
 
     private static Node DeepestNodeAt(Node root, long offset, HashSet<Node> skip)
     {
-        Node current = root;
+        if (TopLevelAt(root, offset) is not { } current || skip.Contains(current))
+        {
+            return root;
+        }
+
         while (true)
         {
             Node? child = current.Children.FirstOrDefault(c => !skip.Contains(c) && c.Offset <= offset && offset < c.End);
@@ -514,10 +564,32 @@ public sealed class Analyzer
         }
     }
 
+    // The root's children are sorted and do not overlap, and a file can have thousands of them,
+    // so they are searched by halving.
+    private static Node? TopLevelAt(Node root, long offset)
+    {
+        IReadOnlyList<Node> top = root.Children;
+        int low = 0;
+        int high = top.Count;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            (low, high) = top[middle].Offset <= offset ? (middle + 1, high) : (low, middle);
+        }
+
+        return low > 0 && offset < top[low - 1].End ? top[low - 1] : null;
+    }
+
     private static string PathTo(Node root, Node target)
     {
         var path = new List<string>();
-        Node current = root;
+        if (target == root || TopLevelAt(root, target.Offset) is not { } top || !Contains(top, target))
+        {
+            return string.Empty;
+        }
+
+        path.Add(top.Name);
+        Node current = top;
         while (current != target)
         {
             Node? next = current.Children.FirstOrDefault(c => c.Offset <= target.Offset && target.End <= c.End && Contains(c, target));

@@ -41,6 +41,7 @@ public sealed class Id3v2TagParser : ITagParser
     {
         const int Chunk = 1 << 16;
         limit = Math.Min(limit, reader.End);
+        int probed = 0;
         for (long chunkStart = from; chunkStart < limit; chunkStart += Chunk)
         {
             int length = (int)Math.Min(Chunk + HeaderId.Length - 1, limit - chunkStart);
@@ -55,7 +56,11 @@ public sealed class Id3v2TagParser : ITagParser
                     break;
                 }
 
-                if (ProbeAt(reader, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
+                // Only a complete tag with a valid header can be found with high confidence, so only
+                // those are parsed, and at most MaxSearchProbes of them: a crafted window full of
+                // "ID3" would otherwise parse the rest of the file once per match.
+                if (IsCompleteCandidate(reader, candidate) && ++probed <= MaxSearchProbes
+                    && ProbeAt(reader, candidate) is { IsAccepted: true, Confidence: Confidence.High } probe)
                 {
                     return probe;
                 }
@@ -65,6 +70,25 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         return null;
+    }
+
+    private const int MaxSearchProbes = 64;
+
+    private static bool IsCompleteCandidate(ByteReader reader, long start)
+    {
+        if (reader.End - start < HeaderSize)
+        {
+            return false;
+        }
+
+        byte[] header = reader.ReadBytesAt(start, HeaderSize);
+        if (ValidateHeader(header, "header") is not null)
+        {
+            return false;
+        }
+
+        bool hasFooter = header[3] == 4 && (header[5] & 0x10) != 0;
+        return start + HeaderSize + Syncsafe(header, 6) + (hasFooter ? HeaderSize : 0) <= reader.End;
     }
 
     // ID3v2.4 section 3.4: a tag appended at the end of a file has a footer, "3DI" followed by
@@ -745,8 +769,10 @@ public sealed class Id3v2TagParser : ITagParser
 
     private static long ParsePadding(Id3v2BodyReader body, ParseState state, long start, DecodedBytes first, long framesStart)
     {
+        // Reading stops at the first non-zero byte, so a tag declaring a huge padding costs no more
+        // than its zero bytes.
         bool nonZero = first.Data.Any(b => b != 0);
-        while (!body.AtEnd)
+        while (!nonZero && !body.AtEnd)
         {
             DecodedBytes chunk = body.Read(1 << 16);
             if (chunk.Length == 0)
@@ -754,10 +780,10 @@ public sealed class Id3v2TagParser : ITagParser
                 break;
             }
 
-            nonZero |= chunk.Data.Any(b => b != 0);
+            nonZero = chunk.Data.Any(b => b != 0);
         }
 
-        long length = body.FilePosition - start;
+        long length = body.End - start;
         Node padding = state.Tag.Add("Padding", start, length, $"{length} bytes");
         if (nonZero)
         {

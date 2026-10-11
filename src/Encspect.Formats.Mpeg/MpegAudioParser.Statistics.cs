@@ -14,19 +14,19 @@ public sealed partial class MpegAudioParser
 
     private static void AddStatistics(StreamState state)
     {
-        List<Entry> all = state.Regions.SelectMany(r => r.Entries).Where(e => !e.IsGap).ToList();
+        var all = new FrameList(state.Regions.SelectMany(r => r.Entries).Where(e => !e.IsGap).ToList());
         foreach (RegionState region in state.Regions)
         {
             region.Statistics = Statistics(region.Entries, all);
         }
 
-        foreach (Entry frame in all.Where(e => e.VbrFrame is not null))
+        foreach (Entry frame in all.Frames.Where(e => e.VbrFrame is not null))
         {
             CheckHeaderCounts(state.Findings, frame, all);
         }
     }
 
-    private static Node? Statistics(List<Entry> entries, List<Entry> all)
+    private static Node? Statistics(List<Entry> entries, FrameList all)
     {
         List<Entry> audio = entries.Where(IsAudio).ToList();
         if (audio.Count == 0)
@@ -57,7 +57,7 @@ public sealed partial class MpegAudioParser
         Node distribution = Add("Bitrate Distribution", counts.Count == 1 ? "1 bitrate" : $"{Number(counts.Count)} bitrates");
         foreach (var group in counts)
         {
-            long tenths = RoundHalfEven(group.Count() * 1000, audio.Count);
+            long tenths = RoundHalfEven(group.Count() * 1000L, audio.Count);
             distribution.Add(group.Key is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
                 $"{FramesText(group.Count())} ({TenthsText(tenths)}%)");
         }
@@ -90,7 +90,7 @@ public sealed partial class MpegAudioParser
 
         Node Add(string name, string value) => node.Add(name, start, length, value);
 
-        void AddHeaderComparison(Entry frame, List<Entry> frames)
+        void AddHeaderComparison(Entry frame, FrameList frames)
         {
             VbrHeader header = VbrHeader.TryRead(frame.VbrFrame!, new MpegHeader(frame.Header))!;
             List<Entry> covered = Covered(frame, frames);
@@ -124,7 +124,7 @@ public sealed partial class MpegAudioParser
 
     // Xing's and Fraunhofer's encoders count the header's own frame, LAME does not; byte counts
     // include it, and LAME's leave out what is not its own, such as a tag added between frames.
-    private static void CheckHeaderCounts(FindingCollector findings, Entry frame, List<Entry> all)
+    private static void CheckHeaderCounts(FindingCollector findings, Entry frame, FrameList all)
     {
         VbrHeader header = VbrHeader.TryRead(frame.VbrFrame!, new MpegHeader(frame.Header))!;
         List<Entry> covered = Covered(frame, all);
@@ -153,12 +153,13 @@ public sealed partial class MpegAudioParser
 
     // The complete frames a VBR header describes: from its frame to the end of its stream, the next
     // VBR header or a change of version, layer or sample rate, across gaps and tags.
-    private static List<Entry> Covered(Entry headerFrame, List<Entry> all)
+    private static List<Entry> Covered(Entry headerFrame, FrameList all)
     {
         var header = new MpegHeader(headerFrame.Header);
         var covered = new List<Entry>();
-        foreach (Entry frame in all.SkipWhile(e => e.Offset != headerFrame.Offset).Skip(1))
+        for (int i = all.IndexOf(headerFrame) + 1; i < all.Frames.Count; i++)
         {
+            Entry frame = all.Frames[i];
             var next = new MpegHeader(frame.Header);
             if (frame.VbrFrame is not null || next.VersionBits != header.VersionBits || next.Layer != header.Layer
                 || next.SampleRateIndex != header.SampleRateIndex)
@@ -173,6 +174,26 @@ public sealed partial class MpegAudioParser
         }
 
         return covered;
+    }
+
+    // The frames of every region in file order, with each frame's index, so each VBR header's
+    // frames are found without walking the list from the start.
+    private sealed class FrameList
+    {
+        private readonly Dictionary<long, int> _index = [];
+
+        public FrameList(List<Entry> frames)
+        {
+            Frames = frames;
+            for (int i = 0; i < frames.Count; i++)
+            {
+                _index.TryAdd(frames[i].Offset, i);
+            }
+        }
+
+        public List<Entry> Frames { get; }
+
+        public int IndexOf(Entry frame) => _index[frame.Offset];
     }
 
     private static bool IsAudio(Entry entry) => !entry.IsGap && entry.VbrFrame is null && !entry.IsTruncated;

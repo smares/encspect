@@ -162,6 +162,53 @@ internal sealed class VbrHeader
         return crc;
     }
 
+    // The CRC of a range from running CRCs: with init 0 the CRC is linear, so after n more bytes
+    // a running CRC c becomes Shift(c, n) XOR the CRC of those bytes alone, as in zlib's
+    // crc32_combine. Shift applies the operator of one zero byte n times by squaring.
+    public static int LameCrcShift(int crc, long bytes)
+    {
+        for (int bit = 0; bytes != 0; bit++, bytes >>= 1)
+        {
+            if ((bytes & 1) != 0)
+            {
+                crc = Apply(ZeroBytePowers.Value[bit], crc);
+            }
+        }
+
+        return crc;
+    }
+
+    // ZeroBytePowers[k] is the operator of 2^k zero bytes, as the images of the 16 unit vectors;
+    // built on first use, after the CRC table it is made from.
+    private static readonly Lazy<int[][]> ZeroBytePowers = new(BuildZeroBytePowers);
+
+    private static int[][] BuildZeroBytePowers()
+    {
+        var powers = new int[63][];
+        powers[0] = Enumerable.Range(0, 16).Select(bit => LameCrc([0], 1 << bit)).ToArray();
+        for (int k = 1; k < powers.Length; k++)
+        {
+            int[] half = powers[k - 1];
+            powers[k] = half.Select(column => Apply(half, column)).ToArray();
+        }
+
+        return powers;
+    }
+
+    private static int Apply(int[] matrix, int vector)
+    {
+        int result = 0;
+        for (int bit = 0; vector != 0; bit++, vector >>= 1)
+        {
+            if ((vector & 1) != 0)
+            {
+                result ^= matrix[bit];
+            }
+        }
+
+        return result;
+    }
+
     private static readonly int[] LameCrcTable = Enumerable.Range(0, 256).Select(value =>
     {
         for (int bit = 0; bit < 8; bit++)

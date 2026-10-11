@@ -71,6 +71,7 @@ public sealed partial class MpegAudioParser
     // the start of that frame (VbrTag.c: the Xing byte count, which includes the frame).
     private static void CheckMusicCrcs(StreamState state)
     {
+        Dictionary<long, int> running = RunningCrcs(state);
         foreach ((Entry frame, VbrHeader vbr) in state.LameTags)
         {
             long position = frame.Offset;
@@ -83,12 +84,7 @@ public sealed partial class MpegAudioParser
                 continue;
             }
 
-            int crc = 0;
-            for (long at = frame.End; at < end; at += MusicCrcChunk)
-            {
-                crc = VbrHeader.LameCrc(state.Blocks.Read(at, (int)Math.Min(MusicCrcChunk, end - at)), crc);
-            }
-
+            int crc = running[end] ^ VbrHeader.LameCrcShift(running[frame.End], end - frame.End);
             state.Build.MusicCrcs[position] = crc;
             if (crc == vbr.StoredMusicCrc)
             {
@@ -108,6 +104,37 @@ public sealed partial class MpegAudioParser
                     $"The audio after the LAME tag of {Frames(count)} no longer matches the tag's music CRC: it changed after encoding, as MP3Gain and other editors change it. The first at 0x{position:X}.");
             }
         }
+    }
+
+    // The running CRC from the first range's start at every start and end of a music CRC range,
+    // in one pass over the file however many LAME tags there are and however their ranges overlap.
+    private static Dictionary<long, int> RunningCrcs(StreamState state)
+    {
+        var positions = new SortedSet<long>();
+        foreach ((Entry frame, VbrHeader vbr) in state.LameTags)
+        {
+            long end = frame.Offset + vbr.MusicLength;
+            if (end >= frame.End && end <= state.Blocks.End)
+            {
+                positions.Add(frame.End);
+                positions.Add(end);
+            }
+        }
+
+        var running = new Dictionary<long, int>();
+        int crc = 0;
+        long at = positions.Count > 0 ? positions.Min : 0;
+        foreach (long position in positions)
+        {
+            for (; at < position; at += Math.Min(MusicCrcChunk, position - at))
+            {
+                crc = VbrHeader.LameCrc(state.Blocks.Read(at, (int)Math.Min(MusicCrcChunk, position - at)), crc);
+            }
+
+            running[position] = crc;
+        }
+
+        return running;
     }
 
     // The encoder a region's frames point to: the encoder string of a LAME tag, Fraunhofer for a
