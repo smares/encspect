@@ -697,17 +697,16 @@ public sealed partial class MpegAudioParser : IFormatParser
         // The decoder's buffer holds one frame at the highest bitrate (bitrate_index 14) at the
         // stream's sample rate, so main_data_begin plus the frame's length may not exceed that
         // frame's length, and main_data_begin is 0 at bitrate_index 14: ISO/IEC 11172-3's bit
-        // reservoir text, quoted in LAME's libmp3lame/reservoir.c and enforced by its
-        // --strictly-enforce-ISO (bitstream.c, MDB_STRICT_ISO), which applies it to ISO/IEC
-        // 13818-3 with that standard's top bitrate, 160 kbps. MPEG 2.5 has no standard and the
-        // same bitrate table, so it is read the same way (LAME's strict mode assumes 64 kbps there).
+        // reservoir text, quoted in LAME's libmp3lame/reservoir.c. Only MPEG-1 is checked: LAME's
+        // --strictly-enforce-ISO applies the rule to MPEG-2 at 160 kbps (bitstream.c,
+        // MDB_STRICT_ISO), but that reading of ISO/IEC 13818-3 could not be confirmed.
         int mainDataBegin = info.MainDataBegin.Value;
         int buffer = new MpegHeader((info.Header.Raw & ~0xF200u) | (14u << 12)).FrameLength();
-        if (mainDataBegin > 0 && mainDataBegin + frameLength > buffer)
+        if (info.Header.IsMpeg1 && mainDataBegin > 0 && mainDataBegin + frameLength > buffer)
         {
             findings.Add(Severity.Warning, "mpeg.main-data-begin-exceeds-buffer",
                 Layer3SideInfo.Span("Main Data Begin", offset, info.MainDataBegin.Bit, info.MainDataBegin.Bit + info.MainDataBegin.Length), count =>
-                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 and 13818-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {mainDataBegin} bytes where at most {Math.Max(buffer - frameLength, 0)} are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
+                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {mainDataBegin} bytes where at most {Math.Max(buffer - frameLength, 0)} are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
         }
     }
 

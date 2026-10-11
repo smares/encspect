@@ -10916,7 +10916,7 @@
       {
         "severity": "Warning",
         "code": "mpeg.main-data-begin-exceeds-buffer",
-        "message": "1 frame reaches back further for main data than the decoder buffer of ISO/IEC 11172-3 and 13818-3 allows, which holds one frame at the highest bitrate: the first at 0x18D7 has a main_data_begin of 485 bytes where at most 209 are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.",
+        "message": "1 frame reaches back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x18D7 has a main_data_begin of 485 bytes where at most 209 are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.",
         "offset": 6363,
         "length": 2
       }

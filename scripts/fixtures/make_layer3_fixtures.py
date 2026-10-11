@@ -428,7 +428,7 @@ class Layer3Fixture(Fixture):
                         self.finding("mpeg.reservoir-across-gap", f"0x{entry['offset']:X}")
                     elif begin < area_start and any(is_header(f) and begin < starts[j] + area_length(f) for j, (f, _) in enumerate(chain[:k])):
                         self.finding("mpeg.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
-                    if 0 < frame.main_data_begin and frame.main_data_begin + frame.length() > iso_buffer(frame):
+                    if frame.mpeg1() and 0 < frame.main_data_begin and frame.main_data_begin + frame.length() > iso_buffer(frame):
                         self.finding("mpeg.main-data-begin-exceeds-buffer", f"0x{entry['offset']:X}")
                 if end > area_end:
                     self.finding("mpeg.main-data-overflow", f"0x{entry['offset']:X}")
@@ -597,7 +597,7 @@ def same_stream(a, b):
 
 def iso_buffer(frame):
     """The length of a frame at bitrate_index 14 (320 kbps in MPEG-1, 160 kbps in MPEG-2 and 2.5) at
-    the frame's sample rate, without padding."""
+    the frame's sample rate, without padding. Only MPEG-1 frames are checked against it."""
     return mpeg.frame_length(frame.version, 3, 320 if frame.mpeg1() else 160, frame.rate, 0)
 
 
@@ -975,9 +975,9 @@ def reservoir_iso_buffer():
 def reservoir_iso_buffer_mpeg2():
     f = Layer3Fixture(
         "reservoir-iso-buffer-mpeg2",
-        "MPEG-2 Layer III joint stereo at 22050 Hz and 128 kbps: a frame at 160 kbps, the highest MPEG-2 bitrate, is "
-        "522 bytes long, so 417-byte frames may reach back 105 bytes and padded ones 104. The second frame reaches "
-        "back 100, the third 200.",
+        "MPEG-2 Layer III joint stereo at 22050 Hz and 128 kbps whose third frame reaches back 200 bytes, more than "
+        "LAME's --strictly-enforce-ISO allows (a 160 kbps frame, 522 bytes). ISO/IEC 11172-3's buffer rule is only "
+        "checked for MPEG-1, since its reading for ISO/IEC 13818-3 could not be confirmed, so there is no finding.",
     )
     return f.add_frames(reservoir_chain([(100, 0), (150, 100), (200, 200), (50, 0), (60, 0)], bitrate=128, rate=22050,
                                         version="2"))

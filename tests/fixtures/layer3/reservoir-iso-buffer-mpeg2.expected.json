@@ -1,5 +1,5 @@
 {
- "description": "MPEG-2 Layer III joint stereo at 22050 Hz and 128 kbps: a frame at 160 kbps, the highest MPEG-2 bitrate, is 522 bytes long, so 417-byte frames may reach back 105 bytes and padded ones 104. The second frame reaches back 100, the third 200.",
+ "description": "MPEG-2 Layer III joint stereo at 22050 Hz and 128 kbps whose third frame reaches back 200 bytes, more than LAME's --strictly-enforce-ISO allows (a 160 kbps frame, 522 bytes). ISO/IEC 11172-3's buffer rule is only checked for MPEG-1, since its reading for ISO/IEC 13818-3 could not be confirmed, so there is no finding.",
  "length": 2089,
  "crosscheck": true,
  "regions": [
@@ -489,12 +489,7 @@
   }
  ],
  "gaps": [],
- "findings": [
-  {
-   "code": "mpeg.main-data-begin-exceeds-buffer",
-   "contains": "0x343"
-  }
- ],
+ "findings": [],
  "silent": true,
  "mp3guessenc": {
   "blocks": {

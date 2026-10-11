@@ -463,7 +463,8 @@ def main_data_findings(path, packets, rows):
             elif main_data_begin > start - previous_end:
                 findings.append("mpeg.main-data-overlap")
             top = frame_length(header[:2] + bytes([(header[2] & 0x0D) | 0xE0]) + header[3:])
-            if 0 < main_data_begin and main_data_begin + frame_length(header) > top:
+            # ISO/IEC 11172-3's decoder buffer, checked for MPEG-1 only (version bits 11).
+            if (header[1] >> 3) & 3 == 3 and 0 < main_data_begin and main_data_begin + frame_length(header) > top:
                 findings.append("mpeg.main-data-begin-exceeds-buffer")
         end = start - main_data_begin + (part2_3 + 7) // 8
         truncated = k == len(offsets) - 1 and truncated_last(path, packets)

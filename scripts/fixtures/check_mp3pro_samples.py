@@ -13,8 +13,7 @@ script confirms the manifest with independent tools:
 - mp3guessenc counts the same ancillary bytes and rate, and guesses Fraunhofer's mp3PRO encoder
   from the signature those bytes carry.
 - The side information, read at the frames ffprobe lists (make_external_mpeg_fixtures.py,
-  main_data_findings), breaks the bit reservoir's rules exactly as "findings" lists: the Thomson
-  encoder reaches back further than the decoder buffer of ISO/IEC 13818-3 allows in one file.
+  main_data_findings), breaks the bit reservoir's rules exactly as "findings" lists (none, so far).
 
 With --analyzer, the analyzer's report on every file (encspect --ndjson) must match the manifest
 instead: frame count, version and sample rate, the mp3PRO enhancement with its ancillary bytes and
