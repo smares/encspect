@@ -19,6 +19,7 @@ import downloads
 import fhg_tool
 import gogo_tool
 import helix_tool
+import lame_win_tool
 import mctoolamed_tool
 import old_lame_tool
 import xing_tool
@@ -42,6 +43,8 @@ def sources():
     yield "bladeenc-0.94.2-src-stable.tar.gz", blade_tool.SHA256, blade_tool.ADDRESSES
     yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
     yield "gogo3.12.zip", gogo_tool.SHA256, gogo_tool.ADDRESSES
+    for build in lame_win_tool.BUILDS.values():
+        yield build["archive"], build["sha256"], build["addresses"]
     for version, digest in old_lame_tool.RELEASES.items():
         yield f"lame-{version}.tar.gz", digest, old_lame_tool.addresses(version)
 

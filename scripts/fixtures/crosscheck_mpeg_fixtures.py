@@ -53,7 +53,10 @@ External fixtures list their encoder settings and ffprobe's packets instead of e
 them, ffprobe's sample rate, channel count and bitrate must match those settings, and minimp3 and
 mp3guessenc must still report what the manifest recorded.
 
-Needs ffprobe, madplay, mpg123, curl, make and a C compiler on the PATH; minimp3 and mp3guessenc
+- getID3: for LAME 3.90 to 3.92, whose tag has no preset field, getID3 must read the same version
+  and name the same preset where it names one (getid3_tool.py).
+
+Needs ffprobe, madplay, mpg123, php, curl, make and a C compiler on the PATH; minimp3 and mp3guessenc
 are built from third_party. Exits
 non-zero when anything disagrees.
 """
@@ -64,6 +67,7 @@ import re
 import subprocess
 import sys
 
+import getid3_tool
 import guessenc_tool
 import mctoolamed_tool
 import minimp3_tool
@@ -603,6 +607,31 @@ def check_statistics(path, manifest):
     return problems
 
 
+# LAME releases whose tag has no preset field, which getID3 and the analyzer read from its settings.
+PRESETLESS_LAME = ("LAME3.90", "LAME3.90.", "LAME3.91", "LAME3.92")
+
+
+def check_getid3(path, manifest):
+    """getID3 must read the same LAME version and, where it names one, the same preset. It does not
+    name the ABR and CBR alt-presets, which it reports as the bitrate mode."""
+    lame = (manifest.get("vbr_header") or {}).get("lame")
+    if not lame or lame["encoder"].rstrip(" ") not in PRESETLESS_LAME:
+        return []
+    problems = []
+    version, options = getid3_tool.encoder(path)
+    expected_version = "LAME" + manifest["detected_encoder"]["name"][len("LAME "):]
+    if version != expected_version:
+        problems.append(f"getID3 reads the encoder {version!r}, the manifest implies {expected_version!r}")
+    match = manifest.get("vbr_header_fields", {}).get("LAME Tag/Preset/Settings Match")
+    preset = match.split(";")[0] if match else None
+    if options and options.startswith("--"):
+        if options != preset:
+            problems.append(f"getID3 guesses {options!r}, the manifest implies {preset!r}")
+    elif preset and not re.fullmatch(r"--alt-preset (cbr )?\d+", preset):
+        problems.append(f"getID3 names no preset ({options!r}), the manifest implies {preset!r}")
+    return problems
+
+
 def check(path, manifest, tools):
     dumper, decoder = tools
     problems = []
@@ -622,6 +651,7 @@ def check(path, manifest, tools):
         problems.append("minimp3 reads different side information than the manifest recorded")
     if "vbr_header" in manifest:
         problems += check_vbr_header(path, manifest)
+        problems += check_getid3(path, manifest)
     if "regions" in manifest:
         problems += check_statistics(path, manifest)
     if "mp3guessenc" in manifest:

@@ -4,7 +4,8 @@ libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
 source of Layer I here, BladeEnc 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
-(old_lame_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
+(old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
+(lame_win_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
 
 The hand-built fixtures from make_mpeg_fixtures.py have zero payloads. These come from encoders
@@ -72,6 +73,7 @@ import wave
 import blade_tool
 import fhg_tool
 import gogo_tool
+import lame_win_tool
 import helix_tool
 import minimp3_tool
 import old_lame_tool
@@ -297,6 +299,20 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame393-alt-standard", ".mp3", 44100, 2, ["lame-3.93.1", "--quiet", "--alt-preset", "standard"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    # HydrogenAudio's 3.90.3 and the Windows build of 3.91 write other preset settings than 3.90 and 3.92;
+    # 3.90.3's version does not fit the tag, which holds "LAME3.90.", and stands whole in the padding.
+    ("external-lame3903-alt-standard", ".mp3", 44100, 2, ["lame-win-3.90.3", "--quiet", "--alt-preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3903-alt-extreme", ".mp3", 44100, 2, ["lame-win-3.90.3", "--quiet", "--alt-preset", "extreme"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3903-alt-insane", ".mp3", 44100, 2, ["lame-win-3.90.3", "--quiet", "--alt-preset", "insane"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=320, info_frame=True, signal="music")),
+    ("external-lame391w-alt-extreme", ".mp3", 44100, 2, ["lame-win-3.91", "--quiet", "--alt-preset", "extreme"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame390-r3mix", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame390-preset-cd", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--preset", "cd"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=True, signal="music")),
     # LAME 3.94 beta 1 computes ReplayGain against 83 dB.
     ("external-lame394b-vbr", ".mp3", 44100, 2, ["lame-3.94b1", "--quiet", "-V", "2"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
@@ -502,10 +518,14 @@ def detected_encoder(command, tag, settings, rows, path):
         return {"name": "Gogo", "confidence": "Medium" if tag is not None and tag.get("quality") == int.from_bytes(b"GOGO", "big") else "Low"}
     if command[0].startswith("lame-"):
         lame = tag.get("lame") if tag else None
+        string = guessenc_tag_lines(path).get("Encoder string")
         if lame is None:
-            string = guessenc_tag_lines(path).get("Encoder string")
             return {"name": f"LAME {string[4:]}", "confidence": "Low"} if string and string.startswith("LAME") else None
-        return {"name": f"LAME {lame['encoder'][4:].rstrip(' ')}", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
+        version = lame["encoder"].rstrip(" ")
+        # A version cut off in the tag ("LAME3.90.") stands whole in the padding, where mp3guessenc finds it.
+        if version.endswith(".") and string and string.startswith(version) and string[len(version):].isdigit():
+            version = string
+        return {"name": f"LAME {version[4:]}", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
     if command[0] in ("twolame", "tompg") and settings["layer"] == 2:
         return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "tompg":
@@ -627,6 +647,9 @@ def encode(command, source, path, temp):
     if command[0] == "gogo":
         gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
         return
+    if command[0].startswith("lame-win-"):
+        lame_win_tool.encode(WIN_LAME[command[0][len("lame-win-"):]], command[1:], source, path)
+        return
     if command[0].startswith("lame-"):
         subprocess.run([str(OLD_LAME[command[0][len("lame-"):]]), *command[1:], str(source), str(path)], check=True)
         return
@@ -692,6 +715,7 @@ XING_ENCODER = []
 BLADE_ENCODER = []
 GOGO_ENCODER = []
 OLD_LAME = {}
+WIN_LAME = {}
 
 
 def main():
@@ -706,6 +730,8 @@ def main():
     GOGO_ENCODER.append(gogo_tool.fetch())
     for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1"):
         OLD_LAME[version] = old_lame_tool.build(version)
+    for version in lame_win_tool.BUILDS:
+        WIN_LAME[version] = lame_win_tool.fetch(version)
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in FIXTURES:
             source = pathlib.Path(temp) / f"{name}.wav"

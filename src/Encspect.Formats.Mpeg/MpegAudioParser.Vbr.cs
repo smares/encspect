@@ -204,9 +204,18 @@ public sealed partial class MpegAudioParser
             string text = vbr.LameEncoder;
             if (LameName(text) is { } name)
             {
-                return vbr.IsTagCrcValid
-                    ? Encoder(name, "High", Evidence(tagNode!, "LAME tag"))
-                    : Encoder(name, "Medium", Evidence(tagNode!, "LAME tag, whose CRC fails"));
+                Node tagEvidence = vbr.IsTagCrcValid ? Evidence(tagNode!, "LAME tag") : Evidence(tagNode!, "LAME tag, whose CRC fails");
+                string confidence = vbr.IsTagCrcValid ? "High" : "Medium";
+
+                // A version longer than the tag's nine bytes ends in a cut-off "." there
+                // ("LAME3.90." of HydrogenAudio's 3.90.3); the padding holds it whole, as getID3 reads it.
+                if (text.EndsWith('.') && signature is { Text: var whole } && whole.Length > text.Length
+                    && whole.StartsWith(text, StringComparison.Ordinal) && whole[text.Length..].All(char.IsAsciiDigit))
+                {
+                    return Encoder(LameName(whole)!, confidence, tagEvidence, ancillary!);
+                }
+
+                return Encoder(name, confidence, tagEvidence);
             }
 
             bool ffmpeg = text.StartsWith("Lavc", StringComparison.Ordinal) || text.StartsWith("Lavf", StringComparison.Ordinal);
