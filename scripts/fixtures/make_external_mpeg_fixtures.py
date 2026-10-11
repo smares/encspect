@@ -427,6 +427,63 @@ def truncated_last(path, packets):
     return expected is not None and length < expected
 
 
+def main_data_findings(path, packets, rows):
+    """Where Layer III main data does not fit the bit reservoir (ISO/IEC 11172-3 2.4.2.7): main data
+    that starts inside the previous frame's (overlap) or runs past the end of its own frame
+    (overflow), as BladeEnc 0.80 and 0.81 write it. main_data_begin and part2_3_length are read
+    here, since minimp3 rejects the side information of exactly those frames. The frames lie back
+    to back: ffprobe lists each but a Xing or Info frame, which minimp3 lists and which takes its
+    place in the reservoir without main data; a truncated last frame cannot overflow."""
+    data = path.read_bytes()
+    sizes = dict(map(tuple, packets))
+    offsets = sorted(set(sizes) | {row["offset"] for row in rows})
+    findings = []
+    position = previous_end = audio = 0
+    for k, offset in enumerate(offsets):
+        header = data[offset : offset + 4]
+        size = sizes.get(offset, offsets[k + 1] - offset if k + 1 < len(offsets) else 0)
+        main_data_begin, part2_3, side = side_info_lengths(data, offset)
+        area = size - 4 - (0 if header[1] & 1 else 2) - side
+        start = position
+        if offset in sizes:
+            if main_data_begin > start - previous_end:
+                findings.append("mpeg.main-data-before-stream" if audio == 0 else "mpeg.main-data-overlap")
+            audio += 1
+        end = start - main_data_begin + (part2_3 + 7) // 8
+        truncated = k == len(offsets) - 1 and truncated_last(path, packets)
+        if offset in sizes and end > start + area and not truncated:
+            findings.append("mpeg.main-data-overflow")
+        previous_end = max(previous_end, min(end, start + area)) if offset in sizes else previous_end
+        position = start + area
+    return sorted(set(findings))
+
+
+def side_info_lengths(data, offset):
+    """main_data_begin, the sum of part2_3_length and the side information's size of the Layer III
+    frame at offset (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7)."""
+    header = data[offset : offset + 4]
+    mpeg1 = (header[1] >> 3) & 3 == 3
+    channels = 1 if header[3] >> 6 == 3 else 2
+    size = (17 if channels == 1 else 32) if mpeg1 else (9 if channels == 1 else 17)
+    start = offset + 4 + (0 if header[1] & 1 else 2)
+    bits = int.from_bytes(data[start : start + size], "big")
+    position = 0
+
+    def read(count):
+        nonlocal position
+        position += count
+        return (bits >> (size * 8 - position)) & ((1 << count) - 1)
+
+    main_data_begin = read(9 if mpeg1 else 8)
+    read((5 if channels == 1 else 3) if mpeg1 else channels)
+    read(4 * channels if mpeg1 else 0)
+    total = 0
+    for _ in range((2 if mpeg1 else 1) * channels):
+        total += read(12)
+        read(47 if mpeg1 else 51)
+    return main_data_begin, total, size
+
+
 def layer1_findings(path, packets):
     """What breaks ISO/IEC 11172-3 in the Layer I audio data (2.4.1.5), read here independently of
     the analyzer: the forbidden allocation 15 and scalefactor index 63. libmad must reject the
@@ -708,6 +765,8 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
     if settings["layer"] == 3 and settings["version"] == "1" and scalefactors_exceed(manifest["minimp3_side_info"], channels):
         manifest.setdefault("findings", []).append("mpeg.scalefactors-exceed-granule")
+    if settings["layer"] == 3 and "ffprobe_packets" in manifest:
+        manifest["findings"] += main_data_findings(path, manifest["ffprobe_packets"], manifest["minimp3_side_info"])
     if settings["layer"] == 3:
         manifest["mp3guessenc"] = guessenc_summary(path)
     describe_tag(path, command, manifest)

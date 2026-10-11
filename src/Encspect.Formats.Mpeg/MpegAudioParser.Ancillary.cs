@@ -109,7 +109,11 @@ public sealed partial class MpegAudioParser
         public void Add(Entry entry)
         {
             var header = new MpegHeader(entry.Header);
-            bool inReservoir = header.Layer == 3 && !entry.IsTruncated && (entry.SideInfo is not null || entry.VbrFrame is not null);
+            // A truncated last frame keeps its place as long as its side information is there: its
+            // main data starts in the reservoir, which ends the previous frame's segment (BladeEnc
+            // 0.80 to 0.83 cut the last frame short), and it has a segment of its own where its main
+            // data fits what is left of it, as mp3guessenc reads it.
+            bool inReservoir = header.Layer == 3 && (entry.SideInfo is not null || entry.VbrFrame is not null);
             if (!inReservoir || _stream != (header.VersionBits, header.SampleRateIndex))
             {
                 Close();
