@@ -4646,7 +4646,7 @@
                     },
                     {
                       "name": "Mode Extension",
-                      "value": "MS stereo",
+                      "value": "Mid/side stereo",
                       "offset": 4182,
                       "length": 1
                     },
@@ -5491,14 +5491,14 @@
       {
         "severity": "Warning",
         "code": "mpeg.big-values-too-large",
-        "message": "1 frame have more than 288 big_values pairs, the first 300 at 0x1A1.",
+        "message": "1 frame has more than 288 big_values pairs, the first 300 at 0x1A1.",
         "offset": 425,
         "length": 2
       },
       {
         "severity": "Warning",
         "code": "mpeg.block-type-reserved",
-        "message": "1 frame switch windows with block type 0, which is reserved, the first at 0x4E5.",
+        "message": "1 frame switches windows with block type 0, which is reserved, the first at 0x4E5.",
         "offset": 1263,
         "length": 1
       },
@@ -5512,21 +5512,21 @@
       {
         "severity": "Warning",
         "code": "mpeg.scalefactors-exceed-granule",
-        "message": "1 frame have scalefactors longer than part2_3_length, the first 74 of 50 bits at 0x9CB.",
+        "message": "1 frame has scalefactors longer than part2_3_length, the first 74 of 50 bits at 0x9CB.",
         "offset": 2513,
         "length": 2
       },
       {
         "severity": "Warning",
         "code": "mpeg.scfsi-with-short-blocks",
-        "message": "1 frame set scfsi for a channel with short blocks, which libmad rejects, the first at 0xD0F.",
+        "message": "1 frame sets scfsi for a channel with short blocks, which libmad rejects, the first at 0xD0F.",
         "offset": 3348,
         "length": 1
       },
       {
         "severity": "Warning",
         "code": "mpeg.stereo-block-types-differ",
-        "message": "1 frame use MS or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x1053.",
+        "message": "1 frame uses mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x1053.",
         "offset": 4197,
         "length": 1
       }

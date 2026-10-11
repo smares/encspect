@@ -439,16 +439,18 @@ def truncated_last(path, packets):
 
 def main_data_findings(path, packets, rows):
     """Where Layer III main data does not fit the bit reservoir (ISO/IEC 11172-3 2.4.2.7): main data
-    that starts inside the previous frame's (overlap) or runs past the end of its own frame
-    (overflow), as BladeEnc 0.80 and 0.81 write it. main_data_begin and part2_3_length are read
-    here, since minimp3 rejects the side information of exactly those frames. The frames lie back
-    to back: ffprobe lists each but a Xing or Info frame, which minimp3 lists and which takes its
-    place in the reservoir without main data; a truncated last frame cannot overflow."""
+    that starts before the stream, inside the previous frame's (overlap) or runs past the end of its
+    own frame (overflow), as BladeEnc 0.80 and 0.81 write it; and main_data_begin beyond the decoder
+    buffer, which holds one frame at bitrate_index 14 at the stream's sample rate, as LAME writes it
+    at high bitrates since 3.81. main_data_begin and part2_3_length are read here, since minimp3
+    rejects the side information of some of those frames. The frames lie back to back: ffprobe lists
+    each but a Xing or Info frame, which minimp3 lists and which takes its place in the reservoir
+    without main data; a truncated last frame cannot overflow."""
     data = path.read_bytes()
     sizes = dict(map(tuple, packets))
     offsets = sorted(set(sizes) | {row["offset"] for row in rows})
     findings = []
-    position = previous_end = audio = 0
+    position = previous_end = 0
     for k, offset in enumerate(offsets):
         header = data[offset : offset + 4]
         size = sizes.get(offset, offsets[k + 1] - offset if k + 1 < len(offsets) else 0)
@@ -456,9 +458,14 @@ def main_data_findings(path, packets, rows):
         area = size - 4 - (0 if header[1] & 1 else 2) - side
         start = position
         if offset in sizes:
-            if main_data_begin > start - previous_end:
-                findings.append("mpeg.main-data-before-stream" if audio == 0 else "mpeg.main-data-overlap")
-            audio += 1
+            if main_data_begin > start:
+                findings.append("mpeg.main-data-before-stream")
+            elif main_data_begin > start - previous_end:
+                findings.append("mpeg.main-data-overlap")
+            top = frame_length(header[:2] + bytes([(header[2] & 0x0D) | 0xE0]) + header[3:])
+            # ISO/IEC 11172-3's decoder buffer, checked for MPEG-1 only (version bits 11).
+            if (header[1] >> 3) & 3 == 3 and 0 < main_data_begin and main_data_begin + frame_length(header) > top:
+                findings.append("mpeg.main-data-begin-exceeds-buffer")
         end = start - main_data_begin + (part2_3 + 7) // 8
         truncated = k == len(offsets) - 1 and truncated_last(path, packets)
         if offset in sizes and end > start + area and not truncated:

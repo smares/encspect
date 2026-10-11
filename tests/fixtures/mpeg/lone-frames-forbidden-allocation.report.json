@@ -1,0 +1,26 @@
+[
+  {
+    "source": "lone-frames-forbidden-allocation.mp1",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 572,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 572
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 572
+      }
+    ]
+  }
+]

@@ -85,8 +85,10 @@ public sealed partial class MpegAudioParser
     // reservoir ends the stream, so the frame before it keeps the rest of its data.
     private sealed class AncillaryScan(BlockReader blocks)
     {
+        // Frames without data after their side information add no bytes and are not kept, so the
+        // list stays bounded whatever the frame lengths.
         private readonly List<(long Stream, long File, int Length)> _areas = [];
-        private (int Version, int SampleRate)? _stream;
+        private MpegHeader? _stream;
         private long _position;
         private long? _previousEnd;
         private bool _hasPrevious;
@@ -114,7 +116,7 @@ public sealed partial class MpegAudioParser
             // 0.80 to 0.83 cut the last frame short), and it has a segment of its own where its main
             // data fits what is left of it, as mp3guessenc reads it.
             bool inReservoir = header.Layer == 3 && (entry.SideInfo is not null || entry.VbrFrame is not null);
-            if (!inReservoir || _stream != (header.VersionBits, header.SampleRateIndex))
+            if (!inReservoir || _stream is not { } stream || !stream.IsSameStream(header))
             {
                 Close();
                 if (!inReservoir)
@@ -122,12 +124,16 @@ public sealed partial class MpegAudioParser
                     return;
                 }
 
-                _stream = (header.VersionBits, header.SampleRateIndex);
+                _stream = header;
             }
 
             long dataOffset = entry.Offset + 4 + (header.IsProtected ? 2 : 0) + Layer3SideInfo.Size(header);
             long start = _position;
-            _areas.Add((start, dataOffset, (int)(entry.End - dataOffset)));
+            if (entry.End > dataOffset)
+            {
+                _areas.Add((start, dataOffset, (int)(entry.End - dataOffset)));
+            }
+
             _position += entry.End - dataOffset;
             if (entry.SideInfo is null)
             {

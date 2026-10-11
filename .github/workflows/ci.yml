@@ -19,13 +19,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-24.04-arm
-          - windows-latest
-          - windows-11-arm
-          - macos-latest
-          - macos-15-intel
+        include:
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+          - { os: windows-latest, rid: win-x64 }
+          - { os: windows-11-arm, rid: win-arm64 }
+          - { os: macos-latest, rid: osx-arm64 }
+          - { os: macos-15-intel, rid: osx-x64 }
     steps:
       - uses: actions/checkout@v5
 
@@ -51,6 +51,38 @@ jobs:
           dotnet run --no-build --configuration Release --project src/Encspect.Cli -- --ndjson "$RUNNER_TEMP/sample.bin" "$RUNNER_TEMP/sample.bin" | tee "$RUNNER_TEMP/out.ndjson"
           test "$(grep -c 'format.unrecognized' "$RUNNER_TEMP/out.ndjson")" = 2
           test "$(wc -l < "$RUNNER_TEMP/out.ndjson")" -eq 2
+
+      # Built on the runner of its own platform, so the smoke run below executes the real binary. Not
+      # uploaded: the repository is public, and no build is published before development ends.
+      - name: Publish the self-contained CLI
+        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/${{ matrix.rid }}
+
+      - name: Run the published CLI
+        shell: bash
+        run: |
+          publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
+          grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
+
+  fuzz:
+    name: fuzz smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # A new seed every run; the log prints it, and a failure saves the input as an artifact.
+      - name: Analyze mutated fixtures for five minutes
+        shell: bash
+        run: dotnet run --configuration Release --project tests/Encspect.Fuzz -- --seconds 300 --seed $(( (RANDOM << 15) | RANDOM )) --out fuzz-failures
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-failures
+          path: fuzz-failures
 
   format:
     name: formatting

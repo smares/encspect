@@ -19,7 +19,9 @@ headers, CRCs and the layout of frames, gaps and tags are fully under control. E
   or resyncs differently.
 
 A header only counts as the start of a stream when two more consistent frames (same version,
-layer and sample rate) follow it, or when its frames end exactly at the end of the data.
+layer and sample rate) follow it, or when its one or two frames end exactly at the end of the data
+and each holds what its header promises: Layer I and II audio data that fits the frame, without the
+forbidden Layer I allocation 15, or valid Layer III side information.
 
 Header layout, tables and frame lengths follow ISO/IEC 11172-3 and 13818-3 as summarized in
 "MPEG Audio Frame Header" (datavoyage.com/mpgscript/mpeghdr.htm); MPEG 2.5 is the Fraunhofer
@@ -147,7 +149,7 @@ def mode_extension_name(layer, mode, mode_ext):
     if mode != "Joint stereo":
         return None
     if layer == 3:
-        return ["None", "Intensity stereo", "MS stereo", "MS and intensity stereo"][mode_ext]
+        return ["None", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"][mode_ext]
     return f"Bands {(mode_ext + 1) * 4} to 31"
 
 
@@ -438,7 +440,9 @@ def frame_layout(frame, available):
     head = 4 + (2 if frame.protected else 0) + side
     return {
         "layer3": frame.layer == 3 and available >= head,
-        "stream": (VERSION_NAMES[frame.version], frame.rate),
+        # The analyzer's stream identity (IsSameStream): a switch to or from free format starts an
+        # empty reservoir too.
+        "stream": (VERSION_NAMES[frame.version], frame.rate, frame.bitrate is None),
         "area": available - head,
         "main_data_begin": getattr(frame, "main_data_begin", 0),
         "main_data_length": frame.main_data_length() if hasattr(frame, "main_data_length") else 0,
@@ -631,6 +635,22 @@ def layer1_overflow():
     return f.finding("mpeg.audio-data-overflow", "Layer I")
 
 
+@fixture
+def layer1_allocation_overflow():
+    f = Fixture(
+        "mpeg1-layer1-allocation-overflow",
+        ".mp1",
+        "MPEG-1 Layer I stereo at 48000 Hz and 32 kbps: 32-byte frames that cannot even hold the 256-bit bit "
+        "allocation after the header, a combination that cannot be a valid frame. mpg123 and libmad reject every "
+        "frame; the analyzer keeps them as frames and reports the overflow.",
+        crosscheck=False,
+    )
+    f.add_frames(stream(6, layer=1, bitrate=32, rate=48000, mode="Stereo"))
+    for entry in f.frames:
+        entry["fields"]["Data"] = "28 bytes"
+    return f.finding("mpeg.audio-data-overflow", "6 frames need more bits for their Layer I audio data")
+
+
 # --- CRC ---------------------------------------------------------------------------------------
 
 
@@ -761,6 +781,51 @@ def no_frames():
 
 
 @fixture
+def lone_frame_after_junk():
+    f = Fixture(
+        "lone-frame-after-junk",
+        ".mp3",
+        "Junk, then a single MPEG-1 Layer III frame that ends exactly at the end of the file. There is no chain to "
+        "follow, but its side information is valid, so it is a frame.",
+        crosscheck=False,
+    )
+    f.gap(junk(500, 52))
+    f.add_frames(stream(1))
+    return f.finding("mpeg.leading-junk", "500 bytes")
+
+
+@fixture
+def lone_frame_overflow():
+    f = Fixture(
+        "lone-frame-overflow",
+        ".mp1",
+        "Junk, then a single 32-byte MPEG-1 Layer I stereo frame at 32 kbps and 48000 Hz that ends exactly at the end "
+        "of the file. Its bit allocation does not fit the frame, so it is no frame and no MPEG audio is recognized.",
+        crosscheck=False,
+    )
+    f.data += junk(700, 53) + Frame(layer=1, bitrate=32, rate=48000, mode="Stereo").bytes()
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    return f.finding("format.unrecognized", "No format parser")
+
+
+@fixture
+def lone_frames_forbidden_allocation():
+    f = Fixture(
+        "lone-frames-forbidden-allocation",
+        ".mp1",
+        "Junk, then two MPEG-1 Layer I mono frames at 128 kbps and 44100 Hz that end exactly at the end of the file; "
+        "the second uses the forbidden bit allocation 15. A chain that short only counts where every frame holds what "
+        "its header promises, so no MPEG audio is recognized.",
+        crosscheck=False,
+    )
+    good = Frame(layer=1, bitrate=128, rate=44100, mode="Mono", payload=Layer1Audio([[3] * 4 + [0] * 28]))
+    forbidden = Frame(layer=1, bitrate=128, rate=44100, mode="Mono", payload=Layer1Audio([[15] + [0] * 31]))
+    f.data += junk(300, 54) + good.bytes() + forbidden.bytes()
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    return f.finding("format.unrecognized", "No format parser")
+
+
+@fixture
 def cut_frame():
     f = Fixture(
         "cut-frame-stream-change",
@@ -808,6 +873,37 @@ def free_format_length_change():
     f.add_frames([Frame(bitrate=None, free_length=600) for _ in range(5)])
     f.finding("mpeg.free-format", "500 bytes")
     return f.finding("mpeg.free-format-length-changed", "from 500 to 600 bytes")
+
+
+@fixture
+def sync_inside_header():
+    f = Fixture(
+        "sync-inside-header",
+        ".mp3",
+        "Five stereo frames, then a mono frame whose header's last byte, $FF, starts a stream of stereo frames that "
+        "begins three bytes in. The mono frame is not followed by a frame, but a frame cannot end inside its own "
+        "header, so it keeps its full length, swallowing the first frame of that stream, and sync is found again "
+        "three bytes after it. Its side information is the stream's header and side information, read three bytes "
+        "off: main_data_begin 503, more than the reservoir before it holds.",
+        crosscheck=False,
+    )
+    f.add_frames(stream(5, mode="Stereo"))
+    damaged = Frame(mode="Mono", mode_ext=3, copyright=1, original=1, emphasis=3)
+    damaged.main_data_begin = 503
+    following = stream(6, mode="Stereo")
+    first = following[0].bytes()
+    data = damaged.header()[:3] + first
+    assert damaged.header()[3] == 0xFF and first[0] == 0xFF
+    length = damaged.length()
+    f.begin_audio()
+    f.frames.append({"offset": len(f.data), "length": length, "fields": damaged.fields()})
+    f.layout.append(frame_layout(damaged, length))
+    f.data += data[:length]
+    f.gap(data[length:])
+    f.add_frames(following[1:])
+    f.finding("mpeg.channel-mode-changed", "once, first from Stereo to Mono")
+    f.finding("mpeg.main-data-overlap", f"0x{f.frames[5]['offset']:X}")
+    return f.finding("mpeg.sync-lost", f"{len(data) - length} bytes")
 
 
 # --- Stream changes ----------------------------------------------------------------------------

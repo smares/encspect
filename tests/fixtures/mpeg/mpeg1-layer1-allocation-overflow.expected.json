@@ -1,0 +1,118 @@
+{
+ "description": "MPEG-1 Layer I stereo at 48000 Hz and 32 kbps: 32-byte frames that cannot even hold the 256-bit bit allocation after the header, a combination that cannot be a valid frame. mpg123 and libmad reject every frame; the analyzer keeps them as frames and reports the overflow.",
+ "length": 192,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 192,
+   "statistics": {
+    "Statistics": "6 frames, 0.048 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "2304",
+    "Statistics/Duration": "0.048 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "32.0 kbps",
+    "Statistics/Minimum Bitrate": "32 kbps",
+    "Statistics/Maximum Bitrate": "32 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/32 kbps": "6 frames (100.0%)",
+    "Statistics/Bitrate Over Time": "32"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  },
+  {
+   "offset": 32,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  },
+  {
+   "offset": 64,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  },
+  {
+   "offset": 96,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  },
+  {
+   "offset": 128,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  },
+  {
+   "offset": 160,
+   "length": 32,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "32 kbps",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Data": "28 bytes"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.audio-data-overflow",
+   "contains": "6 frames need more bits for their Layer I audio data"
+  }
+ ]
+}

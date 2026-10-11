@@ -1,0 +1,135 @@
+{
+ "description": "MPEG-2 Layer II stereo at 24000 Hz and 8 kbps with CRC: 48-byte frames whose bit allocation and scfsi fit, but whose scalefactors run past the frame. mpg123 and libmad reject them; the analyzer reports the overflow and still verifies the CRC, which covers only the allocation and scfsi, and fails in the third frame.",
+ "length": 288,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 288,
+   "statistics": {
+    "Statistics": "6 frames, 0.288 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "6912",
+    "Statistics/Duration": "0.288 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "8.0 kbps",
+    "Statistics/Minimum Bitrate": "8 kbps",
+    "Statistics/Maximum Bitrate": "8 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/8 kbps": "6 frames (100.0%)",
+    "Statistics/Bitrate Over Time": "8"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x5CC1",
+    "CRC/Computed": "0x5CC1",
+    "Data": "42 bytes"
+   }
+  },
+  {
+   "offset": 48,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x697A",
+    "CRC/Computed": "0x697A",
+    "Data": "42 bytes"
+   }
+  },
+  {
+   "offset": 96,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x20C1",
+    "CRC/Computed": "0x20C0",
+    "Data": "42 bytes"
+   }
+  },
+  {
+   "offset": 144,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x157B",
+    "CRC/Computed": "0x157B",
+    "Data": "42 bytes"
+   }
+  },
+  {
+   "offset": 192,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x5CC1",
+    "CRC/Computed": "0x5CC1",
+    "Data": "42 bytes"
+   }
+  },
+  {
+   "offset": 240,
+   "length": 48,
+   "fields": {
+    "Header/Version": "MPEG-2",
+    "Header/Layer": "II",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "24000 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "true",
+    "CRC": "0x697A",
+    "CRC/Computed": "0x697A",
+    "Data": "42 bytes"
+   }
+  }
+ ],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "mpeg.crc-mismatch",
+   "contains": "1 frame fails"
+  },
+  {
+   "code": "mpeg.audio-data-overflow",
+   "contains": "6 frames need more bits for their Layer II audio data"
+  }
+ ],
+ "silent": false
+}

@@ -1,0 +1,20 @@
+{
+ "description": "Junk, then a single 32-byte MPEG-1 Layer I stereo frame at 32 kbps and 48000 Hz that ends exactly at the end of the file. Its bit allocation does not fit the frame, so it is no frame and no MPEG audio is recognized.",
+ "length": 732,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "Data",
+   "offset": 0,
+   "length": 732
+  }
+ ],
+ "frames": [],
+ "gaps": [],
+ "findings": [
+  {
+   "code": "format.unrecognized",
+   "contains": "No format parser"
+  }
+ ]
+}

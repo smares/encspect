@@ -1,0 +1,26 @@
+[
+  {
+    "source": "lone-frame-invalid-side-info.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 817,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 817
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 817
+      }
+    ]
+  }
+]
