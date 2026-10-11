@@ -25,6 +25,8 @@ import tempfile
 
 import downloads
 
+CACHE = pathlib.Path(__file__).resolve().parents[2] / ".cache" / "encoders"
+
 OLD_SITE = "http://home.swipnet.se/~w-82625/source/"
 SITE = "http://bladeenc.mp3.no:80/source/"
 
@@ -54,7 +56,9 @@ def build(version="0.94.2"):
     """Downloads and checks the source of version, and compiles the encoder in a temporary directory."""
     release = RELEASES[version]
     directory = pathlib.Path(tempfile.mkdtemp(prefix="bladeenc-"))
-    path = directory / release["archive"]
+    # The Wayback Machine resets connections now and then, so a checked copy is kept and reused.
+    CACHE.mkdir(parents=True, exist_ok=True)
+    path = CACHE / release["archive"]
     downloads.fetch(addresses(release), release["sha256"], path)
     with tarfile.open(path) as archive:
         archive.extractall(directory / "src", filter="data")

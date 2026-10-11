@@ -19,6 +19,7 @@ import tempfile
 import zipfile
 
 import downloads
+import xing_tool
 
 URL = "https://www.rarewares.org/rrw/files/gogo/gogo3.12.zip"
 SHA256 = "aa3c76fc72a796923e8425ad88ecdacd98778e55e83eb6c23269a134cf2e1cef"
@@ -30,7 +31,7 @@ VERSION = "GOGO-no-coda ver. 3.12"
 
 def fetch():
     """Downloads the release, checks it, and unpacks the encoder and its DLL into a temporary
-    directory with its own Wine prefix."""
+    directory."""
     directory = pathlib.Path(tempfile.mkdtemp(prefix="gogo-"))
     path = directory / "gogo3.12.zip"
     downloads.fetch(ADDRESSES, SHA256, path)
@@ -48,8 +49,8 @@ def fetch():
     return binary
 
 
-def run(binary, arguments, directory, prefix=None):
-    environment = dict(os.environ, WINEPREFIX=str(prefix or binary.parent / "wine"), WINEDEBUG="-all")
+def run(binary, arguments, directory):
+    environment = dict(os.environ, WINEPREFIX=str(xing_tool.WINE_PREFIX), WINEDEBUG="-all")
     return subprocess.run(["wine", str(binary), *arguments], cwd=directory, env=environment, capture_output=True,
                           stdin=subprocess.DEVNULL, timeout=600, encoding="shift_jis", errors="replace")
 
@@ -60,7 +61,7 @@ def encode(binary, arguments, source, path):
         shutil.copy(source, pathlib.Path(temp) / "in.wav")
         for name in FILES:
             shutil.copy(binary.parent / name, pathlib.Path(temp) / name)
-        result = run(pathlib.Path(temp) / binary.name, ["in.wav", "out.mp3", *arguments, "-silent"], temp, binary.parent / "wine")
+        result = run(pathlib.Path(temp) / binary.name, ["in.wav", "out.mp3", *arguments, "-silent"], temp)
         output = pathlib.Path(temp) / "out.mp3"
         if not output.exists() or output.stat().st_size == 0:
             raise SystemExit(f"gogo {' '.join(arguments)} failed: {result.stdout[-500:]}")

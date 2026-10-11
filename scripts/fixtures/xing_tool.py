@@ -25,9 +25,13 @@ BINARY_SHA256 = "64cb19fbe7eda18dc25c7db9c55ceb58c998f77e7d98b50a0747cce91ba937f
 VERSION = "file-file MPEG Layer I/II/III audio encode v3.0/32"
 
 
+# One Wine prefix for every Wine tool and run, outside the repository: a new prefix takes over a
+# gigabyte, and one links z: to /, which tools walking the tree would follow.
+WINE_PREFIX = pathlib.Path(tempfile.gettempdir()) / "encspect-wine"
+
+
 def fetch():
-    """Downloads the release, checks it, and unpacks tompg.exe into a temporary directory with its
-    own Wine prefix."""
+    """Downloads the release, checks it, and unpacks tompg.exe into a temporary directory."""
     directory = pathlib.Path(tempfile.mkdtemp(prefix="tompg-"))
     path = directory / "tompg.zip"
     downloads.fetch(ADDRESSES, SHA256, path)
@@ -43,7 +47,7 @@ def fetch():
 
 
 def run(binary, arguments, directory):
-    environment = dict(os.environ, WINEPREFIX=str(binary.parent / "wine"), WINEDEBUG="-all")
+    environment = dict(os.environ, WINEPREFIX=str(WINE_PREFIX), WINEDEBUG="-all")
     return subprocess.run(["wine", str(binary), *arguments], cwd=directory, env=environment, capture_output=True, text=True,
                           stdin=subprocess.DEVNULL, timeout=600)
 
