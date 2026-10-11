@@ -7,13 +7,16 @@ public static class ReportTextWriter
 {
     private static readonly string Spaces = new(' ', 64);
 
-    public static void Write(Report report, TextWriter writer, bool showOffsets)
+    public static void Write(Report report, TextWriter writer, bool showOffsets) => Write(report, writer, showOffsets, ReportFilter.All);
+
+    public static void Write(Report report, TextWriter writer, bool showOffsets, ReportFilter filter)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(filter);
 
         writer.WriteLine(report.Source);
-        WriteNode(report.Root, writer, showOffsets, 0);
+        WriteNode(report.Root, writer, showOffsets, filter, 0);
 
         if (report.Findings.Count > 0)
         {
@@ -28,7 +31,7 @@ public static class ReportTextWriter
 
     // Written piece by piece rather than as one interpolated line per node, because a report can
     // hold hundreds of thousands of nodes.
-    private static void WriteNode(Node node, TextWriter writer, bool showOffsets, int depth)
+    private static void WriteNode(Node node, TextWriter writer, bool showOffsets, ReportFilter filter, int depth)
     {
         for (int indent = (depth + 1) * 2; indent > 0; indent -= Spaces.Length)
         {
@@ -55,7 +58,10 @@ public static class ReportTextWriter
 
         foreach (Node child in node.Children)
         {
-            WriteNode(child, writer, showOffsets, depth + 1);
+            if (filter.Includes(child, node))
+            {
+                WriteNode(child, writer, showOffsets, filter, depth + 1);
+            }
         }
     }
 

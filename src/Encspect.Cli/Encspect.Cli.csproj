@@ -7,4 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Encspect.Host\Encspect.Host.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Encspect.Tests" />
+  </ItemGroup>
 </Project>
