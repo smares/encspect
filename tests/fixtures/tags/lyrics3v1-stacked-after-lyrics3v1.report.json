@@ -1,0 +1,271 @@
+[
+  {
+    "source": "lyrics3v1-stacked-after-lyrics3v1.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 848,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 512
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 512,
+          "length": 40,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 512,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "Old lyrics\r\nline two",
+              "offset": 523,
+              "length": 20
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 543,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 512,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \"LYRICSEND\"",
+                  "offset": 543,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\"LYRICSBEGIN\" 31 bytes earlier",
+                  "offset": 512,
+                  "length": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.0",
+          "offset": 552,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 552,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Old title",
+              "offset": 555,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Old artist",
+              "offset": 585,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Old album",
+              "offset": 615,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "1999",
+              "offset": 645,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "",
+              "offset": 649,
+              "length": 30
+            },
+            {
+              "name": "Genre",
+              "value": "12 (Other)",
+              "offset": 679,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 552,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"TAG\" 128 bytes before the anchor",
+                  "offset": 552,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 555,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lyrics3",
+          "value": "1.00",
+          "offset": 680,
+          "length": 40,
+          "children": [
+            {
+              "name": "Begin",
+              "value": "LYRICSBEGIN",
+              "offset": 680,
+              "length": 11
+            },
+            {
+              "name": "Lyrics",
+              "value": "New lyrics\r\nline two",
+              "offset": 691,
+              "length": 20
+            },
+            {
+              "name": "End",
+              "value": "LYRICSEND",
+              "offset": 711,
+              "length": 9
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 680,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "End marker \"LYRICSEND\"",
+                  "offset": 711,
+                  "length": 9
+                },
+                {
+                  "name": "Evidence",
+                  "value": "\"LYRICSBEGIN\" 31 bytes earlier",
+                  "offset": 680,
+                  "length": 11
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "value": "1.1",
+          "offset": 720,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 720,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Song Title",
+              "offset": 723,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist Name",
+              "offset": 753,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album Name",
+              "offset": 783,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2001",
+              "offset": 813,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "A comment",
+              "offset": 817,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": "7",
+              "offset": 846,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 847,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 720,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"TAG\" 128 bytes before the anchor",
+                  "offset": 720,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 723,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 512
+      },
+      {
+        "severity": "Warning",
+        "code": "layout.id3v1-not-last",
+        "message": "The ID3v1 tag at 0x228 is followed by the Lyrics3 tag at 0x2A8; readers expect ID3v1 in the last 128 bytes.",
+        "offset": 552,
+        "length": 128
+      }
+    ]
+  }
+]

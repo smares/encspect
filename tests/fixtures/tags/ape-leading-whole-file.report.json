@@ -280,6 +280,13 @@
     },
     "findings": [
       {
+        "severity": "Info",
+        "code": "ape.at-start",
+        "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
+        "offset": 0,
+        "length": 112
+      },
+      {
         "severity": "Warning",
         "code": "layout.tags-only",
         "message": "The file holds only tags; no bytes are left for audio data.",

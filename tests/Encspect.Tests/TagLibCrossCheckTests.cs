@@ -20,6 +20,15 @@ public class TagLibCrossCheckTests
         "TagLib# 2.3 loses every frame after an extended header with a CRC in this layout, whether or not the CRC " +
         "matches (checked with a correct CRC as well); mutagen 1.47 reads the frame, as Encspect does.";
 
+    private const string InnerId3v1Reason =
+        "TagLib# reads a TAG 128 bytes before the ID3v1 tag as a second ID3v1 tag, here inside the tag in front " +
+        "of it, and reports that one; mutagen 1.47 reads the ID3v1 tag at EOF-128, as Encspect does.";
+
+    private const string ApeSizeReason =
+        "The leading APE header's size points past the end of the file. TagLib# reads the tag anyway (mutagen 1.47 " +
+        "reads its items when they are complete and fails otherwise); the plan rejects such a candidate because its " +
+        "extent is unknown, and Encspect reports the rejection.";
+
     // Each entry: fixture, a substring of the difference, and why the tools legitimately differ.
     private static readonly (string Fixture, string Difference, string Reason)[] Explained =
     [
@@ -42,6 +51,10 @@ public class TagLibCrossCheckTests
         ("id3v24-compressed-without-data-length", "frame count", "TagLib# drops a compressed ID3v2.4 frame without a data length indicator; mutagen 1.48 decompresses it, and Encspect keeps it as compressed data, with a finding."),
         ("id3v24-extended-header-size-and-flags", "frame count", "TagLib# finds no frame after an extended header that declares more bytes than its flags use; mutagen 1.48 reads TIT2 at the declared size, as Encspect does."),
         ("ape-header-before-file", "APE:", "TagLib# (and mutagen 1.48) refuse an APE footer whose header would start before the file; Encspect reports the tag with a finding."),
+        ("id3v1-enhanced-tag-in-artist", "ID3v1 ", InnerId3v1Reason),
+        ("lyrics3v1-tag-in-long-lyrics", "ID3v1 ", InnerId3v1Reason),
+        ("ape-leading-truncated", "APE:", ApeSizeReason),
+        ("ape-leading-size-past-eof", "APE:", ApeSizeReason),
         ("stack-id3v2-ape-lyrics3-id3v1", "APE:", LyricsStack),
         ("stack-id3v2-ape-id3v1-lyrics3", "APE:", LyricsStack),
         ("stack-id3v2-ape-id3v1-lyrics3", "ID3v1:", LyricsStack),

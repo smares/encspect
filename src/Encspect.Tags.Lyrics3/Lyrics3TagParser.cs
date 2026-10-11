@@ -52,29 +52,37 @@ public sealed class Lyrics3TagParser : ITagParser
     }
 
     // v1 has no size field: the lyrics run from LYRICSBEGIN to LYRICSEND and should hold at most
-    // 5100 bytes. Lyrics may mention LYRICSBEGIN themselves, so the earliest one in that window
-    // after which only text follows starts the tag; audio before the tag holds $FF bytes. Without
-    // one, the nearest LYRICSBEGIN does.
+    // 5100 bytes. Lyrics3 v1 says to "seek back 5100 bytes and then search forward for the begin
+    // tag", and lyrics may mention LYRICSBEGIN themselves, so the earliest one after which only
+    // text follows starts the tag; audio before the tag holds $FF bytes. The search does not run
+    // back past an end marker either: "LYRICSBEGIN" and "LYRICSEND" must not be present in the
+    // lyrics, so an earlier LYRICSEND or LYRICS200 ends an earlier tag, and text tags such as a
+    // space-padded ID3v1 tag can sit between the two. Without a LYRICSBEGIN in that range, the
+    // nearest one starts the tag.
     private TagProbe ParseV1(ByteReader reader, long end, long marker)
     {
         long windowStart = Math.Max(reader.Start, marker - MaxV1Search - Begin.Length);
         byte[] window = reader.ReadBytesAt(windowStart, (int)(marker - windowStart));
-        int nearest = window.AsSpan().LastIndexOf(Begin);
+        ReadOnlySpan<byte> span = window;
+        int nearest = span.LastIndexOf(Begin);
         if (nearest < 0)
         {
             return TagProbe.Reject(marker, "there is no LYRICSBEGIN before LYRICSEND");
         }
 
-        int lastBad = window.AsSpan().LastIndexOfAny((byte)0x00, (byte)0xFF);
-        int first = window.AsSpan(lastBad + 1).IndexOf(Begin);
-        int index = first >= 0 ? lastBad + 1 + first : nearest;
+        int bound = span.LastIndexOfAny((byte)0x00, (byte)0xFF) + 1;
+        bound = Math.Max(bound, EndOf(span, EndV1));
+        bound = Math.Max(bound, EndOf(span, EndV2));
+        int first = span[bound..].IndexOf(Begin);
+        int index = first >= 0 ? bound + first : nearest;
 
         long start = windowStart + index;
         long lyricsStart = start + Begin.Length;
         long lyricsLength = marker - lyricsStart;
+        ReadOnlySpan<byte> lyricsBytes = span[(index + Begin.Length)..];
         var tag = new Node(Name, start, end - start, "1.00");
         tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
-        string lyrics = Encoding.Latin1.GetString(window, index + Begin.Length, (int)lyricsLength);
+        string lyrics = Encoding.Latin1.GetString(lyricsBytes);
         Node lyricsNode = tag.Add("Lyrics", lyricsStart, lyricsLength, lyrics);
         tag.Add("End", marker, MarkerSize, "LYRICSEND");
 
@@ -84,6 +92,7 @@ public sealed class Lyrics3TagParser : ITagParser
             new("End marker \"LYRICSEND\"", marker, MarkerSize),
             new($"\"LYRICSBEGIN\" {marker - start} bytes earlier", start, Begin.Length),
         };
+        Confidence confidence = Confidence.High;
 
         if (lyricsLength > MaxV1Lyrics)
         {
@@ -93,28 +102,46 @@ public sealed class Lyrics3TagParser : ITagParser
         // Lyrics3 v1: "A byte in the text must not have the binary value 255." $00 is reported as
         // well: v1 does not mention it, but its successor v2.00 restricts text to 01 to 254, and
         // zero bytes are what padding and binary data look like, not lyrics.
-        int bad = window.AsSpan(index + Begin.Length).IndexOfAny((byte)0x00, (byte)0xFF);
+        int bad = lyricsBytes.IndexOfAny((byte)0x00, (byte)0xFF);
         if (bad >= 0)
         {
-            byte value = window[index + Begin.Length + bad];
             findings.Add(new Finding(
                 Severity.Warning,
                 "lyrics3.invalid-byte",
-                $"The lyrics contain the byte ${value:X2} at 0x{lyricsStart + bad:X}, which is not lyrics text.",
+                $"The lyrics contain the byte ${lyricsBytes[bad]:X2} at 0x{lyricsStart + bad:X}, which is not lyrics text.",
                 lyricsNode));
+            confidence = Confidence.Low;
         }
 
-        if (index < nearest)
+        // Lyrics3 v1: "The keywords "LYRICSBEGIN" and "LYRICSEND" must not be present in the lyrics."
+        int begin = lyricsBytes.IndexOf(Begin);
+        if (begin >= 0)
         {
             findings.Add(new Finding(
-                Severity.Info,
+                Severity.Warning,
                 "lyrics3.begin-in-lyrics",
-                $"The lyrics contain \"LYRICSBEGIN\" at 0x{windowStart + nearest:X}; the tag starts at the first one, at 0x{start:X}.",
+                $"The lyrics contain \"LYRICSBEGIN\" at 0x{lyricsStart + begin:X}, which Lyrics3 v1 does not allow; the tag starts at the first one, at 0x{start:X}.",
                 lyricsNode));
         }
 
-        Confidence confidence = findings.Any(f => f.Severity >= Severity.Warning) ? Confidence.Low : Confidence.Medium;
+        int endMarker = lyricsBytes.IndexOf(EndV1);
+        if (endMarker >= 0)
+        {
+            findings.Add(new Finding(
+                Severity.Warning,
+                "lyrics3.end-in-lyrics",
+                $"The lyrics contain \"LYRICSEND\" at 0x{lyricsStart + endMarker:X}, which Lyrics3 v1 does not allow.",
+                lyricsNode));
+        }
+
         return TagProbe.Accept(tag, marker, confidence, evidence, findings);
+    }
+
+    // The offset just past the last occurrence of value in data, or 0.
+    private static int EndOf(ReadOnlySpan<byte> data, ReadOnlySpan<byte> value)
+    {
+        int index = data.LastIndexOf(value);
+        return index < 0 ? 0 : index + value.Length;
     }
 
     // v2.00: LYRICSBEGIN, fields (3-letter ID, 5-digit size, data), a 6-digit size covering
@@ -227,9 +254,12 @@ public sealed class Lyrics3TagParser : ITagParser
 
                 // Characters: lyrics present, timestamps in the lyrics, inhibit random selection.
                 // "This is always three (3) characters big in v2.00."
-                field.Add("HasLyrics", fieldStart + 8, fieldSize, Bool(value, 0));
-                field.Add("HasTimestamps", fieldStart + 8, fieldSize, Bool(value, 1));
-                field.Add("IsRandomSelectionInhibited", fieldStart + 8, fieldSize, Bool(value, 2));
+                string[] indicators = ["HasLyrics", "HasTimestamps", "IsRandomSelectionInhibited"];
+                for (int i = 0; i < Math.Min(fieldSize, indicators.Length); i++)
+                {
+                    field.Add(indicators[i], fieldStart + 8 + i, 1, Bool(value, i));
+                }
+
                 // The 1998 Lyrics3 v2.00 text defines 2 characters, id3.org's later one 3.
                 if (fieldSize is not (2 or 3))
                 {

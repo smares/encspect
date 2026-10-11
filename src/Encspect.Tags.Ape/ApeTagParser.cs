@@ -67,9 +67,13 @@ public sealed class ApeTagParser : ITagParser
         }
 
         long itemsStart = start + BlockSize;
-        long declaredEnd = itemsStart + header.Size;
-        long end = Math.Min(declaredEnd, reader.End);
-        long itemsEnd = header.HasFooter ? Math.Min(declaredEnd - BlockSize, end) : end;
+        long end = itemsStart + header.Size;
+        if (end > reader.End)
+        {
+            return TagProbe.Reject(start, $"the header declares {header.Size} bytes after the header, but the file ends {reader.End - itemsStart} bytes into them, so the size points outside the file");
+        }
+
+        long itemsEnd = header.HasFooter ? end - BlockSize : end;
 
         var builder = new Builder(reader, header, "header", start);
         builder.Evidence.Add(new Evidence("\"APETAGEX\" header with version 2000", start, BlockSize));
@@ -79,13 +83,10 @@ public sealed class ApeTagParser : ITagParser
         }
 
         builder.Header = (start, header);
-        if (declaredEnd > reader.End)
+        builder.IsLeading = true;
+        if (header.HasFooter)
         {
-            builder.Truncated = $"The header declares {header.Size} bytes after the header, but the file ends {reader.End - itemsStart} bytes into them.";
-        }
-        else if (header.HasFooter)
-        {
-            long footerStart = declaredEnd - BlockSize;
+            long footerStart = itemsEnd;
             if (!reader.MatchesAt(footerStart, Preamble))
             {
                 builder.MissingFooter = footerStart;
@@ -180,7 +181,7 @@ public sealed class ApeTagParser : ITagParser
 
         public long? MissingFooter { get; set; }
 
-        public string? Truncated { get; set; }
+        public bool IsLeading { get; set; }
 
         private bool IsV1 => anchor.Version == 1000;
 
@@ -243,10 +244,12 @@ public sealed class ApeTagParser : ITagParser
                 Problem(missing, "ape.footer-missing", $"The header announces a footer, but there is no \"APETAGEX\" footer at 0x{footerStart:X}.", Confidence.Medium);
             }
 
-            if (Truncated is not null)
+            // "An APE tag at the end of a file (strongly recommended) must have at least a footer,
+            // an APE tag in the beginning of a file (strongly unrecommended) must have at least a
+            // header."
+            if (IsLeading)
             {
-                _findings.Add(new Finding(Severity.Error, "ape.truncated", Truncated, tag));
-                _confidence = Confidence.Low;
+                _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".", tag));
             }
 
             foreach ((Node? node, string code, string message) in _problems)
@@ -264,6 +267,8 @@ public sealed class ApeTagParser : ITagParser
             var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             long pos = start;
             parsedEnd = start;
+            long previousSize = 0;
+            bool isUnsorted = false;
 
             for (uint index = 1; index <= anchor.ItemCount; index++)
             {
@@ -324,7 +329,8 @@ public sealed class ApeTagParser : ITagParser
                     _findings.Add(new Finding(Severity.Warning, "ape.duplicate-key", $"The key \"{key}\" appears more than once; keys are case-insensitive and must be unique.", item));
                 }
 
-                if (ForbiddenKeys.Contains(key, StringComparer.OrdinalIgnoreCase))
+                // "APE Tags Item Key are case sensitive", so "Tag" is allowed and only "TAG" is not.
+                if (ForbiddenKeys.Contains(key, StringComparer.Ordinal))
                 {
                     _findings.Add(new Finding(Severity.Warning, "ape.key-forbidden", $"The key \"{key}\" is not allowed by the APEv2 specification.", item));
                 }
@@ -334,6 +340,15 @@ public sealed class ApeTagParser : ITagParser
                     _findings.Add(new Finding(Severity.Warning, "ape.item-type-reserved", $"Item \"{key}\" uses the reserved item type 3.", item));
                 }
 
+                // "APE tag items should be sorted ascending by size ... This is not a must, but
+                // strongly recommended."
+                if (itemEnd - pos < previousSize && !isUnsorted)
+                {
+                    isUnsorted = true;
+                    _findings.Add(new Finding(Severity.Info, "ape.items-unsorted", $"Item \"{key}\" is smaller than the item before it; the APEv2 specification recommends sorting items ascending by size.", item));
+                }
+
+                previousSize = itemEnd - pos;
                 pos = itemEnd;
                 parsedEnd = pos;
             }
