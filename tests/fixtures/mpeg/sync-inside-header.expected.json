@@ -1,0 +1,195 @@
+{
+ "description": "Five stereo frames, then a mono frame whose header's last byte, $FF, starts a stream of stereo frames that begins three bytes in. The mono frame is not followed by a frame, but a frame cannot end inside its own header, so it keeps its full length, swallowing the first frame of that stream, and sync is found again three bytes after it. Its side information is the stream's header and side information, read three bytes off: main_data_begin 503, more than the reservoir before it holds.",
+ "length": 4599,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 4599,
+   "statistics": {
+    "Statistics": "11 frames, 0.287 s",
+    "Statistics/Frames": "11",
+    "Statistics/Samples": "12672",
+    "Statistics/Duration": "0.287 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "128.0 kbps",
+    "Statistics/Minimum Bitrate": "128 kbps",
+    "Statistics/Maximum Bitrate": "128 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/128 kbps": "11 frames (100.0%)",
+    "Statistics/Bitrate Over Time": "128",
+    "Statistics/Maximum Reservoir Fill": "511 bytes",
+    "Statistics/Reservoir Fill Over Time": "359"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 417,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 835,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1253,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1671,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2089,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/IsCopyrighted": "true",
+    "Header/IsOriginal": "true",
+    "Header/Emphasis": "CCITT J.17"
+   }
+  },
+  {
+   "offset": 2509,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2927,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3345,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3763,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 4181,
+   "length": 418,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "offset": 2506,
+   "length": 3
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.channel-mode-changed",
+   "contains": "once, first from Stereo to Mono"
+  },
+  {
+   "code": "mpeg.main-data-overlap",
+   "contains": "0x829"
+  },
+  {
+   "code": "mpeg.sync-lost",
+   "contains": "3 bytes"
+  }
+ ]
+}

@@ -33,11 +33,15 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
     // main_data_begin is at most 511 bytes, so older frames never matter again.
     private const int Reach = 512;
 
+    // Frames without data after their side information hold no reservoir bytes and are not kept,
+    // so the list stays bounded whatever the frame lengths; a gap before one is carried over to
+    // the next frame that has data.
     private readonly List<Area> _recent = [];
-    private (int Version, int SampleRate)? _stream;
+    private MpegHeader? _stream;
     private long _position;
     private long _previousEnd;
-    private int _audioFrames;
+    private long? _frameEnd;
+    private bool _gapPending;
 
     public void Reset()
     {
@@ -45,16 +49,17 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
         _recent.Clear();
         _position = 0;
         _previousEnd = 0;
-        _audioFrames = 0;
+        _frameEnd = null;
+        _gapPending = false;
     }
 
     public MainDataPlacement Add(MpegHeader header, long frameOffset, long frameEnd, long dataOffset, int dataLength,
         int mainDataBegin, int mainDataLength, bool truncated, bool isHeaderFrame = false)
     {
-        if (_stream != (header.VersionBits, header.SampleRateIndex))
+        if (_stream is not { } stream || !stream.IsSameStream(header))
         {
             Reset();
-            _stream = (header.VersionBits, header.SampleRateIndex);
+            _stream = header;
         }
 
         long start = _position;
@@ -62,14 +67,26 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
         long reservoir = start - _previousEnd;
         long begin = start - mainDataBegin;
         long mainEnd = begin + mainDataLength;
-        _recent.Add(new Area(start, dataLength, dataOffset, frameOffset, frameEnd, isHeaderFrame));
+        bool gapBefore = _gapPending || (_frameEnd is { } previousFrameEnd && previousFrameEnd != frameOffset);
+        int earlierAreas = _recent.Count;
+        if (dataLength > 0)
+        {
+            _recent.Add(new Area(start, dataLength, dataOffset, isHeaderFrame, gapBefore));
+        }
+
+        _gapPending = dataLength == 0 && gapBefore;
+        _frameEnd = frameEnd;
 
         MainDataProblem problem = MainDataProblem.None;
-        if (mainDataBegin > reservoir)
+        if (begin < 0)
         {
-            problem = _audioFrames == 0 ? MainDataProblem.BeforeStream : MainDataProblem.Overlap;
+            problem = MainDataProblem.BeforeStream;
         }
-        else if (begin < start && CrossesGap(begin))
+        else if (mainDataBegin > reservoir)
+        {
+            problem = MainDataProblem.Overlap;
+        }
+        else if (begin < start && CrossesGap(begin, gapBefore, earlierAreas))
         {
             problem = MainDataProblem.AcrossGap;
         }
@@ -94,31 +111,37 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
 
         _previousEnd = Math.Max(_previousEnd, ownEnd);
         _position = end;
-        _audioFrames += isHeaderFrame ? 0 : 1;
         _recent.RemoveAll(a => a.Start + a.Length <= _position - Reach);
 
         return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated);
     }
 
-    // Whether main data starting at stream position begin lies in a frame before a gap.
-    private bool CrossesGap(long begin)
+    // Whether main data starting at stream position begin lies in a frame before a gap: the gap
+    // before the current frame, or one before an earlier frame that begin lies before.
+    private bool CrossesGap(long begin, bool gapBefore, int earlierAreas)
     {
-        for (int j = _recent.Count - 1; j > 0; j--)
+        if (gapBefore)
         {
-            if (_recent[j - 1].FrameEnd != _recent[j].FrameOffset)
-            {
-                return true;
-            }
+            return true;
+        }
 
-            if (_recent[j - 1].Start <= begin)
+        for (int j = earlierAreas - 1; j >= 0; j--)
+        {
+            if (_recent[j].Start <= begin)
             {
                 return false;
+            }
+
+            if (j > 0 && _recent[j].HasGapBefore)
+            {
+                return true;
             }
         }
 
         return false;
     }
 
-    // A frame's data in the reservoir's byte stream and in the file.
-    private readonly record struct Area(long Start, int Length, long FileOffset, long FrameOffset, long FrameEnd, bool IsHeaderFrame);
+    // A frame's data in the reservoir's byte stream and in the file, and whether a gap or a tag
+    // lies between it and the frame before it.
+    private readonly record struct Area(long Start, int Length, long FileOffset, bool IsHeaderFrame, bool HasGapBefore);
 }

@@ -107,15 +107,15 @@ internal readonly record struct MpegHeader(uint Raw)
                 return "Not used";
             }
 
-            // Layer III: bit 1 MS stereo, bit 0 intensity stereo. Layers I and II: the subband
+            // Layer III: bit 1 mid/side stereo, bit 0 intensity stereo. Layers I and II: the subband
             // where intensity stereo starts.
             return Layer == 3
                 ? ModeExtension switch
                 {
                     0 => "None",
                     1 => "Intensity stereo",
-                    2 => "MS stereo",
-                    _ => "MS and intensity stereo",
+                    2 => "Mid/side stereo",
+                    _ => "Mid/side and intensity stereo",
                 }
                 : $"Bands {(ModeExtension + 1) * 4} to 31";
         }

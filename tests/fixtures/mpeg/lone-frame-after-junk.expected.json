@@ -1,0 +1,55 @@
+{
+ "description": "Junk, then a single MPEG-1 Layer III frame that ends exactly at the end of the file. There is no chain to follow, but its side information is valid, so it is a frame.",
+ "length": 917,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 917,
+   "statistics": {
+    "Statistics": "1 frame, 0.026 s",
+    "Statistics/Frames": "1",
+    "Statistics/Samples": "1152",
+    "Statistics/Duration": "0.026 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "127.7 kbps",
+    "Statistics/Minimum Bitrate": "128 kbps",
+    "Statistics/Maximum Bitrate": "128 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/128 kbps": "1 frame (100.0%)",
+    "Statistics/Bitrate Over Time": "128",
+    "Statistics/Maximum Reservoir Fill": "0 bytes",
+    "Statistics/Reservoir Fill Over Time": "0"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 500,
+   "length": 417,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "128 kbps",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "offset": 0,
+   "length": 500
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.leading-junk",
+   "contains": "500 bytes"
+  }
+ ]
+}

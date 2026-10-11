@@ -1,0 +1,41 @@
+{
+  "description": "ID3v2.4 extended header with restrictions $3E: ISO-8859-1 or UTF-8 only, strings of at most 30 characters, PNG or JPEG images of at most 64x64 pixels (section 3.2). The tag breaks each: a UTF-16 title of 40 characters, a GIF picture and a 100x80 PNG.",
+  "length": 732,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "Extended Header/Restrictions": "0x3E",
+        "TIT2/Text": "tttttttttttttttttttttttttttttttttttttttt",
+        "APIC[1]/Picture Type": "4 (Cover (back))"
+      },
+      "offset": 0,
+      "length": 220
+    },
+    {
+      "name": "Data",
+      "offset": 220,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "text to ISO-8859-1 and UTF-8, but frame TIT2 at 0x12 uses UTF-16"
+    },
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "strings to 30 characters, but frame TIT2 at 0x12 holds one of 40"
+    },
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "images to PNG and JPEG, but frame APIC at 0x6F holds image/gif"
+    },
+    {
+      "code": "id3v2.restriction-violated",
+      "contains": "images to 64x64 pixels or less, but frame APIC at 0x99 holds one of 100x80"
+    }
+  ]
+}

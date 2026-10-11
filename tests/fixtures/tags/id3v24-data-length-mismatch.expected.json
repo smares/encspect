@@ -1,0 +1,34 @@
+{
+  "description": "ID3v2.4 frames whose data length indicator (section 4.1.2 p) disagrees with their data: an unsynchronized TIT2 and a PRIV frame that both claim 99 bytes. The sizes shown are the measured ones.",
+  "length": 580,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Header/Data Length": "99",
+        "TIT2/Text": "AÿàB",
+        "PRIV/Header/Data Length": "99",
+        "PRIV/Data": "4 bytes"
+      },
+      "offset": 0,
+      "length": 68
+    },
+    {
+      "name": "Data",
+      "offset": 68,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.data-length-mismatch",
+      "contains": "Frame TIT2 at 0xA has a data length indicator of 99 bytes, but its data is 5 bytes"
+    },
+    {
+      "code": "id3v2.data-length-mismatch",
+      "contains": "data length indicator of 99 bytes, but its data is 16 bytes"
+    }
+  ]
+}

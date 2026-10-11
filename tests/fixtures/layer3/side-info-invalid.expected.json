@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer III joint stereo with six broken frames between valid ones: big_values 300 (above 288), window switching with the reserved block type 0, the Huffman tables 4 and 14 that do not exist, scalefactors longer than part2_3_length, and two that libmad rejects: scfsi on a channel with short blocks, and MS stereo with different block types in the two channels. Frames stay frames; each problem is reported once.",
+ "description": "MPEG-1 Layer III joint stereo with six broken frames between valid ones: big_values 300 (above 288), window switching with the reserved block type 0, the Huffman tables 4 and 14 that do not exist, scalefactors longer than part2_3_length, and two that libmad rejects: scfsi on a channel with short blocks, and mid/side stereo with different block types in the two channels. Frames stay frames; each problem is reported once.",
  "length": 5015,
  "crosscheck": false,
  "regions": [
@@ -1433,7 +1433,7 @@
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "true",
     "Header/IsProtected": "false",
-    "Header/Mode Extension": "MS stereo",
+    "Header/Mode Extension": "Mid/side stereo",
     "Side Info/Main Data Begin": "0 bytes",
     "Side Info/Private Bits": "0",
     "Side Info/SCFSI/Channel 0": "0000",

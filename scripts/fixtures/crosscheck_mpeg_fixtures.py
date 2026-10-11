@@ -190,13 +190,18 @@ def decodes_to_silence(path, manifest):
     return problems
 
 
+def stream(frame):
+    """The analyzer's stream identity: version, layer, sample rate and whether it is free format."""
+    fields = frame["fields"]
+    return (fields["Header/Version"], fields["Header/Layer"], fields["Header/Sample Rate"], fields["Header/Bitrate"] == "free")
+
+
 def check_side_info(path, manifest, dumper):
     problems = []
     rows = {row["offset"]: row for row in minimp3_tool.side_info(dumper, path)}
     frames = manifest["frames"]
     gap_ends = {gap["offset"] + gap["length"] for gap in manifest["gaps"]}
-    breaks = [i for i in range(1, len(frames)) if frames[i]["offset"] in gap_ends
-              or frames[i]["fields"]["Header/Sample Rate"] != frames[i - 1]["fields"]["Header/Sample Rate"]]
+    breaks = [i for i in range(1, len(frames)) if frames[i]["offset"] in gap_ends or stream(frames[i]) != stream(frames[i - 1])]
     previous = None
     for i, frame in enumerate(frames):
         row = rows.get(frame["offset"])

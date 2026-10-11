@@ -3387,7 +3387,7 @@
       {
         "severity": "Warning",
         "code": "mpeg.main-data-in-vbr-header-frame",
-        "message": "1 frame have main data that reaches back into the Xing, Info or VBRI header frame before them, the first at 0x1A1. minimp3 decodes them from its bytes, mpg123 and ffmpeg skip that frame and decode them with data missing; the stream was probably cut and the header frame written afterwards.",
+        "message": "1 frame has main data that reaches back into the Xing, Info or VBRI header frame before it, the first at 0x1A1. minimp3 decodes it from its bytes, mpg123 and ffmpeg skip that frame and decode it with data missing; the stream was probably cut and the header frame written afterwards.",
         "offset": 417,
         "length": 418
       }

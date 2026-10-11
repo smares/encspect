@@ -154,7 +154,7 @@ class Multichannel:
 
     def __init__(self, center=1, surround=2, lfe=0, audio_mix=0, dematrix=0, ml=0, ml_fs=0, ml_layer=0,
                  copyright_bit=0, copyright_start=0, n_ad_bytes=None, tc_alloc=(0,), prediction=None,
-                 lfe_alloc=0, seed=1, bad_crc=False, continues=False):
+                 lfe_alloc=0, seed=1, bad_crc=False, continues=False, declared_ad_bytes=None, empty=False):
         self.center, self.surround, self.lfe, self.audio_mix, self.dematrix = center, surround, lfe, audio_mix, dematrix
         self.ml, self.ml_fs, self.ml_layer = ml, ml_fs, ml_layer
         self.copyright_bit, self.copyright_start = copyright_bit, copyright_start
@@ -165,6 +165,11 @@ class Multichannel:
         # The side information continues in the extension bitstream: the frame keeps only the bits
         # that fit before its n_ad_bytes of MPEG-1 ancillary data.
         self.continues = continues
+        # An n_ad_bytes in the header other than the ancillary bytes the frame holds; the CRC still
+        # covers the header as written.
+        self.declared_ad_bytes = declared_ad_bytes
+        # No allocation in the additional channels, so the extension takes only a few bytes.
+        self.empty = empty
         self.channels, self.tc_bits, _, self.pred_table = MC_SHAPE[(surround, center & 1)]
 
     def configuration(self):
@@ -183,7 +188,7 @@ class Multichannel:
         header = Bits()
         header.put(1 if self.n_ad_bytes is not None else 0, 1)
         if self.n_ad_bytes is not None:
-            header.put(self.n_ad_bytes, 8)
+            header.put(self.n_ad_bytes if self.declared_ad_bytes is None else self.declared_ad_bytes, 8)
         for value, count in [(self.center, 2), (self.surround, 2), (self.lfe, 1), (self.audio_mix, 1), (self.dematrix, 2),
                              (self.ml, 3), (self.ml_fs, 1), (self.ml_layer, 1), (self.copyright_bit, 1),
                              (self.copyright_start, 1)]:
@@ -212,7 +217,7 @@ class Multichannel:
             for ch in range(2, 2 + self.channels):
                 if self.center == 3 and sb >= 12 and ch == 2:
                     continue
-                index = (self.seed * 7 + sb * 3 + ch * 5) % 4 if sb < 12 else 0
+                index = (self.seed * 7 + sb * 3 + ch * 5) % 4 if sb < 12 and not self.empty else 0
                 covered.put(index, NBAL[len(table[sb])])
                 alloc[(ch, sb)] = index
         for sb in range(len(table)):
@@ -286,9 +291,11 @@ class Multichannel:
 
 
 class Layer2Frame(Frame):
-    def __init__(self, seed=0, allocation=None, scalefactor_override=None, ancillary=b"", mc=None, **kwargs):
+    def __init__(self, seed=0, allocation=None, scalefactor_override=None, ancillary=b"", mc=None, overflows=False, **kwargs):
         super().__init__(layer=2, **kwargs)
         self.seed, self.ancillary, self.mc = seed, ancillary, mc
+        # The audio data runs past the frame, which keeps only what fits.
+        self.overflows = overflows
         self.channels = 1 if self.mode == "Mono" else 2
         self.table_index = table_for(self.version, self.rate, self.bitrate, self.channels)
         self.table = TABLES[self.table_index]
@@ -435,6 +442,9 @@ class Layer2Frame(Frame):
             assert self.offsets[4][1] > room, "the side information fits the frame"
             bits.bits = bits.bits[:room]
         data = bytearray(bits.bytes())
+        if self.overflows:
+            assert len(data) > body_length and 8 * body_length >= scfsi_end, "the audio data fits, or the CRC's bits do not"
+            data = data[:body_length]
         assert len(data) + len(self.ancillary) <= body_length, f"{len(data)} + {len(self.ancillary)} > {body_length}"
         data += bytes(body_length - len(data) - len(self.ancillary)) + self.ancillary
         if self.protected:
@@ -602,6 +612,29 @@ def undefined_scalefactor():
     return f.finding("mpeg.scalefactor-undefined", "63")
 
 
+@fixture
+def scalefactor_overflow():
+    f = Layer2Fixture(
+        "scalefactor-overflow",
+        "MPEG-2 Layer II stereo at 24000 Hz and 8 kbps with CRC: 48-byte frames whose bit allocation and scfsi fit, "
+        "but whose scalefactors run past the frame. mpg123 and libmad reject them; the analyzer reports the overflow "
+        "and still verifies the CRC, which covers only the allocation and scfsi, and fails in the third frame.",
+        crosscheck=False,
+        silent=False,
+    )
+    allocation = [[1] * 30, [1] * 30]
+    frames = [Layer2Frame(version="2", bitrate=8, rate=24000, mode="Stereo", protected=True, allocation=allocation,
+                          seed=i, overflows=True) for i in range(6)]
+    frames[2].bad_crc = True
+    f.add_frames(frames)
+    for frame, entry in zip(frames, f.frames):
+        del entry["scale_info"]
+        entry["fields"] = mpeg.Frame.fields(frame)
+        entry["fields"]["Data"] = f"{frame.length() - 6} bytes"
+    f.finding("mpeg.crc-mismatch", "1 frame fails")
+    return f.finding("mpeg.audio-data-overflow", "6 frames need more bits for their Layer II audio data")
+
+
 # --- Multichannel -------------------------------------------------------------------------------------
 
 
@@ -690,6 +723,33 @@ def mc_unverified():
                                                                   continues=True), ancillary=bytes(i % 251 for i in range(255)),
                            allocation=sparse))
     return f.finding("mpeg.multichannel-unverified", "3/2 + LFE")
+
+
+@fixture
+def mc_ancillary_overflow():
+    f = Layer2Fixture(
+        "mc-ancillary-overflow",
+        "MPEG-1 Layer II at 48000 Hz and 112 kbps carrying 3/2 with an extension bitstream and 12 bytes of MPEG-1 "
+        "ancillary data, whose fourth frame's multichannel header declares 255 bytes: more than the frame holds after "
+        "the header and its CRC. That frame's multichannel data is taken to end after the CRC, and the bytes after "
+        "it are ancillary data.",
+    )
+    sparse = [[1, 1, 1, 1] + [0] * 23, [1, 1, 1, 1] + [0] * 23]
+    frames = mc_stream(6, 112, 48000, lambda i: Multichannel(center=1, surround=2, n_ad_bytes=12, seed=i, empty=True,
+                                                              declared_ad_bytes=255 if i == 3 else None),
+                       ancillary=text(12, b"MPEG-1 anc. "), allocation=sparse)
+    f.add_frames(frames)
+    frame, entry = frames[3], f.frames[3]
+    del entry["mc_crc"]
+    fields = entry["fields"]
+    for key in [k for k in fields if k.startswith("Multichannel/") and not k.startswith(("Multichannel/Header", "Multichannel/CRC"))]:
+        del fields[key]
+    del fields["Multichannel/CRC/Computed"]
+    fields["Multichannel/Header/Ancillary Bytes"] = "255"
+    mc_start = frame.offsets[4][0]
+    crc_end = mc_start + 24 + 16
+    fields["Ancillary Data"] = f"{frame.length() - 4 - (crc_end + 7) // 8} bytes"
+    return f.finding("mpeg.multichannel-ancillary-overflow", "1 frame declares more MPEG-1 ancillary bytes")
 
 
 @fixture

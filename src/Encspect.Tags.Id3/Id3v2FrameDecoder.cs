@@ -41,6 +41,10 @@ internal sealed class Id3v2FrameDecoder
     private readonly long _frameEnd;
     private readonly List<Finding> _findings;
     private bool? _bigEndian;
+    private bool? _firstBom;
+    private bool _hasMixedByteOrder;
+    private bool _hasInvalidText;
+    private ImageInfo? _image;
 
     private Id3v2FrameDecoder(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings)
     {
@@ -57,13 +61,18 @@ internal sealed class Id3v2FrameDecoder
 
     private int Length => _content.Length;
 
+    // Content cut short by the decode limit, which a text string may run past.
+    private bool IsCut => Length < _decodedSize;
+
     // content holds the decoded frame data after any extra header bytes, possibly cut short
     // when the frame is very large; decodedSize is its full decoded length and frameEnd the file
-    // offset where the frame ends.
-    public static string? Decode(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings)
+    // offset where the frame ends. image is the format and size of an APIC picture.
+    public static string? Decode(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings, out ImageInfo? image)
     {
         var decoder = new Id3v2FrameDecoder(major, id, frame, content, decodedSize, frameEnd, findings);
-        return decoder.Decode();
+        string? value = decoder.Decode();
+        image = decoder._image;
+        return value;
     }
 
     private static string Kind(int major, string id)
@@ -188,6 +197,11 @@ internal sealed class Id3v2FrameDecoder
 
         (string description, int dataStart) = AddTerminatedText("Description", next + 1, encoding);
         AddBinary("Picture Data", dataStart);
+        if (!isV22)
+        {
+            _image = Id3v2Image.Measure(Data, dataStart, Length);
+        }
+
         return description.Length > 0 ? $"{format}, {typeName}, {description}" : $"{format}, {typeName}";
     }
 
@@ -336,16 +350,67 @@ internal sealed class Id3v2FrameDecoder
     private string AddText(string name, int start, int end, byte encoding)
     {
         bool hasByteOrder = _bigEndian is not null;
-        string text = Id3v2Text.Decode(Data, start, end, encoding, ref _bigEndian, out bool missingBom);
-        if (missingBom)
+        bool isCut = end == Length && IsCut;
+        DecodedText decoded = Id3v2Text.Decode(Data, start, end, encoding, isCut, ref _bigEndian);
+        string text = decoded.Text;
+
+        if (decoded.MissingBom)
         {
+            string assumed = hasByteOrder ? "the earlier byte order is assumed" : "little-endian is assumed";
+            if (_major == 2)
+            {
+                // ID3v2.2 section 3.2 only says Unicode is UCS-2; unlike 2.3 and 2.4 it asks for
+                // no byte order mark.
+                _findings.Add(new Finding(Severity.Info, "id3v2.utf16-byte-order-assumed", $"Frame {_id} has UCS-2 text without a byte order mark, which ID3v2.2 does not require; {assumed}.", _frame));
+            }
+            else
+            {
+                _findings.Add(new Finding(
+                    Severity.Warning,
+                    "id3v2.utf16-without-bom",
+                    hasByteOrder
+                        ? $"Frame {_id} has a UTF-16 string without a byte order mark after one with it; {assumed}."
+                        : $"Frame {_id} has UTF-16 text without a byte order mark; {assumed}.",
+                    _frame));
+            }
+        }
+
+        // ID3v2.4 section 4: "All strings in the same frame SHALL have the same byteorder."
+        if (decoded.Bom is { } bom)
+        {
+            if (_major == 4 && _firstBom is { } first && first != bom && !_hasMixedByteOrder)
+            {
+                _hasMixedByteOrder = true;
+                _findings.Add(new Finding(
+                    Severity.Warning,
+                    "id3v2.utf16-byte-order-mixed",
+                    $"Frame {_id} has UTF-16 strings in both byte orders; ID3v2.4 requires one byte order per frame.",
+                    _frame));
+            }
+
+            _firstBom ??= bom;
+        }
+
+        if (decoded.IsInvalid && !_hasInvalidText)
+        {
+            _hasInvalidText = true;
             _findings.Add(new Finding(
                 Severity.Warning,
-                "id3v2.utf16-without-bom",
-                hasByteOrder
-                    ? $"Frame {_id} has a UTF-16 string without a byte order mark after one with it; the earlier byte order is assumed."
-                    : $"Frame {_id} has UTF-16 text without a byte order mark; little-endian is assumed.",
+                "id3v2.text-invalid",
+                $"Frame {_id} has text that is not valid {Id3v2Text.EncodingName(encoding)}; the bytes that do not decode are shown as U+FFFD.",
                 _frame));
+        }
+
+        if (isCut)
+        {
+            long offset = _content.OffsetOf(start);
+            _frame.Add(name, offset, _frameEnd - offset, text);
+            _findings.Add(new Finding(
+                Severity.Info,
+                "id3v2.frame-text-cut",
+                $"Frame {_id} holds {_decodedSize - start} bytes of text; the first {end - start} are decoded and shown, up to the analyzer's limit for one frame.",
+                _frame));
+            return text;
         }
 
         AddRange(name, start, end, text);

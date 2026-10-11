@@ -233,6 +233,13 @@
     },
     "findings": [
       {
+        "severity": "Info",
+        "code": "ape.at-start",
+        "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
+        "offset": 0,
+        "length": 86
+      },
+      {
         "severity": "Warning",
         "code": "ape.footer-mismatch",
         "message": "The footer disagrees with the header: item count 3 vs 1.",

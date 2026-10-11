@@ -66,6 +66,16 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg.music-crc-mismatch" or "mpeg.lame-tag-crc-mismatch" or "mpeg.music-crc-not-verified");
     }
 
+    // Free-format MPEG-1 Layer III stereo frames of 36 bytes, the header and zero side information:
+    // no frame adds data to the bit reservoir, which once kept every frame (95 s for these).
+    [Fact]
+    public void ManyFramesWithoutMainData()
+    {
+        byte[] frame = [0xFF, 0xFB, 0x00, 0x00, .. new byte[32]];
+        Report report = Timed(Repeat(frame, 160_000).ToArray());
+        Assert.Equal("160000 frames", report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
+    }
+
     private static Report Timed(byte[] data)
     {
         var watch = Stopwatch.StartNew();

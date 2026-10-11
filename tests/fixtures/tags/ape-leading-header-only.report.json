@@ -212,6 +212,20 @@
     "findings": [
       {
         "severity": "Info",
+        "code": "ape.at-start",
+        "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
+        "offset": 0,
+        "length": 76
+      },
+      {
+        "severity": "Info",
+        "code": "ape.items-unsorted",
+        "message": "Item \"Album\" is smaller than the item before it; the APEv2 specification recommends sorting items ascending by size.",
+        "offset": 57,
+        "length": 19
+      },
+      {
+        "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 76,
