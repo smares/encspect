@@ -531,6 +531,27 @@ def lame_signature():
 
 
 @fixture
+def lame_signature_tsse():
+    f = VbrFixture("lame-signature-tsse", "LAME's version in ancillary data and in an ID3v2.3 TSSE frame, as LAME writes it with "
+                   "tags: the frames and the tag agree, which together make medium confidence.",
+                   encoder=encoder("LAME 3.99r", "Medium"))
+    f.extra["mp3guessenc_encoder_string"] = "LAME3.99r"
+    f.tag("ID3v2", mpeg.id3v2("Signed", extra_frames=mpeg.tsse_frame("LAME 32bits version 3.99.5 (http://lame.sf.net)")))
+    return f.add_frames(signature_frames(6, b"LAME3.99r", 2))
+
+
+@fixture
+def lame_tsse_differs():
+    audio = mpeg.stream(8, bitrate=128, rate=44100, mode="Joint stereo")
+    f = VbrFixture("lame-tsse-differs", "An ID3v2.3 TSSE frame that names BladeEnc before a stream whose LAME tag names LAME, as "
+                   "after re-encoding with tags kept: the LAME tag decides, the claim is reported.",
+                   encoder=encoder("LAME 3.100", "High"))
+    f.tag("ID3v2", mpeg.id3v2("Re-encoded", extra_frames=mpeg.tsse_frame("BladeEnc 0.94.2")))
+    f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_CBR), audio)
+    return f.finding("mpeg.encoder-claim-differs", "\"BladeEnc 0.94.2\", but the stream points to LAME 3.100")
+
+
+@fixture
 def lame_signature_unaligned():
     f = VbrFixture("lame-signature-unaligned", "No VBR header; each granule codes three bits, so the ancillary data and the "
                    "\"LAME3.100\" in it start 4 bits into a byte, where a byte-aligned search does not find it.",

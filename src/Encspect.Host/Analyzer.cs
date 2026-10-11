@@ -64,7 +64,8 @@ public sealed class Analyzer
         long embeddedBytes = embedded.Sum(c => c.Tag.Length);
         if (dataEnd - dataStart > embeddedBytes)
         {
-            ParseData(reader.Slice(dataStart, dataEnd - dataStart), root, embedded.Select(c => c.Tag).ToList(), findings);
+            List<EncoderClaim> claims = leading.Concat(embedded).Concat(trailing).OrderBy(c => c.Tag.Offset).SelectMany(c => c.Probe.EncoderClaims).ToList();
+            ParseData(reader.Slice(dataStart, dataEnd - dataStart), root, embedded.Select(c => c.Tag).ToList(), claims, findings);
         }
         else
         {
@@ -412,7 +413,7 @@ public sealed class Analyzer
         findings.AddRange(claim.LayoutFindings);
     }
 
-    private void ParseData(ByteReader window, Node root, List<Node> embedded, List<Finding> findings)
+    private void ParseData(ByteReader window, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings)
     {
         IFormatParser? parser = FindParser(window);
         if (parser is null)
@@ -436,7 +437,7 @@ public sealed class Analyzer
         }
 
         root.Value = parser.Name;
-        var context = new ParseContext(window, root, embedded);
+        var context = new ParseContext(window, root, embedded, claims);
 
         try
         {

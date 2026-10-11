@@ -26,7 +26,9 @@ causes; crosscheck_mpeg_fixtures.py confirms the raw values with mp3guessenc, mp
 "detected_encoder" is the encoder the analyzer must name: LAME from its tag (high confidence when
 the tag CRC holds) or, without a tag, from the "LAME3.100" it writes into ancillary data (low);
 ffmpeg's tag names ffmpeg, so the LAME behind it is again known from ancillary data (medium);
-TwoLAME leaves no trace. "mp3guessenc_encoder_string" is the encoder string mp3guessenc finds.
+TwoLAME leaves no trace. An ID3v2 TSSE frame, which LAME's front end and ffmpeg's muxer write,
+names the encoder alone with low confidence and raises low-confidence evidence from the frames that
+names the same encoder to medium. "mp3guessenc_encoder_string" is the encoder string mp3guessenc finds.
 
 "mp3guessenc_guess" is the encoder mp3guessenc guesses, and for a stream with an OFL block,
 "mp3guessenc_ofl" the delay and original length mp3guessenc reads from it and "decoded_onset" the
@@ -59,6 +61,7 @@ import json
 import math
 import random
 import pathlib
+import re
 import struct
 import subprocess
 import sys
@@ -183,6 +186,11 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
     ("external-lame-free-format-tag", ".mp3", 44100, 2, ["lame", "--quiet", "--freeformat", "-b", "400", "-m", "s"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, free_format=True, info_frame=True)),
+    # With tags, LAME's front end writes an ID3v2 TSSE frame naming itself.
+    ("external-lame-tagged", ".mp3", 44100, 2, ["lame", "--quiet", "--tt", "Encspect", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
+    ("external-lame-no-info-tagged", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "--tt", "Encspect", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
     ("external-lame-forced-ms-tag", ".mp3", 44100, 2, ["lame", "--quiet", "-b", "192", "-m", "f", "--noreplaygain"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=True)),
     ("external-ffmpeg-cbr", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "libmp3lame", "-b:a", "128k", "{out}"],
@@ -504,6 +512,40 @@ def detected_encoder(command, tag, settings, rows, path):
     return {"name": "LAME 3.100", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
 
 
+def tsse(path):
+    """The text of the TSSE frame in the ID3v2.3 or 2.4 tag at the start of the file, or None."""
+    data = path.read_bytes()
+    if data[:3] != b"ID3" or data[3] not in (3, 4):
+        return None
+    end = 10 + ((data[6] & 127) << 21 | (data[7] & 127) << 14 | (data[8] & 127) << 7 | (data[9] & 127))
+    position = 10
+    while position + 10 <= end and data[position] != 0:
+        size = int.from_bytes(data[position + 4 : position + 8], "big")
+        if data[3] == 4:
+            size = (size >> 3 & 0xFE00000) | (size >> 2 & 0x1FC000) | (size >> 1 & 0x3F80) | (size & 0x7F)
+        if data[position : position + 4] == b"TSSE":
+            body = data[position + 10 : position + 10 + size]
+            encoding = {0: "latin-1", 1: "utf-16", 2: "utf-16-be", 3: "utf-8"}[body[0]]
+            return body[1:].decode(encoding).rstrip("\x00").strip()
+        position += 10 + size
+    return None
+
+
+def weigh_tsse(encoder, claim):
+    """The encoder the analyzer must name once the TSSE claim is weighed: alone it names the encoder
+    (LAME's front end as "LAME" and its version, ffmpeg's version as the muxer, low confidence);
+    agreeing with low-confidence evidence from the frames it raises that to medium."""
+    if claim is None:
+        return encoder
+    if encoder is None:
+        lame = re.search(r"LAME(?:\s*\d+bits)?(?:\s*version)?\s*(\d+\.\d+[\w.]*)", claim)
+        name = f"LAME {lame.group(1)}" if lame else f"FFmpeg ({claim})" if claim.startswith(("Lavf", "Lavc")) else claim
+        return {"name": name, "confidence": "Low"}
+    if encoder["confidence"] == "Low" and "lame" in claim.lower() and encoder["name"].startswith("LAME"):
+        return {**encoder, "confidence": "Medium"}
+    return encoder
+
+
 def describe_tag(path, command, manifest):
     data = path.read_bytes()
     start, length = first_frame(data)
@@ -514,7 +556,7 @@ def describe_tag(path, command, manifest):
         manifest["vbr_header_fields"] = vbr_tags.report_fields(tag)
         manifest["vbr_findings"] = [{"code": code, "contains": contains} for code, contains in vbr_tags.findings(tag, start)]
     manifest["vbr_header"] = tag
-    manifest["detected_encoder"] = detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path)
+    manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
 
 

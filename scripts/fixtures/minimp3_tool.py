@@ -19,5 +19,17 @@ def build():
 
 
 def side_info(binary, path):
+    # minimp3 drops the last frame when it cannot find a next header, so a trailing ID3v1 tag is cut
+    # off first; the frames keep their offsets.
+    data = pathlib.Path(path).read_bytes()
+    if len(data) >= 128 and data[-128:-125] == b"TAG":
+        with tempfile.TemporaryDirectory(prefix="minimp3-") as directory:
+            stripped = pathlib.Path(directory) / "stream.mp3"
+            stripped.write_bytes(data[:-128])
+            return _run(binary, stripped)
+    return _run(binary, path)
+
+
+def _run(binary, path):
     result = subprocess.run([str(binary), str(path)], capture_output=True, text=True, check=True)
     return [json.loads(line) for line in result.stdout.splitlines()]

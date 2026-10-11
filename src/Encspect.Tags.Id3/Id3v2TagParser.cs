@@ -281,11 +281,19 @@ public sealed class Id3v2TagParser : ITagParser
                 "id3v2.ends-before-size",
                 $"The frames of the ID3v2 tag stop at 0x{unparsed.Offset:X}, where its declared size cannot end; the tag is taken to end there.",
                 cut));
-            return TagProbe.Accept(cut, signatureOffset, confidence, state.Evidence, state.Findings.Select(f => f.Node == tag ? f with { Node = cut } : f).ToList(), next);
+            return TagProbe.Accept(cut, signatureOffset, confidence, state.Evidence, state.Findings.Select(f => f.Node == tag ? f with { Node = cut } : f).ToList(), next,
+                EncoderClaims(state));
         }
 
-        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings, next);
+        return TagProbe.Accept(tag, signatureOffset, confidence, state.Evidence, state.Findings, next, EncoderClaims(state));
     }
+
+    // TSSE (TSS in ID3v2.2): "the used audio encoder and its settings when the file was encoded"
+    // (ID3v2.3 section 4.2.1), as the software that wrote the tag fills it in.
+    private static List<EncoderClaim> EncoderClaims(ParseState state) =>
+        state.Frames.Where(f => f.Name is "TSSE" or "TSS" && !string.IsNullOrWhiteSpace(f.Value))
+            .Select(f => new EncoderClaim(f.Value!, f, $"ID3v2 {f.Name} frame"))
+            .ToList();
 
     private static void VerifyCrc(ByteReader reader, ParseState state, bool unsync, long bodyEnd, long? declaredPadding, bool truncated)
     {
