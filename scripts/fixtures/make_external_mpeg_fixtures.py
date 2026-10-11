@@ -458,6 +458,15 @@ def main_data_findings(path, packets, rows):
     return sorted(set(findings))
 
 
+def last_frame_ancillary(path, packets):
+    """The bytes after the last frame's main data, rounded up to a byte, to the end of its data."""
+    data = path.read_bytes()
+    offset, size = packets[-1]
+    main_data_begin, part2_3, side = side_info_lengths(data, offset)
+    area = size - 4 - (0 if data[offset + 1] & 1 else 2) - side
+    return max(area - ((part2_3 + 7) // 8 - main_data_begin), 0)
+
+
 def side_info_lengths(data, offset):
     """main_data_begin, the sum of part2_3_length and the side information's size of the Layer III
     frame at offset (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7)."""
@@ -608,9 +617,11 @@ def detected_encoder(command, tag, settings, rows, path):
         return None
     if command[0].startswith("bladeenc"):
         found = granules(rows)
+        # mp3guessenc's total ancillary bytes must all be the last frame's (BladeEnc 0.80 and 0.81
+        # drain the reservoir into one segment mid-stream).
         ancillary = guessenc_summary(path)["ancillary"]
         if (any(g["block_type"] for g in found) and not any(g["scalefac_scale"] for g in found)
-                and ancillary[0] == ancillary[2]):
+                and ancillary[0] == last_frame_ancillary(path, ffprobe_packets(path))):
             return {"name": "BladeEnc", "confidence": "Low"}
         return None
     if command[0] == "shineenc":
