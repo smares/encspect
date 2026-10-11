@@ -47,7 +47,7 @@ public sealed class Analyzer
         }
 
         var pending = new List<PendingFinding>();
-        List<Claim> leading = FindLeadingTags(reader, pending);
+        List<Claim> leading = FindLeadingTags(reader, []);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
         List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
@@ -70,11 +70,14 @@ public sealed class Analyzer
             return new Report(source, root, findings);
         }
 
-        List<Claim> leading = FindLeadingTags(reader, pending);
+        var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
+        List<Claim> leading = FindLeadingTags(reader, leadingRejections);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
         List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
+        List<Finding> layout = CheckTrailingLayout(trailing);
         List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings);
+        pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
 
         var detectionNodes = new HashSet<Node>();
         foreach (Claim claim in leading.Concat(embedded).Concat(trailing))
@@ -94,7 +97,7 @@ public sealed class Analyzer
         }
 
         root.SortChildrenByOffset();
-        CheckTrailingLayout(trailing, findings);
+        findings.AddRange(layout);
 
         foreach (PendingFinding finding in pending)
         {
@@ -107,7 +110,7 @@ public sealed class Analyzer
         return new Report(source, root, ordered);
     }
 
-    private List<Claim> FindLeadingTags(ByteReader reader, List<PendingFinding> pending)
+    private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections)
     {
         var claims = new List<Claim>();
         long position = 0;
@@ -129,7 +132,7 @@ public sealed class Analyzer
                     break;
                 }
 
-                pending.Add(Rejected(parser, probe, reader));
+                rejections.Add((parser, probe));
             }
 
             if (accepted is null)
@@ -144,10 +147,39 @@ public sealed class Analyzer
         return claims;
     }
 
+    // A leading candidate is rejected where it would start a tag, but a trailing tag may still own
+    // its bytes (a footer-only APE tag that is the whole file). Then the rejection is not reported:
+    // the bytes belong to the same kind of tag, or are a near miss inside another kind.
+    private static IEnumerable<PendingFinding> ResolveLeadingRejections(
+        List<(ITagParser Parser, TagProbe Probe)> rejections,
+        IEnumerable<Claim> later,
+        ByteReader reader)
+    {
+        List<Claim> claims = later.ToList();
+        foreach ((ITagParser parser, TagProbe probe) in rejections)
+        {
+            Claim? owner = claims.FirstOrDefault(c => c.Tag.Offset <= probe.SignatureOffset && probe.SignatureOffset < c.Tag.End);
+            if (owner is null)
+            {
+                yield return Rejected(parser, probe, reader);
+            }
+            else if (owner.Parser != parser)
+            {
+                yield return NearMiss(parser, probe, owner, reader);
+            }
+        }
+    }
+
     // Walks backward from the end of the file. At each anchor every parser is probed; among the
     // accepted tags that do not reach into the leading tags, the strongest evidence wins and the
     // parser order breaks ties. The winner's start becomes the next anchor, so every anchor moves
     // strictly toward the start.
+    //
+    // Evidence is the confidence first. All candidates end at the anchor, so of two with the same
+    // confidence the longer one contains the shorter, whose signature is then just bytes inside the
+    // longer one's structure: a "TAG" in an Enhanced TAG field or in Lyrics3 lyrics, or "LYRICSEND"
+    // at the end of an ID3v1 comment. The containing tag accounts for those bytes and the contained
+    // one cannot account for the rest, so the longer tag wins before the parser order is asked.
     private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, List<PendingFinding> pending)
     {
         var claims = new List<Claim>();
@@ -167,6 +199,16 @@ public sealed class Analyzer
                     continue;
                 }
 
+                // A parser that searches for its start (Lyrics3 v1) may run into the leading tags;
+                // probed again within the bytes they leave, it may find a tag there. That tag
+                // replaces the overlapping candidate unless its evidence is weaker.
+                if (probe.IsAccepted && probe.Tag!.Offset < dataStart && anchor > dataStart
+                    && Probe(parser, anchor, reader.Slice(dataStart, reader.Length - dataStart), leading: false) is { IsAccepted: true } confined
+                    && Effective(confined) >= Effective(probe))
+                {
+                    probe = confined;
+                }
+
                 if (probe.IsAccepted && probe.Tag!.Offset >= dataStart)
                 {
                     candidates.Add((order, Candidate(parser, probe, claims.Count > 0 ? claims[0] : null)));
@@ -179,6 +221,7 @@ public sealed class Analyzer
 
             Claim? winner = candidates
                 .OrderByDescending(c => c.Claim.Confidence)
+                .ThenByDescending(c => c.Claim.Tag.Length)
                 .ThenBy(c => c.Order)
                 .Select(c => c.Claim)
                 .FirstOrDefault();
@@ -507,17 +550,20 @@ public sealed class Analyzer
     }
 
     // ID3v1 belongs in the last 128 bytes; other orders occur in the wild, so they are findings,
-    // not rejections. Lyrics3 extended fields must agree with the ID3v1 tag after them.
-    private static void CheckTrailingLayout(List<Claim> trailing, List<Finding> findings)
+    // not rejections. Lyrics3 extended fields must agree with the ID3v1 tag after them. A tag that
+    // gets a warning here is at most medium, like one whose parser reported it (plan, rule 2).
+    private static List<Finding> CheckTrailingLayout(List<Claim> trailing)
     {
+        var findings = new List<Finding>();
         for (int i = 0; i < trailing.Count; i++)
         {
             Node tag = trailing[i].Tag;
-            string? next = i + 1 < trailing.Count ? trailing[i + 1].Tag.Name : null;
+            Claim? next = i + 1 < trailing.Count ? trailing[i + 1] : null;
+            int before = findings.Count;
 
-            if (tag.Name == "Lyrics3" && next == "ID3v1")
+            if (tag.Name == "Lyrics3" && next?.Tag.Name == "ID3v1")
             {
-                CheckLyrics3ExtendedFields(tag, trailing[i + 1].Tag, findings);
+                CheckLyrics3ExtendedFields(tag, next.Tag, findings);
             }
 
             if (tag.Name == "ID3v1" && next is not null)
@@ -525,10 +571,17 @@ public sealed class Analyzer
                 findings.Add(new Finding(
                     Severity.Warning,
                     "layout.id3v1-not-last",
-                    $"The ID3v1 tag at 0x{tag.Offset:X} is followed by a {next} tag; readers expect ID3v1 in the last 128 bytes.",
+                    $"The ID3v1 tag at 0x{tag.Offset:X} is followed by the {TagLabel(next.Parser.Name)} at 0x{next.Tag.Offset:X}; readers expect ID3v1 in the last 128 bytes.",
                     tag));
             }
+
+            if (trailing[i].Confidence == Confidence.High && findings.Skip(before).Any(f => f.Severity >= Severity.Warning))
+            {
+                trailing[i] = trailing[i] with { Confidence = Confidence.Medium };
+            }
         }
+
+        return findings;
     }
 
     // Lyrics3 v2.00: "The extended Album, Artist and Track are an extension to the fields in the

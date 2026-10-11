@@ -1,0 +1,42 @@
+{
+  "description": "Enhanced TAG whose artist holds TAG exactly 128 bytes before the end of the Enhanced TAG, then an ID3v1 tag. At that anchor the Enhanced TAG and a forged ID3v1 tag inside its artist tie on confidence; the forged tag lies inside the Enhanced TAG, so the Enhanced TAG wins.",
+  "length": 867,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Enhanced TAG",
+      "confidence": "Medium",
+      "fields": {
+        "Artist": "The Band Who Played Too Loud Again TAG Team"
+      },
+      "offset": 512,
+      "length": 227
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 739,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.near-miss",
+      "contains": "part of Enhanced TAG > Artist"
+    }
+  ]
+}

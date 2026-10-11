@@ -1,0 +1,63 @@
+{
+  "description": "Two Lyrics3 v1 and ID3v1 pairs, the first ID3v1 tag padded with spaces, so only text lies between the two LYRICSBEGIN markers. The second tag's start search stops at the first tag's LYRICSEND, which lyrics cannot contain, so both pairs are found.",
+  "length": 848,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "High",
+      "fields": {
+        "Lyrics": "Old lyrics\r\nline two"
+      },
+      "offset": 512,
+      "length": 40
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.0",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Old title"
+      },
+      "offset": 552,
+      "length": 128
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "High",
+      "fields": {
+        "Lyrics": "New lyrics\r\nline two"
+      },
+      "offset": 680,
+      "length": 40
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 720,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "layout.id3v1-not-last",
+      "contains": "is followed by the Lyrics3 tag"
+    }
+  ]
+}

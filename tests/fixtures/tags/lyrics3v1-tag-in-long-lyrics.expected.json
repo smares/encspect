@@ -1,0 +1,44 @@
+{
+  "description": "Lyrics3 v1 block with 5200 bytes of lyrics, too long but otherwise valid, with TAG 128 bytes before its end. The forged ID3v1 tag lies inside the lyrics and ties with the Lyrics3 tag on confidence, so the Lyrics3 tag, which contains it, wins.",
+  "length": 5860,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "Lyrics3",
+      "version": "1.00",
+      "confidence": "Medium",
+      "offset": 512,
+      "length": 5220
+    },
+    {
+      "name": "ID3v1",
+      "version": "1.1",
+      "confidence": "Medium",
+      "fields": {
+        "Title": "Song Title",
+        "Artist": "Artist Name",
+        "Album": "Album Name",
+        "Year": "2001",
+        "Comment": "A comment",
+        "Track": "7",
+        "Genre": "17 (Rock)"
+      },
+      "offset": 5732,
+      "length": 128
+    }
+  ],
+  "findings": [
+    {
+      "code": "lyrics3.too-long",
+      "contains": "5200"
+    },
+    {
+      "code": "tag.near-miss",
+      "contains": "part of Lyrics3 > Lyrics"
+    }
+  ]
+}

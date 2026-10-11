@@ -1,30 +1,17 @@
 {
-  "description": "Leading APEv2 header declaring more bytes than the file has: kept up to EOF, with an error.",
+  "description": "Leading APEv2 header declaring more bytes than the file has: its size points outside the file, so the extent is unknown and the candidate is rejected (plan, rule 2).",
   "length": 47,
   "regions": [
     {
-      "name": "APE",
-      "version": "2.0",
-      "confidence": "Low",
-      "fields": {
-        "Header/Tag Size": "5000"
-      },
+      "name": "Data",
       "offset": 0,
       "length": 47
     }
   ],
   "findings": [
     {
-      "code": "ape.truncated",
-      "contains": "5000"
-    },
-    {
-      "code": "ape.items-invalid",
-      "contains": ""
-    },
-    {
-      "code": "layout.tags-only",
-      "contains": ""
+      "code": "tag.rejected",
+      "contains": "size points outside the file"
     }
   ]
 }
