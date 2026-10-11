@@ -4,7 +4,7 @@
     "root": {
       "name": "File",
       "offset": 0,
-      "length": 689,
+      "length": 691,
       "children": [
         {
           "name": "Data",
@@ -15,7 +15,7 @@
           "name": "Lyrics3",
           "value": "2.00",
           "offset": 512,
-          "length": 49,
+          "length": 51,
           "children": [
             {
               "name": "Begin",
@@ -25,9 +25,9 @@
             },
             {
               "name": "IND",
-              "value": "10",
+              "value": "1000",
               "offset": 523,
-              "length": 10,
+              "length": 12,
               "children": [
                 {
                   "name": "ID",
@@ -37,64 +37,64 @@
                 },
                 {
                   "name": "Size",
-                  "value": "2",
+                  "value": "4",
                   "offset": 526,
                   "length": 5
                 },
                 {
                   "name": "Data",
-                  "value": "10",
+                  "value": "1000",
                   "offset": 531,
-                  "length": 2
+                  "length": 4
                 },
                 {
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 531,
-                  "length": 2
+                  "length": 4
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
                   "offset": 531,
-                  "length": 2
+                  "length": 4
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
                   "offset": 531,
-                  "length": 2
+                  "length": 4
                 }
               ]
             },
             {
               "name": "LYR",
               "value": "Words",
-              "offset": 533,
+              "offset": 535,
               "length": 13,
               "children": [
                 {
                   "name": "ID",
                   "value": "LYR",
-                  "offset": 533,
+                  "offset": 535,
                   "length": 3
                 },
                 {
                   "name": "Size",
                   "value": "5",
-                  "offset": 536,
+                  "offset": 538,
                   "length": 5
                 },
                 {
                   "name": "Data",
                   "value": "Words",
-                  "offset": 541,
+                  "offset": 543,
                   "length": 5,
                   "children": [
                     {
                       "name": "Line",
                       "value": "Words",
-                      "offset": 541,
+                      "offset": 543,
                       "length": 5
                     }
                   ]
@@ -103,39 +103,39 @@
             },
             {
               "name": "Size",
-              "value": "34",
-              "offset": 546,
+              "value": "36",
+              "offset": 548,
               "length": 6
             },
             {
               "name": "End",
               "value": "LYRICS200",
-              "offset": 552,
+              "offset": 554,
               "length": 9
             },
             {
               "name": "Detection",
-              "value": "High",
+              "value": "Medium",
               "offset": 512,
-              "length": 49,
+              "length": 51,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "End marker \u0022LYRICS200\u0022",
-                  "offset": 552,
+                  "offset": 554,
                   "length": 9
                 },
                 {
                   "name": "Evidence",
-                  "value": "Size field 34 points at \u0022LYRICSBEGIN\u0022",
-                  "offset": 546,
+                  "value": "Size field 36 points at \u0022LYRICSBEGIN\u0022",
+                  "offset": 548,
                   "length": 6
                 },
                 {
                   "name": "Evidence",
                   "value": "Fields end exactly at the size field",
                   "offset": 512,
-                  "length": 34
+                  "length": 36
                 }
               ]
             }
@@ -144,73 +144,73 @@
         {
           "name": "ID3v1",
           "value": "1.1",
-          "offset": 561,
+          "offset": 563,
           "length": 128,
           "children": [
             {
               "name": "Signature",
               "value": "TAG",
-              "offset": 561,
+              "offset": 563,
               "length": 3
             },
             {
               "name": "Title",
               "value": "Song Title",
-              "offset": 564,
+              "offset": 566,
               "length": 30
             },
             {
               "name": "Artist",
               "value": "Artist Name",
-              "offset": 594,
+              "offset": 596,
               "length": 30
             },
             {
               "name": "Album",
               "value": "Album Name",
-              "offset": 624,
+              "offset": 626,
               "length": 30
             },
             {
               "name": "Year",
               "value": "2001",
-              "offset": 654,
+              "offset": 656,
               "length": 4
             },
             {
               "name": "Comment",
               "value": "A comment",
-              "offset": 658,
+              "offset": 660,
               "length": 28
             },
             {
               "name": "Track",
               "value": "7",
-              "offset": 687,
+              "offset": 689,
               "length": 1
             },
             {
               "name": "Genre",
               "value": "17 (Rock)",
-              "offset": 688,
+              "offset": 690,
               "length": 1
             },
             {
               "name": "Detection",
               "value": "Medium",
-              "offset": 561,
+              "offset": 563,
               "length": 128,
               "children": [
                 {
                   "name": "Evidence",
                   "value": "Signature \u0022TAG\u0022 128 bytes before the anchor",
-                  "offset": 561,
+                  "offset": 563,
                   "length": 3
                 },
                 {
                   "name": "Evidence",
                   "value": "All text fields hold printable text",
-                  "offset": 564,
+                  "offset": 566,
                   "length": 124
                 }
               ]
@@ -230,9 +230,9 @@
       {
         "severity": "Warning",
         "code": "lyrics3.ind-size",
-        "message": "The IND field holds 2 characters; Lyrics3 v2.00 defines exactly 3.",
+        "message": "The IND field holds 4 characters; Lyrics3 v2.00 defines 2, and a later revision 3.",
         "offset": 523,
-        "length": 10
+        "length": 12
       }
     ]
   }

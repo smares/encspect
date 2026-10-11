@@ -1,6 +1,6 @@
 {
-  "description": "Lyrics3 v2 IND field with two characters instead of the three v2.00 defines.",
-  "length": 689,
+  "description": "Lyrics3 v2 IND field with four characters; v2.00 defines two, a later revision three.",
+  "length": 691,
   "regions": [
     {
       "name": "Data",
@@ -10,12 +10,12 @@
     {
       "name": "Lyrics3",
       "version": "2.00",
-      "confidence": "High",
+      "confidence": "Medium",
       "fields": {
         "IND/HasLyrics": "true"
       },
       "offset": 512,
-      "length": 49
+      "length": 51
     },
     {
       "name": "ID3v1",
@@ -30,14 +30,14 @@
         "Track": "7",
         "Genre": "17 (Rock)"
       },
-      "offset": 561,
+      "offset": 563,
       "length": 128
     }
   ],
   "findings": [
     {
       "code": "lyrics3.ind-size",
-      "contains": "2 characters"
+      "contains": "4 characters"
     }
   ]
 }

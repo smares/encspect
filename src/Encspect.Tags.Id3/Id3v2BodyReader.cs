@@ -24,6 +24,8 @@ internal sealed class Id3v2BodyReader
 
     public long End => _end;
 
+    public ByteReader Reader => _reader;
+
     public bool AtEnd => FilePosition >= _end;
 
     // Reads up to count decoded bytes; fewer when the body ends first.
