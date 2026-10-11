@@ -3,7 +3,7 @@
 libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
-source of Layer I here, BladeEnc 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
+source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1 built from source
 (old_lame_tool.py), the Windows builds of LAME 3.91 and HydrogenAudio's 3.90.3 under Wine
 (lame_win_tool.py) and Gogo-no-coda 3.12 under Wine (gogo_tool.py). Besides a tone, some encode two seconds of tones, noise, clicks
 and a chord, which give each encoder's habits room to show, or silence.
@@ -55,7 +55,7 @@ Layer II, "minimp3_side_info" holds every frame's allocation, scfsi and scalefac
 The output is committed. CI does not run this script, because the result depends on the encoder
 versions; rerun it by hand when a fixture needs to change:
 
-    apt-get install lame twolame shineenc ffmpeg libmp3lame0 madplay mpg123
+    apt-get install lame twolame shineenc ffmpeg libmp3lame0 madplay mpg123 gcc-multilib wine p7zip-full
     python3 scripts/fixtures/make_external_mpeg_fixtures.py
 """
 
@@ -284,6 +284,21 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Stereo", bitrate=96, protected=True, info_frame=False, signal="music")),
     ("external-blade-flags", ".mp3", 44100, 2, ["bladeenc", "-320", "-p", "-c", "-copy"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=320, info_frame=False, signal="music")),
+    # One encode per older release that writes other bytes. 0.80 and 0.81 drain the bit reservoir
+    # into ancillary data mid-stream, as the ISO dist10 encoder does, so neither the analyzer nor
+    # mp3guessenc names the encoder of this one.
+    ("external-blade080-stereo", ".mp3", 44100, 2, ["bladeenc-0.80", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade082-stereo", ".mp3", 44100, 2, ["bladeenc-0.82", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade084-stereo", ".mp3", 44100, 2, ["bladeenc-0.84", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0920-stereo", ".mp3", 44100, 2, ["bladeenc-0.92.0", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0927-stereo", ".mp3", 44100, 2, ["bladeenc-0.92.7", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-blade0936-stereo", ".mp3", 44100, 2, ["bladeenc-0.93.6", "-128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
     # LAME 3.90 to 3.92 have Dibrom's --alt-presets but no preset field in the tag; 3.93 added it.
     ("external-lame390-alt-standard", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "standard"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
@@ -412,6 +427,72 @@ def truncated_last(path, packets):
     return expected is not None and length < expected
 
 
+def main_data_findings(path, packets, rows):
+    """Where Layer III main data does not fit the bit reservoir (ISO/IEC 11172-3 2.4.2.7): main data
+    that starts inside the previous frame's (overlap) or runs past the end of its own frame
+    (overflow), as BladeEnc 0.80 and 0.81 write it. main_data_begin and part2_3_length are read
+    here, since minimp3 rejects the side information of exactly those frames. The frames lie back
+    to back: ffprobe lists each but a Xing or Info frame, which minimp3 lists and which takes its
+    place in the reservoir without main data; a truncated last frame cannot overflow."""
+    data = path.read_bytes()
+    sizes = dict(map(tuple, packets))
+    offsets = sorted(set(sizes) | {row["offset"] for row in rows})
+    findings = []
+    position = previous_end = audio = 0
+    for k, offset in enumerate(offsets):
+        header = data[offset : offset + 4]
+        size = sizes.get(offset, offsets[k + 1] - offset if k + 1 < len(offsets) else 0)
+        main_data_begin, part2_3, side = side_info_lengths(data, offset)
+        area = size - 4 - (0 if header[1] & 1 else 2) - side
+        start = position
+        if offset in sizes:
+            if main_data_begin > start - previous_end:
+                findings.append("mpeg.main-data-before-stream" if audio == 0 else "mpeg.main-data-overlap")
+            audio += 1
+        end = start - main_data_begin + (part2_3 + 7) // 8
+        truncated = k == len(offsets) - 1 and truncated_last(path, packets)
+        if offset in sizes and end > start + area and not truncated:
+            findings.append("mpeg.main-data-overflow")
+        previous_end = max(previous_end, min(end, start + area)) if offset in sizes else previous_end
+        position = start + area
+    return sorted(set(findings))
+
+
+def last_frame_ancillary(path, packets):
+    """The bytes after the last frame's main data, rounded up to a byte, to the end of its data."""
+    data = path.read_bytes()
+    offset, size = packets[-1]
+    main_data_begin, part2_3, side = side_info_lengths(data, offset)
+    area = size - 4 - (0 if data[offset + 1] & 1 else 2) - side
+    return max(area - ((part2_3 + 7) // 8 - main_data_begin), 0)
+
+
+def side_info_lengths(data, offset):
+    """main_data_begin, the sum of part2_3_length and the side information's size of the Layer III
+    frame at offset (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7)."""
+    header = data[offset : offset + 4]
+    mpeg1 = (header[1] >> 3) & 3 == 3
+    channels = 1 if header[3] >> 6 == 3 else 2
+    size = (17 if channels == 1 else 32) if mpeg1 else (9 if channels == 1 else 17)
+    start = offset + 4 + (0 if header[1] & 1 else 2)
+    bits = int.from_bytes(data[start : start + size], "big")
+    position = 0
+
+    def read(count):
+        nonlocal position
+        position += count
+        return (bits >> (size * 8 - position)) & ((1 << count) - 1)
+
+    main_data_begin = read(9 if mpeg1 else 8)
+    read((5 if channels == 1 else 3) if mpeg1 else channels)
+    read(4 * channels if mpeg1 else 0)
+    total = 0
+    for _ in range((2 if mpeg1 else 1) * channels):
+        total += read(12)
+        read(47 if mpeg1 else 51)
+    return main_data_begin, total, size
+
+
 def layer1_findings(path, packets):
     """What breaks ISO/IEC 11172-3 in the Layer I audio data (2.4.1.5), read here independently of
     the analyzer: the forbidden allocation 15 and scalefactor index 63. libmad must reject the
@@ -534,11 +615,13 @@ def detected_encoder(command, tag, settings, rows, path):
         if settings["layer"] == 3 and not any(g["block_type"] for g in found) and not any(g.get("scfsi") for g in found) and original:
             return {"name": "Xing", "confidence": "Low"}
         return None
-    if command[0] == "bladeenc":
+    if command[0].startswith("bladeenc"):
         found = granules(rows)
+        # mp3guessenc's total ancillary bytes must all be the last frame's (BladeEnc 0.80 and 0.81
+        # drain the reservoir into one segment mid-stream).
         ancillary = guessenc_summary(path)["ancillary"]
         if (any(g["block_type"] for g in found) and not any(g["scalefac_scale"] for g in found)
-                and ancillary[0] == ancillary[2]):
+                and ancillary[0] == last_frame_ancillary(path, ffprobe_packets(path))):
             return {"name": "BladeEnc", "confidence": "Low"}
         return None
     if command[0] == "shineenc":
@@ -641,8 +724,9 @@ def encode(command, source, path, temp):
     if command[0] == "tompg":
         xing_tool.encode(XING_ENCODER[0], command[1:], source, path)
         return
-    if command[0] == "bladeenc":
-        blade_tool.encode(BLADE_ENCODER[0], command[1:], source, path)
+    if command[0].startswith("bladeenc"):
+        version = command[0][len("bladeenc-"):] or "0.94.2"
+        blade_tool.encode(BLADE_ENCODERS[version], version, command[1:], source, path)
         return
     if command[0] == "gogo":
         gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
@@ -692,6 +776,8 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
     if settings["layer"] == 3 and settings["version"] == "1" and scalefactors_exceed(manifest["minimp3_side_info"], channels):
         manifest.setdefault("findings", []).append("mpeg.scalefactors-exceed-granule")
+    if settings["layer"] == 3 and "ffprobe_packets" in manifest:
+        manifest["findings"] += main_data_findings(path, manifest["ffprobe_packets"], manifest["minimp3_side_info"])
     if settings["layer"] == 3:
         manifest["mp3guessenc"] = guessenc_summary(path)
     describe_tag(path, command, manifest)
@@ -712,7 +798,7 @@ FHG_ENCODER = []
 HELIX_ENCODER = []
 HELIX_R11_ENCODER = []
 XING_ENCODER = []
-BLADE_ENCODER = []
+BLADE_ENCODERS = {}
 GOGO_ENCODER = []
 OLD_LAME = {}
 WIN_LAME = {}
@@ -726,7 +812,8 @@ def main():
     HELIX_ENCODER.append(helix_tool.build())
     HELIX_R11_ENCODER.append(helix_tool.build_r11())
     XING_ENCODER.append(xing_tool.fetch())
-    BLADE_ENCODER.append(blade_tool.build())
+    for version in blade_tool.RELEASES:
+        BLADE_ENCODERS[version] = blade_tool.build(version)
     GOGO_ENCODER.append(gogo_tool.fetch())
     for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1"):
         OLD_LAME[version] = old_lame_tool.build(version)

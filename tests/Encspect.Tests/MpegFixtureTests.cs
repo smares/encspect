@@ -112,7 +112,7 @@ public class MpegFixtureTests
 
             if (expectedFrames[i].TryGetProperty("side_info", out JsonElement sideInfo))
             {
-                CheckSideInfo(frames[i], sideInfo);
+                CheckSideInfo(frames[i], sideInfo, compareReservoir: true);
             }
 
             if (expectedFrames[i].TryGetProperty("scale_info", out JsonElement scaleInfo))
@@ -234,6 +234,9 @@ public class MpegFixtureTests
             Assert.Equal(
                 frames.Where(f => !IsVbrHeaderFrame(f) && !truncated.Contains(f.Offset)).Select(f => f.Offset),
                 minimp3.EnumerateArray().Select(r => r.GetProperty("offset").GetInt64()).Where(o => !IsVbrHeaderFrame(byOffset[o])));
+            // After a frame minimp3 rejects or lacks the main data for, it keeps that frame's data as
+            // its reservoir, where the report counts the free bytes after the frame's main data.
+            bool decoded = true;
             foreach (JsonElement row in minimp3.EnumerateArray().Where(r => !IsVbrHeaderFrame(byOffset[r.GetProperty("offset").GetInt64()])))
             {
                 Node frame = byOffset[row.GetProperty("offset").GetInt64()];
@@ -243,15 +246,18 @@ public class MpegFixtureTests
                 }
                 else
                 {
-                    CheckSideInfo(frame, row);
+                    CheckSideInfo(frame, row, compareReservoir: decoded);
+                    int begin = row.GetProperty("main_data_begin").GetInt32();
+                    decoded = begin >= 0 && (!row.TryGetProperty("reservoir", out JsonElement kept) || kept.GetInt32() >= begin);
                 }
             }
         }
 
         if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
         {
-            // mp3guessenc leaves a truncated frame out of its statistics.
-            CheckGuessencStatistics(guessenc, audioFrames.Where(f => !truncated.Contains(f.Offset)).ToArray());
+            // mp3guessenc leaves a truncated frame out of its statistics unless all of its main data
+            // is there (BladeEnc 0.80 to 0.83 cut only stuffing off the last frame).
+            CheckGuessencStatistics(guessenc, audioFrames.Where(f => !truncated.Contains(f.Offset) || HasAllMainData(f)).ToArray());
         }
 
         if (manifest.TryGetProperty("vbr_header_fields", out JsonElement vbrFields))
@@ -321,7 +327,7 @@ public class MpegFixtureTests
 
     // Side information as minimp3_side_info.c prints it: compared field by field where minimp3
     // keeps the coded value, and skipped for frames minimp3 rejects.
-    private static void CheckSideInfo(Node frame, JsonElement expected)
+    private static void CheckSideInfo(Node frame, JsonElement expected, bool compareReservoir)
     {
         int mainDataBegin = expected.GetProperty("main_data_begin").GetInt32();
         if (mainDataBegin < 0)
@@ -330,7 +336,7 @@ public class MpegFixtureTests
         }
 
         var actual = new Dictionary<string, string> { ["Side Info/Main Data Begin"] = $"{mainDataBegin} bytes" };
-        if (expected.TryGetProperty("reservoir", out JsonElement reservoir))
+        if (compareReservoir && expected.TryGetProperty("reservoir", out JsonElement reservoir))
         {
             // minimp3 keeps up to 511 bytes whatever the version; main_data_begin reaches 255 in MPEG-2 and 2.5.
             int reach = Value(frame, "Header/Version") == "MPEG-1" ? 511 : 255;
@@ -443,6 +449,21 @@ public class MpegFixtureTests
     // The statistics mp3guessenc prints about a Layer III stream, computed from the report. A
     // frame's ancillary data is what follows its main data in the reservoir until the next frame's
     // main data starts.
+    // Whether the frame holds what its main data has left after the earlier frames: "Main Data:
+    // 377 bytes, 8 of them in earlier frames" over 369 bytes of this frame.
+    private static bool HasAllMainData(Node frame)
+    {
+        Node? main = frame.Children.FirstOrDefault(c => c.Name == "Main Data");
+        string[] parts = (main?.Value ?? string.Empty).Split(' ');
+        if (main is null || !int.TryParse(parts[0], CultureInfo.InvariantCulture, out int total))
+        {
+            return false;
+        }
+
+        int earlier = parts.Length > 2 ? int.Parse(parts[2], CultureInfo.InvariantCulture) : 0;
+        return main.Length + earlier == total;
+    }
+
     private static void CheckGuessencStatistics(JsonElement expected, Node[] frames)
     {
         var blocks = new Dictionary<string, int> { ["long"] = 0, ["switch"] = 0, ["short"] = 0, ["mixed"] = 0 };
@@ -546,7 +567,9 @@ public class MpegFixtureTests
         const long clock = 14_112_000;
         Node region = Streams(report).Single();
         Node statistics = region.Children.Single(c => c.Name == "Statistics");
-        Node[] audio = region.Children.Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c)).ToArray();
+        // The statistics count complete frames only.
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
+        Node[] audio = region.Children.Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c) && !truncated.Contains(c.Offset)).ToArray();
         long ticks = audio.Sum(f => SamplesOf(f) * (clock / long.Parse(Field(f, "Header/Sample Rate")!.Split(' ')[0], CultureInfo.InvariantCulture)));
         long bits = audio.Sum(f => f.Length * 8);
         Assert.True(Agrees(Field(statistics, "Average Bitrate")!.Split(' ')[0], (Int128)bits * clock, (Int128)ticks * 1000, 10, allowTie: false));

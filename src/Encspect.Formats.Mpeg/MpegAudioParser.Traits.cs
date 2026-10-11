@@ -44,6 +44,8 @@ public sealed partial class MpegAudioParser
 
             // BladeEnc codes plain stereo or mono at a constant bitrate, MPEG-1 only, never uses
             // scalefactor scaling, and leaves ancillary data at most in its last frame (mp3guessenc).
+            // 0.80 and 0.81 also drain an overflowing reservoir into ancillary data mid-stream, as the
+            // ISO dist10 encoder does, which leaves those encodes unnamed.
             if (headers[0].IsMpeg1 && switching && !scaling && headers.All(h => h.ChannelModeBits is 0 or 3 && h.BitrateIndex == headers[0].BitrateIndex)
                 && region.Ancillary is { } ancillary && ancillary.Bytes == ancillary.LastSegmentBytes)
             {
