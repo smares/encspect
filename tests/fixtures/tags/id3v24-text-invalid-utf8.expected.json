@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 TIT2 frame in UTF-8 holding the bytes $FF $FE, which UTF-8 does not allow. Readers show them as U+FFFD, and so does the report, with a finding.",
+  "length": 564,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "ab��cd",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 52
+    },
+    {
+      "name": "Data",
+      "offset": 52,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.text-invalid",
+      "contains": "Frame TIT2 has text that is not valid UTF-8"
+    }
+  ]
+}

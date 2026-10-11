@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 TIT2 frame with the unsynchronization flag whose data still holds $FF $FB, a false synchronization (section 6.1: \"A completely unsynchronised tag has no false synchonisations in it\").",
+  "length": 562,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Header/Flags/IsUnsynchronized": "true",
+        "TIT2/Text": "AÿûB"
+      },
+      "offset": 0,
+      "length": 50
+    },
+    {
+      "name": "Data",
+      "offset": 50,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.false-sync",
+      "contains": "Frame TIT2 is unsynchronized, but holds a false synchronization at 0x16"
+    }
+  ]
+}

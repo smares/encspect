@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 USLT frame whose UTF-8 text runs past the 1 MiB the analyzer decodes of one frame. The text is shown up to there, without the character the limit cuts, its node spans the whole text, and an info finding gives both lengths.",
+  "length": 1049149,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "Lyrics",
+        "USLT/Language": "eng"
+      },
+      "offset": 0,
+      "length": 1048637
+    },
+    {
+      "name": "Data",
+      "offset": 1048637,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-text-cut",
+      "contains": "Frame USLT holds 1048587 bytes of text; the first 1048571 are decoded"
+    }
+  ]
+}

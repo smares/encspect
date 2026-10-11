@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.4 SEEK frame pointing at a tag that sets an undefined frame flag. The guided search accepts only a fully validated tag (plan, tag detection rule 1), so the tag stays data and the SEEK frame finds nothing.",
+  "length": 567,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "SEEK/Minimum Offset": "300"
+      },
+      "offset": 0,
+      "length": 39
+    },
+    {
+      "name": "Data",
+      "offset": 39,
+      "length": 528
+    }
+  ],
+  "findings": [
+    {
+      "code": "tag.next-missing",
+      "contains": "none was found"
+    }
+  ]
+}

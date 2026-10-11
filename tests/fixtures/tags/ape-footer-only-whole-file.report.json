@@ -1,0 +1,123 @@
+[
+  {
+    "source": "ape-footer-only-whole-file.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 32,
+      "children": [
+        {
+          "name": "APE",
+          "value": "2.0",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Items",
+              "value": "0 items",
+              "offset": 0,
+              "length": 0
+            },
+            {
+              "name": "Footer",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 0,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": "2000",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": "32",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": "0",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": "0x00000000",
+                  "offset": 20,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": "true",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": "false",
+                      "offset": 20,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 24,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\"APETAGEX\" footer with version 2000 and a size that fits the file",
+                  "offset": 0,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "0 items end exactly where the size says",
+                  "offset": 0,
+                  "length": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "layout.tags-only",
+        "message": "The file holds only tags; no bytes are left for audio data.",
+        "offset": 0,
+        "length": 32
+      }
+    ]
+  }
+]

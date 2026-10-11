@@ -1,5 +1,5 @@
 {
-  "description": "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, and an EAR field no longer than the ID3v1 artist, which the specification recommends not to save.",
+  "description": "Lyrics3 v2 ETT field that does not start with the ID3v1 title after it, a warning that leaves the tag at medium confidence, and an EAR field no longer than the ID3v1 artist, which the specification recommends not to save.",
   "length": 743,
   "regions": [
     {
@@ -10,7 +10,7 @@
     {
       "name": "Lyrics3",
       "version": "2.00",
-      "confidence": "High",
+      "confidence": "Medium",
       "fields": {
         "ETT/Data": "A Completely Different Long Track Title"
       },

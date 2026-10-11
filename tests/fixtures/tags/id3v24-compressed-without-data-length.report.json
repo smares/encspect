@@ -71,6 +71,7 @@
             },
             {
               "name": "TIT2",
+              "value": "Packed",
               "offset": 10,
               "length": 25,
               "children": [
@@ -152,6 +153,18 @@
                 {
                   "name": "Compressed Data",
                   "value": "15 bytes",
+                  "offset": 20,
+                  "length": 15
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 20,
+                  "length": 15
+                },
+                {
+                  "name": "Text",
+                  "value": "Packed",
                   "offset": 20,
                   "length": 15
                 }
@@ -310,7 +323,7 @@
       {
         "severity": "Info",
         "code": "id3v2.frame-compressed",
-        "message": "Frame TIT2 is zlib-compressed; its content is not decoded.",
+        "message": "Frame TIT2 is zlib-compressed; its content is shown decompressed, with every field pointing at the compressed data.",
         "offset": 10,
         "length": 25
       },

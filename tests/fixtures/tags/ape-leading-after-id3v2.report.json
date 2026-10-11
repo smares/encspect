@@ -472,6 +472,13 @@
     "findings": [
       {
         "severity": "Info",
+        "code": "ape.at-start",
+        "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
+        "offset": 46,
+        "length": 112
+      },
+      {
+        "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 158,

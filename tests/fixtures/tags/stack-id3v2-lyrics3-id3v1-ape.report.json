@@ -237,19 +237,19 @@
                   "name": "HasLyrics",
                   "value": "true",
                   "offset": 577,
-                  "length": 3
+                  "length": 1
                 },
                 {
                   "name": "HasTimestamps",
                   "value": "false",
-                  "offset": 577,
-                  "length": 3
+                  "offset": 578,
+                  "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
                   "value": "false",
-                  "offset": 577,
-                  "length": 3
+                  "offset": 579,
+                  "length": 1
                 }
               ]
             },
@@ -692,7 +692,7 @@
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
-        "message": "The ID3v1 tag at 0x272 is followed by a APE tag; readers expect ID3v1 in the last 128 bytes.",
+        "message": "The ID3v1 tag at 0x272 is followed by the APE tag at 0x2F2; readers expect ID3v1 in the last 128 bytes.",
         "offset": 626,
         "length": 128
       }
