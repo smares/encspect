@@ -1,5 +1,5 @@
 {
-  "description": "ID3v2.4 TIT2 frame compressed with zlib without a data length indicator, which section 4.1.2 requires with compression.",
+  "description": "ID3v2.4 TIT2 frame compressed with zlib without a data length indicator, which section 4.1.2 requires with compression. It is decompressed anyway, as mutagen does.",
   "length": 572,
   "regions": [
     {
@@ -8,6 +8,7 @@
       "confidence": "Medium",
       "fields": {
         "TIT2/Compressed Data": "15 bytes",
+        "TIT2/Text": "Packed",
         "TPE1/Text": "Artist"
       },
       "offset": 0,

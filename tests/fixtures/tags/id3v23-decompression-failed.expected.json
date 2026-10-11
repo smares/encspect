@@ -1,0 +1,31 @@
+{
+  "description": "ID3v2.3 TIT2 frame marked as compressed whose data is not zlib, and a TPE1 frame whose zlib stream is cut short. Neither is decoded.",
+  "length": 583,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Compressed Data": "13 bytes"
+      },
+      "offset": 0,
+      "length": 71
+    },
+    {
+      "name": "Data",
+      "offset": 71,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-decompression-failed",
+      "contains": "Frame TIT2 at 0xA is marked as zlib-compressed"
+    },
+    {
+      "code": "id3v2.frame-decompression-failed",
+      "contains": "Frame TPE1"
+    }
+  ]
+}

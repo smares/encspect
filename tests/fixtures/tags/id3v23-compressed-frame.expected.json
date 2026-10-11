@@ -1,0 +1,29 @@
+{
+  "description": "ID3v2.3 TSSE frame compressed with zlib (section 3.3.1 i), with its decompressed size. It is decompressed, so its text and encoder claim are reported; its fields point at the compressed bytes.",
+  "length": 579,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.3.0",
+      "confidence": "High",
+      "fields": {
+        "TSSE/Header/Decompressed Size": "11",
+        "TSSE/Compressed Data": "19 bytes",
+        "TSSE/Text": "LAME 3.100"
+      },
+      "offset": 0,
+      "length": 67
+    },
+    {
+      "name": "Data",
+      "offset": 67,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-compressed",
+      "contains": "Frame TSSE is zlib-compressed; its content is shown decompressed"
+    }
+  ]
+}

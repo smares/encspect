@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.2 TT2 frame in UCS-2 without a byte order mark. ID3v2.2 does not ask for one (unlike 2.3 and 2.4), so the assumed byte order is an info finding, not a violation.",
+  "length": 554,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.2.0",
+      "confidence": "High",
+      "fields": {
+        "TT2/Text": "Hi",
+        "TP1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 42
+    },
+    {
+      "name": "Data",
+      "offset": 42,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.utf16-byte-order-assumed",
+      "contains": "Frame TT2 has UCS-2 text without a byte order mark"
+    }
+  ]
+}

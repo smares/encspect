@@ -27,6 +27,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 - Comments only for non-obvious decisions and constraints, or to cite the spec section a field implements. Do not comment what the code already says.
 - Booleans that appear in the GUI or in JSON output read as booleans (`IsVbr`, `HasLameTag`), not as nouns.
+- Stereo and channel terms are written out in output, messages and docs: mid/side, intensity stereo, left/right, never MS, IS or LR. Spec acronyms such as CRC, VBR, CBR, ABR, TOC, ATH, LFE and SCFSI stay abbreviated.
 - American English everywhere, including comments, docs and prose (-ize, not -ise). Write "ID" capitalized in comments when it means the word.
 
 ## Verification
