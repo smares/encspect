@@ -141,7 +141,7 @@ public sealed partial class MpegAudioParser
         if (header.HasLameTag && header.FrameCount is { } counted && counted == covered.Count + 1 && covered.Count > 0)
         {
             int frameSamples = new MpegHeader(covered[0].Header).Samples;
-            findings.Add(Severity.Warning, "mpeg.gapless-count-includes-header", node, count =>
+            findings.Add(Severity.Warning, "mpeg.vbr-frame-count-includes-header", node, count =>
                 $"The Xing header of {Frames(count)} counts its own frame, though the LAME tag after it counts its delay and padding from the frames that follow; decoders that take the length from the count, such as ffmpeg and mpg123, play {Number(frameSamples)} samples more than were encoded. The first at 0x{position:X}.");
         }
 

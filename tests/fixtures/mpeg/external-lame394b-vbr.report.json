@@ -37064,7 +37064,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.gapless-count-includes-header",
+        "code": "mpeg.vbr-frame-count-includes-header",
         "message": "The Xing header of 1 frame counts its own frame, though the LAME tag after it counts its delay and padding from the frames that follow; decoders that take the length from the count, such as ffmpeg and mpg123, play 1152 samples more than were encoded. The first at 0x0.",
         "offset": 0,
         "length": 417

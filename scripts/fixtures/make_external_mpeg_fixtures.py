@@ -602,7 +602,7 @@ def describe_tag(path, command, manifest):
         packets = manifest.get("ffprobe_packets")
         if tag.get("lame") and packets and tag.get("frames") == len(packets) + 1:
             samples = 1152 if manifest["encoder"]["version"] == "1" else 576
-            manifest["vbr_findings"].append({"code": "mpeg.gapless-count-includes-header", "contains": f"play {samples} samples more"})
+            manifest["vbr_findings"].append({"code": "mpeg.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
     manifest["vbr_header"] = tag
     manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
