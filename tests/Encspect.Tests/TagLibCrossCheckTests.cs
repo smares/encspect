@@ -31,6 +31,7 @@ public class TagLibCrossCheckTests
         ("id3v24-itunes-plain-sizes", "frame count", "TagLib# loses TPE1 after misreading the TIT2 size; mutagen 1.47 finds both frames."),
         ("id3v2-unknown-flags", "ID3v2:", "TagLib# (and mutagen 1.47) refuse an ID3v2 tag with undefined header flags; Encspect reports the tag with a finding."),
         ("ape-v1-flags", "APE Title", "TagLib# applies APEv2 item flags to an APEv1 item; APEv1 flags are \"ignored on reading\" per the specification."),
+        ("id3v24-undefined-encoding", "TIT2[0] text", "No version defines text encoding $04. TagLib# decodes it as UTF-16, mutagen 1.48.1 drops the frame, Encspect shows ISO-8859-1 with a finding."),
         ("ape-v1-not-ascii", "APE Title value", "TagLib# reads every APE value as UTF-8; Encspect reads APEv1 values that are not valid UTF-8 as ISO-8859-1, with a finding."),
         ("ape-v1-zero-byte", "APE Title value", "TagLib# splits an APEv1 value at $00 into a list, which only APEv2 defines; mutagen 1.47 keeps one value, as Encspect does."),
         ("ape-leading-header-only", "TagLib# fails", "TagLib# throws on a header-only APE tag at the start of the file; mutagen 1.47 reads the same items as Encspect."),

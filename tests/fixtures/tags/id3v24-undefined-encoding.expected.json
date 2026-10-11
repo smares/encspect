@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 TIT2 frame whose encoding byte is $04, which no version defines (ID3v2.4 main structure, section 4). The text is shown as ISO-8859-1.",
+  "length": 561,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Café",
+        "TPE1/Text": "Jóga"
+      },
+      "offset": 0,
+      "length": 49
+    },
+    {
+      "name": "Data",
+      "offset": 49,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.encoding-invalid",
+      "contains": "undefined text encoding 4"
+    }
+  ]
+}
