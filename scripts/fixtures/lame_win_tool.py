@@ -61,7 +61,8 @@ def fetch(version):
 
 
 def run(binary, arguments, directory):
-    environment = dict(os.environ, WINEPREFIX=str(CACHE / "wine"), WINEDEBUG="-all")
+    # Not under the repository: a Wine prefix links z: to /, which tools walking the tree would follow.
+    environment = dict(os.environ, WINEPREFIX=str(pathlib.Path(tempfile.gettempdir()) / "encspect-lame-wine"), WINEDEBUG="-all")
     return subprocess.run(["wine", str(binary), *arguments], cwd=directory, env=environment, capture_output=True, text=True,
                           stdin=subprocess.DEVNULL, timeout=600, errors="replace")
 
