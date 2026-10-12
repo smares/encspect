@@ -109,15 +109,17 @@ internal static class Program
             return $"the root covers {report.Root.Length} bytes of {input.Length}.";
         }
 
+        // Top-level nodes own their bytes; a node that is not contiguous owns only its ranges, so
+        // another may sit in its gaps.
         long previousEnd = 0;
-        foreach (Node region in report.Root.Children)
+        foreach ((Node region, ByteRange range) in report.Root.Children.SelectMany(c => RangesOf(c).Select(r => (c, r))).OrderBy(p => p.r.Offset))
         {
-            if (region.Offset < previousEnd)
+            if (range.Offset < previousEnd)
             {
-                return $"region {region.Name} at {region.Offset} overlaps the previous one, which ends at {previousEnd}.";
+                return $"region {region.Name} at {range.Offset} overlaps the previous one, which ends at {previousEnd}.";
             }
 
-            previousEnd = region.End;
+            previousEnd = range.End;
         }
 
         // A finding's node must be a node of the tree, which the host found a path to.
@@ -148,6 +150,12 @@ internal static class Program
                 return $"{child.Name} [{child.Offset}, {child.End}) is outside {parent.Name} [{parent.Offset}, {parent.End}).";
             }
 
+            // A field of a packet that spans pages must not point into a page header between them.
+            if (parent.Ranges is not null && RangesOf(child).FirstOrDefault(r => r.Length > 0 && !RangesOf(parent).Any(p => p.Offset <= r.Offset && r.End <= p.End)) is { Length: > 0 } stray)
+            {
+                return $"{child.Name} holds [{stray.Offset}, {stray.End}), which lies in a gap between the ranges of {parent.Name}.";
+            }
+
             if (OutsideParent(child) is { } failure)
             {
                 return failure;
@@ -156,6 +164,8 @@ internal static class Program
 
         return null;
     }
+
+    private static IReadOnlyList<ByteRange> RangesOf(Node node) => node.Ranges ?? [new ByteRange(node.Offset, node.Length)];
 
     private static byte[] Mutate(byte[][] corpus, Random random)
     {

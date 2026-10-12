@@ -9,7 +9,7 @@ namespace Encspect.Formats.Mpeg;
 // its one or two frames end exactly at the end of the data and each holds what its header
 // promises (plan, "File layout and tags"). Once in sync, frames are followed by their lengths and
 // never searched inside; anything that is not a frame is a gap.
-public sealed partial class MpegAudioParser : IFormatParser
+public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 {
     private const int SniffLimit = 1 << 20;
 
@@ -18,6 +18,8 @@ public sealed partial class MpegAudioParser : IFormatParser
     private const int MaxFreeFormatLength = 8192;
 
     public string Name => "MPEG Audio";
+
+    public string Id => "mpeg-audio";
 
     public int Sniff(SniffContext context)
     {
@@ -59,6 +61,35 @@ public sealed partial class MpegAudioParser : IFormatParser
         AddStreams(stream, context);
 
         findings.Flush(context);
+    }
+
+    // MPEG audio that a container holds as one payload (WAV's WAVE_FORMAT_MPEGLAYER3, MP4's object
+    // type 0x6B) is parsed as the same bytes in a file would be, under the container's node.
+    public void Parse(CodecContext context)
+    {
+        if (context.Payload is not { } payload)
+        {
+            context.AddFinding(Severity.Info, "mpeg.packets-not-analyzed", "MPEG audio handed over as packets is not analyzed; only one contiguous payload is.", context.Parent);
+            return;
+        }
+
+        var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims);
+        try
+        {
+            Parse(inner);
+        }
+        finally
+        {
+            foreach (Finding finding in inner.Findings)
+            {
+                context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node, finding.Count);
+            }
+
+            foreach (StreamInfo info in inner.Streams)
+            {
+                context.AddStream(info);
+            }
+        }
     }
 
     private static void ParseSegment(StreamState state, Node root, long start, long end)

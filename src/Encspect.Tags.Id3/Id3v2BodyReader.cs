@@ -33,7 +33,7 @@ internal sealed class Id3v2BodyReader
     public long? FalseSync { get; private set; }
 
     // Reads up to count decoded bytes; fewer when the body ends first.
-    public DecodedBytes Read(int count)
+    public MappedBytes Read(int count)
     {
         long start = FilePosition;
 
@@ -43,11 +43,11 @@ internal sealed class Id3v2BodyReader
             _reader.Position = FilePosition;
             byte[] raw = _reader.ReadBytes(available);
             FilePosition += available;
-            return new DecodedBytes(raw, start, FilePosition);
+            return new MappedBytes(raw, start);
         }
 
         var data = new List<byte>(Math.Min(count, 4096));
-        var map = new List<long>(Math.Min(count, 4096));
+        var ranges = new List<ByteRange>();
         _reader.Position = FilePosition;
 
         while (data.Count < count && FilePosition < _end)
@@ -62,12 +62,12 @@ internal sealed class Id3v2BodyReader
 
             NoteFalseSync(b, offset);
             data.Add(b);
-            map.Add(offset);
+            Unsynchronization.Extend(ranges, offset);
             _previousWasFF = b == 0xFF;
         }
 
         AbsorbStuffing();
-        return new DecodedBytes([.. data], start, FilePosition, [.. map]);
+        return new MappedBytes(data.ToArray(), ranges, FilePosition);
     }
 
     // Skips up to count decoded bytes and returns how many were skipped.

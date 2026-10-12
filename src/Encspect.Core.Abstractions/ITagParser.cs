@@ -27,4 +27,9 @@ public interface ITagParser
     // confidence. Only used where a previous tag points at a later one (TagProbe.NextTagOffset),
     // since it is the one search not tied to a fixed position.
     TagProbe? FindFrom(TagProbeContext context, long from, long limit) => null;
+
+    // Parses a tag that a container holds whole (AnalysisContext.ParseTag), such as the ID3v2 tag
+    // in a RIFF or AIFF chunk: the context's reader is limited to the container's bytes for it, and
+    // the tag starts at the reader's start. Returns null when the signature is absent.
+    TagProbe? ParseWhole(TagProbeContext context) => ProbeAt(context, context.Reader.Start);
 }

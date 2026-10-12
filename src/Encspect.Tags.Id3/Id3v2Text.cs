@@ -20,12 +20,12 @@ internal static class Id3v2Text
 
     // Index of the terminator at or after start (aligned to the string start for two-byte
     // encodings), or end when the string runs to the end of the data.
-    public static int FindTerminator(byte[] data, int start, int end, byte encoding)
+    public static int FindTerminator(ReadOnlySpan<byte> data, int start, int end, byte encoding)
     {
         if (TerminatorWidth(encoding) == 1)
         {
-            int index = Array.IndexOf(data, (byte)0, start, end - start);
-            return index < 0 ? end : index;
+            int index = data[start..end].IndexOf((byte)0);
+            return index < 0 ? end : start + index;
         }
 
         for (int i = start; i + 1 < end; i += 2)
@@ -46,7 +46,7 @@ internal static class Id3v2Text
     // bigEndian carries the byte order of the last UTF-16 BOM into later strings of the same
     // frame. isCut says the string was cut short by the decode limit, so a character split there
     // is dropped rather than reported as invalid.
-    public static DecodedText Decode(byte[] data, int start, int end, byte encoding, bool isCut, ref bool? bigEndian)
+    public static DecodedText Decode(ReadOnlySpan<byte> data, int start, int end, byte encoding, bool isCut, ref bool? bigEndian)
     {
         switch (encoding)
         {
@@ -77,11 +77,11 @@ internal static class Id3v2Text
             case 3:
                 return Utf8(data, start, end, isCut);
             default:
-                return new DecodedText(Encoding.Latin1.GetString(data, start, end - start));
+                return new DecodedText(Encoding.Latin1.GetString(data[start..end]));
         }
     }
 
-    private static DecodedText Utf16(byte[] data, int start, int end, bool bigEndian, bool isCut)
+    private static DecodedText Utf16(ReadOnlySpan<byte> data, int start, int end, bool bigEndian, bool isCut)
     {
         int length = end - start;
         bool isInvalid = false;
@@ -105,7 +105,7 @@ internal static class Id3v2Text
         return new DecodedText(text) { IsInvalid = isInvalid || undecodable };
     }
 
-    private static DecodedText Utf8(byte[] data, int start, int end, bool isCut)
+    private static DecodedText Utf8(ReadOnlySpan<byte> data, int start, int end, bool isCut)
     {
         int length = end - start;
         if (isCut && length > 0)
@@ -130,15 +130,15 @@ internal static class Id3v2Text
     }
 
     // Invalid bytes are still shown, as U+FFFD, the way lenient readers show them.
-    private static (string Text, bool Undecodable) Strict(Encoding strict, Encoding lenient, byte[] data, int start, int length)
+    private static (string Text, bool Undecodable) Strict(Encoding strict, Encoding lenient, ReadOnlySpan<byte> data, int start, int length)
     {
         try
         {
-            return (strict.GetString(data, start, length), false);
+            return (strict.GetString(data.Slice(start, length)), false);
         }
         catch (DecoderFallbackException)
         {
-            return (lenient.GetString(data, start, length), true);
+            return (lenient.GetString(data.Slice(start, length)), true);
         }
     }
 }

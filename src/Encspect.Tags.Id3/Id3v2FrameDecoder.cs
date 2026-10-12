@@ -36,7 +36,7 @@ internal sealed class Id3v2FrameDecoder
     private readonly int _major;
     private readonly string _id;
     private readonly Node _frame;
-    private readonly DecodedBytes _content;
+    private readonly MappedBytes _content;
     private readonly long _decodedSize;
     private readonly long _frameEnd;
     private readonly List<Finding> _findings;
@@ -46,7 +46,7 @@ internal sealed class Id3v2FrameDecoder
     private bool _hasInvalidText;
     private ImageInfo? _image;
 
-    private Id3v2FrameDecoder(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings)
+    private Id3v2FrameDecoder(int major, string id, Node frame, MappedBytes content, long decodedSize, long frameEnd, List<Finding> findings)
     {
         _frameEnd = frameEnd;
         _major = major;
@@ -57,7 +57,7 @@ internal sealed class Id3v2FrameDecoder
         _findings = findings;
     }
 
-    private byte[] Data => _content.Data;
+    private ReadOnlySpan<byte> Data => _content.Span;
 
     private int Length => _content.Length;
 
@@ -67,7 +67,7 @@ internal sealed class Id3v2FrameDecoder
     // content holds the decoded frame data after any extra header bytes, possibly cut short
     // when the frame is very large; decodedSize is its full decoded length and frameEnd the file
     // offset where the frame ends. image is the format and size of an APIC picture.
-    public static NodeValue? Decode(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings, out ImageInfo? image)
+    public static NodeValue? Decode(int major, string id, Node frame, MappedBytes content, long decodedSize, long frameEnd, List<Finding> findings, out ImageInfo? image)
     {
         var decoder = new Id3v2FrameDecoder(major, id, frame, content, decodedSize, frameEnd, findings);
         NodeValue? value = decoder.Decode();
@@ -208,7 +208,7 @@ internal sealed class Id3v2FrameDecoder
     private string DecodeUniqueFileId()
     {
         (string owner, int next) = AddTerminatedLatin1("Owner", 0);
-        byte[] identifier = Data[next..];
+        byte[] identifier = Data[next..].ToArray();
         string value = identifier.All(b => b is >= 0x20 and < 0x7F)
             ? Encoding.ASCII.GetString(identifier)
             : Convert.ToHexString(identifier);
@@ -419,7 +419,7 @@ internal sealed class Id3v2FrameDecoder
 
     private string AddLatin1(string name, int start, int end)
     {
-        string text = Encoding.Latin1.GetString(Data, start, end - start);
+        string text = Encoding.Latin1.GetString(Data[start..end]);
         AddRange(name, start, end, text);
         return text;
     }
@@ -444,7 +444,7 @@ internal sealed class Id3v2FrameDecoder
     {
         if (end - start > 8)
         {
-            return "0x" + Convert.ToHexString(Data, start, end - start);
+            return "0x" + Convert.ToHexString(Data[start..end]);
         }
 
         ulong value = 0;

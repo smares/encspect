@@ -10,18 +10,21 @@ public sealed class Node
     // deeper reports a finding instead.
     public const int MaxDepth = 64;
 
-    private readonly List<Node>? _children;
-    private readonly Func<IReadOnlyList<Node>>? _build;
+    // The added children (a List<Node>) or the function that builds them on demand: one field for
+    // both, so Ranges costs a report of hundreds of thousands of nodes no memory.
+    private readonly object? _source;
     private WeakReference<IReadOnlyList<Node>>? _built;
 
     // The bit offset in the low three bits and the bit length above them, or -1: reports hold
     // hundreds of thousands of nodes, so the bit position takes no more than an int.
     private int _bits = -1;
 
+    private readonly IReadOnlyList<ByteRange>? _ranges;
+
     public Node(string name, long offset, long length, NodeValue? value = null)
         : this(name, offset, length, value, null)
     {
-        _children = [];
+        _source = new List<Node>();
     }
 
     // For parts that repeat by the thousand, such as the frames of an audio stream: the children
@@ -38,7 +41,7 @@ public sealed class Node
         Offset = offset;
         Length = length;
         Value = value;
-        _build = build;
+        _source = build;
     }
 
     public string Name { get; }
@@ -54,6 +57,15 @@ public sealed class Node
 
     public int? BitLength => _bits < 0 ? null : _bits >> 3;
 
+    // For a node whose bytes are not contiguous in the file, such as a packet that spans Ogg pages:
+    // the ranges that hold them, in file order. Offset and Length cover them from the first to the
+    // last. Null for contiguous bytes; ranges that touch are merged, so a node never holds one range.
+    public IReadOnlyList<ByteRange>? Ranges
+    {
+        get => _ranges;
+        init => _ranges = Normalize(value);
+    }
+
     public NodeValue? Value { get; set; }
 
     public NodeKind Kind { get; init; }
@@ -62,9 +74,9 @@ public sealed class Node
     {
         get
         {
-            if (_build is null)
+            if (_source is not Func<IReadOnlyList<Node>>)
             {
-                return _children ?? [];
+                return (IReadOnlyList<Node>?)_source ?? [];
             }
 
             IReadOnlyList<Node>? built = null;
@@ -91,9 +103,9 @@ public sealed class Node
     {
         get
         {
-            if (_build is null)
+            if (_source is not Func<IReadOnlyList<Node>>)
             {
-                return _children is { Count: > 0 };
+                return _source is List<Node> { Count: > 0 };
             }
 
             return Volatile.Read(ref _built) is not { } built || !built.TryGetTarget(out IReadOnlyList<Node>? children) || children.Count > 0;
@@ -124,6 +136,56 @@ public sealed class Node
         return node;
     }
 
+    // A node for bytes [start, end) of mapped data, at the file bytes they came from, with Ranges
+    // where those are not contiguous. Opaque data maps every field to its whole source.
+    public static Node FromMapped(string name, MappedBytes bytes, int start, int end, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+
+        IReadOnlyList<ByteRange> ranges = bytes.FileRanges(start, end);
+        if (bytes.IsOpaque || ranges.Count == 0)
+        {
+            return new Node(name, ranges.Count > 0 ? ranges[0].Offset : bytes.OffsetOf(start), ranges.Count > 0 ? ranges[0].Length : 0, value) { Kind = kind };
+        }
+
+        return new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges };
+    }
+
+    // A node for bits [startBit, endBit) of mapped data, counted from the most significant bit of
+    // its first byte. Within one file range it is the node FromBits gives there; bits that continue
+    // after a gap (a field split by an Ogg page header) also get Ranges, and BitOffset is then the
+    // first bit in the byte at Offset and BitLength the field's width. Opaque data maps every field
+    // to its whole source, without a bit position.
+    public static Node FromBits(string name, MappedBytes bytes, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        ArgumentOutOfRangeException.ThrowIfNegative(startBit);
+        ArgumentOutOfRangeException.ThrowIfLessThan(endBit, startBit);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(endBit, bytes.Length * 8L);
+
+        if (bytes.IsOpaque)
+        {
+            return new Node(name, bytes.FileStart, bytes.FileEnd - bytes.FileStart, value) { Kind = kind };
+        }
+
+        int first = (int)(startBit / 8);
+        int end = endBit == startBit ? (startBit % 8 == 0 ? first : first + 1) : (int)((endBit + 7) / 8);
+        IReadOnlyList<ByteRange> ranges = bytes.FileRanges(first, end);
+        if (ranges.Count <= 1)
+        {
+            return FromBits(name, bytes.OffsetOf(first), startBit % 8, (startBit % 8) + endBit - startBit, value, kind);
+        }
+
+        var node = new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges };
+        bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
+        if (!isWholeBytes && endBit - startBit <= int.MaxValue >> 3)
+        {
+            node._bits = (int)(((endBit - startBit) << 3) | (startBit % 8));
+        }
+
+        return node;
+    }
+
     public Node Add(string name, long offset, long length, NodeValue? value = null) => Add(new Node(name, offset, length, value));
 
     public Node Add(Node child)
@@ -143,7 +205,50 @@ public sealed class Node
     }
 
     private List<Node> AddedChildren =>
-        _children ?? throw new InvalidOperationException($"The children of {Name} are built on demand and cannot be added to.");
+        _source as List<Node> ?? throw new InvalidOperationException($"The children of {Name} are built on demand and cannot be added to.");
+
+    private ByteRange[]? Normalize(IReadOnlyList<ByteRange>? ranges)
+    {
+        if (ranges is null)
+        {
+            return null;
+        }
+
+        var merged = new List<ByteRange>(ranges.Count);
+        foreach (ByteRange range in ranges)
+        {
+            if (range.Offset < 0 || range.Length < 0)
+            {
+                throw new ArgumentException("A range cannot have a negative offset or length.", nameof(ranges));
+            }
+
+            if (range.Length == 0)
+            {
+                continue;
+            }
+
+            if (merged.Count > 0 && range.Offset < merged[^1].End)
+            {
+                throw new ArgumentException($"The ranges of {Name} must be in file order and must not overlap.", nameof(ranges));
+            }
+
+            if (merged.Count > 0 && range.Offset == merged[^1].End)
+            {
+                merged[^1] = merged[^1] with { Length = merged[^1].Length + range.Length };
+            }
+            else
+            {
+                merged.Add(range);
+            }
+        }
+
+        if (merged.Count == 0 ? Length != 0 : merged[0].Offset != Offset || merged[^1].End != End)
+        {
+            throw new ArgumentException($"The ranges of {Name} must reach from its offset to its end.", nameof(ranges));
+        }
+
+        return merged.Count > 1 ? [.. merged] : null;
+    }
 
     // A builder runs long after the analysis, inside a writer or the GUI, where an exception would
     // end the batch, so a failing builder shows as an error in the tree instead.
@@ -151,7 +256,7 @@ public sealed class Node
     {
         try
         {
-            return _build!();
+            return ((Func<IReadOnlyList<Node>>)_source!)();
         }
         catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
