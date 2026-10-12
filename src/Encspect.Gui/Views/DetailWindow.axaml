@@ -12,7 +12,8 @@
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Spacing="3" VerticalAlignment="Center">
           <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
-          <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap" />
+          <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap"
+                     ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, playing time, average bitrate with CBR or VBR, and the encoder with how sure the analysis is." />
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
@@ -27,124 +28,157 @@
           <Button Name="NextButton" Click="OnNext" IsEnabled="{Binding CanGoNext}" Padding="8,6">
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
           </Button>
-          <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" Margin="6,0,0,0" />
+          <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
+          <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" />
         </StackPanel>
       </Grid>
     </Border>
 
     <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsLoading}" />
 
-    <Grid Grid.Row="2" RowDefinitions="*,1,230" ColumnDefinitions="5*,1,6*">
-      <ListBox Name="TreeList" Classes="compact" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}"
-               Background="Transparent" Padding="0,4">
-        <ListBox.ItemTemplate>
-          <DataTemplate DataType="vm:TreeRow">
-            <StackPanel Orientation="Horizontal" Spacing="6" Height="22">
-              <Border Width="{Binding Indent}" />
-              <Border Name="Expander" Width="14" Background="Transparent" Classes="expander">
-                <PathIcon Classes="chevron" Classes.expanded="{Binding IsExpanded}" Data="{x:Static views:Icons.Chevron}"
-                          IsVisible="{Binding HasChildren}" />
-              </Border>
-              <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Classes.section="{Binding IsSection}" />
-              <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Classes="secondary" />
-            </StackPanel>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-
-      <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
-
-      <DockPanel Grid.Column="2">
-        <Border DockPanel.Dock="Bottom" Classes="divider" BorderThickness="0,1,0,0" Padding="12,8">
-          <StackPanel Spacing="6">
-            <TextBlock Name="SelectionText" Text="{Binding SelectionText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionText}" />
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-              <views:BitStripView Name="Bits" Strip="{Binding BitStrip}" HorizontalAlignment="Left" />
-            </ScrollViewer>
-          </StackPanel>
-        </Border>
-        <views:HexView Name="Hex" Document="{Binding Document}" Highlight="{Binding Highlight}" />
-      </DockPanel>
-
-      <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" ResizeDirection="Rows" />
-
-      <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="8,6,12,4">
-          <StackPanel Orientation="Horizontal" Spacing="2" Margin="0,0,14,0">
-            <Button Name="FindingsTab" Content="Findings" Classes="tab" Classes.selected="{Binding IsFindingsShown}" Click="OnFindingsTab" />
-            <Button Name="GraphsTab" Content="Graphs" Classes="tab" Classes.selected="{Binding IsGraphsShown}" Click="OnGraphsTab" />
-          </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsFindingsShown}">
-            <ToggleButton Name="ErrorsFilter" IsChecked="{Binding ShowErrors}" Classes="filter">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <Ellipse Classes="severity error" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding ErrorFilterText}" />
-              </StackPanel>
-            </ToggleButton>
-            <ToggleButton Name="WarningsFilter" IsChecked="{Binding ShowWarnings}" Classes="filter">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <Ellipse Classes="severity warning" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding WarningFilterText}" />
-              </StackPanel>
-            </ToggleButton>
-            <ToggleButton Name="InfosFilter" IsChecked="{Binding ShowInfos}" Classes="filter">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <Ellipse Classes="severity info" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding InfoFilterText}" />
-              </StackPanel>
-            </ToggleButton>
-          </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsGraphsShown}">
-            <ComboBox Name="GraphStreams" ItemsSource="{Binding Graphs.Streams}" SelectedItem="{Binding Graphs.SelectedStream}"
-                      IsVisible="{Binding Graphs.HasStreamChoice}" MaxWidth="300" Padding="10,3" MinHeight="26" VerticalAlignment="Center">
-              <ComboBox.ItemTemplate>
-                <DataTemplate DataType="vm:GraphStream">
-                  <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
-            <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.Choices}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel Orientation="Horizontal" Spacing="6" />
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="vm:GraphChoice">
-                  <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" />
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Grid>
-
-        <Panel IsVisible="{Binding IsFindingsShown}">
-          <TextBlock Text="No findings." Classes="secondary" Margin="14,6" VerticalAlignment="Top" IsVisible="{Binding HasNoFindings}" />
-          <ListBox Name="FindingList" Classes="findings" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" Background="Transparent">
-            <ListBox.ItemTemplate>
-              <DataTemplate DataType="vm:FindingItem">
-                <Grid ColumnDefinitions="Auto,*">
-                  <Ellipse Classes="severity" Classes.error="{Binding IsError}" Classes.warning="{Binding IsWarning}" Classes.info="{Binding IsInfo}"
-                           VerticalAlignment="Top" Margin="0,6,10,0" />
-                  <StackPanel Grid.Column="1" Spacing="1">
-                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Detail}" Classes="secondary" FontSize="12" />
+    <Grid Grid.Row="2" Name="Body" ColumnDefinitions="*,Auto,0">
+      <Grid RowDefinitions="*,1,230" ColumnDefinitions="5*,1,6*">
+        <ListBox Name="TreeList" Classes="compact" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}"
+                 Background="Transparent" Padding="0,4">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:TreeRow">
+              <StackPanel Orientation="Horizontal" Spacing="6" Height="22" Background="Transparent">
+                <ToolTip.Tip>
+                  <StackPanel MaxWidth="440" Spacing="4">
+                    <TextBlock Text="{Binding Heading}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" IsVisible="{Binding HasDescription}" />
                   </StackPanel>
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
-        </Panel>
+                </ToolTip.Tip>
+                <Border Width="{Binding Indent}" />
+                <Border Name="Expander" Width="14" Background="Transparent" Classes="expander">
+                  <PathIcon Classes="chevron" Classes.expanded="{Binding IsExpanded}" Data="{x:Static views:Icons.Chevron}"
+                            IsVisible="{Binding HasChildren}" />
+                </Border>
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Classes.section="{Binding IsSection}" />
+                <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Classes="secondary" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
 
-        <DockPanel IsVisible="{Binding IsGraphsShown}">
-          <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary" FontSize="12"
-                     Margin="14,0,12,8" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <Panel>
-            <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
-                       IsVisible="{Binding HasNoGraphs}" />
-            <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" />
-          </Panel>
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+
+        <DockPanel Grid.Column="2">
+          <Border DockPanel.Dock="Bottom" Classes="divider" BorderThickness="0,1,0,0" Padding="12,8">
+            <StackPanel Spacing="6">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Name="SelectionText" Text="{Binding SelectionText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionText}" />
+                <TextBlock Grid.Column="1" Name="LearnMore" Text="{Binding LearnMoreText}" Classes="link" Margin="12,0,0,0" Cursor="Hand"
+                           IsVisible="{Binding LearnMoreText, Converter={x:Static ObjectConverters.IsNotNull}}" Tapped="OnLearnMore"
+                           ToolTip.Tip="Open the background article in a side pane." />
+              </Grid>
+              <TextBlock Name="SelectionDescription" Text="{Binding SelectionDescription}" Classes="secondary" FontSize="12" TextWrapping="Wrap"
+                         MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionDescription}"
+                         IsVisible="{Binding SelectionDescription, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <views:BitStripView Name="Bits" Strip="{Binding BitStrip}" HorizontalAlignment="Left" />
+              </ScrollViewer>
+            </StackPanel>
+          </Border>
+          <views:HexView Name="Hex" Document="{Binding Document}" Highlight="{Binding Highlight}" />
         </DockPanel>
+
+        <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" ResizeDirection="Rows" />
+
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="8,6,12,4">
+            <StackPanel Orientation="Horizontal" Spacing="2" Margin="0,0,14,0">
+              <Button Name="FindingsTab" Content="Findings" Classes="tab" Classes.selected="{Binding IsFindingsShown}" Click="OnFindingsTab" />
+              <Button Name="GraphsTab" Content="Graphs" Classes="tab" Classes.selected="{Binding IsGraphsShown}" Click="OnGraphsTab" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsFindingsShown}">
+              <ToggleButton Name="ErrorsFilter" IsChecked="{Binding ShowErrors}" Classes="filter">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Classes="severity error" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding ErrorFilterText}" />
+                </StackPanel>
+              </ToggleButton>
+              <ToggleButton Name="WarningsFilter" IsChecked="{Binding ShowWarnings}" Classes="filter">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Classes="severity warning" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding WarningFilterText}" />
+                </StackPanel>
+              </ToggleButton>
+              <ToggleButton Name="InfosFilter" IsChecked="{Binding ShowInfos}" Classes="filter">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Classes="severity info" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding InfoFilterText}" />
+                </StackPanel>
+              </ToggleButton>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsGraphsShown}">
+              <ComboBox Name="GraphStreams" ItemsSource="{Binding Graphs.Streams}" SelectedItem="{Binding Graphs.SelectedStream}"
+                        IsVisible="{Binding Graphs.HasStreamChoice}" MaxWidth="300" Padding="10,3" MinHeight="26" VerticalAlignment="Center">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate DataType="vm:GraphStream">
+                    <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.Choices}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:GraphChoice">
+                    <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding Description}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Grid>
+
+          <Panel IsVisible="{Binding IsFindingsShown}">
+            <TextBlock Text="No findings." Classes="secondary" Margin="14,6" VerticalAlignment="Top" IsVisible="{Binding HasNoFindings}" />
+            <ListBox Name="FindingList" Classes="findings" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" Background="Transparent">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:FindingItem">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Classes="severity" Classes.error="{Binding IsError}" Classes.warning="{Binding IsWarning}" Classes.info="{Binding IsInfo}"
+                             VerticalAlignment="Top" Margin="0,6,10,0" />
+                    <StackPanel Grid.Column="1" Spacing="1">
+                      <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Detail}" Classes="secondary" FontSize="12" />
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Panel>
+
+          <DockPanel IsVisible="{Binding IsGraphsShown}">
+            <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary" FontSize="12"
+                       Margin="14,0,12,8" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <Panel>
+              <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
+                         IsVisible="{Binding HasNoGraphs}" />
+              <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" />
+            </Panel>
+          </DockPanel>
+        </DockPanel>
+      </Grid>
+
+      <GridSplitter Grid.Column="1" Name="TopicSplitter" ResizeDirection="Columns" IsVisible="{Binding IsTopicOpen}" />
+
+      <DockPanel Grid.Column="2" Name="TopicPane" IsVisible="{Binding IsTopicOpen}">
+        <Border DockPanel.Dock="Top" Classes="pane divider" BorderThickness="0,0,0,1" Padding="14,6,6,6">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="Background" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Name="CloseTopicButton" Click="OnCloseTopic" Padding="8,4" Background="Transparent" ToolTip.Tip="Close the pane (F1)">
+              <PathIcon Width="10" Height="10" Data="{x:Static views:Icons.Close}" />
+            </Button>
+          </Grid>
+        </Border>
+        <ScrollViewer Name="TopicScroll" HorizontalScrollBarVisibility="Disabled">
+          <views:TopicView Name="Topic" Topic="{Binding ShownTopic}" Topics="{Binding AllTopics}" />
+        </ScrollViewer>
       </DockPanel>
     </Grid>
   </Grid>

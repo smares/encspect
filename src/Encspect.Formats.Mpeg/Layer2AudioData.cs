@@ -227,19 +227,23 @@ internal sealed class Layer2AudioData
     public IEnumerable<Node> ToNodes(long frameOffset, long frameLength)
     {
         int end = (int)Math.Min(End, frameLength * 8);
-        Node allocation = Span("Bit Allocation", frameOffset, AllocationStart, ScfsiStart, $"Table {TableNames[TableIndex]}", NodeKind.SideInfo);
-        Node scfsi = Span("SCFSI", frameOffset, ScfsiStart, ScalefactorStart, kind: NodeKind.SideInfo);
-        Node scalefactors = Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart, kind: NodeKind.SideInfo);
+        Node allocation = Span("Bit Allocation", frameOffset, AllocationStart, ScfsiStart, $"Table {TableNames[TableIndex]}", NodeKind.SideInfo,
+            Explain.Layer2Allocation, Topics.SubbandCoding);
+        Node scfsi = Span("SCFSI", frameOffset, ScfsiStart, ScalefactorStart, kind: NodeKind.SideInfo, description: Explain.Layer2Scfsi, topic: Topics.SubbandCoding);
+        Node scalefactors = Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart, kind: NodeKind.SideInfo,
+            description: Explain.Layer2Scalefactors, topic: Topics.SubbandCoding);
         for (int sb = 0; sb < Subbands; sb++)
         {
             int width = AllocationWidth(Tables[TableIndex][sb]);
             int coded = sb < Bound ? Channels : 1;
-            Node subband = allocation.Add(Span($"Subband {sb}", frameOffset, AllocationBit[0, sb], AllocationBit[coded - 1, sb] + width));
+            Node subband = allocation.Add(Span($"Subband {sb}", frameOffset, AllocationBit[0, sb], AllocationBit[coded - 1, sb] + width, description: Explain.Subband));
             for (int ch = 0; ch < coded; ch++)
             {
-                string name = coded < Channels ? "Channels 0 and 1" : $"Channel {ch}";
+                bool shared = coded < Channels;
                 int levels = Tables[TableIndex][sb][Allocation[ch, sb]];
-                subband.Add(Span(name, frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + width, levels == 0 ? "None" : NodeValue.Integer(levels, "levels")));
+                subband.Add(Span(shared ? "Channels 0 and 1" : $"Channel {ch}", frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + width,
+                    levels == 0 ? "None" : NodeValue.Integer(levels, "levels"), description: shared ? Explain.SharedAllocation : Explain.Layer2ChannelAllocation,
+                    topic: shared ? Topics.IntensityStereo : null));
             }
 
             int[] allocated = Enumerable.Range(0, Channels).Where(ch => Allocation[ch, sb] != 0).ToArray();
@@ -248,12 +252,12 @@ internal sealed class Layer2AudioData
                 continue;
             }
 
-            Node scfsiSubband = scfsi.Add(Span($"Subband {sb}", frameOffset, ScfsiBit[allocated[0], sb], ScfsiBit[allocated[^1], sb] + 2));
+            Node scfsiSubband = scfsi.Add(Span($"Subband {sb}", frameOffset, ScfsiBit[allocated[0], sb], ScfsiBit[allocated[^1], sb] + 2, description: Explain.Subband));
             Node scalefactorSubband = scalefactors.Add(Span($"Subband {sb}", frameOffset, ScalefactorBit[allocated[0], sb],
-                ScalefactorBit[allocated[^1], sb] + (6 * Scalefactors[allocated[^1], sb].Length)));
+                ScalefactorBit[allocated[^1], sb] + (6 * Scalefactors[allocated[^1], sb].Length), description: Explain.Subband));
             foreach (int ch in allocated)
             {
-                scfsiSubband.Add(Span($"Channel {ch}", frameOffset, ScfsiBit[ch, sb], ScfsiBit[ch, sb] + 2, NodeValue.Integer(Scfsi[ch, sb])));
+                scfsiSubband.Add(Span($"Channel {ch}", frameOffset, ScfsiBit[ch, sb], ScfsiBit[ch, sb] + 2, NodeValue.Integer(Scfsi[ch, sb]), description: Explain.Layer2ScfsiChannel));
                 int[] values = Scalefactors[ch, sb];
                 scalefactorSubband.Add(ScalefactorNode(frameOffset, ch, sb, values.Length == 1 ? NodeValue.Integer(values[0]) : string.Join(", ", values.Select(Number))));
             }
@@ -268,17 +272,18 @@ internal sealed class Layer2AudioData
 
         if (end > SampleStart)
         {
-            yield return Span("Samples", frameOffset, SampleStart, end, NodeValue.Integer(end - SampleStart, "bits"));
+            yield return Span("Samples", frameOffset, SampleStart, end, NodeValue.Integer(end - SampleStart, "bits"), description: Explain.Layer2Samples);
         }
     }
 
     // The node of one channel's scalefactors in a subband, one to three of them as scfsi says.
     public Node ScalefactorNode(long frameOffset, int ch, int sb, NodeValue? value = null) =>
-        Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + (6 * Scalefactors[ch, sb].Length), value);
+        Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + (6 * Scalefactors[ch, sb].Length), value, description: Explain.Layer2Scalefactor);
 
     // A node covering the bytes that hold bits [startBit, endBit) of the frame.
-    public static Node Span(string name, long frameOffset, int startBit, int endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail) =>
-        Node.FromBits(name, frameOffset, startBit, endBit, value, kind);
+    public static Node Span(string name, long frameOffset, int startBit, int endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
+        string? description = null, string? topic = null) =>
+        Node.FromBits(name, frameOffset, startBit, endBit, value, kind, description, topic);
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 

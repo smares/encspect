@@ -229,78 +229,86 @@ internal sealed class Layer3SideInfo
     // is not stored in the file, so its node points at main_data_begin, which it bounds.
     public Node ToNode(long offset, int reservoirFill)
     {
-        Node node = new("Side Info", offset, Size(Header)) { Kind = NodeKind.SideInfo };
-        Add(node, "Main Data Begin", MainDataBegin, NodeValue.Integer(MainDataBegin.Value, "bytes"));
-        Add(node, "Reservoir Fill", MainDataBegin, NodeValue.Integer(reservoirFill, "bytes"));
-        Add(node, "Private Bits", PrivateBits, NodeValue.Integer(PrivateBits.Value));
+        Node node = new("Side Info", offset, Size(Header)) { Kind = NodeKind.SideInfo, Description = Explain.SideInfo, Topic = Topics.GranulesAndFrames };
+        Add(node, "Main Data Begin", MainDataBegin, NodeValue.Integer(MainDataBegin.Value, "bytes"), Explain.MainDataBegin, Topics.BitReservoir);
+        Add(node, "Reservoir Fill", MainDataBegin, NodeValue.Integer(reservoirFill, "bytes"), Explain.ReservoirFill, Topics.BitReservoir);
+        Add(node, "Private Bits", PrivateBits, NodeValue.Integer(PrivateBits.Value), Explain.PrivateBits);
         if (Scfsi.Length > 0)
         {
-            Node scfsi = node.Add(Span("SCFSI", offset, Scfsi[0].Bit, Scfsi[^1].Bit + Scfsi[^1].Length));
+            Node scfsi = node.Add(Span("SCFSI", offset, Scfsi[0].Bit, Scfsi[^1].Bit + Scfsi[^1].Length, null, Explain.Scfsi, Topics.Scfsi));
             for (int ch = 0; ch < Scfsi.Length; ch++)
             {
-                Add(scfsi, $"Channel {ch}", Scfsi[ch], Convert.ToString(Scfsi[ch].Value, 2).PadLeft(4, '0'));
+                Add(scfsi, $"Channel {ch}", Scfsi[ch], Convert.ToString(Scfsi[ch].Value, 2).PadLeft(4, '0'), Explain.ScfsiChannel);
             }
         }
 
         for (int gr = 0; gr < Granules.Length; gr++)
         {
             Layer3Granule[] row = Granules[gr];
-            Node granule = node.Add(Span($"Granule {gr}", offset, row[0].Start, row[^1].End));
+            Node granule = node.Add(Span($"Granule {gr}", offset, row[0].Start, row[^1].End, null, Explain.Granule, Topics.GranulesAndFrames));
             for (int ch = 0; ch < row.Length; ch++)
             {
-                AddGranule(granule.Add(Span($"Channel {ch}", offset, row[ch].Start, row[ch].End)), row[ch]);
+                AddGranule(granule.Add(Span($"Channel {ch}", offset, row[ch].Start, row[ch].End, null, Explain.GranuleChannel)), row[ch]);
             }
         }
 
         return node;
 
-        void Add(Node parent, string name, BitField field, NodeValue value) =>
-            parent.Add(Span(name, offset, field.Bit, field.Bit + field.Length, value));
+        void Add(Node parent, string name, BitField field, NodeValue value, string description, string? topic = null) =>
+            parent.Add(Span(name, offset, field.Bit, field.Bit + field.Length, value, description, topic));
 
         void AddGranule(Node parent, Layer3Granule g)
         {
-            Add(parent, "Part 2 and 3 Length", g.Part23Length, NodeValue.Integer(g.Part23Length.Value, "bits"));
-            Add(parent, "Big Values", g.BigValues, NodeValue.Integer(g.BigValues.Value));
-            Add(parent, "Global Gain", g.GlobalGain, NodeValue.Integer(g.GlobalGain.Value));
-            Add(parent, "Scalefactor Compress", g.ScalefacCompress, NodeValue.Integer(g.ScalefacCompress.Value));
+            Add(parent, "Part 2 and 3 Length", g.Part23Length, NodeValue.Integer(g.Part23Length.Value, "bits"), Explain.Part23Length, Topics.HuffmanCoding);
+            Add(parent, "Big Values", g.BigValues, NodeValue.Integer(g.BigValues.Value), Explain.BigValues, Topics.HuffmanCoding);
+            Add(parent, "Global Gain", g.GlobalGain, NodeValue.Integer(g.GlobalGain.Value), Explain.GlobalGain, Topics.GlobalGain);
+            Add(parent, "Scalefactor Compress", g.ScalefacCompress, NodeValue.Integer(g.ScalefacCompress.Value), Explain.ScalefacCompress, Topics.Scalefactors);
             if (g.IsSwitched)
             {
                 parent.Add(BlockTypeSpan(offset, g, g.BlockType.Value == 0 ? "Reserved" : BlockTypes[g.BlockType.Value]));
-                Add(parent, "IsMixedBlock", g.MixedBlock, NodeValue.Boolean(g.MixedBlock.Value != 0));
+                Add(parent, "IsMixedBlock", g.MixedBlock, NodeValue.Boolean(g.MixedBlock.Value != 0), Explain.IsMixedBlock, Topics.BlockSwitching);
                 parent.Add(TableSelectSpan(offset, g, List(g.TableSelect)));
-                parent.Add(Span("Subblock Gain", offset, g.SubblockGain[0].Bit, g.SubblockGain[^1].Bit + 3, List(g.SubblockGain)));
+                parent.Add(Span("Subblock Gain", offset, g.SubblockGain[0].Bit, g.SubblockGain[^1].Bit + 3, List(g.SubblockGain), Explain.SubblockGain, Topics.GlobalGain));
             }
             else
             {
                 parent.Add(BlockTypeSpan(offset, g, BlockTypes[0]));
                 parent.Add(TableSelectSpan(offset, g, List(g.TableSelect)));
-                Add(parent, "Region 0 Count", g.Region0Count, NodeValue.Integer(g.Region0Count.Value));
-                Add(parent, "Region 1 Count", g.Region1Count, NodeValue.Integer(g.Region1Count.Value));
+                Add(parent, "Region 0 Count", g.Region0Count, NodeValue.Integer(g.Region0Count.Value), Explain.Region0Count, Topics.HuffmanCoding);
+                Add(parent, "Region 1 Count", g.Region1Count, NodeValue.Integer(g.Region1Count.Value), Explain.Region1Count, Topics.HuffmanCoding);
             }
 
             if (Header.IsMpeg1)
             {
-                Add(parent, "HasPreflag", g.Preflag, NodeValue.Boolean(g.Preflag.Value != 0));
+                Add(parent, "HasPreflag", g.Preflag, NodeValue.Boolean(g.Preflag.Value != 0), Explain.HasPreflag, Topics.ScalefacScaleAndPreflag);
             }
 
-            Add(parent, "HasCoarseScalefactors", g.ScalefacScale, NodeValue.Boolean(g.ScalefacScale.Value != 0));
-            Add(parent, "Count1 Table", g.Count1Table, g.Count1Table.Value == 0 ? "A" : "B");
+            Add(parent, "HasCoarseScalefactors", g.ScalefacScale, NodeValue.Boolean(g.ScalefacScale.Value != 0), Explain.HasCoarseScalefactors, Topics.ScalefacScaleAndPreflag);
+            Add(parent, "Count1 Table", g.Count1Table, g.Count1Table.Value == 0 ? "A" : "B", Explain.Count1Table, Topics.HuffmanCoding);
         }
     }
 
     // A node covering the bytes that hold bits [startBit, endBit) of the side information.
-    public static Node Span(string name, long offset, int startBit, int endBit, NodeValue? value = null) =>
-        Node.FromBits(name, offset, startBit, endBit, value);
+    public static Node Span(string name, long offset, int startBit, int endBit, NodeValue? value = null, string? description = null, string? topic = null) =>
+        Node.FromBits(name, offset, startBit, endBit, value, description: description, topic: topic);
 
     // The block type node covers window_switching_flag and, where it is set, block_type.
     public static Node BlockTypeSpan(long offset, Layer3Granule g, NodeValue? value = null) =>
         g.IsSwitched
-            ? Span("Block Type", offset, g.WindowSwitching.Bit, g.BlockType.Bit + g.BlockType.Length, value)
-            : Span("Block Type", offset, g.WindowSwitching.Bit, g.WindowSwitching.Bit + g.WindowSwitching.Length, value);
+            ? Span("Block Type", offset, g.WindowSwitching.Bit, g.BlockType.Bit + g.BlockType.Length, value, BlockTypeText(g.BlockType.Value), Topics.BlockSwitching)
+            : Span("Block Type", offset, g.WindowSwitching.Bit, g.WindowSwitching.Bit + g.WindowSwitching.Length, value, Explain.BlockNormal, Topics.BlockSwitching);
 
     // One node covers every table_select of a granule and channel.
     public static Node TableSelectSpan(long offset, Layer3Granule g, NodeValue? value = null) =>
-        Span("Table Select", offset, g.TableSelect[0].Bit, g.TableSelect[^1].Bit + 5, value);
+        Span("Table Select", offset, g.TableSelect[0].Bit, g.TableSelect[^1].Bit + 5, value, Explain.TableSelect, Topics.HuffmanCoding);
+
+    private static string BlockTypeText(int blockType) => blockType switch
+    {
+        1 => Explain.BlockStart,
+        2 => Explain.BlockShort,
+        3 => Explain.BlockStop,
+        _ => Explain.BlockReserved,
+    };
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 

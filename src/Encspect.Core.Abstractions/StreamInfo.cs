@@ -85,4 +85,7 @@ public sealed class Series
     // The node the series belongs with, such as a statistics figure; the text tree prints the
     // series after it. Null for a series only graphs show.
     public Node? Anchor { get; }
+
+    // What the series shows, as a node's Description says what its field is.
+    public string? Description { get; init; }
 }

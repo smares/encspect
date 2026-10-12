@@ -65,9 +65,9 @@ public sealed partial class MpegAudioParser
 
         if (name is not null)
         {
-            Node node = new("Enhancement", start, length, name);
-            node.Add("Ancillary Data", start, length, Bytes(scan.Bytes));
-            node.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)scan.Bytes * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"));
+            Node node = new("Enhancement", start, length, name) { Description = Explain.Enhancement, Topic = name == "mp3PRO" ? Topics.Mp3Pro : Topics.Mp3Surround };
+            node.Add("Ancillary Data", start, length, Bytes(scan.Bytes), Explain.EnhancementBytes);
+            node.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)scan.Bytes * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"), Explain.EnhancementRate);
             region.Enhancement = node;
             string message = name == "mp3PRO"
                 ? $"The stream is mp3PRO: {Number(scan.Bytes)} bytes of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at {header.SampleRate} Hz, without the high frequencies."
@@ -78,11 +78,11 @@ public sealed partial class MpegAudioParser
         if (scan.Ofl is { } ofl)
         {
             int rate = ofl.IsMp3Pro ? header.SampleRate * 2 : header.SampleRate;
-            Node node = new("Original File Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples"));
-            node.Add("Delay", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Delay, "samples"));
-            node.Add("Original Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples"));
-            node.Add("Sample Rate", ofl.Offset, ofl.Length, NodeValue.Integer(rate, "Hz"));
-            node.Add("Duration", ofl.Offset, ofl.Length, Duration(ofl.Samples * (Clock / rate)));
+            Node node = new("Original File Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples")) { Description = Explain.Ofl, Topic = Topics.GaplessPlayback };
+            node.Add("Delay", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Delay, "samples"), Explain.OflDelay);
+            node.Add("Original Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples"), Explain.OflLength);
+            node.Add("Sample Rate", ofl.Offset, ofl.Length, NodeValue.Integer(rate, "Hz"), Explain.OflRate);
+            node.Add("Duration", ofl.Offset, ofl.Length, Duration(ofl.Samples * (Clock / rate)), Explain.OflDuration);
             region.Ofl = node;
             long streamSamples = samples * (rate / header.SampleRate);
             if (ofl.Delay + ofl.Samples > streamSamples)

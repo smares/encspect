@@ -120,7 +120,7 @@ internal sealed class Id3v2FrameDecoder
                 "POPM" => DecodePopularimeter(),
                 "PCNT" => DecodeCounter(),
                 "GEOB" => DecodeObject(),
-                _ => AddBinary("Data", 0),
+                _ => AddBinary("Data", 0, Explain.FrameData),
             };
         }
         catch (TruncatedContentException ex)
@@ -133,30 +133,30 @@ internal sealed class Id3v2FrameDecoder
     private string DecodeText()
     {
         byte encoding = ReadEncoding();
-        List<string> values = AddTextValues("Text", 1, encoding);
+        List<string> values = AddTextValues("Text", 1, encoding, Explain.Text);
         return string.Join("; ", values);
     }
 
     private string DecodeUserText()
     {
         byte encoding = ReadEncoding();
-        (string description, int next) = AddTerminatedText("Description", 1, encoding);
-        List<string> values = AddTextValues("Text", next, encoding);
+        (string description, int next) = AddTerminatedText("Description", 1, encoding, Explain.Description);
+        List<string> values = AddTextValues("Text", next, encoding, Explain.Text);
         return $"{description}: {string.Join("; ", values)}";
     }
 
     private string DecodeUrl()
     {
         int end = Id3v2Text.FindTerminator(Data, 0, Length, 0);
-        return AddLatin1("URL", 0, end);
+        return AddLatin1("URL", 0, end, Explain.Url);
     }
 
     private string DecodeUserUrl()
     {
         byte encoding = ReadEncoding();
-        (string description, int next) = AddTerminatedText("Description", 1, encoding);
+        (string description, int next) = AddTerminatedText("Description", 1, encoding, Explain.Description);
         int end = Id3v2Text.FindTerminator(Data, next, Length, 0);
-        string url = AddLatin1("URL", next, end);
+        string url = AddLatin1("URL", next, end, Explain.Url);
         return $"{description}: {url}";
     }
 
@@ -164,10 +164,10 @@ internal sealed class Id3v2FrameDecoder
     {
         byte encoding = ReadEncoding();
         Require(4, "language");
-        AddLatin1("Language", 1, 4);
-        (string description, int next) = AddTerminatedText("Description", 4, encoding);
+        AddLatin1("Language", 1, 4, Explain.Language);
+        (string description, int next) = AddTerminatedText("Description", 4, encoding, Explain.Description);
         int end = Id3v2Text.FindTerminator(Data, next, Length, encoding);
-        string text = AddText("Text", next, end, encoding);
+        string text = AddText("Text", next, end, encoding, Explain.Text);
         return description.Length > 0 ? $"{description}: {text}" : text;
     }
 
@@ -179,24 +179,24 @@ internal sealed class Id3v2FrameDecoder
         if (isV22)
         {
             Require(4, "image format");
-            format = AddLatin1("Image Format", 1, 4);
+            format = AddLatin1("Image Format", 1, 4, Explain.ImageFormat);
             next = 4;
         }
         else
         {
             int end = Id3v2Text.FindTerminator(Data, 1, Length, 0);
             Require(end + 1, "MIME type");
-            format = AddLatin1("MIME Type", 1, end);
+            format = AddLatin1("MIME Type", 1, end, Explain.MimeType);
             next = end + 1;
         }
 
         Require(next + 1, "picture type");
         byte type = Data[next];
         string typeName = type < PictureTypes.Length ? PictureTypes[type] : "unknown";
-        AddRange("Picture Type", next, next + 1, $"{type} ({typeName})");
+        AddRange("Picture Type", next, next + 1, $"{type} ({typeName})", Explain.PictureType);
 
-        (string description, int dataStart) = AddTerminatedText("Description", next + 1, encoding);
-        AddBinary("Picture Data", dataStart);
+        (string description, int dataStart) = AddTerminatedText("Description", next + 1, encoding, Explain.Description);
+        AddBinary("Picture Data", dataStart, Explain.PictureData);
         if (!isV22)
         {
             _image = Id3v2Image.Measure(Data, dataStart, Length);
@@ -207,30 +207,30 @@ internal sealed class Id3v2FrameDecoder
 
     private string DecodeUniqueFileId()
     {
-        (string owner, int next) = AddTerminatedLatin1("Owner", 0);
+        (string owner, int next) = AddTerminatedLatin1("Owner", 0, Explain.Owner);
         byte[] identifier = Data[next..].ToArray();
         string value = identifier.All(b => b is >= 0x20 and < 0x7F)
             ? Encoding.ASCII.GetString(identifier)
             : Convert.ToHexString(identifier);
-        AddRange("Identifier", next, Length, value);
+        AddRange("Identifier", next, Length, value, Explain.Identifier);
         return $"{owner}: {value}";
     }
 
     private string DecodePrivate()
     {
-        (string owner, int next) = AddTerminatedLatin1("Owner", 0);
-        AddBinary("Data", next);
+        (string owner, int next) = AddTerminatedLatin1("Owner", 0, Explain.Owner);
+        AddBinary("Data", next, Explain.PrivateData);
         return owner;
     }
 
     private string DecodePopularimeter()
     {
-        (string email, int next) = AddTerminatedLatin1("Email", 0);
+        (string email, int next) = AddTerminatedLatin1("Email", 0, Explain.Email);
         Require(next + 1, "rating");
-        AddRange("Rating", next, next + 1, NodeValue.Integer(Data[next]));
+        AddRange("Rating", next, next + 1, NodeValue.Integer(Data[next]), Explain.Rating);
         if (next + 1 < Length)
         {
-            AddRange("Counter", next + 1, Length, FormatCounter(next + 1, Length));
+            AddRange("Counter", next + 1, Length, FormatCounter(next + 1, Length), Explain.Counter);
         }
 
         return $"{email}: {Data[next]}";
@@ -239,17 +239,17 @@ internal sealed class Id3v2FrameDecoder
     private NodeValue DecodeCounter()
     {
         NodeValue value = FormatCounter(0, Length);
-        AddRange("Counter", 0, Length, value);
+        AddRange("Counter", 0, Length, value, Explain.Counter);
         return value;
     }
 
     private string DecodeObject()
     {
         byte encoding = ReadEncoding();
-        (string mime, int next) = AddTerminatedLatin1("MIME Type", 1);
-        (string fileName, next) = AddTerminatedText("Filename", next, encoding);
-        (string description, next) = AddTerminatedText("Description", next, encoding);
-        AddBinary("Object", next);
+        (string mime, int next) = AddTerminatedLatin1("MIME Type", 1, Explain.MimeType);
+        (string fileName, next) = AddTerminatedText("Filename", next, encoding, Explain.Filename);
+        (string description, next) = AddTerminatedText("Description", next, encoding, Explain.Description);
+        AddBinary("Object", next, Explain.ObjectData);
         return $"{mime}, {fileName}, {description}";
     }
 
@@ -257,7 +257,7 @@ internal sealed class Id3v2FrameDecoder
     {
         Require(1, "text encoding");
         byte encoding = Data[0];
-        AddRange("Encoding", 0, 1, Id3v2Text.EncodingName(encoding));
+        AddRange("Encoding", 0, 1, Id3v2Text.EncodingName(encoding), Explain.Encoding, Topics.TextEncodings);
 
         if (encoding > 3)
         {
@@ -280,7 +280,7 @@ internal sealed class Id3v2FrameDecoder
     }
 
     // Text frames hold one string in 2.2 and 2.3 and a terminator-separated list in 2.4.
-    private List<string> AddTextValues(string name, int start, byte encoding)
+    private List<string> AddTextValues(string name, int start, byte encoding, string description)
     {
         int width = Id3v2Text.TerminatorWidth(encoding);
         var ranges = new List<(int Start, int End)>();
@@ -316,13 +316,13 @@ internal sealed class Id3v2FrameDecoder
         var values = new List<string>(ranges.Count);
         foreach ((int s, int e) in ranges)
         {
-            values.Add(AddText(name, s, e, encoding));
+            values.Add(AddText(name, s, e, encoding, description));
         }
 
         return values;
     }
 
-    private (string Text, int Next) AddTerminatedText(string name, int start, byte encoding)
+    private (string Text, int Next) AddTerminatedText(string name, int start, byte encoding, string description)
     {
         Require(start, name.ToLowerInvariant());
         int end = Id3v2Text.FindTerminator(Data, start, Length, encoding);
@@ -331,11 +331,11 @@ internal sealed class Id3v2FrameDecoder
             throw new TruncatedContentException($"{name.ToLowerInvariant()} terminator");
         }
 
-        string text = AddText(name, start, end, encoding);
+        string text = AddText(name, start, end, encoding, description);
         return (text, end + Id3v2Text.TerminatorWidth(encoding));
     }
 
-    private (string Text, int Next) AddTerminatedLatin1(string name, int start)
+    private (string Text, int Next) AddTerminatedLatin1(string name, int start, string description)
     {
         Require(start, name.ToLowerInvariant());
         int end = Id3v2Text.FindTerminator(Data, start, Length, 0);
@@ -344,10 +344,10 @@ internal sealed class Id3v2FrameDecoder
             throw new TruncatedContentException($"{name.ToLowerInvariant()} terminator");
         }
 
-        return (AddLatin1(name, start, end), end + 1);
+        return (AddLatin1(name, start, end, description), end + 1);
     }
 
-    private string AddText(string name, int start, int end, byte encoding)
+    private string AddText(string name, int start, int end, byte encoding, string description)
     {
         bool hasByteOrder = _bigEndian is not null;
         bool isCut = end == Length && IsCut;
@@ -404,7 +404,7 @@ internal sealed class Id3v2FrameDecoder
         if (isCut)
         {
             long offset = _content.OffsetOf(start);
-            _frame.Add(name, offset, _frameEnd - offset, text);
+            _frame.Add(name, offset, _frameEnd - offset, text, description);
             _findings.Add(new Finding(
                 Severity.Info,
                 "id3v2.frame-text-cut",
@@ -413,30 +413,30 @@ internal sealed class Id3v2FrameDecoder
             return text;
         }
 
-        AddRange(name, start, end, text);
+        AddRange(name, start, end, text, description);
         return text;
     }
 
-    private string AddLatin1(string name, int start, int end)
+    private string AddLatin1(string name, int start, int end, string description)
     {
         string text = Encoding.Latin1.GetString(Data[start..end]);
-        AddRange(name, start, end, text);
+        AddRange(name, start, end, text, description);
         return text;
     }
 
     // Binary data runs to the end of the frame, which may lie beyond the decoded prefix.
-    private NodeValue AddBinary(string name, int start)
+    private NodeValue AddBinary(string name, int start, string description)
     {
         long size = Math.Max(0, _decodedSize - start);
         long offset = _content.OffsetOf(Math.Min(start, Length));
         NodeValue value = NodeValue.Integer(size, "bytes");
-        _frame.Add(name, offset, _frameEnd - offset, value);
+        _frame.Add(name, offset, _frameEnd - offset, value, description);
         return value;
     }
 
-    private void AddRange(string name, int start, int end, NodeValue value)
+    private void AddRange(string name, int start, int end, NodeValue value, string description, string? topic = null)
     {
-        _frame.Add(name, _content.OffsetOf(start), _content.FileLength(start, end), value);
+        _frame.Add(name, _content.OffsetOf(start), _content.FileLength(start, end), value, description, topic);
     }
 
     // A counter longer than a long shows its bytes.

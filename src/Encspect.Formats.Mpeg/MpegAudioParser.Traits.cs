@@ -55,9 +55,9 @@ public sealed partial class MpegAudioParser
 
             Node TraitNode(string name, string evidence)
             {
-                Node node = new("Encoder", span.Offset, span.Length, name);
-                node.Add("Confidence", span.Offset, span.Length, "Low");
-                node.Add("Evidence", span.Offset, span.Length, evidence);
+                Node node = EncoderNode(span.Offset, span.Length, name);
+                node.Add("Confidence", span.Offset, span.Length, "Low", Explain.Confidence);
+                node.Add("Evidence", span.Offset, span.Length, evidence, Explain.Evidence);
                 return node;
             }
         }
@@ -65,9 +65,10 @@ public sealed partial class MpegAudioParser
         // TwoLAME and Xing's tompg both write it.
         if (region.Layer2Frames >= MinTraitFrames && region.UndefinedScalefactor is { } undefined)
         {
-            Node node = new("Encoder", undefined.Offset, undefined.Length, "TwoLAME or Xing");
-            node.Add("Confidence", undefined.Offset, undefined.Length, "Low");
-            node.Add("Evidence", undefined.Offset, undefined.Length, "Scalefactor index 63, which TwoLAME and Xing's encoder write and Table B.1 of ISO/IEC 11172-3 leaves undefined");
+            Node node = EncoderNode(undefined.Offset, undefined.Length, "TwoLAME or Xing");
+            node.Add("Confidence", undefined.Offset, undefined.Length, "Low", Explain.Confidence);
+            node.Add("Evidence", undefined.Offset, undefined.Length, "Scalefactor index 63, which TwoLAME and Xing's encoder write and Table B.1 of ISO/IEC 11172-3 leaves undefined",
+                Explain.Evidence);
             return node;
         }
 

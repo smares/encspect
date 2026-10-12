@@ -31,14 +31,14 @@ public sealed class Id3v1TagParser : ITagParser
         // ID3v1.1: a zero byte at comment offset 28 followed by a non-zero track number.
         bool isV11 = data[125] == 0 && data[126] != 0;
 
-        var tag = new Node(Name, start, TagSize, isV11 ? "1.1" : "1.0") { Kind = NodeKind.Tag };
+        var tag = new Node(Name, start, TagSize, isV11 ? "1.1" : "1.0") { Kind = NodeKind.Tag, Description = Explain.Id3v1Tag, Topic = Topics.Id3v1 };
         var nonText = new List<string>();
 
-        tag.Add("Signature", start, 3, "TAG");
-        AddText(tag, "Title", data, start, 3, 30, nonText);
-        AddText(tag, "Artist", data, start, 33, 30, nonText);
-        AddText(tag, "Album", data, start, 63, 30, nonText);
-        Node year = AddText(tag, "Year", data, start, 93, 4, nonText);
+        tag.Add("Signature", start, 3, "TAG", Explain.Id3v1Signature);
+        AddText(tag, "Title", data, start, 3, 30, nonText, Explain.Id3v1Title);
+        AddText(tag, "Artist", data, start, 33, 30, nonText, Explain.Id3v1Artist);
+        AddText(tag, "Album", data, start, 63, 30, nonText, Explain.Id3v1Album);
+        Node year = AddText(tag, "Year", data, start, 93, 4, nonText, Explain.Id3v1Year);
         if (year.Value!.ToString() is { Length: > 0 } yearText && !yearText.All(char.IsAsciiDigit))
         {
             findings.Add(new Finding(Severity.Warning, "id3v1.year-not-numeric", $"The ID3v1 year \"{year.Value}\" is not a number.", year));
@@ -46,15 +46,15 @@ public sealed class Id3v1TagParser : ITagParser
 
         if (isV11)
         {
-            AddText(tag, "Comment", data, start, 97, 28, nonText);
-            tag.Add("Track", start + 126, 1, NodeValue.Integer(data[126]));
+            AddText(tag, "Comment", data, start, 97, 28, nonText, Explain.Id3v1Comment);
+            tag.Add("Track", start + 126, 1, NodeValue.Integer(data[126]), Explain.Id3v1Track);
         }
         else
         {
-            AddText(tag, "Comment", data, start, 97, 30, nonText);
+            AddText(tag, "Comment", data, start, 97, 30, nonText, Explain.Id3v1Comment);
         }
 
-        tag.Add("Genre", start + 127, 1, GenreName(data[127]));
+        tag.Add("Genre", start + 127, 1, GenreName(data[127]), Explain.Id3v1Genre);
 
         Confidence confidence = Confidence.Medium;
         if (nonText.Count > 0)
@@ -85,7 +85,7 @@ public sealed class Id3v1TagParser : ITagParser
     }
 
     // Fields are ISO-8859-1, padded with zero bytes or spaces.
-    internal static Node AddText(Node parent, string name, byte[] data, long baseOffset, int offset, int length, List<string> nonText, string? label = null)
+    internal static Node AddText(Node parent, string name, byte[] data, long baseOffset, int offset, int length, List<string> nonText, string description, string? label = null)
     {
         ReadOnlySpan<byte> field = data.AsSpan(offset, length);
         int terminator = field.IndexOf((byte)0);
@@ -101,6 +101,6 @@ public sealed class Id3v1TagParser : ITagParser
         }
 
         string value = Encoding.Latin1.GetString(text).TrimEnd(' ');
-        return parent.Add(name, baseOffset + offset, length, value);
+        return parent.Add(name, baseOffset + offset, length, value, description);
     }
 }
