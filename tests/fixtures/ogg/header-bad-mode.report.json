@@ -1,0 +1,783 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "header-bad-mode.spx",
+    "root": {
+      "name": "File",
+      "value": "Ogg",
+      "offset": 0,
+      "length": 279,
+      "children": [
+        {
+          "name": "Ogg",
+          "value": 3,
+          "unit": "pages",
+          "offset": 0,
+          "length": 279,
+          "children": [
+            {
+              "name": "Logical Stream",
+              "value": "Speex",
+              "offset": 0,
+              "length": 279,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 2829,
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Speex",
+                  "offset": 28,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 3,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 279
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 6,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 279
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 600,
+                  "offset": 174,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": true,
+                  "offset": 173,
+                  "length": 1
+                },
+                {
+                  "name": "Speex Header",
+                  "value": "Undefined mode, 8000 Hz",
+                  "offset": 28,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "Speex String",
+                      "value": "Speex   ",
+                      "offset": 28,
+                      "length": 8
+                    },
+                    {
+                      "name": "Speex Version",
+                      "value": "1.2.1",
+                      "offset": 36,
+                      "length": 20
+                    },
+                    {
+                      "name": "Version ID",
+                      "value": 1,
+                      "offset": 56,
+                      "length": 4
+                    },
+                    {
+                      "name": "Header Size",
+                      "value": 80,
+                      "unit": "bytes",
+                      "offset": 60,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 64,
+                      "length": 4
+                    },
+                    {
+                      "name": "Mode",
+                      "value": "7 (undefined)",
+                      "offset": 68,
+                      "length": 4
+                    },
+                    {
+                      "name": "Mode Bitstream Version",
+                      "value": 4,
+                      "offset": 72,
+                      "length": 4
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "offset": 76,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "-1 (not given)",
+                      "offset": 80,
+                      "length": 4
+                    },
+                    {
+                      "name": "Frame Size",
+                      "value": 160,
+                      "unit": "samples",
+                      "offset": 84,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsVbr",
+                      "value": false,
+                      "offset": 88,
+                      "length": 4
+                    },
+                    {
+                      "name": "Frames Per Packet",
+                      "value": 1,
+                      "offset": 92,
+                      "length": 4
+                    },
+                    {
+                      "name": "Extra Headers",
+                      "value": 0,
+                      "offset": 96,
+                      "length": 4
+                    },
+                    {
+                      "name": "Reserved 1",
+                      "value": 0,
+                      "offset": 100,
+                      "length": 4
+                    },
+                    {
+                      "name": "Reserved 2",
+                      "value": 0,
+                      "offset": 104,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Vorbis Comment",
+                  "kind": "Tag",
+                  "value": 0,
+                  "unit": "comments",
+                  "offset": 136,
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Vendor Length",
+                      "value": 24,
+                      "unit": "bytes",
+                      "offset": 136,
+                      "length": 4
+                    },
+                    {
+                      "name": "Vendor",
+                      "value": "Encoded with Speex 1.2.1",
+                      "offset": 140,
+                      "length": 24
+                    },
+                    {
+                      "name": "Comment Count",
+                      "value": 0,
+                      "offset": 164,
+                      "length": 4
+                    },
+                    {
+                      "name": "Detection",
+                      "value": "High",
+                      "offset": 136,
+                      "length": 32,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "The vendor string and 0 comments fit the data",
+                          "offset": 136,
+                          "length": 32
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoder",
+                  "value": "speexenc 1.2.1",
+                  "offset": 36,
+                  "length": 128,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "High",
+                      "offset": 36,
+                      "length": 128
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string \"Encoded with Speex 1.2.1\", which speexenc writes",
+                      "offset": 140,
+                      "length": 24
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Speex header version \"1.2.1\", which libspeex writes, agrees",
+                      "offset": 36,
+                      "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "value": "4 packets",
+                  "offset": 199,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 4,
+                      "offset": 199,
+                      "length": 80
+                    },
+                    {
+                      "name": "Frames",
+                      "value": 0,
+                      "offset": 199,
+                      "length": 80
+                    },
+                    {
+                      "name": "Packet Sizes",
+                      "value": 1,
+                      "unit": "sizes",
+                      "offset": 199,
+                      "length": 80,
+                      "children": [
+                        {
+                          "name": "20 bytes",
+                          "value": "4 packets (100.0%)",
+                          "offset": 199,
+                          "length": 80
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Packets",
+                  "kind": "Stream",
+                  "value": 4,
+                  "unit": "packets",
+                  "offset": 199,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "20 bytes, no frames",
+                      "offset": 199,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Padding",
+                          "value": 160,
+                          "unit": "bits",
+                          "offset": 199,
+                          "length": 20
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "20 bytes, no frames",
+                      "offset": 219,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Padding",
+                          "value": 160,
+                          "unit": "bits",
+                          "offset": 219,
+                          "length": 20
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "20 bytes, no frames",
+                      "offset": 239,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Padding",
+                          "value": 160,
+                          "unit": "bits",
+                          "offset": 239,
+                          "length": 20
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "20 bytes, no frames",
+                      "offset": 259,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Padding",
+                          "value": 160,
+                          "unit": "bits",
+                          "offset": 259,
+                          "length": 20
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pages",
+              "kind": "Stream",
+              "value": 3,
+              "unit": "pages",
+              "offset": 0,
+              "length": 279,
+              "children": [
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x00000B0D, sequence 0, granule 0, beginning of stream",
+                  "offset": 0,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 2,
+                      "offset": 5,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": true,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 6,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 2829,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 1332936388,
+                      "offset": 22,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1332936388,
+                          "offset": 22,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 26,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 27,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 80,
+                          "unit": "bytes",
+                          "offset": 27,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "80 bytes, packet 0",
+                      "offset": 28,
+                      "length": 80
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x00000B0D, sequence 1, granule 0",
+                  "offset": 108,
+                  "length": 60,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 108,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 112,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 113,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 114,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 2829,
+                      "offset": 122,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 1,
+                      "offset": 126,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 452248575,
+                      "offset": 130,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 452248575,
+                          "offset": 130,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 134,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 135,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 32,
+                          "unit": "bytes",
+                          "offset": 135,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "32 bytes, packet 1",
+                      "offset": 136,
+                      "length": 32
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x00000B0D, sequence 2, granule 600, end of stream",
+                  "offset": 168,
+                  "length": 111,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 168,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 172,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 4,
+                      "offset": 173,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": true,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 600,
+                      "offset": 174,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 2829,
+                      "offset": 182,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 2,
+                      "offset": 186,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 1028486358,
+                      "offset": 190,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1028486358,
+                          "offset": 190,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 4,
+                      "offset": 194,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 4,
+                      "unit": "lacing values",
+                      "offset": 195,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 195,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 196,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 197,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 198,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 2",
+                      "offset": 199,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 3",
+                      "offset": 219,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 4",
+                      "offset": 239,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 5",
+                      "offset": 259,
+                      "length": 20
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "codec": "Speex",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "samples": 0,
+        "duration": 0,
+        "isVbr": false,
+        "encoder": "speexenc 1.2.1",
+        "encoderConfidence": "High",
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "speex.mode-invalid",
+        "message": "The header's mode 7 is none of narrowband (0), wideband (1) and ultra-wideband (2); decoders reject the stream, so its frames are not read.",
+        "offset": 68,
+        "length": 4,
+        "path": [
+          0,
+          0,
+          7,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

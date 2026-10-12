@@ -1,0 +1,4901 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "speex-narrowband.spx",
+    "root": {
+      "name": "File",
+      "value": "Ogg",
+      "offset": 0,
+      "length": 2199,
+      "children": [
+        {
+          "name": "Ogg",
+          "value": 5,
+          "unit": "pages",
+          "offset": 0,
+          "length": 2199,
+          "children": [
+            {
+              "name": "Logical Stream",
+              "value": "Speex",
+              "offset": 0,
+              "length": 2199,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 1592590336,
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Speex",
+                  "offset": 28,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 5,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 2199
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 52,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 2199
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 7900,
+                  "offset": 1788,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": true,
+                  "offset": 1787,
+                  "length": 1
+                },
+                {
+                  "name": "Speex Header",
+                  "value": "Narrowband, 8000 Hz",
+                  "offset": 28,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "Speex String",
+                      "value": "Speex   ",
+                      "offset": 28,
+                      "length": 8
+                    },
+                    {
+                      "name": "Speex Version",
+                      "value": "1.2.1",
+                      "offset": 36,
+                      "length": 20
+                    },
+                    {
+                      "name": "Version ID",
+                      "value": 1,
+                      "offset": 56,
+                      "length": 4
+                    },
+                    {
+                      "name": "Header Size",
+                      "value": 80,
+                      "unit": "bytes",
+                      "offset": 60,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 64,
+                      "length": 4
+                    },
+                    {
+                      "name": "Mode",
+                      "value": "Narrowband",
+                      "offset": 68,
+                      "length": 4
+                    },
+                    {
+                      "name": "Mode Bitstream Version",
+                      "value": 4,
+                      "offset": 72,
+                      "length": 4
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "offset": 76,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": "-1 (not given)",
+                      "offset": 80,
+                      "length": 4
+                    },
+                    {
+                      "name": "Frame Size",
+                      "value": 160,
+                      "unit": "samples",
+                      "offset": 84,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsVbr",
+                      "value": false,
+                      "offset": 88,
+                      "length": 4
+                    },
+                    {
+                      "name": "Frames Per Packet",
+                      "value": 1,
+                      "offset": 92,
+                      "length": 4
+                    },
+                    {
+                      "name": "Extra Headers",
+                      "value": 0,
+                      "offset": 96,
+                      "length": 4
+                    },
+                    {
+                      "name": "Reserved 1",
+                      "value": 0,
+                      "offset": 100,
+                      "length": 4
+                    },
+                    {
+                      "name": "Reserved 2",
+                      "value": 0,
+                      "offset": 104,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Vorbis Comment",
+                  "kind": "Tag",
+                  "value": 0,
+                  "unit": "comments",
+                  "offset": 136,
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Vendor Length",
+                      "value": 24,
+                      "unit": "bytes",
+                      "offset": 136,
+                      "length": 4
+                    },
+                    {
+                      "name": "Vendor",
+                      "value": "Encoded with Speex 1.2.1",
+                      "offset": 140,
+                      "length": 24
+                    },
+                    {
+                      "name": "Comment Count",
+                      "value": 0,
+                      "offset": 164,
+                      "length": 4
+                    },
+                    {
+                      "name": "Detection",
+                      "value": "High",
+                      "offset": 136,
+                      "length": 32,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "The vendor string and 0 comments fit the data",
+                          "offset": 136,
+                          "length": 32
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoder",
+                  "value": "speexenc 1.2.1",
+                  "offset": 36,
+                  "length": 128,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "High",
+                      "offset": 36,
+                      "length": 128
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string \"Encoded with Speex 1.2.1\", which speexenc writes",
+                      "offset": 140,
+                      "length": 24
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Speex header version \"1.2.1\", which libspeex writes, agrees",
+                      "offset": 36,
+                      "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "value": "50 packets, 0.988 s",
+                  "offset": 215,
+                  "length": 1984,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 50,
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Frames",
+                      "value": 50,
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Coded Samples",
+                      "value": 8000,
+                      "unit": "samples",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Encoder Delay",
+                      "value": 40,
+                      "unit": "samples",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "End Trimming",
+                      "value": 60,
+                      "unit": "samples",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 7900,
+                      "unit": "samples",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.9875,
+                      "unit": "s",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "IsVbr",
+                      "value": false,
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 15.2,
+                      "unit": "kbps",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 15.2,
+                      "unit": "kbps",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 15.2,
+                      "unit": "kbps",
+                      "offset": 215,
+                      "length": 1984
+                    },
+                    {
+                      "name": "Packet Sizes",
+                      "value": 1,
+                      "unit": "sizes",
+                      "offset": 215,
+                      "length": 1984,
+                      "children": [
+                        {
+                          "name": "38 bytes",
+                          "value": "50 packets (100.0%), 15.2 kbps",
+                          "offset": 215,
+                          "length": 1984
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Narrowband Submodes",
+                      "value": 1,
+                      "unit": "submodes",
+                      "offset": 215,
+                      "length": 1984,
+                      "children": [
+                        {
+                          "name": "Submode 5 (300 bits)",
+                          "value": "50 frames (100.0%)",
+                          "offset": 215,
+                          "length": 1984
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Packets",
+                  "kind": "Stream",
+                  "value": 50,
+                  "unit": "packets",
+                  "offset": 215,
+                  "length": 1984,
+                  "children": [
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 215,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 215,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 215,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 215,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 215,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 215,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 252,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 253,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 253,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 253,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 253,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 253,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 253,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 290,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 291,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 291,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 291,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 291,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 291,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 291,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 328,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 329,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 329,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 329,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 329,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 329,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 329,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 366,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 367,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 367,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 367,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 367,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 367,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 367,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 404,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 405,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 405,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 405,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 405,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 405,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 405,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 442,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 443,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 443,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 443,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 443,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 443,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 443,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 480,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 481,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 481,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 481,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 481,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 481,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 481,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 518,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 519,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 519,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 519,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 519,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 519,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 519,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 556,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 557,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 557,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 557,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 557,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 557,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 557,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 594,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 595,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 595,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 595,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 595,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 595,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 595,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 632,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 633,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 633,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 633,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 633,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 633,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 633,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 670,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 671,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 671,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 671,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 671,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 671,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 671,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 708,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 709,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 709,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 709,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 709,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 709,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 709,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 746,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 747,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 747,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 747,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 747,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 747,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 747,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 784,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 785,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 785,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 785,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 785,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 785,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 785,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 822,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 823,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 823,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 823,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 823,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 823,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 823,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 860,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 861,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 861,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 861,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 861,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 861,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 861,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 898,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 899,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 899,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 899,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 899,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 899,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 899,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 936,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 937,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 937,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 937,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 937,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 937,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 937,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 974,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1022,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1022,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1022,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1022,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1022,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1022,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1059,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1060,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1060,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1060,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1060,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1060,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1060,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1097,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1098,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1098,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1098,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1098,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1098,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1098,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1135,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1136,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1136,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1136,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1136,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1136,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1136,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1173,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1174,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1174,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1174,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1174,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1174,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1174,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1211,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1212,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1212,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1212,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1212,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1212,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1212,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1249,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1250,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1250,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1250,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1250,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1250,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1250,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1287,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1288,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1288,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1288,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1288,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1288,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1288,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1325,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1326,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1326,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1326,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1326,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1326,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1326,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1363,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1364,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1364,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1364,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1364,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1364,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1364,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1401,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1402,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1402,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1402,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1402,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1402,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1402,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1439,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1440,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1440,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1440,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1440,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1440,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1440,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1477,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1478,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1478,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1478,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1478,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1478,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1478,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1515,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1516,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1516,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1516,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1516,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1516,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1516,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1553,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1554,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1554,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1554,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1554,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1554,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1554,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1591,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1592,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1592,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1592,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1592,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1592,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1592,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1629,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1630,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1630,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1630,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1630,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1630,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1630,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1667,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1668,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1668,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1668,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1668,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1668,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1668,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1705,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1706,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1706,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1706,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1706,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1706,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1706,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1743,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1744,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1744,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1744,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1744,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1744,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1744,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1781,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1819,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1819,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1819,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1819,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1819,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1819,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1856,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1857,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1857,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1857,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1857,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1857,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1857,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1894,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1895,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1895,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1895,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1895,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1895,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1895,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1932,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1933,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1933,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1933,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1933,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1933,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1933,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1970,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 1971,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 1971,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1971,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1971,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1971,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1971,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2008,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 2009,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 2009,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 2009,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 2009,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 2009,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 2009,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2046,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 2047,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 2047,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 2047,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 2047,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 2047,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 2047,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2084,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 2085,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 2085,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 2085,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 2085,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 2085,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 2085,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2122,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 2123,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 2123,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 2123,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 2123,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 2123,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 2123,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2160,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "38 bytes, narrowband submode 5",
+                      "offset": 2161,
+                      "length": 38,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5",
+                          "offset": 2161,
+                          "length": 38,
+                          "bitOffset": 0,
+                          "bitLength": 300,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 2161,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 2161,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 2161,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 2161,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 2198,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pages",
+              "kind": "Stream",
+              "value": 5,
+              "unit": "pages",
+              "offset": 0,
+              "length": 2199,
+              "children": [
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 0, granule 0, beginning of stream",
+                  "offset": 0,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 2,
+                      "offset": 5,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": true,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 6,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3582298315,
+                      "offset": 22,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3582298315,
+                          "offset": 22,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 26,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 27,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 80,
+                          "unit": "bytes",
+                          "offset": 27,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "80 bytes, packet 0",
+                      "offset": 28,
+                      "length": 80
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 1, granule 0",
+                  "offset": 108,
+                  "length": 60,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 108,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 112,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 113,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 114,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 122,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 1,
+                      "offset": 126,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 2078923301,
+                      "offset": 130,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 2078923301,
+                          "offset": 130,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 134,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 135,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 32,
+                          "unit": "bytes",
+                          "offset": 135,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "32 bytes, packet 1",
+                      "offset": 136,
+                      "length": 32
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 2, granule 3160",
+                  "offset": 168,
+                  "length": 807,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 168,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 172,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 173,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 173,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 3160,
+                      "offset": 174,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 182,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 2,
+                      "offset": 186,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 298298581,
+                      "offset": 190,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 298298581,
+                          "offset": 190,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 20,
+                      "offset": 194,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 20,
+                      "unit": "lacing values",
+                      "offset": 195,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 195,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 196,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 197,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 198,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 199,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 200,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 201,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 202,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 203,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 204,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 205,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 206,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 207,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 208,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 209,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 210,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 211,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 212,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 213,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 214,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 2",
+                      "offset": 215,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 3",
+                      "offset": 253,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 4",
+                      "offset": 291,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 5",
+                      "offset": 329,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 6",
+                      "offset": 367,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 7",
+                      "offset": 405,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 8",
+                      "offset": 443,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 9",
+                      "offset": 481,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 10",
+                      "offset": 519,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 11",
+                      "offset": 557,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 12",
+                      "offset": 595,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 13",
+                      "offset": 633,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 14",
+                      "offset": 671,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 15",
+                      "offset": 709,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 16",
+                      "offset": 747,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 17",
+                      "offset": 785,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 18",
+                      "offset": 823,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 19",
+                      "offset": 861,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 20",
+                      "offset": 899,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 21",
+                      "offset": 937,
+                      "length": 38
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 3, granule 6360",
+                  "offset": 975,
+                  "length": 807,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 975,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 979,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 980,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 980,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 980,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 980,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 6360,
+                      "offset": 981,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 989,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 3,
+                      "offset": 993,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3933885391,
+                      "offset": 997,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3933885391,
+                          "offset": 997,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 20,
+                      "offset": 1001,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 20,
+                      "unit": "lacing values",
+                      "offset": 1002,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1002,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1003,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1004,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1005,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1006,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1007,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1008,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1009,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1010,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1011,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1012,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1013,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1014,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1015,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1016,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1017,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1018,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1019,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1020,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1021,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 22",
+                      "offset": 1022,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 23",
+                      "offset": 1060,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 24",
+                      "offset": 1098,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 25",
+                      "offset": 1136,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 26",
+                      "offset": 1174,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 27",
+                      "offset": 1212,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 28",
+                      "offset": 1250,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 29",
+                      "offset": 1288,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 30",
+                      "offset": 1326,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 31",
+                      "offset": 1364,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 32",
+                      "offset": 1402,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 33",
+                      "offset": 1440,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 34",
+                      "offset": 1478,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 35",
+                      "offset": 1516,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 36",
+                      "offset": 1554,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 37",
+                      "offset": 1592,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 38",
+                      "offset": 1630,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 39",
+                      "offset": 1668,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 40",
+                      "offset": 1706,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 41",
+                      "offset": 1744,
+                      "length": 38
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 4, granule 7900, end of stream",
+                  "offset": 1782,
+                  "length": 417,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 1782,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 1786,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 4,
+                      "offset": 1787,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 1787,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 1787,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": true,
+                          "offset": 1787,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 7900,
+                      "offset": 1788,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 1796,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 4,
+                      "offset": 1800,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 2028258871,
+                      "offset": 1804,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 2028258871,
+                          "offset": 1804,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 10,
+                      "offset": 1808,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 10,
+                      "unit": "lacing values",
+                      "offset": 1809,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1809,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1810,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1811,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1812,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1813,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1814,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1815,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1816,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1817,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 38,
+                          "unit": "bytes",
+                          "offset": 1818,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 42",
+                      "offset": 1819,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 43",
+                      "offset": 1857,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 44",
+                      "offset": 1895,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 45",
+                      "offset": 1933,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 46",
+                      "offset": 1971,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 47",
+                      "offset": 2009,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 48",
+                      "offset": 2047,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 49",
+                      "offset": 2085,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 50",
+                      "offset": 2123,
+                      "length": 38
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "38 bytes, packet 51",
+                      "offset": 2161,
+                      "length": 38
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "codec": "Speex narrowband",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "samples": 7900,
+        "duration": 0.9875,
+        "averageBitrate": 15.2,
+        "isVbr": false,
+        "encoder": "speexenc 1.2.1",
+        "encoderConfidence": "High",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              215,
+              253,
+              291,
+              329,
+              367,
+              405,
+              443,
+              481,
+              519,
+              557,
+              595,
+              633,
+              671,
+              709,
+              747,
+              785,
+              823,
+              861,
+              899,
+              937,
+              1022,
+              1060,
+              1098,
+              1136,
+              1174,
+              1212,
+              1250,
+              1288,
+              1326,
+              1364,
+              1402,
+              1440,
+              1478,
+              1516,
+              1554,
+              1592,
+              1630,
+              1668,
+              1706,
+              1744,
+              1819,
+              1857,
+              1895,
+              1933,
+              1971,
+              2009,
+              2047,
+              2085,
+              2123,
+              2161
+            ],
+            "values": [
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2,
+              15.2
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              15.2
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

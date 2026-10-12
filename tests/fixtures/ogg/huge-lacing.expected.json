@@ -1,0 +1,210 @@
+{
+ "length": 66889,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 66889
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 65535,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 65535,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 132,
+   "serial": 65535,
+   "sequence": 2,
+   "granule": 760,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 300,
+   "length": 65307,
+   "serial": 65535,
+   "sequence": 3,
+   "granule": -1,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 65607,
+   "length": 1282,
+   "serial": 65535,
+   "sequence": 4,
+   "granule": -1,
+   "flags": 5,
+   "crc_ok": true,
+   "truncated": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000FFFF",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 5,
+   "packets": 7,
+   "has_eos": false,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      200,
+      20
+     ],
+     [
+      220,
+      20
+     ],
+     [
+      240,
+      20
+     ],
+     [
+      260,
+      20
+     ],
+     [
+      280,
+      20
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "5",
+     "Frames": "5",
+     "Coded Samples": "800 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "760 samples",
+     "Duration": "0.095 s",
+     "IsVbr": "false",
+     "Average Bitrate": "8.0 kbps",
+     "Minimum Bitrate": "8.0 kbps",
+     "Maximum Bitrate": "8.0 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "5 packets (100.0%), 8.0 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "5 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 720
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 760,
+   "duration": 0.095,
+   "average_bitrate": 8.0,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "ogg.page-truncated",
+   "contains": "is cut short after 1282 bytes of 65307 bytes"
+  },
+  {
+   "code": "ogg.eos-missing",
+   "contains": "sets the flag but is damaged"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": [
+   "missing *** eos"
+  ],
+  "packets": true,
+  "speexdec": true,
+  "not_compared": {
+   "ogginfo and ffprobe": "they do not report a page cut short; the packet the largest page starts never ends, so no tool lists it"
+  }
+ }
+}

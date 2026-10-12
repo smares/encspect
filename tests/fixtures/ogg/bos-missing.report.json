@@ -1,0 +1,578 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "bos-missing.spx",
+    "root": {
+      "name": "File",
+      "value": "Ogg",
+      "offset": 0,
+      "length": 474,
+      "children": [
+        {
+          "name": "Ogg",
+          "value": 2,
+          "unit": "pages",
+          "offset": 0,
+          "length": 474,
+          "children": [
+            {
+              "name": "Logical Stream",
+              "value": "Unknown",
+              "offset": 0,
+              "length": 474,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 45232,
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Unknown",
+                  "offset": 37,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 2,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 474
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 20,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 474
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 3160,
+                  "offset": 243,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": true,
+                  "offset": 242,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Pages",
+              "kind": "Stream",
+              "value": 2,
+              "unit": "pages",
+              "offset": 0,
+              "length": 474,
+              "children": [
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0000B0B0, sequence 2, granule 1560",
+                  "offset": 0,
+                  "length": 237,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 5,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 1560,
+                      "offset": 6,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 45232,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 2,
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3265519983,
+                      "offset": 22,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3265519983,
+                          "offset": 22,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 10,
+                      "offset": 26,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 10,
+                      "unit": "lacing values",
+                      "offset": 27,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 27,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 28,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 29,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 30,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 31,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 32,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 33,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 34,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 35,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 36,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 0",
+                      "offset": 37,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 1",
+                      "offset": 57,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 2",
+                      "offset": 77,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 3",
+                      "offset": 97,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 4",
+                      "offset": 117,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 5",
+                      "offset": 137,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 6",
+                      "offset": 157,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 7",
+                      "offset": 177,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 8",
+                      "offset": 197,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 9",
+                      "offset": 217,
+                      "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0000B0B0, sequence 3, granule 3160, end of stream",
+                  "offset": 237,
+                  "length": 237,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 237,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 241,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 4,
+                      "offset": 242,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 242,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 242,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": true,
+                          "offset": 242,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 3160,
+                      "offset": 243,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 45232,
+                      "offset": 251,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 3,
+                      "offset": 255,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 168544275,
+                      "offset": 259,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 168544275,
+                          "offset": 259,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 10,
+                      "offset": 263,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 10,
+                      "unit": "lacing values",
+                      "offset": 264,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 264,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 265,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 266,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 267,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 268,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 269,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 270,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 271,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 272,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 273,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 10",
+                      "offset": 274,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 11",
+                      "offset": 294,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 12",
+                      "offset": 314,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 13",
+                      "offset": 334,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 14",
+                      "offset": 354,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 15",
+                      "offset": 374,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 16",
+                      "offset": 394,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 17",
+                      "offset": 414,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 18",
+                      "offset": 434,
+                      "length": 20
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "20 bytes, packet 19",
+                      "offset": 454,
+                      "length": 20
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "ogg.codec-unknown",
+        "message": "The logical stream 0x0000B0B0 starts with bytes no Ogg mapping is known for (1800000000000000); its packets are not analyzed.",
+        "offset": 0,
+        "length": 474,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "ogg.bos-missing",
+        "message": "The logical stream 0x0000B0B0 starts at 0x0 without a beginning-of-stream page; its first pages are missing, so decoders may not know its codec.",
+        "offset": 5,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          0,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,200 @@
+{
+ "length": 363,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 363
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 47836,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 123,
+   "serial": 47836,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 231,
+   "length": 132,
+   "serial": 47836,
+   "sequence": 2,
+   "granule": 760,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000BADC",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 7,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      263,
+      20
+     ],
+     [
+      283,
+      20
+     ],
+     [
+      303,
+      20
+     ],
+     [
+      323,
+      20
+     ],
+     [
+      343,
+      20
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "5",
+     "Frames": "5",
+     "Coded Samples": "800 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "760 samples",
+     "Duration": "0.095 s",
+     "IsVbr": "false",
+     "Average Bitrate": "8.0 kbps",
+     "Minimum Bitrate": "8.0 kbps",
+     "Maximum Bitrate": "8.0 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "5 packets (100.0%), 8.0 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "5 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": [
+      "NOSEPARATOR",
+      "TITLE=�� broken",
+      "F\u0001ELD=value",
+      "ARTIST=cut"
+     ]
+    },
+    "speexdec_samples": 800
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 760,
+   "duration": 0.095,
+   "average_bitrate": 8.0,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "vorbis-comment.no-separator",
+   "contains": "\"NOSEPARATOR\" has no '='"
+  },
+  {
+   "code": "vorbis-comment.not-utf8",
+   "contains": "is not valid UTF-8"
+  },
+  {
+   "code": "vorbis-comment.invalid-field-name",
+   "contains": "is not made of ASCII 0x20 to 0x7D"
+  },
+  {
+   "code": "vorbis-comment.length-overrun",
+   "contains": "Comment 4 of 4 declares 1000 bytes"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "speexdec": true,
+  "not_compared": {
+   "ogginfo and ffprobe": "they stop reading the comment at the one that runs past the packet, and report nothing else of it"
+  }
+ }
+}
