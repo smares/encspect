@@ -316,7 +316,9 @@ public class CommandLineTests
         string fifo = folder.MakeFifo("sub/pipe");
 
         // A writer's open blocks until a reader comes: the analyzer's look at the FIFO or the cleanup.
-        Task writer = withWriter ? Task.Run(() => File.WriteAllBytes(fifo, File.ReadAllBytes(Tagged))) : Task.CompletedTask;
+        // What it writes is never read, so it stays below PIPE_BUF (at least 512 bytes everywhere),
+        // which always fits the pipe's buffer; a macOS FIFO's buffer can be smaller than a whole MP3.
+        Task writer = withWriter ? Task.Run(() => File.WriteAllBytes(fifo, new byte[100])) : Task.CompletedTask;
         try
         {
             var (csv, filtered, text) = await Task.Run(() => (Run("--csv", folder.Path), Run("--csv", "--only-format", "mpeg", folder.Path), Run(fifo))).WaitAsync(Timeout);
@@ -339,7 +341,7 @@ public class CommandLineTests
             if (withWriter)
             {
                 // Opened for reading and writing, a FIFO never blocks, and it lets a writer that is
-                // still waiting finish; the tagged file fits the pipe's buffer. A writer that the
+                // still waiting finish; its bytes fit the pipe's buffer. A writer that the
                 // analyzer's look at the FIFO let through has lost its reader since: a broken pipe.
                 using (new FileStream(fifo, FileMode.Open, FileAccess.ReadWrite))
                 {
