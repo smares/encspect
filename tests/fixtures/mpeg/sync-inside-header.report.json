@@ -84,13 +84,184 @@
                       "name": "128 kbps",
                       "value": "11 frames (100.0%)",
                       "offset": 0,
-                      "length": 4599
+                      "length": 4599,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "2 frames of 417 bytes",
+                          "offset": 0,
+                          "length": 4599
+                        },
+                        {
+                          "name": "Padded",
+                          "value": "9 frames of 418 bytes",
+                          "offset": 0,
+                          "length": 4599
+                        }
+                      ]
                     }
                   ]
                 },
                 {
                   "name": "Maximum Reservoir Fill",
                   "value": 511,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 2,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 4599,
+                  "children": [
+                    {
+                      "name": "Stereo",
+                      "value": "10 frames (90.9%)",
+                      "offset": 0,
+                      "length": 4599
+                    },
+                    {
+                      "name": "Mono",
+                      "value": "1 frame (9.1%)",
+                      "offset": 0,
+                      "length": 4599
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Usage",
+                  "value": 42,
+                  "unit": "granules",
+                  "offset": 0,
+                  "length": 4599,
+                  "children": [
+                    {
+                      "name": "Long",
+                      "value": "42 granules (100.0%)",
+                      "offset": 0,
+                      "length": 4599
+                    }
+                  ]
+                },
+                {
+                  "name": "Global Gain",
+                  "offset": 0,
+                  "length": 4599,
+                  "children": [
+                    {
+                      "name": "Channel 0",
+                      "offset": 0,
+                      "length": 4599,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 4599
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 4599
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Channel 1",
+                      "offset": 0,
+                      "length": 4599,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 4599
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 4599
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 4336,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4599,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 94.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 4599
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 120.7,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 4599
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 381,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4599
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 899,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4599
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": true,
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "UsesScfsi",
+                  "value": false,
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "UsesScalefactorScaling",
+                  "value": false,
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "Scalefactor Scaling",
+                  "value": 0,
+                  "unit": "%",
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "Average Main Data Begin",
+                  "value": 45.7,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4599
+                },
+                {
+                  "name": "Maximum Main Data Begin",
+                  "value": 503,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 4599

@@ -1,0 +1,919 @@
+o   ----------------------------------------------------------------------
+|   Revision: a240f57694dfd61798589a2bab5fede92501fe3b
+|   Parent:   a4243cfb4331df6eecf724bc6b0a0a810aa08cdd
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     29/07/11 00:14:09
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   Tag:      encspot-2.01+mtn20110729
+|   
+|   Changelog: 
+|   
+|   Update changelog.
+o   ----------------------------------------------------------------------
+|   Revision: a4243cfb4331df6eecf724bc6b0a0a810aa08cdd
+|   Parent:   7862c055f75dd5dd1a62a7bdf075bd50b13330dd
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     07/03/11 11:16:10
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Clarify most recent Debian changelog entry.
+o   ----------------------------------------------------------------------
+|   Revision: 7862c055f75dd5dd1a62a7bdf075bd50b13330dd
+|   Parent:   0f7f4422a572907e6d910aa3bcc90ac933ba84c3
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     07/03/11 05:36:59
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Make EncSpot report the presence of sync errors.
+o   ----------------------------------------------------------------------
+|   Revision: 0f7f4422a572907e6d910aa3bcc90ac933ba84c3
+|   Parent:   2733167000d6335b49b2fd0f8ed2b670897a6105
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     07/03/11 01:57:34
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   Tag:      encspot-2.01+mtn20110307
+|   
+|   Changelog: 
+|   
+|   Update debian changelog.
+o   ----------------------------------------------------------------------
+|   Revision: 2733167000d6335b49b2fd0f8ed2b670897a6105
+|   Parent:   e1d4e1f2859eea1fa5992cf3e0e23d9b0dc13f7f
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     07/03/11 01:47:45
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Fix line-endings when printing reports.
+|   
+|   All printing of reports was done with "\r\n" as the line ending. This is
+|   incorrect, even under Windows, as "\n" will be converted to the
+|   platform's native line ending anyway.
+o   ----------------------------------------------------------------------
+|   Revision: e1d4e1f2859eea1fa5992cf3e0e23d9b0dc13f7f
+|   Parent:   c163f6f7d184379b8f268771f7f258a7452e6183
+|   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|   Date:     07/03/11 00:55:10
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Update Debian changelog.
+o     ----------------------------------------------------------------------
+|\    Revision: c163f6f7d184379b8f268771f7f258a7452e6183
+| |   Parent:   13c1f7307c5b868cd64e65b300ffb70fcc948088
+| |   Parent:   9d172b4875dee0f274dd9f8821f6508054c35b05
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     07/03/11 00:36:22
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   merge of '13c1f7307c5b868cd64e65b300ffb70fcc948088'
+| |        and '9d172b4875dee0f274dd9f8821f6508054c35b05'
+o |   ----------------------------------------------------------------------
+| |   Revision: 13c1f7307c5b868cd64e65b300ffb70fcc948088
+| |   Parent:   d8bdee8b9eb086f488d0fee3b7d5d5c6310cbdda
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     06/03/11 18:52:47
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Improve/simplify readBits implementation.
+| |   
+| |   EncSpot spends the majority of its time in readBits. readBits now only
+| |   fills the buffer if the request cannot be satisfied otherwise. The
+| |   buffer is now a long, which means that on some platforms, more bytes
+| |   will be read during a single buffer refill.
+o |   ----------------------------------------------------------------------
+| |   Revision: d8bdee8b9eb086f488d0fee3b7d5d5c6310cbdda
+| |   Parent:   54342ad80a9353bb143df82e7b62a7cff4a4fe93
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     06/03/11 15:52:11
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix compilation warnings under Lucid.
+| |   
+| |   The Lucid PPA build complains about the unused return values from fread.
+| |   Use them to fail quickly on read errors and unexpected EOFs, and to
+| |   place better bounds when searching buffers.
+| |   
+| |   This commit may also fix skipping over an ID3 tag with an extended
+| |   header, but I have yet to find an MP3 file that has an ID3 tag with one.
+o |   ----------------------------------------------------------------------
+| |   Revision: 54342ad80a9353bb143df82e7b62a7cff4a4fe93
+| |   Parent:   8a65baef4df5eb625c051b642b15ce4cbc7130a5
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     06/03/11 00:58:17
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make headers that use tstring or C99 types include Common.hpp.
+o |   ----------------------------------------------------------------------
+| |   Revision: 8a65baef4df5eb625c051b642b15ce4cbc7130a5
+| |   Parent:   1262f671e0e6f0c1a8549742345b097c23343b4d
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     05/03/11 21:22:09
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make manual page slightly more informative.
+o |   ----------------------------------------------------------------------
+| |   Revision: 1262f671e0e6f0c1a8549742345b097c23343b4d
+| |   Parent:   fa4df6b5c66f9257cc52222aec032f1ca2977663
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 13:31:58
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   Tag:      encspot-2.01+mtn20110228
+| |   
+| |   Changelog: 
+| |   
+| |   Remove obsolete comment about StdAfx pre-compiled headers.
+o |   ----------------------------------------------------------------------
+| |   Revision: fa4df6b5c66f9257cc52222aec032f1ca2977663
+| |   Parent:   def927efe81b1faf6a42d3f556527592a9afa0af
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 12:55:04
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make dump of monotone changelog less verbose.
+o |   ----------------------------------------------------------------------
+| |   Revision: def927efe81b1faf6a42d3f556527592a9afa0af
+| |   Parent:   8073a1c839d204a297626dcc81389cdb194dd572
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 12:39:45
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Add rule for installing upstream changelog.
+o |   ----------------------------------------------------------------------
+| |   Revision: 8073a1c839d204a297626dcc81389cdb194dd572
+| |   Parent:   31ac2efa99243f79b874ba2a8d87171f6ebbc63c
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 11:23:59
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Rename mp3structs.{hpp,cpp} to Mp3Structs.{hpp,cpp}.
+o |   ----------------------------------------------------------------------
+| |   Revision: 31ac2efa99243f79b874ba2a8d87171f6ebbc63c
+| |   Parent:   a103b46d0b58715d917278f3873c66652bd72751
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 11:16:52
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Use hpp as C++ header file extension.
+o |   ----------------------------------------------------------------------
+| |   Revision: a103b46d0b58715d917278f3873c66652bd72751
+| |   Parent:   386cb20d564992e066a348525368cc5f853a5139
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 11:08:35
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Rename StdAfx.{h,cpp} to something more generic.
+o |   ----------------------------------------------------------------------
+| |   Revision: 386cb20d564992e066a348525368cc5f853a5139
+| |   Parent:   86a3b1cbf1b2ebc6c3d8aa65f193ad3f8b356b43
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 04:08:00
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Set cmake install prefix to /usr instead of /.
+o |   ----------------------------------------------------------------------
+| |   Revision: 86a3b1cbf1b2ebc6c3d8aa65f193ad3f8b356b43
+| |   Parent:   86ae747453ef9b80c4de0450f546524a56df8f16
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 04:00:20
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Switch to debhelper automatic scripts.
+o |   ----------------------------------------------------------------------
+| |   Revision: 86ae747453ef9b80c4de0450f546524a56df8f16
+| |   Parent:   fb0274bee0dd8088f77aba2c240f28f5f40bee53
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 03:10:22
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Update standards version.
+o |   ----------------------------------------------------------------------
+| |   Revision: fb0274bee0dd8088f77aba2c240f28f5f40bee53
+| |   Parent:   f90050a9b56c65a2c719651010abc5ffb7c72ed2
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     28/02/11 03:02:41
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Update Debian changelog.
+o |   ----------------------------------------------------------------------
+| |   Revision: f90050a9b56c65a2c719651010abc5ffb7c72ed2
+| |   Parent:   5486696270b5ffb98cc84ecff3dac1cc703614bd
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     19/02/11 15:53:48
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Minor pass by const reference and scope improvements.
+o |   ----------------------------------------------------------------------
+| |   Revision: 5486696270b5ffb98cc84ecff3dac1cc703614bd
+| |   Parent:   d94238e4395872b6bf7646c58fcf907f29b047d6
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     13/02/11 03:54:08
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make non-shared arrays in Mp3File.cpp static.
+o |   ----------------------------------------------------------------------
+| |   Revision: d94238e4395872b6bf7646c58fcf907f29b047d6
+| |   Parent:   8c2c2d4c6ca21120b8525a52cdf20a03deb53ada
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     12/02/11 15:23:23
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Remove commented Windows-specific convert_time function.
+o |   ----------------------------------------------------------------------
+| |   Revision: 8c2c2d4c6ca21120b8525a52cdf20a03deb53ada
+| |   Parent:   e509c3a3a3e334086e4566db83f2f6311f129323
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     30/01/11 16:28:27
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Change a couple of files to Unix line endings.
+o |   ----------------------------------------------------------------------
+| |   Revision: e509c3a3a3e334086e4566db83f2f6311f129323
+| |   Parent:   c2c3d19f0aad1190d111d8e9eda169c84d4bb360
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     30/01/11 13:17:40
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Move CFrame method implementations into ID3tag.cpp.
+o |   ----------------------------------------------------------------------
+| |   Revision: c2c3d19f0aad1190d111d8e9eda169c84d4bb360
+| |   Parent:   44c5115107e8a108cf035277a85ce6e9e5ac94aa
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     30/01/11 13:03:32
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Remove call to abs in ID3Tag.h.
+| |   
+| |   The ID3 code was previously modified to only read unsigned values so the
+| |   call to abs was redundant.
+o |   ----------------------------------------------------------------------
+| |   Revision: 44c5115107e8a108cf035277a85ce6e9e5ac94aa
+| |   Parent:   e74ca5412ec925cff83fe3ce76f6c96053b669f2
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     30/01/11 12:50:53
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix Windows build.
+| |   
+| |   Unsuprisingly, versions of MSVC don't support C99 properly so add
+| |   typedefs for C99 types when building under Windows. Also, A2T cannot be
+| |   used in a catch block, so throw tstrings instead for now.
+o |   ----------------------------------------------------------------------
+| |   Revision: e74ca5412ec925cff83fe3ce76f6c96053b669f2
+| |   Parent:   9320e1d861d6871c2edbc596f50c0167575337f2
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 23:42:01
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Minor clean-ups to report printing code.
+o |   ----------------------------------------------------------------------
+| |   Revision: 9320e1d861d6871c2edbc596f50c0167575337f2
+| |   Parent:   9f12c2a79fc26244e022b82191fc06f6b35aec78
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 23:08:05
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Replace a few dynamically allocated arrays with vectors.
+o |   ----------------------------------------------------------------------
+| |   Revision: 9f12c2a79fc26244e022b82191fc06f6b35aec78
+| |   Parent:   995f8f98e59b938634678c169fe1fbd935d583b8
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 22:42:23
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Remove another piece of #ifdef disabled code.
+o |   ----------------------------------------------------------------------
+| |   Revision: 995f8f98e59b938634678c169fe1fbd935d583b8
+| |   Parent:   a8ce8c70ad674f7118fb81eb1401ea4a6f9d8d56
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 22:39:01
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Replace Windows data types with C99 ones.
+o |   ----------------------------------------------------------------------
+| |   Revision: a8ce8c70ad674f7118fb81eb1401ea4a6f9d8d56
+| |   Parent:   5feb651f59aec94b8be01aff1a14001c6ae028ba
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 18:23:51
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Print errors to standard error.
+o |   ----------------------------------------------------------------------
+| |   Revision: 5feb651f59aec94b8be01aff1a14001c6ae028ba
+| |   Parent:   70923f87253c636ff55b304a4f516e0d65884785
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 18:21:06
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make debug output more informative.
+o |   ----------------------------------------------------------------------
+| |   Revision: 70923f87253c636ff55b304a4f516e0d65884785
+| |   Parent:   17b011a3da95209d0a4fc1da0a80796f4e375bea
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 17:59:10
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Make exception printing work under Windows.
+o |   ----------------------------------------------------------------------
+| |   Revision: 17b011a3da95209d0a4fc1da0a80796f4e375bea
+| |   Parent:   6985aa1019ebf29a01c25adf16ea339ce395ab12
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 17:39:09
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Actually report the exceptions Encspot throws.
+o |   ----------------------------------------------------------------------
+| |   Revision: 6985aa1019ebf29a01c25adf16ea339ce395ab12
+| |   Parent:   acc412dd892243946ec9224617ea05eb3ee90244
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 16:20:44
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix more unsigned comparisons in VBR code.
+o |   ----------------------------------------------------------------------
+| |   Revision: acc412dd892243946ec9224617ea05eb3ee90244
+| |   Parent:   301332fd61e6984945625fc2c0892527999c43ed
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 16:17:45
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix buffer size checks when parsing VBR headers.
+| |   
+| |   As well as the usual unsigned issues, the check for a VBRI header
+| |   verified that there was enough space for a Xing VBR header.
+o |   ----------------------------------------------------------------------
+| |   Revision: 301332fd61e6984945625fc2c0892527999c43ed
+| |   Parent:   2784572bc8ebb4d8ac8569a21b2e9b330cfaa476
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 16:09:45
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix some of the more minor compilation warnings.
+o |   ----------------------------------------------------------------------
+| |   Revision: 2784572bc8ebb4d8ac8569a21b2e9b330cfaa476
+| |   Parent:   a6797ff8be0529898c038391553f83f303e1d962
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 15:34:52
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Improve base-10 itoa implementation.
+| |   
+| |   Modified the base-10 itoa replacement to use an std::basic_ostringstream
+| |   and return a tstring. This enabled removal of a bunch of character
+| |   arrays used as buffers for the conversions. Also, renamed function from
+| |   itot10 to itoa10. I have no idea why I didn't call it itoa10 in the
+| |   first place.
+o |     ----------------------------------------------------------------------
+|\ \    Revision: a6797ff8be0529898c038391553f83f303e1d962
+| | |   Parent:   0cecdb5639202824247c71f32f146c15a3c91357
+| | |   Parent:   4a5055b61973ea6fc313f99856c0b5f35d4aa5f5
+| | |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| | |   Date:     29/01/11 15:20:20
+| | |   Branch:   uk.co.unchartedbackwaters.encspot
+| | |   
+| | |   Changelog: 
+| | |   
+| | |   merge of '0cecdb5639202824247c71f32f146c15a3c91357'
+| | |        and '4a5055b61973ea6fc313f99856c0b5f35d4aa5f5'
+| o |   ----------------------------------------------------------------------
+| | |   Revision: 4a5055b61973ea6fc313f99856c0b5f35d4aa5f5
+| | |   Parent:   6eb4045c14b25f90e7384a1082f55c3775ba7d31
+| | |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| | |   Date:     29/01/11 14:27:39
+| | |   Branch:   uk.co.unchartedbackwaters.encspot
+| | |   
+| | |   Changelog: 
+| | |   
+| | |   Remove WAV, Ogg and Musepack support.
+| | |   
+| | |   Ogg support was practically non-existent. WAV and Musepack support could
+| | |   parse headers, but not much else. Neither was used by the Encspot
+| | |   console application and it's unclear if they were used by anything else
+| | |   either.
+| o |   ----------------------------------------------------------------------
+| | |   Revision: 6eb4045c14b25f90e7384a1082f55c3775ba7d31
+| | |   Parent:   1c1b8716cc066b16765d19f6956b8b887d1a1579
+| | |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| | |   Date:     29/01/11 12:54:29
+| | |   Branch:   uk.co.unchartedbackwaters.encspot
+| | |   
+| | |   Changelog: 
+| | |   
+| | |   Remove a piece of #ifdef disabled code.
+| o |   ----------------------------------------------------------------------
+| | |   Revision: 1c1b8716cc066b16765d19f6956b8b887d1a1579
+| | |   Parent:   5226a5bd188e6f60d89d595423056d6b0ad18826
+| | |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| | |   Date:     29/01/11 12:39:30
+| | |   Branch:   uk.co.unchartedbackwaters.encspot
+| | |   
+| | |   Changelog: 
+| | |   
+| | |   Removed unused EncSpot.h.
+| | |   
+| | |   As with the COLUMNDATA struct, it appears to be part of the GUI
+| | |   framework that was moved into the library.
+| o |   ----------------------------------------------------------------------
+| | |   Revision: 5226a5bd188e6f60d89d595423056d6b0ad18826
+| | |   Parent:   35f6b22800c3828df673b6b632bdcf75c676556f
+| | |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| | |   Date:     29/01/11 12:33:11
+| | |   Branch:   uk.co.unchartedbackwaters.encspot
+| | |   
+| | |   Changelog: 
+| | |   
+| | |   Remove unused COLUMNDATA struct definition.
+o | |   ----------------------------------------------------------------------
+|/ /    Revision: 0cecdb5639202824247c71f32f146c15a3c91357
+| |     Parent:   35f6b22800c3828df673b6b632bdcf75c676556f
+| |     Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |     Date:     29/01/11 15:19:58
+| |     Branch:   uk.co.unchartedbackwaters.encspot
+| |     
+| |     Changelog: 
+| |     
+| |     disapproval of revision '35f6b22800c3828df673b6b632bdcf75c676556f'
+| |     
+| |     Reverted because memset is used to intialise mp3data structs.
+o |   ----------------------------------------------------------------------
+| |   Revision: 35f6b22800c3828df673b6b632bdcf75c676556f
+| |   Parent:   77f59ae8ae5a733944a81c8c70c8228d4dc7e8e2
+| |   Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+| |   Date:     29/01/11 12:20:42
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Replace a couple of TCHAR arrays with tstrings.
+o |   ----------------------------------------------------------------------
+| |   Revision: 77f59ae8ae5a733944a81c8c70c8228d4dc7e8e2
+| |   Parent:   876af2c9b1cd739442d6fef876a1b4bcfa254e6d
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 09:24:30
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   Tag:      encspot-2.01+mtn20100426
+| |   
+| |   Changelog: 
+| |   
+| |   Oops! Fix to CMp3File::GetLabelsFromBuffer suffered from unsigned wrap around error.
+o |   ----------------------------------------------------------------------
+| |   Revision: 876af2c9b1cd739442d6fef876a1b4bcfa254e6d
+| |   Parent:   22d59a2b9bb27767bd7a4ad31bb548b88929c761
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 05:57:01
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Update Debian changelog.
+o |   ----------------------------------------------------------------------
+| |   Revision: 22d59a2b9bb27767bd7a4ad31bb548b88929c761
+| |   Parent:   d170cb5f64fa9ec85f2ffd94e39ab5c7ce7a9d24
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 05:50:22
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fix some absurdly broken buffer size tests in CMp3File::GetLabelsFromBuffer.
+o |   ----------------------------------------------------------------------
+| |   Revision: d170cb5f64fa9ec85f2ffd94e39ab5c7ce7a9d24
+| |   Parent:   d3a0e9307c252195023814905305b9e798a698c3
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 05:25:59
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Move another buffer onto the heap.
+o |   ----------------------------------------------------------------------
+| |   Revision: d3a0e9307c252195023814905305b9e798a698c3
+| |   Parent:   9a91c7a980d62e2e77c46a1223f3987612380e29
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 04:54:57
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Update Debian changelog for new version.
+o |   ----------------------------------------------------------------------
+| |   Revision: 9a91c7a980d62e2e77c46a1223f3987612380e29
+| |   Parent:   2559bfdfd90ff48e4b809846539775464730a813
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 04:48:58
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Rework mp3structs.{h,cpp} mainly for const correctness.
+o |   ----------------------------------------------------------------------
+| |   Revision: 2559bfdfd90ff48e4b809846539775464730a813
+| |   Parent:   1e49dbb1a13f07ef99d2f0b4a2ba2dc575eed259
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 04:29:15
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Rework Mp3File.{h,cpp}. Mainly added consts and avoided giant buffer allocation
+| |   on the stack.
+o |   ----------------------------------------------------------------------
+| |   Revision: 1e49dbb1a13f07ef99d2f0b4a2ba2dc575eed259
+| |   Parent:   4ca2e07878ad08c78666da3cd21d2cab792993ca
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 03:07:01
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Improve ID3 code:
+| |    - Use std:vector where possible to avoid memory leaks.
+| |    - Treat all ints read from ID3 tags as unsigned.
+| |    - Const correctness.
+o |   ----------------------------------------------------------------------
+| |   Revision: 4ca2e07878ad08c78666da3cd21d2cab792993ca
+| |   Parent:   82c56812a7548c8913e3c58cbe6a70f88356e754
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     26/04/10 01:11:28
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Use trap to always delete temporary directory in make_tarball script.
+o |   ----------------------------------------------------------------------
+| |   Revision: 82c56812a7548c8913e3c58cbe6a70f88356e754
+| |   Parent:   2eb32486a0a1c7ff05ebc56beae1d0f1cb10e658
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     25/04/10 22:58:09
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Fixes to tarball script and add OpenPGP signing.
+o |   ----------------------------------------------------------------------
+| |   Revision: 2eb32486a0a1c7ff05ebc56beae1d0f1cb10e658
+| |   Parent:   4cd25b8ef042a7c9ab55b1f405ef4000e3d21cbe
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     25/04/10 22:48:05
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Add tarball preparation script.
+o |   ----------------------------------------------------------------------
+| |   Revision: 4cd25b8ef042a7c9ab55b1f405ef4000e3d21cbe
+| |   Parent:   a68cd199cf9e987ecddb61cc182ec75962356b69
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     24/04/10 22:40:27
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Change debian/README into general README and add build instructions.
+o |   ----------------------------------------------------------------------
+| |   Revision: a68cd199cf9e987ecddb61cc182ec75962356b69
+| |   Parent:   a66cc9705e51168ee81a752e4084c2669fb5fcb1
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     24/04/10 16:31:32
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Eliminate some tabs.
+o |   ----------------------------------------------------------------------
+| |   Revision: a66cc9705e51168ee81a752e4084c2669fb5fcb1
+| |   Parent:   e4a48a49c323d82bbeed309ea4e1fadc0c83e79e
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     24/04/10 15:57:24
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Now fix Unix build again :)
+o |   ----------------------------------------------------------------------
+| |   Revision: e4a48a49c323d82bbeed309ea4e1fadc0c83e79e
+| |   Parent:   6322167262484f3ca43af1b46cd13799cc4d6114
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     24/04/10 15:54:42
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Add some fixes for building under Windows.
+o |   ----------------------------------------------------------------------
+| |   Revision: 6322167262484f3ca43af1b46cd13799cc4d6114
+| |   Parent:   f946267b028f7afcd169b70e3b56d2616fb86d37
+| |   Author:   francis@unchartedbackwaters.co.uk-callisto
+| |   Date:     18/04/10 23:21:08
+| |   Branch:   uk.co.unchartedbackwaters.encspot
+| |   
+| |   Changelog: 
+| |   
+| |   Rename main to _tmain for potential Windows support.
+| o   ----------------------------------------------------------------------
+|/    Revision: 9d172b4875dee0f274dd9f8821f6508054c35b05
+|     Parent:   f946267b028f7afcd169b70e3b56d2616fb86d37
+|     Author:   Francis Russell <francis@unchartedbackwaters.co.uk>
+|     Date:     07/03/11 00:34:24
+|     Branch:   uk.co.unchartedbackwaters.encspot
+|     
+|     Changelog: 
+|     
+|     Change type of mp3data::scalefac from a bool to an int.
+|     
+|     mp3data::scalefac is typed as a boolean, but actually used as an int.
+|     When BOOL was replaced by bool, this broke scale factor detection since
+|     it was no longer possible for scalefac to become larger than one.
+o   ----------------------------------------------------------------------
+|   Revision: f946267b028f7afcd169b70e3b56d2616fb86d37
+|   Parent:   0afde849f4a282c9395dd8ea5e061eba4df1b811
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 23:13:35
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Add a '#ifdef __WIN32__' to StdAfx.h.
+o   ----------------------------------------------------------------------
+|   Revision: 0afde849f4a282c9395dd8ea5e061eba4df1b811
+|   Parent:   d1531bb380e03641edc06361c85437f4dc81761e
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 22:53:03
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   More fixes for unsafe string handling.
+o   ----------------------------------------------------------------------
+|   Revision: d1531bb380e03641edc06361c85437f4dc81761e
+|   Parent:   ec79b041ace789876f9062ba461ba4616f37007f
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 20:50:23
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   disapproval of revision 'ec79b041ace789876f9062ba461ba4616f37007f'
+o   ----------------------------------------------------------------------
+|   Revision: ec79b041ace789876f9062ba461ba4616f37007f
+|   Parent:   1a5f60d66f265b22d235a681973d8eff42f1edc4
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 20:43:58
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Remove a couple of unnecessary fields from the mp3data struct.
+o   ----------------------------------------------------------------------
+|   Revision: 1a5f60d66f265b22d235a681973d8eff42f1edc4
+|   Parent:   0ad9549e2cc936991ecc54eddb5fc4e2377d3dc4
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 17:38:13
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Replace a couple of uses of strcpy with strncpy.
+o   ----------------------------------------------------------------------
+|   Revision: 0ad9549e2cc936991ecc54eddb5fc4e2377d3dc4
+|   Parent:   bbfe6d50752f81994ccf1903bb30290abe9e333e
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 17:22:29
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Replace a couple of instances of lstrcpy with strncpy (they were being used to 
+|   copy ANSI strings.
+o   ----------------------------------------------------------------------
+|   Revision: bbfe6d50752f81994ccf1903bb30290abe9e333e
+|   Parent:   eabb872172d2481f63679b1612391db03a0e7c98
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 17:16:10
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Add a few consts.
+o   ----------------------------------------------------------------------
+|   Revision: eabb872172d2481f63679b1612391db03a0e7c98
+|   Parent:   4ded13d26bc5108f94bbdef5b1a3e2e10aa7510d
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 16:52:51
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Remove more strcpy uses.
+o   ----------------------------------------------------------------------
+|   Revision: 4ded13d26bc5108f94bbdef5b1a3e2e10aa7510d
+|   Parent:   56044611d6f26a4b3256cb3df10abf6e67bbe388
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 16:25:55
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Replace a use of strcpy and strcat with a string.
+o   ----------------------------------------------------------------------
+|   Revision: 56044611d6f26a4b3256cb3df10abf6e67bbe388
+|   Parent:   a8cbd90794317e0d6649cfd5050e7c2ac9a487a8
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 11:21:34
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Formatting changes (mainly tabs to spaces).
+o   ----------------------------------------------------------------------
+|   Revision: a8cbd90794317e0d6649cfd5050e7c2ac9a487a8
+|   Parent:   fe8640274dcebc8d302c9b31144e0d2aa18b0046
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 10:05:38
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Fix some compiler warnings and remove useless calls to ftell.
+o   ----------------------------------------------------------------------
+|   Revision: fe8640274dcebc8d302c9b31144e0d2aa18b0046
+|   Parent:   4ac6505a46ea9e8c4c9a4130bfe052574889d2bf
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 06:05:40
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Changes to debian/rules.
+o   ----------------------------------------------------------------------
+|   Revision: 4ac6505a46ea9e8c4c9a4130bfe052574889d2bf
+|   Parent:   db2ca0788c6051e69278decc006d0cfe4b694b30
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 05:45:33
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Enable optimisations.
+o   ----------------------------------------------------------------------
+|   Revision: db2ca0788c6051e69278decc006d0cfe4b694b30
+|   Parent:   45a144183eaeadf34ce518bef8c38149d6122ecc
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 05:38:19
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Disable suppression of a MSVC++ warning.
+o   ----------------------------------------------------------------------
+|   Revision: 45a144183eaeadf34ce518bef8c38149d6122ecc
+|   Parent:   1e5cecc9a6821970c55d589bc32b92bfb358e8cf
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 05:35:02
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Fix initialization order warning.
+o   ----------------------------------------------------------------------
+|   Revision: 1e5cecc9a6821970c55d589bc32b92bfb358e8cf
+|   Parent:   80e5df5baf8172909d3aacb4e75d108bfea3c090
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 05:30:23
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Enable -Wall and -pedantic compile options.
+o   ----------------------------------------------------------------------
+|   Revision: 80e5df5baf8172909d3aacb4e75d108bfea3c090
+|   Parent:   c6984335fed706a8635fc376805b56183d88a214
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 04:56:13
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Add debian packaging.
+o   ----------------------------------------------------------------------
+|   Revision: c6984335fed706a8635fc376805b56183d88a214
+|   Parent:   8ca5ca1cb5d316aea43405e393d397b79ace0801
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 02:52:26
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Remove useless template-generated comments.
+o   ----------------------------------------------------------------------
+|   Revision: 8ca5ca1cb5d316aea43405e393d397b79ace0801
+|   Parent:   4fb7c8522bb24153c5f1f733d3163bb662bb39be
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 02:49:14
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Add EncSpot license.
+o   ----------------------------------------------------------------------
+|   Revision: 4fb7c8522bb24153c5f1f733d3163bb662bb39be
+|   Parent:   7bfe009c73721ce506bb9d36d51911b1aef8c84a
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 02:47:21
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   - Avoid including standard namespace.
+|   - Strip down StdAfx.h as much as possible.
+o   ----------------------------------------------------------------------
+|   Revision: 7bfe009c73721ce506bb9d36d51911b1aef8c84a
+|   Parent:   f51b1ec5e6e2264aa1e99b84546544e392dc300d
+|   Author:   francis@unchartedbackwaters.co.uk-callisto
+|   Date:     18/04/10 01:58:40
+|   Branch:   uk.co.unchartedbackwaters.encspot
+|   
+|   Changelog: 
+|   
+|   Rework include guards to avoid MSVC related pragmas.
+o   ----------------------------------------------------------------------
+    Revision: f51b1ec5e6e2264aa1e99b84546544e392dc300d
+    Author:   francis@unchartedbackwaters.co.uk-callisto
+    Date:     18/04/10 01:49:56
+    Branch:   uk.co.unchartedbackwaters.encspot
+    
+    Changelog: 
+    
+    Initial commit of EncSpot source modifed to built under *nix.

@@ -92,11 +92,22 @@ internal static class Fixtures
     {
         string[] segments = path.Split('/');
         Node current = start;
-        for (int i = 0; i < segments.Length; i++)
+        int i = 0;
+        while (i < segments.Length)
         {
+            // A name may hold a slash ("Mid/side stereo"), so a step takes the fewest segments that
+            // name a child.
+            int end = i;
             (string name, int? index) = ParseSegment(segments[i]);
             Node[] matches = current.Children.Where(c => c.Name == name).ToArray();
-            if (i == segments.Length - 1 && index is null)
+            while (matches.Length == 0 && end + 1 < segments.Length)
+            {
+                end++;
+                (name, index) = ParseSegment(string.Join('/', segments[i..(end + 1)]));
+                matches = current.Children.Where(c => c.Name == name).ToArray();
+            }
+
+            if (end == segments.Length - 1 && index is null)
             {
                 return matches;
             }
@@ -108,6 +119,7 @@ internal static class Fixtures
             }
 
             current = matches[pick];
+            i = end + 1;
         }
 
         return [current];

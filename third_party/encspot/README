@@ -1,0 +1,18 @@
+It seems that GuerillaSoft have long since vanished. Before they did, they
+released the source for the Windows console-based version of EncSpot under a
+"New BSD" license.  This package is based on a version of that source modified
+to compile under *nix (though hopefully cross-platform).
+
+Main changes to the source include:
+
+- CMake based build system.
+- Debian packaging.
+- General reformatting of source.
+- Removal of MSVC++ comment templates, pragmas etc..
+- Changes to compile under a modern g++.
+- Removed numerous unsafe string operations that could cause a buffer overflow.
+
+Both the original GuerillaSoft source release and the source for this package
+can be found here:
+
+http://www.unchartedbackwaters.co.uk/pyblosxom/static/encspot

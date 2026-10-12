@@ -98,8 +98,9 @@ public sealed partial class MpegAudioParser
         foreach ((int? rate, int count) in counts)
         {
             long tenths = RoundHalfEven(count * 1000L, audio);
-            region.Distribution.Add(rate is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
+            Node entry = region.Distribution.Add(rate is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
                 $"{FramesText(count)} ({TenthsText(tenths)}%)");
+            AddFrameSizes(entry, region.Tally, rate);
         }
 
         // The bitrate and reservoir fill over time are series of the stream (AddStreams), which
@@ -108,6 +109,8 @@ public sealed partial class MpegAudioParser
         {
             region.MaximumFill = Add("Maximum Reservoir Fill", NodeValue.Integer(maximumFill, "bytes"));
         }
+
+        AddTally(node, region, start, length, bits / 8, ticks);
 
         // Each header's figures cover the frames it describes; where those are not all of the
         // region's (files were joined), the node says which.

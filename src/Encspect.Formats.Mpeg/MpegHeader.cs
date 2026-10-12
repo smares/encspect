@@ -30,7 +30,7 @@ internal readonly record struct MpegHeader(uint Raw)
         [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
     ];
 
-    private static readonly string[] ChannelModes = ["Stereo", "Joint stereo", "Dual channel", "Mono"];
+    public static readonly string[] ChannelModes = ["Stereo", "Joint stereo", "Dual channel", "Mono"];
     private static readonly string[] Emphases = ["None", "50/15 µs", "Reserved", "CCITT J.17"];
 
     public int VersionBits => (int)(Raw >> 19) & 3;

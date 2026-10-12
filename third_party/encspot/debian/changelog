@@ -1,0 +1,54 @@
+encspot (2.01+mtn20110729) unstable; urgency=low
+
+  * Make EncSpot report the presence of sync errors. 
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Fri, 29 Jul 2011 00:12:38 +0100
+
+encspot (2.01+mtn20110307) unstable; urgency=low
+
+  * Regression fix. The original EncSpot code used the BOOL type
+    (actually an int) to store the scale factor. When the code was refactored
+    to use the true bool type, scale factor calculation broke.
+  * Fixed use of "\r\n" as line ending, which is invalid under both
+    Windows and *nix since "\n" is automatically converted to the native
+    platform's line ending.
+  * Fixes to compilation warnings observed under Ubuntu 10.04.
+  * Minor update to manual page.
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Mon, 07 Mar 2011 11:06:01 +0000
+
+encspot (2.01+mtn20110228) unstable; urgency=low
+
+  * General code cleanup:
+    - Use C99 types instead of Windows ones.
+    - Compilation warning fixes.
+    - Improved itoa replacement.
+    - Unused code removal.
+    - Fixes to incorrect use of unsigned arithmetic.
+  * Print the exceptions thrown by EncSpot.
+  * Update standards version.
+  * Switch to debhelper automatic scripts. 
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Mon, 28 Feb 2011 03:56:49 +0000
+
+encspot (2.01+mtn20100426) unstable; urgency=low
+
+  * Many fixes for const-correctness.
+  * Avoid allocating giant buffers on the stack.
+  * Fix broken buffer size checking in CMp3File::GetLabelsFromBuffer.
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Mon, 26 Apr 2010 04:50:34 +0100
+
+encspot (2.01+mtn20100425) unstable; urgency=low
+
+  * Build fixes for both *nix and Windows.
+  * Code reformatting and cleanup.
+  * Multiple fixes for unsafe string handling.
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Sun, 25 Apr 2010 22:31:34 +0100
+
+encspot (2.01) unstable; urgency=low
+
+  * Initial packaging.
+
+ -- Francis Russell <francis@unchartedbackwaters.co.uk>  Sun, 18 Apr 2010 03:51:58 +0100

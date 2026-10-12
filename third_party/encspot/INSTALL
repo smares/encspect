@@ -1,0 +1,13 @@
+This package is intended to build under *nix-like systems but has been built under Windows as well.
+
+To create the Makefiles (requires cmake):
+$ cmake .
+
+To build:
+$ make
+
+To install to ${LOCATION}:
+$ DESTDIR=${LOCATION} make install
+
+To build as a package under Debian, Ubuntu or derivatives:
+$ dpkg-buildbackpackage -b
