@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-leading-v1-block.mp3",
     "root": {
       "name": "File",
@@ -13,20 +18,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 432
+        "length": 432,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "tag.rejected",
         "message": "APE candidate at 0x0 (EOF-432) rejected: APEv1 tags have no header, so a version 1000 block cannot start a tag.",
         "offset": 0,
-        "length": 432
+        "length": 432,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-leading-footer-mismatch.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 0,
           "length": 86,
@@ -25,49 +31,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 8,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "54",
+                  "value": 54,
                   "offset": 12,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 16,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xA0000000",
+                  "value": 2684354560,
                   "offset": 20,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     }
@@ -82,7 +88,8 @@
             },
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 32,
               "length": 22,
               "children": [
@@ -94,19 +101,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "8",
+                      "value": 8,
                       "offset": 32,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 36,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 36,
                           "length": 4
                         },
@@ -147,49 +154,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 62,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "54",
+                  "value": 54,
                   "offset": 66,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "3",
+                  "value": 3,
                   "offset": 70,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 74,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 74,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 74,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 74,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 74,
                       "length": 4
                     }
@@ -231,27 +238,40 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "ape.at-start",
         "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
         "offset": 0,
-        "length": 86
+        "length": 86,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.footer-mismatch",
         "message": "The footer disagrees with the header: item count 3 vs 1.",
         "offset": 0,
-        "length": 86
+        "length": 86,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 86,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

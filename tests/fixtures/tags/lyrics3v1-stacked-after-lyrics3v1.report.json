@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v1-stacked-after-lyrics3v1.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "1.00",
           "offset": 512,
           "length": 40,
@@ -59,6 +65,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 552,
           "length": 128,
@@ -129,6 +136,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "1.00",
           "offset": 680,
           "length": 40,
@@ -175,6 +183,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 720,
           "length": 128,
@@ -217,7 +226,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 846,
               "length": 1
             },
@@ -251,20 +260,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x228 is followed by the Lyrics3 tag at 0x2A8; readers expect ID3v1 in the last 128 bytes.",
         "offset": 552,
-        "length": 128
+        "length": 128,
+        "path": [
+          2
+        ],
+        "count": 1
       }
     ]
   }

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-header-before-file.mp3",
     "root": {
       "name": "File",
@@ -8,13 +13,15 @@
       "children": [
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 0,
           "length": 51,
           "children": [
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 0,
               "length": 19,
               "children": [
@@ -26,19 +33,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "5",
+                      "value": 5,
                       "offset": 0,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 4,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 4,
                           "length": 4
                         },
@@ -79,49 +86,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 27,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "51",
+                  "value": 51,
                   "offset": 31,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 35,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 39,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 39,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 39,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 39,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 39,
                       "length": 4
                     }
@@ -158,20 +165,27 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "ape.header-missing",
         "message": "The footer announces a header, which would start 32 bytes before the start of the file.",
         "offset": 0,
-        "length": 51
+        "length": 51,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.tags-only",
         "message": "The file holds only tags; no bytes are left for audio data.",
         "offset": 0,
-        "length": 51
+        "length": 51,
+        "path": [],
+        "count": 1
       }
     ]
   }

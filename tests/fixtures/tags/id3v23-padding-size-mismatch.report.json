@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v23-padding-size-mismatch.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 41,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x40",
+                  "value": 64,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "31",
+                  "value": 31,
                   "offset": 6,
                   "length": 4
                 }
@@ -70,19 +76,19 @@
               "children": [
                 {
                   "name": "Size",
-                  "value": "6",
+                  "value": 6,
                   "offset": 10,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x0000",
+                  "value": 0,
                   "offset": 14,
                   "length": 2,
                   "children": [
                     {
                       "name": "HasCrc",
-                      "value": "false",
+                      "value": false,
                       "offset": 14,
                       "length": 2
                     }
@@ -90,7 +96,7 @@
                 },
                 {
                   "name": "Padding Size",
-                  "value": "16",
+                  "value": 16,
                   "offset": 16,
                   "length": 4
                 }
@@ -115,49 +121,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "7",
+                      "value": 7,
                       "offset": 24,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 28,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 28,
                           "length": 2
                         }
@@ -181,7 +187,8 @@
             },
             {
               "name": "Padding",
-              "value": "4 bytes",
+              "value": 4,
+              "unit": "bytes",
               "offset": 37,
               "length": 4
             },
@@ -232,20 +239,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "id3v2.padding-size-mismatch",
         "message": "The extended header declares 16 bytes of padding, but the tag has 4.",
         "offset": 0,
-        "length": 41
+        "length": 41,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 41,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

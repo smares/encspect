@@ -18,8 +18,7 @@
     "Statistics/Maximum Bitrate": "128 kbps",
     "Statistics/Bitrate Distribution": "2 bitrates",
     "Statistics/Bitrate Distribution/64 kbps": "5 frames (50.0%)",
-    "Statistics/Bitrate Distribution/128 kbps": "5 frames (50.0%)",
-    "Statistics/Bitrate Over Time": "87"
+    "Statistics/Bitrate Distribution/128 kbps": "5 frames (50.0%)"
    }
   }
  ],
@@ -164,6 +163,27 @@
   {
    "offset": 2089,
    "length": 37
+  }
+ ],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 5760,
+   "duration": "0.131 s",
+   "average_bitrate": "128.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "128",
+   "reservoir_fill_over_time": "305"
+  },
+  {
+   "codec": "MPEG-2 Layer II",
+   "sample_rate": 24000,
+   "samples": 5760,
+   "duration": "0.240 s",
+   "average_bitrate": "64.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "64"
   }
  ],
  "findings": [

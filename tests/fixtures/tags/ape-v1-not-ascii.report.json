@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-v1-not-ascii.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,15 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 512,
           "length": 76,
           "children": [
             {
               "name": "Items",
-              "value": "2 items",
+              "value": 2,
+              "unit": "items",
               "offset": 512,
               "length": 44,
               "children": [
@@ -31,19 +38,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "4",
+                      "value": 4,
                       "offset": 512,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 516,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 516,
                           "length": 4
                         },
@@ -77,19 +84,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "11",
+                      "value": 11,
                       "offset": 530,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 534,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 534,
                           "length": 4
                         },
@@ -130,25 +137,25 @@
                 },
                 {
                   "name": "Version",
-                  "value": "1000",
+                  "value": 1000,
                   "offset": 564,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "76",
+                  "value": 76,
                   "offset": 568,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 572,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00000000",
+                  "value": 0,
                   "offset": 576,
                   "length": 4
                 },
@@ -183,27 +190,44 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.v1-not-ascii",
         "message": "The APEv1 value of item \"Title\" is not ASCII; it is read as ISO-8859-1.",
         "offset": 512,
-        "length": 18
+        "length": 18,
+        "path": [
+          1,
+          0,
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.v1-not-ascii",
         "message": "The APEv1 value of item \"Artist\" is not ASCII; it is read as UTF-8.",
         "offset": 530,
-        "length": 26
+        "length": 26,
+        "path": [
+          1,
+          0,
+          1
+        ],
+        "count": 1
       }
     ]
   }

@@ -92,7 +92,7 @@ public sealed class Analyzer
 
         if (reader.Length == 0)
         {
-            findings.Add(new Finding(Severity.Warning, "file.empty", "The file is empty.", root));
+            findings.Add(new Finding(Severity.Warning, "file.empty", "The file is empty.", root) { Path = [] });
             options.BytesRead?.Report(0);
             return new Report(source, root, findings);
         }
@@ -114,6 +114,7 @@ public sealed class Analyzer
         }
 
         long embeddedBytes = embedded.Sum(c => c.Tag.Length);
+        IReadOnlyList<StreamInfo> streams = [];
         if (dataEnd - dataStart > embeddedBytes)
         {
             List<EncoderClaim> claims = leading.Concat(embedded).Concat(trailing).OrderBy(c => c.Tag.Offset).SelectMany(c => c.Probe.EncoderClaims).ToList();
@@ -121,7 +122,7 @@ public sealed class Analyzer
             // Only the format parser's reads count as progress: tags are probed at both ends of the
             // file first, which would make the furthest offset read jump to the end.
             ByteReader window = new ByteReader(stream, options.CancellationToken, options.BytesRead).Slice(dataStart, dataEnd - dataStart);
-            ParseData(new SniffContext(window, Path.GetExtension(source)), root, embedded.Select(c => shown[c.Tag]).ToList(), claims, findings, failures);
+            streams = ParseData(new SniffContext(window, Path.GetExtension(source)), root, embedded.Select(c => shown[c.Tag]).ToList(), claims, findings, failures);
         }
         else
         {
@@ -145,12 +146,15 @@ public sealed class Analyzer
 
         // Findings on a tag point at the node the report shows for it. In file order, so the list
         // reads like the tree; stable for findings on the same bytes.
+        var paths = new TreePaths(root);
         List<Finding> ordered = findings
             .Select(f => f.Node is { } node && shown.TryGetValue(node, out Node? copy) ? f with { Node = copy } : f)
             .OrderBy(f => f.Node?.Offset ?? 0)
+            .Select(f => f with { Path = paths.Find(f.Node) })
             .ToList();
+        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList() }).ToList();
         options.BytesRead?.Report(reader.Length);
-        return new Report(source, root, ordered);
+        return new Report(source, root, ordered, streams);
     }
 
     private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections, List<Failure> failures)
@@ -536,7 +540,7 @@ public sealed class Analyzer
             detection.Add("Evidence", evidence.Offset, evidence.Length, evidence.Description);
         }
 
-        var copy = new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, detection]);
+        var copy = new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, detection]) { Kind = NodeKind.Tag };
         shown[tag] = copy;
         detectionNodes.Add(detection);
         root.Add(copy);
@@ -544,7 +548,8 @@ public sealed class Analyzer
         findings.AddRange(claim.LayoutFindings);
     }
 
-    private void ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings, List<Failure> failures)
+    private IReadOnlyList<StreamInfo> ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings,
+        List<Failure> failures)
     {
         ByteReader window = sniff.Reader;
         IFormatParser? parser = FindParser(sniff, failures);
@@ -565,7 +570,7 @@ public sealed class Analyzer
             }
 
             findings.Add(new Finding(Severity.Info, "format.unrecognized", "No format parser recognized this file.", first ?? root));
-            return;
+            return [];
         }
 
         root.Value = parser.Name;
@@ -589,6 +594,7 @@ public sealed class Analyzer
         }
 
         findings.AddRange(context.Findings);
+        return context.Streams;
     }
 
     private IFormatParser? FindParser(SniffContext context, List<Failure> failures)
@@ -672,8 +678,8 @@ public sealed class Analyzer
         foreach ((string field, string v1Field) in new[] { ("EAL", "Album"), ("EAR", "Artist"), ("ETT", "Title") })
         {
             Node? extended = lyrics.Children.FirstOrDefault(c => c.Name == field);
-            string? v1 = id3v1.Children.FirstOrDefault(c => c.Name == v1Field)?.Value;
-            if (extended?.Value is not { } text || v1 is null)
+            string? v1 = id3v1.Children.FirstOrDefault(c => c.Name == v1Field)?.Value?.ToString();
+            if (extended?.Value?.ToString() is not { } text || v1 is null)
             {
                 continue;
             }

@@ -66,7 +66,7 @@ public sealed partial class MpegAudioParser
                 continue;
             }
 
-            HashSet<string> named = FamiliesOf(encoder.Value ?? string.Empty);
+            HashSet<string> named = FamiliesOf(encoder.Value?.ToString() ?? string.Empty);
             if (claimed.Overlaps(named))
             {
                 encoder.Add("Evidence", encoder.Offset, encoder.Length, evidence);
@@ -82,7 +82,7 @@ public sealed partial class MpegAudioParser
             }
             else
             {
-                string name = encoder.Value!;
+                string name = encoder.Value!.ToString();
                 state.Findings.Add(Severity.Info, "mpeg.encoder-claim-differs", claim.Source, _ =>
                     $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
             }

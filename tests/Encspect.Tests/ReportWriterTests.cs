@@ -163,7 +163,9 @@ public class ReportWriterTests
         ReportJsonWriter.WriteLines(reports, lines);
 
         using JsonDocument document = JsonDocument.Parse(array.ToArray());
-        string[] expected = [.. document.RootElement.EnumerateArray().Select(r => JsonSerializer.Serialize(r))];
+        // The writer leaves non-ASCII text and characters such as the + in the tool version unescaped.
+        var options = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+        string[] expected = [.. document.RootElement.EnumerateArray().Select(r => JsonSerializer.Serialize(r, options))];
         string[] actual = System.Text.Encoding.UTF8.GetString(lines.ToArray()).TrimEnd('\n').Split('\n');
         Assert.Equal(expected, actual);
     }

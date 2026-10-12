@@ -8,7 +8,7 @@ public static class ReportCsvWriter
 {
     private static readonly string[] Columns =
     [
-        "Path", "Format", "Streams", "Codec", "Duration (s)", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
+        "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Encoder", "Encoder Confidence", "Tags", "Errors", "Warnings", "Infos",
     ];
 
@@ -23,14 +23,19 @@ public static class ReportCsvWriter
             ReportSummary s = ReportSummary.From(report);
             WriteRow(writer,
             [
-                s.Source, s.Format, Count(s.Streams), s.Codec, s.Duration, s.AverageBitrate, s.SampleRate, s.ChannelMode,
-                s.Encoder, s.EncoderConfidence, string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
+                s.Source, s.Format, Count(s.Streams), s.Codec, Fixed(s.Duration, 3), s.Samples?.ToString(CultureInfo.InvariantCulture),
+                Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.Encoder,
+                s.EncoderConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
             ]);
             writer.Flush();
         }
     }
 
     private static string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+    // Rounded half to even, as the statistics in the report are.
+    private static string? Fixed(double? value, int decimals) =>
+        value is { } number ? Math.Round(number, decimals, MidpointRounding.ToEven).ToString("F" + decimals, CultureInfo.InvariantCulture) : null;
 
     private static void WriteRow(TextWriter writer, IEnumerable<string?> fields)
     {

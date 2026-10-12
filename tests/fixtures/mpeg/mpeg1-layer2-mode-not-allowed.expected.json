@@ -17,8 +17,7 @@
     "Statistics/Minimum Bitrate": "32 kbps",
     "Statistics/Maximum Bitrate": "32 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
-    "Statistics/Bitrate Distribution/32 kbps": "6 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "32"
+    "Statistics/Bitrate Distribution/32 kbps": "6 frames (100.0%)"
    }
   }
  ],
@@ -103,6 +102,17 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer II",
+   "sample_rate": 48000,
+   "samples": 6912,
+   "duration": "0.144 s",
+   "average_bitrate": "32.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "32"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.bitrate-mode-not-allowed",

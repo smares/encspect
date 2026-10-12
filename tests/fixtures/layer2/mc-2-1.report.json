@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "mc-2-1.mp2",
     "root": {
       "name": "File",
@@ -9,61 +14,69 @@
       "children": [
         {
           "name": "MPEG Audio",
-          "value": "6 frames",
+          "kind": "Stream",
+          "value": 6,
+          "unit": "frames",
           "offset": 0,
           "length": 5015,
           "children": [
             {
               "name": "Statistics",
+              "kind": "Statistics",
               "value": "6 frames, 0.157 s",
               "offset": 0,
               "length": 5015,
               "children": [
                 {
                   "name": "Frames",
-                  "value": "6",
+                  "value": 6,
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Samples",
-                  "value": "6912",
+                  "value": 6912,
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Duration",
-                  "value": "0.157 s",
+                  "value": 0.157,
+                  "unit": "s",
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "IsVbr",
-                  "value": "false",
+                  "value": false,
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": "256.0 kbps",
+                  "value": 256,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": "256 kbps",
+                  "value": 256,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": "256 kbps",
+                  "value": 256,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 5015
                 },
                 {
                   "name": "Bitrate Distribution",
-                  "value": "1 bitrate",
+                  "value": 1,
+                  "unit": "bitrates",
                   "offset": 0,
                   "length": 5015,
                   "children": [
@@ -74,17 +87,12 @@
                       "length": 5015
                     }
                   ]
-                },
-                {
-                  "name": "Bitrate Over Time",
-                  "value": "256",
-                  "offset": 0,
-                  "length": 5015
                 }
               ]
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 0,
               "length": 835,
@@ -112,7 +120,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 1,
                       "length": 1,
                       "bitOffset": 7,
@@ -120,7 +128,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 0,
@@ -128,7 +137,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 4,
@@ -136,7 +146,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 6,
@@ -144,7 +154,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 7,
@@ -168,7 +178,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 3,
                       "length": 1,
                       "bitOffset": 4,
@@ -176,7 +186,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 3,
                       "length": 1,
                       "bitOffset": 5,
@@ -194,6 +204,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 4,
                   "length": 24,
@@ -207,7 +218,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "65535 levels",
+                          "value": 65535,
+                          "unit": "levels",
                           "offset": 4,
                           "length": 1,
                           "bitOffset": 0,
@@ -261,7 +273,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 6,
                           "length": 1,
                           "bitOffset": 4,
@@ -276,7 +289,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 7,
                           "length": 1,
                           "bitOffset": 0,
@@ -330,7 +344,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 9,
                           "length": 1,
                           "bitOffset": 4,
@@ -345,7 +360,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 10,
                           "length": 1,
                           "bitOffset": 0,
@@ -399,7 +415,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 12,
                           "length": 1,
                           "bitOffset": 4,
@@ -414,7 +431,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 13,
                           "length": 1,
                           "bitOffset": 0,
@@ -470,7 +488,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 15,
                           "length": 1,
                           "bitOffset": 3,
@@ -487,7 +506,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 15,
                           "length": 2,
                           "bitOffset": 6,
@@ -545,7 +565,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 17,
                           "length": 1,
                           "bitOffset": 5,
@@ -562,7 +583,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 18,
                           "length": 1,
                           "bitOffset": 0,
@@ -620,7 +642,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 19,
                           "length": 2,
                           "bitOffset": 7,
@@ -637,7 +660,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 20,
                           "length": 1,
                           "bitOffset": 2,
@@ -932,6 +956,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 27,
                   "length": 4,
                   "bitOffset": 4,
@@ -946,7 +971,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 27,
                           "length": 1,
                           "bitOffset": 4,
@@ -963,7 +988,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 27,
                           "length": 1,
                           "bitOffset": 6,
@@ -980,7 +1005,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 28,
                           "length": 1,
                           "bitOffset": 0,
@@ -997,7 +1022,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 28,
                           "length": 1,
                           "bitOffset": 2,
@@ -1014,7 +1039,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 28,
                           "length": 1,
                           "bitOffset": 4,
@@ -1031,7 +1056,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 28,
                           "length": 1,
                           "bitOffset": 6,
@@ -1048,7 +1073,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 29,
                           "length": 1,
                           "bitOffset": 0,
@@ -1065,7 +1090,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 29,
                           "length": 1,
                           "bitOffset": 2,
@@ -1082,7 +1107,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 29,
                           "length": 1,
                           "bitOffset": 4,
@@ -1099,7 +1124,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 29,
                           "length": 1,
                           "bitOffset": 6,
@@ -1116,7 +1141,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 30,
                           "length": 1,
                           "bitOffset": 0,
@@ -1133,7 +1158,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 30,
                           "length": 1,
                           "bitOffset": 2,
@@ -1150,7 +1175,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 30,
                           "length": 1,
                           "bitOffset": 4,
@@ -1162,6 +1187,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 30,
                   "length": 21,
                   "bitOffset": 6,
@@ -1244,7 +1270,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "30",
+                          "value": 30,
                           "offset": 38,
                           "length": 1,
                           "bitOffset": 2,
@@ -1295,7 +1321,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "58",
+                          "value": 58,
                           "offset": 42,
                           "length": 1,
                           "bitOffset": 0,
@@ -1380,7 +1406,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "27",
+                          "value": 27,
                           "offset": 50,
                           "length": 1,
                           "bitOffset": 2,
@@ -1392,7 +1418,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1296 bits",
+                  "value": 1296,
+                  "unit": "bits",
                   "offset": 51,
                   "length": 162
                 },
@@ -1409,7 +1436,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 213,
                           "length": 1,
                           "bitOffset": 0,
@@ -1433,7 +1460,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 213,
                           "length": 1,
                           "bitOffset": 5,
@@ -1441,7 +1468,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "0",
+                          "value": 0,
                           "offset": 213,
                           "length": 1,
                           "bitOffset": 6,
@@ -1449,7 +1476,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 213,
                           "length": 2,
                           "bitOffset": 7,
@@ -1457,7 +1484,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 214,
                           "length": 1,
                           "bitOffset": 1,
@@ -1481,7 +1508,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 214,
                           "length": 1,
                           "bitOffset": 6,
@@ -1489,7 +1516,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 214,
                           "length": 1,
                           "bitOffset": 7,
@@ -1499,13 +1526,13 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0x58BD",
+                      "value": 22717,
                       "offset": 215,
                       "length": 2,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0x58BD",
+                          "value": 22717,
                           "offset": 215,
                           "length": 2
                         }
@@ -1528,7 +1555,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 217,
                           "length": 1,
                           "bitOffset": 1,
@@ -1536,7 +1563,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 217,
                           "length": 1,
                           "bitOffset": 2,
@@ -1560,7 +1587,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 220,
                               "length": 1,
                               "bitOffset": 3,
@@ -1577,7 +1605,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 220,
                               "length": 2,
                               "bitOffset": 7,
@@ -1611,7 +1640,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 221,
                               "length": 2,
                               "bitOffset": 7,
@@ -1628,7 +1658,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 222,
                               "length": 1,
                               "bitOffset": 3,
@@ -1645,7 +1676,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 222,
                               "length": 2,
                               "bitOffset": 7,
@@ -1679,7 +1711,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 223,
                               "length": 2,
                               "bitOffset": 7,
@@ -1696,7 +1729,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 224,
                               "length": 1,
                               "bitOffset": 3,
@@ -1713,7 +1747,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 224,
                               "length": 2,
                               "bitOffset": 7,
@@ -1747,7 +1782,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 225,
                               "length": 2,
                               "bitOffset": 7,
@@ -2079,7 +2115,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 232,
                               "length": 1,
                               "bitOffset": 1,
@@ -2096,7 +2132,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 232,
                               "length": 1,
                               "bitOffset": 3,
@@ -2113,7 +2149,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 232,
                               "length": 1,
                               "bitOffset": 5,
@@ -2130,7 +2166,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 232,
                               "length": 2,
                               "bitOffset": 7,
@@ -2147,7 +2183,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 233,
                               "length": 1,
                               "bitOffset": 1,
@@ -2164,7 +2200,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 233,
                               "length": 1,
                               "bitOffset": 3,
@@ -2181,7 +2217,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 233,
                               "length": 1,
                               "bitOffset": 5,
@@ -2198,7 +2234,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 233,
                               "length": 2,
                               "bitOffset": 7,
@@ -2215,7 +2251,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 234,
                               "length": 1,
                               "bitOffset": 1,
@@ -2227,7 +2263,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "600 bytes",
+                      "value": 600,
+                      "unit": "bytes",
                       "offset": 235,
                       "length": 600
                     }
@@ -2237,6 +2274,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 835,
               "length": 836,
@@ -2264,7 +2302,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 836,
                       "length": 1,
                       "bitOffset": 7,
@@ -2272,7 +2310,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 837,
                       "length": 1,
                       "bitOffset": 0,
@@ -2280,7 +2319,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 837,
                       "length": 1,
                       "bitOffset": 4,
@@ -2288,7 +2328,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "true",
+                      "value": true,
                       "offset": 837,
                       "length": 1,
                       "bitOffset": 6,
@@ -2296,7 +2336,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 837,
                       "length": 1,
                       "bitOffset": 7,
@@ -2320,7 +2360,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 838,
                       "length": 1,
                       "bitOffset": 4,
@@ -2328,7 +2368,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 838,
                       "length": 1,
                       "bitOffset": 5,
@@ -2346,6 +2386,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 839,
                   "length": 24,
@@ -2390,7 +2431,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 840,
                           "length": 1,
                           "bitOffset": 4,
@@ -2405,7 +2447,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 841,
                           "length": 1,
                           "bitOffset": 0,
@@ -2459,7 +2502,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 843,
                           "length": 1,
                           "bitOffset": 4,
@@ -2474,7 +2518,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 844,
                           "length": 1,
                           "bitOffset": 0,
@@ -2520,7 +2565,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "8191 levels",
+                          "value": 8191,
+                          "unit": "levels",
                           "offset": 846,
                           "length": 1,
                           "bitOffset": 0,
@@ -2528,7 +2574,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 846,
                           "length": 1,
                           "bitOffset": 4,
@@ -2543,7 +2590,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 847,
                           "length": 1,
                           "bitOffset": 0,
@@ -2597,7 +2645,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 849,
                           "length": 1,
                           "bitOffset": 4,
@@ -2614,7 +2663,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 850,
                           "length": 1,
                           "bitOffset": 0,
@@ -2672,7 +2722,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 851,
                           "length": 2,
                           "bitOffset": 7,
@@ -2689,7 +2740,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 852,
                           "length": 1,
                           "bitOffset": 2,
@@ -2747,7 +2799,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 854,
                           "length": 1,
                           "bitOffset": 1,
@@ -2764,7 +2817,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 854,
                           "length": 1,
                           "bitOffset": 4,
@@ -2822,7 +2876,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 856,
                           "length": 1,
                           "bitOffset": 3,
@@ -3084,6 +3139,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 862,
                   "length": 4,
                   "bitOffset": 4,
@@ -3098,7 +3154,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 862,
                           "length": 1,
                           "bitOffset": 4,
@@ -3115,7 +3171,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 862,
                           "length": 1,
                           "bitOffset": 6,
@@ -3132,7 +3188,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 863,
                           "length": 1,
                           "bitOffset": 0,
@@ -3149,7 +3205,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 863,
                           "length": 1,
                           "bitOffset": 2,
@@ -3166,7 +3222,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 863,
                           "length": 1,
                           "bitOffset": 4,
@@ -3174,7 +3230,7 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 863,
                           "length": 1,
                           "bitOffset": 6,
@@ -3191,7 +3247,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 864,
                           "length": 1,
                           "bitOffset": 0,
@@ -3208,7 +3264,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 864,
                           "length": 1,
                           "bitOffset": 2,
@@ -3225,7 +3281,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 864,
                           "length": 1,
                           "bitOffset": 4,
@@ -3242,7 +3298,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 864,
                           "length": 1,
                           "bitOffset": 6,
@@ -3259,7 +3315,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 865,
                           "length": 1,
                           "bitOffset": 0,
@@ -3276,7 +3332,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 865,
                           "length": 1,
                           "bitOffset": 2,
@@ -3293,7 +3349,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 865,
                           "length": 1,
                           "bitOffset": 4,
@@ -3310,7 +3366,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 865,
                           "length": 1,
                           "bitOffset": 6,
@@ -3322,6 +3378,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 866,
                   "length": 21,
                   "bitOffset": 0,
@@ -3370,7 +3427,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "34",
+                          "value": 34,
                           "offset": 869,
                           "length": 1,
                           "bitOffset": 0,
@@ -3404,7 +3461,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "46",
+                          "value": 46,
                           "offset": 872,
                           "length": 1,
                           "bitOffset": 0,
@@ -3463,7 +3520,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 878,
                           "length": 1,
                           "bitOffset": 0,
@@ -3514,7 +3571,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "31",
+                          "value": 31,
                           "offset": 881,
                           "length": 2,
                           "bitOffset": 6,
@@ -3560,7 +3617,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1248 bits",
+                  "value": 1248,
+                  "unit": "bits",
                   "offset": 886,
                   "length": 157,
                   "bitOffset": 2,
@@ -3583,7 +3641,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 1042,
                           "length": 1,
                           "bitOffset": 2,
@@ -3607,7 +3665,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 1042,
                           "length": 1,
                           "bitOffset": 7,
@@ -3615,7 +3673,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "1",
+                          "value": 1,
                           "offset": 1043,
                           "length": 1,
                           "bitOffset": 0,
@@ -3623,7 +3681,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1043,
                           "length": 1,
                           "bitOffset": 1,
@@ -3631,7 +3689,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1043,
                           "length": 1,
                           "bitOffset": 3,
@@ -3655,7 +3713,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 1044,
                           "length": 1,
                           "bitOffset": 0,
@@ -3663,7 +3721,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 1044,
                           "length": 1,
                           "bitOffset": 1,
@@ -3673,7 +3731,7 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0xFAC6",
+                      "value": 64198,
                       "offset": 1044,
                       "length": 3,
                       "bitOffset": 2,
@@ -3681,7 +3739,7 @@
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0xFAC6",
+                          "value": 64198,
                           "offset": 1044,
                           "length": 3,
                           "bitOffset": 2,
@@ -3706,7 +3764,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 1046,
                           "length": 1,
                           "bitOffset": 3,
@@ -3714,7 +3772,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 1046,
                           "length": 1,
                           "bitOffset": 4,
@@ -3738,7 +3796,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1049,
                               "length": 2,
                               "bitOffset": 5,
@@ -3772,7 +3831,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "15 levels",
+                              "value": 15,
+                              "unit": "levels",
                               "offset": 1050,
                               "length": 2,
                               "bitOffset": 5,
@@ -3789,7 +3849,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 1051,
                               "length": 1,
                               "bitOffset": 1,
@@ -3806,7 +3867,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1051,
                               "length": 2,
                               "bitOffset": 5,
@@ -3840,7 +3902,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 1052,
                               "length": 2,
                               "bitOffset": 5,
@@ -3857,7 +3920,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 1053,
                               "length": 1,
                               "bitOffset": 1,
@@ -3874,7 +3938,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1053,
                               "length": 2,
                               "bitOffset": 5,
@@ -3908,7 +3973,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 1054,
                               "length": 2,
                               "bitOffset": 5,
@@ -3925,7 +3991,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 1055,
                               "length": 1,
                               "bitOffset": 1,
@@ -4257,7 +4324,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1061,
                               "length": 1,
                               "bitOffset": 3,
@@ -4274,7 +4341,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1061,
                               "length": 1,
                               "bitOffset": 5,
@@ -4291,7 +4358,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1061,
                               "length": 2,
                               "bitOffset": 7,
@@ -4308,7 +4375,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1062,
                               "length": 1,
                               "bitOffset": 1,
@@ -4325,7 +4392,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1062,
                               "length": 1,
                               "bitOffset": 3,
@@ -4342,7 +4409,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1062,
                               "length": 1,
                               "bitOffset": 5,
@@ -4359,7 +4426,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1062,
                               "length": 2,
                               "bitOffset": 7,
@@ -4376,7 +4443,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1063,
                               "length": 1,
                               "bitOffset": 1,
@@ -4393,7 +4460,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1063,
                               "length": 1,
                               "bitOffset": 3,
@@ -4405,7 +4472,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "607 bytes",
+                      "value": 607,
+                      "unit": "bytes",
                       "offset": 1064,
                       "length": 607
                     }
@@ -4415,6 +4483,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 1671,
               "length": 836,
@@ -4442,7 +4511,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 1672,
                       "length": 1,
                       "bitOffset": 7,
@@ -4450,7 +4519,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 1673,
                       "length": 1,
                       "bitOffset": 0,
@@ -4458,7 +4528,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 1673,
                       "length": 1,
                       "bitOffset": 4,
@@ -4466,7 +4537,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "true",
+                      "value": true,
                       "offset": 1673,
                       "length": 1,
                       "bitOffset": 6,
@@ -4474,7 +4545,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 1673,
                       "length": 1,
                       "bitOffset": 7,
@@ -4498,7 +4569,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 1674,
                       "length": 1,
                       "bitOffset": 4,
@@ -4506,7 +4577,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 1674,
                       "length": 1,
                       "bitOffset": 5,
@@ -4524,6 +4595,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 1675,
                   "length": 24,
@@ -4545,7 +4617,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1675,
                           "length": 1,
                           "bitOffset": 4,
@@ -4560,7 +4633,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1676,
                           "length": 1,
                           "bitOffset": 0,
@@ -4606,7 +4680,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "4095 levels",
+                          "value": 4095,
+                          "unit": "levels",
                           "offset": 1678,
                           "length": 1,
                           "bitOffset": 0,
@@ -4614,7 +4689,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1678,
                           "length": 1,
                           "bitOffset": 4,
@@ -4629,7 +4705,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1679,
                           "length": 1,
                           "bitOffset": 0,
@@ -4683,7 +4760,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1681,
                           "length": 1,
                           "bitOffset": 4,
@@ -4698,7 +4776,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1682,
                           "length": 1,
                           "bitOffset": 0,
@@ -4752,7 +4831,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1684,
                           "length": 1,
                           "bitOffset": 4,
@@ -4767,7 +4847,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1685,
                           "length": 1,
                           "bitOffset": 0,
@@ -4825,7 +4906,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1687,
                           "length": 1,
                           "bitOffset": 1,
@@ -4842,7 +4924,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1687,
                           "length": 1,
                           "bitOffset": 4,
@@ -4900,7 +4983,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1689,
                           "length": 1,
                           "bitOffset": 3,
@@ -4917,7 +5001,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1689,
                           "length": 2,
                           "bitOffset": 6,
@@ -4975,7 +5060,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1691,
                           "length": 1,
                           "bitOffset": 5,
@@ -4992,7 +5078,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 1692,
                           "length": 1,
                           "bitOffset": 0,
@@ -5262,6 +5349,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 1698,
                   "length": 5,
                   "bitOffset": 4,
@@ -5276,7 +5364,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 1698,
                           "length": 1,
                           "bitOffset": 4,
@@ -5293,7 +5381,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 1698,
                           "length": 1,
                           "bitOffset": 6,
@@ -5310,7 +5398,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 1699,
                           "length": 1,
                           "bitOffset": 0,
@@ -5318,7 +5406,7 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1699,
                           "length": 1,
                           "bitOffset": 2,
@@ -5335,7 +5423,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 1699,
                           "length": 1,
                           "bitOffset": 4,
@@ -5352,7 +5440,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 1699,
                           "length": 1,
                           "bitOffset": 6,
@@ -5369,7 +5457,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 1700,
                           "length": 1,
                           "bitOffset": 0,
@@ -5386,7 +5474,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 1700,
                           "length": 1,
                           "bitOffset": 2,
@@ -5403,7 +5491,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1700,
                           "length": 1,
                           "bitOffset": 4,
@@ -5420,7 +5508,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 1700,
                           "length": 1,
                           "bitOffset": 6,
@@ -5437,7 +5525,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 1701,
                           "length": 1,
                           "bitOffset": 0,
@@ -5454,7 +5542,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1701,
                           "length": 1,
                           "bitOffset": 2,
@@ -5471,7 +5559,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 1701,
                           "length": 1,
                           "bitOffset": 4,
@@ -5488,7 +5576,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 1701,
                           "length": 1,
                           "bitOffset": 6,
@@ -5505,7 +5593,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 1702,
                           "length": 1,
                           "bitOffset": 0,
@@ -5517,6 +5605,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 1702,
                   "length": 23,
                   "bitOffset": 2,
@@ -5590,7 +5679,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "42",
+                          "value": 42,
                           "offset": 1709,
                           "length": 1,
                           "bitOffset": 0,
@@ -5641,7 +5730,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "7",
+                          "value": 7,
                           "offset": 1712,
                           "length": 2,
                           "bitOffset": 6,
@@ -5726,7 +5815,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "39",
+                          "value": 39,
                           "offset": 1721,
                           "length": 1,
                           "bitOffset": 0,
@@ -5772,7 +5861,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1272 bits",
+                  "value": 1272,
+                  "unit": "bits",
                   "offset": 1724,
                   "length": 160,
                   "bitOffset": 6,
@@ -5795,7 +5885,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 1883,
                           "length": 1,
                           "bitOffset": 6,
@@ -5819,7 +5909,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 1884,
                           "length": 1,
                           "bitOffset": 3,
@@ -5827,7 +5917,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1884,
                           "length": 1,
                           "bitOffset": 4,
@@ -5835,7 +5925,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1884,
                           "length": 1,
                           "bitOffset": 5,
@@ -5843,7 +5933,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 1884,
                           "length": 2,
                           "bitOffset": 7,
@@ -5867,7 +5957,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 1885,
                           "length": 1,
                           "bitOffset": 4,
@@ -5875,7 +5965,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 1885,
                           "length": 1,
                           "bitOffset": 5,
@@ -5885,7 +5975,7 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0x20B8",
+                      "value": 8376,
                       "offset": 1885,
                       "length": 3,
                       "bitOffset": 6,
@@ -5893,7 +5983,7 @@
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0x20B8",
+                          "value": 8376,
                           "offset": 1885,
                           "length": 3,
                           "bitOffset": 6,
@@ -5918,7 +6008,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 1887,
                           "length": 1,
                           "bitOffset": 7,
@@ -5926,7 +6016,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 1888,
                           "length": 1,
                           "bitOffset": 0,
@@ -5967,7 +6057,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "15 levels",
+                              "value": 15,
+                              "unit": "levels",
                               "offset": 1891,
                               "length": 2,
                               "bitOffset": 5,
@@ -5984,7 +6075,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 1892,
                               "length": 1,
                               "bitOffset": 1,
@@ -6001,7 +6093,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1892,
                               "length": 2,
                               "bitOffset": 5,
@@ -6035,7 +6128,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 1893,
                               "length": 2,
                               "bitOffset": 5,
@@ -6052,7 +6146,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 1894,
                               "length": 1,
                               "bitOffset": 1,
@@ -6069,7 +6164,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1894,
                               "length": 2,
                               "bitOffset": 5,
@@ -6103,7 +6199,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 1895,
                               "length": 2,
                               "bitOffset": 5,
@@ -6120,7 +6217,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 1896,
                               "length": 1,
                               "bitOffset": 1,
@@ -6137,7 +6235,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 1896,
                               "length": 1,
                               "bitOffset": 5,
@@ -6469,7 +6568,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1902,
                               "length": 2,
                               "bitOffset": 7,
@@ -6486,7 +6585,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1903,
                               "length": 1,
                               "bitOffset": 1,
@@ -6503,7 +6602,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1903,
                               "length": 1,
                               "bitOffset": 3,
@@ -6520,7 +6619,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1903,
                               "length": 1,
                               "bitOffset": 5,
@@ -6537,7 +6636,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1903,
                               "length": 2,
                               "bitOffset": 7,
@@ -6554,7 +6653,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1904,
                               "length": 1,
                               "bitOffset": 1,
@@ -6571,7 +6670,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 1904,
                               "length": 1,
                               "bitOffset": 3,
@@ -6588,7 +6687,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 1904,
                               "length": 1,
                               "bitOffset": 5,
@@ -6605,7 +6704,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 1904,
                               "length": 2,
                               "bitOffset": 7,
@@ -6617,7 +6716,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "601 bytes",
+                      "value": 601,
+                      "unit": "bytes",
                       "offset": 1906,
                       "length": 601
                     }
@@ -6627,6 +6727,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 2507,
               "length": 836,
@@ -6654,7 +6755,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 2508,
                       "length": 1,
                       "bitOffset": 7,
@@ -6662,7 +6763,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 2509,
                       "length": 1,
                       "bitOffset": 0,
@@ -6670,7 +6772,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 2509,
                       "length": 1,
                       "bitOffset": 4,
@@ -6678,7 +6781,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "true",
+                      "value": true,
                       "offset": 2509,
                       "length": 1,
                       "bitOffset": 6,
@@ -6686,7 +6789,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 2509,
                       "length": 1,
                       "bitOffset": 7,
@@ -6710,7 +6813,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 2510,
                       "length": 1,
                       "bitOffset": 4,
@@ -6718,7 +6821,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 2510,
                       "length": 1,
                       "bitOffset": 5,
@@ -6736,6 +6839,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 2511,
                   "length": 24,
@@ -6749,7 +6853,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2511,
                           "length": 1,
                           "bitOffset": 0,
@@ -6803,7 +6908,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2513,
                           "length": 1,
                           "bitOffset": 4,
@@ -6818,7 +6924,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2514,
                           "length": 1,
                           "bitOffset": 0,
@@ -6872,7 +6979,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2516,
                           "length": 1,
                           "bitOffset": 4,
@@ -6887,7 +6995,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2517,
                           "length": 1,
                           "bitOffset": 0,
@@ -6941,7 +7050,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2519,
                           "length": 1,
                           "bitOffset": 4,
@@ -6956,7 +7066,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2520,
                           "length": 1,
                           "bitOffset": 0,
@@ -6979,7 +7090,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "65535 levels",
+                          "value": 65535,
+                          "unit": "levels",
                           "offset": 2521,
                           "length": 1,
                           "bitOffset": 0,
@@ -7012,7 +7124,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2522,
                           "length": 1,
                           "bitOffset": 3,
@@ -7029,7 +7142,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2522,
                           "length": 2,
                           "bitOffset": 6,
@@ -7087,7 +7201,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2524,
                           "length": 1,
                           "bitOffset": 5,
@@ -7104,7 +7219,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2525,
                           "length": 1,
                           "bitOffset": 0,
@@ -7162,7 +7278,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2526,
                           "length": 2,
                           "bitOffset": 7,
@@ -7179,7 +7296,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 2527,
                           "length": 1,
                           "bitOffset": 2,
@@ -7474,6 +7592,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 2534,
                   "length": 4,
                   "bitOffset": 4,
@@ -7488,7 +7607,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 2534,
                           "length": 1,
                           "bitOffset": 4,
@@ -7505,7 +7624,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 2534,
                           "length": 1,
                           "bitOffset": 6,
@@ -7522,7 +7641,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 2535,
                           "length": 1,
                           "bitOffset": 0,
@@ -7539,7 +7658,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 2535,
                           "length": 1,
                           "bitOffset": 2,
@@ -7556,7 +7675,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 2535,
                           "length": 1,
                           "bitOffset": 4,
@@ -7573,7 +7692,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 2535,
                           "length": 1,
                           "bitOffset": 6,
@@ -7590,7 +7709,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 2536,
                           "length": 1,
                           "bitOffset": 0,
@@ -7607,7 +7726,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 2536,
                           "length": 1,
                           "bitOffset": 2,
@@ -7624,7 +7743,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 2536,
                           "length": 1,
                           "bitOffset": 4,
@@ -7641,7 +7760,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 2536,
                           "length": 1,
                           "bitOffset": 6,
@@ -7658,7 +7777,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 2537,
                           "length": 1,
                           "bitOffset": 0,
@@ -7675,7 +7794,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 2537,
                           "length": 1,
                           "bitOffset": 2,
@@ -7692,7 +7811,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 2537,
                           "length": 1,
                           "bitOffset": 4,
@@ -7709,7 +7828,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 2537,
                           "length": 1,
                           "bitOffset": 6,
@@ -7721,6 +7840,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 2538,
                   "length": 21,
                   "children": [
@@ -7750,7 +7870,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "46",
+                          "value": 46,
                           "offset": 2539,
                           "length": 2,
                           "bitOffset": 4,
@@ -7835,7 +7955,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "15",
+                          "value": 15,
                           "offset": 2547,
                           "length": 2,
                           "bitOffset": 6,
@@ -7903,7 +8023,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "43",
+                          "value": 43,
                           "offset": 2553,
                           "length": 1,
                           "bitOffset": 0,
@@ -7966,7 +8086,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1356 bits",
+                  "value": 1356,
+                  "unit": "bits",
                   "offset": 2559,
                   "length": 170,
                   "bitOffset": 0,
@@ -7989,7 +8110,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 2728,
                           "length": 1,
                           "bitOffset": 4,
@@ -8013,7 +8134,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 2729,
                           "length": 1,
                           "bitOffset": 1,
@@ -8021,7 +8142,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "1",
+                          "value": 1,
                           "offset": 2729,
                           "length": 1,
                           "bitOffset": 2,
@@ -8029,7 +8150,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 2729,
                           "length": 1,
                           "bitOffset": 3,
@@ -8037,7 +8158,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 2729,
                           "length": 1,
                           "bitOffset": 5,
@@ -8061,7 +8182,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 2730,
                           "length": 1,
                           "bitOffset": 2,
@@ -8069,7 +8190,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 2730,
                           "length": 1,
                           "bitOffset": 3,
@@ -8079,7 +8200,7 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0x3407",
+                      "value": 13319,
                       "offset": 2730,
                       "length": 3,
                       "bitOffset": 4,
@@ -8087,7 +8208,7 @@
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0x3407",
+                          "value": 13319,
                           "offset": 2730,
                           "length": 3,
                           "bitOffset": 4,
@@ -8112,7 +8233,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 2732,
                           "length": 1,
                           "bitOffset": 5,
@@ -8120,7 +8241,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 2732,
                           "length": 1,
                           "bitOffset": 6,
@@ -8144,7 +8265,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "15 levels",
+                              "value": 15,
+                              "unit": "levels",
                               "offset": 2735,
                               "length": 2,
                               "bitOffset": 7,
@@ -8161,7 +8283,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 2736,
                               "length": 1,
                               "bitOffset": 3,
@@ -8178,7 +8301,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 2736,
                               "length": 2,
                               "bitOffset": 7,
@@ -8212,7 +8336,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 2737,
                               "length": 2,
                               "bitOffset": 7,
@@ -8229,7 +8354,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 2738,
                               "length": 1,
                               "bitOffset": 3,
@@ -8246,7 +8372,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 2738,
                               "length": 2,
                               "bitOffset": 7,
@@ -8280,7 +8407,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 2739,
                               "length": 2,
                               "bitOffset": 7,
@@ -8297,7 +8425,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 2740,
                               "length": 1,
                               "bitOffset": 3,
@@ -8314,7 +8443,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 2740,
                               "length": 2,
                               "bitOffset": 7,
@@ -8663,7 +8793,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 2747,
                               "length": 1,
                               "bitOffset": 5,
@@ -8680,7 +8810,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 2747,
                               "length": 2,
                               "bitOffset": 7,
@@ -8697,7 +8827,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 2748,
                               "length": 1,
                               "bitOffset": 1,
@@ -8714,7 +8844,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 2748,
                               "length": 1,
                               "bitOffset": 3,
@@ -8731,7 +8861,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 2748,
                               "length": 1,
                               "bitOffset": 5,
@@ -8748,7 +8878,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 2748,
                               "length": 2,
                               "bitOffset": 7,
@@ -8765,7 +8895,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 2749,
                               "length": 1,
                               "bitOffset": 1,
@@ -8782,7 +8912,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 2749,
                               "length": 1,
                               "bitOffset": 3,
@@ -8799,7 +8929,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 2749,
                               "length": 1,
                               "bitOffset": 5,
@@ -8811,7 +8941,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "593 bytes",
+                      "value": 593,
+                      "unit": "bytes",
                       "offset": 2750,
                       "length": 593
                     }
@@ -8821,6 +8952,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 3343,
               "length": 836,
@@ -8848,7 +8980,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 3344,
                       "length": 1,
                       "bitOffset": 7,
@@ -8856,7 +8988,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 3345,
                       "length": 1,
                       "bitOffset": 0,
@@ -8864,7 +8997,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 3345,
                       "length": 1,
                       "bitOffset": 4,
@@ -8872,7 +9006,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "true",
+                      "value": true,
                       "offset": 3345,
                       "length": 1,
                       "bitOffset": 6,
@@ -8880,7 +9014,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 3345,
                       "length": 1,
                       "bitOffset": 7,
@@ -8904,7 +9038,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 3346,
                       "length": 1,
                       "bitOffset": 4,
@@ -8912,7 +9046,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 3346,
                       "length": 1,
                       "bitOffset": 5,
@@ -8930,6 +9064,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 3347,
                   "length": 24,
@@ -8974,7 +9109,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3348,
                           "length": 1,
                           "bitOffset": 4,
@@ -8989,7 +9125,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3349,
                           "length": 1,
                           "bitOffset": 0,
@@ -9043,7 +9180,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3351,
                           "length": 1,
                           "bitOffset": 4,
@@ -9058,7 +9196,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3352,
                           "length": 1,
                           "bitOffset": 0,
@@ -9081,7 +9220,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "8191 levels",
+                          "value": 8191,
+                          "unit": "levels",
                           "offset": 3353,
                           "length": 1,
                           "bitOffset": 0,
@@ -9112,7 +9252,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3354,
                           "length": 1,
                           "bitOffset": 4,
@@ -9127,7 +9268,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3355,
                           "length": 1,
                           "bitOffset": 0,
@@ -9181,7 +9323,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3357,
                           "length": 1,
                           "bitOffset": 4,
@@ -9198,7 +9341,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3358,
                           "length": 1,
                           "bitOffset": 0,
@@ -9256,7 +9400,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3359,
                           "length": 2,
                           "bitOffset": 7,
@@ -9273,7 +9418,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3360,
                           "length": 1,
                           "bitOffset": 2,
@@ -9331,7 +9477,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3362,
                           "length": 1,
                           "bitOffset": 1,
@@ -9348,7 +9495,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3362,
                           "length": 1,
                           "bitOffset": 4,
@@ -9406,7 +9554,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 3364,
                           "length": 1,
                           "bitOffset": 3,
@@ -9668,6 +9817,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 3370,
                   "length": 4,
                   "bitOffset": 4,
@@ -9682,7 +9832,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3370,
                           "length": 1,
                           "bitOffset": 4,
@@ -9699,7 +9849,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 3370,
                           "length": 1,
                           "bitOffset": 6,
@@ -9716,7 +9866,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 3371,
                           "length": 1,
                           "bitOffset": 0,
@@ -9733,7 +9883,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 3371,
                           "length": 1,
                           "bitOffset": 2,
@@ -9750,7 +9900,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 3371,
                           "length": 1,
                           "bitOffset": 4,
@@ -9767,7 +9917,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 3371,
                           "length": 1,
                           "bitOffset": 6,
@@ -9784,7 +9934,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3372,
                           "length": 1,
                           "bitOffset": 0,
@@ -9801,7 +9951,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 3372,
                           "length": 1,
                           "bitOffset": 2,
@@ -9818,7 +9968,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 3372,
                           "length": 1,
                           "bitOffset": 4,
@@ -9835,7 +9985,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3372,
                           "length": 1,
                           "bitOffset": 6,
@@ -9852,7 +10002,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 3373,
                           "length": 1,
                           "bitOffset": 0,
@@ -9869,7 +10019,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 3373,
                           "length": 1,
                           "bitOffset": 2,
@@ -9886,7 +10036,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 3373,
                           "length": 1,
                           "bitOffset": 4,
@@ -9903,7 +10053,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 3373,
                           "length": 1,
                           "bitOffset": 6,
@@ -9915,6 +10065,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 3374,
                   "length": 20,
                   "bitOffset": 0,
@@ -9946,7 +10097,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "54",
+                          "value": 54,
                           "offset": 3376,
                           "length": 1,
                           "bitOffset": 2,
@@ -9997,7 +10148,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "11",
+                          "value": 11,
                           "offset": 3380,
                           "length": 1,
                           "bitOffset": 0,
@@ -10014,7 +10165,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "19",
+                          "value": 19,
                           "offset": 3380,
                           "length": 2,
                           "bitOffset": 6,
@@ -10099,7 +10250,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "51",
+                          "value": 51,
                           "offset": 3389,
                           "length": 1,
                           "bitOffset": 0,
@@ -10150,7 +10301,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "16",
+                          "value": 16,
                           "offset": 3392,
                           "length": 2,
                           "bitOffset": 6,
@@ -10162,7 +10313,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1248 bits",
+                  "value": 1248,
+                  "unit": "bits",
                   "offset": 3393,
                   "length": 157,
                   "bitOffset": 4,
@@ -10185,7 +10337,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 3549,
                           "length": 1,
                           "bitOffset": 4,
@@ -10209,7 +10361,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 3550,
                           "length": 1,
                           "bitOffset": 1,
@@ -10217,7 +10369,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3550,
                           "length": 1,
                           "bitOffset": 2,
@@ -10225,7 +10377,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3550,
                           "length": 1,
                           "bitOffset": 3,
@@ -10233,7 +10385,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 3550,
                           "length": 1,
                           "bitOffset": 5,
@@ -10257,7 +10409,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 3551,
                           "length": 1,
                           "bitOffset": 2,
@@ -10265,7 +10417,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 3551,
                           "length": 1,
                           "bitOffset": 3,
@@ -10275,7 +10427,7 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0x58BD",
+                      "value": 22717,
                       "offset": 3551,
                       "length": 3,
                       "bitOffset": 4,
@@ -10283,7 +10435,7 @@
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0x58BD",
+                          "value": 22717,
                           "offset": 3551,
                           "length": 3,
                           "bitOffset": 4,
@@ -10308,7 +10460,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 3553,
                           "length": 1,
                           "bitOffset": 5,
@@ -10316,7 +10468,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 3553,
                           "length": 1,
                           "bitOffset": 6,
@@ -10340,7 +10492,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 3556,
                               "length": 2,
                               "bitOffset": 7,
@@ -10357,7 +10510,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 3557,
                               "length": 1,
                               "bitOffset": 3,
@@ -10391,7 +10545,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 3558,
                               "length": 1,
                               "bitOffset": 3,
@@ -10408,7 +10563,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 3558,
                               "length": 2,
                               "bitOffset": 7,
@@ -10425,7 +10581,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 3559,
                               "length": 1,
                               "bitOffset": 3,
@@ -10459,7 +10616,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 3560,
                               "length": 1,
                               "bitOffset": 3,
@@ -10476,7 +10634,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 3560,
                               "length": 2,
                               "bitOffset": 7,
@@ -10493,7 +10652,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 3561,
                               "length": 1,
                               "bitOffset": 3,
@@ -10527,7 +10687,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 3562,
                               "length": 1,
                               "bitOffset": 3,
@@ -10859,7 +11020,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 3568,
                               "length": 1,
                               "bitOffset": 5,
@@ -10876,7 +11037,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 3568,
                               "length": 2,
                               "bitOffset": 7,
@@ -10893,7 +11054,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 3569,
                               "length": 1,
                               "bitOffset": 1,
@@ -10910,7 +11071,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 3569,
                               "length": 1,
                               "bitOffset": 3,
@@ -10927,7 +11088,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 3569,
                               "length": 1,
                               "bitOffset": 5,
@@ -10944,7 +11105,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 3569,
                               "length": 2,
                               "bitOffset": 7,
@@ -10961,7 +11122,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 3570,
                               "length": 1,
                               "bitOffset": 1,
@@ -10978,7 +11139,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 3570,
                               "length": 1,
                               "bitOffset": 3,
@@ -10995,7 +11156,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 3570,
                               "length": 1,
                               "bitOffset": 5,
@@ -11007,7 +11168,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "608 bytes",
+                      "value": 608,
+                      "unit": "bytes",
                       "offset": 3571,
                       "length": 608
                     }
@@ -11017,6 +11179,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer II, 256 kbps, 44100 Hz, Stereo",
               "offset": 4179,
               "length": 836,
@@ -11044,7 +11207,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "false",
+                      "value": false,
                       "offset": 4180,
                       "length": 1,
                       "bitOffset": 7,
@@ -11052,7 +11215,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "256 kbps",
+                      "value": 256,
+                      "unit": "kbps",
                       "offset": 4181,
                       "length": 1,
                       "bitOffset": 0,
@@ -11060,7 +11224,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 4181,
                       "length": 1,
                       "bitOffset": 4,
@@ -11068,7 +11233,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "true",
+                      "value": true,
                       "offset": 4181,
                       "length": 1,
                       "bitOffset": 6,
@@ -11076,7 +11241,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 4181,
                       "length": 1,
                       "bitOffset": 7,
@@ -11100,7 +11265,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 4182,
                       "length": 1,
                       "bitOffset": 4,
@@ -11108,7 +11273,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 4182,
                       "length": 1,
                       "bitOffset": 5,
@@ -11126,6 +11291,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "value": "Table B.2b",
                   "offset": 4183,
                   "length": 24,
@@ -11147,7 +11313,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4183,
                           "length": 1,
                           "bitOffset": 4,
@@ -11162,7 +11329,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4184,
                           "length": 1,
                           "bitOffset": 0,
@@ -11185,7 +11353,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "16383 levels",
+                          "value": 16383,
+                          "unit": "levels",
                           "offset": 4185,
                           "length": 1,
                           "bitOffset": 0,
@@ -11216,7 +11385,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4186,
                           "length": 1,
                           "bitOffset": 4,
@@ -11231,7 +11401,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4187,
                           "length": 1,
                           "bitOffset": 0,
@@ -11285,7 +11456,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4189,
                           "length": 1,
                           "bitOffset": 4,
@@ -11300,7 +11472,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4190,
                           "length": 1,
                           "bitOffset": 0,
@@ -11354,7 +11527,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4192,
                           "length": 1,
                           "bitOffset": 4,
@@ -11369,7 +11543,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4193,
                           "length": 1,
                           "bitOffset": 0,
@@ -11427,7 +11602,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4195,
                           "length": 1,
                           "bitOffset": 1,
@@ -11444,7 +11620,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4195,
                           "length": 1,
                           "bitOffset": 4,
@@ -11502,7 +11679,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4197,
                           "length": 1,
                           "bitOffset": 3,
@@ -11519,7 +11697,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4197,
                           "length": 2,
                           "bitOffset": 6,
@@ -11577,7 +11756,8 @@
                         },
                         {
                           "name": "Channel 1",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4199,
                           "length": 1,
                           "bitOffset": 5,
@@ -11594,7 +11774,8 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3 levels",
+                          "value": 3,
+                          "unit": "levels",
                           "offset": 4200,
                           "length": 1,
                           "bitOffset": 0,
@@ -11864,6 +12045,7 @@
                 },
                 {
                   "name": "SCFSI",
+                  "kind": "SideInfo",
                   "offset": 4206,
                   "length": 5,
                   "bitOffset": 4,
@@ -11878,7 +12060,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 4206,
                           "length": 1,
                           "bitOffset": 4,
@@ -11895,7 +12077,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4206,
                           "length": 1,
                           "bitOffset": 6,
@@ -11912,7 +12094,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 4207,
                           "length": 1,
                           "bitOffset": 0,
@@ -11929,7 +12111,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 4207,
                           "length": 1,
                           "bitOffset": 2,
@@ -11946,7 +12128,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 4207,
                           "length": 1,
                           "bitOffset": 4,
@@ -11963,7 +12145,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4207,
                           "length": 1,
                           "bitOffset": 6,
@@ -11980,7 +12162,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 4208,
                           "length": 1,
                           "bitOffset": 0,
@@ -11997,7 +12179,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "1",
+                          "value": 1,
                           "offset": 4208,
                           "length": 1,
                           "bitOffset": 2,
@@ -12014,7 +12196,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "3",
+                          "value": 3,
                           "offset": 4208,
                           "length": 1,
                           "bitOffset": 4,
@@ -12031,7 +12213,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "2",
+                          "value": 2,
                           "offset": 4208,
                           "length": 1,
                           "bitOffset": 6,
@@ -12048,7 +12230,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4209,
                           "length": 1,
                           "bitOffset": 0,
@@ -12065,7 +12247,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "3",
+                          "value": 3,
                           "offset": 4209,
                           "length": 1,
                           "bitOffset": 2,
@@ -12082,7 +12264,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "1",
+                          "value": 1,
                           "offset": 4209,
                           "length": 1,
                           "bitOffset": 4,
@@ -12099,7 +12281,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4209,
                           "length": 1,
                           "bitOffset": 6,
@@ -12116,7 +12298,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "2",
+                          "value": 2,
                           "offset": 4210,
                           "length": 1,
                           "bitOffset": 0,
@@ -12128,6 +12310,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 4210,
                   "length": 23,
                   "bitOffset": 2,
@@ -12142,7 +12325,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "58",
+                          "value": 58,
                           "offset": 4210,
                           "length": 1,
                           "bitOffset": 2,
@@ -12244,7 +12427,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "27",
+                          "value": 27,
                           "offset": 4220,
                           "length": 1,
                           "bitOffset": 0,
@@ -12295,7 +12478,7 @@
                       "children": [
                         {
                           "name": "Channel 1",
-                          "value": "55",
+                          "value": 55,
                           "offset": 4223,
                           "length": 2,
                           "bitOffset": 6,
@@ -12380,7 +12563,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "24",
+                          "value": 24,
                           "offset": 4232,
                           "length": 1,
                           "bitOffset": 0,
@@ -12392,7 +12575,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "1344 bits",
+                  "value": 1344,
+                  "unit": "bits",
                   "offset": 4232,
                   "length": 169,
                   "bitOffset": 6,
@@ -12415,7 +12599,7 @@
                       "children": [
                         {
                           "name": "HasExtensionBitstream",
-                          "value": "false",
+                          "value": false,
                           "offset": 4400,
                           "length": 1,
                           "bitOffset": 6,
@@ -12439,7 +12623,7 @@
                         },
                         {
                           "name": "HasLfe",
-                          "value": "false",
+                          "value": false,
                           "offset": 4401,
                           "length": 1,
                           "bitOffset": 3,
@@ -12447,7 +12631,7 @@
                         },
                         {
                           "name": "Audio Mix",
-                          "value": "1",
+                          "value": 1,
                           "offset": 4401,
                           "length": 1,
                           "bitOffset": 4,
@@ -12455,7 +12639,7 @@
                         },
                         {
                           "name": "Dematrix Procedure",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4401,
                           "length": 1,
                           "bitOffset": 5,
@@ -12463,7 +12647,7 @@
                         },
                         {
                           "name": "Multilingual Channels",
-                          "value": "0",
+                          "value": 0,
                           "offset": 4401,
                           "length": 2,
                           "bitOffset": 7,
@@ -12487,7 +12671,7 @@
                         },
                         {
                           "name": "HasCopyrightIdentification",
-                          "value": "false",
+                          "value": false,
                           "offset": 4402,
                           "length": 1,
                           "bitOffset": 4,
@@ -12495,7 +12679,7 @@
                         },
                         {
                           "name": "IsCopyrightIdentificationStart",
-                          "value": "false",
+                          "value": false,
                           "offset": 4402,
                           "length": 1,
                           "bitOffset": 5,
@@ -12505,7 +12689,7 @@
                     },
                     {
                       "name": "CRC",
-                      "value": "0xFAC6",
+                      "value": 64198,
                       "offset": 4402,
                       "length": 3,
                       "bitOffset": 6,
@@ -12513,7 +12697,7 @@
                       "children": [
                         {
                           "name": "Computed",
-                          "value": "0xFAC6",
+                          "value": 64198,
                           "offset": 4402,
                           "length": 3,
                           "bitOffset": 6,
@@ -12538,7 +12722,7 @@
                         },
                         {
                           "name": "HasDynamicCrosstalk",
-                          "value": "false",
+                          "value": false,
                           "offset": 4404,
                           "length": 1,
                           "bitOffset": 7,
@@ -12546,7 +12730,7 @@
                         },
                         {
                           "name": "HasPrediction",
-                          "value": "false",
+                          "value": false,
                           "offset": 4405,
                           "length": 1,
                           "bitOffset": 0,
@@ -12570,7 +12754,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 4408,
                               "length": 1,
                               "bitOffset": 1,
@@ -12604,7 +12789,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "15 levels",
+                              "value": 15,
+                              "unit": "levels",
                               "offset": 4409,
                               "length": 1,
                               "bitOffset": 1,
@@ -12621,7 +12807,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 4409,
                               "length": 2,
                               "bitOffset": 5,
@@ -12638,7 +12825,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 4410,
                               "length": 1,
                               "bitOffset": 1,
@@ -12672,7 +12860,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 4411,
                               "length": 1,
                               "bitOffset": 1,
@@ -12689,7 +12878,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 4411,
                               "length": 2,
                               "bitOffset": 5,
@@ -12706,7 +12896,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3 levels",
+                              "value": 3,
+                              "unit": "levels",
                               "offset": 4412,
                               "length": 1,
                               "bitOffset": 1,
@@ -12740,7 +12931,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "7 levels",
+                              "value": 7,
+                              "unit": "levels",
                               "offset": 4413,
                               "length": 1,
                               "bitOffset": 1,
@@ -12757,7 +12949,8 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "5 levels",
+                              "value": 5,
+                              "unit": "levels",
                               "offset": 4413,
                               "length": 1,
                               "bitOffset": 5,
@@ -13089,7 +13282,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 4419,
                               "length": 2,
                               "bitOffset": 7,
@@ -13106,7 +13299,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 4420,
                               "length": 1,
                               "bitOffset": 1,
@@ -13123,7 +13316,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 4420,
                               "length": 1,
                               "bitOffset": 3,
@@ -13140,7 +13333,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 4420,
                               "length": 1,
                               "bitOffset": 5,
@@ -13157,7 +13350,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 4420,
                               "length": 2,
                               "bitOffset": 7,
@@ -13174,7 +13367,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 4421,
                               "length": 1,
                               "bitOffset": 1,
@@ -13191,7 +13384,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "3",
+                              "value": 3,
                               "offset": 4421,
                               "length": 1,
                               "bitOffset": 3,
@@ -13208,7 +13401,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "1",
+                              "value": 1,
                               "offset": 4421,
                               "length": 1,
                               "bitOffset": 5,
@@ -13225,7 +13418,7 @@
                           "children": [
                             {
                               "name": "Channel 2",
-                              "value": "2",
+                              "value": 2,
                               "offset": 4421,
                               "length": 2,
                               "bitOffset": 7,
@@ -13237,7 +13430,8 @@
                     },
                     {
                       "name": "Data",
-                      "value": "592 bytes",
+                      "value": 592,
+                      "unit": "bytes",
                       "offset": 4423,
                       "length": 592
                     }
@@ -13249,6 +13443,57 @@
         }
       ]
     },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "MPEG-1 Layer II",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "samples": 6912,
+        "duration": 0.156734693877551,
+        "averageBitrate": 255.97395833333334,
+        "isVbr": false,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0,
+              835,
+              1671,
+              2507,
+              3343,
+              4179
+            ],
+            "values": [
+              256,
+              256,
+              256,
+              256,
+              256,
+              256
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              256
+            ]
+          }
+        ]
+      }
+    ],
     "findings": []
   }
 ]

@@ -3,6 +3,7 @@ namespace Encspect.Core;
 public sealed class ParseContext
 {
     private readonly List<Finding> _findings = [];
+    private readonly List<StreamInfo> _streams = [];
 
     public ParseContext(ByteReader reader, Node root, IReadOnlyList<Node>? embeddedTags = null, IReadOnlyList<EncoderClaim>? encoderClaims = null)
     {
@@ -32,8 +33,18 @@ public sealed class ParseContext
 
     public IReadOnlyList<Finding> Findings => _findings;
 
-    public void AddFinding(Severity severity, string code, string message, Node? node = null)
+    public IReadOnlyList<StreamInfo> Streams => _streams;
+
+    // count: how many cases a finding reported once per stream stands for.
+    public void AddFinding(Severity severity, string code, string message, Node? node = null, int count = 1)
     {
-        _findings.Add(new Finding(severity, code, message, node));
+        ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
+        _findings.Add(new Finding(severity, code, message, node) { Count = count });
+    }
+
+    public void AddStream(StreamInfo stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        _streams.Add(stream);
     }
 }

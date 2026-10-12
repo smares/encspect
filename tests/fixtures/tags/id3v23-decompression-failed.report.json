@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v23-decompression-failed.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 71,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "61",
+                  "value": 61,
                   "offset": 6,
                   "length": 4
                 }
@@ -81,49 +87,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "17",
+                      "value": 17,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0080",
+                      "value": 128,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "true",
+                          "value": true,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -131,7 +137,7 @@
                     },
                     {
                       "name": "Decompressed Size",
-                      "value": "6",
+                      "value": 6,
                       "offset": 20,
                       "length": 4
                     }
@@ -139,7 +145,8 @@
                 },
                 {
                   "name": "Compressed Data",
-                  "value": "13 bytes",
+                  "value": 13,
+                  "unit": "bytes",
                   "offset": 24,
                   "length": 13
                 }
@@ -163,49 +170,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "16",
+                      "value": 16,
                       "offset": 41,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0080",
+                      "value": 128,
                       "offset": 45,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 45,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 45,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 45,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "true",
+                          "value": true,
                           "offset": 45,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 45,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 45,
                           "length": 2
                         }
@@ -213,7 +220,7 @@
                     },
                     {
                       "name": "Decompressed Size",
-                      "value": "141",
+                      "value": 141,
                       "offset": 47,
                       "length": 4
                     }
@@ -221,7 +228,8 @@
                 },
                 {
                   "name": "Compressed Data",
-                  "value": "12 bytes",
+                  "value": 12,
+                  "unit": "bytes",
                   "offset": 51,
                   "length": 12
                 }
@@ -229,7 +237,8 @@
             },
             {
               "name": "Padding",
-              "value": "8 bytes",
+              "value": 8,
+              "unit": "bytes",
               "offset": 63,
               "length": 8
             },
@@ -274,27 +283,42 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "id3v2.frame-decompression-failed",
         "message": "Frame TIT2 at 0xA is marked as zlib-compressed, but its data is not one complete zlib stream; its content is not decoded.",
         "offset": 10,
-        "length": 27
+        "length": 27,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "id3v2.frame-decompression-failed",
         "message": "Frame TPE1 at 0x25 is marked as zlib-compressed, but its data is not one complete zlib stream; its content is not decoded.",
         "offset": 37,
-        "length": 26
+        "length": 26,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 71,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

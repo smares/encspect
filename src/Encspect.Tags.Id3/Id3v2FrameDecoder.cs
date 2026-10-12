@@ -67,10 +67,10 @@ internal sealed class Id3v2FrameDecoder
     // content holds the decoded frame data after any extra header bytes, possibly cut short
     // when the frame is very large; decodedSize is its full decoded length and frameEnd the file
     // offset where the frame ends. image is the format and size of an APIC picture.
-    public static string? Decode(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings, out ImageInfo? image)
+    public static NodeValue? Decode(int major, string id, Node frame, DecodedBytes content, long decodedSize, long frameEnd, List<Finding> findings, out ImageInfo? image)
     {
         var decoder = new Id3v2FrameDecoder(major, id, frame, content, decodedSize, frameEnd, findings);
-        string? value = decoder.Decode();
+        NodeValue? value = decoder.Decode();
         image = decoder._image;
         return value;
     }
@@ -102,13 +102,13 @@ internal sealed class Id3v2FrameDecoder
         };
     }
 
-    private string? Decode()
+    private NodeValue? Decode()
     {
         try
         {
             return Kind(_major, _id) switch
             {
-                "T" => DecodeText(),
+                "T" => (NodeValue)DecodeText(),
                 "TXXX" => DecodeUserText(),
                 "W" => DecodeUrl(),
                 "WXXX" => DecodeUserUrl(),
@@ -227,7 +227,7 @@ internal sealed class Id3v2FrameDecoder
     {
         (string email, int next) = AddTerminatedLatin1("Email", 0);
         Require(next + 1, "rating");
-        AddRange("Rating", next, next + 1, Data[next].ToString(CultureInfo.InvariantCulture));
+        AddRange("Rating", next, next + 1, NodeValue.Integer(Data[next]));
         if (next + 1 < Length)
         {
             AddRange("Counter", next + 1, Length, FormatCounter(next + 1, Length));
@@ -236,9 +236,9 @@ internal sealed class Id3v2FrameDecoder
         return $"{email}: {Data[next]}";
     }
 
-    private string DecodeCounter()
+    private NodeValue DecodeCounter()
     {
-        string value = FormatCounter(0, Length);
+        NodeValue value = FormatCounter(0, Length);
         AddRange("Counter", 0, Length, value);
         return value;
     }
@@ -425,21 +425,22 @@ internal sealed class Id3v2FrameDecoder
     }
 
     // Binary data runs to the end of the frame, which may lie beyond the decoded prefix.
-    private string AddBinary(string name, int start)
+    private NodeValue AddBinary(string name, int start)
     {
         long size = Math.Max(0, _decodedSize - start);
         long offset = _content.OffsetOf(Math.Min(start, Length));
-        string value = $"{size} bytes";
+        NodeValue value = NodeValue.Integer(size, "bytes");
         _frame.Add(name, offset, _frameEnd - offset, value);
         return value;
     }
 
-    private void AddRange(string name, int start, int end, string value)
+    private void AddRange(string name, int start, int end, NodeValue value)
     {
         _frame.Add(name, _content.OffsetOf(start), _content.FileLength(start, end), value);
     }
 
-    private string FormatCounter(int start, int end)
+    // A counter longer than a long shows its bytes.
+    private NodeValue FormatCounter(int start, int end)
     {
         if (end - start > 8)
         {
@@ -452,7 +453,7 @@ internal sealed class Id3v2FrameDecoder
             value = (value << 8) | Data[i];
         }
 
-        return value.ToString(CultureInfo.InvariantCulture);
+        return value <= long.MaxValue ? NodeValue.Integer((long)value) : value.ToString(CultureInfo.InvariantCulture);
     }
 
     private void Require(int length, string field)

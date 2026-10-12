@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v1-control-bytes.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 512,
           "length": 128,
@@ -77,27 +83,41 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "id3v1.not-text",
         "message": "ID3v1 fields contain control characters, so this may not be a real tag: Title, Artist.",
         "offset": 512,
-        "length": 128
+        "length": 128,
+        "path": [
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "id3v1.year-not-numeric",
         "message": "The ID3v1 year \"[\\]^\" is not a number.",
         "offset": 605,
-        "length": 4
+        "length": 4,
+        "path": [
+          1,
+          4
+        ],
+        "count": 1
       }
     ]
   }

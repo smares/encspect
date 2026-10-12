@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-no-fields.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 26,
@@ -25,7 +31,7 @@
             },
             {
               "name": "Size",
-              "value": "11",
+              "value": 11,
               "offset": 523,
               "length": 6
             },
@@ -59,6 +65,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 538,
           "length": 128,
@@ -101,7 +108,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 664,
               "length": 1
             },
@@ -135,20 +142,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.no-fields",
         "message": "The tag has no fields; Lyrics3 v2.00 requires at least one.",
         "offset": 512,
-        "length": 26
+        "length": 26,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

@@ -22,9 +22,7 @@
     "Statistics/Bitrate Distribution/48 kbps": "1 frame (16.7%)",
     "Statistics/Bitrate Distribution/56 kbps": "1 frame (16.7%)",
     "Statistics/Bitrate Distribution/64 kbps": "1 frame (16.7%)",
-    "Statistics/Bitrate Over Time": "45",
     "Statistics/Maximum Reservoir Fill": "255 bytes",
-    "Statistics/Reservoir Fill Over Time": "230",
     "Statistics/VBR Header/Claimed Frames": "7",
     "Statistics/VBR Header/Counted Frames": "6",
     "Statistics/VBR Header/Claimed Bytes": "2189",
@@ -138,6 +136,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2.5 Layer III",
+   "sample_rate": 11025,
+   "samples": 3456,
+   "duration": "0.313 s",
+   "average_bitrate": "45.2 kbps",
+   "is_vbr": true,
+   "bitrate_over_time": "45",
+   "reservoir_fill_over_time": "230"
+  }
+ ],
  "findings": [],
  "detected_encoder": {
   "name": "Fraunhofer",

@@ -104,14 +104,10 @@ def encode(label, binary, libraries, source, path, arguments):
 def analyze(cli, path):
     """The encoder the analyzer names with its confidence, and whether every frame fails its CRC."""
     report = json.loads(subprocess.run([cli, "--json", str(path)], capture_output=True, text=True, check=True).stdout)[0]
-    frames = sum(1 for region in report["root"]["children"] for node in region.get("children", []) if node["name"] == "Frame")
-    failing = next((int(f["message"].split()[0]) for f in report["findings"] if f["code"] == "mpeg.crc-mismatch"), 0)
-    for region in report["root"]["children"]:
-        for node in region.get("children", []):
-            if node["name"] == "Encoder":
-                confidence = next(c["value"] for c in node["children"] if c["name"] == "Confidence")
-                return (node["value"], confidence), failing == frames
-    return (None, None), failing == frames
+    frames = sum(1 for region in report["root"]["children"] for node in region.get("children", []) if node.get("kind") == "Frame")
+    failing = next((f["count"] for f in report["findings"] if f["code"] == "mpeg.crc-mismatch"), 0)
+    stream = next((s for s in report["streams"] if s.get("encoder") is not None), {})
+    return (stream.get("encoder"), stream.get("encoderConfidence")), failing == frames
 
 
 MP3PRO_URL = "https://www.rarewares.org/rrw/files/mpeg/mp3ProAudioPlayer11.exe"
@@ -200,13 +196,13 @@ def check_mp3pro(cli, directory):
     write_tone(source, 44100, 2, signal="music")
     path = mp3pro_encode(directory, source)
     report = json.loads(subprocess.run([cli, "--json", str(path)], capture_output=True, text=True, check=True).stdout)[0]
-    region = next(r for r in report["root"]["children"] if r["name"] == "MPEG Audio")
+    region = next(r for r in report["root"]["children"] if r.get("kind") == "Stream")
     nodes = {n["name"]: n for n in region.get("children", [])}
     ofl = nodes.get("Original File Length")
     fields = {c["name"]: c["value"] for c in ofl["children"]} if ofl else {}
     expected = guessenc_ofl(path)
     good = (nodes.get("Enhancement", {}).get("value") == "mp3PRO" and ofl is not None and expected is not None
-            and fields["Delay"] == f"{expected['delay']} samples" and fields["Original Length"] == f"{expected['length']} samples"
+            and fields["Delay"] == expected["delay"] and fields["Original Length"] == expected["length"]
             and not any(f["code"] == "mpeg.ofl-exceeds-stream" for f in report["findings"]))
     print(f"mp3PRO Audio Player 1.1 with OFL on {source.stem}: enhancement {nodes.get('Enhancement', {}).get('value')}, "
           f"OFL {fields or None}, mp3guessenc OFL {expected}{'' if good else '  <- unexpected'}")

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v24-appended-without-footer.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 330
+        "length": 330,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

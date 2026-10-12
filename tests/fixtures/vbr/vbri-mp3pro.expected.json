@@ -23,9 +23,7 @@
     "Statistics/Maximum Bitrate": "64 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
     "Statistics/Bitrate Distribution/64 kbps": "12 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "64",
     "Statistics/Maximum Reservoir Fill": "187 bytes",
-    "Statistics/Reservoir Fill Over Time": "96",
     "Statistics/VBR Header/Claimed Frames": "13",
     "Statistics/VBR Header/Counted Frames": "12",
     "Statistics/VBR Header/Claimed Bytes": "2715",
@@ -1144,6 +1142,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2 Layer III",
+   "sample_rate": 22050,
+   "samples": 6912,
+   "duration": "0.313 s",
+   "average_bitrate": "64.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "64",
+   "reservoir_fill_over_time": "96"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.mp3pro",

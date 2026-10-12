@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-basic.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 339,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "3",
+                  "value": 3,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,19 +55,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "true",
+                  "value": true,
                   "offset": 532,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 533,
                   "length": 1
                 }
@@ -81,7 +87,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "33",
+                  "value": 33,
                   "offset": 537,
                   "length": 5
                 },
@@ -137,7 +143,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "11",
+                  "value": 11,
                   "offset": 578,
                   "length": 5
                 },
@@ -163,7 +169,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "13",
+                  "value": 13,
                   "offset": 597,
                   "length": 5
                 },
@@ -189,7 +195,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "52",
+                  "value": 52,
                   "offset": 618,
                   "length": 5
                 },
@@ -215,7 +221,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "53",
+                  "value": 53,
                   "offset": 678,
                   "length": 5
                 },
@@ -241,7 +247,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "53",
+                  "value": 53,
                   "offset": 739,
                   "length": 5
                 },
@@ -267,7 +273,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "31",
+                  "value": 31,
                   "offset": 800,
                   "length": 5
                 },
@@ -309,7 +315,7 @@
             },
             {
               "name": "Size",
-              "value": "324",
+              "value": 324,
               "offset": 836,
               "length": 6
             },
@@ -349,6 +355,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 851,
           "length": 128,
@@ -391,7 +398,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 977,
               "length": 1
             },
@@ -425,13 +432,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

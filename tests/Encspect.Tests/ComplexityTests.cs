@@ -73,7 +73,7 @@ public class ComplexityTests
     {
         byte[] frame = [0xFF, 0xFB, 0x00, 0x00, .. new byte[32]];
         Report report = Timed(Repeat(frame, 160_000).ToArray());
-        Assert.Equal("160000 frames", report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
+        Assert.Equal(NodeValue.Integer(160_000, "frames", "frame"), report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
     }
 
     private static Report Timed(byte[] data)

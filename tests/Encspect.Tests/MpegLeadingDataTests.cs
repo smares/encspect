@@ -15,7 +15,7 @@ public class MpegLeadingDataTests
         Report report = Analyze([.. new byte[MiB + 102_400], .. Frames(50)]);
 
         Node region = Assert.Single(report.Root.Children, c => c.Name == "MPEG Audio");
-        Assert.Equal("50 frames", region.Value);
+        Assert.Equal("50 frames", region.Value?.ToString());
         Finding junk = Assert.Single(report.Findings, f => f.Code == "mpeg.leading-junk");
         Assert.Contains("(all zero bytes)", junk.Message, StringComparison.Ordinal);
     }

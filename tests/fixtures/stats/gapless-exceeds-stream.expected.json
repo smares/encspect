@@ -18,9 +18,7 @@
     "Statistics/Maximum Bitrate": "128 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
     "Statistics/Bitrate Distribution/128 kbps": "3 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "128",
     "Statistics/Maximum Reservoir Fill": "382 bytes",
-    "Statistics/Reservoir Fill Over Time": "381",
     "Statistics/VBR Header/Claimed Frames": "3",
     "Statistics/VBR Header/Counted Frames": "3",
     "Statistics/VBR Header/Claimed Bytes": "1670",
@@ -131,6 +129,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 3456,
+   "duration": "0.078 s",
+   "average_bitrate": "127.9 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "128",
+   "reservoir_fill_over_time": "381"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.gapless-exceeds-stream",

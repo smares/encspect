@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v1-too-long.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "1.00",
           "offset": 512,
           "length": 6020,
@@ -59,6 +65,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 6532,
           "length": 128,
@@ -101,7 +108,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 6658,
               "length": 1
             },
@@ -135,20 +142,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.too-long",
         "message": "The lyrics are 6000 bytes long; Lyrics3 v1 allows at most 5100.",
         "offset": 523,
-        "length": 6000
+        "length": 6000,
+        "path": [
+          1,
+          1
+        ],
+        "count": 1
       }
     ]
   }

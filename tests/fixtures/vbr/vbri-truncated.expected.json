@@ -22,9 +22,7 @@
     "Statistics/Bitrate Distribution/128 kbps": "2 frames (33.3%)",
     "Statistics/Bitrate Distribution/160 kbps": "1 frame (16.7%)",
     "Statistics/Bitrate Distribution/192 kbps": "1 frame (16.7%)",
-    "Statistics/Bitrate Over Time": "136",
     "Statistics/Maximum Reservoir Fill": "511 bytes",
-    "Statistics/Reservoir Fill Over Time": "394",
     "Statistics/VBR Header/Claimed Frames": "7",
     "Statistics/VBR Header/Counted Frames": "6",
     "Statistics/VBR Header/Claimed Bytes": "3077",
@@ -138,6 +136,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 6912,
+   "duration": "0.157 s",
+   "average_bitrate": "135.8 kbps",
+   "is_vbr": true,
+   "bitrate_over_time": "136",
+   "reservoir_fill_over_time": "394"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.vbr-header-truncated",

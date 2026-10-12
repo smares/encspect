@@ -229,10 +229,10 @@ internal sealed class Layer3SideInfo
     // is not stored in the file, so its node points at main_data_begin, which it bounds.
     public Node ToNode(long offset, int reservoirFill)
     {
-        Node node = new("Side Info", offset, Size(Header));
-        Add(node, "Main Data Begin", MainDataBegin, $"{MainDataBegin.Value} bytes");
-        Add(node, "Reservoir Fill", MainDataBegin, $"{reservoirFill} bytes");
-        Add(node, "Private Bits", PrivateBits, Number(PrivateBits.Value));
+        Node node = new("Side Info", offset, Size(Header)) { Kind = NodeKind.SideInfo };
+        Add(node, "Main Data Begin", MainDataBegin, NodeValue.Integer(MainDataBegin.Value, "bytes"));
+        Add(node, "Reservoir Fill", MainDataBegin, NodeValue.Integer(reservoirFill, "bytes"));
+        Add(node, "Private Bits", PrivateBits, NodeValue.Integer(PrivateBits.Value));
         if (Scfsi.Length > 0)
         {
             Node scfsi = node.Add(Span("SCFSI", offset, Scfsi[0].Bit, Scfsi[^1].Bit + Scfsi[^1].Length));
@@ -254,48 +254,55 @@ internal sealed class Layer3SideInfo
 
         return node;
 
-        void Add(Node parent, string name, BitField field, string value) =>
+        void Add(Node parent, string name, BitField field, NodeValue value) =>
             parent.Add(Span(name, offset, field.Bit, field.Bit + field.Length, value));
 
         void AddGranule(Node parent, Layer3Granule g)
         {
-            Add(parent, "Part 2 and 3 Length", g.Part23Length, $"{g.Part23Length.Value} bits");
-            Add(parent, "Big Values", g.BigValues, Number(g.BigValues.Value));
-            Add(parent, "Global Gain", g.GlobalGain, Number(g.GlobalGain.Value));
-            Add(parent, "Scalefactor Compress", g.ScalefacCompress, Number(g.ScalefacCompress.Value));
+            Add(parent, "Part 2 and 3 Length", g.Part23Length, NodeValue.Integer(g.Part23Length.Value, "bits"));
+            Add(parent, "Big Values", g.BigValues, NodeValue.Integer(g.BigValues.Value));
+            Add(parent, "Global Gain", g.GlobalGain, NodeValue.Integer(g.GlobalGain.Value));
+            Add(parent, "Scalefactor Compress", g.ScalefacCompress, NodeValue.Integer(g.ScalefacCompress.Value));
             if (g.IsSwitched)
             {
-                string type = g.BlockType.Value == 0 ? "Reserved" : BlockTypes[g.BlockType.Value];
-                parent.Add(Span("Block Type", offset, g.WindowSwitching.Bit, g.BlockType.Bit + g.BlockType.Length, type));
-                Add(parent, "IsMixedBlock", g.MixedBlock, Bool(g.MixedBlock.Value));
-                parent.Add(Span("Table Select", offset, g.TableSelect[0].Bit, g.TableSelect[^1].Bit + 5, List(g.TableSelect)));
+                parent.Add(BlockTypeSpan(offset, g, g.BlockType.Value == 0 ? "Reserved" : BlockTypes[g.BlockType.Value]));
+                Add(parent, "IsMixedBlock", g.MixedBlock, NodeValue.Boolean(g.MixedBlock.Value != 0));
+                parent.Add(TableSelectSpan(offset, g, List(g.TableSelect)));
                 parent.Add(Span("Subblock Gain", offset, g.SubblockGain[0].Bit, g.SubblockGain[^1].Bit + 3, List(g.SubblockGain)));
             }
             else
             {
-                Add(parent, "Block Type", g.WindowSwitching, BlockTypes[0]);
-                parent.Add(Span("Table Select", offset, g.TableSelect[0].Bit, g.TableSelect[^1].Bit + 5, List(g.TableSelect)));
-                Add(parent, "Region 0 Count", g.Region0Count, Number(g.Region0Count.Value));
-                Add(parent, "Region 1 Count", g.Region1Count, Number(g.Region1Count.Value));
+                parent.Add(BlockTypeSpan(offset, g, BlockTypes[0]));
+                parent.Add(TableSelectSpan(offset, g, List(g.TableSelect)));
+                Add(parent, "Region 0 Count", g.Region0Count, NodeValue.Integer(g.Region0Count.Value));
+                Add(parent, "Region 1 Count", g.Region1Count, NodeValue.Integer(g.Region1Count.Value));
             }
 
             if (Header.IsMpeg1)
             {
-                Add(parent, "HasPreflag", g.Preflag, Bool(g.Preflag.Value));
+                Add(parent, "HasPreflag", g.Preflag, NodeValue.Boolean(g.Preflag.Value != 0));
             }
 
-            Add(parent, "HasCoarseScalefactors", g.ScalefacScale, Bool(g.ScalefacScale.Value));
+            Add(parent, "HasCoarseScalefactors", g.ScalefacScale, NodeValue.Boolean(g.ScalefacScale.Value != 0));
             Add(parent, "Count1 Table", g.Count1Table, g.Count1Table.Value == 0 ? "A" : "B");
         }
     }
 
     // A node covering the bytes that hold bits [startBit, endBit) of the side information.
-    public static Node Span(string name, long offset, int startBit, int endBit, string? value = null) =>
+    public static Node Span(string name, long offset, int startBit, int endBit, NodeValue? value = null) =>
         Node.FromBits(name, offset, startBit, endBit, value);
 
-    private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+    // The block type node covers window_switching_flag and, where it is set, block_type.
+    public static Node BlockTypeSpan(long offset, Layer3Granule g, NodeValue? value = null) =>
+        g.IsSwitched
+            ? Span("Block Type", offset, g.WindowSwitching.Bit, g.BlockType.Bit + g.BlockType.Length, value)
+            : Span("Block Type", offset, g.WindowSwitching.Bit, g.WindowSwitching.Bit + g.WindowSwitching.Length, value);
 
-    private static string Bool(int value) => value != 0 ? "true" : "false";
+    // One node covers every table_select of a granule and channel.
+    public static Node TableSelectSpan(long offset, Layer3Granule g, NodeValue? value = null) =>
+        Span("Table Select", offset, g.TableSelect[0].Bit, g.TableSelect[^1].Bit + 5, value);
+
+    private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 
     private static string List(BitField[] fields) => string.Join(", ", fields.Select(f => Number(f.Value)));
 }

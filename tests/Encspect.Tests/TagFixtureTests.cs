@@ -79,7 +79,7 @@ public class TagFixtureTests
         {
             foreach (JsonProperty field in fields.EnumerateObject())
             {
-                string[] actual = Fixtures.Resolve(node, field.Name).Select(n => n.Value ?? string.Empty).ToArray();
+                string[] actual = Fixtures.Resolve(node, field.Name).Select(n => n.Value?.ToString() ?? string.Empty).ToArray();
                 string[] wanted = field.Value.ValueKind == JsonValueKind.Array
                     ? field.Value.EnumerateArray().Select(v => v.GetString()!).ToArray()
                     : [field.Value.GetString()!];

@@ -17,8 +17,7 @@
     "Statistics/Minimum Bitrate": "128 kbps",
     "Statistics/Maximum Bitrate": "128 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
-    "Statistics/Bitrate Distribution/128 kbps": "6 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "128"
+    "Statistics/Bitrate Distribution/128 kbps": "6 frames (100.0%)"
    }
   }
  ],
@@ -2179,6 +2178,17 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer II",
+   "sample_rate": 48000,
+   "samples": 6912,
+   "duration": "0.144 s",
+   "average_bitrate": "128.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "128"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.multichannel-unverified",

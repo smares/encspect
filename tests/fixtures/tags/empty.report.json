@@ -1,18 +1,26 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "empty.mp3",
     "root": {
       "name": "File",
       "offset": 0,
       "length": 0
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "file.empty",
         "message": "The file is empty.",
         "offset": 0,
-        "length": 0
+        "length": 0,
+        "path": [],
+        "count": 1
       }
     ]
   }

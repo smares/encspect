@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-invalid-byte.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 46,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "12",
+                  "value": 12,
                   "offset": 526,
                   "length": 5
                 },
@@ -59,7 +65,7 @@
             },
             {
               "name": "Size",
-              "value": "31",
+              "value": 31,
               "offset": 543,
               "length": 6
             },
@@ -93,6 +99,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 558,
           "length": 128,
@@ -135,7 +142,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 684,
               "length": 1
             },
@@ -169,20 +176,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.invalid-byte",
         "message": "Field LYR contains the byte $00, outside the 01 to 254 that Lyrics3 v2.00 allows.",
         "offset": 523,
-        "length": 20
+        "length": 20,
+        "path": [
+          1,
+          1
+        ],
+        "count": 1
       }
     ]
   }

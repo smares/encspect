@@ -16,7 +16,18 @@ public static class ReportTextWriter
         ArgumentNullException.ThrowIfNull(filter);
 
         writer.WriteLine(Escape(report.Source));
-        WriteNode(report.Root, writer, showOffsets, filter, 0);
+        Dictionary<Node, List<Series>> anchored = new(ReferenceEqualityComparer.Instance);
+        foreach (Series series in report.Streams.SelectMany(s => s.Series).Where(s => s.Anchor is not null))
+        {
+            if (!anchored.TryGetValue(series.Anchor!, out List<Series>? list))
+            {
+                anchored[series.Anchor!] = list = [];
+            }
+
+            list.Add(series);
+        }
+
+        WriteNode(report.Root, writer, showOffsets, filter, 0, anchored);
 
         if (report.Findings.Count > 0)
         {
@@ -39,14 +50,14 @@ public static class ReportTextWriter
     // hold hundreds of thousands of nodes.
     // depth: levels below the root. Recursion stops at Node.MaxDepth, where a line says that
     // deeper children are left out.
-    private static void WriteNode(Node node, TextWriter writer, bool showOffsets, ReportFilter filter, int depth)
+    private static void WriteNode(Node node, TextWriter writer, bool showOffsets, ReportFilter filter, int depth, Dictionary<Node, List<Series>> anchored)
     {
         Indent(writer, depth);
         writer.Write(node.Name);
-        if (node.Value is not null)
+        if (node.Value is { } value)
         {
             writer.Write(": ");
-            writer.Write(Escape(node.Value));
+            WriteValue(value, writer);
         }
 
         if (showOffsets)
@@ -58,21 +69,75 @@ public static class ReportTextWriter
 
         if (depth >= Node.MaxDepth)
         {
-            if (node.HasChildren && node.Children.Any(c => filter.Includes(c, node)))
+            if (node.HasChildren && node.Children.Any(filter.Includes))
             {
                 Indent(writer, depth + 1);
                 writer.WriteLine($"(children nested deeper than {Node.MaxDepth} levels are not shown)");
             }
+        }
+        else
+        {
+            foreach (Node child in node.Children)
+            {
+                if (filter.Includes(child))
+                {
+                    WriteNode(child, writer, showOffsets, filter, depth + 1, anchored);
+                }
+            }
+        }
 
+        if (anchored.TryGetValue(node, out List<Series>? series))
+        {
+            foreach (Series item in series)
+            {
+                WriteSeries(item, writer, depth, showOffsets);
+            }
+        }
+    }
+
+    // A series in one line after the node it belongs with, "Bitrate Over Time: 128,160,128", and
+    // with offsets that node's location.
+    private static void WriteSeries(Series series, TextWriter writer, int depth, bool showOffsets)
+    {
+        Indent(writer, depth);
+        writer.Write(series.Name);
+        writer.Write(": ");
+        ReadOnlySpan<double> values = series.Values.Span;
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (i > 0)
+            {
+                writer.Write(',');
+            }
+
+            writer.Write(values[i].ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (showOffsets)
+        {
+            WriteLocation(series.Anchor!, writer);
+        }
+
+        writer.WriteLine();
+    }
+
+    // Values from the file are text and escaped; numbers are written without a string per node.
+    private static void WriteValue(NodeValue value, TextWriter writer)
+    {
+        if (value.AsText() is { } text)
+        {
+            writer.Write(Escape(text));
             return;
         }
 
-        foreach (Node child in node.Children)
+        Span<char> buffer = stackalloc char[96];
+        if (value.TryFormat(buffer, out int written))
         {
-            if (filter.Includes(child, node))
-            {
-                WriteNode(child, writer, showOffsets, filter, depth + 1);
-            }
+            writer.Write(buffer[..written]);
+        }
+        else
+        {
+            writer.Write(Escape(value.ToString()));
         }
     }
 

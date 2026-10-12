@@ -19,9 +19,7 @@
     "Statistics/Bitrate Distribution": "2 bitrates",
     "Statistics/Bitrate Distribution/128 kbps": "4 frames (44.4%)",
     "Statistics/Bitrate Distribution/free": "5 frames (55.6%)",
-    "Statistics/Bitrate Over Time": "125",
-    "Statistics/Maximum Reservoir Fill": "381 bytes",
-    "Statistics/Reservoir Fill Over Time": "256"
+    "Statistics/Maximum Reservoir Fill": "381 bytes"
    }
   }
  ],
@@ -1414,6 +1412,28 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 5760,
+   "duration": "0.131 s",
+   "average_bitrate": "122.5 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "122",
+   "reservoir_fill_over_time": "251"
+  },
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 4608,
+   "duration": "0.104 s",
+   "average_bitrate": "127.9 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "128",
+   "reservoir_fill_over_time": "261"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.free-format",

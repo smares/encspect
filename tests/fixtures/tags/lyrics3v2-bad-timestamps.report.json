@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-bad-timestamps.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 98,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "3",
+                  "value": 3,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,19 +55,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "true",
+                  "value": true,
                   "offset": 532,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 533,
                   "length": 1
                 }
@@ -81,7 +87,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "23",
+                  "value": 23,
                   "offset": 537,
                   "length": 5
                 },
@@ -123,7 +129,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "22",
+                  "value": 22,
                   "offset": 568,
                   "length": 5
                 },
@@ -165,7 +171,7 @@
             },
             {
               "name": "Size",
-              "value": "83",
+              "value": 83,
               "offset": 595,
               "length": 6
             },
@@ -205,6 +211,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 610,
           "length": 128,
@@ -247,7 +254,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 736,
               "length": 1
             },
@@ -281,27 +288,48 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.timestamp-invalid",
         "message": "The timestamp [00:75] has more than 59 seconds.",
         "offset": 542,
-        "length": 7
+        "length": 7,
+        "path": [
+          1,
+          2,
+          2,
+          0,
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.timestamp-invalid",
         "message": "The IMG timestamp \"0:10\" is not [mm:ss].",
         "offset": 591,
-        "length": 4
+        "length": 4,
+        "path": [
+          1,
+          3,
+          2,
+          0,
+          2
+        ],
+        "count": 1
       }
     ]
   }

@@ -79,21 +79,30 @@ def tool_problems(path, sample):
     return problems
 
 
+def shown(node, decimals=0):
+    """A typed value with its unit as the report's text shows it."""
+    if node is None:
+        return None
+    return f"{node['value']:.{decimals}f} {node['unit']}" if "unit" in node else node["value"]
+
+
 def analyzer_problems(analyzer, path, sample):
     report = json.loads(subprocess.run([analyzer, "--ndjson", str(path)], capture_output=True, text=True, check=True).stdout)
     frames = list(walk(report["root"], "Frame"))
     problems = []
+    if report.get("schemaVersion") != 1:
+        problems.append(f"the analyzer writes report schema {report.get('schemaVersion')}, this script reads 1")
     if len(frames) != sample["frames"]:
         problems.append(f"the analyzer finds {len(frames)} frames, the manifest lists {sample['frames']}")
     header = {c["name"]: c.get("value") for c in child(frames[0], "Header")["children"]} if frames else {}
-    if (header.get("Version"), header.get("Sample Rate")) != (sample["version"], f"{sample['sample_rate']} Hz"):
+    if (header.get("Version"), header.get("Sample Rate")) != (sample["version"], sample["sample_rate"]):
         problems.append(f"the first frame is {header.get('Version')} at {header.get('Sample Rate')}")
-    region = child(report["root"], "MPEG Audio")
+    region = next(walk(report["root"], "Stream"), None)
     enhancement = child(region, "Enhancement") if region else None
     actual = None
     if enhancement:
-        fields = {c["name"]: c.get("value") for c in enhancement["children"]}
-        actual = (enhancement["value"], fields.get("Ancillary Data"), fields.get("Data Rate"))
+        fields = {c["name"]: c for c in enhancement["children"]}
+        actual = (enhancement["value"], shown(fields.get("Ancillary Data")), shown(fields.get("Data Rate"), decimals=1))
     expected = (sample["enhancement"], f"{sample['ancillary_bytes']} bytes", sample["ancillary_rate"])
     if actual != expected:
         problems.append(f"the analyzer reports the enhancement {actual}, the manifest {expected}")

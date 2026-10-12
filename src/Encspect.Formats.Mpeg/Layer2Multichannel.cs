@@ -39,8 +39,8 @@ internal sealed class Layer2Multichannel
     // Subband to subband group.
     private static readonly int[] Groups = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11];
 
-    private readonly List<(string Name, int Bit, int Length, string Value)> _header = [];
-    private readonly List<(string Name, int Bit, int Length, string Value)> _status = [];
+    private readonly List<(string Name, int Bit, int Length, NodeValue Value)> _header = [];
+    private readonly List<(string Name, int Bit, int Length, NodeValue Value)> _status = [];
     private readonly List<(int Subband, int Channel, int Bit, int Index)> _allocation = [];
     private readonly List<(int Subband, int Channel, int Bit, int Value)> _scfsi = [];
 
@@ -120,7 +120,7 @@ internal sealed class Layer2Multichannel
             bits.Read(8);
         }
 
-        int Field(List<(string, int, int, string)> list, string name, int length, Func<int, string> describe)
+        int Field(List<(string, int, int, NodeValue)> list, string name, int length, Func<int, NodeValue> describe)
         {
             int bit = bits.Position;
             int value = bits.Read(length);
@@ -131,15 +131,15 @@ internal sealed class Layer2Multichannel
         mc.HasExtension = Field(mc._header, "HasExtensionBitstream", 1, Bool) == 1;
         if (mc.HasExtension)
         {
-            mc.AncillaryBytes = Field(mc._header, "Ancillary Bytes", 8, Number);
+            mc.AncillaryBytes = Field(mc._header, "Ancillary Bytes", 8, Integer);
         }
 
         mc.Center = Field(mc._header, "Center", 2, v => CenterNames[v]);
         mc.Surround = Field(mc._header, "Surround", 2, v => SurroundNames[v]);
         mc.HasLfe = Field(mc._header, "HasLfe", 1, Bool) == 1;
-        Field(mc._header, "Audio Mix", 1, Number);
-        mc.DematrixProcedure = Field(mc._header, "Dematrix Procedure", 2, Number);
-        mc.MultilingualChannels = Field(mc._header, "Multilingual Channels", 3, Number);
+        Field(mc._header, "Audio Mix", 1, Integer);
+        mc.DematrixProcedure = Field(mc._header, "Dematrix Procedure", 2, Integer);
+        mc.MultilingualChannels = Field(mc._header, "Multilingual Channels", 3, Integer);
         Field(mc._header, "Multilingual Sample Rate", 1, v => v == 0 ? "Full" : "Half");
         Field(mc._header, "Multilingual Layer", 1, v => v == 0 ? "II" : "I");
         Field(mc._header, "HasCopyrightIdentification", 1, Bool);
@@ -159,7 +159,7 @@ internal sealed class Layer2Multichannel
         int tcBit = bits.Position;
         int[] tc = tcSelect == 1 ? Enumerable.Repeat(bits.Read(tcBits), 12).ToArray() : Enumerable.Range(0, 12).Select(_ => bits.Read(tcBits)).ToArray();
         mc._status.Add(("Channel Allocation", tcBit - 3, bits.Position - tcBit + 3,
-            tcSelect == 1 ? Number(tc[0]) : string.Join(", ", tc.Select(Number))));
+            tcSelect == 1 ? Integer(tc[0]) : string.Join(", ", tc.Select(Number))));
 
         int[] dynMode = new int[12];
         int[] secondStereo = new int[12];
@@ -305,12 +305,12 @@ internal sealed class Layer2Multichannel
     {
         Node node = Span("Multichannel", fileOffset, Start, End, Configuration);
         Node header = node.Add(Span("Header", fileOffset, Start, CrcBit));
-        foreach ((string name, int bit, int length, string value) in _header)
+        foreach ((string name, int bit, int length, NodeValue value) in _header)
         {
             header.Add(Span(name, fileOffset, bit, bit + length, value));
         }
 
-        Node crc = node.Add(Span("CRC", fileOffset, CrcBit, CrcBit + 16, $"0x{StoredCrc:X4}"));
+        Node crc = node.Add(Span("CRC", fileOffset, CrcBit, CrcBit + 16, NodeValue.Hex(StoredCrc, 4)));
         if (HasAncillaryOverflow)
         {
             return node;
@@ -322,16 +322,16 @@ internal sealed class Layer2Multichannel
             return node;
         }
 
-        crc.Add(Span("Computed", fileOffset, CrcBit, CrcBit + 16, $"0x{ComputedCrc:X4}"));
+        crc.Add(Span("Computed", fileOffset, CrcBit, CrcBit + 16, NodeValue.Hex(ComputedCrc, 4)));
         Node status = node.Add(Span("Composite Status", fileOffset, CrcBit + 16, HasLfe ? LfeBit : AllocationStart));
-        foreach ((string name, int bit, int length, string value) in _status.OrderBy(s => s.Bit))
+        foreach ((string name, int bit, int length, NodeValue value) in _status.OrderBy(s => s.Bit))
         {
             status.Add(Span(name, fileOffset, bit, bit + length, value));
         }
 
         if (HasLfe)
         {
-            node.Add(Span("LFE Allocation", fileOffset, LfeBit, LfeBit + 4, LfeAllocation == 0 ? "None" : $"{LfeAllocation + 1} bits"));
+            node.Add(Span("LFE Allocation", fileOffset, LfeBit, LfeBit + 4, LfeAllocation == 0 ? "None" : NodeValue.Integer(LfeAllocation + 1, "bits")));
         }
 
         int table = rate == 48000 ? 0 : 1;
@@ -343,7 +343,7 @@ internal sealed class Layer2Multichannel
             foreach ((int _, int channel, int bit, int index) in subband)
             {
                 int levels = Layer2AudioData.Levels(table, subband.Key)[index];
-                group.Add(Span($"Channel {channel}", fileOffset, bit, bit + width, levels == 0 ? "None" : $"{levels} levels"));
+                group.Add(Span($"Channel {channel}", fileOffset, bit, bit + width, levels == 0 ? "None" : NodeValue.Integer(levels, "levels")));
             }
         }
 
@@ -353,19 +353,21 @@ internal sealed class Layer2Multichannel
             Node group = scfsi.Add(Span($"Subband {subband.Key}", fileOffset, subband.First().Bit, subband.Last().Bit + 2));
             foreach ((int _, int channel, int bit, int value) in subband)
             {
-                group.Add(Span($"Channel {channel}", fileOffset, bit, bit + 2, Number(value)));
+                group.Add(Span($"Channel {channel}", fileOffset, bit, bit + 2, Integer(value)));
             }
         }
 
         int dataStart = (SideInfoEnd + 7) / 8;
-        node.Add(new Node("Data", fileOffset + dataStart, Math.Max((End / 8) - dataStart, 0), $"{Math.Max((End / 8) - dataStart, 0)} bytes"));
+        node.Add(new Node("Data", fileOffset + dataStart, Math.Max((End / 8) - dataStart, 0), NodeValue.Integer(Math.Max((End / 8) - dataStart, 0), "bytes")));
         return node;
     }
 
-    private static Node Span(string name, long fileOffset, int startBit, int endBit, string? value = null) =>
+    private static Node Span(string name, long fileOffset, int startBit, int endBit, NodeValue? value = null) =>
         Layer2AudioData.Span(name, fileOffset, startBit, endBit, value);
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 
-    private static string Bool(int value) => value != 0 ? "true" : "false";
+    private static NodeValue Integer(int value) => NodeValue.Integer(value);
+
+    private static NodeValue Bool(int value) => NodeValue.Boolean(value != 0);
 }

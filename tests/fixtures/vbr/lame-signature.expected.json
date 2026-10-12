@@ -18,9 +18,7 @@
     "Statistics/Maximum Bitrate": "128 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
     "Statistics/Bitrate Distribution/128 kbps": "6 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "128",
-    "Statistics/Maximum Reservoir Fill": "380 bytes",
-    "Statistics/Reservoir Fill Over Time": "317"
+    "Statistics/Maximum Reservoir Fill": "380 bytes"
    }
   }
  ],
@@ -393,6 +391,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 6912,
+   "duration": "0.157 s",
+   "average_bitrate": "127.7 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "128",
+   "reservoir_fill_over_time": "317"
+  }
+ ],
  "findings": [],
  "detected_encoder": {
   "name": "LAME 3.99.x",

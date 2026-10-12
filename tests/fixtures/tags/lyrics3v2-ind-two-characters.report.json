@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-ind-two-characters.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 49,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "2",
+                  "value": 2,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,13 +55,13 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "false",
+                  "value": false,
                   "offset": 532,
                   "length": 1
                 }
@@ -75,7 +81,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "5",
+                  "value": 5,
                   "offset": 536,
                   "length": 5
                 },
@@ -97,7 +103,7 @@
             },
             {
               "name": "Size",
-              "value": "34",
+              "value": 34,
               "offset": 546,
               "length": 6
             },
@@ -137,6 +143,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 561,
           "length": 128,
@@ -179,7 +186,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 687,
               "length": 1
             },
@@ -213,13 +220,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

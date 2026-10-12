@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v22-basic.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.2.0",
           "offset": 0,
           "length": 132,
@@ -31,19 +37,19 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsCompressed",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -51,7 +57,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "122",
+                  "value": 122,
                   "offset": 6,
                   "length": 4
                 }
@@ -76,7 +82,7 @@
                     },
                     {
                       "name": "Size",
-                      "value": "11",
+                      "value": 11,
                       "offset": 13,
                       "length": 3
                     }
@@ -115,7 +121,7 @@
                     },
                     {
                       "name": "Size",
-                      "value": "15",
+                      "value": 15,
                       "offset": 30,
                       "length": 3
                     }
@@ -154,7 +160,7 @@
                     },
                     {
                       "name": "Size",
-                      "value": "17",
+                      "value": 17,
                       "offset": 51,
                       "length": 3
                     }
@@ -205,7 +211,7 @@
                     },
                     {
                       "name": "Size",
-                      "value": "23",
+                      "value": 23,
                       "offset": 74,
                       "length": 3
                     }
@@ -237,7 +243,8 @@
                 },
                 {
                   "name": "Picture Data",
-                  "value": "12 bytes",
+                  "value": 12,
+                  "unit": "bytes",
                   "offset": 88,
                   "length": 12
                 }
@@ -245,7 +252,8 @@
             },
             {
               "name": "Padding",
-              "value": "32 bytes",
+              "value": 32,
+              "unit": "bytes",
               "offset": 100,
               "length": 32
             },
@@ -296,13 +304,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 132,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }
