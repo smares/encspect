@@ -10,17 +10,19 @@ internal sealed class StreamSetup
     {
         ObjectType = config.ObjectType;
         SampleRate = config.CoreSampleRate;
-        SampleIndex = SampleRateIndex(config.CoreSampleRate);
-        Is960 = config.CoreFrameLength == 960;
-        LongOffsets = Is960 ? BandTables.Long960[SampleIndex] : BandTables.Long[SampleIndex];
-        ShortOffsets = Is960 ? BandTables.Short120[SampleIndex] : BandTables.Short[SampleIndex];
-        LongBands = Is960 ? BandTables.NumLong960[SampleIndex] : BandTables.NumLong[SampleIndex];
-        ShortBands = Is960 ? BandTables.NumShort120[SampleIndex] : BandTables.NumShort[SampleIndex];
-        LongLines = Is960 ? 960 : 1024;
-        PredictionBands = BandTables.PredictionMax[SampleIndex];
+        int index = SampleRateIndex(config.CoreSampleRate);
+        bool is960 = config.CoreFrameLength == 960;
+        LongOffsets = is960 ? BandTables.Long960[index] : BandTables.Long[index];
+        ShortOffsets = is960 ? BandTables.Short120[index] : BandTables.Short[index];
+        LongBands = is960 ? BandTables.NumLong960[index] : BandTables.NumLong[index];
+        ShortBands = is960 ? BandTables.NumShort120[index] : BandTables.NumShort[index];
+        LongLines = is960 ? 960 : 1024;
+        PredictionBands = BandTables.PredictionMax[index];
         ChannelConfiguration = config.ChannelConfiguration;
-        SbrSampleRate = config.Sbr == true && config.ExtensionSampleRate is { } rate ? rate : 2 * config.CoreSampleRate;
-        IsSbrSignaledAbsent = config.Sbr == false;
+        // SBR's frequency tables are derived at twice the core rate whatever extension rate the
+        // configuration states, as fdk-aac (env_extr.cpp), ffmpeg and faad2 derive them; the stated
+        // rate only sets the output rate.
+        SbrSampleRate = 2 * config.CoreSampleRate;
         (ExpectedSce, ExpectedCpe, ExpectedLfe) = config.ChannelConfiguration switch
         {
             1 => (1, 0, 0),
@@ -43,10 +45,6 @@ internal sealed class StreamSetup
 
     public int SampleRate { get; }
 
-    public int SampleIndex { get; }
-
-    public bool Is960 { get; }
-
     public ushort[] LongOffsets { get; }
 
     public ushort[] ShortOffsets { get; }
@@ -62,8 +60,6 @@ internal sealed class StreamSetup
     public int ChannelConfiguration { get; }
 
     public int SbrSampleRate { get; }
-
-    public bool IsSbrSignaledAbsent { get; }
 
     // The single channel, channel pair and LFE elements the channel configuration defines, or -1
     // where it leaves them to a program config element (ISO/IEC 14496-3 1.6.3.5, Table 1.19).

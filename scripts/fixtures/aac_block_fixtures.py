@@ -205,8 +205,8 @@ def stereo():
     f = "ADTS/Frame[{}]/Raw Data Block/CPE"
     streams = [s for m in made for s in m[1]]
     fields = {
-        f.format(0) + "/MS Mask Present": "0 (no mid/side)", f.format(1) + "/MS Mask Present": "1 (per band)",
-        f.format(1) + "/Mid/Side Bands": band_text([[u == 1 for u in used[0]]]), f.format(2) + "/MS Mask Present": "2 (all bands)",
+        f.format(0) + "/Mid/Side Mask Present": "0 (no mid/side)", f.format(1) + "/Mid/Side Mask Present": "1 (per band)",
+        f.format(1) + "/Mid/Side Bands": band_text([[u == 1 for u in used[0]]]), f.format(2) + "/Mid/Side Mask Present": "2 (all bands)",
         f.format(3) + "/HasCommonWindow": "false", f.format(3) + "/Channel 0/ICS Info/Window Sequence": "0 (only long)",
         f.format(3) + "/Channel 1/ICS Info/Window Sequence": "2 (eight short)",
         f.format(3) + "/Channel 1/ICS Info/Scale Factor Grouping": "0x77 (2 groups of 4, 4 windows)",
@@ -315,6 +315,9 @@ def mp4_fixture(name, description, config, rate, channels, units, codec, out_rat
     }
 
 
+FAAD_PS_ABSENT = {"label": "HE AAC", "channels": 2, "rate": 44100}
+
+
 def mp4_fixtures():
     stats = "MP4/mdat/Track 1 Samples/AAC/Statistics"
     out = []
@@ -334,6 +337,33 @@ def mp4_fixtures():
          "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
         [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
         {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+    units = [b for b, _ in sbr_units(12, "stereo")]
+    out.append(mp4_fixture(
+        "sbr-downsampled", "HE-AAC signaled hierarchically with an extension rate equal to the core's 22050 Hz (downsampled SBR): decoders derive "
+        "SBR's frequency tables at twice the core rate all the same, and output 22050 Hz.", asc(2, 22050, 2, sbr=True, signaling="hierarchical",
+                                                                                                  extension_rate=22050), 22050, 2,
+        units, "HE-AAC", 22050, 2, "Stereo", {k.replace("ADTS", "MP4/mdat/Track 1 Samples/AAC"): v for k, v in sbr_fields("ADTS", 12, 3, False).items()}, [],
+        {"label": "LC AAC", "channels": 2, "rate": 22050}, ffprobe_profile="HE-AAC"))
+    units = [b for b, _ in sbr_units(12, "mono", ps=True)]
+    name, data, man = mp4_fixture(
+        "ps-signaled-absent", "HE-AAC over a mono core whose sync extensions signal SBR present and PS absent, over access units that carry the "
+        "parametric stereo extension anyway: mono, with a warning.", asc(2, 22050, 1, sbr=True, ps=False, signaling="backward", extension_rate=44100),
+        22050, 1, units, "HE-AAC", 44100, 1, "Mono", {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit")},
+        [["aac.ps-signaled-absent", "signals PS absent, but 12 of 12 raw data blocks carry the parametric stereo extension"]], FAAD_PS_ABSENT)
+    man["crosscheck"]["decode"] = False
+    man["crosscheck"]["skip"] = {"decode": "ffmpeg reports that PS is signaled absent but found, the condition the fixture tests."}
+    out.append((name, data, man))
+    units = [b for b, _ in sbr_units(12, "stereo", ps=True)]
+    name, data, man = (mp4_fixture(
+        "ps-in-channel-pair", "AAC LC at 22050 Hz in its configuration whose channel pairs carry SBR data with the parametric stereo extension's "
+        "ID, which only a single channel element can carry: HE-AAC with two channels, and a warning.", asc(2, 22050, 2), 22050, 2, units,
+        "HE-AAC", 44100, 2, "Stereo", {stats + "/SBR/Parametric Stereo": share(0, 12, "access unit")},
+        [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC,"],
+         ["aac.ps-in-channel-pair", "12 raw data blocks hold the parametric stereo extension's ID in a channel pair's SBR data"]],
+        {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AAC"))
+    man["crosscheck"]["decode"] = False
+    man["crosscheck"]["skip"] = {"decode": "ffmpeg reports PS found in a stream whose channel pair rules it out, the condition the fixture tests."}
+    out.append((name, data, man))
     units = [b for b, _ in sbr_units(12, "mono", ps=True)]
     out.append(mp4_fixture(
         "explicit-sbr-implicit-ps", "HE-AAC signaled hierarchically over a mono core, whose access units also carry the parametric stereo "
@@ -549,7 +579,7 @@ def corrupt():
               "faad_trace": "faad2 stops at the first broken frame."}))]
 
     # Breaks the reading survives: an ics_reserved_bit, ms_mask_present 3, pulse data in short windows, a scalefactor out of range, a TNS
-    # filter of too high an order, and fill data with other bytes than 0xA5.
+    # filter of too high an order, fill data with other bytes than 0xA5, and gain control data in AAC LC.
     soft = []
     ics = channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=50, reserved=1)
     soft.append((M.raw_data_block([M.Element(M.SCE, ics=ics)]), "aac.ics-reserved-bit", "an ics_reserved_bit of 1"))
@@ -568,13 +598,16 @@ def corrupt():
     ics = channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=56)
     soft.append((M.raw_data_block([M.Element(M.SCE, ics=ics), M.Element(M.FIL, payload=M.fill_data_payload(6, byte=0x55))]),
                  "aac.fill-data-invalid", "fill data other than the fill nibble 0000 and fill bytes 10100101"))
+    ics = channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=57, gain_control=(1, [[(3, 1)]]))
+    soft.append((M.raw_data_block([M.Element(M.SCE, ics=ics)]), "aac.gain-control-not-allowed", "gain control data, which only AAC SSR defines"))
     frames = []
     for blk, _, _ in soft:
         frames += adts_frames([good, blk, good])
     data, rows = concat(frames)
     out.append(("corrupt-soft.aac", data, manifest(
         "Valid mono and stereo frames, among them some that break the specification without stopping the reading: an ics_reserved_bit of 1, "
-        "ms_mask_present 3, pulse data in short windows, a scalefactor of 270, a TNS filter of order 15 and fill bytes of 0x55.",
+        "ms_mask_present 3, pulse data in short windows, a scalefactor of 270, a TNS filter of order 15, fill bytes of 0x55 and gain control data "
+        "outside AAC SSR.",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
         {"ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/ICS Reserved Bit": "1"},
         [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"]],

@@ -135,12 +135,19 @@ internal sealed class BlockLog
             return;
         }
 
+        if (config.Ps == false && config.Sbr == true && tally.PsBlocks > 0)
+        {
+            findings.AddNow(Severity.Warning, "aac.ps-signaled-absent",
+                $"{where} signals PS absent, but {tally.PsBlocks} of {tally.Blocks} raw data blocks carry the parametric stereo extension; ffmpeg's decoder warns and ignores it, as the report does.", node);
+        }
+
         if (config.IsSbrImplicit)
         {
             string codec = config.HasPs ? "HE-AAC v2" : "HE-AAC";
             string ps = config.HasPs ? $", and {tally.PsBlocks} carry the parametric stereo extension" : string.Empty;
             findings.AddNow(Severity.Info, "aac.implicit-sbr",
                 $"{(where == "ADTS" ? "ADTS cannot signal SBR or PS explicitly" : $"{where} signals no SBR")}, but {units} hold SBR data{ps}: the stream is {codec}, signaled only implicitly, with an output rate of {config.OutputSampleRate} Hz. "
+                + (config.CoreSampleRate > 24000 ? $"faad2 doubles only a core rate of up to 24 kHz, so it plays this one at {config.CoreSampleRate} Hz. " : string.Empty)
                 + $"Decoders without SBR play the AAC LC core at {config.CoreSampleRate} Hz.{first}", node);
         }
         else if (config.IsPsImplicit)

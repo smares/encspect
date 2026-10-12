@@ -234,7 +234,7 @@ def analyzer_records(block):
         records.append(["EL", str(number), str(bit_of(element, base))])
         shared = next((c for c in element.get("children") or [] if c["name"] == "ICS Info"), None)
         if element["name"] == "CPE":
-            mask = field(element, "MS Mask Present", "0").split()[0] if shared else "0"
+            mask = field(element, "Mid/Side Mask Present", "0").split()[0] if shared else "0"
             flags = ""
             if mask == "1":
                 flags = band_flags(field(element, "Mid/Side Bands", "none"), groups_of(shared), int(field(shared, "Max SFB")))

@@ -132,6 +132,55 @@ public class AacBlockTests
         Assert.True(compared > 0 || name.Contains("pce", StringComparison.Ordinal) || name.Contains("adif", StringComparison.Ordinal), $"No block of {name} was compared.");
     }
 
+    // Frames of four raw data blocks each, from ffmpeg's frames repeated past what one chunk of the
+    // store holds: every block's nodes come from its own entry, wherever the store put it.
+    [Fact]
+    public void MultiBlockFramesRebuildEveryBlock()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"));
+        var blocks = new List<byte[]>();
+        byte[] header = source[..7];
+        for (int at = 0; at + 7 <= source.Length;)
+        {
+            int length = ((source[at + 3] & 3) << 11) | (source[at + 4] << 3) | (source[at + 5] >> 5);
+            int headerLength = (source[at + 1] & 1) == 1 ? 7 : 9;
+            blocks.Add(source[(at + headerLength)..(at + length)]);
+            at += length;
+        }
+
+        var stream = new MemoryStream();
+        for (int repeat = 0; repeat < 40; repeat++)
+        {
+            for (int i = 0; i + 4 <= blocks.Count; i += 4)
+            {
+                byte[] body = [.. blocks[i], .. blocks[i + 1], .. blocks[i + 2], .. blocks[i + 3]];
+                int frameLength = body.Length + 7;
+                byte[] frame = [.. header];
+                frame[1] |= 1;
+                frame[3] = (byte)((frame[3] & 0xFC) | (frameLength >> 11));
+                frame[4] = (byte)(frameLength >> 3);
+                frame[5] = (byte)(((frameLength & 7) << 5) | 0x1F);
+                frame[6] = 0xFC | 3;
+                stream.Write(frame);
+                stream.Write(body);
+            }
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("blocks.aac", new MemoryStream(stream.ToArray()));
+        int count = 0;
+        foreach (Node frame in Frames(report.Root))
+        {
+            foreach (Node block in frame.Children.Where(c => c.Name == "Raw Data Block"))
+            {
+                Assert.True(block.Children.Count > 0 && block.Children[0].Name != "Trailing Bytes", $"The block at 0x{block.Offset:X} has no element nodes.");
+                Assert.DoesNotContain(block.Children, c => c.Name == "Trailing Bytes");
+                count++;
+            }
+        }
+
+        Assert.True(count > 2000, $"{count} blocks");
+    }
+
     private static IEnumerable<Node> Frames(Node node)
     {
         if (node.Kind == NodeKind.Frame && node.Name == "Frame")

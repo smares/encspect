@@ -68,10 +68,10 @@ internal sealed record AacConfig
     // Whether each access unit is a raw_data_block whose first element ID can be read.
     public bool HasRawDataBlocks => AacTables.HasRawDataBlock(ObjectType);
 
-    // With implicit SBR, a decoder doubles a core rate of up to 24 kHz and runs SBR at the core's rate
-    // above it, as faad2 reads the specification; ffmpeg doubles any.
+    // With implicit SBR, fdk-aac (sbrdecoder.cpp, "assume dual rate SBR") and ffmpeg double any core
+    // rate; faad2 doubles only a core rate of up to 24 kHz, which the implicit SBR finding says.
     public int OutputSampleRate => UsacSampleRate ?? (Sbr == true ? ExtensionSampleRate ?? CoreSampleRate * 2
-        : IsSbrImplicit && CoreSampleRate <= 24000 ? CoreSampleRate * 2 : CoreSampleRate);
+        : IsSbrImplicit ? CoreSampleRate * 2 : CoreSampleRate);
 
     public int OutputFrameLength => UsacOutputFrameLength
         ?? (CoreSampleRate > 0 ? (int)((long)CoreFrameLength * OutputSampleRate / CoreSampleRate) : CoreFrameLength);

@@ -61,7 +61,7 @@ internal ref struct AacBits
 
         if (Position + count > Limit)
         {
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
 
         uint value = (uint)(Peek64() >> (64 - count));
@@ -77,7 +77,7 @@ internal ref struct AacBits
         int position = original - Skipped;
         if (position < 0 || position > Limit)
         {
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
 
         Position = position;
@@ -109,7 +109,7 @@ internal ref struct AacBits
     {
         if (Position > Limit)
         {
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
     }
 
@@ -117,7 +117,7 @@ internal ref struct AacBits
     {
         if (count < 0 || Position + (long)count > Limit)
         {
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
 
         Position += count;
@@ -200,14 +200,12 @@ internal ref struct AacBits
     }
 }
 
-// A read past the end of the data a raw data block may use. One instance, since it carries nothing
-// but the fact; the block reader catches it and reports where it happened. It is a truncation, so
-// one that escaped would still be reported as one.
+// A read past the end of the data a raw data block may use. A new one per throw, since a thrown
+// exception records its stack and threads share no state; the block reader catches it and reports
+// where it happened. It is a truncation, so one that escaped would still be reported as one.
 internal sealed class BlockOverrun : EndOfStreamException
 {
-    public static readonly BlockOverrun Instance = new();
-
-    private BlockOverrun()
+    public BlockOverrun()
         : base("A syntax element runs past the end of the data.")
     {
     }

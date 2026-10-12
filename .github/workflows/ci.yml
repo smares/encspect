@@ -144,6 +144,10 @@ jobs:
       - name: Regenerate the hand-built MP4 and raw AAC fixtures
         run: python3 scripts/fixtures/make_mp4_fixtures.py
 
+      # The parser's and the model's Huffman and band tables agree and are complete prefix codes.
+      - name: Check the AAC tables
+        run: python3 scripts/fixtures/check_aac_tables.py
+
       - name: Regenerate the hand-built Ogg fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ogg_fixtures.py

@@ -121,8 +121,17 @@ internal sealed class CodingTally
 
     public long Texts { get; set; }
 
+    // The channels whose global gain is counted, as the bound BlockLog keeps for a block; past them,
+    // a crafted block of many single channel elements would add a statistics node per element.
+    public const int MaxGainChannels = 48;
+
     public void Gain(int channel, int gain)
     {
+        if (channel >= MaxGainChannels)
+        {
+            return;
+        }
+
         while (MinimumGain.Count <= channel)
         {
             MinimumGain.Add(int.MaxValue);

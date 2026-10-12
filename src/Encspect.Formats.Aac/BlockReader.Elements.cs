@@ -170,7 +170,7 @@ internal sealed partial class BlockReader
         bool kept = true;
         if (length < 0 || (long)start + length > bits.Bound)
         {
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
 
         if (bits.IsSkeleton)
@@ -694,7 +694,7 @@ internal sealed partial class BlockReader
         if (length <= 0)
         {
             // The payload's count leaves no room for sbr_data after the CRC, the flag and the header.
-            throw BlockOverrun.Instance;
+            throw new BlockOverrun();
         }
 
         int psAt = -1;
@@ -798,6 +798,13 @@ internal sealed partial class BlockReader
             {
                 Soft("aac.sbr-data-invalid", $"SBR data with {error}", dataStart, end, "SBR Data");
                 tally.SbrUnread++;
+                return -1;
+            }
+
+            if (ps == Sbr.PsInPair)
+            {
+                Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",
+                    dataStart, end, "SBR Data");
                 return -1;
             }
 
@@ -947,7 +954,9 @@ internal sealed partial class BlockReader
     }
 
     // The intensity stereo bands of a pair's second channel, in phase (INTENSITY_HCB, 15) or out of
-    // phase (INTENSITY_HCB2, 14), where ms_used inverts the sign (4.6.8.2.3).
+    // phase (INTENSITY_HCB2, 14), where ms_used inverts the sign (4.6.8.2.3). With ms_mask_present 2,
+    // which marks every band, the sign is inverted in every band, as ffmpeg and fdk-aac decode it;
+    // faad2's invert_intensity (is.h) inverts only with ms_mask_present 1.
     private void IntensityNode(Node n, Ics ics, bool masked)
     {
         if (!HasBand(ics, b => b is 14 or 15))

@@ -226,12 +226,17 @@ internal static class AacTables
         _ => "end of the raw data block",
     };
 
-    // 4.5.2.10, Table 4.121: the extension_type of a fill element's extension_payload.
+    // 4.5.2.10, Table 4.121: the extension_type of a fill element's extension_payload, with the
+    // types later amendments add as fdk-aac names them (FDK_audio.h): EXT_DATA_LENGTH,
+    // EXT_LDSAC_DATA and EXT_SAOC_DATA.
     public static string ExtensionTypeName(int type) => type switch
     {
         0 => "EXT_FILL",
         1 => "EXT_FILL_DATA",
         2 => "EXT_DATA_ELEMENT",
+        3 => "EXT_DATA_LENGTH",
+        9 => "EXT_LDSAC_DATA",
+        10 => "EXT_SAOC_DATA",
         11 => "EXT_DYNAMIC_RANGE",
         12 => "EXT_SAC_DATA",
         13 => "EXT_SBR_DATA",

@@ -520,9 +520,10 @@ public sealed class RawAacParser : IFormatParser
 
         Block[] blocks = details?.Blocks ?? [new Block(headerLength, -1, frame.Elements, frame.Skeleton, -1, CrcState.None)];
         BlockLog log = state.LogAt(index);
-        long position = blocks[0].Skeleton;
         foreach (Block block in blocks)
         {
+            // Each block's own entry: the store may start a block's entry in a new chunk.
+            long position = block.Skeleton;
             long start = offset + block.Start;
             if (start >= frame.Offset + frame.Length)
             {
@@ -546,8 +547,6 @@ public sealed class RawAacParser : IFormatParser
                 {
                     node.Add(TrailingNode(unit, (int)(last - start) * 8, (int)length));
                 }
-
-                position = entry.Next;
             }
 
             nodes.Add(node);

@@ -285,7 +285,7 @@ internal sealed partial class BlockReader
                 second.CopyWindow(first);
                 int maskStart = bits.Original;
                 mask = (int)bits.Read(2);
-                Field(n, "MS Mask Present", maskStart, maskStart + 2, MaskText(mask), Explain.MsMaskPresent, Topics.MidSide);
+                Field(n, "Mid/Side Mask Present", maskStart, maskStart + 2, MaskText(mask), Explain.MsMaskPresent, Topics.MidSide);
                 msStart = bits.Original;
                 Array.Clear(_midSide, 0, first.Groups * MaxBands);
                 if (mask == 1)
@@ -307,7 +307,7 @@ internal sealed partial class BlockReader
                 }
                 else if (mask == 3)
                 {
-                    Soft("aac.ms-mask-reserved", "ms_mask_present 3, which the specification reserves", maskStart, maskStart + 2, "MS Mask Present");
+                    Soft("aac.ms-mask-reserved", "ms_mask_present 3, which the specification reserves", maskStart, maskStart + 2, "Mid/Side Mask Present");
                 }
 
                 msEnd = bits.Original;
@@ -429,6 +429,12 @@ internal sealed partial class BlockReader
             Field(n, "HasGainControlData", flagStart, flagStart + 1, NodeValue.Boolean(gainControl), Explain.HasGainControlData);
             if (gainControl)
             {
+                if (_setup.ObjectType != 3)
+                {
+                    Soft("aac.gain-control-not-allowed", $"gain control data, which only AAC SSR defines and which decoders reject in {AacTables.ObjectTypeName(_setup.ObjectType)}",
+                        flagStart, flagStart + 1, "HasGainControlData");
+                }
+
                 GainControl(ref bits, n, ics);
             }
 
@@ -838,7 +844,9 @@ internal sealed partial class BlockReader
         int start = bits.Original;
         bool eight = ics.WindowSequence == 2;
         int windows = eight ? 8 : 1;
-        int maxOrder = eight ? 7 : _setup.ObjectType == 1 ? 20 : 12;
+        // TNS_MAX_ORDER: 12 for long windows of LC and SSR and 20 for Main, as ffmpeg checks; for LTP
+        // the references differ (ffmpeg 12, faad2 and fdk-aac 20), so only orders above 20 count.
+        int maxOrder = eight ? 7 : _setup.ObjectType is 1 or 4 ? 20 : 12;
         int total = 0;
         bool tooHigh = false;
         for (int w = 0; w < windows; w++)

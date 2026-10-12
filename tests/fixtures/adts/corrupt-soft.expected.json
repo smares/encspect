@@ -1,6 +1,6 @@
 {
- "description": "Valid mono and stereo frames, among them some that break the specification without stopping the reading: an ics_reserved_bit of 1, ms_mask_present 3, pulse data in short windows, a scalefactor of 270, a TNS filter of order 15 and fill bytes of 0x55.",
- "length": 1327,
+ "description": "Valid mono and stereo frames, among them some that break the specification without stopping the reading: an ics_reserved_bit of 1, ms_mask_present 3, pulse data in short windows, a scalefactor of 270, a TNS filter of order 15, fill bytes of 0x55 and gain control data outside AAC SSR.",
+ "length": 1541,
  "format": "AAC",
  "boxes": [],
  "streams": [
@@ -12,7 +12,7 @@
    "channel_layout": [
     "front center"
    ],
-   "samples": 18432,
+   "samples": 21504,
    "is_vbr": true
   }
  ],
@@ -88,6 +88,18 @@
   [
    1235,
    92
+  ],
+  [
+   1327,
+   92
+  ],
+  [
+   1419,
+   30
+  ],
+  [
+   1449,
+   92
   ]
  ],
  "fields": {
@@ -117,6 +129,10 @@
   [
    "aac.fill-data-invalid",
    "fill data other than the fill nibble 0000 and fill bytes 10100101"
+  ],
+  [
+   "aac.gain-control-not-allowed",
+   "gain control data, which only AAC SSR defines"
   ],
   [
    "aac.elements-mismatch",

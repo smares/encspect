@@ -1,0 +1,198 @@
+{
+ "description": "HE-AAC signaled hierarchically with an extension rate equal to the core's 22050 Hz (downsampled SBR): decoders derive SBR's frequency tables at twice the core rate all the same, and output 22050 Hz.",
+ "length": 2454,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   618
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   502
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   402
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   317
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   257
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   105
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   89
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   53
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   502,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   526,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   554,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   622,
+   24
+  ],
+  [
+   "mdat",
+   646,
+   1808
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AAC"
+  }
+ ],
+ "units": [
+  [
+   654,
+   151
+  ],
+  [
+   805,
+   150
+  ],
+  [
+   955,
+   149
+  ],
+  [
+   1104,
+   150
+  ],
+  [
+   1254,
+   152
+  ],
+  [
+   1406,
+   150
+  ],
+  [
+   1556,
+   151
+  ],
+  [
+   1707,
+   149
+  ],
+  [
+   1856,
+   151
+  ],
+  [
+   2007,
+   149
+  ],
+  [
+   2156,
+   148
+  ],
+  [
+   2304,
+   150
+  ]
+ ],
+ "fields": {
+  "MP4/mdat/Track 1 Samples/AAC/Statistics/SBR": "12 access units (100.0%)",
+  "MP4/mdat/Track 1 Samples/AAC/Statistics/SBR/Parametric Stereo": "0 access units (0.0%)",
+  "MP4/mdat/Track 1 Samples/AAC/Statistics/SBR/SBR Headers": "3 headers"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "decode": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 22050
+  }
+ }
+}

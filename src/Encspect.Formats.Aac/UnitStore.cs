@@ -74,8 +74,9 @@ internal sealed class UnitStore
         return Write(head, bits, []);
     }
 
-    // The entry at position: whether it is kept whole, its bits and its cut list, and where the
-    // next entry starts.
+    // The entry at position: whether it is kept whole, its bits and its cut list. Entries are found
+    // by the positions Add returned, never by walking from one to the next, since an entry that does
+    // not fit its chunk starts a new one.
     public Entry Read(long position)
     {
         byte[] chunk = _chunks[(int)(position >> ChunkBits)];
@@ -86,7 +87,7 @@ internal sealed class UnitStore
         int bytes = (bits + 7) >> 3;
         var data = new ReadOnlyMemory<byte>(chunk, at, bytes);
         var cutList = new ReadOnlyMemory<byte>(chunk, at + bytes, cuts);
-        return new Entry(whole, bits, data, cutList, position + (at - (int)(position & (ChunkSize - 1))) + bytes + cuts);
+        return new Entry(whole, bits, data, cutList);
     }
 
     // The bits of the block an entry keeps, the ones its cuts leave out included: where the block
@@ -195,7 +196,7 @@ internal sealed class UnitStore
         }
     }
 
-    public readonly record struct Entry(bool IsWhole, int Bits, ReadOnlyMemory<byte> Data, ReadOnlyMemory<byte> Cuts, long Next);
+    public readonly record struct Entry(bool IsWhole, int Bits, ReadOnlyMemory<byte> Data, ReadOnlyMemory<byte> Cuts);
 }
 
 // A range of a raw data block that a skeleton leaves out: its kind, first bit and length, and an

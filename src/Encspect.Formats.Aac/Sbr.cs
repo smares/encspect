@@ -243,6 +243,9 @@ internal static class Sbr
     // sbr_channel_pair_element, then the extended data, whose extensions are read up to their ID:
     // ID 2 is parametric stereo (EXT_ID_PS). Returns where the PS extension's ID lies, or -1, and
     // the reason the data cannot be read, or null.
+    // What ReadData gives for the parametric stereo extension's ID in a channel pair's SBR data.
+    public const int PsInPair = -2;
+
     public static (int PsAt, string? Error) ReadData(ref AacBits bits, SbrHeader header, bool pair)
     {
         SbrBands bands = header.Bands!.Value;
@@ -333,10 +336,12 @@ internal static class Sbr
             {
                 // The first extension's ID; the extensions after it are not read, since the
                 // parametric stereo data that ID 2 starts is not parsed.
+                // Parametric stereo exists only in a single channel element's SBR data (4.4.2.8,
+                // sbr_single_channel_element); in a pair's, ID 2 is reported, not taken for PS.
                 int id = (int)bits.Read(2);
                 if (id == 2)
                 {
-                    ps = bits.Original - 2;
+                    ps = pair ? PsInPair : bits.Original - 2;
                 }
 
                 left -= 2;
