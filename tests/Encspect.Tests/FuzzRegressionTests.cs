@@ -23,16 +23,25 @@ public class FuzzRegressionTests
 
     [Theory]
     [MemberData(nameof(Names))]
-    public void FormerFailuresYieldCleanReports(string name)
+    public async Task FormerFailuresYieldCleanReports(string name)
     {
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name));
 
-        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
+        // Some of these once hung, as the fuzzer's 20 s limit found; this fails instead of waiting.
+        Report report = await Task.Run(() => Analyzer.CreateDefault().Analyze(name, new MemoryStream(data))).WaitAsync(TimeSpan.FromSeconds(20));
 
         Assert.Equal(data.Length, report.Root.Length);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.All(report.Streams, s => Assert.All(s.NodePaths, p => Assert.NotNull(p)));
         TestFiles.CheckInsideParents(report.Root);
+
+        // As the fuzzer checks: top-level nodes own their bytes, a node with ranges only those.
+        long previousEnd = 0;
+        foreach (ByteRange range in report.Root.Children.SelectMany(TestFiles.RangesOf).OrderBy(r => r.Offset))
+        {
+            Assert.True(range.Offset >= previousEnd, $"A region at {range.Offset} overlaps the one before, which ends at {previousEnd}.");
+            previousEnd = Math.Max(previousEnd, range.End);
+        }
     }
 }
