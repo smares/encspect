@@ -13,9 +13,11 @@ public static class Format
     // among test files and fixtures.
     public static string Duration(double seconds)
     {
-        if (seconds < 60)
+        // Rounded first, so 59.96 s reads as a minute rather than "0:60.0".
+        double tenths = Math.Round(seconds, 1, MidpointRounding.AwayFromZero);
+        if (tenths < 60)
         {
-            return "0:" + seconds.ToString("00.0", Invariant);
+            return "0:" + tenths.ToString("00.0", Invariant);
         }
 
         var time = TimeSpan.FromSeconds(Math.Round(seconds));

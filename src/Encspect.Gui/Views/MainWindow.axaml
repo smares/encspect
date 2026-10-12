@@ -12,11 +12,13 @@
     <NativeMenuBar DockPanel.Dock="Top" />
 
     <Border DockPanel.Dock="Bottom" Classes="pane divider" BorderThickness="0,1,0,0" Padding="12,4" MinHeight="32">
-      <Grid ColumnDefinitions="*,Auto,Auto">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
         <TextBlock Name="StatusText" Text="{Binding Status}" VerticalAlignment="Center" Classes="secondary" TextTrimming="CharacterEllipsis" />
-        <ProgressBar Grid.Column="1" Width="180" Margin="12,0" VerticalAlignment="Center"
+        <TextBlock Grid.Column="1" Name="ErrorText" Text="{Binding Error}" Classes="error" Margin="16,0,0,0" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Error}" IsVisible="{Binding HasError}" />
+        <ProgressBar Grid.Column="2" Width="180" Margin="12,0" VerticalAlignment="Center"
                      IsVisible="{Binding IsRunning}" Maximum="{Binding Total}" Value="{Binding Analyzed}" />
-        <Button Grid.Column="2" Name="StopButton" Content="Stop" Padding="12,2" IsVisible="{Binding IsRunning}" Click="OnStop" />
+        <Button Grid.Column="3" Name="StopButton" Content="Stop" Padding="12,2" IsVisible="{Binding IsRunning}" Click="OnStop" />
       </Grid>
     </Border>
 

@@ -12,6 +12,7 @@ namespace Encspect.Gui.ViewModels;
 // summary cache, each file is looked up there first, which takes a stat and a read of 128 KiB, and
 // only files the cache does not hold as they are now are analyzed, their summaries then cached.
 // Opening another source, or changing whether subfolders are included, cancels the run before it.
+// Listing the same source again keeps the selected file selected once it is listed again.
 public sealed class MainViewModel : ObservableObject, IDisposable
 {
     // Rows are handed to the UI thread in batches, so a folder of thousands of files does not post
@@ -19,11 +20,14 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private const int BatchSize = 256;
     private static readonly TimeSpan BatchInterval = TimeSpan.FromMilliseconds(100);
 
-    // A sorted list sorts again as rows fill in at most this often, and once more when the run ends,
-    // so it does not reshuffle on every batch.
+    // A sorted list sorts again as rows fill in, and once more when the run ends, so it does not
+    // reshuffle on every batch: at most this often, and never sooner after a sort than four times
+    // what that sort took, so a long list that takes long to sort leaves the UI thread free.
     private static readonly TimeSpan SortInterval = TimeSpan.FromMilliseconds(250);
+    private const int SortCostFactor = 4;
 
-    private readonly Stopwatch _lastSort = Stopwatch.StartNew();
+    private readonly Stopwatch _sinceSort = Stopwatch.StartNew();
+    private TimeSpan _sortCost;
 
     private readonly Analyzer _analyzer;
     private readonly Action<Action> _post;
@@ -39,6 +43,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool _isListed;
     private bool _wasCanceled;
     private bool _isSorting;
+    private string? _reselectPath;
+    private string? _error;
 
     public MainViewModel(Analyzer analyzer, Action<Action>? post = null, int? parallelism = null, IReadOnlyList<FolderItem>? roots = null, SummaryCache? cache = null)
     {
@@ -54,7 +60,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     public event EventHandler? SelectedRowChanged;
 
-    // How many files are analyzed at once.
     public int Parallelism { get; }
 
     public IReadOnlyList<FolderItem> Folders { get; }
@@ -81,7 +86,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _selectedFolder, value) && value is { IsPlaceholder: false })
             {
-                Open(FileSource.ForFolder(value.Path));
+                OpenSource(FileSource.ForFolder(value.Path));
             }
         }
     }
@@ -91,6 +96,12 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         get => _selectedRow;
         set
         {
+            // A row chosen while the list fills in wins over the one it was to select again.
+            if (value is not null)
+            {
+                _reselectPath = null;
+            }
+
             if (Set(ref _selectedRow, value) && !_isSorting)
             {
                 SelectedRowChanged?.Invoke(this, EventArgs.Empty);
@@ -105,7 +116,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _includeSubfolders, value) && _source is not null)
             {
-                Start();
+                Start(keepSelection: true);
             }
         }
     }
@@ -142,20 +153,45 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    // What went wrong that the window should show: a run that failed, or an operation of the
+    // window the system refused. Cleared when the list is listed again.
+    public string? Error
+    {
+        get => _error;
+        private set
+        {
+            if (Set(ref _error, value))
+            {
+                Raise(nameof(HasError));
+            }
+        }
+    }
+
+    public bool HasError => _error is not null;
+
     // The task of the current run, which ends once every row it listed is analyzed or the run is
     // canceled; its rows reach the list on the UI thread after that.
     public Task Completion => _run?.Task ?? Task.CompletedTask;
 
+    // Opens a source chosen other than in the folder tree, such as a dropped folder, so the tree
+    // no longer marks the folder it showed last, and choosing that folder again opens it.
     public void Open(FileSource source)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        _source = source;
-        Raise(nameof(Source));
-        Raise(nameof(Title));
-        Raise(nameof(HasSource));
-        Raise(nameof(CanIncludeSubfolders));
-        Start();
+        if (_selectedFolder is not null)
+        {
+            _selectedFolder = null;
+            Raise(nameof(SelectedFolder));
+        }
+
+        OpenSource(source);
+    }
+
+    public void ShowError(string message)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        Error = message;
     }
 
     // Sorts the list again once rows got the figures it is sorted by, keeping the selected row
@@ -168,7 +204,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        _lastSort.Restart();
+        var cost = Stopwatch.StartNew();
         FileRow? selected = _selectedRow;
         _isSorting = true;
         try
@@ -179,6 +215,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         finally
         {
             _isSorting = false;
+            _sortCost = cost.Elapsed;
+            _sinceSort.Restart();
         }
     }
 
@@ -187,7 +225,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         if (_source is not null)
         {
-            Start();
+            Start(keepSelection: true);
         }
     }
 
@@ -229,15 +267,27 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _run = null;
     }
 
-    private void Start()
+    private void OpenSource(FileSource source)
+    {
+        _source = source;
+        Raise(nameof(Source));
+        Raise(nameof(Title));
+        Raise(nameof(HasSource));
+        Raise(nameof(CanIncludeSubfolders));
+        Start(keepSelection: false);
+    }
+
+    private void Start(bool keepSelection)
     {
         _run?.Cancellation.Cancel();
+        _reselectPath = keepSelection ? _selectedRow?.Path : null;
         SelectedRow = null;
         Rows.Clear();
         _total = 0;
         _analyzed = 0;
         _isListed = false;
         _wasCanceled = false;
+        Error = null;
         if (_source is null)
         {
             _run = null;
@@ -253,21 +303,19 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         run.Task = Task.Run(() => ExecuteAsync(run, entries));
     }
 
+    // Every way the run ends, also an exception nothing expected, ends with the final post, so the
+    // window never stays "running"; an unexpected exception stops the run and shows.
     private async Task ExecuteAsync(Run run, IEnumerable<SourceEntry> entries)
     {
         CancellationToken token = run.Cancellation.Token;
+        Exception? failure = null;
 
         // Two stages: rows are looked up in the cache, which is quick, and the rows it does not
         // hold go on to be analyzed, so cached rows fill in while the first analyses run.
         var lookups = Channel.CreateUnbounded<FileRow>(new UnboundedChannelOptions { SingleWriter = true });
         var analyses = Channel.CreateUnbounded<(FileRow Row, FileFingerprint? Fingerprint)>();
-        var lookupOptions = new ParallelOptions { MaxDegreeOfParallelism = Parallelism * 2, CancellationToken = token };
+        Task looking = LookAllAsync(run, lookups.Reader, analyses.Writer, token);
         var options = new ParallelOptions { MaxDegreeOfParallelism = Parallelism, CancellationToken = token };
-        Task looking = Parallel.ForEachAsync(lookups.Reader.ReadAllAsync(token), lookupOptions, (row, _) =>
-        {
-            Look(run, row, analyses.Writer);
-            return ValueTask.CompletedTask;
-        }).ContinueWith(_ => analyses.Writer.TryComplete(), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
         Task workers = Parallel.ForEachAsync(analyses.Reader.ReadAllAsync(token), options, (item, rowToken) =>
         {
             Analyze(run, item.Row, item.Fingerprint, rowToken);
@@ -276,58 +324,103 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            var batch = new List<FileRow>();
-            var clock = Stopwatch.StartNew();
-            foreach (SourceEntry entry in entries)
+            try
             {
-                token.ThrowIfCancellationRequested();
-                var row = new FileRow(entry.Path, entry.DisplayName, entry.FolderError);
-                batch.Add(row);
-                lookups.Writer.TryWrite(row);
-                if (batch.Count >= BatchSize || clock.Elapsed >= BatchInterval)
+                var batch = new List<FileRow>();
+                var clock = Stopwatch.StartNew();
+                foreach (SourceEntry entry in entries)
                 {
-                    PostRows(run, batch, isLast: false);
-                    batch = [];
-                    clock.Restart();
+                    token.ThrowIfCancellationRequested();
+                    var row = new FileRow(entry.Path, entry.DisplayName, entry.FolderError);
+                    batch.Add(row);
+                    lookups.Writer.TryWrite(row);
+                    if (batch.Count >= BatchSize || clock.Elapsed >= BatchInterval)
+                    {
+                        PostRows(run, batch, isLast: false);
+                        batch = [];
+                        clock.Restart();
+                    }
                 }
+
+                PostRows(run, batch, isLast: true);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+                run.Cancellation.Cancel();
+            }
+            finally
+            {
+                lookups.Writer.TryComplete();
             }
 
-            PostRows(run, batch, isLast: true);
-        }
-        catch (OperationCanceledException)
-        {
+            try
+            {
+                await looking.ConfigureAwait(false);
+                await workers.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                failure ??= ex;
+            }
         }
         finally
         {
-            lookups.Writer.TryComplete();
-        }
+            if (failure is not null)
+            {
+                run.Cancellation.Cancel();
+                ErrorLog.Write("the folder's analysis stopped", failure);
+            }
 
+            _post(() => Finish(run, failure));
+        }
+    }
+
+    private async Task LookAllAsync(Run run, ChannelReader<FileRow> rows, ChannelWriter<(FileRow, FileFingerprint?)> analyses, CancellationToken token)
+    {
         try
         {
-            await looking.ConfigureAwait(false);
-            await workers.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-
-        _post(() =>
-        {
-            if (_run != run)
+            var options = new ParallelOptions { MaxDegreeOfParallelism = Parallelism * 2, CancellationToken = token };
+            await Parallel.ForEachAsync(rows.ReadAllAsync(token), options, (row, _) =>
             {
-                return;
-            }
+                Look(run, row, analyses);
+                return ValueTask.CompletedTask;
+            }).ConfigureAwait(false);
+        }
+        finally
+        {
+            analyses.TryComplete();
+        }
+    }
 
-            _wasCanceled = token.IsCancellationRequested;
-            foreach (FileRow row in Rows)
-            {
-                row.MarkCanceled();
-            }
+    private void Finish(Run run, Exception? failure)
+    {
+        if (_run != run)
+        {
+            return;
+        }
 
-            IsRunning = false;
-            SortAgain();
-            RaiseProgress();
-        });
+        _wasCanceled = run.Cancellation.IsCancellationRequested;
+        _reselectPath = null;
+        foreach (FileRow row in Rows)
+        {
+            row.MarkCanceled();
+        }
+
+        if (failure is not null)
+        {
+            Error = "The analysis stopped: " + failure.Message;
+        }
+
+        IsRunning = false;
+        SortAgain();
+        RaiseProgress();
     }
 
     private void PostRows(Run run, List<FileRow> batch, bool isLast) => _post(() =>
@@ -340,10 +433,25 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         foreach (FileRow row in batch)
         {
             Rows.Add(row);
+            row.IsListed = true;
+            if (row.State == FileState.Analyzed)
+            {
+                _analyzed++;
+            }
+
+            if (_reselectPath is not null && row.Path == _reselectPath)
+            {
+                SelectedRow = row;
+            }
         }
 
         _total += batch.Count;
         _isListed |= isLast;
+        if (isLast)
+        {
+            _reselectPath = null;
+        }
+
         RaiseProgress();
     });
 
@@ -382,6 +490,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             {
                 report = FileReports.Unreadable(row.Path, ex.Message);
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // The host turns a parser's failure into a finding, so this is the host's or the
+                // system's (out of memory): the row says so and the run goes on.
+                ErrorLog.Write($"analyzing {row.Path}", ex);
+                report = FileReports.Unreadable(row.Path, "The analysis failed: " + ex.Message);
+            }
         }
 
         FileSummary summary = FileSummary.From(report);
@@ -396,7 +511,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     // Results reach the UI thread in batches: whatever has come in by the time the UI thread gets
-    // to them, so a folder of cached rows fills in with a few updates rather than one per file.
+    // to them, so a folder of cached rows fills in with a few updates rather than one per file. A
+    // cached row can be done before its batch of rows is listed; it counts as analyzed once it is,
+    // so the count never runs ahead of the files listed.
     private void Apply(Run run, FileRow row, FileSummary summary, bool isCached)
     {
         run.Results.Enqueue((row, summary, isCached));
@@ -417,11 +534,15 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             while (run.Results.TryDequeue(out (FileRow Row, FileSummary Summary, bool IsCached) result))
             {
                 result.Row.Apply(result.Summary, result.IsCached);
-                _analyzed++;
+                if (result.Row.IsListed)
+                {
+                    _analyzed++;
+                }
+
                 isApplied = true;
             }
 
-            if (isApplied && _lastSort.Elapsed >= SortInterval)
+            if (isApplied && _sinceSort.Elapsed >= SortInterval && _sinceSort.Elapsed >= SortCostFactor * _sortCost)
             {
                 SortAgain();
             }

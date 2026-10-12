@@ -50,6 +50,9 @@
     <Setter Property="Opacity" Value="0.5" />
     <Setter Property="FontStyle" Value="Italic" />
   </Style>
+  <Style Selector="TextBlock.error">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+  </Style>
   <Style Selector="TextBlock.section">
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>

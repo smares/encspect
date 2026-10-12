@@ -17,6 +17,8 @@ public sealed class Settings
     [JsonIgnore]
     public string? FilePath { get; private set; }
 
+    // %APPDATA% on Windows, $XDG_CONFIG_HOME or ~/.config on Linux; on macOS .NET maps
+    // ApplicationData to ~/Library/Application Support (NSApplicationSupportDirectory).
     public static string DefaultPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), "Encspect", "settings.json");
 

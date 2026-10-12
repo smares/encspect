@@ -127,6 +127,68 @@ public class DetailViewModelTests
     }
 
     [Fact]
+    public void A_folder_shows_what_it_is_and_one_that_could_not_be_listed_why()
+    {
+        using var temp = new TempFolder();
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(temp.Path);
+        ui.Until(() => load.IsCompleted);
+        FindingItem finding = Assert.Single(model.Findings);
+        Assert.Equal(FileReports.NotRegularCode, finding.Code);
+        Assert.Equal("This is a folder, not a regular file, so it was not read.", finding.Message);
+
+        load = model.LoadAsync(temp.Path, "Permission denied");
+        ui.Until(() => load.IsCompleted);
+        finding = Assert.Single(model.Findings);
+        Assert.Equal(FileReports.UnreadableFolderCode, finding.Code);
+        Assert.Equal("Permission denied", finding.Message);
+    }
+
+    [Fact]
+    public void An_analysis_that_fails_unexpectedly_shows_why_and_ends_the_load()
+    {
+        using var temp = new TempFolder();
+        string path = temp.Write("boom.bin", ThrowingParser.File);
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(new ThrowingParser().Analyzer(), ui.Post);
+
+        Task load = model.LoadAsync(path);
+        ui.Until(() => load.IsCompleted);
+
+        Assert.False(model.IsLoading);
+        Assert.Equal("The analysis failed: " + ThrowingParser.Message, Assert.Single(model.Findings).Message);
+    }
+
+    [Fact]
+    public void Collapsing_a_row_above_the_selection_selects_the_row()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Mpeg("external-lame-vbr-v2.mp3"));
+        ui.Until(() => load.IsCompleted);
+        StructureTree tree = model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow frame = tree[tree.IndexOf(stream) + 3];
+        tree.Expand(frame);
+        TreeRow field = tree[tree.IndexOf(frame) + 1];
+        model.SelectedNode = field;
+
+        model.Toggle(stream);
+
+        Assert.False(stream.IsExpanded);
+        Assert.Same(stream, model.SelectedNode);
+
+        // A row the selection does not lie below leaves it where it is.
+        model.Toggle(stream);
+        model.SelectedNode = tree.Root;
+        model.Toggle(stream);
+        Assert.Same(tree.Root, model.SelectedNode);
+    }
+
+    [Fact]
     public async Task Export_writes_the_report_as_the_writers_do()
     {
         var ui = new TestDispatcher();

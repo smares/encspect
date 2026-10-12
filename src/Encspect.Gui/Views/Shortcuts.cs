@@ -5,10 +5,10 @@ using Avalonia.Input;
 
 namespace Encspect.Gui.Views;
 
-// Menu items and their shortcuts, with Cmd on macOS and Ctrl elsewhere. Where the menu is in the
-// system's menu bar (macOS), the menu bar handles the shortcuts of its items; elsewhere the
-// window's key bindings do, and a window that shows its menu shows it in the window
-// (NativeMenuBar).
+// Menu items and their shortcuts, with Cmd on macOS and Ctrl elsewhere. On macOS the menu is in the
+// system's menu bar, which handles the shortcuts of its items. Elsewhere the window's key bindings
+// do, also where a Linux desktop shows the menu in a global menu bar over D-Bus, which does not
+// deliver shortcuts; a window that shows its menu itself does so with NativeMenuBar.
 internal static class Shortcuts
 {
     public static KeyModifiers Command =>
@@ -27,7 +27,7 @@ internal static class Shortcuts
                 Gesture = gesture,
                 Command = new Relay(() =>
                 {
-                    if (!NativeMenu.GetIsNativeMenuExported(window))
+                    if (!OperatingSystem.IsMacOS() || !NativeMenu.GetIsNativeMenuExported(window))
                     {
                         action();
                     }
@@ -49,11 +49,38 @@ internal static class Shortcuts
         return new NativeMenuItem(header) { Menu = menu };
     }
 
-    // The Window menu macOS apps have: minimize and zoom the key window.
-    public static NativeMenuItem WindowMenu(Window window) => Submenu(
-        "Window",
-        Item(window, "Minimize", OperatingSystem.IsMacOS() ? new KeyGesture(Key.M, KeyModifiers.Meta) : null, () => window.WindowState = WindowState.Minimized),
-        Item(window, "Zoom", null, () => window.WindowState = window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized));
+    // The Window menu macOS apps have: minimize and zoom the window, bring every window to the
+    // front, and the open windows, this one checked, to bring one to the front.
+    public static NativeMenuItem WindowMenu(Window window)
+    {
+        NativeMenuItem menu = Submenu(
+            "Window",
+            Item(window, "Minimize", OperatingSystem.IsMacOS() ? new KeyGesture(Key.M, KeyModifiers.Meta) : null, () => window.WindowState = WindowState.Minimized),
+            Item(window, "Zoom", null, () => window.WindowState = window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized),
+            new NativeMenuItemSeparator(),
+            Item(window, "Bring All to Front", null, () => WindowList.BringAllToFront(window)),
+            new NativeMenuItemSeparator());
+        int fixedCount = menu.Menu!.Items.Count;
+        void List(object? sender, EventArgs e)
+        {
+            while (menu.Menu.Items.Count > fixedCount)
+            {
+                menu.Menu.Items.RemoveAt(menu.Menu.Items.Count - 1);
+            }
+
+            foreach (Window open in WindowList.Windows)
+            {
+                var item = new NativeMenuItem(open.Title ?? string.Empty) { ToggleType = MenuItemToggleType.CheckBox, IsChecked = open == window };
+                item.Click += (_, _) => WindowList.BringToFront(open);
+                menu.Menu.Items.Add(item);
+            }
+        }
+
+        List(null, EventArgs.Empty);
+        WindowList.Changed += List;
+        window.Closed += (_, _) => WindowList.Changed -= List;
+        return menu;
+    }
 
     // Shortcuts without a menu item, such as Esc to close a window.
     public static void Bind(Window window, KeyGesture gesture, Action action) =>

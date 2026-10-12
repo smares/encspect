@@ -24,12 +24,14 @@ public partial class DetailWindow : Window
         InitializeComponent();
         Model = model;
         DataContext = model;
+        PickExportTarget = PickExportTargetAsync;
+        WindowList.Register(this);
         TreeList.AddHandler(TappedEvent, OnTreeTapped, RoutingStrategies.Bubble, handledEventsToo: true);
         TreeList.DoubleTapped += (_, e) =>
         {
             if (!IsOnExpander(e.Source) && Model.SelectedNode is { } row)
             {
-                Model.Tree?.Toggle(row);
+                Model.Toggle(row);
             }
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
@@ -54,11 +56,43 @@ public partial class DetailWindow : Window
     // The row of the file list this window shows.
     public FileRow? Row { get; set; }
 
+    // Where an export goes: the save dialog's choice, or null when it was canceled. Tests replace
+    // the dialog, which the headless platform does not have.
+    internal Func<Task<ExportTarget?>> PickExportTarget { get; set; }
+
+    // Asks where to export the report and writes it there. Never throws: what goes wrong, from the
+    // dialog to the last byte written, shows in the window.
     public async Task ExportAsync()
     {
-        if (Model.Report is null || !StorageProvider.CanSave)
+        if (Model.Report is null)
         {
             return;
+        }
+
+        await Model.TryExportAsync(async () =>
+        {
+            if (await PickExportTarget() is not { } chosen)
+            {
+                return;
+            }
+
+            if (chosen.Path is { } path)
+            {
+                await Model.ExportAsync(path, chosen.Format);
+            }
+            else if (chosen.File is { } file)
+            {
+                await using Stream stream = await file.OpenWriteAsync();
+                await Model.ExportAsync(stream, chosen.Format);
+            }
+        });
+    }
+
+    private async Task<ExportTarget?> PickExportTargetAsync()
+    {
+        if (!StorageProvider.CanSave)
+        {
+            return null;
         }
 
         string name = Path.GetFileNameWithoutExtension(Model.Path) ?? "report";
@@ -72,12 +106,11 @@ public partial class DetailWindow : Window
         });
         if (result.File is not { } file)
         {
-            return;
+            return null;
         }
 
         ReportFormat format = result.SelectedFileType == JsonReport ? ReportFormat.Json : ReportExport.FormatOf(file.Name);
-        await using Stream stream = await file.OpenWriteAsync();
-        await Model.ExportAsync(stream, format);
+        return new ExportTarget(file.TryGetLocalPath(), file, format);
     }
 
     private NativeMenu CreateMenu() =>
@@ -110,7 +143,7 @@ public partial class DetailWindow : Window
 
     private void OnNext(object? sender, RoutedEventArgs e) => StepRequested?.Invoke(this, 1);
 
-    private async void OnExport(object? sender, RoutedEventArgs e) => await ExportAsync();
+    private void OnExport(object? sender, RoutedEventArgs e) => _ = ExportAsync();
 
     private static bool IsOnExpander(object? source) =>
         source is Avalonia.Visual visual && visual.GetSelfAndVisualAncestors().Any(v => v is Border { Name: "Expander" });
@@ -119,7 +152,7 @@ public partial class DetailWindow : Window
     {
         if (IsOnExpander(e.Source) && e.Source is Avalonia.StyledElement { DataContext: TreeRow row })
         {
-            Model.Tree?.Toggle(row);
+            Model.Toggle(row);
         }
     }
 
@@ -137,7 +170,7 @@ public partial class DetailWindow : Window
             case Key.Right when row.HasChildren && !row.IsExpanded:
             case Key.Left when row.IsExpanded:
             case Key.Enter or Key.Space when row.HasChildren:
-                tree.Toggle(row);
+                Model.Toggle(row);
                 e.Handled = true;
                 break;
             case Key.Right when row.IsExpanded:
@@ -151,3 +184,7 @@ public partial class DetailWindow : Window
         }
     }
 }
+
+// A file to export to: its local path when it has one, which is written through a temporary file,
+// otherwise the storage file the dialog gave, written as a stream.
+internal readonly record struct ExportTarget(string? Path, IStorageFile? File, ReportFormat Format);

@@ -28,6 +28,16 @@ public partial class MainWindow : Window
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
         DetailWindows = new DetailWindows(this, Model, analyzer, settings);
+        WindowList.Register(this);
+
+        // The grid does not scroll to a row selected from elsewhere, such as Previous and Next.
+        Model.SelectedRowChanged += (_, _) =>
+        {
+            if (Model.SelectedRow is { } row)
+            {
+                Files.ScrollIntoView(row, null);
+            }
+        };
 
         AddColumns(Files);
         Files.DoubleTapped += (_, e) =>
@@ -143,11 +153,10 @@ public partial class MainWindow : Window
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Open Selected File", null, () => OpenSelected(newWindow: false)),
             Shortcuts.Item(this, "Open Selected File in New Window", Shortcuts.WithCommand(Key.Enter), () => OpenSelected(newWindow: true)));
-        if (!OperatingSystem.IsMacOS())
-        {
-            file.Menu!.Add(new NativeMenuItemSeparator());
-            file.Menu.Add(Shortcuts.Item(this, "Exit", null, Close));
-        }
+        file.Menu!.Add(new NativeMenuItemSeparator());
+        file.Menu.Add(OperatingSystem.IsMacOS()
+            ? Shortcuts.Item(this, "Close Window", Shortcuts.WithCommand(Key.W), Close)
+            : Shortcuts.Item(this, "Exit", null, Close));
 
         var view = Shortcuts.Submenu(
             "View",
@@ -191,17 +200,37 @@ public partial class MainWindow : Window
 
     private async Task OpenFolderAsync()
     {
-        IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open Folder", AllowMultiple = false });
-        if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
+        try
         {
-            Model.Open(FileSource.ForFolder(path));
+            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open Folder", AllowMultiple = false });
+            if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
+            {
+                Model.Open(FileSource.ForFolder(path));
+            }
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The folder dialog failed", ex);
         }
     }
 
     private async Task OpenFilesAsync()
     {
-        IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Open Files", AllowMultiple = true });
-        OpenItems(files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList());
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Open Files", AllowMultiple = true });
+            OpenItems(files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList());
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The file dialog failed", ex);
+        }
+    }
+
+    private void ShowError(string what, Exception exception)
+    {
+        ErrorLog.Write(what, exception);
+        Model.ShowError($"{what}: {exception.Message}");
     }
 
     private void OnStop(object? sender, RoutedEventArgs e) => Model.Cancel();
@@ -212,9 +241,16 @@ public partial class MainWindow : Window
 
     private async void OnCopyPath(object? sender, RoutedEventArgs e)
     {
-        if (Model.SelectedRow is { } row && Clipboard is { } clipboard)
+        try
         {
-            await clipboard.SetTextAsync(row.Path);
+            if (Model.SelectedRow is { } row && Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(row.Path);
+            }
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The path was not copied", ex);
         }
     }
 

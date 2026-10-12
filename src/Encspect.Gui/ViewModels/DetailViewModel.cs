@@ -31,6 +31,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _canGoPrevious;
     private bool _canGoNext;
     private bool _isGraphsShown;
+    private string? _exportError;
 
     public DetailViewModel(Analyzer analyzer, Action<Action>? post = null)
     {
@@ -230,9 +231,16 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         set => Set(ref _canGoNext, value);
     }
 
-    // Analyzes the file on a background thread. The task ends once the result is shown, or at
-    // once when another load replaced this one.
-    public Task LoadAsync(string path)
+    // Why the last export failed, until the next export or file.
+    public string? ExportError
+    {
+        get => _exportError;
+        private set => Set(ref _exportError, value);
+    }
+
+    // Analyzes the file on a background thread; a folder that could not be listed shows why. The
+    // task ends once the result is shown, or at once when another load replaced this one.
+    public Task LoadAsync(string path, string? folderError = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -263,40 +271,40 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         Task.Run(() =>
         {
-            Report report;
+            Report? report = null;
             HexDocument? document = null;
             try
             {
-                length = new FileInfo(path).Length;
-                report = _analyzer.AnalyzeFile(path, options);
-                if (!FileReports.IsNotAnalyzed(report))
-                {
-                    document = HexDocument.Open(path);
-                }
+                report = folderError is not null ? FileReports.UnreadableFolder(path, folderError) : Analyze(path, options, out length, out document);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
             {
-                shown.TrySetResult();
-                return;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 report = FileReports.Unreadable(path, ex.Message);
             }
-
-            _post(() =>
+            catch (Exception ex)
             {
-                if (generation != _generation)
+                ErrorLog.Write($"analyzing {path}", ex);
+                report = FileReports.Unreadable(path, "The analysis failed: " + ex.Message);
+            }
+            finally
+            {
+                _post(() =>
                 {
-                    document?.Dispose();
-                }
-                else
-                {
-                    Show(report, document);
-                }
+                    if (generation != _generation || report is null)
+                    {
+                        document?.Dispose();
+                    }
+                    else
+                    {
+                        Show(report, document);
+                    }
 
-                shown.TrySetResult();
-            });
+                    shown.TrySetResult();
+                });
+            }
         });
 
         return shown.Task;
@@ -338,11 +346,140 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return Task.Run(() => ReportExport.Write(report, output, format));
     }
 
+    // Writes the report to a temporary file next to the target, which then replaces it, so a
+    // failed export leaves no half-written file. A target that exists and is not a regular file,
+    // such as a device, is written directly.
+    public Task ExportAsync(string path, ReportFormat format)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        Report report = _report ?? throw new InvalidOperationException("No report is loaded.");
+        return Task.Run(() =>
+        {
+            string target = System.IO.Path.GetFullPath(path);
+            if (!IsRegularOrMissing(target))
+            {
+                using var direct = new FileStream(target, FileMode.Open, FileAccess.Write);
+                ReportExport.Write(report, direct, format);
+                return;
+            }
+
+            string temporary = System.IO.Path.Join(System.IO.Path.GetDirectoryName(target), $".{System.IO.Path.GetFileName(target)}.{Guid.NewGuid():N}.tmp");
+            try
+            {
+                using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    ReportExport.Write(report, output, format);
+                }
+
+                File.Move(temporary, target, overwrite: true);
+            }
+            catch
+            {
+                try
+                {
+                    File.Delete(temporary);
+                }
+                catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+                {
+                }
+
+                throw;
+            }
+        });
+    }
+
+    // Runs an export and shows why it failed. The report is never changed by an export, so any
+    // failure leaves the state sound and is shown rather than thrown.
+    public async Task TryExportAsync(Func<Task> export)
+    {
+        ArgumentNullException.ThrowIfNull(export);
+
+        ExportError = null;
+        try
+        {
+            await export();
+        }
+        catch (Exception ex)
+        {
+            if (ex is not (IOException or UnauthorizedAccessException))
+            {
+                ErrorLog.Write("exporting the report", ex);
+            }
+
+            ExportError = "Not exported: " + ex.Message;
+        }
+    }
+
+    // Expands or collapses a row. Collapsing a row the selection lies below selects the row, as a
+    // tree view does, rather than leaving nothing selected.
+    public void Toggle(TreeRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        if (_tree is not { } tree)
+        {
+            return;
+        }
+
+        if (row.IsExpanded && IsBelow(_selectedNode, row))
+        {
+            SelectedNode = row;
+        }
+
+        tree.Toggle(row);
+    }
+
     public void Dispose()
     {
         _loading?.Cancel();
         _generation++;
         Clear();
+    }
+
+    private Report Analyze(string path, AnalysisOptions options, out long length, out HexDocument? document)
+    {
+        // A folder or a file that is gone has no length; the analysis then reports what it is.
+        var info = new FileInfo(path);
+        length = info.Exists ? info.Length : 0;
+        document = null;
+        Report report = _analyzer.AnalyzeFile(path, options);
+        if (!FileReports.IsNotAnalyzed(report))
+        {
+            document = HexDocument.Open(path);
+        }
+
+        return report;
+    }
+
+    private static bool IsRegularOrMissing(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return true;
+        }
+
+        try
+        {
+            using FileStream? stream = FileType.Open(path, out string? notRegular);
+            return notRegular is null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
+    }
+
+    private static bool IsBelow(TreeRow? row, TreeRow ancestor)
+    {
+        for (TreeRow? current = row?.Parent; current is not null; current = current.Parent)
+        {
+            if (current == ancestor)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void Show(Report report, HexDocument? document)
@@ -376,6 +513,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Graphs.Clear();
         Raise(nameof(HasNoGraphs));
         RaiseCounts();
+        ExportError = null;
         IsLoading = false;
     }
 
