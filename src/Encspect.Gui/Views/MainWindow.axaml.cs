@@ -7,6 +7,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
+using Encspect.Gui.Cache;
 using Encspect.Gui.ViewModels;
 using Encspect.Host;
 
@@ -20,10 +21,11 @@ public partial class MainWindow : Window
     {
     }
 
-    public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null)
+    // Without a cache, as in tests, every folder is analyzed in full.
+    public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null, SummaryCache? cache = null)
     {
         InitializeComponent();
-        Model = model ?? new MainViewModel(analyzer);
+        Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
         DetailWindows = new DetailWindows(this, Model, analyzer, settings);
 
@@ -53,6 +55,7 @@ public partial class MainWindow : Window
         {
             DetailWindows.CloseAll();
             Model.Dispose();
+            Model.Cache?.Flush();
         };
     }
 
@@ -149,7 +152,13 @@ public partial class MainWindow : Window
         var view = Shortcuts.Submenu(
             "View",
             Shortcuts.Item(this, "Include Subfolders", Shortcuts.WithCommand(Key.I), () => Model.IncludeSubfolders = !Model.IncludeSubfolders),
+            Shortcuts.Item(this, "Refresh", OperatingSystem.IsMacOS() ? Shortcuts.WithCommand(Key.R) : new KeyGesture(Key.F5), Model.Refresh),
             Shortcuts.Item(this, "Stop Analysis", Shortcuts.WithCommand(Key.OemPeriod), Model.Cancel));
+        if (Model.Cache is not null)
+        {
+            view.Menu!.Add(new NativeMenuItemSeparator());
+            view.Menu.Add(Shortcuts.Item(this, "Clear Summary Cache", null, Model.ClearCache));
+        }
         var menu = new NativeMenu { file, view };
         if (OperatingSystem.IsMacOS())
         {

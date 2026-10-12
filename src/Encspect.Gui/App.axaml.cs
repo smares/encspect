@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Encspect.Gui.Cache;
 using Encspect.Gui.Views;
 using Encspect.Host;
 
@@ -15,7 +16,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var window = new MainWindow(Analyzer.CreateDefault(), Settings.Load(Settings.DefaultPath));
+            var cache = new SummaryCache(SummaryCache.DefaultPath, AnalyzerVersion.Current);
+            var window = new MainWindow(Analyzer.CreateDefault(), Settings.Load(Settings.DefaultPath), cache: cache);
             desktop.MainWindow = window;
             if (desktop.Args is { Length: > 0 } args)
             {

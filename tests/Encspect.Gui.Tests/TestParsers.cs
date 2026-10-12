@@ -37,3 +37,29 @@ internal sealed class BlockingParser : IFormatParser
 
     public Analyzer Analyzer() => new(DefaultParsers.Tags, [this, .. DefaultParsers.Formats], DefaultParsers.Codecs);
 }
+
+// The default format parser, counting the files it parses, so tests see which files a run
+// analyzed rather than took from the cache.
+internal sealed class CountingParser(IFormatParser inner) : IFormatParser
+{
+    private readonly System.Collections.Concurrent.ConcurrentBag<long> _lengths = [];
+
+    public string Name => inner.Name;
+
+    // The lengths of the files parsed.
+    public IReadOnlyCollection<long> Lengths => _lengths;
+
+    public int Sniff(SniffContext context) => inner.Sniff(context);
+
+    public long? DeclaredEnd(SniffContext context) => inner.DeclaredEnd(context);
+
+    public void Parse(ParseContext context)
+    {
+        _lengths.Add(context.Reader.Length);
+        inner.Parse(context);
+    }
+
+    public static CountingParser Mpeg() => new(DefaultParsers.Formats[0]);
+
+    public Analyzer Analyzer() => new(DefaultParsers.Tags, [this], DefaultParsers.Codecs);
+}

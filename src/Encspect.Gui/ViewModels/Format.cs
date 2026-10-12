@@ -24,6 +24,15 @@ public static class Format
             : time.ToString(@"m\:ss", Invariant);
     }
 
+    // A point in time on a graph's axis, in whole seconds: "0:05", "3:25", "1:02:03".
+    public static string Clock(double seconds)
+    {
+        var time = TimeSpan.FromSeconds(Math.Max(0, Math.Floor(seconds)));
+        return time.TotalHours >= 1
+            ? ((int)time.TotalHours).ToString(Invariant) + time.ToString(@"\:mm\:ss", Invariant)
+            : time.ToString(@"m\:ss", Invariant);
+    }
+
     public static string Bitrate(double kbps, bool? isVbr)
     {
         string text = Math.Round(kbps).ToString("0", Invariant) + " kbps";

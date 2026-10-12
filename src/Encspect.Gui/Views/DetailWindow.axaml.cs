@@ -33,6 +33,7 @@ public partial class DetailWindow : Window
             }
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
+        Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
 
         // The menu shows in macOS's menu bar; elsewhere the window has no menu bar, which would
         // only repeat its buttons, and the menu's shortcuts still work.
@@ -92,6 +93,18 @@ public partial class DetailWindow : Window
             Shortcuts.Item(this, "Next File", Shortcuts.WithCommand(Key.Down), () => StepRequested?.Invoke(this, 1))),
         Shortcuts.WindowMenu(this),
     ];
+
+    private void OnFindingsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = false;
+
+    private void OnGraphsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = true;
+
+    private void OnGraphChoice(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: GraphChoice choice })
+        {
+            Model.Graphs.Selected = choice;
+        }
+    }
 
     private void OnPrevious(object? sender, RoutedEventArgs e) => StepRequested?.Invoke(this, -1);
 

@@ -28,7 +28,7 @@
 
     <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsLoading}" />
 
-    <Grid Grid.Row="2" RowDefinitions="*,1,190" ColumnDefinitions="5*,1,6*">
+    <Grid Grid.Row="2" RowDefinitions="*,1,230" ColumnDefinitions="5*,1,6*">
       <ListBox Name="TreeList" Classes="compact" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}"
                Background="Transparent" Padding="0,4">
         <ListBox.ItemTemplate>
@@ -63,42 +63,82 @@
       <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" ResizeDirection="Rows" />
 
       <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="14,8,12,6">
-          <TextBlock Text="Findings" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0" />
-          <ToggleButton Name="ErrorsFilter" IsChecked="{Binding ShowErrors}" Classes="filter">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <Ellipse Classes="severity error" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding ErrorFilterText}" />
-            </StackPanel>
-          </ToggleButton>
-          <ToggleButton Name="WarningsFilter" IsChecked="{Binding ShowWarnings}" Classes="filter">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <Ellipse Classes="severity warning" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding WarningFilterText}" />
-            </StackPanel>
-          </ToggleButton>
-          <ToggleButton Name="InfosFilter" IsChecked="{Binding ShowInfos}" Classes="filter">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <Ellipse Classes="severity info" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding InfoFilterText}" />
-            </StackPanel>
-          </ToggleButton>
-        </StackPanel>
-        <TextBlock DockPanel.Dock="Top" Text="No findings." Classes="secondary" Margin="14,6" IsVisible="{Binding HasNoFindings}" />
-        <ListBox Name="FindingList" Classes="findings" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" Background="Transparent">
-          <ListBox.ItemTemplate>
-            <DataTemplate DataType="vm:FindingItem">
-              <Grid ColumnDefinitions="Auto,*">
-                <Ellipse Classes="severity" Classes.error="{Binding IsError}" Classes.warning="{Binding IsWarning}" Classes.info="{Binding IsInfo}"
-                         VerticalAlignment="Top" Margin="0,6,10,0" />
-                <StackPanel Grid.Column="1" Spacing="1">
-                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-                  <TextBlock Text="{Binding Detail}" Classes="secondary" FontSize="12" />
-                </StackPanel>
-              </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="8,6,12,4">
+          <StackPanel Orientation="Horizontal" Spacing="2" Margin="0,0,14,0">
+            <Button Name="FindingsTab" Content="Findings" Classes="tab" Classes.selected="{Binding IsFindingsShown}" Click="OnFindingsTab" />
+            <Button Name="GraphsTab" Content="Graphs" Classes="tab" Classes.selected="{Binding IsGraphsShown}" Click="OnGraphsTab" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsFindingsShown}">
+            <ToggleButton Name="ErrorsFilter" IsChecked="{Binding ShowErrors}" Classes="filter">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Ellipse Classes="severity error" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ErrorFilterText}" />
+              </StackPanel>
+            </ToggleButton>
+            <ToggleButton Name="WarningsFilter" IsChecked="{Binding ShowWarnings}" Classes="filter">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Ellipse Classes="severity warning" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding WarningFilterText}" />
+              </StackPanel>
+            </ToggleButton>
+            <ToggleButton Name="InfosFilter" IsChecked="{Binding ShowInfos}" Classes="filter">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Ellipse Classes="severity info" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding InfoFilterText}" />
+              </StackPanel>
+            </ToggleButton>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsGraphsShown}">
+            <ComboBox Name="GraphStreams" ItemsSource="{Binding Graphs.Streams}" SelectedItem="{Binding Graphs.SelectedStream}"
+                      IsVisible="{Binding Graphs.HasStreamChoice}" MaxWidth="300" Padding="10,3" MinHeight="26" VerticalAlignment="Center">
+              <ComboBox.ItemTemplate>
+                <DataTemplate DataType="vm:GraphStream">
+                  <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.Choices}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="6" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:GraphChoice">
+                  <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+
+        <Panel IsVisible="{Binding IsFindingsShown}">
+          <TextBlock Text="No findings." Classes="secondary" Margin="14,6" VerticalAlignment="Top" IsVisible="{Binding HasNoFindings}" />
+          <ListBox Name="FindingList" Classes="findings" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" Background="Transparent">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="vm:FindingItem">
+                <Grid ColumnDefinitions="Auto,*">
+                  <Ellipse Classes="severity" Classes.error="{Binding IsError}" Classes.warning="{Binding IsWarning}" Classes.info="{Binding IsInfo}"
+                           VerticalAlignment="Top" Margin="0,6,10,0" />
+                  <StackPanel Grid.Column="1" Spacing="1">
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Detail}" Classes="secondary" FontSize="12" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+
+        <DockPanel IsVisible="{Binding IsGraphsShown}">
+          <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary" FontSize="12"
+                     Margin="14,0,12,8" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <Panel>
+            <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
+                       IsVisible="{Binding HasNoGraphs}" />
+            <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" />
+          </Panel>
+        </DockPanel>
       </DockPanel>
     </Grid>
   </Grid>

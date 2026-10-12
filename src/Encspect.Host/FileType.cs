@@ -9,7 +9,7 @@ namespace Encspect.Host;
 // file is opened with POSIX open(2) and O_NONBLOCK, which returns at once for a FIFO, and what the
 // open file does tells the rest: a FIFO or a terminal cannot seek, and a device or a kernel file
 // reports a size of 0 yet yields data.
-internal static class FileType
+public static class FileType
 {
     private static readonly Lazy<OpenFunction?> NonBlockingOpen = new(FindOpen);
 

@@ -109,11 +109,15 @@ public sealed class FileRow : ObservableObject
     // Why the file was not analyzed, as its single error finding says.
     public string? Problem => _summary?.Problem;
 
-    public void Apply(FileSummary summary)
+    // Whether the summary came from the summary cache rather than an analysis of the file.
+    public bool IsCached { get; private set; }
+
+    public void Apply(FileSummary summary, bool isCached = false)
     {
         ArgumentNullException.ThrowIfNull(summary);
 
         _summary = summary;
+        IsCached = isCached;
         State = FileState.Analyzed;
         foreach (string name in Changed)
         {

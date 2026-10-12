@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Encspect.Gui.ViewModels;
@@ -55,6 +56,64 @@ public class ScreenshotTests
 
         main.Close();
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+
+    // The graphs of a VBR stream: the bitrate per frame with a point clicked, which selects its frame
+    // in the tree and hex view, and the bitrate distribution with a bar hovered.
+    [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void RendersGraphs(string variant)
+    {
+        Application.Current!.RequestedThemeVariant = variant == "dark" ? ThemeVariant.Dark : ThemeVariant.Light;
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1180, Height = 800 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Stats("vbr-seconds.mp3"));
+        UiPump.Until(() => load.IsCompleted);
+        window.Model.IsGraphsShown = true;
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+
+        Point point = PointOver(window, 60);
+        window.MouseDown(point, MouseButton.Left);
+        window.MouseUp(point, MouseButton.Left);
+        Assert.Equal(Core.NodeKind.Frame, window.Model.SelectedNode!.Kind);
+        window.MouseMove(PointOver(window, 90));
+        Save(window, $"graphs-{variant}.png");
+
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.First(c => c.Graph is DistributionGraph);
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        window.MouseMove(PointOver(window, window.Graph.Graph!.Count / 2));
+        Save(window, $"distribution-{variant}.png");
+
+        // A file of two streams offers a choice of stream.
+        load = window.Model.LoadAsync(Fixtures.Stats("sample-rate-change-statistics.mp3"));
+        UiPump.Until(() => load.IsCompleted);
+        window.Model.Graphs.SelectedStream = window.Model.Graphs.Streams[1];
+        Save(window, $"graphs-streams-{variant}.png");
+
+        window.Close();
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+
+    // A point in the window over the chart's point or bar at index, at the height of its value.
+    internal static Point PointOver(DetailWindow window, int index)
+    {
+        GraphView view = window.Graph;
+        Graph graph = view.Graph!;
+        for (double x = 0; x < view.Bounds.Width; x++)
+        {
+            for (double y = view.Bounds.Height - 1; y > 0; y -= 2)
+            {
+                if (view.IndexAt(new Point(x, y)) == index)
+                {
+                    return view.TranslatePoint(new Point(x + 1, y), window)!.Value;
+                }
+            }
+        }
+
+        throw new InvalidOperationException($"No point of {graph.Title} at {index}.");
     }
 
     private static void Save(Avalonia.Controls.TopLevel window, string name)
