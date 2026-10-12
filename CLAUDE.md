@@ -4,15 +4,16 @@ Audio file analyzer with a GUI and a CLI. Read `docs/PLAN.md` for goals, archite
 
 ## Stack
 
-C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one project per format. No playback, no runtime-loadable plugins, no bundled native libraries.
+C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one project per format. No playback, no runtime-loadable plugins, no bundled decoders or audio libraries; the native rendering libraries the UI framework itself needs (Skia, HarfBuzz) are the one exception.
 
 ## Layout
 
 - `src/Encspect.Core.Abstractions`: result model, byte and bit readers, mapped bytes, parser interfaces and their contexts.
-- `src/Encspect.Host`: analyzer (format detection, parser orchestration, the routes between parsers) and report writers.
+- `src/Encspect.Host`: analyzer (format detection, parser orchestration, the routes between parsers), report writers and the input walker both front ends use.
 - `src/Encspect.Cli`: console app, assembly name `encspect`.
-- `tests/Encspect.Tests`: xUnit tests for all of the above.
-- Format parsers, tag parsers and the Avalonia GUI are added as further projects.
+- `src/Encspect.Gui`: Avalonia GUI, assembly name `encspect-gui`; it references the host only.
+- `tests/Encspect.Tests`: xUnit tests for all of the above but the GUI; `tests/Encspect.Gui.Tests`: headless GUI tests on xUnit v3, which Avalonia.Headless.XUnit needs.
+- Format parsers and tag parsers are added as further projects.
 
 ## Architecture rules
 

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>encspect-gui</AssemblyName>
+    <RootNamespace>Encspect.Gui</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- A single-file publish carries Skia's and HarfBuzz's native libraries inside the file. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Encspect.Host\Encspect.Host.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Encspect.Gui.Tests" />
+  </ItemGroup>
+</Project>

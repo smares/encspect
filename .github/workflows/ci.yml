@@ -12,6 +12,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Avalonia's build tasks send usage data unless told not to.
+env:
+  AVALONIA_TELEMETRY_OPTOUT: 1
+
 jobs:
   build-test:
     name: build and test (${{ matrix.os }})
@@ -63,6 +67,19 @@ jobs:
         run: |
           publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
+
+      # Not uploaded either. A runner has no display to open a window on, so the published GUI runs
+      # its self-check: it loads Skia's and HarfBuzz's native libraries from the single file and
+      # analyzes a fixture through the host, without opening a window.
+      - name: Publish the self-contained GUI
+        run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
+
+      - name: Run the published GUI's self-check
+        shell: bash
+        run: |
+          publish/gui-${{ matrix.rid }}/encspect-gui --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/gui.txt"
+          grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/gui.txt"
+          grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
 
   fuzz:
     name: fuzz smoke test

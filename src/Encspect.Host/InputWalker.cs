@@ -1,14 +1,15 @@
-namespace Encspect.Cli;
+namespace Encspect.Host;
 
 // A file to analyze, or a folder that could not be listed and why.
-internal readonly record struct Input(string Path, string? FolderError = null);
+public readonly record struct Input(string Path, string? FolderError = null);
 
 // Expands folders into the files below them, in the ordinal order of their paths. Each folder is
 // listed and sorted on its own, so output starts before the whole tree is read. Hidden files and
 // folders are included. A symbolic link to a folder is followed only when it leads out of the
 // tree being walked, neither into it nor to a folder above it, and to no folder visited before,
-// so every folder is visited once and link loops end.
-internal static class InputWalker
+// so every folder is visited once and link loops end. The CLI walks every folder it is given, the
+// GUI a folder whose subfolders are included.
+public static class InputWalker
 {
     // Linux's limit on links followed while resolving one path.
     private const int MaxLinks = 40;
