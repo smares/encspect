@@ -229,6 +229,62 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    [AvaloniaFact]
+    public void A_sorted_list_sorts_again_as_rows_fill_in_and_keeps_the_selection()
+    {
+        var model = new MainViewModel(Analyzer.CreateDefault(), roots: []);
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), model);
+        main.Show();
+        var rows = new List<FileRow>();
+        for (int i = 0; i < 60; i++)
+        {
+            var row = new FileRow($"/{i}", $"{i:D2}");
+            model.Rows.Add(row);
+            rows.Add(row);
+        }
+
+        main.Files.Columns.Single(c => (string)c.Header! == "Duration").Sort(ListSortDirection.Ascending);
+        UiPump.Until(() => model.RowsView.SortDescriptions.Count == 1);
+        model.SelectedRow = rows[5];
+        UiPump.Until(() => true);
+        int changes = 0;
+        model.SelectedRowChanged += (_, _) => changes++;
+        foreach (FileRow row in rows)
+        {
+            row.Apply(new FileSummary(new ReportSummary(row.Path, "MPEG Audio", 1, "MPEG-1 Layer III", 100 - rows.IndexOf(row), 1, 128, 44100, null, null, null, [], 0, 0, 0), false, null));
+        }
+
+        model.SortAgain();
+        UiPump.Until(() => true);
+
+        Assert.Equal(["59", "58", "57"], model.RowsView.Cast<FileRow>().Take(3).Select(r => r.Name));
+        Assert.Same(rows[5], model.SelectedRow);
+        Assert.Same(rows[5], main.Files.SelectedItem);
+        Assert.Equal(0, changes);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_run_ends_sorted_by_the_column_chosen_before_it()
+    {
+        MainWindow main = OpenMain();
+        main.Files.Columns.Single(c => (string)c.Header! == "Duration").Sort(ListSortDirection.Descending);
+        UiPump.Until(() => main.Model.RowsView.SortDescriptions.Count == 1);
+
+        // Refreshing lists the rows again, unsorted until they fill in.
+        main.Model.Refresh();
+        Assert.True(main.Model.IsRunning);
+        UiPump.Until(() => !main.Model.IsRunning);
+        double?[] durations = [];
+        UiPump.Until(() =>
+        {
+            durations = [.. main.Model.RowsView.Cast<FileRow>().Select(r => r.Duration)];
+            return durations.SequenceEqual(durations.OrderDescending());
+        }, 3000);
+        Assert.Equal(4, durations.Length);
+        main.Close();
+    }
+
     private MainWindow OpenMain(Settings? settings = null)
     {
         var main = new MainWindow(Analyzer.CreateDefault(), settings ?? new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: []));

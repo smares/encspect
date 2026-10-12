@@ -30,6 +30,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _showInfos = true;
     private bool _canGoPrevious;
     private bool _canGoNext;
+    private bool _isGraphsShown;
 
     public DetailViewModel(Analyzer analyzer, Action<Action>? post = null)
     {
@@ -37,7 +38,28 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         _analyzer = analyzer;
         _post = post ?? UiThread.Post;
+        Graphs.FrameRequested += (_, offset) => SelectFrameAt(offset);
     }
+
+    public GraphsViewModel Graphs { get; } = new();
+
+    // The pane below the tree and hex view shows the findings or the graphs.
+    public bool IsGraphsShown
+    {
+        get => _isGraphsShown;
+        set
+        {
+            if (Set(ref _isGraphsShown, value))
+            {
+                Raise(nameof(IsFindingsShown));
+            }
+        }
+    }
+
+    public bool IsFindingsShown => !_isGraphsShown;
+
+    // "No graphs" shows once a report without anything to graph is loaded.
+    public bool HasNoGraphs => _report is not null && !Graphs.HasGraphs;
 
     public string? Path => _path;
 
@@ -87,6 +109,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             {
                 Highlight = value is null ? null : HexHighlight.For(value.Node);
                 BitStrip = BitStrip.For(_highlight, _document);
+                Graphs.MarkFrame(FrameOf(value)?.Node.Offset);
                 Raise(nameof(SelectionText));
             }
         }
@@ -279,6 +302,35 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return shown.Task;
     }
 
+    // Selects the frame that holds the offset, found through the tree's containment from the nodes
+    // of the stream the graphs show, and returns its row; null when no frame holds it.
+    public TreeRow? SelectFrameAt(long offset)
+    {
+        if (_tree is not { } tree)
+        {
+            return null;
+        }
+
+        Node root = tree.Root.Node;
+        IEnumerable<IReadOnlyList<int>> starts = Graphs.SelectedStream?.Stream.NodePaths.OfType<IReadOnlyList<int>>() ?? [];
+        foreach (IReadOnlyList<int> start in starts.Append([]))
+        {
+            Node? node = NodeAt(root, start);
+            if (node is null || node.Offset > offset || offset >= node.End || FrameLocator.PathFrom(node, offset) is not { } below)
+            {
+                continue;
+            }
+
+            if (tree.Reveal([.. start, .. below]) is { } row)
+            {
+                SelectedNode = row;
+                return row;
+            }
+        }
+
+        return null;
+    }
+
     public Task ExportAsync(Stream output, ReportFormat format)
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -305,6 +357,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Progress = 1;
         Streams = report.Streams.Select(s => new StreamItem(s)).ToList();
         Raise(nameof(StreamsText));
+        Graphs.Load(report);
+        Raise(nameof(HasNoGraphs));
         SelectedNode = Tree.Root;
     }
 
@@ -319,8 +373,38 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         _allFindings = [];
         Findings.Clear();
         Streams = [];
+        Graphs.Clear();
+        Raise(nameof(HasNoGraphs));
         RaiseCounts();
         IsLoading = false;
+    }
+
+    // The frame a row is or lies in, which the graphs mark.
+    private static TreeRow? FrameOf(TreeRow? row)
+    {
+        while (row is not null && row.Kind != NodeKind.Frame)
+        {
+            row = row.Parent;
+        }
+
+        return row;
+    }
+
+    private static Node? NodeAt(Node root, IReadOnlyList<int> path)
+    {
+        Node node = root;
+        foreach (int index in path)
+        {
+            IReadOnlyList<Node> children = node.Children;
+            if ((uint)index >= (uint)children.Count)
+            {
+                return null;
+            }
+
+            node = children[index];
+        }
+
+        return node;
     }
 
     private void RaiseCounts()
