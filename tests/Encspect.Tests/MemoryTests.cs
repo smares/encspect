@@ -84,8 +84,9 @@ public class MemoryTests(ITestOutputHelper output)
     // A Speex stream keeps an 8-byte record per packet, 4 bytes per frame and its per-packet series
     // (16 bytes, whose x values are also the packets' offsets), plus its share of the page records:
     // 30 bytes in all on linux-x64, where macOS on arm64 measured 67 before the measurement
-    // compacted the heap, and a peak of 30 to 40. The bounds leave room for both and stay below
-    // what keeping a packet's bytes or node would cost.
+    // compacted the heap, and a peak of 30 to 50, where macOS on arm64 measured 80. The bounds
+    // leave room for both and stay below what keeping a packet's bytes or node would cost (a peak
+    // of 125 on linux-x64).
     [Fact]
     public void ManySpeexPacketsStayCompact()
     {
@@ -105,7 +106,7 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Equal(packets * 160L / 8000.0 - (40 / 8000.0), report.Streams.Single().Duration, 9);
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 80L, $"The report keeps {kept / packets} bytes per packet.");
-        Assert.True(peak < packets * 80L, $"The live heap grew by {peak / packets} bytes per packet.");
+        Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 

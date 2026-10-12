@@ -254,8 +254,11 @@ public static class ReportJsonWriter
     {
         switch (value.Kind)
         {
-            case NodeValueKind.Integer or NodeValueKind.Hex:
+            case NodeValueKind.Integer:
                 writer.WriteNumber("value", value.AsInteger()!.Value);
+                break;
+            case NodeValueKind.Hex:
+                writer.WriteNumber("value", value.AsUnsigned()!.Value);
                 break;
             case NodeValueKind.Decimal:
                 writer.WriteNumber("value", value.AsDouble()!.Value);

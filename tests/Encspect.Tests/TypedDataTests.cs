@@ -49,6 +49,19 @@ public class NodeValueTests
     }
 
     [Fact]
+    public void HexValuesCanUseAll64Bits()
+    {
+        NodeValue mask = NodeValue.Hex(ulong.MaxValue, 16);
+        Assert.Equal("0xFFFFFFFFFFFFFFFF", mask.ToString());
+        Assert.Equal(ulong.MaxValue, mask.AsUnsigned());
+        Assert.Null(mask.AsInteger());
+        Span<char> text = stackalloc char[32];
+        Assert.True(mask.TryFormat(text, out int written));
+        Assert.Equal("0xFFFFFFFFFFFFFFFF", text[..written].ToString());
+        Assert.Throws<ArgumentOutOfRangeException>(() => NodeValue.Hex(-1L, 16));
+    }
+
+    [Fact]
     public void BooleansAndTextShowAsBefore()
     {
         Assert.Equal("true", NodeValue.Boolean(true).ToString());

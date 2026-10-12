@@ -242,7 +242,7 @@ public sealed partial class Mp4Parser
             }
             else
             {
-                ulong omitted = f.Field(node, "Omitted Channels", 8, Explain.ChnlOmittedChannels, v => NodeValue.Hex((long)v, 16));
+                ulong omitted = f.Field(node, "Omitted Channels", 8, Explain.ChnlOmittedChannels, v => NodeValue.Hex(v, 16));
                 if (defined < Configurations.Length && Configurations[defined] is { } configuration)
                 {
                     // The lowest bit stands for the configuration's first channel, as ffmpeg reads it.
