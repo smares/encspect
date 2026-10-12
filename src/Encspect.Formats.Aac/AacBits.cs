@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Encspect.Formats.Aac;
 
@@ -99,6 +101,18 @@ internal ref struct AacBits
     // The next count bits (at most 32), zero past the data, without moving on.
     public readonly uint Peek(int count) => (uint)(Peek64() >> (64 - count));
 
+    // Moves on without checking the limit, for a run of short reads that Peek already makes safe;
+    // Check must follow before anything relies on the position.
+    public void Advance(int count) => Position += count;
+
+    public readonly void Check()
+    {
+        if (Position > Limit)
+        {
+            throw BlockOverrun.Instance;
+        }
+    }
+
     public void Skip(int count)
     {
         if (count < 0 || Position + (long)count > Limit)
@@ -167,9 +181,9 @@ internal ref struct AacBits
     {
         int index = Position >> 3;
         ulong word;
-        if (index + 8 <= _data.Length)
+        if ((uint)index + 8u <= (uint)_data.Length)
         {
-            word = BinaryPrimitives.ReadUInt64BigEndian(_data[index..]);
+            word = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(_data), index)));
         }
         else
         {

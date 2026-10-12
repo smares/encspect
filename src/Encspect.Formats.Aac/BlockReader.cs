@@ -970,23 +970,44 @@ internal sealed partial class BlockReader
                     int codewords = lines / Codebooks.Dimension(book);
                     Huffman huffman = Codebooks.Spectral[book];
                     byte[] follow = Codebooks.Follow[book];
+                    int[] shortcut = Codebooks.Shortcuts[book];
+                    int width = huffman.RootWidth;
                     for (int i = 0; i < codewords; i++)
                     {
-                        int after = follow[huffman.Decode(ref bits)];
-                        if (after != 0)
+                        // Most codewords fit the root: one lookup gives their bits and sign bits.
+                        // Peek reads zero bits past the data, so the limit is checked once per band.
+                        int entry = shortcut[bits.Peek(width)];
+                        if (entry >= 0 && entry < 0x100)
                         {
-                            bits.Skip(after & 7);
-                            if ((after & 8) != 0)
-                            {
-                                Escape(ref bits);
-                            }
+                            bits.Advance(entry);
+                            continue;
+                        }
 
-                            if ((after & 16) != 0)
-                            {
-                                Escape(ref bits);
-                            }
+                        bits.Check();
+                        int after;
+                        if (entry >= 0)
+                        {
+                            bits.Skip(entry & 0xFF);
+                            after = entry >> 5;
+                        }
+                        else
+                        {
+                            after = follow[huffman.Decode(ref bits)];
+                            bits.Skip(after & 7);
+                        }
+
+                        if ((after & 8) != 0)
+                        {
+                            Escape(ref bits);
+                        }
+
+                        if ((after & 16) != 0)
+                        {
+                            Escape(ref bits);
                         }
                     }
+
+                    bits.Check();
                 }
             }
 

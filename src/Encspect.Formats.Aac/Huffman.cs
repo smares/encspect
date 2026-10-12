@@ -22,6 +22,9 @@ internal sealed class Huffman
 
     public int MaxLength { get; }
 
+    // The bits the root is indexed by.
+    public int RootWidth => Math.Min(RootBits, MaxLength);
+
     // The next symbol: its index in the codebook's table. Reads past the limit throw BlockOverrun.
     public int Decode(ref AacBits bits)
     {
@@ -40,6 +43,21 @@ internal sealed class Huffman
             offset = (entry >> 8) & 0x7FFFFF;
             width = entry & 0xFF;
         }
+    }
+
+    // For each value of the root's bits, where a codeword no longer than them starts: its length plus
+    // the sign bits follow gives for its symbol in the low byte, and follow's escape flags (8 and
+    // 16) as bits 8 and 9; -1 where the codeword is longer, for Decode to read.
+    public int[] Shortcut(byte[] follow)
+    {
+        var table = new int[1 << RootWidth];
+        for (int i = 0; i < table.Length; i++)
+        {
+            int entry = _table[i];
+            table[i] = entry < 0 ? -1 : ((entry & 0xFF) + (follow[entry >> 8] & 7)) | ((follow[entry >> 8] & 24) << 5);
+        }
+
+        return table;
     }
 
     // Writes the table for the codewords in symbols, whose first consumed bits are already read, at
@@ -100,6 +118,9 @@ internal static class Codebooks
     // Per spectral codebook and symbol: the sign bits after the codeword (unsigned codebooks) in the
     // low 3 bits, 8 where the pair's first value escapes and 16 where its second does (codebook 11).
     public static readonly byte[][] Follow = BuildFollow();
+
+    // Per spectral codebook, Huffman.Shortcut of its Follow.
+    public static readonly int[][] Shortcuts = [[], .. Enumerable.Range(1, 11).Select(book => Spectral[book].Shortcut(Follow[book]))];
 
     // Codebooks 1 to 4 code four lines per codeword, 5 to 11 two.
     public static int Dimension(int codebook) => codebook < 5 ? 4 : 2;

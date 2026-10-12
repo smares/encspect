@@ -386,7 +386,7 @@ def main():
                     ok = line.startswith(faad["label"] + "\t") and f", {faad['channels']} ch, {faad['rate']} Hz" in line
                 if not ok:
                     problems.append(f"faad -i prints {line!r}, expected {faad}")
-            if "faad_trace" not in check.get("skip", {}) and (directory / (path.stem + ".report.json")).exists():
+            if not {"faad_trace", "all"} & set(check.get("skip", {})) and (directory / (path.stem + ".report.json")).exists():
                 report = json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
                 traced += check_trace(path, report, problems, check.get("faad_trace_skip", {}))
             if check.get("decode"):

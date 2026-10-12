@@ -216,7 +216,8 @@ def layout_variants():
         "fields": {"MP4/mdat/Size": "1 (a 64-bit size follows)", "MP4/mdat/Large Size": f"{next(s for p, o, s in records if p == 'mdat')} bytes",
                    "MP4/moov/trak/mdia/minf/stbl/co64": "3 chunks", ESDS + "/Average Bitrate": "128000 bit/s"},
         "findings": [MOOV_AFTER], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None,
-                                                 "skip": {"faad": "faad2's MP4 reader does not read 64-bit box sizes or chunk offsets."}},
+                                                 "skip": {"faad": "faad2's MP4 reader does not read 64-bit box sizes or chunk offsets.",
+                                                          "faad_trace": "faad2's MP4 reader does not read 64-bit box sizes or chunk offsets."}},
     }))
 
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
@@ -238,7 +239,8 @@ def layout_variants():
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
         "streams": [stream("AAC LC", 44100, 2, "Stereo", 24 * 1024, vbr=True), stream("AAC LC", 22050, 1, "Mono", 18 * 1024, vbr=True)],
         "units": unit_list(offsets[0], first.samples, 6) + unit_list(offsets[1], second.samples, 6), "fields": {},
-        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)},
+        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100),
+                                       "skip": {"faad_trace": "faad2 decodes the first track only."}},
     }))
     return out
 
@@ -419,7 +421,8 @@ def quicktime():
             "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
             "streams": [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)],
             "units": unit_list(offsets[0], samples, 10), "fields": fields, "findings": [],
-            "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2's MP4 reader does not look for esds inside a wave box."}},
+            "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2's MP4 reader does not look for esds inside a wave box.",
+                                                                                 "faad_trace": "faad2's MP4 reader does not look for esds inside a wave box."}},
         }))
     return out
 
@@ -491,7 +494,8 @@ def fragmented():
         "units": unit_rows,
         "fields": {"MP4/moof[1]/mfhd": "Movie Fragment Header, sequence 2", "MP4/moof/traf/trun": "10 samples", "MP4/moov/mvex/trex": "Track Extends, track 1"},
         "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None,
-                                       "skip": {"faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty."}},
+                                       "skip": {"faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
+                                                "faad_trace": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty."}},
     })]
 
 

@@ -149,6 +149,22 @@ internal sealed class UnitStore
     // Copies count bits from bit from of source to bit to of target, which is zero there.
     private static void CopyBits(ReadOnlySpan<byte> source, int from, int count, Span<byte> target, int to)
     {
+        // Eight bits at a time while they last, read from wherever they start and written where
+        // they go; the target is clear.
+        for (; count >= 8; from += 8, to += 8, count -= 8)
+        {
+            int at = from >> 3;
+            int shift = from & 7;
+            int value = shift == 0 ? source[at] : ((source[at] << shift) | (source[at + 1] >> (8 - shift))) & 0xFF;
+            int into = to >> 3;
+            int offset = to & 7;
+            target[into] |= (byte)(value >> offset);
+            if (offset != 0)
+            {
+                target[into + 1] |= (byte)(value << (8 - offset));
+            }
+        }
+
         for (int i = 0; i < count; i++)
         {
             int bit = (source[(from + i) >> 3] >> (7 - ((from + i) & 7))) & 1;

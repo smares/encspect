@@ -131,6 +131,8 @@ def stream(codec, rate, channels, mode, samples, vbr=True, encoder=None, **extra
 def manifest(description, data, rows, streams, fields, findings=(), skip=None, rate=RATE, fmt="AAC", boxes=None, trace_skip=None):
     skip = dict(skip or {})
     check = {"ffprobe": "ffprobe" not in skip, "decode": "decode" not in skip}
+    if "ffprobe_streams" in skip:
+        check["ffprobe_streams"] = False
     if trace_skip:
         check["faad_trace_skip"] = {str(k): v for k, v in trace_skip.items()}
     if fmt == "AAC":
@@ -343,7 +345,7 @@ def mp4_fixtures():
         asc(2, 22050, 2, sbr=False, signaling="backward"), 22050, 2, units, "AAC LC", 22050, 2, "Stereo",
         {stats + "/SBR": share(12, 12, "access unit")},
         [["aac.sbr-signaled-absent", "signals SBR absent, but 12 of 12 raw data blocks hold SBR data"]],
-        {"label": "LC AAC", "channels": 2, "rate": 44100})
+        {"label": "LC AAC", "channels": 2, "rate": 22050})
     man["crosscheck"]["decode"] = False
     man["crosscheck"]["skip"] = {"decode": "ffmpeg warns that SBR is signaled absent but found, the condition the fixture tests."}
     out.append((name, data, man))
@@ -485,7 +487,8 @@ def object_types():
          "ADTS/Frame[1]/Raw Data Block/CCE/IsIndependentlySwitched": "true"},
         [["aac.coupling-without-program", "4 raw data blocks hold a coupling channel element, which channel configuration 2 does not provide for"]],
         skip={"faad": "faad2 is built without coupling and stops at the element.", "faad_trace": "faad2 is built without coupling and stops at the element.",
-              "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2."})))
+              "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2.",
+              "ffprobe_streams": "ffmpeg cannot decode the frames, so it reports no sample rate."})))
     return out
 
 

@@ -73,6 +73,36 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
+    // from: the side information without the Huffman-coded scalefactors and spectral data
+    // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 132 bytes
+    // kept per frame on linux-x64, of the 281 a frame holds. The bound leaves room for a platform
+    // that measures more and stays below what keeping the frames' bytes would cost.
+    [Fact]
+    public void ManyAdtsFramesStayCompact()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"));
+        var stream = new MemoryStream();
+        int frames = 0;
+        while (frames < 100_000)
+        {
+            for (int at = 0; at + 7 <= source.Length && frames < 100_000; frames++)
+            {
+                int length = ((source[at + 3] & 3) << 11) | (source[at + 4] << 3) | (source[at + 5] >> 5);
+                stream.Write(source, at, length);
+                at += length;
+            }
+        }
+
+        (Report report, long kept, long peak) = Measure("frames.aac", stream.ToArray());
+
+        Assert.Equal(frames * 1024L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame of {stream.Length / frames} bytes");
+        Assert.True(kept < frames * 200L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 1024L, $"The heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
     // scan never holds the pages' nodes or data (64 bytes kept per page and a few more for its
     // segment table and place in its stream, 72 in all on linux-x64, where macOS on arm64

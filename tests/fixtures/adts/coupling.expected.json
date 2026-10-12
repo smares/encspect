@@ -45,11 +45,13 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": false,
+  "ffprobe_streams": false,
   "faad": null,
   "skip": {
    "faad": "faad2 is built without coupling and stops at the element.",
    "faad_trace": "faad2 is built without coupling and stops at the element.",
-   "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2."
+   "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2.",
+   "ffprobe_streams": "ffmpeg cannot decode the frames, so it reports no sample rate."
   }
  }
 }
