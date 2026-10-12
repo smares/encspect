@@ -90,6 +90,22 @@ public sealed class MappedBytes
 
     public ReadOnlyMemory<byte> Data { get; }
 
+    // For a packet a container hands to a codec parser (AnalysisContext.ParsePackets): the
+    // container's position at the end of the packet in the codec's own units, where the container
+    // records one, such as the granule position of the Ogg page the packet ends on, which only the
+    // last packet that ends there carries; null elsewhere. EndPositionField is the node of the
+    // field that holds it, for findings. IsEndOfStream marks the last packet of a stream the
+    // container says has ended (an Ogg page with the end-of-stream flag), and FollowsGap the first
+    // packet after packets the container lost (a damaged page, a gap in the page sequence), so a
+    // codec does not count positions across the gap.
+    public long? EndPosition { get; init; }
+
+    public Node? EndPositionField { get; init; }
+
+    public bool IsEndOfStream { get; init; }
+
+    public bool FollowsGap { get; init; }
+
     public ReadOnlySpan<byte> Span => Data.Span;
 
     public int Length => Data.Length;

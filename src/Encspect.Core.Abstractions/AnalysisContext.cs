@@ -93,4 +93,16 @@ public abstract class AnalysisContext
 
         return _router?.ParseTag(this, tagName, slice, parent);
     }
+
+    // As ParseTag, for a tag that a container or codec took apart, such as the Vorbis comment
+    // packet of an Ogg stream, which may span pages: the tag starts at the first byte and its nodes
+    // point at the file through the bytes' map (ITagParser.ParseWhole with mapped bytes).
+    public Node? ParseTag(string tagName, MappedBytes tag, Node parent)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(tagName);
+        ArgumentNullException.ThrowIfNull(tag);
+        ArgumentNullException.ThrowIfNull(parent);
+
+        return _router?.ParseTag(this, tagName, tag, parent);
+    }
 }

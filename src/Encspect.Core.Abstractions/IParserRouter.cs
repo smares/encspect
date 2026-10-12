@@ -10,4 +10,6 @@ public interface IParserRouter
     bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets);
 
     Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent);
+
+    Node? ParseTag(AnalysisContext caller, string tagName, MappedBytes tag, Node parent);
 }
