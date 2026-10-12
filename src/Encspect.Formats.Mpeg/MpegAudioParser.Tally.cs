@@ -19,38 +19,38 @@ public sealed partial class MpegAudioParser
     private static void AddTally(Node node, RegionState region, long start, long length, long audioBytes, long ticks)
     {
         FrameTally tally = region.Tally;
-        Node modes = node.Add("Channel Modes", start, length, NodeValue.Integer(tally.ChannelModes.Count(c => c > 0), "modes", "mode"));
+        Node modes = node.Add("Channel Modes", start, length, NodeValue.Integer(tally.ChannelModes.Count(c => c > 0), "modes", "mode"), Explain.ChannelModes, Topics.ChannelModes);
         int frames = tally.ChannelModes.Sum();
         for (int mode = 0; mode < 4; mode++)
         {
             if (tally.ChannelModes[mode] > 0)
             {
-                modes.Add(MpegHeader.ChannelModes[mode], start, length, Share(FramesText(tally.ChannelModes[mode]), tally.ChannelModes[mode], frames));
+                modes.Add(MpegHeader.ChannelModes[mode], start, length, Share(FramesText(tally.ChannelModes[mode]), tally.ChannelModes[mode], frames), Explain.ChannelModeCount);
             }
         }
 
-        AddExtensions("Joint Stereo Modes", tally.Layer3Extensions, e => JointStereoModes[e]);
-        AddExtensions("Intensity Stereo Bounds", tally.Bounds, e => $"Bands {(e + 1) * 4} to 31");
+        AddExtensions("Joint Stereo Modes", tally.Layer3Extensions, e => JointStereoModes[e], Explain.JointStereoModes, Explain.JointStereoMode, Topics.JointStereo);
+        AddExtensions("Intensity Stereo Bounds", tally.Bounds, e => $"Bands {(e + 1) * 4} to 31", Explain.IntensityBounds, Explain.IntensityBound, Topics.IntensityStereo);
 
         if (tally.Layer3Frames > 0)
         {
-            Node blocks = node.Add("Block Usage", start, length, NodeValue.Integer(tally.GranuleChannels, "granules", "granule"));
+            Node blocks = node.Add("Block Usage", start, length, NodeValue.Integer(tally.GranuleChannels, "granules", "granule"), Explain.BlockUsage, Topics.BlockSwitching);
             for (int kind = 0; kind < BlockKinds.Length; kind++)
             {
                 if (tally.Blocks[kind] > 0)
                 {
-                    blocks.Add(BlockKinds[kind], start, length, Share(GranulesText(tally.Blocks[kind]), tally.Blocks[kind], tally.GranuleChannels));
+                    blocks.Add(BlockKinds[kind], start, length, Share(GranulesText(tally.Blocks[kind]), tally.Blocks[kind], tally.GranuleChannels), kind == 3 ? Explain.BlockKindMixed : Explain.BlockKind);
                 }
             }
 
-            Node gain = node.Add(new Node("Global Gain", start, length));
+            Node gain = node.Add(new Node("Global Gain", start, length) { Description = Explain.GainRange, Topic = Topics.GlobalGain });
             for (int ch = 0; ch < 2; ch++)
             {
                 if (tally.MaximumGain[ch] >= 0)
                 {
-                    Node channel = gain.Add(new Node($"Channel {ch}", start, length));
-                    channel.Add("Minimum", start, length, NodeValue.Integer(tally.MinimumGain[ch]));
-                    channel.Add("Maximum", start, length, NodeValue.Integer(tally.MaximumGain[ch]));
+                    Node channel = gain.Add(new Node($"Channel {ch}", start, length) { Description = Explain.GainChannel });
+                    channel.Add("Minimum", start, length, NodeValue.Integer(tally.MinimumGain[ch]), Explain.GainMinimum);
+                    channel.Add("Maximum", start, length, NodeValue.Integer(tally.MaximumGain[ch]), Explain.GainMaximum);
                 }
             }
         }
@@ -59,28 +59,30 @@ public sealed partial class MpegAudioParser
         // count what mp3guessenc counts after the audio data.
         AncillaryScan? scan = region.Ancillary;
         long ancillary = (scan?.AudioBytes ?? 0) + tally.Layer12Ancillary;
-        Node data = node.Add("Ancillary Data", start, length, Bytes(ancillary));
-        data.Add("Share", start, length, NodeValue.Decimal(RoundHalfEven((Int128)ancillary * 1000, audioBytes) / 10.0, 1, "%"));
-        data.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)ancillary * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"));
+        Node data = node.Add("Ancillary Data", start, length, Bytes(ancillary), Explain.AncillaryTotal, Topics.AncillaryData);
+        data.Add("Share", start, length, NodeValue.Decimal(RoundHalfEven((Int128)ancillary * 1000, audioBytes) / 10.0, 1, "%"), Explain.AncillaryShare);
+        data.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)ancillary * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"), Explain.AncillaryRate);
         if (ancillary > 0)
         {
             long smallest = scan?.SmallestSegment ?? 0;
             smallest = smallest == 0 ? tally.SmallestLayer12 : tally.SmallestLayer12 == 0 ? smallest : Math.Min(smallest, tally.SmallestLayer12);
-            data.Add("Smallest Nonzero Amount", start, length, Bytes(smallest));
-            data.Add("Largest Amount", start, length, Bytes(Math.Max(scan?.LargestSegment ?? 0, tally.LargestLayer12)));
+            data.Add("Smallest Nonzero Amount", start, length, Bytes(smallest), Explain.AncillarySmallest);
+            data.Add("Largest Amount", start, length, Bytes(Math.Max(scan?.LargestSegment ?? 0, tally.LargestLayer12)), Explain.AncillaryLargest);
         }
 
-        node.Add("UsesPadding", start, length, NodeValue.Boolean(tally.UsesPadding));
+        node.Add("UsesPadding", start, length, NodeValue.Boolean(tally.UsesPadding), Explain.UsesPadding, Topics.Padding);
         if (tally.Layer3Frames > 0)
         {
-            node.Add("UsesScfsi", start, length, NodeValue.Boolean(tally.UsesScfsi));
-            node.Add("UsesScalefactorScaling", start, length, NodeValue.Boolean(tally.Scaled > 0));
-            node.Add("Scalefactor Scaling", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.Scaled * 1000, tally.GranuleChannels) / 10.0, 1, "%"));
-            node.Add("Average Main Data Begin", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.MainDataBegins * 10, tally.Layer3Frames) / 10.0, 1, "bytes"));
-            node.Add("Maximum Main Data Begin", start, length, NodeValue.Integer(tally.MaximumMainDataBegin, "bytes"));
+            node.Add("UsesScfsi", start, length, NodeValue.Boolean(tally.UsesScfsi), Explain.UsesScfsi, Topics.Scfsi);
+            node.Add("UsesScalefactorScaling", start, length, NodeValue.Boolean(tally.Scaled > 0), Explain.UsesScaling, Topics.ScalefacScaleAndPreflag);
+            node.Add("Scalefactor Scaling", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.Scaled * 1000, tally.GranuleChannels) / 10.0, 1, "%"),
+                Explain.ScalingShare, Topics.ScalefacScaleAndPreflag);
+            node.Add("Average Main Data Begin", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.MainDataBegins * 10, tally.Layer3Frames) / 10.0, 1, "bytes"),
+                Explain.AverageMainDataBegin, Topics.BitReservoir);
+            node.Add("Maximum Main Data Begin", start, length, NodeValue.Integer(tally.MaximumMainDataBegin, "bytes"), Explain.MaximumMainDataBegin, Topics.BitReservoir);
         }
 
-        void AddExtensions(string name, int[] counts, Func<int, string> label)
+        void AddExtensions(string name, int[] counts, Func<int, string> label, string description, string entryDescription, string topic)
         {
             int joint = counts.Sum();
             if (joint == 0)
@@ -88,12 +90,12 @@ public sealed partial class MpegAudioParser
                 return;
             }
 
-            Node parent = node.Add(name, start, length, NodeValue.Integer(joint, "frames", "frame"));
+            Node parent = node.Add(name, start, length, NodeValue.Integer(joint, "frames", "frame"), description, topic);
             for (int e = 0; e < 4; e++)
             {
                 if (counts[e] > 0)
                 {
-                    parent.Add(label(e), start, length, Share(FramesText(counts[e]), counts[e], joint));
+                    parent.Add(label(e), start, length, Share(FramesText(counts[e]), counts[e], joint), entryDescription);
                 }
             }
         }
@@ -109,7 +111,7 @@ public sealed partial class MpegAudioParser
             if (sizes.Count > 0)
             {
                 entry.Add(padded ? "Padded" : "Unpadded", entry.Offset, entry.Length,
-                    string.Join(", ", sizes.Select(s => $"{FramesText(s.Value)} of {Number(s.Key.Length)} bytes")));
+                    string.Join(", ", sizes.Select(s => $"{FramesText(s.Value)} of {Number(s.Key.Length)} bytes")), padded ? Explain.Padded : Explain.Unpadded, Topics.Padding);
             }
         }
     }

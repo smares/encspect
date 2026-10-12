@@ -103,7 +103,7 @@ public sealed class Analyzer
         }
 
         var reader = new ByteReader(stream, options.CancellationToken);
-        var root = new Node("File", 0, reader.Length);
+        var root = new Node("File", 0, reader.Length) { Description = HostText.File };
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();
         var failures = new List<Failure>();
@@ -624,14 +624,19 @@ public sealed class Analyzer
     // The node the report shows for an accepted tag, also for one a container holds.
     internal static Node ShowTag(Node tag, Confidence confidence, IReadOnlyList<Evidence> evidence, out Node detection)
     {
-        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString());
+        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString()) { Description = HostText.Detection, Topic = Topics.TagPlacement };
         foreach (Evidence item in evidence)
         {
-            shownDetection.Add("Evidence", item.Offset, item.Length, item.Description);
+            shownDetection.Add("Evidence", item.Offset, item.Length, item.Description, HostText.Evidence);
         }
 
         detection = shownDetection;
-        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection]) { Kind = NodeKind.Tag };
+        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection])
+        {
+            Kind = NodeKind.Tag,
+            Description = tag.Description,
+            Topic = tag.Topic,
+        };
     }
 
     private IReadOnlyList<StreamInfo> ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings,
@@ -648,7 +653,7 @@ public sealed class Analyzer
                 long gapEnd = tag?.Offset ?? window.End;
                 if (gapEnd > position)
                 {
-                    Node data = root.Add("Data", position, gapEnd - position);
+                    Node data = root.Add("Data", position, gapEnd - position, null, HostText.UnrecognizedData);
                     first ??= data;
                 }
 

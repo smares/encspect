@@ -70,6 +70,15 @@ public sealed class Node
 
     public NodeKind Kind { get; init; }
 
+    // What the field is and, where it helps, what this value means, in one or two sentences. The
+    // parser that makes the node writes it, from strings it shares across nodes, so a report of a
+    // million frames allocates none. Front ends show it as it is.
+    public string? Description { get; init; }
+
+    // The ID of a background article on the concept behind the node, such as "mid-side-stereo",
+    // which the host serves (TopicLibrary). A node without one belongs to its nearest ancestor's.
+    public string? Topic { get; init; }
+
     public IReadOnlyList<Node> Children
     {
         get
@@ -117,14 +126,15 @@ public sealed class Node
     // A node for bits [startBit, endBit) counted from the most significant bit of the byte at
     // offset. It covers every byte those bits touch, and carries the bit position unless the bits
     // are whole bytes; an empty field inside a byte covers that byte.
-    public static Node FromBits(string name, long offset, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
+    public static Node FromBits(string name, long offset, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
+        string? description = null, string? topic = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(startBit);
         ArgumentOutOfRangeException.ThrowIfLessThan(endBit, startBit);
 
         long first = offset + (startBit / 8);
         long length = endBit == startBit ? (startBit % 8 == 0 ? 0 : 1) : ((endBit - 1) / 8) - (startBit / 8) + 1;
-        var node = new Node(name, first, length, value) { Kind = kind };
+        var node = new Node(name, first, length, value) { Kind = kind, Description = description, Topic = topic };
 
         // A span of more than 256 Mbit is no field; its bytes alone place it.
         bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
@@ -138,17 +148,23 @@ public sealed class Node
 
     // A node for bytes [start, end) of mapped data, at the file bytes they came from, with Ranges
     // where those are not contiguous. Opaque data maps every field to its whole source.
-    public static Node FromMapped(string name, MappedBytes bytes, int start, int end, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
+    public static Node FromMapped(string name, MappedBytes bytes, int start, int end, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
+        string? description = null, string? topic = null)
     {
         ArgumentNullException.ThrowIfNull(bytes);
 
         IReadOnlyList<ByteRange> ranges = bytes.FileRanges(start, end);
         if (bytes.IsOpaque || ranges.Count == 0)
         {
-            return new Node(name, ranges.Count > 0 ? ranges[0].Offset : bytes.OffsetOf(start), ranges.Count > 0 ? ranges[0].Length : 0, value) { Kind = kind };
+            return new Node(name, ranges.Count > 0 ? ranges[0].Offset : bytes.OffsetOf(start), ranges.Count > 0 ? ranges[0].Length : 0, value)
+            {
+                Kind = kind,
+                Description = description,
+                Topic = topic,
+            };
         }
 
-        return new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges };
+        return new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges, Description = description, Topic = topic };
     }
 
     // A node for bits [startBit, endBit) of mapped data, counted from the most significant bit of
@@ -156,7 +172,8 @@ public sealed class Node
     // after a gap (a field split by an Ogg page header) also get Ranges, and BitOffset is then the
     // first bit in the byte at Offset and BitLength the field's width. Opaque data maps every field
     // to its whole source, without a bit position.
-    public static Node FromBits(string name, MappedBytes bytes, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
+    public static Node FromBits(string name, MappedBytes bytes, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
+        string? description = null, string? topic = null)
     {
         ArgumentNullException.ThrowIfNull(bytes);
         ArgumentOutOfRangeException.ThrowIfNegative(startBit);
@@ -165,7 +182,7 @@ public sealed class Node
 
         if (bytes.IsOpaque)
         {
-            return new Node(name, bytes.FileStart, bytes.FileEnd - bytes.FileStart, value) { Kind = kind };
+            return new Node(name, bytes.FileStart, bytes.FileEnd - bytes.FileStart, value) { Kind = kind, Description = description, Topic = topic };
         }
 
         int first = (int)(startBit / 8);
@@ -173,10 +190,10 @@ public sealed class Node
         IReadOnlyList<ByteRange> ranges = bytes.FileRanges(first, end);
         if (ranges.Count <= 1)
         {
-            return FromBits(name, bytes.OffsetOf(first), startBit % 8, (startBit % 8) + endBit - startBit, value, kind);
+            return FromBits(name, bytes.OffsetOf(first), startBit % 8, (startBit % 8) + endBit - startBit, value, kind, description, topic);
         }
 
-        var node = new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges };
+        var node = new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges, Description = description, Topic = topic };
         bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
         if (!isWholeBytes && endBit - startBit <= int.MaxValue >> 3)
         {
@@ -186,7 +203,8 @@ public sealed class Node
         return node;
     }
 
-    public Node Add(string name, long offset, long length, NodeValue? value = null) => Add(new Node(name, offset, length, value));
+    public Node Add(string name, long offset, long length, NodeValue? value = null, string? description = null, string? topic = null) =>
+        Add(new Node(name, offset, length, value) { Description = description, Topic = topic });
 
     public Node Add(Node child)
     {
@@ -250,6 +268,9 @@ public sealed class Node
         return merged.Count > 1 ? [.. merged] : null;
     }
 
+    private const string ErrorDescription =
+        "The parser failed to build this node's children, so they are missing. That is a bug in the analyzer, not damage in the file.";
+
     // A builder runs long after the analysis, inside a writer or the GUI, where an exception would
     // end the batch, so a failing builder shows as an error in the tree instead.
     private IReadOnlyList<Node> Build()
@@ -260,7 +281,7 @@ public sealed class Node
         }
         catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
-            return [new Node("Error", Offset, Length, $"The children could not be built: {ex.GetType().Name}: {ex.Message}")];
+            return [new Node("Error", Offset, Length, $"The children could not be built: {ex.GetType().Name}: {ex.Message}") { Description = ErrorDescription }];
         }
     }
 }
