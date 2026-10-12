@@ -1,7 +1,7 @@
 ---
 id: mid-side-stereo
 title: Mid/side stereo
-related: joint-stereo, intensity-stereo, channel-modes
+related: joint-stereo, intensity-stereo, channel-modes, musepack-subband-coding
 references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3
 ---
 
@@ -13,4 +13,4 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **What you see.** Mode Extension shows "Mid/side stereo" or "Mid/side and intensity stereo" in frames that use it. A file of joint stereo frames that never use mid/side stereo codes left and right in every frame, as plain stereo would.
 
-AAC and Opus can choose it for each band. Vorbis uses a related mapping, square polar coupling, which codes a magnitude and an angle.
+AAC and Opus can choose it for each band, [Musepack](musepack-subband-coding) for each subband. Vorbis uses a related mapping, square polar coupling, which codes a magnitude and an angle.

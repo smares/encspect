@@ -1,7 +1,7 @@
 ---
 id: encoder-detection
 title: Encoder detection and confidence
-related: lame-tag, vbri-header, ancillary-data, id3v2, aac-raw-data-blocks, itunes-metadata
+related: lame-tag, vbri-header, ancillary-data, id3v2, aac-raw-data-blocks, itunes-metadata, musepack-sv8-packets
 references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne)
 ---
 
@@ -18,3 +18,5 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne)
 **Confidence.** High means the encoder signed the file in a way that checks out; medium means specific but weaker evidence; low means only habits or text other software may have written. Silence gives an encoder nothing to decide, so a quiet file may match another encoder's habits.
 
 **What you see.** An Encoder node in each region with its Confidence and every piece of Evidence, each pointing at the bytes it was found in.
+
+**In Musepack** the encoder writes its version into the SV7 header or SV8's encoder info packet ([SV8 packets](musepack-sv8-packets)).

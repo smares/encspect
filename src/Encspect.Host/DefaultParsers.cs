@@ -2,6 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
+using Encspect.Formats.Musepack;
 using Encspect.Formats.Ogg;
 using Encspect.Formats.Speex;
 using Encspect.Tags.Ape;
@@ -37,8 +38,9 @@ public static class DefaultParsers
     // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
     // start of the data (91) outranks MPEG audio too, one further in (50) does not. Ogg is certain
     // of a chain of pages from the start (100), which no MP4 or ADTS file starts with, and takes one
-    // further in (60) only where nothing more certain claims the file.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser()];
+    // further in (60) only where nothing more certain claims the file. Musepack is certain of its
+    // magic number (100); a stream of version 4 to 6 has none and takes 60.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
     // Speex in Ogg.

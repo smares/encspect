@@ -1,7 +1,7 @@
 ---
 id: gapless-playback
 title: Encoder delay, padding and gapless playback
-related: lame-tag, granules-and-frames, filter-bank
+related: lame-tag, granules-and-frames, filter-bank, musepack-sv7-stream
 references: LAME tag specification (Gabriel Bouvigne); Fraunhofer Original File Length
 ---
 
@@ -12,3 +12,5 @@ references: LAME tag specification (Gabriel Bouvigne); Fraunhofer Original File 
 **Sequences.** LAME's --nogap option encodes a series of files so that each continues where the previous one ended, and marks the files as continuing and continued in the tag.
 
 **What you see.** Encoder Delay and Encoder Padding in the LAME tag, and in the statistics the sample count and duration that remain once they are dropped, which is what ffmpeg and mpg123 output with gapless trimming.
+
+**In Musepack.** Decoders drop the synthesis filter's 481 samples at the start. SV7's header gives the samples in the last frame (true gapless), SV8's stream header the total samples and any silence to skip at the start, so decoders output exactly the input ([SV7](musepack-sv7-stream)).

@@ -1,7 +1,7 @@
 ---
 id: ape-tag
 title: APE tags
-related: tag-placement, replaygain, id3v1
+related: tag-placement, replaygain, id3v1, musepack-sv8-packets
 references: APEv1 and APEv2 specifications (Monkey's Audio, wiki.hydrogenaud.io)
 ---
 
@@ -12,3 +12,5 @@ references: APEv1 and APEv2 specifications (Monkey's Audio, wiki.hydrogenaud.io)
 **Versions.** APEv1 (version 1000) has only text values and no header; APEv2 (version 2000) adds the header, UTF-8, binary items and flags.
 
 **What you see.** The header and footer with their fields, each item with its size, flags, key and values, and findings where the header and footer disagree, keys repeat or text is not UTF-8. The APE preamble contains "TAG", which can sit exactly where an ID3v1 tag is expected; the analyzer checks the structure so it does not mistake one for the other ([where tags sit](tag-placement)).
+
+**In Musepack.** Musepack files carry an APEv2 tag after the stream, and SV8's chapter packets each hold an APEv2 tag of their own without its "APETAGEX" preamble ([SV8 packets](musepack-sv8-packets)).

@@ -1,7 +1,7 @@
 ---
 id: intensity-stereo
 title: Intensity stereo
-related: joint-stereo, mid-side-stereo, subband-coding
+related: joint-stereo, mid-side-stereo, subband-coding, musepack-sv7-stream
 references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3
 ---
 
@@ -14,3 +14,5 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 **In MPEG audio.** In Layers I and II the Mode Extension field gives a bound: subbands from 4, 8, 12 or 16 upward are coded once with a scalefactor for each channel. In Layer III intensity stereo starts at the first scalefactor band above the highest nonzero frequency line of the right channel, and that channel's scalefactors there carry the direction instead of a level. It can be combined with mid/side stereo for the bands below.
 
 **What you see.** Mode Extension shows "Intensity stereo" or a band range, and the statistics count the frames. Most encoders use intensity stereo only at low bitrates, if at all.
+
+**In Musepack.** The headers of Musepack stream versions 4 to 6 have an intensity stereo flag, which libmpcdec 1.2.6 refuses to decode; SV7 keeps the bit, which mppenc 1.16 writes as 0 ("not supported anymore").
