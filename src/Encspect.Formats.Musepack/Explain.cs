@@ -28,6 +28,7 @@ internal static class Explain
     public const string Sv8Stream = "A Musepack stream of version 8: the magic number MPCK, then packets of a two-letter key, a size and a payload, ending with a stream end packet (SV8 specification).";
     public const string OldStream = "A Musepack stream of version 4, 5 or 6, the versions before SV7 (libmpcdec 1.2.6 streaminfo.c). The analyzer reads its header; its frames are not analyzed.";
     public const string Gap = "Bytes after the end of the stream, which no frame or packet of it claims.";
+    public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside the Musepack stream, which the tag breaks; the analyzer does not read them as part of the stream.";
     public const string AudioData = "The frames of the stream, which the analyzer does not read for this stream version.";
 
     public const string Header = "The SV7 stream header: the frame count, the coding settings, ReplayGain, the gapless length of the last frame and the encoder's version, in seven 32-bit little-endian words read from their most significant bit (libmpcdec r495 streaminfo_read_header_sv7, mppenc 1.16 WriteHeader_SV7).";
