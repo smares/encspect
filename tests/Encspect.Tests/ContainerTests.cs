@@ -329,6 +329,32 @@ public partial class ContainerTests
     }
 
     [Fact]
+    public void TheConfigurationReachesTheCodecWithTheNodeThatHoldsIt()
+    {
+        (byte[] file, List<List<ByteRange>> expected) = PagedContainer.Build(2, [1, 2, 3], new byte[20], new byte[30]);
+        var codec = new PacketCodec();
+
+        Report report = TestFiles.Analyze(file, new PagedContainer(configured: true), [codec]);
+
+        CodecConfiguration configuration = Assert.IsType<CodecConfiguration>(codec.Configuration);
+        Assert.Equal([1, 2, 3], configuration.Data.Span.ToArray());
+        Assert.Equal(expected[0], configuration.Data.FileRanges());
+        Assert.True(configuration.IsVbr);
+        Assert.Equal([20, 30], codec.Packets.Select(p => p.Length));
+        Node page = report.Root.Children.Single().Children.First(c => c.Name == "Page");
+        Assert.Same(page, configuration.Parent);
+        Node node = page.Children.Single(c => c.Name == "Configuration");
+        Assert.Equal((expected[0][0].Offset, 3L), (node.Offset, node.Length));
+        TestFiles.CheckInsideParents(report.Root);
+
+        // Without one, the codec gets none.
+        var plain = new PacketCodec();
+        TestFiles.Analyze(file, new PagedContainer(), [plain]);
+        Assert.Null(plain.Configuration);
+        Assert.Equal(3, plain.Packets.Count);
+    }
+
+    [Fact]
     public void ACodecWithoutPacketSupportSaysSo()
     {
         Report report = TestFiles.Analyze(PagedContainer.Build(4, new byte[10]).File, new PagedContainer("mpeg-audio"));

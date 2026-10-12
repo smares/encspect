@@ -56,27 +56,28 @@ public abstract class AnalysisContext
     // with that ID, which adds its nodes under parent; its findings and streams join this
     // context's. Returns false when no codec parser has the ID, and reports nothing then. Damage
     // and parser failures inside the payload become findings on parent, so the container carries
-    // on; only cancellation passes through.
-    public bool ParseStream(string codecId, Node parent, ByteReader payload)
+    // on; only cancellation passes through. configuration is what the container stores about the
+    // coding elsewhere, such as AAC's AudioSpecificConfig, or null.
+    public bool ParseStream(string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);
         ArgumentNullException.ThrowIfNull(parent);
         ArgumentNullException.ThrowIfNull(payload);
 
-        return _router?.ParseStream(this, codecId, parent, payload) ?? false;
+        return _router?.ParseStream(this, codecId, parent, payload, configuration) ?? false;
     }
 
     // As ParseStream, for a codec whose data the container hands over as packets, such as Ogg
     // pages or MP4 samples. The packets are enumerated once, while the codec parser runs, so a
     // container may read them lazily; it reports damage in its own pages and ends the sequence
     // rather than throwing.
-    public bool ParsePackets(string codecId, Node parent, IEnumerable<MappedBytes> packets)
+    public bool ParsePackets(string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);
         ArgumentNullException.ThrowIfNull(parent);
         ArgumentNullException.ThrowIfNull(packets);
 
-        return _router?.ParsePackets(this, codecId, parent, packets) ?? false;
+        return _router?.ParsePackets(this, codecId, parent, packets, configuration) ?? false;
     }
 
     // Hands a tag that a container holds whole, such as the ID3v2 tag in a RIFF or AIFF chunk, to
