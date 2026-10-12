@@ -57,8 +57,14 @@ FAAD_ADTS_RATE = "faad -i prints twice the rate of any ADTS stream at 24 kHz or 
 STATS = "ADTS/Statistics"
 
 
+# The speakers of one and two channels: AAC's channel configurations 1 and 2 (ISO/IEC 14496-3 Table
+# 1.19), parametric stereo's output, and MPEG audio's mono and stereo.
+SPEAKERS = {1: ["front center"], 2: ["front left", "front right"]}
+
+
 def stream(codec, rate, channels, mode, frame, vbr, encoder, profile=None, **extra):
-    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "frame": frame, "is_vbr": vbr}
+    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels], "frame": frame,
+             "is_vbr": vbr}
     if encoder:
         entry["encoder"] = list(encoder)
     if profile:

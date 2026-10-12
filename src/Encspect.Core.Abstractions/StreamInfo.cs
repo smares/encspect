@@ -22,6 +22,22 @@ public sealed record StreamInfo
     // The format's name for how the channels are coded, such as "Joint stereo", or null.
     public string? ChannelMode { get; init; }
 
+    // The speaker each channel feeds, one per channel in the stream's channel order, which is the
+    // format's (AAC's 5.1 starts with the center), or null where the format states no positions. A
+    // channel without a position, such as either program of MPEG dual channel, is
+    // Speaker.Discrete. Where it is set, Channels is its count.
+    public IReadOnlyList<Speaker>? ChannelLayout { get; init; }
+
+    // The layout's common name, such as "5.1" or "stereo", from the speakers it holds; null without a
+    // layout or where it has no common name.
+    public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
+
+    // Channels that carry other programs next to the layout, such as the multilingual channels of
+    // MPEG-2 multichannel audio (ISO/IEC 13818-3), which a decoder plays in place of a speaker
+    // channel rather than through a speaker of their own. Neither Channels nor ChannelLayout counts
+    // them.
+    public int MultilingualChannels { get; init; }
+
     // Null for a lossy coding, which has no sample size.
     public int? BitsPerSample { get; init; }
 

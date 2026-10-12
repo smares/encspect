@@ -9,6 +9,8 @@ least significant bit.
 """
 
 import pathlib
+import re
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -53,6 +55,13 @@ def build():
 def decode(binary, path, extension=None):
     """Decodes path, with its extension bitstream if any; returns the number of multichannel CRC
     errors, whether every channel is silent, and how many channels it wrote."""
+    errors, silent, channels, _ = decode_all(binary, path, extension)
+    return errors, silent, channels
+
+
+def decode_all(binary, path, extension=None):
+    """As decode, and the number of multilingual channels the decoder reports, which it writes to a
+    file of their own, apart from the channel files."""
     work = pathlib.Path(tempfile.mkdtemp(prefix="mctoolamed-run-"))
     (work / "stream.mp2").write_bytes(pathlib.Path(path).read_bytes())
     if extension is not None:
@@ -62,4 +71,6 @@ def decode(binary, path, extension=None):
     channels = sorted(work.glob("channel*.wav")) + sorted(work.glob("*_lfe.dec"))
     # The channel files start with a 44-byte header.
     silent = bool(channels) and all(not any(f.read_bytes()[44 if f.suffix == ".wav" else 0 :]) for f in channels)
-    return output.count("ERROR in MC-CRC"), silent, len(channels)
+    multilingual = re.search(r"There are (\d+) multilingual channels", output)
+    shutil.rmtree(work, ignore_errors=True)
+    return output.count("ERROR in MC-CRC"), silent, len(channels), int(multilingual.group(1)) if multilingual else 0

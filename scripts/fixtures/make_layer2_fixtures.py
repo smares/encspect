@@ -486,13 +486,18 @@ class Layer2Frame(Frame):
 class Layer2Fixture(Fixture):
     out = OUT
 
-    def __init__(self, name, description, extension=".mp2", crosscheck=True, silent=True, mctoolamed=None, guessenc=None):
+    def __init__(self, name, description, extension=".mp2", crosscheck=True, silent=True, mctoolamed=None, guessenc=None, mc_accepted=True):
         super().__init__(name, extension, description, crosscheck)
         self.silent, self.mctoolamed, self.guessenc = silent, mctoolamed, guessenc
+        # Whether the analyzer takes the frames' multichannel data for an extension, so the stream
+        # reports its channels; False where it is only a candidate.
+        self.mc_accepted = mc_accepted
         self.layer2 = []
+        self.layer2_frames = []
 
     def add_frames(self, frames, truncate_last=None):
         start = len(self.frames)
+        self.layer2_frames += [frame for frame in frames if isinstance(frame, Layer2Frame)]
         super().add_frames(frames, truncate_last)
         for frame, entry in zip(frames, self.frames[start:]):
             entry["scale_info"] = frame.scale_info
@@ -502,6 +507,16 @@ class Layer2Fixture(Fixture):
 
     def manifest(self):
         manifest = super().manifest()
+        # A multichannel extension the analyzer accepts gives the stream its configuration's
+        # speakers: left and right from the base, the center, the surround channels or the second
+        # stereo programme's two discrete channels, then the LFE (a reserved center counts as none).
+        mc = next((frame.mc for frame in self.layer2_frames if frame.mc is not None), None)
+        if mc is not None and self.mc_accepted:
+            layout = ["front left", "front right"] + (["front center"] if mc.center in (1, 3) else [])
+            layout += [[], ["back center"], ["back left", "back right"], ["discrete", "discrete"]][mc.surround]
+            layout += ["LFE"] if mc.lfe else []
+            for entry in manifest["streams"]:
+                entry["channel_layout"] = layout
         manifest["silent"] = self.silent
         if self.mctoolamed is not None:
             manifest["mctoolamed"] = self.mctoolamed
@@ -696,6 +711,20 @@ def mc_phantom():
 
 
 @fixture
+def mc_configuration_change():
+    f = Layer2Fixture(
+        "mc-configuration-change",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 in its first three frames and 2/0 + 2/0 in the last three, "
+        "every multichannel CRC intact: the extension is reported in each frame, but the stream, whose speakers change, "
+        "reports its stereo base, with an info. mctoolamed decodes all six frames into the five channels of the first.",
+        mctoolamed={"crc_errors": 0, "channels": 5}, mc_accepted=False,
+    )
+    f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1 if i < 3 else 0, surround=2 if i < 3 else 3, tc_alloc=(i % 4 if i < 3 else 0,),
+                                                                  seed=i + 6)))
+    return f.finding("mpeg.multichannel-configuration-changes", "from 3/2 to 2/0 + 2/0")
+
+
+@fixture
 def mc_extension():
     f = Layer2Fixture(
         "mc-extension-header",
@@ -716,7 +745,8 @@ def mc_unverified():
         "MPEG-1 Layer II at 48000 Hz and 128 kbps whose multichannel side information (3/2 + LFE) continues in an "
         "extension bitstream in every frame: 255 bytes of MPEG-1 ancillary data, the most n_ad_bytes can announce, "
         "leave too little room in the base frame. Without the extension bitstream no multichannel CRC can be "
-        "checked, so the extension is reported as possible, not as fact.",
+        "checked, so the extension is reported as possible, not as fact, and the stream as its stereo base.",
+        mc_accepted=False,
     )
     sparse = [[1, 1, 1, 1] + [0] * 23, [1, 1, 1, 1] + [0] * 23]
     f.add_frames(mc_stream(6, 128, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, lfe_alloc=2, n_ad_bytes=255, seed=i,
@@ -781,7 +811,8 @@ def mc_chance_crc():
         "mc-chance-crc",
         "MPEG-1 Layer II at 48000 Hz and 384 kbps whose ancillary data reads as a multichannel extension in all 20 "
         "frames, but whose multichannel CRC holds in only two, as random data passes it about once in 65,536 frames: "
-        "two passes among 20 frames are chance, so no multichannel extension is reported.",
+        "two passes among 20 frames are chance, so no multichannel extension is reported and the stream is its stereo base.",
+        mc_accepted=False,
     )
     frames = mc_stream(20, 384, 48000, lambda i: Multichannel(center=1, surround=2, seed=i, bad_crc=i not in (4, 13)))
     f.add_frames(frames)

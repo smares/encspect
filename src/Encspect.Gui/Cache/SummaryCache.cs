@@ -27,7 +27,7 @@ namespace Encspect.Gui.Cache;
 // SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -404,6 +404,7 @@ public sealed class SummaryCache : IDisposable
             reader.ReadBoolean() ? reader.ReadDouble() : null,
             reader.ReadBoolean() ? reader.ReadInt32() : null,
             ReadText(reader),
+            reader.ReadBoolean() ? ReadLayout(reader) : null,
             ReadText(reader),
             reader.ReadBoolean() ? ReadConfidence(reader) : null,
             [.. Enumerable.Range(0, Bounded(reader.ReadInt32(), 1 << 10)).Select(_ => reader.ReadString())],
@@ -419,6 +420,18 @@ public sealed class SummaryCache : IDisposable
     {
         var confidence = (Confidence)reader.ReadInt32();
         return Enum.IsDefined(confidence) ? confidence : throw new InvalidDataException("Unknown confidence.");
+    }
+
+    private static Speaker[] ReadLayout(BinaryReader reader)
+    {
+        var layout = new Speaker[Bounded(reader.ReadInt32(), 1 << 10)];
+        for (int i = 0; i < layout.Length; i++)
+        {
+            var speaker = (Speaker)reader.ReadByte();
+            layout[i] = Enum.IsDefined(speaker) ? speaker : throw new InvalidDataException("Unknown speaker.");
+        }
+
+        return layout;
     }
 
     private static string? ReadText(BinaryReader reader) => reader.ReadBoolean() ? reader.ReadString() : null;
@@ -517,6 +530,16 @@ public sealed class SummaryCache : IDisposable
         WriteOptional(writer, summary.AverageBitrate, writer.Write);
         WriteOptional(writer, summary.SampleRate, writer.Write);
         WriteText(writer, summary.ChannelMode);
+        writer.Write(summary.ChannelLayout is not null);
+        if (summary.ChannelLayout is { } layout)
+        {
+            writer.Write(layout.Count);
+            foreach (Speaker speaker in layout)
+            {
+                writer.Write((byte)speaker);
+            }
+        }
+
         WriteText(writer, summary.Encoder);
         WriteOptional(writer, (int?)summary.EncoderConfidence, writer.Write);
         writer.Write(summary.Tags.Count);

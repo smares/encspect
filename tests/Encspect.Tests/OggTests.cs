@@ -139,7 +139,7 @@ public class OggTests
         var writer = new StringWriter();
         ReportCsvWriter.Write([report], writer);
 
-        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,speexenc 1.2.1,High,Vorbis Comment,0,0,0",
+        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,mono (front center),speexenc 1.2.1,High,Vorbis Comment,0,0,0",
             writer.ToString().Split("\r\n")[1]);
 
         ReportSummary chained = ReportSummary.From(Fixtures.AnalyzeMpeg("ogg/external-chained.spx"));

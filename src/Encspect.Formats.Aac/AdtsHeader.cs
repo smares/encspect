@@ -96,7 +96,7 @@ internal readonly record struct AdtsHeader(ulong Raw)
         yield return Node.FromBits("Profile", offset, 16, 18, $"{Profile} ({ProfileName})", description: Explain.AdtsProfile, topic: Topics.ObjectTypes);
         yield return Node.FromBits("Sample Rate", offset, 18, 22, AacTables.SampleRate(SampleRateIndex) is { } rate ? NodeValue.Integer(rate, "Hz") : $"{SampleRateIndex} (reserved)", description: Explain.AdtsSampleRate);
         yield return Node.FromBits("IsPrivate", offset, 22, 23, NodeValue.Boolean(IsPrivate), description: Explain.AdtsPrivate);
-        yield return Node.FromBits("Channel Configuration", offset, 23, 26, $"{ChannelConfiguration} ({AacTables.ChannelLayout(ChannelConfiguration)})", description: Explain.AdtsChannelConfiguration);
+        yield return Node.FromBits("Channel Configuration", offset, 23, 26, $"{ChannelConfiguration} ({AacTables.ChannelLayout(ChannelConfiguration)})", description: Explain.AdtsChannelConfiguration, topic: Topics.ChannelLayouts);
         yield return Node.FromBits("IsOriginal", offset, 26, 27, NodeValue.Boolean(IsOriginal), description: Explain.AdtsOriginal);
         yield return Node.FromBits("IsHome", offset, 27, 28, NodeValue.Boolean(IsHome), description: Explain.AdtsHome);
         yield return Node.FromBits("Copyright ID Bit", offset, 28, 29, NodeValue.Integer(CopyrightIdBit ? 1 : 0), description: Explain.CopyrightIdBit);

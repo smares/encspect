@@ -123,7 +123,7 @@ public sealed class Analyzer
         List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
         List<Finding> layout = CheckTrailingLayout(trailing);
-        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings, failures);
+        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, container, findings, failures);
         pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
 
         var detectionNodes = new HashSet<Node>();
@@ -139,10 +139,17 @@ public sealed class Analyzer
         {
             List<EncoderClaim> claims = leading.Concat(embedded).Concat(trailing).OrderBy(c => c.Tag.Offset).SelectMany(c => c.Probe.EncoderClaims).ToList();
 
+            // A container owns the bytes up to the end it declares, so the tags a pointer found lie
+            // after it (FollowNextTagOffsets); its parser reads up to the first of them, as it would
+            // up to a trailing tag, and the bytes between those tags are no format's.
+            long formatEnd = container is not null && embedded.Count > 0 ? embedded[0].Tag.Offset : dataEnd;
+
             // Only the format parser's reads count as progress: tags are probed at both ends of the
             // file first, which would make the furthest offset read jump to the end.
-            ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, dataEnd - dataStart);
-            streams = ParseData(new SniffContext(window, Path.GetExtension(source)), root, embedded.Select(c => shown[c.Tag]).ToList(), claims, findings, failures);
+            ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, formatEnd - dataStart);
+            List<Node> inWindow = embedded.Where(c => c.Tag.Offset < formatEnd).Select(c => shown[c.Tag]).ToList();
+            streams = ParseData(new SniffContext(window, Path.GetExtension(source)), root, inWindow, claims, findings, failures);
+            AddDataBetweenTags(root, embedded.Where(c => c.Tag.Offset >= formatEnd), dataEnd, findings);
         }
         else
         {
@@ -376,8 +383,10 @@ public sealed class Analyzer
     // next such tag found at an anchor starts at or after that point, the pointer is satisfied;
     // otherwise the unclaimed data from there on is searched, at most 1 MiB of it. Tags found
     // this way are followed in turn, and each search starts after the previous tag, so it ends.
-    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, List<Finding> findings,
-        List<Failure> failures)
+    // The bytes up to the end a container declares are its own, as for trailing tags, so a pointer
+    // into them is searched from that end.
+    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, Container? container,
+        List<Finding> findings, List<Failure> failures)
     {
         var embedded = new List<Claim>();
         var queue = new Queue<Claim>(leading.Concat(trailing));
@@ -415,6 +424,12 @@ public sealed class Analyzer
             }
 
             long from = Math.Max(target, dataStart);
+            bool intoContainer = container is { } owner && from < owner.End;
+            if (intoContainer)
+            {
+                from = container!.End;
+            }
+
             long limit = Math.Min(Math.Min(dataEnd, next?.Tag.Offset ?? dataEnd), from + MaxNextTagSearch);
             limit = Math.Min(limit, embeddedIndex.FirstFrom(from)?.Tag.Offset ?? limit);
 
@@ -443,6 +458,14 @@ public sealed class Analyzer
                 embeddedIndex.Add(foundClaim);
                 ParserIndex(claim.Parser).Add(foundClaim);
                 queue.Enqueue(foundClaim);
+            }
+            else if (next is null && intoContainer)
+            {
+                findings.Add(new Finding(
+                    Severity.Warning,
+                    "tag.next-in-container",
+                    $"{label}, inside the {container!.Format} data, which by its own size extends to 0x{container.End:X}; no tag of its kind follows that.",
+                    tag));
             }
             else if (next is null)
             {
@@ -662,6 +685,31 @@ public sealed class Analyzer
             Topic = tag.Topic,
             Ranges = tag.Ranges,
         };
+    }
+
+    // The bytes between tags found after a container's declared end, and after the last of them up
+    // to the trailing tags: no tag and no format claims them.
+    private static void AddDataBetweenTags(Node root, IEnumerable<Claim> tags, long dataEnd, List<Finding> findings)
+    {
+        List<Claim> after = tags.ToList();
+        if (after.Count == 0)
+        {
+            return;
+        }
+
+        long position = after[0].Tag.Offset;
+        foreach (Claim? claim in after.Append<Claim?>(null))
+        {
+            long gapEnd = claim?.Tag.Offset ?? dataEnd;
+            if (gapEnd > position)
+            {
+                Node data = root.Add("Data", position, gapEnd - position, null, HostText.DataAfterContainer);
+                findings.Add(new Finding(Severity.Info, "layout.data-between-tags",
+                    $"{gapEnd - position} bytes at 0x{position:X} lie after the end the format declares, between or after tags found there; nothing claims them.", data));
+            }
+
+            position = Math.Max(position, claim?.Tag.End ?? position);
+        }
     }
 
     private IReadOnlyList<StreamInfo> ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings,

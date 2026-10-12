@@ -309,7 +309,7 @@ public class FileListTests
         view.Cast<FileRow>().Select(r => column == nameof(FileRow.Duration) ? r.Duration!.Value : r.Bitrate!.Value).ToArray();
 
     private static FileSummary Summary(double value) => new(
-        new ReportSummary("x", "MPEG Audio", 1, "MPEG-1 Layer III", value, 1152, value, 44100, "Stereo", null, null, [], 0, 0, 0),
+        new ReportSummary("x", "MPEG Audio", 1, "MPEG-1 Layer III", value, 1152, value, 44100, "Stereo", ChannelLayouts.Stereo, null, null, [], 0, 0, 0),
         IsVbr: false,
         Problem: null);
 }

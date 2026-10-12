@@ -44,6 +44,7 @@ internal static class BoxNames
         "esds" => "Elementary Stream Descriptor",
         "btrt" => "Bitrate",
         "chan" => "Channel Layout",
+        "chnl" => "Channel Layout",
         "wave" => "Sound Decompression Parameters",
         "frma" => "Original Format",
         "mvex" => "Movie Extends",

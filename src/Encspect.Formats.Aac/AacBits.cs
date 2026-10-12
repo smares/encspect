@@ -160,9 +160,10 @@ internal ref struct AacBits
     public (CutKind Kind, int Length, int Extra) TakeCut()
     {
         int at = _cut;
-        var kind = (CutKind)_cuts[at++];
-        int length = UnitStore.ReadVarint(_cuts, ref at);
-        int extra = UnitStore.ReadVarint(_cuts, ref at) - 1;
+        int packed = UnitStore.ReadVarint(_cuts, ref at);
+        var kind = (CutKind)(packed & 7);
+        int length = packed >> 3;
+        int extra = kind == CutKind.Sbr ? UnitStore.ReadVarint(_cuts, ref at) - 1 : -1;
         _cut = at;
         Skipped += length;
         return (kind, length, extra);

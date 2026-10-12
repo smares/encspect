@@ -8,10 +8,11 @@ namespace Encspect.Formats.Aac;
 // stream keeps a few tens of bytes per access unit and never one array per unit.
 //
 // An entry: a flag byte (1: kept whole), the bits kept, the length of the cut list, the kept bytes
-// and the cut list (kind, length and extra value per cut, as varints).
+// and the cut list (per cut a varint of its length and kind, and for SBR data its extra value). The
+// chunks stay below the large object heap's threshold, so the last one wastes little.
 internal sealed class UnitStore
 {
-    private const int ChunkBits = 20;
+    private const int ChunkBits = 16;
     private const int ChunkSize = 1 << ChunkBits;
 
     private readonly List<byte[]> _chunks = [];
@@ -30,11 +31,14 @@ internal sealed class UnitStore
         }
 
         var cutBytes = new List<byte>(cuts.Count * 4);
+        // Each cut as its length and kind in one varint, and an SBR cut's extra value after it.
         foreach (BlockCut cut in cuts)
         {
-            cutBytes.Add((byte)cut.Kind);
-            WriteVarint(cutBytes, cut.Length);
-            WriteVarint(cutBytes, cut.Extra + 1);
+            WriteVarint(cutBytes, (cut.Length << 3) | (int)cut.Kind);
+            if (cut.Kind == CutKind.Sbr)
+            {
+                WriteVarint(cutBytes, cut.Extra + 1);
+            }
         }
 
         int keptBytes = (kept + 7) >> 3;
@@ -83,6 +87,25 @@ internal sealed class UnitStore
         var data = new ReadOnlyMemory<byte>(chunk, at, bytes);
         var cutList = new ReadOnlyMemory<byte>(chunk, at + bytes, cuts);
         return new Entry(whole, bits, data, cutList, position + (at - (int)(position & (ChunkSize - 1))) + bytes + cuts);
+    }
+
+    // The bits of the block an entry keeps, the ones its cuts leave out included: where the block
+    // ends, counted from its start.
+    public static int BlockBits(Entry entry)
+    {
+        int bits = entry.Bits;
+        ReadOnlySpan<byte> cuts = entry.Cuts.Span;
+        for (int at = 0; at < cuts.Length;)
+        {
+            int packed = ReadVarint(cuts, ref at);
+            bits += packed >> 3;
+            if ((CutKind)(packed & 7) == CutKind.Sbr)
+            {
+                ReadVarint(cuts, ref at);
+            }
+        }
+
+        return bits;
     }
 
     public static int ReadVarint(ReadOnlySpan<byte> data, ref int at)

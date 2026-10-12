@@ -121,7 +121,9 @@ def concat(frames):
 
 
 def stream(codec, rate, channels, mode, samples, vbr=True, encoder=None, **extra):
-    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "samples": samples, "is_vbr": vbr}
+    from make_mp4_fixtures import SPEAKERS
+    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels], "samples": samples,
+             "is_vbr": vbr}
     if encoder:
         entry["encoder"] = list(encoder)
     entry.update(extra)

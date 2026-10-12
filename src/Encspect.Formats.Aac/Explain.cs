@@ -21,6 +21,7 @@ internal static class Topics
     public const string DynamicRange = "aac-dynamic-range-control";
     public const string MidSide = "mid-side-stereo";
     public const string Intensity = "intensity-stereo";
+    public const string ChannelLayouts = "channel-layouts";
 }
 
 // What each AAC node is, in the words the report shows next to it. Constants only: access unit and

@@ -1,0 +1,244 @@
+{
+ "description": "AAC LC 5.1 with a chnl box that gives ChannelConfiguration 6 but omits its sixth channel, the LFE: 5.0 against the configuration's 5.1, a warning.",
+ "length": 1549,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   670
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   554
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   454
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   369
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   309
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   125
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   109
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chnl",
+   500,
+   22
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   522,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   546,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   574,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   674,
+   24
+  ],
+  [
+   "mdat",
+   698,
+   851
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "5.1",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   706,
+   19
+  ],
+  [
+   725,
+   58
+  ],
+  [
+   783,
+   55
+  ],
+  [
+   838,
+   52
+  ],
+  [
+   890,
+   49
+  ],
+  [
+   939,
+   46
+  ],
+  [
+   985,
+   43
+  ],
+  [
+   1028,
+   40
+  ],
+  [
+   1068,
+   37
+  ],
+  [
+   1105,
+   33
+  ],
+  [
+   1138,
+   30
+  ],
+  [
+   1168,
+   27
+  ],
+  [
+   1195,
+   24
+  ],
+  [
+   1219,
+   21
+  ],
+  [
+   1240,
+   59
+  ],
+  [
+   1299,
+   56
+  ],
+  [
+   1355,
+   53
+  ],
+  [
+   1408,
+   50
+  ],
+  [
+   1458,
+   47
+  ],
+  [
+   1505,
+   44
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl": "5.0 (front center, front left, front right, back left, back right)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl/Omitted Channels": "0x0000000000000020"
+ },
+ "findings": [
+  [
+   "mp4.channel-layout-differs",
+   "states 5.0 (front center, front left, front right, back left, back right)"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 6,
+   "rate": 48000
+  },
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 does not read a chnl box that omits channels (\"Not yet implemented\")."
+  }
+ }
+}

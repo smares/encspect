@@ -143,6 +143,13 @@ public sealed partial class Mp4Parser
         public uint? MaxBitrate { get; set; }
 
         public uint? AverageBitrate { get; set; }
+
+        // The speakers a chan or chnl box in the entry states, the box's node and its type.
+        public IReadOnlyList<Speaker>? Layout { get; set; }
+
+        public Node? LayoutNode { get; set; }
+
+        public string? LayoutBox { get; set; }
     }
 
     private sealed record Edit(ulong SegmentDuration, long MediaTime, double Rate, Node Node);

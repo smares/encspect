@@ -17,6 +17,7 @@ public sealed class AacCodecParser : ICodecParser
     private const byte IsErrorResilient = 4;
     private const byte IsRead = 8;
     private const byte IsFirstOnly = 16;
+    private const byte HasTrailingBytes = 32;
 
     public string Id => "aac";
 
@@ -173,6 +174,7 @@ public sealed class AacCodecParser : ICodecParser
             SampleRate = rate,
             Channels = config.OutputChannels ?? 0,
             ChannelMode = config.ChannelMode,
+            ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
@@ -231,9 +233,9 @@ public sealed class AacCodecParser : ICodecParser
             {
                 nodes.Add(bytes.Bits("Unread Bytes", BlockLog.MaxBlockBytes * 8, unit.Length * 8, NodeValue.Integer(unit.Length - BlockLog.MaxBlockBytes, "bytes"), Explain.UnreadUnitBytes));
             }
-            else if (unit.BlockEnd >= 0 && unit.BlockEnd < unit.Length * 8)
+            else if ((unit.Flags & HasTrailingBytes) != 0)
             {
-                nodes.Add(TrailingNode(bytes, unit.BlockEnd, unit.Length));
+                nodes.Add(TrailingNode(bytes, UnitStore.BlockBits(log.Blocks.Store.Read(unit.Skeleton)), unit.Length));
             }
 
             return nodes;
@@ -313,7 +315,6 @@ public sealed class AacCodecParser : ICodecParser
             int elements = -1;
             byte tag = 0;
             long skeleton = -1;
-            int blockEnd = -1;
             if (_config is { IsUsac: true })
             {
                 flags |= IsUsac;
@@ -338,9 +339,9 @@ public sealed class AacCodecParser : ICodecParser
                 HasElements = true;
                 if (result.Ok)
                 {
-                    blockEnd = result.End;
                     if (result.End < packet.Length * 8)
                     {
+                        flags |= HasTrailingBytes;
                         Node unit = UnitNodeAt(packet, ranges);
                         Node trailing = TrailingNode(where, result.End, packet.Length);
                         long offset = unit.Offset;
@@ -371,7 +372,7 @@ public sealed class AacCodecParser : ICodecParser
                 }
             }
 
-            Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, blockEnd, flags, tag));
+            Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, flags, tag));
         }
 
         private static Node UnitNodeAt(MappedBytes packet, IReadOnlyList<ByteRange> ranges) =>
@@ -379,8 +380,11 @@ public sealed class AacCodecParser : ICodecParser
     }
 
     [StructLayout(LayoutKind.Auto)]
-    private readonly struct Unit(long offset, int length, int elements, long skeleton, int blockEnd, byte flags, byte tag)
+    private readonly struct Unit(long offset, int length, int elements, long skeleton, byte flags, byte tag)
     {
+        // Where the store keeps the unit's block, plus one, above the flags and the tag: 24 bytes in all.
+        private readonly long _packed = ((skeleton + 1) << 16) | ((long)flags << 8) | tag;
+
         public long Offset => offset;
 
         public int Length => length;
@@ -389,14 +393,11 @@ public sealed class AacCodecParser : ICodecParser
         public int Elements => elements;
 
         // Where the store keeps the unit's block, or -1.
-        public long Skeleton => skeleton;
+        public long Skeleton => (_packed >> 16) - 1;
 
-        // The bit after the block's END and alignment, where it was read to its end, or -1.
-        public int BlockEnd => blockEnd;
-
-        public byte Flags => flags;
+        public byte Flags => (byte)(_packed >> 8);
 
         // The first element's instance tag or count, or usacIndependencyFlag.
-        public byte Tag => tag;
+        public byte Tag => (byte)_packed;
     }
 }

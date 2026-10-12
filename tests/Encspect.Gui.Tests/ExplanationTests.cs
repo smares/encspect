@@ -132,6 +132,32 @@ public sealed class ExplanationTests : IDisposable
         main.Close();
     }
 
+    // The channel layout column shows the layout's name, its cells' tooltips the speakers in the
+    // stream's order, and the detail window's streams line both.
+    [AvaloniaFact]
+    public void The_channel_layout_column_names_the_layout_and_lists_its_speakers()
+    {
+        _folder.Copy(Path.Combine(Fixtures.Directory, "layer2", "mc-3-2-lfe.mp2"), "surround.mp2");
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: []));
+        main.Show();
+        main.Model.Open(FileSource.ForFolder(_folder.Path));
+        UiPump.Until(() => !main.Model.IsRunning);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+
+        DataGridColumnHeader header = main.Files.GetVisualDescendants().OfType<DataGridColumnHeader>().Single(h => h.Content as string == "Channel Layout");
+        Assert.StartsWith("Which speakers the first stream's channels feed", (string?)ToolTip.GetTip(header));
+        string speakers = "front left, front right, front center, back left, back right, LFE";
+        TextBlock cell = main.Files.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "5.1");
+        Assert.Equal(speakers, ToolTip.GetTip(cell));
+        FileRow row = main.Model.Rows.Single();
+        Assert.Equal(("Stereo", "5.1", speakers), (row.ChannelMode, row.ChannelLayout, row.ChannelLayoutTip));
+
+        DetailWindow detail = main.DetailWindows.Open(row);
+        UiPump.Until(() => !detail.Model.IsLoading);
+        Assert.Contains($"Stereo · 5.1 ({speakers})", detail.Model.StreamsText, StringComparison.Ordinal);
+        main.Close();
+    }
+
     [AvaloniaFact]
     public void Graph_chips_and_the_streams_line_have_tooltips()
     {

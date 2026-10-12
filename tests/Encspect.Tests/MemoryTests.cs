@@ -10,55 +10,39 @@ public class MemoryCollection;
 
 // A long file's report keeps compact records of its frames, and the passes over them never hold
 // every frame's decoded side information or nodes at once (plan, "Large inputs"). Measured over a
-// stream built in memory, alone, since the heap is the whole process's. The bounds are generous
-// for the compact records (130 bytes kept and 0.1 KB more heap per frame) and far below what the
-// parser took when it kept an array per frame and listed every frame for each pass (490 bytes
-// and 2.8 KB).
+// stream built in memory, alone, since the heap is the whole process's: what the report keeps,
+// and the most the analysis holds live at once (Measure). The peak bounds are about twice what
+// linux-x64 measures, so they hold on other platforms, and below what keeping each packet's bytes
+// costs: with that regression the Speex and MP4 peaks rose from about 35 and 56 bytes per packet
+// to 125 and 161. The MPEG bounds are far below what the parser took when it kept an array per
+// frame and listed every frame for each pass (490 bytes kept and 2.8 KB of heap).
 [Collection(nameof(MemoryTests))]
 public class MemoryTests(ITestOutputHelper output)
 {
     private const int Frames = 100_000;
 
+    private const int SampleInterval = 2;
+
     [Fact]
     public void ManyFramesStayCompact()
     {
         byte[] data = Layer3Frames(Frames);
-        var analyzer = Analyzer.CreateDefault();
-        analyzer.Analyze("warm-up.mp3", new MemoryStream(data[..(104 * 100)]));
-        long before = GC.GetTotalMemory(forceFullCollection: true);
 
-        // The heap after each collection while the analysis runs, without the free space the
-        // collection left in it, whose amount depends on the machine's GC settings: what the
-        // analysis holds at once.
-        long peak = before;
-        bool done = false;
-        var sampler = new Thread(() =>
-        {
-            while (!Volatile.Read(ref done))
-            {
-                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.Any);
-                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), info.HeapSizeBytes - info.FragmentedBytes));
-                Thread.Sleep(1);
-            }
-        });
-        sampler.Start();
-        Report report = analyzer.Analyze("memory.mp3", new MemoryStream(data));
-        Volatile.Write(ref done, true);
-        sampler.Join();
-        long kept = GC.GetTotalMemory(forceFullCollection: true) - before;
+        (Report report, long kept, long peak) = Measure("memory.mp3", data, data[..(104 * 100)]);
 
         Assert.Equal(NodeValue.Integer(Frames, "frames", "frame"), report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
+        output.WriteLine($"{kept / Frames} bytes kept and {peak / Frames} bytes peak per frame");
         Assert.True(kept < Frames * 250L, $"The report keeps {kept / Frames} bytes per frame.");
-        Assert.True(peak - before < Frames * 1024L, $"The heap grew by {(peak - before) / Frames} bytes per frame.");
+        Assert.True(peak < Frames * 350L, $"The live heap grew by {peak / Frames} bytes per frame.");
         GC.KeepAlive(report);
-        GC.KeepAlive(data);
     }
 
-    // An MP4 file keeps a compact record per access unit and the arrays of its graphs, and reads its
-    // sample tables into arrays of the entries the boxes hold, never the samples' bytes at once
-    // (plan, "Large inputs"): 35 bytes kept per sample on linux-x64. The bound leaves room for a
-    // platform that measures twice that, as macOS on arm64 did for the Ogg records, and stays below
-    // what keeping a sample's node or bytes would cost.
+    // An MP4 file keeps a compact record per access unit, the arrays of its graphs and each raw data
+    // block without its Huffman-coded data, and reads its sample tables into arrays of the entries
+    // the boxes hold, never the samples' bytes at once (plan, "Large inputs"): 60 bytes kept per
+    // sample on linux-x64 and a peak of 100. The bounds leave room for a platform that measures
+    // nearly twice that, as macOS on arm64 did for the Ogg records, and stay below what keeping a
+    // sample's node or bytes would cost.
     [Fact]
     public void ManySamplesStayCompact()
     {
@@ -68,16 +52,17 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.Equal(samples, Assert.Single(report.Streams).Samples / 1024);
         output.WriteLine($"{kept / samples} bytes kept and {peak / samples} bytes peak per sample");
-        Assert.True(kept < samples * 80L, $"The report keeps {kept / samples} bytes per sample.");
-        Assert.True(peak < samples * 1024L, $"The heap grew by {peak / samples} bytes per sample.");
+        Assert.True(kept < samples * 110L, $"The report keeps {kept / samples} bytes per sample.");
+        Assert.True(peak < samples * 180L, $"The live heap grew by {peak / samples} bytes per sample.");
         GC.KeepAlive(report);
     }
 
     // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
     // from: the side information without the Huffman-coded scalefactors and spectral data
-    // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 132 bytes
-    // kept per frame on linux-x64, of the 281 a frame holds. The bound leaves room for a platform
-    // that measures more and stays below what keeping the frames' bytes would cost.
+    // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 116 bytes
+    // kept per frame on linux-x64 and a peak of 133, of the 281 a frame holds. The bounds leave room
+    // for a platform that measures nearly twice that and stay below what keeping the frames' bytes
+    // would cost.
     [Fact]
     public void ManyAdtsFramesStayCompact()
     {
@@ -98,16 +83,16 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.Equal(frames * 1024L, Assert.Single(report.Streams).Samples);
         output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame of {stream.Length / frames} bytes");
-        Assert.True(kept < frames * 200L, $"The report keeps {kept / frames} bytes per frame.");
-        Assert.True(peak < frames * 1024L, $"The heap grew by {peak / frames} bytes per frame.");
+        Assert.True(kept < frames * 220L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 250L, $"The live heap grew by {peak / frames} bytes per frame.");
         GC.KeepAlive(report);
     }
 
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
     // scan never holds the pages' nodes or data (64 bytes kept per page and a few more for its
     // segment table and place in its stream, 72 in all on linux-x64, where macOS on arm64
-    // measured 120 before the measurement compacted the heap; the bounds leave room for both and
-    // stay below what keeping a page's node or bytes would cost).
+    // measured 120 before the measurement compacted the heap, and a peak of 70 to 85; the bounds
+    // leave room for both and stay below what keeping a page's node or bytes would cost).
     [Fact]
     public void ManyPagesStayCompact()
     {
@@ -124,20 +109,22 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Equal(NodeValue.Integer(pages, "pages", "page"), report.Root.Children.Single().Value);
         output.WriteLine($"{kept / pages} bytes kept and {peak / pages} bytes peak per page");
         Assert.True(kept < pages * 150L, $"The report keeps {kept / pages} bytes per page.");
-        Assert.True(peak < pages * 1024L, $"The heap grew by {peak / pages} bytes per page.");
+        Assert.True(peak < pages * 170L, $"The live heap grew by {peak / pages} bytes per page.");
         GC.KeepAlive(report);
     }
 
     // A Speex stream keeps an 8-byte record per packet, 4 bytes per frame and its per-packet series
     // (16 bytes, whose x values are also the packets' offsets), plus its share of the page records:
     // 30 bytes in all on linux-x64, where macOS on arm64 measured 67 before the measurement
-    // compacted the heap. The bounds leave room for both and stay below what keeping a packet's
-    // bytes or node would cost.
+    // compacted the heap, and a peak of 30 to 50, where macOS on arm64 measured 80. The bounds
+    // leave room for both and stay below what keeping a packet's bytes or node would cost (a peak
+    // of 125 on linux-x64).
     [Fact]
     public void ManySpeexPacketsStayCompact()
     {
         const int packets = 200_000;
-        byte[] frame = [0x08, 0, 0, 0, 0, 0x0F];
+        // A narrowband frame of submode 7 (492 bits, 24.6 kbps) and the terminator, 63 bytes.
+        byte[] frame = [0x38, .. new byte[60], 0x07, 0x80];
         var builder = new OggBuilder()
             .Page(9, 0, 2, OggBuilder.SpeexHeader(8000, 0))
             .Page(9, 0, 0, OggBuilder.VorbisComment("Encoded with Speex 1.2.1"));
@@ -151,15 +138,19 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Equal(packets * 160L / 8000.0 - (40 / 8000.0), report.Streams.Single().Duration, 9);
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 80L, $"The report keeps {kept / packets} bytes per packet.");
-        Assert.True(peak < packets * 1024L, $"The heap grew by {peak / packets} bytes per packet.");
+        Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
-    // The heap the report keeps and the most it grew by while the analysis ran.
-    private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data)
+    // The heap the report keeps, and the most the analysis held live at once: while it runs, a
+    // sampler thread forces a blocking full collection every few milliseconds and reads the heap
+    // that survived it. Reading the collector's last figures instead measures nothing where no
+    // collection happens during a short analysis. The forced collections slow the analysis down,
+    // so the files stay small.
+    private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
-        analyzer.Analyze("warm-up", new MemoryStream(data[..Math.Min(data.Length, 4096)]));
+        analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         long before = Live();
         long peak = before;
         bool done = false;
@@ -167,9 +158,9 @@ public class MemoryTests(ITestOutputHelper output)
         {
             while (!Volatile.Read(ref done))
             {
-                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.Any);
-                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), info.HeapSizeBytes - info.FragmentedBytes));
-                Thread.Sleep(1);
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: false);
+                Volatile.Write(ref peak, Math.Max(Volatile.Read(ref peak), GC.GetTotalMemory(forceFullCollection: false)));
+                Thread.Sleep(SampleInterval);
             }
         });
         sampler.Start();
@@ -178,7 +169,7 @@ public class MemoryTests(ITestOutputHelper output)
         sampler.Join();
         long kept = Live() - before;
         GC.KeepAlive(data);
-        return (report, kept, peak - before);
+        return (report, kept, Volatile.Read(ref peak) - before);
     }
 
     // The live heap after a full, compacting collection that also compacts the large object heap,
@@ -193,8 +184,10 @@ public class MemoryTests(ITestOutputHelper output)
         return GC.GetTotalMemory(forceFullCollection: false);
     }
 
-    // An M4A file of count silent AAC LC stereo access units of 6 bytes (a channel pair element with
-    // max_sfb 0 and an END element), in one chunk after moov (ISO/IEC 14496-12 8.5 to 8.7).
+    // An M4A file of count silent AAC LC stereo access units of 100 bytes (a channel pair element with
+    // a common window, max_sfb 0 and a global gain of 100 in each channel, and an END element, then
+    // zero bytes no decoder reads, so that keeping a sample's bytes would show), in one chunk after
+    // moov (ISO/IEC 14496-12 8.5 to 8.7).
     private static byte[] Mp4Samples(int count)
     {
         static byte[] Box(string type, params byte[][] parts)
@@ -205,7 +198,7 @@ public class MemoryTests(ITestOutputHelper output)
 
         static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 
-        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x01, 0x9C];
+        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
         byte[] Moov(int mdatPayload)
         {
             byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);

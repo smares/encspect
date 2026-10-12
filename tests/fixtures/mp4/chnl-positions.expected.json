@@ -1,0 +1,277 @@
+{
+ "description": "AAC LC stereo with a chnl box that lists a speaker position per channel (0, left front, and 1, right front) and an object count of 0.",
+ "length": 1588,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   709
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   593
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   493
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   408
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   348
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   120
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   104
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chnl",
+   500,
+   17
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   517,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   541,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   569,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   709,
+   28
+  ],
+  [
+   "mdat",
+   737,
+   851
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   745,
+   6
+  ],
+  [
+   751,
+   45
+  ],
+  [
+   796,
+   42
+  ],
+  [
+   838,
+   39
+  ],
+  [
+   877,
+   36
+  ],
+  [
+   913,
+   33
+  ],
+  [
+   946,
+   30
+  ],
+  [
+   976,
+   27
+  ],
+  [
+   1003,
+   24
+  ],
+  [
+   1027,
+   20
+  ],
+  [
+   1047,
+   17
+  ],
+  [
+   1064,
+   14
+  ],
+  [
+   1078,
+   11
+  ],
+  [
+   1089,
+   8
+  ],
+  [
+   1097,
+   46
+  ],
+  [
+   1143,
+   43
+  ],
+  [
+   1186,
+   40
+  ],
+  [
+   1226,
+   37
+  ],
+  [
+   1263,
+   34
+  ],
+  [
+   1297,
+   31
+  ],
+  [
+   1328,
+   28
+  ],
+  [
+   1356,
+   25
+  ],
+  [
+   1381,
+   21
+  ],
+  [
+   1402,
+   18
+  ],
+  [
+   1420,
+   15
+  ],
+  [
+   1435,
+   12
+  ],
+  [
+   1447,
+   9
+  ],
+  [
+   1456,
+   47
+  ],
+  [
+   1503,
+   44
+  ],
+  [
+   1547,
+   41
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl": "stereo (front left, front right)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl/Stream Structure": "3 (channels and objects)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl/Speaker Position": "0 (left front)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl/Object Count": "0"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  },
+  "skip": {
+   "mp4box": "GPAC 2.2 reads the omitted channels map in place of the speaker positions, runs past the box and drops it."
+  }
+ }
+}

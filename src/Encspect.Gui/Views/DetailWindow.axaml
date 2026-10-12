@@ -13,7 +13,7 @@
         <StackPanel Spacing="3" VerticalAlignment="Center">
           <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
           <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap"
-                     ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, playing time, average bitrate with CBR or VBR, and the encoder with how sure the analysis is." />
+                     ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, and the encoder with how sure the analysis is." />
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
