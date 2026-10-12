@@ -104,6 +104,7 @@ public sealed class Analyzer
 
         var reader = new ByteReader(stream, options.CancellationToken);
         var root = new Node("File", 0, reader.Length);
+        Increasing? progress = options.BytesRead is { } report ? new Increasing(report) : null;
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();
         var failures = new List<Failure>();
@@ -140,7 +141,7 @@ public sealed class Analyzer
 
             // Only the format parser's reads count as progress: tags are probed at both ends of the
             // file first, which would make the furthest offset read jump to the end.
-            ByteReader window = new ByteReader(stream, options.CancellationToken, options.BytesRead).Slice(dataStart, dataEnd - dataStart);
+            ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, dataEnd - dataStart);
             streams = ParseData(new SniffContext(window, Path.GetExtension(source)), root, embedded.Select(c => shown[c.Tag]).ToList(), claims, findings, failures);
         }
         else
@@ -172,8 +173,24 @@ public sealed class Analyzer
             .Select(f => f with { Path = paths.Find(f.Node) })
             .ToList();
         streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList() }).ToList();
-        options.BytesRead?.Report(reader.Length);
+        progress?.Report(reader.Length);
         return new Report(source, root, ordered, streams);
+    }
+
+    // Progress only grows: the format parser's reads may already have reached the end of the file,
+    // which the analysis reports again when it is done.
+    private sealed class Increasing(IProgress<long> progress) : IProgress<long>
+    {
+        private long _last = -1;
+
+        public void Report(long value)
+        {
+            if (value > _last)
+            {
+                _last = value;
+                progress.Report(value);
+            }
+        }
     }
 
     private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections, List<Failure> failures)

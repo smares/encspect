@@ -1,4 +1,6 @@
 using Encspect.Core;
+using Encspect.Formats.Aac;
+using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
@@ -24,8 +26,12 @@ public static class DefaultParsers
 
     private static readonly MpegAudioParser Mpeg = new();
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg];
+    // The host takes the format that sniffs most confident, and the first of equals. MP4 is certain
+    // of an ftyp box (100) and sure of a run of top-level boxes (95), above MPEG audio's 90 for a
+    // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
+    // start of the data (91) outranks MPEG audio too, one further in (50) does not.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser()];
 
-    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4.
-    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg];
+    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new AacCodecParser()];
 }
