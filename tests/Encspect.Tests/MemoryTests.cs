@@ -65,13 +65,15 @@ public class MemoryTests
         analyzer.Analyze("warm-up.m4a", new MemoryStream(Mp4Samples(100)));
         long before = GC.GetTotalMemory(forceFullCollection: true);
 
+        // As for MPEG frames, the heap without the free space a collection left in it.
         long peak = before;
         bool done = false;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
             {
-                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), GC.GetGCMemoryInfo(GCKind.Any).HeapSizeBytes));
+                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.Any);
+                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), info.HeapSizeBytes - info.FragmentedBytes));
                 Thread.Sleep(1);
             }
         });
