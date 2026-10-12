@@ -1,11 +1,11 @@
 {
- "description": "Frames of four raw data blocks, one with a wrong header CRC, which fails, and one with a wrong CRC after its second block, which is not verified.",
+ "description": "Frames of four raw data blocks, one with a wrong header CRC, which fails, and one with a wrong CRC after its second block, which fails too.",
  "length": 1558,
  "format": "AAC",
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -37,20 +37,12 @@
  ],
  "fields": {
   "ADTS/Frame[2]/CRC/Check": "mismatch",
-  "ADTS/Frame[3]/Raw Data Block CRC[1]/Check": "not verified: a channel element's end needs its spectral data"
+  "ADTS/Frame[3]/Raw Data Block CRC[1]/Check": "mismatch"
  },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
    "aac.crc-mismatch",
-   "1 ADTS frame fails the CRC check"
-  ],
-  [
-   "aac.crc-not-verified",
-   "The CRC of 1 ADTS frame"
+   "2 ADTS frames fail the CRC check"
   ]
  ],
  "crosscheck": {
@@ -59,9 +51,10 @@
    "seconds": "0.116",
    "rate": 44100
   },
-  "ffprobe_streams": false,
   "skip": {
+   "faad_trace": "faad2 reads one raw data block per ADTS frame.",
    "ffprobe_streams": "ffmpeg 6.1 does not decode ADTS frames of several protected raw data blocks, so it reports no sample rate."
-  }
+  },
+  "ffprobe_streams": false
  }
 }

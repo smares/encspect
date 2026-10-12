@@ -1,0 +1,198 @@
+{
+ "description": "Mono AAC LC at 22050 Hz in its configuration, whose access units carry SBR data with a parametric stereo extension: HE-AAC v2, signaled only implicitly.",
+ "length": 1737,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   616
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   500
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   400
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   315
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   255
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   103
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   87
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   524,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   552,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   620,
+   24
+  ],
+  [
+   "mdat",
+   644,
+   1093
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AACv2"
+  }
+ ],
+ "units": [
+  [
+   652,
+   91
+  ],
+  [
+   743,
+   91
+  ],
+  [
+   834,
+   90
+  ],
+  [
+   924,
+   91
+  ],
+  [
+   1015,
+   93
+  ],
+  [
+   1108,
+   90
+  ],
+  [
+   1198,
+   91
+  ],
+  [
+   1289,
+   89
+  ],
+  [
+   1378,
+   91
+  ],
+  [
+   1469,
+   89
+  ],
+  [
+   1558,
+   89
+  ],
+  [
+   1647,
+   90
+  ]
+ ],
+ "fields": {
+  "MP4/mdat/Track 1 Samples/AAC/Statistics/SBR/Parametric Stereo": "12 access units (100.0%)",
+  "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "decode": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

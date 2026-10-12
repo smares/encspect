@@ -1,0 +1,96 @@
+{
+ "description": "Mono frames of every window sequence (only long, long start, eight short with groups of 3, 2, 2 and 1 windows, long stop) and both window shapes; the first codes bands with every Huffman codebook from 1 to 11, escapes up to 8191, noise substitution, two TNS filters and two pulses; the short one TNS in three windows; the last codes no band.",
+ "length": 1588,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   767
+  ],
+  [
+   767,
+   211
+  ],
+  [
+   978,
+   355
+  ],
+  [
+   1333,
+   223
+  ],
+  [
+   1556,
+   21
+  ],
+  [
+   1577,
+   11
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/ICS Info/Window Shape": "1 (KBD)",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/ICS Info/Max SFB": "49",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Section Data": "15 sections",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Section Data/Section[1]": "codebook 1 (signed quadruples up to 1), bands 3-4",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Noise Substitution Bands": "30-33",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/TNS Data": "2 filters",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/TNS Data/Window/Filter": "order 8, 20 bands, downward",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Pulse Data": "2 pulses",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Pulse Data/Pulse Start SFB": "2",
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/Pulse Data/Pulse[1]": "offset 10, amplitude 2",
+  "ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "1 (long start)",
+  "ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/Window Shape": "0 (sine)",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "2 (eight short)",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/ICS Info/Scale Factor Grouping": "0x6A (4 groups of 3, 2, 2, 1 windows)",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/Section Data/Section[4]": "group 1: codebook 9 (unsigned pairs up to 12), bands 0-3",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/Noise Substitution Bands": "group 1: 10-13",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/TNS Data": "3 filters",
+  "ADTS/Frame[3]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "3 (long stop)",
+  "ADTS/Frame[5]/Raw Data Block/SCE/Channel/ICS Info/Max SFB": "0",
+  "ADTS/Statistics/TNS/Only Long": "1 of 3 (33.3%)",
+  "ADTS/Statistics/TNS/Eight Short": "1 of 1 (100.0%)",
+  "ADTS/Statistics/Pulse Data": "1 channel stream (16.7%)",
+  "ADTS/Statistics/Max SFB (Short Windows)/14": "1 channel stream (100.0%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "3 channel streams (50.0%)",
+  "ADTS/Statistics/Window Sequences/Long Start": "1 channel stream (16.7%)",
+  "ADTS/Statistics/Window Sequences/Eight Short": "1 channel stream (16.7%)",
+  "ADTS/Statistics/Window Sequences/Long Stop": "1 channel stream (16.7%)",
+  "ADTS/Statistics/Window Shapes/Sine": "3 channel streams (50.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "3 channel streams (50.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "18 bands (10.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "6 bands (3.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 2": "9 bands (5.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "28 bands (16.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 4": "8 bands (4.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "17 bands (9.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 6": "8 bands (4.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "6 bands (3.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 8": "4 bands (2.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "16 bands (9.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 10": "5 bands (2.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "42 bands (24.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "8 bands (4.6%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  }
+ }
+}

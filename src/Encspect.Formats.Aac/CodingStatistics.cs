@@ -169,12 +169,12 @@ internal static class CodingStatistics
 
         if (tally.Elements[6] > 0)
         {
-            Node fill = statistics.Add(cover("Fill Elements", $"{Number(tally.Elements[6])} elements, {Number(tally.FillBytes)} bytes", Explain.StatFill, Topics.RawDataBlocks));
+            Node fill = statistics.Add(cover("Fill Elements", $"{Count(tally.Elements[6], "element")}, {Count(tally.FillBytes, "byte")}", Explain.StatFill, Topics.RawDataBlocks));
             for (int type = 0; type < 16; type++)
             {
                 if (tally.Extensions[type] > 0)
                 {
-                    fill.Add(cover(AacTables.ExtensionTypeName(type), $"{Number(tally.Extensions[type])} payloads, {Number(tally.ExtensionBytes[type])} bytes", Explain.StatExtension, null));
+                    fill.Add(cover(AacTables.ExtensionTypeName(type), $"{Count(tally.Extensions[type], "payload")}, {Count(tally.ExtensionBytes[type], "byte")}", Explain.StatExtension, null));
                 }
             }
 
@@ -186,7 +186,7 @@ internal static class CodingStatistics
 
         if (tally.Elements[4] > 0)
         {
-            statistics.Add(cover("Data Stream Elements", $"{Number(tally.Elements[4])} elements, {Number(tally.DataStreamBytes)} bytes", Explain.StatDse, Topics.RawDataBlocks));
+            statistics.Add(cover("Data Stream Elements", $"{Count(tally.Elements[4], "element")}, {Count(tally.DataStreamBytes, "byte")}", Explain.StatDse, Topics.RawDataBlocks));
         }
     }
 
@@ -250,4 +250,6 @@ internal static class CodingStatistics
     }
 
     private static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
+
+    private static string Count(long value, string unit) => $"{Number(value)} {unit}{(value == 1 ? string.Empty : "s")}";
 }

@@ -21,7 +21,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -301,18 +301,10 @@
   ]
  ],
  "fields": {
-  "ADTS/Frame[1]/CRC/Check": "verified"
+  "ADTS/Frame[1]/CRC/Check": "verified",
+  "ADTS/Frame[40]/CRC/Check": "verified"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
-   "aac.crc-not-verified",
-   "covers a channel element whose end is not known"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": false,

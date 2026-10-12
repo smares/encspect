@@ -168,6 +168,11 @@ internal sealed partial class BlockReader
     {
         int start = bits.Original;
         bool kept = true;
+        if (length < 0 || (long)start + length > bits.Bound)
+        {
+            throw BlockOverrun.Instance;
+        }
+
         if (bits.IsSkeleton)
         {
             (_, int cut, _) = bits.TakeCut();
@@ -445,26 +450,42 @@ internal sealed partial class BlockReader
         Field(n, "Extension Type", start, start + 4, $"{type} ({AacTables.ExtensionTypeName(type)})", Explain.FillExtensionType);
         int end = start + (count * 8);
         int used = count;
-        string? topic = null;
-        switch (type)
+        string? topic = type is 13 or 14 ? Topics.Sbr : type == 11 ? Topics.DynamicRange : null;
+        int limit = bits.Narrow(end);
+        try
         {
-            case 13 or 14:
-                SbrPayload(ref bits, n, type == 14, end);
-                topic = Topics.Sbr;
-                break;
-            case 11:
-                used = DynamicRange(ref bits, n);
-                topic = Topics.DynamicRange;
-                break;
-            case 1:
-                FillData(ref bits, n, count, start);
-                break;
-            case 2:
-                used = DataElement(ref bits, n, count, end);
-                break;
-            default:
-                Payload(ref bits, n, (count * 8) - 4, "Other Bits", Explain.OtherBits, inBytes: false);
-                break;
+            switch (type)
+            {
+                case 13 or 14:
+                    SbrPayload(ref bits, n, type == 14, end);
+                    break;
+                case 11:
+                    used = DynamicRange(ref bits, n);
+                    break;
+                case 1:
+                    FillData(ref bits, n, count, start);
+                    break;
+                case 2:
+                    used = DataElement(ref bits, n, count, end);
+                    break;
+                default:
+                    Payload(ref bits, n, (count * 8) - 4, "Other Bits", Explain.OtherBits, inBytes: false);
+                    break;
+            }
+        }
+        catch (BlockOverrun)
+        {
+            // The payload needs more than its fill element holds: what it holds is shown, and the
+            // next element is read where the fill element's count ends.
+            Soft(type is 13 or 14 ? "aac.sbr-past-fill" : "aac.fill-payload-overrun",
+                type is 13 or 14 ? "SBR data that runs past its fill element" : $"an extension payload that needs more than the {count} bytes its fill element has left",
+                start, start + 4, "Extension Type");
+            bits.Restore(limit);
+            bits.MoveTo(end);
+        }
+        finally
+        {
+            bits.Restore(limit);
         }
 
         if (_tally is not null && type < 16)
@@ -666,16 +687,16 @@ internal sealed partial class BlockReader
         if (hasHeader)
         {
             header = ReadSbrHeader(ref bits, n);
-            if (bits.Original > end)
-            {
-                Soft("aac.sbr-past-fill", "SBR data that runs past its fill element", flag, end, "HasSbrHeader");
-                bits.MoveTo(end);
-                return;
-            }
         }
 
         int dataStart = bits.Original;
         int length = end - dataStart;
+        if (length <= 0)
+        {
+            // The payload's count leaves no room for sbr_data after the CRC, the flag and the header.
+            throw BlockOverrun.Instance;
+        }
+
         int psAt = -1;
         if (bits.IsSkeleton)
         {
@@ -843,6 +864,20 @@ internal sealed partial class BlockReader
     private Node Close(Node parent, Node scratch, string name, int start, int end, NodeValue? value, string description, string? topic = null, NodeKind kind = NodeKind.Detail)
     {
         Node node = _where.Bits(name, start, end, value, description, topic, kind);
+
+        // A field read past where its element's length ends (SBR data that runs past its fill
+        // element) widens the element, so it still holds every node read in it.
+        long past = 0;
+        foreach (Node child in scratch.Children)
+        {
+            past = child.Ranges is null && node.Ranges is null ? Math.Max(past, EndBit(child) - EndBit(node)) : past;
+        }
+
+        if (past > 0)
+        {
+            node = _where.Bits(name, start, end + (int)past, value, description, topic, kind);
+        }
+
         foreach (Node child in scratch.Children)
         {
             node.Add(child);
@@ -851,6 +886,8 @@ internal sealed partial class BlockReader
         parent.Add(node);
         return node;
     }
+
+    private static long EndBit(Node node) => (node.Offset * 8) + (node.BitOffset ?? 0) + (node.BitLength ?? (node.Length * 8));
 
     private void Field(Node? parent, string name, int start, int end, NodeValue? value, string description, string? topic = null)
     {

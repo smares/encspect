@@ -3,8 +3,10 @@ using Encspect.Core;
 namespace Encspect.Formats.Aac;
 
 // adif_header (ISO/IEC 14496-3 1.A.2.1, Table 1.A.4; ISO/IEC 13818-7 6.1): one header, then raw data
-// blocks with no length or sync between them, so their bounds need every element parsed, the
-// Huffman-coded spectral data included, which is not done yet.
+// blocks with no length or sync between them (raw_data_stream, Table 1.A.3), each byte-aligned after
+// its END element. Each block's end is only known once every element, the Huffman-coded spectral
+// data included, is read, so a block that cannot be read ends the reading: nothing marks where the
+// next one starts.
 internal static class Adif
 {
     // The header with its program config elements fits in a few hundred bytes; comments make it
@@ -23,16 +25,24 @@ internal static class Adif
         }
     }
 
-    public static void Parse(ByteReader reader, Node parent, AnalysisContext context)
+    public static void Parse(ByteReader reader, Node parent, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
     {
-        var region = parent.Add(new Node("ADIF", reader.Start, reader.Length) { Kind = NodeKind.Stream, Description = Explain.Adif, Topic = Topics.Adts });
+        var leading = new List<Node>();
+        var blocks = new ChunkedList<Block>();
+        BlockLog? log = null;
+        var region = parent.Add(new Node("ADIF", reader.Start, reader.Length, null, () => Children(leading, blocks, log))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Adif,
+            Topic = Topics.Adts,
+        });
         Header? header;
         try
         {
             header = Read(reader, region, out Node? node);
             if (node is not null)
             {
-                region.Add(node);
+                leading.Add(node);
             }
         }
         catch (EndOfStreamException)
@@ -47,12 +57,6 @@ internal static class Adif
             return;
         }
 
-        long dataStart = reader.Start + header.Length;
-        long dataLength = reader.End - dataStart;
-        Node data = region.Add(new Node("Raw Data Blocks", dataStart, dataLength, NodeValue.Integer(dataLength, "bytes")) { Description = Explain.AdifBlocks, Topic = Topics.RawDataBlocks });
-        context.AddFinding(Severity.Info, "aac.adif-blocks-not-analyzed",
-            "ADIF delimits no raw data blocks; finding them needs the spectral data of every element parsed, which is not done yet, so they are not analyzed.", data);
-
         var config = new AacConfig
         {
             ObjectType = header.ObjectType,
@@ -61,14 +65,56 @@ internal static class Adif
             Channels = header.Channels,
             CoreFrameLength = 1024,
         };
-        if (config.ImplicitPossible)
+        long dataStart = reader.Start + header.Length;
+        if (!StreamSetup.CanRead(config))
         {
-            context.AddFinding(Severity.Info, "aac.implicit-signaling-not-checked",
-                "ADIF cannot signal SBR or PS explicitly. They can be signaled implicitly, in the fill elements of the raw data blocks, which are not checked yet; the stream may be HE-AAC or HE-AAC v2.", region);
+            long length = reader.End - dataStart;
+            leading.Add(new Node("Raw Data Blocks", dataStart, length, NodeValue.Integer(length, "bytes")) { Description = Explain.AdifBlocks, Topic = Topics.RawDataBlocks });
+            context.AddStream(new StreamInfo { Nodes = [region], Codec = config.Codec, SampleRate = config.OutputSampleRate, Channels = header.Channels, ChannelMode = config.ChannelMode, IsVbr = header.IsVbr });
+            return;
         }
 
-        // A constant bitrate gives the duration; a variable one states only its peak.
-        double? duration = header.IsVbr || header.Bitrate == 0 ? null : dataLength * 8.0 / header.Bitrate;
+        var findings = new FindingCollector();
+        log = new BlockLog(new StreamSetup(config), findings);
+        (string Text, int Index, long Offset)? signature = null;
+        long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature);
+        if (position < reader.End)
+        {
+            long rest = reader.End - position;
+            var unread = new Node("Unread Bytes", position, rest, NodeValue.Integer(rest, "bytes")) { Description = Explain.AdifUnread };
+            leading.Add(unread);
+            findings.AddNow(Severity.Warning, "aac.adif-blocks-unread",
+                $"The {rest} bytes from 0x{position:X} are not read: ADIF marks no raw data block's start, so none can be found after one that cannot be read to its end.", unread);
+        }
+
+        config = config with { SbrFound = log.Tally.SbrBlocks > 0, PsFound = log.Tally.PsBlocks > 0 };
+        var figures = new StreamFigures(config.OutputSampleRate);
+        for (int i = 0; i < blocks.Count && blocks[i].IsRead; i++)
+        {
+            figures.Add(blocks[i].Offset, blocks[i].Length, config.OutputFrameLength);
+        }
+
+        Node FirstBlock() => blocks.Count > 0 ? BlockNode(blocks, 0, null) : region;
+        log.ReportSignaling(config, FirstBlock(), "ADIF");
+        Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
+            new(name, region.Offset, region.Length, value) { Kind = kind, Description = description, Topic = topic };
+        Node? encoder = AacEncoder.Detect(
+            signature is { } found ? new AacEncoder.Signature(found.Text, BlockNode(blocks, found.Index, null), found.Index) : null,
+            claims,
+            (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
+            (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
+                $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded."));
+        if (encoder is not null)
+        {
+            leading.Add(encoder);
+        }
+
+        Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Block", "Blocks", out Node bitrate);
+        CodingStatistics.Add(statistics, log.Tally, log.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
+        leading.Add(statistics);
+        findings.Flush(context);
+
+        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
         context.AddStream(new StreamInfo
         {
             Nodes = [region],
@@ -76,11 +122,83 @@ internal static class Adif
             SampleRate = config.OutputSampleRate,
             Channels = config.OutputChannels ?? 0,
             ChannelMode = config.ChannelMode,
-            Duration = duration ?? 0,
-            AverageBitrate = duration is null ? null : header.Bitrate / 1000.0,
+            Samples = figures.Samples,
+            Duration = figures.Duration,
+            AverageBitrate = figures.AverageBitrate,
             IsVbr = header.IsVbr,
+            Encoder = encoder?.Value?.ToString(),
+            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Series = figures.Series(bitrate, context.CancellationToken),
         });
     }
+
+    // Reads raw data blocks one after another from start; returns where the reading ended. The data
+    // is read through a window twice the longest block, moved on once the next block could run past it.
+    private static long ReadBlocks(ByteReader reader, long start, BlockLog log, ChunkedList<Block> blocks, FindingCollector findings, CancellationToken cancellation,
+        ref (string Text, int Index, long Offset)? signature)
+    {
+        var cache = new BlockCache(reader);
+        var window = new byte[2 * BlockLog.MaxBlockBytes];
+        long windowStart = start;
+        int windowLength = 0;
+        long position = start;
+        while (position < reader.End)
+        {
+            if (blocks.Count % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (position + BlockLog.MaxBlockBytes > windowStart + windowLength && windowStart + windowLength < reader.End)
+            {
+                windowStart = position;
+                windowLength = cache.Read(position, window);
+            }
+
+            int at = (int)(position - windowStart);
+            ReadOnlySpan<byte> data = window.AsSpan(at, Math.Min(windowLength - at, BlockLog.MaxBlockBytes));
+            var where = new UnitBytes(position, data.Length, null);
+            int index = blocks.Count;
+            long blockStart = position;
+            int available = data.Length;
+            (long skeleton, BlockResult read) = log.Read(data, 0, available * 8, where,
+                () => new Node("Raw Data Block", blockStart, available) { Kind = NodeKind.Frame, Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks });
+            if (!read.Ok)
+            {
+                // The block that breaks reaches as far as a block can, where its finding places it.
+                blocks.Add(new Block(position, available, read.Elements, skeleton, false));
+                return position + available;
+            }
+
+            int length = (read.End + 7) / 8;
+            blocks.Add(new Block(position, length, read.Elements, skeleton, true));
+            if (signature is null && log.Tally.FirstText is { } text)
+            {
+                signature = (text, index, position);
+            }
+
+            position += length;
+        }
+
+        return position;
+    }
+
+    private static IReadOnlyList<Node> Children(List<Node> leading, ChunkedList<Block> blocks, BlockLog? log) =>
+        new BlockedChildren(leading, blocks.Count, i => BlockNode(blocks, i, log));
+
+    private static Node BlockNode(ChunkedList<Block> blocks, int index, BlockLog? log)
+    {
+        Block block = blocks[index];
+        return new Node("Raw Data Block", block.Offset, block.Length, BlockLog.ElementList(block.Elements),
+            log is null ? null : () => BlockLog.Nodes(log.Store, log.Setup, block.Skeleton, new UnitBytes(block.Offset, block.Length, null)))
+        {
+            Kind = NodeKind.Frame,
+            Description = Explain.RawDataBlock,
+            Topic = Topics.RawDataBlocks,
+        };
+    }
+
+    private readonly record struct Block(long Offset, int Length, int Elements, long Skeleton, bool IsRead);
 
     private static Header? Read(ByteReader reader, Node parent, out Node? node)
     {

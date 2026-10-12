@@ -178,7 +178,8 @@ internal sealed partial class BlockReader
         }
         catch (BlockOverrun)
         {
-            var error = new BlockError("aac.element-past-end", "runs past the end of its access unit", root?.Children.Count > 0 ? root.Children[^1] : null, toEnd: true);
+            // Every element catches its own overrun, so this one is the next element ID's: the block holds no END element.
+            var error = new BlockError("aac.element-past-end", "ends before its END element", null, toEnd: true) { Element = "raw data block" };
             CountDamaged();
             return new BlockResult(false, bits.Original, Packed(), _hasSbr, _hasPs, error);
         }
@@ -718,7 +719,7 @@ internal sealed partial class BlockReader
 
             if (parent is not null)
             {
-                Close(parent, n!, "Section Data", start, bits.Original, sections == 1 ? "1 section" : $"{sections} sections", Explain.SectionData, Topics.Codebooks, NodeKind.SideInfo);
+                Close(parent, n!, "Section Data", start, bits.Original, NodeValue.Integer(sections, "sections", "section"), Explain.SectionData, Topics.Codebooks, NodeKind.SideInfo);
             }
 
             ics.SectionStart = start;
@@ -825,7 +826,7 @@ internal sealed partial class BlockReader
 
         if (parent is not null)
         {
-            Close(parent, n!, "Pulse Data", start, bits.Original, count == 1 ? "1 pulse" : $"{count} pulses", Explain.PulseData, Topics.PulseData, NodeKind.SideInfo);
+            Close(parent, n!, "Pulse Data", start, bits.Original, NodeValue.Integer(count, "pulses", "pulse"), Explain.PulseData, Topics.PulseData, NodeKind.SideInfo);
         }
     }
 
@@ -888,7 +889,7 @@ internal sealed partial class BlockReader
 
             if (n is not null)
             {
-                Close(n, window!, eight ? $"Window {w}" : "Window", windowStart, bits.Original, filters == 1 ? "1 filter" : $"{filters} filters", Explain.TnsWindow, Topics.Tns);
+                Close(n, window!, eight ? $"Window {w}" : "Window", windowStart, bits.Original, NodeValue.Integer(filters, "filters", "filter"), Explain.TnsWindow, Topics.Tns);
             }
         }
 
@@ -899,7 +900,7 @@ internal sealed partial class BlockReader
 
         if (parent is not null)
         {
-            Close(parent, n!, "TNS Data", start, bits.Original, total == 1 ? "1 filter" : $"{total} filters", Explain.TnsData, Topics.Tns, NodeKind.SideInfo);
+            Close(parent, n!, "TNS Data", start, bits.Original, NodeValue.Integer(total, "filters", "filter"), Explain.TnsData, Topics.Tns, NodeKind.SideInfo);
         }
 
         return total;
@@ -935,7 +936,7 @@ internal sealed partial class BlockReader
 
         if (parent is not null)
         {
-            Close(parent, n!, "Gain Control Data", start, bits.Original, $"{adjustments} adjustments", Explain.GainControlData, null, NodeKind.SideInfo);
+            Close(parent, n!, "Gain Control Data", start, bits.Original, NodeValue.Integer(adjustments, "adjustments", "adjustment"), Explain.GainControlData, null, NodeKind.SideInfo);
         }
     }
 

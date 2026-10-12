@@ -116,7 +116,7 @@
  ],
  "streams": [
   {
-   "codec": "HE-AAC (no PS signaled explicitly)",
+   "codec": "HE-AAC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -248,12 +248,7 @@
   ]
  ],
  "fields": {},
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "PS can also be signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

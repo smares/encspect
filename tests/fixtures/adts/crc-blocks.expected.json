@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -40,21 +40,17 @@
   "ADTS/Frame/CRC/Check": "verified",
   "ADTS/Frame/Raw Data Block CRC[2]/Check": "verified"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "faad": {
    "seconds": "0.116",
    "rate": 44100
   },
-  "ffprobe_streams": false,
   "skip": {
+   "faad_trace": "faad2 reads one raw data block per ADTS frame.",
    "ffprobe_streams": "ffmpeg 6.1 does not decode ADTS frames of several protected raw data blocks, so it reports no sample rate."
-  }
+  },
+  "ffprobe_streams": false
  }
 }

@@ -46,8 +46,6 @@ ADTS = ROOT / "adts"
 STSD = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a"
 ESDS = STSD + "/esds/ES_Descriptor/DecoderConfigDescriptor"
 ASC = ESDS + "/DecoderSpecificInfo/AudioSpecificConfig"
-IMPLICIT = ["aac.implicit-signaling-not-checked", "signaled implicitly"]
-IMPLICIT_PS = ["aac.implicit-signaling-not-checked", "PS can also be signaled implicitly"]
 MOOV_AFTER = ["mp4.moov-after-mdat", "not optimized for streaming"]
 
 
@@ -115,7 +113,7 @@ def he_aac_configs():
     lc = asc(2, 44100, 2)
     return [
         plain("lc-implicit", "AAC LC, stereo, 44100 Hz, with a configuration that signals nothing about SBR: SBR stays possible.", lc, "stereo",
-              "AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", findings=[IMPLICIT],
+              "AAC LC", 44100, 2, "Stereo", findings=[],
               fields={ASC + "/Audio Object Type": "2 (AAC LC)", ASC + "/Sample Rate": "44100 Hz", ASC + "/Channel Configuration": "2 (stereo)",
                       ASC + "/Frame Length": "1024 samples"}, faad="LC AAC"),
         plain("lc-sbr-absent", "AAC LC whose configuration signals SBR absent through the sync extension 0x2B7, as ffmpeg writes it.",
@@ -136,11 +134,11 @@ def he_aac_configs():
               output_rate=44100, output_channels=2, frame=2048, fields={ASC + "/Sync Extension": "SBR and PS present", ASC + "/Sync Extension/HasPs": "true"},
               faad="HE AAC"),
         plain("he-aac-mono", "HE-AAC over a mono core, signaled hierarchically with object type 5: PS stays possible.",
-              asc(2, 22050, 1, sbr=True, signaling="hierarchical", extension_rate=44100), "mono", "HE-AAC (no PS signaled explicitly)", 22050, 1, "Mono",
-              output_rate=44100, frame=2048, findings=[IMPLICIT_PS], faad="LC AAC", ffprobe_channels=2, faad_channels=2),
+              asc(2, 22050, 1, sbr=True, signaling="hierarchical", extension_rate=44100), "mono", "HE-AAC", 22050, 1, "Mono",
+              output_rate=44100, frame=2048, faad="LC AAC", ffprobe_channels=2, faad_channels=2),
         plain("pce-5-1", "AAC LC 5.1 at 48000 Hz whose channel configuration 0 leaves the layout to a program config element in the configuration.",
-              asc(2, 48000, 0, pce=pce_5_1), "5.1", "AAC LC (no SBR signaled explicitly)", 48000, 6, "6 channels", samples=units("5.1", 20),
-              findings=[IMPLICIT], fields={ASC + "/Channel Configuration": "0 (defined in a program config element)", ASC + "/Program Config Element": "6 channels",
+              asc(2, 48000, 0, pce=pce_5_1), "5.1", "AAC LC", 48000, 6, "6 channels", samples=units("5.1", 20),
+              fields={ASC + "/Channel Configuration": "0 (defined in a program config element)", ASC + "/Program Config Element": "6 channels",
                                            ASC + "/Program Config Element/Front Channel Elements": "2"}, faad="LC AAC", faad_channels=0),
     ]
 
@@ -545,7 +543,10 @@ def corrupt():
         return data[:stco_offset + 16] + u32(moov_offset + 8) + data[stco_offset + 20:]
     plain_offsets = movie(big)[2][0]
     file("sample-outside-mdat", "The first chunk offset points into moov: its samples lie outside every mdat box and are still read.",
-         [["mp4.sample-outside-mdat", "lie outside every mdat box"]], tracks=big, mutate=into_moov,
+         # The samples read from moov are no raw data blocks, which their findings show.
+         [["mp4.sample-outside-mdat", "lie outside every mdat box"], ["aac.prediction-not-allowed", "6 raw data blocks are not read to their end"],
+          ["aac.max-sfb-too-large", "gives max_sfb 61"], ["aac.element-past-end", "ends before its END element"], ["aac.section-overrun", "past max_sfb 1"]],
+         tracks=big, mutate=into_moov,
          units_rows=unit_list([next(o for p, o, s in movie(big)[1] if p == "moov") + 8] + plain_offsets[1:], samples, 10))
 
     file("box-size-zero-and-small", "A udta box whose last box has size 0, which only the last box of the file may have, so it is read to the end of udta; "
@@ -590,7 +591,10 @@ def corrupt():
     chunk_offsets = movie([fewer])[2][0]
     placed = unit_list([chunk_offsets[0]], samples[:5], 5) + unit_list([chunk_offsets[1]], samples[5:10], 5)
     file("chunk-sample-mismatch", "stsc puts 5 samples into each of the 2 chunks, while stsz sizes 20: the last 10 samples have no place.",
-         [["mp4.chunk-sample-mismatch", "hold 10 samples, but stsz sizes 20"]], tracks=[fewer], units_rows=placed)
+         # From the sixth sample on, the sizes stsz gives do not fit the bytes at the second chunk, so what is read there is no raw data block.
+         [["mp4.chunk-sample-mismatch", "hold 10 samples, but stsz sizes 20"], ["aac.unit-trailing-bytes", "holds 16 bytes after the END element"],
+          ["aac.tns-order-too-high", "higher order than the 12"], ["aac.element-past-end", "The PCE at"], ["aac.ics-reserved-bit", "3 raw data blocks"],
+          ["aac.prediction-not-allowed", "3 raw data blocks are not read to their end"]], tracks=[fewer], units_rows=placed)
 
     sizes_bad = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), edits=[(500, -5)])
     file("edit-list-invalid", "An edit list whose media time is -5, which ISO/IEC 14496-12 does not define.",
@@ -693,6 +697,8 @@ def adts_fixtures():
         check = {"ffprobe": "ffprobe" not in (skip or {}), "faad": None if "faad" in (skip or {}) else {"seconds": f"{len(frames) * 1024 / rate:.3f}", "rate": rate}}
         if skip:
             check["skip"] = skip
+        if not ffprobe_streams or name == "raw-blocks":
+            check.setdefault("skip", {})["faad_trace"] = "faad2 reads one raw data block per ADTS frame."
         if not ffprobe_streams:
             check["ffprobe_streams"] = False
             check.setdefault("skip", {})["ffprobe_streams"] = "ffmpeg 6.1 does not decode ADTS frames of several protected raw data blocks, so it reports no sample rate."
@@ -713,45 +719,44 @@ def adts_fixtures():
     stereo = units("stereo", 30)
     data, rows = concat([adts_frame([u], fullness=0x100) for u in stereo])
     add("cbr", "ADTS AAC LC stereo at 44100 Hz with a buffer fullness of 0x100 in every frame, so a constant bitrate.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 30 * 1024)], [IMPLICIT],
+        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024)], [],
         {"ADTS/Frame/Buffer Fullness": "256", "ADTS/Frame/Profile": "1 (AAC LC)", "ADTS/Frame/Raw Data Block": "CPE"})
 
     data, rows = concat([adts_frame([u]) for u in stereo])
     add("vbr", "ADTS with a buffer fullness of 0x7FF in every frame, which signals a variable bitrate.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [IMPLICIT],
+        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [],
         {"ADTS/Frame/Buffer Fullness": "0x7FF (variable bitrate)"})
 
     mono = units("mono", 20, zero_bands=40)
     data, rows = concat([adts_frame([u], channels=1, protect=True) for u in mono])
     add("crc-mono", "Protected ADTS frames of one single channel element longer than 192 bits each: the CRC covers the header and the element's first 192 "
-        "bits, and every frame's verifies.", data, rows, [stream("AAC LC (no SBR signaled explicitly)", 44100, 1, "Mono", 20 * 1024, vbr=True)], [IMPLICIT],
+        "bits, and every frame's verifies.", data, rows, [stream("AAC LC", 44100, 1, "Mono", 20 * 1024, vbr=True)], [],
         {"ADTS/Frame/CRC/Check": "verified", "ADTS/Frame/IsProtected": "true"})
 
     frames = [adts_frame([u], channels=1, protect=True, bad_header_crc=(i == 5)) for i, u in enumerate(mono)]
     data, rows = concat(frames)
-    add("crc-mono-damaged", "Protected mono frames, one of which has a wrong CRC. A single channel element may end before its 192 bits, which only its "
-        "spectral data tells, so a CRC that does not match it is reported as not verified rather than as failing.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 1, "Mono", 20 * 1024, vbr=True)], [IMPLICIT, ["aac.crc-not-verified", "The CRC of 1 ADTS frame"]],
-        {"ADTS/Frame[5]/CRC/Check": "not verified: a channel element's end needs its spectral data", "ADTS/Frame[4]/CRC/Check": "verified"})
+    add("crc-mono-damaged", "Protected mono frames, one of which has a wrong CRC, which fails.", data, rows,
+        [stream("AAC LC", 44100, 1, "Mono", 20 * 1024, vbr=True)], [["aac.crc-mismatch", "1 ADTS frame fails the CRC check"]],
+        {"ADTS/Frame[5]/CRC/Check": "mismatch", "ADTS/Frame[4]/CRC/Check": "verified"})
 
     groups = [mono[i:i + 4] for i in range(0, 20, 4)]
     data, rows = concat([adts_frame(g, channels=1, protect=True) for g in groups])
     add("crc-blocks", "Protected frames of four raw data blocks each: the header's CRC covers the header and the block positions, and each block ends in a "
-        "CRC over its single channel element's first 192 bits.", data, rows, [stream("AAC LC (no SBR signaled explicitly)", 44100, 1, "Mono", 20 * 1024, vbr=True)],
-        [IMPLICIT], {"ADTS/Frame/Raw Data Blocks": "4", "ADTS/Frame/CRC/Check": "verified", "ADTS/Frame/Raw Data Block CRC[2]/Check": "verified"},
+        "CRC over its single channel element's first 192 bits.", data, rows, [stream("AAC LC", 44100, 1, "Mono", 20 * 1024, vbr=True)],
+        [], {"ADTS/Frame/Raw Data Blocks": "4", "ADTS/Frame/CRC/Check": "verified", "ADTS/Frame/Raw Data Block CRC[2]/Check": "verified"},
         ffprobe_streams=False)
 
     data, rows = concat([adts_frame(g, channels=1, protect=True, bad_header_crc=(i == 2), bad_block_crc=(i == 3)) for i, g in enumerate(groups)])
     add("crc-blocks-damaged", "Frames of four raw data blocks, one with a wrong header CRC, which fails, and one with a wrong CRC after its second block, "
-        "which is not verified.", data, rows, [stream("AAC LC (no SBR signaled explicitly)", 44100, 1, "Mono", 20 * 1024, vbr=True)],
-        [IMPLICIT, ["aac.crc-mismatch", "1 ADTS frame fails the CRC check"], ["aac.crc-not-verified", "The CRC of 1 ADTS frame"]],
-        {"ADTS/Frame[2]/CRC/Check": "mismatch", "ADTS/Frame[3]/Raw Data Block CRC[1]/Check": "not verified: a channel element's end needs its spectral data"},
+        "which fails too.", data, rows, [stream("AAC LC", 44100, 1, "Mono", 20 * 1024, vbr=True)],
+        [["aac.crc-mismatch", "2 ADTS frames fail the CRC check"]],
+        {"ADTS/Frame[2]/CRC/Check": "mismatch", "ADTS/Frame[3]/Raw Data Block CRC[1]/Check": "mismatch"},
         ffprobe_streams=False)
 
     groups = [stereo[i:i + 3] for i in range(0, 30, 3)]
     data, rows = concat([adts_frame(g) for g in groups])
     add("raw-blocks", "Unprotected frames of three raw data blocks each: only the first block's start is known.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [IMPLICIT], {"ADTS/Frame/Raw Data Blocks": "3"})
+        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [], {"ADTS/Frame/Raw Data Blocks": "3"})
 
     frames = [adts_frame([u]) for u in stereo]
     damaged = list(frames)
@@ -759,7 +764,7 @@ def adts_fixtures():
     data, rows = concat(damaged)
     rows = [r for i, r in enumerate(rows) if i != 10]
     add("damaged-header", "Frame 11's sync word is overwritten: its bytes are a gap, and sync is found again at the next frame.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 29 * 1024, vbr=True)], [IMPLICIT, ["aac.sync-lost", "ADTS sync is lost for"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 29 * 1024, vbr=True)], [["aac.sync-lost", "ADTS sync is lost for"]],
         skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})
 
     long_frame = bytearray(frames[7])
@@ -771,7 +776,7 @@ def adts_fixtures():
     damaged[7] = bytes(long_frame)
     data, rows = concat(damaged)
     add("damaged-length", "Frame 8 states a length 50 bytes too long: the next frame's header inside it cuts it short where the damage is.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [IMPLICIT, ["aac.frame-damaged", "cut short by the next frame's header"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [["aac.frame-damaged", "cut short by the next frame's header"]],
         skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})
 
     data, rows = concat(frames[:20])
@@ -779,26 +784,27 @@ def adts_fixtures():
     data = junk + data + b"trailing bytes"
     rows = [(o + 100, l) for o, l in rows]
     add("junk-around", "100 bytes of junk before the first frame and 14 after the last.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 20 * 1024, vbr=True)],
-        [IMPLICIT, ["aac.leading-junk", "100 bytes before the first ADTS frame"], ["aac.trailing-data", "14 bytes after the last ADTS frame"]],
-        skip={"ffprobe": "ffmpeg's ADTS probe does not look past junk at the start.", "faad": "faad2 reads ADTS only from the first byte."})
+        [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)],
+        [["aac.leading-junk", "100 bytes before the first ADTS frame"], ["aac.trailing-data", "14 bytes after the last ADTS frame"]],
+        skip={"ffprobe": "ffmpeg's ADTS probe does not look past junk at the start.", "faad": "faad2 reads ADTS only from the first byte.",
+              "faad_trace": "faad2 reads ADTS only from the first byte."})
 
     data, rows = concat(frames[:15] + [adts_frame([u], rate=48000) for u in stereo[:15]])
     add("stream-change", "15 frames at 44100 Hz, then 15 at 48000 Hz, as when two files are joined: two streams.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 15 * 1024, vbr=True),
-         stream("AAC LC (no SBR signaled explicitly)", 48000, 2, "Stereo", 15 * 1024, vbr=True)],
-        [IMPLICIT, IMPLICIT, ["aac.stream-changed", "from AAC LC, 44100 Hz, channel configuration 2 to AAC LC, 48000 Hz"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 15 * 1024, vbr=True),
+         stream("AAC LC", 48000, 2, "Stereo", 15 * 1024, vbr=True)],
+        [["aac.stream-changed", "from AAC LC, 44100 Hz, channel configuration 2 to AAC LC, 48000 Hz"]],
         skip={"ffprobe": "ffmpeg keeps one stream across the change of sample rate."})
 
     data, rows = concat([adts_frame([u], mpeg2=True) for u in stereo[:20]])
     add("mpeg2", "MPEG-2 ADTS (ID 1), whose profile 1 is LC as in MPEG-4.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 20 * 1024, vbr=True)], [IMPLICIT], {"ADTS/Frame/Version": "MPEG-2"})
+        [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], [], {"ADTS/Frame/Version": "MPEG-2"})
 
     data, rows = concat(frames[:12])
     data = data[:-5]
     rows = rows[:11] + [(rows[11][0], len(data) - rows[11][0])]
     add("truncated", "The last frame is cut 5 bytes short.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 44100, 2, "Stereo", 12 * 1024, vbr=True)], [IMPLICIT, ["aac.frame-truncated", "of its"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 12 * 1024, vbr=True)], [["aac.frame-truncated", "of its"]],
         skip={"ffprobe": "ffmpeg drops the cut frame.", "faad": "faad2 does not count the cut frame."})
 
     # ADTS with channel configuration 0: each raw data block starts with a program config element.
@@ -823,8 +829,8 @@ def adts_fixtures():
 
     data, rows = concat([adts_frame([pce_block()], rate=48000, channels=0) for _ in range(12)])
     add("pce", "Channel configuration 0: every raw data block starts with a program config element for 5.1.", data, rows,
-        [stream("AAC LC (no SBR signaled explicitly)", 48000, 6, "6 channels", 12 * 1024, vbr=True)], [IMPLICIT],
-        {"ADTS/Frame/Raw Data Block": "PCE", "ADTS/Frame/Channel Configuration": "0 (defined in a program config element)"})
+        [stream("AAC LC", 48000, 6, "6 channels", 12 * 1024, vbr=True)], [],
+        {"ADTS/Frame/Raw Data Block": "PCE, SCE, CPE, CPE, LFE", "ADTS/Frame/Channel Configuration": "0 (defined in a program config element)"})
 
     # ADIF: the header with one program config element, then raw data blocks with nothing between them.
     bits = Bits()
@@ -840,9 +846,11 @@ def adts_fixtures():
     out.append(("adif.aac", data, {
         "description": "ADIF: a constant bitrate of 128000 bit/s and one program config element with a channel pair, then 20 raw data blocks.",
         "length": len(data), "format": "AAC", "boxes": [],
-        "streams": [{"codec": "AAC LC (no SBR signaled explicitly)", "sample_rate": 44100, "channels": 2, "channel_mode": "2 channels", "samples": 0, "is_vbr": False}],
-        "units": [], "fields": {"ADIF/ADIF Header/Bitrate": "128000 bit/s", "ADIF/Raw Data Blocks": f"{len(body)} bytes"},
-        "findings": [IMPLICIT, ["aac.adif-blocks-not-analyzed", "ADIF delimits no raw data blocks"]],
+        "streams": [{"codec": "AAC LC", "sample_rate": 44100, "channels": 2, "channel_mode": "2 channels", "samples": 20 * 1024, "is_vbr": False}],
+        "units": [[len(header) + sum(len(u) for u in stereo[:i]), len(stereo[i])] for i in range(20)],
+        "fields": {"ADIF/ADIF Header/Bitrate": "128000 bit/s", "ADIF/Raw Data Block": "CPE", "ADIF/Raw Data Block[1]": "CPE, FIL",
+                                "ADIF/Statistics/Blocks": "20 blocks", "ADIF/Statistics/Largest Block": f"{max(len(u) for u in stereo[:20])} bytes"},
+        "findings": [],
         "crosscheck": {"ffprobe": False, "faad": None, "skip": {"ffprobe": "ffmpeg does not read ADIF.", "faad": "faad2 reads ADIF headers but reports no duration."}},
     }))
 
@@ -872,11 +880,15 @@ def write_fixture(directory, name, data, manifest):
 
 
 def main():
+    import aac_block_fixtures
+
     fixtures = he_aac_configs() + [xhe(), eld()] + layout_variants() + gapless() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():
         write_fixture(ADTS, name, data, manifest)
+    for directory, name, data, manifest in aac_block_fixtures.fixtures():
+        write_fixture(ADTS if directory == "adts" else MP4, name, data, manifest)
     print(f"{len(fixtures)} MP4 fixtures in {MP4}, the ADTS ones in {ADTS}")
 
 

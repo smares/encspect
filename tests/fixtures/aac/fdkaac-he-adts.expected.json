@@ -20,14 +20,13 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
-   "sample_rate": 22050,
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
    "is_vbr": false,
    "ffprobe_profile": "HE-AAC",
-   "ffprobe_sample_rate": 44100,
-   "samples": 35840
+   "samples": 71680
   }
  ],
  "units": [
@@ -172,11 +171,13 @@
    242
   ]
  ],
- "fields": {},
+ "fields": {
+  "ADTS/Statistics/SBR": "35 access units (100.0%)"
+ },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
+   "aac.implicit-sbr",
+   "35 of 35 raw data blocks hold SBR data"
   ]
  ],
  "crosscheck": {
@@ -185,7 +186,7 @@
   "mp4box_samples": false,
   "faad": null,
   "skip": {
-   "faad": "faad2 finds the SBR data that ADTS can only signal implicitly, which the analyzer does not check yet (slice B); ffprobe reports the doubled rate for the same reason."
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
   }
  }
 }

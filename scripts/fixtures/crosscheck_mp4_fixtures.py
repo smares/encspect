@@ -30,6 +30,8 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   shape, max_sfb, window groups, global gain, pulse, TNS and gain control flags, predictor flag, TNS filters and the codebook of every
   band, the extension payloads' types, the SBR headers' start, stop and crossover fields, the parametric stereo extension, and the
   block's length in bits. It runs on every fixture whose report holds read raw data blocks.
+  Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
+- "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
 
 The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureTests). Exits non-zero
@@ -169,12 +171,14 @@ def faad_info(path):
 
 
 def analyzer_blocks(report):
-    """The raw data blocks the analyzer read, from a report's JSON: MP4 access units and the raw data blocks of ADTS frames."""
+    """The raw data blocks the analyzer read, from a report's JSON: MP4 access units, the raw data blocks of ADTS frames and ADIF's."""
     blocks = []
 
     def walk(node):
         children = node.get("children") or []
         if node.get("kind") == "Frame":
+            if node["name"] == "Raw Data Block" and (node.get("children") or []):
+                blocks.append(node)
             if node["name"] == "Access Unit" and any(c["name"] == "END" or child_id(c) is not None for c in children):
                 blocks.append(node)
             blocks.extend(c for c in children if c["name"] == "Raw Data Block" and (c.get("children") or []))
@@ -281,7 +285,7 @@ def stream_record(channel, shared):
             for band in range(int(match.group(3)), int(match.group(4) or match.group(3)) + 1):
                 books[int(match.group(1) or 0)][band] = int(match.group(2))
     tns = next((c for c in channel.get("children") or [] if c["name"] == "TNS Data"), None)
-    filters = int(tns["value"].split()[0]) if tns else 0
+    filters = int(str(tns["value"]).split()[0]) if tns else 0
     return ["ICS", str(sequence), str(shape), str(max_sfb), str(groups), str(field(channel, "Global Gain")), str(flag(channel, "HasPulseData")),
             str(flag(channel, "HasTnsData")), str(flag(channel, "HasGainControlData")), str(flag(info, "HasPredictorData")), str(filters),
             "".join(format(b, "x") for row in books for b in row)]
@@ -305,7 +309,12 @@ def faad_records(block):
     return block.get("bits"), records
 
 
-def check_trace(path, report, problems):
+def decode_messages(path):
+    result = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(path), "-f", "null", "-"], capture_output=True)
+    return result.stderr.decode("utf-8", "replace").strip()
+
+
+def check_trace(path, report, problems, skipped=()):
     """Compares the raw data blocks of the golden report with faad2's trace; returns how many blocks were compared."""
     ours = analyzer_blocks(report)
     if not ours:
@@ -315,7 +324,7 @@ def check_trace(path, report, problems):
         problems.append(f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}")
     for index, (mine, faad) in enumerate(zip(ours, theirs)):
         # A block the analyzer could not read to its end is damaged, which decoders handle each in their own way.
-        if analyzer_records(mine)[0] is None:
+        if analyzer_records(mine)[0] is None or str(index) in skipped:
             continue
         if analyzer_records(mine) != faad_records(faad):
             end, records = analyzer_records(mine)
@@ -324,7 +333,8 @@ def check_trace(path, report, problems):
             problems.append(f"raw data block {index}: the analyzer reads {records[first:first + 2]} (block of {end} bits), "
                             f"faad2 {theirs_records[first:first + 2]} (block of {bits} bits)")
             break
-    return min(len(ours), len(theirs))
+    compared = min(len(ours), len(theirs))
+    return compared - sum(1 for key in skipped if int(key) < compared)
 
 
 def main():
@@ -378,7 +388,11 @@ def main():
                     problems.append(f"faad -i prints {line!r}, expected {faad}")
             if "faad_trace" not in check.get("skip", {}) and (directory / (path.stem + ".report.json")).exists():
                 report = json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
-                traced += check_trace(path, report, problems)
+                traced += check_trace(path, report, problems, check.get("faad_trace_skip", {}))
+            if check.get("decode"):
+                messages = decode_messages(path)
+                if messages:
+                    problems.append(f"ffmpeg decodes with messages: {messages.splitlines()[0]}")
             checked += 1
             for problem in problems:
                 print(f"{path.relative_to(ROOT)}: {problem}")

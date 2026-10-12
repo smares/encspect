@@ -116,7 +116,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -252,12 +252,7 @@
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Channel Configuration": "2 (stereo)",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Frame Length": "1024 samples"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

@@ -1,0 +1,18 @@
+---
+id: aac-windows-and-blocks
+title: AAC windows, block switching and grouping
+related: block-switching, tns, aac-section-data-and-codebooks, aac-raw-data-blocks
+references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_template.c
+---
+
+**The problem.** AAC transforms each frame into 1024 frequency lines over a window of 2048 samples that overlaps its neighbors by half. Quantization noise spreads over the whole window, so ahead of a sudden attack it can be heard as pre-echo, as in MP3 [block switching](block-switching).
+
+**Window sequences.** ics_info gives each channel's window_sequence: one long window (only long), eight short windows of 128 lines each (eight short), and the transitions between them, long start before short windows and long stop after them, whose shapes let the overlapping halves match. [TNS](tns) is a second tool against pre-echo, within a long window.
+
+**Window shapes.** window_shape picks the shape of the window's slopes: a sine window or a Kaiser-Bessel derived (KBD) window. Each frame's bit sets the shape of its window's second half; the first half keeps the previous frame's.
+
+**Grouping.** Eight short windows code their spectra one after another, and scale_factor_grouping joins neighboring windows into groups that share one set of sections and scalefactors, which saves bits where the windows are alike.
+
+**max_sfb.** Only the lowest max_sfb scalefactor bands are coded; the bands above are zero. Encoders set it from the bandwidth they keep, so the most common max_sfb of long windows tells how high the core codes.
+
+**What you see.** Each channel's ICS Info with its window sequence, shape, max_sfb and grouping; in the statistics the window sequences and shapes per channel stream, the max_sfb distributions and the bandwidth they give.

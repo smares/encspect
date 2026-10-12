@@ -40,7 +40,7 @@ public sealed class RawAacParser : IFormatParser
     {
         if (reader.MatchesAt(reader.Start, "ADIF"u8))
         {
-            Adif.Parse(reader, parent, context);
+            Adif.Parse(reader, parent, context, claims);
             return;
         }
 

@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -137,10 +137,6 @@
  ],
  "fields": {},
  "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
   [
    "aac.frame-damaged",
    "cut short by the next frame's header"

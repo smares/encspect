@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 6,
    "channel_mode": "6 channels",
@@ -64,15 +64,10 @@
   ]
  ],
  "fields": {
-  "ADTS/Frame/Raw Data Block": "PCE",
+  "ADTS/Frame/Raw Data Block": "PCE, SCE, CPE, CPE, LFE",
   "ADTS/Frame/Channel Configuration": "0 (defined in a program config element)"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "faad": {

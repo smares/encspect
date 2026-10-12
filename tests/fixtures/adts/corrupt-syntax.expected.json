@@ -1,0 +1,143 @@
+{
+ "description": "Valid mono frames with six broken ones between them: codebook 12, a section past max_sfb, max_sfb 60 at 44100 Hz, a block that ends inside its spectral data, an escape sequence of nine leading ones, and predictor data in AAC LC. Each block's reading stops there.",
+ "length": 1549,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 21504,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   92
+  ],
+  [
+   92,
+   92
+  ],
+  [
+   184,
+   13
+  ],
+  [
+   197,
+   92
+  ],
+  [
+   289,
+   92
+  ],
+  [
+   381,
+   13
+  ],
+  [
+   394,
+   92
+  ],
+  [
+   486,
+   92
+  ],
+  [
+   578,
+   19
+  ],
+  [
+   597,
+   92
+  ],
+  [
+   689,
+   92
+  ],
+  [
+   781,
+   71
+  ],
+  [
+   852,
+   92
+  ],
+  [
+   944,
+   92
+  ],
+  [
+   1036,
+   22
+  ],
+  [
+   1058,
+   92
+  ],
+  [
+   1150,
+   92
+  ],
+  [
+   1242,
+   31
+  ],
+  [
+   1273,
+   92
+  ],
+  [
+   1365,
+   92
+  ],
+  [
+   1457,
+   92
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/Section Data/Section": "codebook 12 (reserved), bands 0-3",
+  "ADTS/Statistics/Raw Data Blocks/Unreadable Blocks": "6 blocks (28.6%)"
+ },
+ "findings": [
+  [
+   "aac.codebook-reserved",
+   "names codebook 12, which the specification reserves"
+  ],
+  [
+   "aac.section-overrun",
+   "has a section that ends at band 6, past max_sfb 4"
+  ],
+  [
+   "aac.max-sfb-too-large",
+   "gives max_sfb 60, more than the 49 scalefactor bands"
+  ],
+  [
+   "aac.element-past-end",
+   "runs past the end of its access unit"
+  ],
+  [
+   "aac.escape-too-long",
+   "holds an escape sequence of more than 8 leading ones"
+  ],
+  [
+   "aac.prediction-not-allowed",
+   "sets predictor_data_present, which AAC LC does not define"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg drops the broken frames.",
+   "faad": "faad2 stops at the first broken frame.",
+   "decode": "a damaged file, which decoders reject",
+   "faad_trace": "faad2 stops at the first broken frame."
+  }
+ }
+}

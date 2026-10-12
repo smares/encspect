@@ -1,0 +1,82 @@
+{
+ "description": "Channel pairs: a common window with mid/side masks 0, 1 (every third band) and 2; separate windows, one long and one of two short groups; a common short window with a mask per group.",
+ "length": 2942,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   371
+  ],
+  [
+   371,
+   376
+  ],
+  [
+   747,
+   371
+  ],
+  [
+   1118,
+   755
+  ],
+  [
+   1873,
+   693
+  ],
+  [
+   2566,
+   376
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/CPE/MS Mask Present": "0 (no mid/side)",
+  "ADTS/Frame[1]/Raw Data Block/CPE/MS Mask Present": "1 (per band)",
+  "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Bands": "0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39",
+  "ADTS/Frame[2]/Raw Data Block/CPE/MS Mask Present": "2 (all bands)",
+  "ADTS/Frame[3]/Raw Data Block/CPE/HasCommonWindow": "false",
+  "ADTS/Frame[3]/Raw Data Block/CPE/Channel 0/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[3]/Raw Data Block/CPE/Channel 1/ICS Info/Window Sequence": "2 (eight short)",
+  "ADTS/Frame[3]/Raw Data Block/CPE/Channel 1/ICS Info/Scale Factor Grouping": "0x77 (2 groups of 4, 4 windows)",
+  "ADTS/Frame[4]/Raw Data Block/CPE/Mid/Side Bands": "group 0: 0-1, 4; group 2: 0-13; group 3: 1, 3, 5, 7, 9, 11, 13",
+  "ADTS/Statistics/Channel Pairs/Common Window": "5 elements (83.3%)",
+  "ADTS/Statistics/Channel Pairs/Mid/Side Masks/Per Band (1)": "3 elements (60.0%)",
+  "ADTS/Statistics/Channel Pairs/Mid/Side Masks/All Bands (2)": "1 element (20.0%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "9 channel streams (75.0%)",
+  "ADTS/Statistics/Window Sequences/Eight Short": "3 channel streams (25.0%)",
+  "ADTS/Statistics/Window Shapes/Sine": "3 channel streams (25.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "9 channel streams (75.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "58 bands (11.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "144 bands (29.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 2": "24 bands (4.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "82 bands (16.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 4": "12 bands (2.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "46 bands (9.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 6": "12 bands (2.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "8 bands (1.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 8": "4 bands (0.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "32 bands (6.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 10": "6 bands (1.2%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "54 bands (11.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "8 bands (1.6%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  }
+ }
+}

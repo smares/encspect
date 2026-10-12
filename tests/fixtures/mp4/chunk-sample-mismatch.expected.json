@@ -171,6 +171,26 @@
   [
    "mp4.chunk-sample-mismatch",
    "hold 10 samples, but stsz sizes 20"
+  ],
+  [
+   "aac.unit-trailing-bytes",
+   "holds 16 bytes after the END element"
+  ],
+  [
+   "aac.tns-order-too-high",
+   "higher order than the 12"
+  ],
+  [
+   "aac.element-past-end",
+   "The PCE at"
+  ],
+  [
+   "aac.ics-reserved-bit",
+   "3 raw data blocks"
+  ],
+  [
+   "aac.prediction-not-allowed",
+   "3 raw data blocks are not read to their end"
   ]
  ],
  "crosscheck": {

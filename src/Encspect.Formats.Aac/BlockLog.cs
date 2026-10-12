@@ -61,8 +61,9 @@ internal sealed class BlockLog
             string element = error.Element ?? "access unit";
             long offset = node.Offset;
             string message = error.Message;
+            string rest = element == "raw data block" ? "" : "; the rest of its raw data block is not read";
             findings.Add(Severity.Warning, error.Code, node, count => count == 1
-                ? $"The {element} at 0x{offset:X} {message}; the rest of its raw data block is not read."
+                ? $"The {element} at 0x{offset:X} {message}{rest}."
                 : $"{count} raw data blocks are not read to their end; in the first, the {element} at 0x{offset:X} {message}.");
         }
 

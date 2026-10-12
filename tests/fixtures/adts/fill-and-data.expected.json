@@ -1,0 +1,76 @@
+{
+ "description": "Fill elements with dynamic range control (three bands, a reference level, a program config element's tag and an excluded channel), fill data, other bits holding text, ancillary data with text, and two payloads in one fill element; data stream elements, one byte-aligned with text, one of 300 bytes with an escape count.",
+ "length": 1040,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 7168,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   103
+  ],
+  [
+   103,
+   113
+  ],
+  [
+   216,
+   110
+  ],
+  [
+   326,
+   109
+  ],
+  [
+   435,
+   394
+  ],
+  [
+   829,
+   100
+  ],
+  [
+   929,
+   111
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/Extension Type": "11 (EXT_DYNAMIC_RANGE)",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/PCE Instance Tag": "0",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/DRC Band Increment": "2",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/DRC Band Top[2]": "192",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/Program Reference Level": "80 (-20.00 dB)",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/Dynamic Range": "-3.00 dB",
+  "ADTS/Frame[0]/Raw Data Block/FIL/Extension Payload/Dynamic Range[1]": "+1.00 dB",
+  "ADTS/Frame[1]/Raw Data Block/FIL/Extension Payload/Fill Bytes": "19 bytes",
+  "ADTS/Frame[2]/Raw Data Block/FIL/Extension Payload/Text": "hand-built AAC",
+  "ADTS/Frame[6]/Raw Data Block/FIL/Extension Payload/Data Element Version": "0 (ANC_DATA)",
+  "ADTS/Frame[6]/Raw Data Block/FIL/Extension Payload/Text": "ancillary text",
+  "ADTS/Frame[3]/Raw Data Block/DSE/Text": "data stream text",
+  "ADTS/Frame[4]/Raw Data Block/DSE/Escape Count": "45",
+  "ADTS/Frame[5]/Raw Data Block/FIL": "fill element, EXT_DYNAMIC_RANGE, EXT_FILL_DATA, 8 bytes",
+  "ADTS/Statistics/Fill Elements/EXT_DYNAMIC_RANGE": "2 payloads, 14 bytes",
+  "ADTS/Statistics/Data Stream Elements": "2 elements, 316 bytes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad_trace_skip": {
+   "6": "faad2 2.11 returns from an ancillary data element after its first byte (extension_payload in syntax.c) and reads the rest of the fill element as further elements."
+  },
+  "faad": {
+   "seconds": "0.163",
+   "rate": 44100
+  }
+ }
+}

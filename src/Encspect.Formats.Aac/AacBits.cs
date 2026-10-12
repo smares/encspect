@@ -36,7 +36,7 @@ internal ref struct AacBits
 
     public int Position { get; private set; }
 
-    public int Limit { get; }
+    public int Limit { get; private set; }
 
     // Bits stepped over in cut ranges, and before the skeleton's first bit.
     public int Skipped { get; private set; }
@@ -118,6 +118,28 @@ internal ref struct AacBits
             Skip(8 - misaligned);
         }
     }
+
+    // Confines reading to the block's own bits before end, as for a fill element's payload, so a
+    // payload that claims more throws here, as it does in a skeleton of the block; returns the limit
+    // that Restore puts back. A cut taken after it leaves the limit as far from the cut's end as end
+    // was, so payloads take their cut last.
+    public int Narrow(int end)
+    {
+        int saved = Limit;
+        Limit = Math.Clamp(end - Skipped, Position, Limit);
+        Bound = end;
+        return saved;
+    }
+
+    public void Restore(int limit)
+    {
+        Limit = limit;
+        Bound = int.MaxValue;
+    }
+
+    // The end that Narrow set, in the block's own bits, or int.MaxValue: a skeleton's limit cannot
+    // tell whether a payload that would be cut fits before it.
+    public int Bound { get; private set; } = int.MaxValue;
 
     // The next cut range of a skeleton: its kind, its length in the block's own bits and the extra
     // value stored with it.

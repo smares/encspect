@@ -1,0 +1,50 @@
+{
+ "description": "AAC SSR (ADTS profile 2): gain control data for two bands in a frame of each window sequence, whose location fields differ in width.",
+ "length": 127,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC SSR",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   21
+  ],
+  [
+   21,
+   23
+  ],
+  [
+   44,
+   60
+  ],
+  [
+   104,
+   23
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/SCE/Channel/Gain Control Data": "1 adjustment",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/Gain Control Data": "8 adjustments",
+  "ADTS/Statistics/Gain Control": "4 channel streams (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "decode": "ffmpeg skips SSR's gain control and reports it as a missing feature.",
+   "faad": "faad2 is built without SSR.",
+   "faad_trace": "faad2 is built without SSR and stops at gain control data."
+  }
+ }
+}

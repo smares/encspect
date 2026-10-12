@@ -191,6 +191,7 @@ internal static partial class Explain
     public const string PceCount = "num_program_config_elements plus one: how many programs the stream defines (ISO/IEC 14496-3 1.A.2.1).";
     public const string AdifBufferFullness = "adif_buffer_fullness: how full the decoder's buffer is after the first raw data block, for a constant bitrate (ISO/IEC 14496-3 1.A.2.1).";
     public const string AdifBlocks = "The raw data blocks after the header, back to back without lengths; finding their bounds needs every element parsed (ISO/IEC 14496-3 1.A.2.1).";
+    public const string AdifUnread = "The bytes after the longest extent of a raw data block that could not be read to its end: ADIF gives no block's length or start, so the blocks after one that breaks cannot be found (ISO/IEC 14496-3 1.A.2.1).";
 
     public const string Statistics = "Figures the analyzer computed over the stream's access units or frames.";
     public const string StatUnits = "How many access units or frames the stream has.";
