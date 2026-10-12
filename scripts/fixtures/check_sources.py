@@ -21,6 +21,7 @@ import gogo_tool
 import helix_tool
 import lame_win_tool
 import mctoolamed_tool
+import musepack_tool
 import old_lame_tool
 import xing_tool
 
@@ -48,6 +49,8 @@ def sources():
         yield build["archive"], build["sha256"], build["addresses"]
     for version, digest in old_lame_tool.RELEASES.items():
         yield f"lame-{version}.tar.gz", digest, old_lame_tool.addresses(version)
+    yield musepack_tool.MPPENC
+    yield musepack_tool.LIBMPC
 
 
 def main():

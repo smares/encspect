@@ -1,0 +1,146 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv4.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 32,
+      "children": [
+        {
+          "name": "Musepack SV4",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 8,
+              "ranges": [
+                {
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "offset": 6,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Bitrate",
+                  "value": 0,
+                  "unit": "kbps",
+                  "offset": 2,
+                  "length": 2
+                },
+                {
+                  "name": "Intensity Stereo",
+                  "value": false,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Mid/Side Stereo",
+                  "value": true,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Stream Version",
+                  "value": 4,
+                  "offset": 1,
+                  "length": 2
+                },
+                {
+                  "name": "Max Band",
+                  "value": 27,
+                  "offset": 0,
+                  "length": 2
+                },
+                {
+                  "name": "Block Size",
+                  "value": 1,
+                  "offset": 0,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6
+                },
+                {
+                  "name": "Frame Count",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 6,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Audio Data",
+              "value": 26,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 28,
+              "ranges": [
+                {
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "offset": 8,
+                  "length": 24
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Musepack SV4",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 0,
+        "duration": 0,
+        "isVbr": true,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "musepack.version-not-analyzed",
+        "message": "The stream is Musepack SV4, which the analyzer reads only as far as its header; its frames are not analyzed.",
+        "offset": 1,
+        "length": 2,
+        "path": [
+          0,
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

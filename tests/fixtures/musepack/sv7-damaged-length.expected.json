@@ -1,0 +1,71 @@
+{
+ "length": 26240,
+ "version": 7,
+ "header": {
+  "Frame Count": "58 frames",
+  "Max Band": "28",
+  "Profile": "10",
+  "Sample Rate": "44100 Hz",
+  "True Gapless": "true",
+  "Last Frame Samples": "486 samples",
+  "Mid/Side Stereo": "true",
+  "Encoder Version": "116"
+ },
+ "frames": [
+  [
+   13893,
+   25,
+   "fffff9",
+   0
+  ],
+  [
+   2379,
+   5,
+   "1",
+   0
+  ],
+  [
+   2493,
+   6,
+   "1",
+   0
+  ],
+  [
+   2363,
+   7,
+   "1",
+   0
+  ]
+ ],
+ "stream_end": 26240,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV7",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 4127,
+   "average_bitrate": 202.9671875,
+   "duration": 0.0935827664399093
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV7",
+   "offset": 0,
+   "length": 26240
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.frame-truncated",
+   "contains": "the stream is cut short"
+  },
+  {
+   "code": "musepack.frames-missing",
+   "contains": "counts 58 frames"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

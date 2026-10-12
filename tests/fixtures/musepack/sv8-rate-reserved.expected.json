@@ -1,0 +1,76 @@
+{
+ "length": 25026,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   14,
+   "SH"
+  ],
+  [
+   18,
+   12,
+   "RG"
+  ],
+  [
+   30,
+   7,
+   "EI"
+  ],
+  [
+   37,
+   8,
+   "SO"
+  ],
+  [
+   45,
+   24972,
+   "AP"
+  ],
+  [
+   25017,
+   6,
+   "ST"
+  ],
+  [
+   25023,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {
+  "Sample Count": "66150 samples",
+  "Beginning Silence": "0 samples",
+  "Channels": "2",
+  "Max Used Bands": "28",
+  "Mid/Side Stereo": "true",
+  "Audio Block Frames": "64 frames"
+ },
+ "frames": 58,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 0,
+   "channels": 2,
+   "samples": 66150,
+   "average_bitrate": null,
+   "duration": 0
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 25026
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.sample-rate-reserved",
+   "contains": "index is 5"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}
