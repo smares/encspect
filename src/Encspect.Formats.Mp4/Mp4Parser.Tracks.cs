@@ -56,7 +56,8 @@ public sealed partial class Mp4Parser
         List<ByteRange> ranges = SampleRanges(state, track);
         if (codec is null)
         {
-            string what = entry.Format == "mp4a" ? $"MPEG-4 audio of object type 0x{entry.ObjectType ?? 0:X2}" : $"{entry.Format} ({FormatName(entry.Format)})";
+            string what = entry.Format != "mp4a" ? $"{entry.Format} ({FormatName(entry.Format)})"
+                : entry.ObjectType is { } type ? $"MPEG-4 audio of object type 0x{type:X2}" : "MPEG-4 audio without an esds box";
             state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {what}, whose samples are not analyzed yet.", entry.Node);
             return;
         }

@@ -2179,7 +2179,7 @@
     ],
     "findings": [
       {
-        "severity": "Info",
+        "severity": "Warning",
         "code": "mp4.box-to-end",
         "message": "The skip box at 0x2BB has size 0, which ISO/IEC 14496-12 allows only for the last box of the file; it is read to the end of its parent.",
         "offset": 699,
@@ -2195,7 +2195,7 @@
       {
         "severity": "Warning",
         "code": "mp4.box-size-invalid",
-        "message": "The box at 0x2D3 states a size smaller than its header, so the 16 bytes from there are not read as boxes.",
+        "message": "The box at 0x2D3 states a size smaller than its header, or a 64-bit size beyond any file, so the 16 bytes from there are not read as boxes.",
         "offset": 723,
         "length": 16,
         "path": [

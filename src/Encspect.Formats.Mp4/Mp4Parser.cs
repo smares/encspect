@@ -168,12 +168,13 @@ public sealed partial class Mp4Parser : IFormatParser
         return size < headerLength && !toEnd ? null : new BoxHeader(position, size, type, headerLength, toEnd, large);
     }
 
-    // Reads the boxes in [start, end) as children of parent and returns where they end: end, or the
-    // start of bytes that are no box.
+    // Reads a box's payload, where the box's type alone does not say how (a sample entry, an item).
     private delegate void PayloadParser(State state, Node node, BoxHeader header, BoxFields fields, int depth);
 
     private delegate (string Name, NodeKind Kind) BoxNaming(BoxHeader header);
 
+    // Reads the boxes in [start, end) as children of parent and returns where they end: end, or the
+    // start of bytes that are no box.
     private static long ReadChildren(State state, Node parent, long start, long end, int depth, bool topLevel = false, PayloadParser? custom = null,
         BoxNaming? naming = null)
     {
@@ -203,16 +204,12 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")));
-                state.Findings.AddNow(Severity.Warning, "mp4.box-size-invalid", $"The box at 0x{position:X} states a size smaller than its header, so the {end - position} bytes from there are not read as boxes.", rest);
+                state.Findings.AddNow(Severity.Warning, "mp4.box-size-invalid",
+                    $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {end - position} bytes from there are not read as boxes.", rest);
                 return end;
             }
 
             long boxEnd = header.End;
-            if (header.IsToEnd && !topLevel)
-            {
-                state.Findings.AddNow(Severity.Info, "mp4.box-to-end", $"The {header.Type} box at 0x{position:X} has size 0, which ISO/IEC 14496-12 allows only for the last box of the file; it is read to the end of its parent.", new Node(header.Type, position, Math.Min(boxEnd, end) - position));
-            }
-
             bool cut = boxEnd > end;
             if (cut)
             {
@@ -234,6 +231,12 @@ public sealed partial class Mp4Parser : IFormatParser
 
             (string name, NodeKind kind) = naming?.Invoke(header) ?? Naming(state, header);
             Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name, kind);
+            if (header.IsToEnd && !topLevel)
+            {
+                state.Findings.AddNow(Severity.Warning, "mp4.box-to-end",
+                    $"The {header.Type} box at 0x{position:X} has size 0, which ISO/IEC 14496-12 allows only for the last box of the file; it is read to the end of its parent.", node);
+            }
+
             if (cut)
             {
                 if (topLevel && header.End > reader.End)
@@ -252,13 +255,13 @@ public sealed partial class Mp4Parser : IFormatParser
         return position;
     }
 
-    // The box's node with its header fields, then its payload by type.
     // An item list is the file's iTunes or QuickTime metadata, a tag of the container; every other
     // box is named by its type.
     private static (string Name, NodeKind Kind) Naming(State state, BoxHeader header) => header.Type == "ilst"
         ? (state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag)
         : (header.Type, NodeKind.Detail);
 
+    // The box's node with its header fields, then its payload by type.
     private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, string name, NodeKind kind)
     {
         var node = new Node(name, header.Offset, header.Size, BoxNames.Describe(header.Type)) { Kind = kind };
