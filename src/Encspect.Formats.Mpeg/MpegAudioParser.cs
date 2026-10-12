@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Mpeg;
@@ -33,8 +34,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         var blocks = new BlockReader(context.Reader);
         var findings = new FindingCollector();
-        var runs = new List<MainDataRun>();
-        var stream = new StreamState(blocks, findings, new BuildContext(runs), new BitReservoir(runs), [], [], [], context.CancellationToken);
+        var build = new BuildContext();
+        var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs), [], [], context.CancellationToken);
         long position = context.Reader.Start;
 
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
@@ -94,9 +95,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private static void ParseSegment(StreamState state, Node root, long start, long end)
     {
         (BlockReader blocks, FindingCollector findings) = (state.Blocks, state.Findings);
-        var entries = new List<Entry>();
         BuildContext build = state.Build;
-        var regionState = new RegionState(entries);
+        var regionState = new RegionState(build.Frames.Count);
         state.Regions.Add(regionState);
         Node region = root.Add(new Node("MPEG Audio", start, end - start, null, () => BuildRegion(regionState, build)) { Kind = NodeKind.Stream });
         regionState.Node = region;
@@ -153,7 +153,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                             $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
 
-                    Entry frame = AddFrame(state, entries, at, frameLimit, header, freeLength, frameLimit < end);
+                    Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < end);
                     if (header.ChannelModeBits != current.ChannelModeBits)
                     {
                         findings.Add(Severity.Info, "mpeg.channel-mode-changed", FindingNode(frame), count =>
@@ -170,7 +170,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 {
                     freeLength = newFreeLength;
                     stream = header;
-                    Entry frame = AddFrame(state, entries, at, end, header, freeLength);
+                    Entry frame = AddFrame(state, regionState, at, end, header, freeLength);
                     StreamChanged(current, header, FindingNode(frame));
                     FreeFormat(header, freeLength);
                     position = frame.End;
@@ -204,6 +204,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         region.Value = NodeValue.Integer(frames, "frames", "frame");
+        regionState.End = build.Frames.Count;
 
         void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
             findings.Add(Severity.Warning, "mpeg.stream-changed", node, count =>
@@ -219,8 +220,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
         {
-            var gap = new Entry(gapStart, gapEnd - gapStart, 0, -1, -1, null, 0, 0, 0, null, null, false);
-            entries.Add(gap);
+            var gap = Entry.Gap(gapStart, gapEnd - gapStart);
+            build.Frames.Add(gap);
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
             {
@@ -242,14 +243,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    // Records the frame at position, with what checking it needs the bytes for, and reports its
+    // Records the frame at position, with the bytes its nodes are built from, and reports its
     // problems. Its nodes are built from the record when the report is read.
     // A cut frame ends where the next frame starts, before the length its header gives.
-    private static Entry AddFrame(StreamState state, List<Entry> entries, long position, long end, MpegHeader header, int freeLength, bool isCut = false)
+    private static Entry AddFrame(StreamState state, RegionState region, long position, long end, MpegHeader header, int freeLength, bool isCut = false)
     {
-        (BlockReader blocks, FindingCollector findings) = (state.Blocks, state.Findings);
+        (BlockReader blocks, FindingCollector findings, BuildContext build) = (state.Blocks, state.Findings, state.Build);
+        int index = build.Frames.Count;
         int length = header.FrameLength(freeLength);
         long available = Math.Min(length, end - position);
+        bool isComplete = available == length;
         int stored = -1;
         int computed = -1;
 
@@ -270,30 +273,37 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         byte[]? layer1 = header.Layer == 1 ? ReadLayer1(blocks, position, available, length, header, findings) : null;
         byte[]? vbrFrame = HasVbrMagic(blocks, position, available, header) ? blocks.Read(position, (int)available) : null;
         VbrHeader? vbr = vbrFrame is null ? null : VbrHeader.TryRead(vbrFrame, header);
-        vbrFrame = vbr is null ? null : vbrFrame;
 
-        byte[]? sideInfo = null;
-        int mainDataLength = 0;
-        int earlier = 0;
-        int fill = 0;
+        var frame = new Entry(position, available, header.Raw) { Crc = stored, ComputedCrc = computed, IsTruncated = available < length };
         MainDataPlacement? placement = null;
         long sideInfoOffset = position + 4 + (header.IsProtected ? 2 : 0);
         if (vbr is null && header.Layer == 3 && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
         {
-            sideInfo = blocks.Read(sideInfoOffset, Layer3SideInfo.Size(header));
+            byte[] sideInfo = blocks.Read(sideInfoOffset, Layer3SideInfo.Size(header));
             var info = Layer3SideInfo.Read(sideInfo, header);
             CheckSideInfo(info, position, sideInfoOffset, length, findings);
-            mainDataLength = info.MainDataLength;
             long dataOffset = sideInfoOffset + sideInfo.Length;
-            placement = state.Reservoir.Add(header, position, position + available, dataOffset,
-                (int)(position + available - dataOffset), info.MainDataBegin.Value, mainDataLength, available < length);
-            earlier = placement.Value.Earlier;
-            fill = (int)Math.Min(placement.Value.Reservoir, (1 << info.MainDataBegin.Length) - 1);
+            placement = state.Reservoir.Add(header, index, position, position + available, dataOffset,
+                (int)(position + available - dataOffset), info.MainDataBegin.Value, info.MainDataLength, available < length);
+            frame = frame with
+            {
+                Data = build.Store.Add(sideInfo),
+                DataKind = FrameData.SideInfo,
+                DataLength = sideInfo.Length,
+                MainDataBegin = info.MainDataBegin.Value,
+                MainDataLength = info.MainDataLength,
+                Earlier = placement.Value.Earlier,
+                ReservoirFill = (int)Math.Min(placement.Value.Reservoir, (1 << info.MainDataBegin.Length) - 1),
+            };
+            if (isComplete)
+            {
+                region.Traits.Add(info, position, position + available);
+            }
         }
         else if (vbr is not null && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
         {
             long dataOffset = sideInfoOffset + Layer3SideInfo.Size(header);
-            state.Reservoir.Add(header, position, position + available, dataOffset, (int)(position + available - dataOffset), 0, 0, available < length,
+            state.Reservoir.Add(header, index, position, position + available, dataOffset, (int)(position + available - dataOffset), 0, 0, available < length,
                 isHeaderFrame: true);
         }
         else
@@ -301,18 +311,44 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             state.Reservoir.Reset();
         }
 
-        var frame = new Entry(position, available, header.Raw, stored, computed, sideInfo, mainDataLength, earlier, fill, layer2, vbrFrame,
-            available < length, layer1);
-        entries.Add(frame);
         if (vbr is not null)
         {
-            ReportVbrHeader(state, frame, vbr, IsMidStream(state, entries));
+            frame = frame with { Data = build.Store.Add(vbrFrame), DataKind = FrameData.VbrHeader, DataLength = vbrFrame!.Length };
+        }
+        else if (layer2 is not null)
+        {
+            frame = frame with
+            {
+                Data = build.Store.Add(layer2.Audio, layer2.Multichannel),
+                DataKind = FrameData.Layer2,
+                DataLength = layer2.Audio.Length,
+                MultichannelLength = layer2.Multichannel?.Length ?? 0,
+                IsMultichannelCandidate = layer2.Multichannel is not null,
+            };
+            if (isComplete)
+            {
+                region.Layer2Frames++;
+                region.UndefinedScalefactor ??= layer2.UndefinedScalefactor;
+            }
+        }
+        else if (layer1 is not null)
+        {
+            frame = frame with { Data = build.Store.Add(layer1), DataKind = FrameData.Layer1, DataLength = layer1.Length };
         }
 
-        if (layer2?.Multichannel is not null)
+        build.Frames.Add(frame);
+        bool midStream = state.FrameCount > 0;
+        state.FrameCount++;
+        if (vbr is null && isComplete)
         {
-            state.Candidates.Add(frame);
+            region.AddAudio(frame);
         }
+
+        if (vbr is not null)
+        {
+            ReportVbrHeader(state, index, frame, vbr, midStream);
+        }
+
         if (placement is { } placed)
         {
             ReportPlacement(placed, FindingNode(frame), findings);
@@ -360,7 +396,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return frame;
     }
 
-    private static List<Node> BuildRegion(RegionState region, BuildContext build)
+    private static IReadOnlyList<Node> BuildRegion(RegionState region, BuildContext build)
     {
         var nodes = new List<Node>();
         if (region.Encoder is { } encoder)
@@ -383,18 +419,19 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             nodes.Add(statistics);
         }
 
-        nodes.AddRange(region.Entries.Select(e => e.IsGap ? GapNode(e) : FrameNode(e, build)));
-        return nodes;
+        return new RegionChildren(nodes, region.First, region.End ?? build.Frames.Count, build);
     }
 
-    private static Node GapNode(Entry gap) => new("Gap", gap.Offset, gap.Length, Bytes(gap.Length));
+    private static Node GapNode(in Entry gap) => new("Gap", gap.Offset, gap.Length, Bytes(gap.Length));
 
-    private static Node FrameNode(Entry frame, BuildContext build) =>
-        new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary, () => BuildFrame(frame, build)) { Kind = NodeKind.Frame };
+    private static Node FrameNode(int index, BuildContext build, NodeValue summary)
+    {
+        ref readonly Entry frame = ref build.Frames[index];
+        return new("Frame", frame.Offset, frame.Length, summary, () => BuildFrame(index, build)) { Kind = NodeKind.Frame };
+    }
 
-    // The frame's node for a finding: the same as the one in the tree, without the build function
-    // that would keep the frame's record alive.
-    private static Node FindingNode(Entry frame) =>
+    // The frame's node for a finding: equal to the one in the tree, without its children.
+    private static Node FindingNode(in Entry frame) =>
         new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary) { Kind = NodeKind.Frame };
 
     // ISO/IEC 11172-3 2.4.1.3, with the syncword cut to 11 bits for MPEG 2.5's two version bits.
@@ -423,8 +460,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     private static NodeValue Bytes(long count) => NodeValue.Integer(count, "bytes");
 
-    private static List<Node> BuildFrame(Entry frame, BuildContext build)
+    private static List<Node> BuildFrame(int index, BuildContext build)
     {
+        Entry frame = build.Frames[index];
         var header = new MpegHeader(frame.Header);
         long position = frame.Offset;
         var children = new List<Node>();
@@ -457,30 +495,30 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             dataStart += 2;
         }
 
-        if (frame.VbrFrame is not null)
+        if (frame.DataKind == FrameData.VbrHeader)
         {
-            VbrHeader vbr = VbrHeader.TryRead(frame.VbrFrame, header)!;
+            VbrHeader vbr = ReadVbrHeader(build, frame);
             List<Node> nodes = vbr.ToNodes(position, (int)(dataStart - position), build.MusicCrcs.TryGetValue(position, out int crc) ? crc : null);
             if (nodes[^1] is { Name: "Unused" } unused)
             {
                 nodes.RemoveAt(nodes.Count - 1);
-                nodes.AddRange(ReservoirPieces(unused.Offset, unused.End, build.Runs, "Unused"));
+                nodes.AddRange(ReservoirPieces(unused.Offset, unused.End, build, "Unused"));
             }
 
             children.AddRange(nodes);
         }
-        else if (frame.SideInfo is not null)
+        else if (frame.DataKind == FrameData.SideInfo)
         {
-            children.Add(Layer3SideInfo.Read(frame.SideInfo, header).ToNode(dataStart, frame.ReservoirFill));
-            AddMainData(children, frame, dataStart + frame.SideInfo.Length, build.Runs);
+            children.Add(Layer3SideInfo.Read(build.Store.Read(frame.Data, frame.DataLength), header).ToNode(dataStart, frame.ReservoirFill));
+            AddMainData(children, index, frame, dataStart + frame.DataLength, build);
         }
-        else if (frame.Layer2 is { } layer2)
+        else if (frame.DataKind == FrameData.Layer2)
         {
-            AddLayer2(children, frame, header, layer2, build.HasMultichannel);
+            AddLayer2(children, frame, header, build);
         }
-        else if (frame.Layer1 is { } layer1)
+        else if (frame.DataKind == FrameData.Layer1)
         {
-            var audio = Layer1AudioData.Read(layer1, header);
+            var audio = Layer1AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
             children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
             long ancillary = frame.Offset + ((audio.End + 7) / 8);
             if (frame.End > ancillary)
@@ -498,8 +536,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     // The bytes from start to end in the main data of later frames, as "Bit Reservoir" nodes, and
     // the bytes between them as nodes named rest.
-    private static IEnumerable<Node> ReservoirPieces(long start, long end, List<MainDataRun> runs, string rest)
+    private static IEnumerable<Node> ReservoirPieces(long start, long end, BuildContext build, string rest)
     {
+        ChunkedList<MainDataRun> runs = build.Runs;
         long cursor = start;
         int low = 0;
         int high = runs.Count;
@@ -518,7 +557,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 yield return new Node(rest, cursor, from - cursor, Bytes(from - cursor));
             }
 
-            yield return new Node("Bit Reservoir", from, to - from, $"{to - from} bytes of the main data of the frame at 0x{runs[i].Owner:X}");
+            yield return new Node("Bit Reservoir", from, to - from, $"{to - from} bytes of the main data of the frame at 0x{build.Frames[runs[i].Owner].Offset:X}");
             cursor = to;
         }
 
@@ -530,8 +569,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     // Splits a Layer III frame's bytes after the side information by owner: its own main data,
     // main data of later frames in the bit reservoir, and ancillary data no frame uses.
-    private static void AddMainData(List<Node> children, Entry frame, long dataStart, List<MainDataRun> runs)
+    private static void AddMainData(List<Node> children, int index, in Entry frame, long dataStart, BuildContext build)
     {
+        ChunkedList<MainDataRun> runs = build.Runs;
         NodeValue own = frame.Earlier > 0 ? $"{frame.MainDataLength} bytes, {frame.Earlier} of them in earlier frames" : Bytes(frame.MainDataLength);
         int first = children.Count;
         bool hasOwn = false;
@@ -548,14 +588,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             MainDataRun run = runs[i];
             AddAncillary(cursor, run.Offset);
-            if (run.Owner == frame.Offset)
+            if (run.Owner == index)
             {
                 children.Add(new Node("Main Data", run.Offset, run.Length, own));
                 hasOwn = true;
             }
             else
             {
-                children.Add(new Node("Bit Reservoir", run.Offset, run.Length, $"{run.Length} bytes of the main data of the frame at 0x{run.Owner:X}"));
+                children.Add(new Node("Bit Reservoir", run.Offset, run.Length, $"{run.Length} bytes of the main data of the frame at 0x{build.Frames[run.Owner].Offset:X}"));
             }
 
             cursor = run.End;
@@ -645,22 +685,19 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         byte[] audioBytes = bytes[..Math.Min(bytes.Length, (audio.SampleStart + 7) / 8)];
         if (!header.IsMpeg1 || header.IsMono || available < length || audio.End + 32 > bytes.Length * 8)
         {
-            return new Layer2Record(audioBytes, null, 0, 0, 0) { UndefinedScalefactor = undefined };
+            return new Layer2Record(audioBytes, null, undefined);
         }
 
         int[,] baseAllocation = BaseAllocation(audio);
         var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, baseAllocation, header.SampleRate);
         if (!mc.HeaderFits)
         {
-            return new Layer2Record(audioBytes, null, 0, 0, 0) { UndefinedScalefactor = undefined };
+            return new Layer2Record(audioBytes, null, undefined);
         }
 
         int first = audio.End / 8;
         int last = Math.Min(bytes.Length, (Math.Max(mc.SideInfoEnd, mc.CrcBit + 16) + 7) / 8);
-        return new Layer2Record(audioBytes, bytes[first..last], audio.End - (first * 8), (bytes.Length - first) * 8, position + first)
-        {
-            UndefinedScalefactor = undefined,
-        };
+        return new Layer2Record(audioBytes, bytes[first..last], undefined);
 
         void ReportOverflow() =>
             findings.Add(Severity.Warning, "mpeg.audio-data-overflow", new Node("Frame", position, available), count =>
@@ -679,9 +716,17 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return allocation;
     }
 
-    private static Layer2Multichannel ReadMultichannel(Layer2Record record, MpegHeader header) =>
-        Layer2Multichannel.Read(record.Multichannel!, record.McStart, record.McEnd,
-            BaseAllocation(Layer2AudioData.Read(record.Audio, header)), header.SampleRate);
+    // A Layer II frame's multichannel candidate, read again from the bytes its record keeps: those
+    // of the audio data up to the samples, which give the base allocation and where the candidate
+    // starts, then the candidate's.
+    private static (Layer2Multichannel Mc, long Offset) ReadMultichannel(BuildContext build, in Entry frame, MpegHeader header)
+    {
+        var audio = Layer2AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
+        int first = audio.End / 8;
+        byte[] bytes = build.Store.Read(frame.Data + frame.DataLength, frame.MultichannelLength);
+        var mc = Layer2Multichannel.Read(bytes, audio.End - (first * 8), (int)(frame.Length - first) * 8, BaseAllocation(audio), header.SampleRate);
+        return (mc, frame.Offset + first);
+    }
 
     // The ancillary data of MPEG-1 Layer II frames carries the multichannel extension only by
     // convention, so a file counts as multichannel once at least two frames' multichannel CRCs
@@ -689,31 +734,60 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // data passes a 16-bit CRC about once in 65,536 frames, so a long file passes it a few times
     // by chance. Where every frame's side information continues in an extension bitstream, no CRC
     // can be checked: the same header in nearly every frame is then reported as a possible
-    // extension, not as one.
+    // extension, not as one. The candidates are read once to decide and once more to report, so
+    // no more than one is in memory at a time.
     private static void DecideMultichannel(StreamState state)
     {
-        var read = state.Candidates.Select((e, i) =>
+        ChunkedList<Entry> frames = state.Build.Frames;
+        int candidates = 0;
+        int verified = 0;
+        int fitting = 0;
+        int continued = 0;
+        bool isOneHeader = true;
+        (int Index, Layer2Multichannel Mc)? firstContinued = null;
+        for (int i = 0; i < frames.Count; i++)
         {
             state.CheckCancellation(i);
-            return (Frame: e, Mc: ReadMultichannel(e.Layer2!, new MpegHeader(e.Header)));
-        }).ToList();
-        int verified = read.Count(r => r.Mc.IsCrcValid);
-        if (verified < 2 || verified * 2 < read.Count(r => r.Mc.Fits))
-        {
-            var continued = read.Where(r => !r.Mc.Fits && r.Mc.HasExtension && !r.Mc.HasAncillaryOverflow).ToList();
-            if (continued.Count >= 2 && continued.Count * 10 >= read.Count * 9 && continued.Select(r => r.Mc.HeaderKey).Distinct().Count() == 1)
+            if (!frames[i].IsMultichannelCandidate)
             {
-                Layer2Multichannel first = continued[0].Mc;
-                state.Findings.Add(Severity.Info, "mpeg.multichannel-unverified", FindingNode(continued[0].Frame), count =>
-                    $"The ancillary data of {continued.Count} frames looks like an MPEG-2 multichannel extension ({first.Configuration}) whose side information continues in an extension bitstream, a separate file, so it cannot be verified.");
+                continue;
+            }
+
+            Layer2Multichannel mc = ReadMultichannel(state.Build, frames[i], new MpegHeader(frames[i].Header)).Mc;
+            candidates++;
+            verified += mc.IsCrcValid ? 1 : 0;
+            fitting += mc.Fits ? 1 : 0;
+            if (!mc.Fits && mc.HasExtension && !mc.HasAncillaryOverflow)
+            {
+                continued++;
+                firstContinued ??= (i, mc);
+                isOneHeader &= mc.HeaderKey == firstContinued.Value.Mc.HeaderKey;
+            }
+        }
+
+        if (verified < 2 || verified * 2 < fitting)
+        {
+            if (continued >= 2 && continued * 10 >= candidates * 9 && isOneHeader && firstContinued is { } found)
+            {
+                Layer2Multichannel first = found.Mc;
+                state.Findings.Add(Severity.Info, "mpeg.multichannel-unverified", FindingNode(frames[found.Index]), count =>
+                    $"The ancillary data of {continued} frames looks like an MPEG-2 multichannel extension ({first.Configuration}) whose side information continues in an extension bitstream, a separate file, so it cannot be verified.");
             }
 
             return;
         }
 
         state.Build.HasMultichannel = true;
-        foreach ((Entry frame, Layer2Multichannel mc) in read)
+        for (int i = 0; i < frames.Count; i++)
         {
+            state.CheckCancellation(i);
+            if (!frames[i].IsMultichannelCandidate)
+            {
+                continue;
+            }
+
+            Entry frame = frames[i];
+            Layer2Multichannel mc = ReadMultichannel(state.Build, frame, new MpegHeader(frame.Header)).Mc;
             Node node = FindingNode(frame);
             if (mc.Center == 2)
             {
@@ -744,16 +818,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    private static void AddLayer2(List<Node> children, Entry frame, MpegHeader header, Layer2Record record, bool hasMultichannel)
+    private static void AddLayer2(List<Node> children, in Entry frame, MpegHeader header, BuildContext build)
     {
-        var audio = Layer2AudioData.Read(record.Audio, header);
+        var audio = Layer2AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
         children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
         long end = frame.End;
-        if (hasMultichannel && record.Multichannel is not null)
+        if (build.HasMultichannel && frame.IsMultichannelCandidate)
         {
-            Layer2Multichannel mc = ReadMultichannel(record, header);
-            children.Add(mc.ToNode(record.McOffset, header.SampleRate));
-            long start = record.McOffset + ((mc.End + 7) / 8);
+            (Layer2Multichannel mc, long offset) = ReadMultichannel(build, frame, header);
+            children.Add(mc.ToNode(offset, header.SampleRate));
+            long start = offset + ((mc.End + 7) / 8);
             if (end > start)
             {
                 children.Add(new Node("Ancillary Data", start, end - start, Bytes(end - start)));
@@ -1026,19 +1100,113 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return true;
     }
 
-    // A frame or, with a zero header (never a valid one), a gap: all a region keeps per frame
-    // until its nodes are asked for. Crc and ComputedCrc are -1 when absent.
-    // SideInfo holds a Layer III frame's raw side information; MainDataLength and Earlier, how
-    // long its main data is and how much of it lies in earlier frames; ReservoirFill, the bytes
-    // in the bit reservoir when the frame starts. VbrFrame holds the bytes of a frame that carries
-    // a Xing, Info or VBRI header, which is not audio. IsTruncated marks a frame the data ends inside.
-    // Layer1 holds a Layer I frame's bytes up to its samples.
-    private readonly record struct Entry(long Offset, long Length, uint Header, int Crc, int ComputedCrc, byte[]? SideInfo,
-        int MainDataLength, int Earlier, int ReservoirFill, Layer2Record? Layer2, byte[]? VbrFrame, bool IsTruncated, byte[]? Layer1 = null)
+    // What a frame record keeps of the frame's bytes, in the ByteStore, to build its nodes from.
+    private enum FrameData : byte
     {
+        None,
+
+        // Layer III side information.
+        SideInfo,
+
+        // The whole frame, which carries a Xing, Info or VBRI header and is not audio.
+        VbrHeader,
+
+        // Layer I audio data up to the samples.
+        Layer1,
+
+        // Layer II audio data up to the samples, then the bytes of a multichannel candidate.
+        Layer2,
+    }
+
+    // A frame or, with a zero header (never a valid one), a gap, in 48 bytes: all a region keeps per
+    // frame until its nodes are asked for, so a long file costs little more than the records. Crc and
+    // ComputedCrc are -1 when absent. MainDataBegin, MainDataLength and Earlier give where a Layer III
+    // frame's main data starts, how long it is and how much of it lies in earlier frames;
+    // ReservoirFill, the bytes in the bit reservoir when the frame starts. Data and DataLength place
+    // the bytes kept for its nodes in the ByteStore, and MultichannelLength those of a Layer II
+    // multichannel candidate after them. IsTruncated marks a frame the data ends inside.
+    [StructLayout(LayoutKind.Auto)]
+    private readonly struct Entry
+    {
+        private const byte HasCrcFlag = 1;
+        private const byte HasComputedCrcFlag = 2;
+        private const byte TruncatedFlag = 4;
+        private const byte CandidateFlag = 8;
+
+        private readonly ushort _crc;
+        private readonly ushort _computedCrc;
+        private readonly ushort _dataLength;
+        private readonly ushort _multichannelLength;
+        private readonly ushort _mainDataBegin;
+        private readonly ushort _mainDataLength;
+        private readonly ushort _earlier;
+        private readonly ushort _reservoirFill;
+        private readonly byte _flags;
+
+        public Entry(long offset, long length, uint header)
+        {
+            Offset = offset;
+            Length = length;
+            Header = header;
+        }
+
+        public long Offset { get; }
+
+        public long Length { get; }
+
+        public uint Header { get; }
+
+        public long Data { get; init; }
+
+        public FrameData DataKind { get; init; }
+
         public bool IsGap => Header == 0;
 
         public long End => Offset + Length;
+
+        // Frames are at most a few kilobytes and main data at most 2,048 bytes, so 16 bits hold
+        // every length and count below.
+        public int Crc
+        {
+            get => (_flags & HasCrcFlag) != 0 ? _crc : -1;
+            init => (_crc, _flags) = value >= 0 ? ((ushort)value, (byte)(_flags | HasCrcFlag)) : (_crc, _flags);
+        }
+
+        public int ComputedCrc
+        {
+            get => (_flags & HasComputedCrcFlag) != 0 ? _computedCrc : -1;
+            init => (_computedCrc, _flags) = value >= 0 ? ((ushort)value, (byte)(_flags | HasComputedCrcFlag)) : (_computedCrc, _flags);
+        }
+
+        public bool IsTruncated
+        {
+            get => (_flags & TruncatedFlag) != 0;
+            init => _flags = value ? (byte)(_flags | TruncatedFlag) : _flags;
+        }
+
+        public bool IsMultichannelCandidate
+        {
+            get => (_flags & CandidateFlag) != 0;
+            init => _flags = value ? (byte)(_flags | CandidateFlag) : _flags;
+        }
+
+        public int DataLength { get => _dataLength; init => _dataLength = (ushort)value; }
+
+        public int MultichannelLength { get => _multichannelLength; init => _multichannelLength = (ushort)value; }
+
+        public int MainDataBegin { get => _mainDataBegin; init => _mainDataBegin = (ushort)value; }
+
+        public int MainDataLength { get => _mainDataLength; init => _mainDataLength = (ushort)value; }
+
+        public int Earlier { get => _earlier; init => _earlier = (ushort)value; }
+
+        public int ReservoirFill { get => _reservoirFill; init => _reservoirFill = (ushort)value; }
+
+        public bool HasSideInfo => DataKind == FrameData.SideInfo;
+
+        public bool IsVbrHeader => DataKind == FrameData.VbrHeader;
+
+        public static Entry Gap(long offset, long length) => new(offset, length, 0);
     }
 
     private static string Frames(int count) => count == 1 ? "1 frame" : $"{count.ToString(CultureInfo.InvariantCulture)} frames";
@@ -1051,8 +1219,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // What a file's frames share: the bytes, the findings, and the bit reservoir with the main-data
     // runs it has recorded, which frames on both sides of a tag can own.
     private sealed record StreamState(BlockReader Blocks, FindingCollector Findings, BuildContext Build, BitReservoir Reservoir,
-        List<Entry> Candidates, List<RegionState> Regions, List<(Entry Frame, VbrHeader Tag)> LameTags, CancellationToken Cancellation)
+        List<RegionState> Regions, List<(int Index, VbrHeader Tag)> LameTags, CancellationToken Cancellation)
     {
+        // The frames recorded so far, gaps not counted.
+        public int FrameCount { get; set; }
+
+        // The frames each VBR header describes, by the header frame's index.
+        public Dictionary<int, Coverage> Coverages { get; } = [];
+
         // Reads check cancellation already; passes over the recorded frames only compute, so they
         // check it every few thousand frames.
         public void CheckCancellation(int frame)
@@ -1064,11 +1238,29 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    // A region's frames and gaps, and the encoder they point to and their statistics, known once
-    // every frame is read.
-    private sealed class RegionState(List<Entry> entries)
+    // A region's frames and gaps, First to End in the file's records, what its frames have in
+    // common, and the encoder they point to and their statistics, known once every frame is read.
+    private sealed class RegionState(int first)
     {
-        public List<Entry> Entries => entries;
+        public int First => first;
+
+        // Null while the region is being read.
+        public int? End { get; set; }
+
+        // Its complete audio frames: not a frame that holds a VBR header, not a truncated one.
+        public int AudioFrames { get; private set; }
+
+        public long AudioStart { get; private set; }
+
+        public long AudioEnd { get; private set; }
+
+        public Layer3Traits Traits { get; } = new();
+
+        // Its complete Layer II frames with their audio data, and the first scalefactor with index 63
+        // in them.
+        public int Layer2Frames { get; set; }
+
+        public Node? UndefinedScalefactor { get; set; }
 
         public Node? Encoder { get; set; }
 
@@ -1087,13 +1279,25 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public Node? MaximumFill { get; set; }
 
         public Node? Node { get; set; }
+
+        public void AddAudio(in Entry frame)
+        {
+            AudioStart = AudioFrames == 0 ? frame.Offset : AudioStart;
+            AudioEnd = frame.End;
+            AudioFrames++;
+        }
     }
 
-    // What building frame nodes needs beyond each frame's record: the Layer III main-data runs, and
-    // whether the file carries the MPEG-2 multichannel extension, known once every frame is read.
-    private sealed class BuildContext(List<MainDataRun> runs)
+    // What building nodes needs: every frame's and gap's record, the bytes kept for them, the
+    // Layer III main-data runs, and whether the file carries the MPEG-2 multichannel extension,
+    // known once every frame is read.
+    private sealed class BuildContext
     {
-        public List<MainDataRun> Runs => runs;
+        public ChunkedList<Entry> Frames { get; } = new();
+
+        public ByteStore Store { get; } = new();
+
+        public ChunkedList<MainDataRun> Runs { get; } = new();
 
         public bool HasMultichannel { get; set; }
 
@@ -1101,13 +1305,129 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public Dictionary<long, int> MusicCrcs { get; } = [];
     }
 
-    // A Layer II frame's bytes up to its scalefactors, and the bytes of a multichannel candidate:
-    // McStart and McEnd in bits within Multichannel, which starts at McOffset in the file.
-    private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, int McStart, int McEnd, long McOffset)
+    // The children of a region: its encoder, enhancement, OFL block and statistics, then a node for
+    // each of its frames and gaps. Those are built from the records in blocks when first read and
+    // held weakly, as Node holds children built on demand, so writing a region of a million frames
+    // never keeps all their nodes, and readers on several threads get the same nodes while a block
+    // lives.
+    private sealed class RegionChildren : IReadOnlyList<Node>
     {
-        // The first scalefactor with index 63, which Table B.1 leaves undefined, if any.
-        public Node? UndefinedScalefactor { get; init; }
+        private const int BlockSize = 1024;
+
+        private readonly List<Node> _leading;
+        private readonly int _first;
+        private readonly int _count;
+        private readonly BuildContext _build;
+        private readonly WeakReference<Node[]>?[] _blocks;
+
+        // The block read last, kept so that reading the nodes in order or near each other does not
+        // look up a weak reference each time.
+        private Block? _last;
+
+        public RegionChildren(List<Node> leading, int first, int end, BuildContext build)
+        {
+            _leading = leading;
+            _first = first;
+            _count = end - first;
+            _build = build;
+            _blocks = new WeakReference<Node[]>?[(_count + BlockSize - 1) / BlockSize];
+        }
+
+        public int Count => _leading.Count + _count;
+
+        public Node this[int index]
+        {
+            get
+            {
+                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)index, (uint)Count, nameof(index));
+                if (index < _leading.Count)
+                {
+                    return _leading[index];
+                }
+
+                int entry = index - _leading.Count;
+                return BlockOf(entry / BlockSize)[entry % BlockSize];
+            }
+        }
+
+        public IEnumerator<Node> GetEnumerator()
+        {
+            foreach (Node node in _leading)
+            {
+                yield return node;
+            }
+
+            for (int block = 0; block < _blocks.Length; block++)
+            {
+                foreach (Node node in BlockOf(block))
+                {
+                    yield return node;
+                }
+            }
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+        private Node[] BlockOf(int block)
+        {
+            if (Volatile.Read(ref _last) is { } last && last.Index == block)
+            {
+                return last.Nodes;
+            }
+
+            Node[]? built = null;
+            while (true)
+            {
+                WeakReference<Node[]>? current = Volatile.Read(ref _blocks[block]);
+                if (current is not null && current.TryGetTarget(out Node[]? existing))
+                {
+                    Volatile.Write(ref _last, new Block(block, existing));
+                    return existing;
+                }
+
+                built ??= Build(block);
+                if (Interlocked.CompareExchange(ref _blocks[block], new WeakReference<Node[]>(built), current) == current)
+                {
+                    Volatile.Write(ref _last, new Block(block, built));
+                    return built;
+                }
+            }
+        }
+
+        // Neighboring frames mostly share a header, and so the text that sums it up.
+        private Node[] Build(int block)
+        {
+            int start = block * BlockSize;
+            var nodes = new Node[Math.Min(BlockSize, _count - start)];
+            var summaries = new Dictionary<uint, NodeValue>();
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                int index = _first + start + i;
+                ref readonly Entry entry = ref _build.Frames[index];
+                if (entry.IsGap)
+                {
+                    nodes[i] = GapNode(entry);
+                    continue;
+                }
+
+                if (!summaries.TryGetValue(entry.Header, out NodeValue? summary))
+                {
+                    summaries[entry.Header] = summary = new MpegHeader(entry.Header).Summary;
+                }
+
+                nodes[i] = FrameNode(index, _build, summary);
+            }
+
+            return nodes;
+        }
+
+        private sealed record Block(int Index, Node[] Nodes);
     }
+
+    // A Layer II frame's bytes up to its samples, the bytes of a multichannel candidate, from the
+    // byte its first bit is in, and the first scalefactor with index 63, which Table B.1 leaves
+    // undefined, if any.
+    private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, Node? UndefinedScalefactor);
 
     // Findings of one kind are reported once per stream with a count, pointing at the first case.
     private sealed class FindingCollector

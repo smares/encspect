@@ -1,7 +1,8 @@
 namespace Encspect.Formats.Mpeg;
 
-// Bytes of one frame's main data, at a file offset inside some frame's data.
-internal readonly record struct MainDataRun(long Offset, int Length, long Owner)
+// Bytes of one frame's main data, at a file offset inside some frame's data; Owner is that frame's
+// index among the file's frames and gaps.
+internal readonly record struct MainDataRun(long Offset, int Length, int Owner)
 {
     public long End => Offset + Length;
 }
@@ -28,7 +29,7 @@ internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, M
 //
 // Every main-data byte is recorded as a run owned by its frame. Where main data overlaps the
 // previous frame's or does not fit its frame, the earlier owner keeps the bytes.
-internal sealed class BitReservoir(List<MainDataRun> runs)
+internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
 {
     // main_data_begin is at most 511 bytes, so older frames never matter again.
     private const int Reach = 512;
@@ -53,7 +54,7 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
         _gapPending = false;
     }
 
-    public MainDataPlacement Add(MpegHeader header, long frameOffset, long frameEnd, long dataOffset, int dataLength,
+    public MainDataPlacement Add(MpegHeader header, int owner, long frameOffset, long frameEnd, long dataOffset, int dataLength,
         int mainDataBegin, int mainDataLength, bool truncated, bool isHeaderFrame = false)
     {
         if (_stream is not { } stream || !stream.IsSameStream(header))
@@ -104,7 +105,7 @@ internal sealed class BitReservoir(List<MainDataRun> runs)
             long to = Math.Min(ownEnd, area.Start + area.Length);
             if (from < to)
             {
-                runs.Add(new MainDataRun(area.FileOffset + (from - area.Start), (int)(to - from), frameOffset));
+                runs.Add(new MainDataRun(area.FileOffset + (from - area.Start), (int)(to - from), owner));
                 earlier += area.Start < start ? (int)(to - from) : 0;
             }
         }

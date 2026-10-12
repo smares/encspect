@@ -53,11 +53,10 @@ public sealed partial class MpegAudioParser
                     continue;
                 }
 
-                List<Entry> audio = region.Entries.Where(IsAudio).ToList();
-                if (audio.Count > 0)
+                if (region.AudioFrames > 0)
                 {
-                    long offset = audio[0].Offset;
-                    long length = audio[^1].End - offset;
+                    long offset = region.AudioStart;
+                    long length = region.AudioEnd - offset;
                     encoder = new Node("Encoder", offset, length, ClaimedName(text, claimed));
                     encoder.Add("Confidence", offset, length, "Low");
                     encoder.Add("Evidence", offset, length, evidence);
