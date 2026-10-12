@@ -362,8 +362,24 @@ public sealed class RawAacParser : IFormatParser
 
                     crc.Add(block, bit + 3, 192);
                     return crc.Value == expected ? CrcState.Verified : CrcState.NotVerified;
+                case 5:
+                    // The comment's byte alignment counts from the start of the raw data block.
+                    var fields = new BitFields(new MappedBytes(block.ToArray(), 0));
+                    try
+                    {
+                        fields.Skip(bit + 3);
+                        ProgramConfigElement.Read(fields, new Node("PCE", 0, 1), 0, (_, _, _, _) => { });
+                    }
+                    catch (EndOfStreamException)
+                    {
+                        return CrcState.NotVerified;
+                    }
+
+                    crc.Add(block, bit + 3, fields.Position - bit - 3);
+                    bit = fields.Position;
+                    break;
                 default:
-                    // A channel pair's second channel and a PCE's end need more than the element ID.
+                    // Where a channel pair's second channel starts needs its first channel's spectral data.
                     return CrcState.NotVerified;
             }
         }
@@ -375,9 +391,9 @@ public sealed class RawAacParser : IFormatParser
     // -1.
     internal static long FindChain(BlockCache cache, long from, long limit, long end)
     {
-        for (long position = from; position < limit; position++)
+        for (long position = cache.IndexOf(0xFF, from, limit); position >= 0; position = cache.IndexOf(0xFF, position + 1, limit))
         {
-            if (cache.ByteAt(position) != 0xFF || (cache.ByteAt(position + 1) & 0xF6) != 0xF0)
+            if ((cache.ByteAt(position + 1) & 0xF6) != 0xF0)
             {
                 continue;
             }

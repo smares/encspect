@@ -183,7 +183,7 @@ public sealed class AacCodecParser : ICodecParser
         var bytes = new UnitBytes(unit.Offset, unit.Length, ranges);
         if (unit.Element == Usac)
         {
-            return [bytes.Bits("IsIndependent", 0, 1, NodeValue.Boolean(unit.Tag != 0))];
+            return unit.Length > 0 ? [bytes.Bits("IsIndependent", 0, 1, NodeValue.Boolean(unit.Tag != 0))] : [];
         }
 
         if (unit.Element < 0)

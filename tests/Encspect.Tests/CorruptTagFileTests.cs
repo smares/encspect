@@ -3,8 +3,9 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Truncated, byte-flipped and garbage-prefixed variants of every tag and MPEG fixture must yield
-// a report, never an exception or a hang, and every node must stay inside the file and its parent.
+// Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4 and raw AAC fixture
+// must yield a report, never an exception or a hang, and every node must stay inside the file and its
+// parent.
 public class CorruptTagFileTests
 {
     private const int FlipsPerFixture = 300;
@@ -21,6 +22,11 @@ public class CorruptTagFileTests
             }
 
             foreach (string name in Fixtures.MpegFixtures())
+            {
+                data.Add(name);
+            }
+
+            foreach (string name in Fixtures.Mp4FixtureNames())
             {
                 data.Add(name);
             }

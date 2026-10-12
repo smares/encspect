@@ -34,6 +34,32 @@ internal sealed class BlockCache(ByteReader reader)
         return _block[offset - _start];
     }
 
+    // The first offset in [from, limit) that holds value, or -1, searched a block at a time.
+    public long IndexOf(byte value, long from, long limit)
+    {
+        from = Math.Max(from, reader.Start);
+        limit = Math.Min(limit, reader.End);
+        while (from < limit)
+        {
+            if (from < _start || from >= _start + _length)
+            {
+                Load(from);
+            }
+
+            int index = (int)(from - _start);
+            int count = (int)Math.Min(_length - index, limit - from);
+            int found = _block.AsSpan(index, count).IndexOf(value);
+            if (found >= 0)
+            {
+                return from + found;
+            }
+
+            from += count;
+        }
+
+        return -1;
+    }
+
     // Copies bytes from offset into buffer, as many as the reader holds; returns how many.
     public int Read(long offset, Span<byte> buffer)
     {

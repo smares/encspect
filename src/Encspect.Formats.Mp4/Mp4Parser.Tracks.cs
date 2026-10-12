@@ -152,6 +152,7 @@ public sealed partial class Mp4Parser
         var ranges = new List<ByteRange>();
         long outside = 0;
         long outsideMdat = 0;
+        long empty = 0;
         (long Offset, long Size)? firstOutside = null;
         (long Offset, long Size)? firstOutsideMdat = null;
         long index = 0;
@@ -169,6 +170,12 @@ public sealed partial class Mp4Parser
                 continue;
             }
 
+            if (sample.Size == 0)
+            {
+                empty++;
+                continue;
+            }
+
             if (!state.Mdats.Any(m => m.Start <= sample.Offset && sample.Offset + sample.Size <= m.End))
             {
                 outsideMdat++;
@@ -179,7 +186,7 @@ public sealed partial class Mp4Parser
             {
                 ranges[^1] = ranges[^1] with { Length = ranges[^1].Length + sample.Size };
             }
-            else if (sample.Size > 0)
+            else
             {
                 ranges.Add(new ByteRange(sample.Offset, sample.Size));
             }
@@ -190,6 +197,11 @@ public sealed partial class Mp4Parser
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
                 $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {cut.Size} bytes; they are not analyzed.", table);
+        }
+
+        if (empty > 0)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.empty-samples", $"{Samples(empty)} of track {track.Id} have a size of 0 bytes; they are not analyzed.", track.SampleSizeNode ?? track.Box);
         }
 
         if (firstOutsideMdat is { } stray)
@@ -227,7 +239,7 @@ public sealed partial class Mp4Parser
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (InFile(state, sample))
+            if (InFile(state, sample) && sample.Size > 0)
             {
                 yield return MappedBytes.Read(state.Reader, [new ByteRange(sample.Offset, sample.Size)]);
             }

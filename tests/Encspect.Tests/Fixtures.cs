@@ -32,6 +32,16 @@ internal static class Fixtures
     public static TheoryData<string> Mp4Fixtures()
     {
         var data = new TheoryData<string>();
+        foreach (string name in Mp4FixtureNames())
+        {
+            data.Add(name);
+        }
+
+        return data;
+    }
+
+    public static IEnumerable<string> Mp4FixtureNames()
+    {
         string[] extensions = [".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"];
         foreach (string directory in new[] { "mp4", "adts", "aac" })
         {
@@ -44,11 +54,9 @@ internal static class Fixtures
             foreach (string file in Directory.EnumerateFiles(path)
                 .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
             {
-                data.Add($"{directory}/{Path.GetFileName(file)}");
+                yield return $"{directory}/{Path.GetFileName(file)}";
             }
         }
-
-        return data;
     }
 
     public static Report AnalyzeMpeg(string name)

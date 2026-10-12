@@ -20,6 +20,10 @@ internal static class Program
         "ID3"u8.ToArray(), "3DI"u8.ToArray(), "TAG"u8.ToArray(), "TAG+"u8.ToArray(), "APETAGEX"u8.ToArray(),
         "LYRICSBEGIN"u8.ToArray(), "LYRICSEND"u8.ToArray(), "LYRICS200"u8.ToArray(), "Xing"u8.ToArray(),
         "Info"u8.ToArray(), "VBRI"u8.ToArray(), "LAME"u8.ToArray(), [0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xE3], [0xFF, 0xFD],
+        [0xFF, 0xF1], [0xFF, 0xF9], [0xFF, 0xF0], "ADIF"u8.ToArray(), "ftyp"u8.ToArray(), "moov"u8.ToArray(), "mdat"u8.ToArray(), "trak"u8.ToArray(),
+        "stsz"u8.ToArray(), "stco"u8.ToArray(), "co64"u8.ToArray(), "stsc"u8.ToArray(), "stts"u8.ToArray(), "esds"u8.ToArray(), "moof"u8.ToArray(),
+        "trun"u8.ToArray(), "ilst"u8.ToArray(), "meta"u8.ToArray(), "udta"u8.ToArray(), "----"u8.ToArray(), "data"u8.ToArray(), "ID32"u8.ToArray(),
+        [0x2B, 0x7], [0x56, 0xE5], [0x05, 0x80, 0x80, 0x80],
     ];
 
     private static readonly uint[] Sizes = [0, 1, 0x7F, 0x80, 0x7F7F7F7F, 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 10, 128];
@@ -33,7 +37,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

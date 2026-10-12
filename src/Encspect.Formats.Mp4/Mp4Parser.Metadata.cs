@@ -61,7 +61,14 @@ public sealed partial class Mp4Parser
         node.Value = NodeValue.Integer(node.Children.Count - before, "items", "item");
     }
 
+    // An item's node is named for what it is; a name that its data leaves empty falls back to its type.
     private static string ItemName(State state, BoxHeader header)
+    {
+        string name = DataName(state, header);
+        return name.Length > 0 ? name : header.Type;
+    }
+
+    private static string DataName(State state, BoxHeader header)
     {
         if (state.MetaHandler == "mdta")
         {

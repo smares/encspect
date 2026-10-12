@@ -219,6 +219,19 @@ public sealed partial class Mp4Parser : IFormatParser
                 boxEnd = end;
             }
 
+            // A header that its parent's end cuts off is no box: its size fields cannot be shown.
+            if (boxEnd - position < header.HeaderLength)
+            {
+                if (topLevel)
+                {
+                    return position;
+                }
+
+                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")));
+                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for the {header.Type} box's header.", rest);
+                return end;
+            }
+
             (string name, NodeKind kind) = naming?.Invoke(header) ?? Naming(state, header);
             Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name, kind);
             if (cut)
