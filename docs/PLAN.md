@@ -214,20 +214,20 @@ GitHub Actions is the single source of truth for "does it build and pass on ever
 
 ## Format rollout
 
-MP3 comes first, and each later phase starts only after the previous one passes its gate.
+MP3 comes first, then the other lossy formats, then the lossless ones; each later phase starts only after the previous one passes its gate.
 
 | Phase | Scope |
 | --- | --- |
 | 1 (v1) | MP1/2/3 and tags: all tags, side info, Xing, LAME, VBRI, reference tests |
 | Gate 1 (passed) | Pipeline green everywhere, review findings fixed, abstractions settled |
-| 2 | FLAC, WAV, AIFF, Ogg with Vorbis and Opus (Ogg hands streams to codec parsers) |
+| 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV7 and SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core; WavPack, whose hybrid mode is lossy (a lossy .wv file and an optional .wvc correction file), with its lossless mode in the same parser |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
-| 3 | MP4 with AAC and ALAC, WavPack, Monkey's Audio, TTA |
+| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
-| 4 | Long tail: Musepack, WMA, AC-3; TAK and OptimFROG at header level only |
+| 4 | TAK and OptimFROG at header level only |
 | Later, order not fixed | MP3 scalefactor and Huffman analysis; decoders for waveform and spectrogram, format by format |
 
-A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The deeper MP3 pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views.
+A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The deeper MP3 pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views. HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the AAC parser reads each raw data block's Huffman-coded data far enough to reach it, without dequantizing or transforming; the same pass gives AAC's coding statistics (window sequences, mid/side and intensity stereo, TNS, noise substitution). For MP3, that depth stays a later phase.
 
 ## CLI and GUI
 
