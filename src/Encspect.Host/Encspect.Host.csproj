@@ -3,6 +3,10 @@
     <RootNamespace>Encspect.Host</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The background articles parsers point their nodes to by ID (Node.Topic). -->
+    <EmbeddedResource Include="Topics\*.md" LogicalName="Encspect.Topics.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Encspect.Core.Abstractions\Encspect.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Encspect.Formats.Mpeg\Encspect.Formats.Mpeg.csproj" />
     <ProjectReference Include="..\Encspect.Tags.Ape\Encspect.Tags.Ape.csproj" />

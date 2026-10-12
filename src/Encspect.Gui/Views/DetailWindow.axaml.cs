@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -11,6 +13,9 @@ namespace Encspect.Gui.Views;
 public partial class DetailWindow : Window
 {
     private static readonly FilePickerFileType TextReport = new("Text report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
+    private const double DefaultTopicWidth = 340;
+    private const double MinimumTopicWidth = 260;
+
     private static readonly FilePickerFileType JsonReport = new("JSON report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
 
     // For the XAML previewer and loader only.
@@ -36,17 +41,37 @@ public partial class DetailWindow : Window
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
+        Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
+        model.PropertyChanged += OnModelChanged;
 
         // The menu shows in macOS's menu bar; elsewhere the window has no menu bar, which would
         // only repeat its buttons, and the menu's shortcuts still work.
         Shortcuts.Bind(this, new KeyGesture(Key.Escape), Close);
+        Shortcuts.Bind(this, new KeyGesture(Key.F1), Model.ToggleTopics);
         NativeMenu.SetMenu(this, CreateMenu());
 
         string modifier = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl+";
         ToolTip.SetTip(PreviousButton, $"Previous file ({modifier}Up)");
         ToolTip.SetTip(NextButton, $"Next file ({modifier}Down)");
+        ToolTip.SetTip(TopicsButton, "Background articles on what the report shows (F1)");
+        Closing += (_, _) => RememberTopicPane();
         Closed += (_, _) => Model.Dispose();
     }
+
+    // Where the window keeps whether the pane of background articles is open, and its width.
+    public Settings? Settings
+    {
+        get;
+        set
+        {
+            field = value;
+            _topicWidth = value?.TopicPaneWidth is { } width and >= MinimumTopicWidth ? width : DefaultTopicWidth;
+            Model.IsTopicOpen = value?.IsTopicPaneOpen == true;
+            ShowTopicPane();
+        }
+    }
+
+    private double _topicWidth = DefaultTopicWidth;
 
     // Previous (-1) or Next (1), which the window that opened this one carries out.
     public event EventHandler<int>? StepRequested;
@@ -125,6 +150,7 @@ public partial class DetailWindow : Window
             Shortcuts.Item(this, "Previous File", Shortcuts.WithCommand(Key.Up), () => StepRequested?.Invoke(this, -1)),
             Shortcuts.Item(this, "Next File", Shortcuts.WithCommand(Key.Down), () => StepRequested?.Invoke(this, 1))),
         Shortcuts.WindowMenu(this),
+        Shortcuts.Submenu("Help", Shortcuts.Item(this, "Topics", null, () => Model.ShowTopic(null))),
     ];
 
     private void OnFindingsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = false;
@@ -137,6 +163,55 @@ public partial class DetailWindow : Window
         {
             Model.Graphs.Selected = choice;
         }
+    }
+
+    private void OnTopics(object? sender, RoutedEventArgs e) => Model.ToggleTopics();
+
+    private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
+
+    private void OnLearnMore(object? sender, TappedEventArgs e) => Model.ShowTopic(Model.SelectionTopic?.Id);
+
+    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DetailViewModel.IsTopicOpen))
+        {
+            ShowTopicPane();
+            RememberTopicPane();
+        }
+        else if (e.PropertyName == nameof(DetailViewModel.ShownTopic))
+        {
+            TopicScroll.Offset = default;
+        }
+    }
+
+    // The pane takes its own column at the right of the window, which the splitter resizes.
+    private void ShowTopicPane()
+    {
+        ColumnDefinition column = Body.ColumnDefinitions[2];
+        if (!Model.IsTopicOpen && column.ActualWidth >= MinimumTopicWidth)
+        {
+            _topicWidth = column.ActualWidth;
+        }
+
+        column.MinWidth = Model.IsTopicOpen ? MinimumTopicWidth : 0;
+        column.Width = new GridLength(Model.IsTopicOpen ? _topicWidth : 0);
+    }
+
+    private void RememberTopicPane()
+    {
+        if (Settings is not { } settings)
+        {
+            return;
+        }
+
+        if (Model.IsTopicOpen && Body.ColumnDefinitions[2].ActualWidth >= MinimumTopicWidth)
+        {
+            _topicWidth = Body.ColumnDefinitions[2].ActualWidth;
+        }
+
+        settings.IsTopicPaneOpen = Model.IsTopicOpen;
+        settings.TopicPaneWidth = _topicWidth;
+        settings.Save();
     }
 
     private void OnPrevious(object? sender, RoutedEventArgs e) => StepRequested?.Invoke(this, -1);

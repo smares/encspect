@@ -74,10 +74,10 @@ public sealed partial class MpegAudioParser
         int audio = region.AudioFrames;
         long start = region.AudioStart;
         long length = region.AudioEnd - start;
-        Node node = new("Statistics", start, length, $"{FramesText(audio)}, {DurationText(ticks)}") { Kind = NodeKind.Statistics };
-        Add("Frames", NodeValue.Integer(audio));
-        Add("Samples", NodeValue.Integer(samples));
-        Add("Duration", Duration(ticks));
+        Node node = new("Statistics", start, length, $"{FramesText(audio)}, {DurationText(ticks)}") { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        Add("Frames", NodeValue.Integer(audio), Explain.StatFrames);
+        Add("Samples", NodeValue.Integer(samples), Explain.StatSamples);
+        Add("Duration", Duration(ticks), Explain.StatDuration);
 
         // Free format, without a bitrate, sorts last.
         var counts = fixedRates.Select(r => ((int?)r.Key, r.Value)).ToList();
@@ -86,20 +86,20 @@ public sealed partial class MpegAudioParser
             counts.Add((null, free));
         }
 
-        Add("IsVbr", NodeValue.Boolean(counts.Count > 1));
-        Add("Average Bitrate", NodeValue.Decimal(RoundHalfEven((Int128)bits * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"));
+        Add("IsVbr", NodeValue.Boolean(counts.Count > 1), Explain.IsVbr, Topics.BitrateModes);
+        Add("Average Bitrate", NodeValue.Decimal(RoundHalfEven((Int128)bits * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"), Explain.AverageBitrate);
         if (fixedRates.Count > 0)
         {
-            Add("Minimum Bitrate", NodeValue.Integer(fixedRates.Keys.First(), "kbps"));
-            Add("Maximum Bitrate", NodeValue.Integer(fixedRates.Keys.Last(), "kbps"));
+            Add("Minimum Bitrate", NodeValue.Integer(fixedRates.Keys.First(), "kbps"), Explain.MinimumBitrate);
+            Add("Maximum Bitrate", NodeValue.Integer(fixedRates.Keys.Last(), "kbps"), Explain.MaximumBitrate);
         }
 
-        region.Distribution = Add("Bitrate Distribution", NodeValue.Integer(counts.Count, "bitrates", "bitrate"));
+        region.Distribution = Add("Bitrate Distribution", NodeValue.Integer(counts.Count, "bitrates", "bitrate"), Explain.Distribution, Topics.BitrateModes);
         foreach ((int? rate, int count) in counts)
         {
             long tenths = RoundHalfEven(count * 1000L, audio);
             Node entry = region.Distribution.Add(rate is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
-                $"{FramesText(count)} ({TenthsText(tenths)}%)");
+                $"{FramesText(count)} ({TenthsText(tenths)}%)", Explain.DistributionEntry);
             AddFrameSizes(entry, region.Tally, rate);
         }
 
@@ -107,7 +107,7 @@ public sealed partial class MpegAudioParser
         // the text tree shows after these nodes.
         if (hasSideInfo)
         {
-            region.MaximumFill = Add("Maximum Reservoir Fill", NodeValue.Integer(maximumFill, "bytes"));
+            region.MaximumFill = Add("Maximum Reservoir Fill", NodeValue.Integer(maximumFill, "bytes"), Explain.MaximumFill, Topics.BitReservoir);
         }
 
         AddTally(node, region, start, length, bits / 8, ticks);
@@ -125,7 +125,7 @@ public sealed partial class MpegAudioParser
 
         return node;
 
-        Node Add(string name, NodeValue value) => node.Add(name, start, length, value);
+        Node Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
         void AddHeaderComparison(int index)
         {
@@ -140,29 +140,30 @@ public sealed partial class MpegAudioParser
 
             string? scope = index == firstFrame && inside == audio ? null
                 : $"{FramesText(covered.Frames)} after the {header.Type} header at 0x{frame.Offset:X}";
-            Node? counts = header.FrameCount is null && header.ByteCount is null ? null : node.Add(new Node("VBR Header", from, span, scope));
+            Node? counts = header.FrameCount is null && header.ByteCount is null ? null
+                : node.Add(new Node("VBR Header", from, span, scope) { Description = Explain.HeaderCounts, Topic = Topics.XingHeader });
             if (header.FrameCount is { } claimedFrames)
             {
-                counts!.Add("Claimed Frames", from, span, NodeValue.Integer(claimedFrames));
-                counts.Add("Counted Frames", from, span, NodeValue.Integer(covered.Frames));
+                counts!.Add("Claimed Frames", from, span, NodeValue.Integer(claimedFrames), Explain.ClaimedFrames);
+                counts.Add("Counted Frames", from, span, NodeValue.Integer(covered.Frames), Explain.CountedFrames);
             }
 
             if (header.ByteCount is { } claimedBytes)
             {
-                counts!.Add("Claimed Bytes", from, span, NodeValue.Integer(claimedBytes));
-                counts.Add("Counted Bytes", from, span, NodeValue.Integer(frame.Length + covered.Bytes));
+                counts!.Add("Claimed Bytes", from, span, NodeValue.Integer(claimedBytes), Explain.ClaimedBytes);
+                counts.Add("Counted Bytes", from, span, NodeValue.Integer(frame.Length + covered.Bytes), Explain.CountedBytes);
             }
 
             if (header.HasLameTag)
             {
-                Node gapless = node.Add(new Node("Gapless", from, span, scope));
-                gapless.Add("Encoder Delay", from, span, NodeValue.Integer(header.EncoderDelay, "samples"));
-                gapless.Add("Encoder Padding", from, span, NodeValue.Integer(header.EncoderPadding, "samples"));
+                Node gapless = node.Add(new Node("Gapless", from, span, scope) { Description = Explain.Gapless, Topic = Topics.GaplessPlayback });
+                gapless.Add("Encoder Delay", from, span, NodeValue.Integer(header.EncoderDelay, "samples"), Explain.EncoderDelay);
+                gapless.Add("Encoder Padding", from, span, NodeValue.Integer(header.EncoderPadding, "samples"), Explain.EncoderPadding);
                 long count = covered.Samples - header.EncoderDelay - header.EncoderPadding;
                 if (count >= 0)
                 {
-                    gapless.Add("Sample Count", from, span, NodeValue.Integer(count));
-                    gapless.Add("Duration", from, span, Duration(count * (Clock / new MpegHeader(frame.Header).SampleRate)));
+                    gapless.Add("Sample Count", from, span, NodeValue.Integer(count), Explain.GaplessSamples);
+                    gapless.Add("Duration", from, span, Duration(count * (Clock / new MpegHeader(frame.Header).SampleRate)), Explain.GaplessDuration);
                 }
             }
         }

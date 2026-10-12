@@ -146,7 +146,7 @@ public sealed class DetailWindows
 
     private DetailWindow Create()
     {
-        var window = new DetailWindow(new DetailViewModel(_analyzer));
+        var window = new DetailWindow(new DetailViewModel(_analyzer)) { Settings = _settings };
         _neighbors[window] = new ListNeighbors(_model.RowsView);
         return window;
     }

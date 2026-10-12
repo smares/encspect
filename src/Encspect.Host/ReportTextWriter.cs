@@ -7,9 +7,15 @@ public static class ReportTextWriter
 {
     private static readonly string Spaces = new(' ', 64);
 
+    // Where --explain wraps the descriptions.
+    private const int ExplainWidth = 100;
+
     public static void Write(Report report, TextWriter writer, bool showOffsets) => Write(report, writer, showOffsets, ReportFilter.All);
 
-    public static void Write(Report report, TextWriter writer, bool showOffsets, ReportFilter filter)
+    public static void Write(Report report, TextWriter writer, bool showOffsets, ReportFilter filter) => Write(report, writer, showOffsets, filter, explain: false);
+
+    // explain: write each node's description and topic, indented under its line.
+    public static void Write(Report report, TextWriter writer, bool showOffsets, ReportFilter filter, bool explain)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(writer);
@@ -27,7 +33,7 @@ public static class ReportTextWriter
             list.Add(series);
         }
 
-        WriteNode(report.Root, writer, showOffsets, filter, 0, anchored);
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter), 0, anchored);
 
         if (report.Findings.Count > 0)
         {
@@ -50,7 +56,7 @@ public static class ReportTextWriter
     // hold hundreds of thousands of nodes.
     // depth: levels below the root. Recursion stops at Node.MaxDepth, where a line says that
     // deeper children are left out.
-    private static void WriteNode(Node node, TextWriter writer, bool showOffsets, ReportFilter filter, int depth, Dictionary<Node, List<Series>> anchored)
+    private static void WriteNode(Node node, TextWriter writer, Options options, int depth, Dictionary<Node, List<Series>> anchored)
     {
         Indent(writer, depth);
         writer.Write(node.Name);
@@ -60,16 +66,20 @@ public static class ReportTextWriter
             WriteValue(value, writer);
         }
 
-        if (showOffsets)
+        if (options.ShowOffsets)
         {
             WriteLocation(node, writer);
         }
 
         writer.WriteLine();
+        if (options.Explain)
+        {
+            WriteExplanation(node.Description, node.Topic, writer, depth);
+        }
 
         if (depth >= Node.MaxDepth)
         {
-            if (node.HasChildren && node.Children.Any(filter.Includes))
+            if (node.HasChildren && node.Children.Any(options.Filter.Includes))
             {
                 Indent(writer, depth + 1);
                 writer.WriteLine($"(children nested deeper than {Node.MaxDepth} levels are not shown)");
@@ -79,9 +89,9 @@ public static class ReportTextWriter
         {
             foreach (Node child in node.Children)
             {
-                if (filter.Includes(child))
+                if (options.Filter.Includes(child))
                 {
-                    WriteNode(child, writer, showOffsets, filter, depth + 1, anchored);
+                    WriteNode(child, writer, options, depth + 1, anchored);
                 }
             }
         }
@@ -90,14 +100,30 @@ public static class ReportTextWriter
         {
             foreach (Series item in series)
             {
-                WriteSeries(item, writer, depth, showOffsets);
+                WriteSeries(item, writer, depth, options);
             }
         }
     }
 
+    // The description, and the topic to read with --learn, wrapped under the node's line and
+    // indented one level deeper than its children, so they do not read as a child.
+    private static void WriteExplanation(string? description, string? topic, TextWriter writer, int depth)
+    {
+        if (description is null && topic is null)
+        {
+            return;
+        }
+
+        string text = topic is null ? description! : $"{description} [topic:{topic}]".TrimStart();
+        string indent = new(' ', (depth + 3) * 2);
+        var wrapped = new System.Text.StringBuilder();
+        TopicLibrary.Wrap(wrapped, Escape(text), Math.Max(ExplainWidth, indent.Length + 40), indent, indent);
+        writer.Write(wrapped.ToString().Replace("\n", Environment.NewLine, StringComparison.Ordinal));
+    }
+
     // A series in one line after the node it belongs with, "Bitrate Over Time: 128,160,128", and
     // with offsets that node's location.
-    private static void WriteSeries(Series series, TextWriter writer, int depth, bool showOffsets)
+    private static void WriteSeries(Series series, TextWriter writer, int depth, Options options)
     {
         Indent(writer, depth);
         writer.Write(series.Name);
@@ -113,13 +139,19 @@ public static class ReportTextWriter
             writer.Write(values[i].ToString(CultureInfo.InvariantCulture));
         }
 
-        if (showOffsets)
+        if (options.ShowOffsets)
         {
             WriteLocation(series.Anchor!, writer);
         }
 
         writer.WriteLine();
+        if (options.Explain)
+        {
+            WriteExplanation(series.Description, null, writer, depth);
+        }
     }
+
+    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter);
 
     // Values from the file are text and escaped; numbers are written without a string per node.
     private static void WriteValue(NodeValue value, TextWriter writer)

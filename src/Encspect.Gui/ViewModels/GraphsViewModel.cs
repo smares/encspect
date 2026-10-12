@@ -11,6 +11,8 @@ public sealed class GraphChoice(Graph graph) : ObservableObject
 
     public string Title => Graph.Title;
 
+    public string? Description => Graph.Description;
+
     public bool IsSelected
     {
         get => _isSelected;

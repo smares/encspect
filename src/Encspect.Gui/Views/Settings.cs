@@ -14,6 +14,11 @@ public sealed class Settings
 
     public WindowPlacement? DetailWindow { get; set; }
 
+    // Whether the detail window's pane of background articles was open, and how wide it was.
+    public bool IsTopicPaneOpen { get; set; }
+
+    public double? TopicPaneWidth { get; set; }
+
     [JsonIgnore]
     public string? FilePath { get; private set; }
 

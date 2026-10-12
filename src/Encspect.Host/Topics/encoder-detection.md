@@ -1,0 +1,19 @@
+---
+id: encoder-detection
+title: Encoder detection and confidence
+related: lame-tag, vbri-header, ancillary-data, id3v2
+references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne)
+---
+
+**Why it is possible.** The MPEG standards define only what a decoder must do. Every encoder makes its own choices within them, and many leave traces: a tag with their name, text in unused bits, or habits in how they code.
+
+**The evidence, from strongest to weakest:**
+
+- A header the encoder wrote with its name, such as the [LAME tag](lame-tag) or Fraunhofer's [VBRI header](vbri-header). Where its CRC holds, the confidence is high.
+- A signature in the [ancillary data](ancillary-data), such as LAME's version text, or an extension only certain encoders write, such as mp3PRO or MP3 Surround.
+- Habits: Shine never uses the bit reservoir or short blocks, Xing's encoder never switches to short blocks, Fraunhofer's encoders never use scfsi, and so on. Only habits that encodes of known signals show every time, over at least 20 frames, are used, and they give low confidence, since a new encoder may share them.
+- An ID3v2 TSSE frame, which whatever software wrote the tag fills in. It supports other evidence but alone names an encoder with low confidence.
+
+**Confidence.** High means the encoder signed the file in a way that checks out; medium means specific but weaker evidence; low means only habits or text other software may have written. Silence gives an encoder nothing to decide, so a quiet file may match another encoder's habits.
+
+**What you see.** An Encoder node in each region with its Confidence and every piece of Evidence, each pointing at the bytes it was found in.

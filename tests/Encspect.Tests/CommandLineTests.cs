@@ -35,6 +35,97 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void DefaultOutputHasNoDescriptions()
+    {
+        (_, string text, _) = Run(Tagged);
+        (_, string json, _) = Run("--json", Tagged);
+
+        Assert.DoesNotContain("The whole file", text);
+        Assert.DoesNotContain("[topic:", text);
+        Assert.DoesNotContain("\"description\"", json);
+        Assert.DoesNotContain("\"topic\"", json);
+    }
+
+    // Each node's description, wrapped at 100 columns and indented under the node, with its topic.
+    [Fact]
+    public void ExplainDescribesEveryNodeInTheTextTree()
+    {
+        (int code, string output, _) = Run("--explain", Tagged);
+
+        Assert.Equal(CommandLine.Success, code);
+        string[] lines = output.ReplaceLineEndings("\n").Split('\n');
+        int mode = Array.FindIndex(lines, l => l.TrimStart().StartsWith("Mode Extension: ", StringComparison.Ordinal));
+        Assert.True(mode > 0);
+        int indent = lines[mode].Length - lines[mode].TrimStart().Length;
+        Assert.StartsWith(new string(' ', indent + 4) + "Which joint stereo tools", lines[mode + 1]);
+        Assert.Contains("[topic:", string.Join(' ', lines.Skip(mode + 1).Take(3)));
+        Assert.All(lines, l => Assert.True(l.Length <= 100 || !l.StartsWith(' ') || l.TrimStart().Contains(':'), l));
+        Assert.Contains("    The whole file,", output);
+        Assert.Contains("[topic:id3v2]", output);
+    }
+
+    [Fact]
+    public void ExplainAddsDescriptionsAndTopicsToJson()
+    {
+        (int code, string output, _) = Run("--json", "--explain", Tagged);
+
+        Assert.Equal(CommandLine.Success, code);
+        JsonElement root = JsonDocument.Parse(output).RootElement[0].GetProperty("root");
+        Assert.StartsWith("The whole file", root.GetProperty("description").GetString());
+        JsonElement tag = root.GetProperty("children").EnumerateArray().First(c => c.GetProperty("name").GetString() == "ID3v2");
+        Assert.Equal("id3v2", tag.GetProperty("topic").GetString());
+        JsonElement stream = JsonDocument.Parse(output).RootElement[0].GetProperty("streams")[0];
+        Assert.All(stream.GetProperty("series").EnumerateArray(), s => Assert.False(string.IsNullOrEmpty(s.GetProperty("description").GetString())));
+    }
+
+    [Fact]
+    public void ExplainIsNotForCsv()
+    {
+        (int code, _, string errors) = Run("--csv", "--explain", Tagged);
+
+        Assert.Equal(CommandLine.UsageError, code);
+        Assert.Contains("--explain", errors);
+    }
+
+    [Fact]
+    public void LearnListsTopicsAndPrintsOne()
+    {
+        (int code, string list, _) = Run("--learn");
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Contains("mid-side-stereo", list);
+        Assert.Contains("Mid/side stereo", list);
+
+        (code, string article, _) = Run("--learn", "mid-side-stereo");
+        Assert.Equal(CommandLine.Success, code);
+        Assert.StartsWith("Mid/side stereo" + Environment.NewLine + "===", article);
+        Assert.Contains("Related: ", article);
+        Assert.All(article.ReplaceLineEndings("\n").Split('\n'), l => Assert.True(l.Length <= 100, l));
+        Assert.DoesNotContain("**", article);
+
+        Assert.Equal(article, Run("--learn=mid-side-stereo").Output);
+    }
+
+    [Fact]
+    public void LearnRejectsUnknownTopicsAndOtherArguments()
+    {
+        (int code, _, string errors) = Run("--learn", "no-such-topic");
+        Assert.Equal(CommandLine.UsageError, code);
+        Assert.Contains("Unknown topic", errors);
+
+        Assert.Equal(CommandLine.UsageError, Run("--learn", "scfsi", Tagged).Code);
+        Assert.Equal(CommandLine.UsageError, Run(Tagged, "--learn", "scfsi").Code);
+    }
+
+    [Fact]
+    public void HelpNamesExplainAndLearn()
+    {
+        string help = Run("--help").Output;
+
+        Assert.Contains("--explain", help);
+        Assert.Contains("--learn [<topic>]", help);
+    }
+
+    [Fact]
     public void HideLeavesOutSections()
     {
         (_, string output, _) = Run("--hide", "frames,tags", Tagged);

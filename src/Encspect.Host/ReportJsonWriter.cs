@@ -34,7 +34,10 @@ public static class ReportJsonWriter
     // file at a time.
     public static void Write(IEnumerable<Report> reports, Stream output) => Write(reports, output, ReportFilter.All);
 
-    public static void Write(IEnumerable<Report> reports, Stream output, ReportFilter filter)
+    public static void Write(IEnumerable<Report> reports, Stream output, ReportFilter filter) => Write(reports, output, filter, explain: false);
+
+    // explain: write each node's description and topic, and each series' description.
+    public static void Write(IEnumerable<Report> reports, Stream output, ReportFilter filter, bool explain)
     {
         ArgumentNullException.ThrowIfNull(reports);
         ArgumentNullException.ThrowIfNull(output);
@@ -45,7 +48,7 @@ public static class ReportJsonWriter
         writer.WriteStartArray();
         foreach (Report report in reports)
         {
-            WriteReport(writer, report, filter);
+            WriteReport(writer, report, filter, explain);
             writer.Flush();
         }
 
@@ -56,7 +59,9 @@ public static class ReportJsonWriter
     // its own, even when the run stops early, and outputs can be concatenated.
     public static void WriteLines(IEnumerable<Report> reports, Stream output) => WriteLines(reports, output, ReportFilter.All);
 
-    public static void WriteLines(IEnumerable<Report> reports, Stream output, ReportFilter filter)
+    public static void WriteLines(IEnumerable<Report> reports, Stream output, ReportFilter filter) => WriteLines(reports, output, filter, explain: false);
+
+    public static void WriteLines(IEnumerable<Report> reports, Stream output, ReportFilter filter, bool explain)
     {
         ArgumentNullException.ThrowIfNull(reports);
         ArgumentNullException.ThrowIfNull(output);
@@ -66,7 +71,7 @@ public static class ReportJsonWriter
 
         foreach (Report report in reports)
         {
-            WriteReport(writer, report, filter);
+            WriteReport(writer, report, filter, explain);
             writer.Flush();
             output.WriteByte((byte)'\n');
 
@@ -75,7 +80,7 @@ public static class ReportJsonWriter
         }
     }
 
-    private static void WriteReport(Utf8JsonWriter writer, Report report, ReportFilter filter)
+    private static void WriteReport(Utf8JsonWriter writer, Report report, ReportFilter filter, bool explain)
     {
         writer.WriteStartObject();
         writer.WriteNumber("schemaVersion", SchemaVersion);
@@ -86,12 +91,12 @@ public static class ReportJsonWriter
         writer.WriteString("source", report.Source);
 
         writer.WritePropertyName("root");
-        WriteNode(writer, report.Root, filter, 0);
+        WriteNode(writer, report.Root, filter, explain, 0);
 
         writer.WriteStartArray("streams");
         foreach (StreamInfo stream in report.Streams)
         {
-            WriteStream(writer, stream);
+            WriteStream(writer, stream, explain);
         }
 
         writer.WriteEndArray();
@@ -122,7 +127,7 @@ public static class ReportJsonWriter
         writer.WriteEndObject();
     }
 
-    private static void WriteStream(Utf8JsonWriter writer, StreamInfo stream)
+    private static void WriteStream(Utf8JsonWriter writer, StreamInfo stream, bool explain)
     {
         writer.WriteStartObject();
         writer.WriteStartArray("nodes");
@@ -177,6 +182,11 @@ public static class ReportJsonWriter
             writer.WriteString("name", series.Name);
             writer.WriteString("unit", series.Unit);
             writer.WriteString("axis", series.Axis == SeriesAxis.FrameOffset ? "frameOffset" : "seconds");
+            if (explain && series.Description is { } description)
+            {
+                writer.WriteString("description", description);
+            }
+
             WriteNumbers(writer, "x", series.X.Span);
             WriteNumbers(writer, "values", series.Values.Span);
             writer.WriteEndObject();
@@ -246,7 +256,7 @@ public static class ReportJsonWriter
 
     // depth: levels below the root. Children nested deeper than Node.MaxDepth are left out, and
     // hasOmittedChildren says so.
-    private static void WriteNode(Utf8JsonWriter writer, Node node, ReportFilter filter, int depth)
+    private static void WriteNode(Utf8JsonWriter writer, Node node, ReportFilter filter, bool explain, int depth)
     {
         writer.WriteStartObject();
         writer.WriteString("name", node.Name);
@@ -258,6 +268,16 @@ public static class ReportJsonWriter
         if (node.Value is { } value)
         {
             WriteValue(writer, value);
+        }
+
+        if (explain && node.Description is { } description)
+        {
+            writer.WriteString("description", description);
+        }
+
+        if (explain && node.Topic is { } topic)
+        {
+            writer.WriteString("topic", topic);
         }
 
         writer.WriteNumber("offset", node.Offset);
@@ -301,7 +321,7 @@ public static class ReportJsonWriter
                 writer.WriteStartArray("children");
                 foreach (Node child in children)
                 {
-                    WriteNode(writer, child, filter, depth + 1);
+                    WriteNode(writer, child, filter, explain, depth + 1);
                 }
 
                 writer.WriteEndArray();

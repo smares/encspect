@@ -170,16 +170,22 @@ public sealed partial class MpegAudioParser
         RegionState first = state.Regions[RegionOf(state, firstAudio)];
         var series = new List<Series>
         {
-            new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates),
+            new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate },
             new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts,
-                seconds.Select(s => s.Ticks > 0 ? (double)RoundHalfEven((Int128)s.Bits * Clock, (Int128)s.Ticks * 1000) : 0).ToArray(), first.Distribution),
+                seconds.Select(s => s.Ticks > 0 ? (double)RoundHalfEven((Int128)s.Bits * Clock, (Int128)s.Ticks * 1000) : 0).ToArray(), first.Distribution)
+            {
+                Description = SeriesText.BitrateOverTime,
+            },
         };
 
         if (hasSideInfo)
         {
-            series.Add(new("Reservoir Fill", "bytes", SeriesAxis.FrameOffset, offsets, fills));
+            series.Add(new("Reservoir Fill", "bytes", SeriesAxis.FrameOffset, offsets, fills) { Description = SeriesText.ReservoirFill });
             series.Add(new("Reservoir Fill Over Time", "bytes", SeriesAxis.Seconds, starts,
-                seconds.Select(s => s.Count > 0 ? (double)RoundHalfEven(s.Fill, s.Count) : 0).ToArray(), first.MaximumFill));
+                seconds.Select(s => s.Count > 0 ? (double)RoundHalfEven(s.Fill, s.Count) : 0).ToArray(), first.MaximumFill)
+            {
+                Description = SeriesText.ReservoirFillOverTime,
+            });
         }
 
         return series;

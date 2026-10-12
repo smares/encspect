@@ -14,6 +14,7 @@ internal static class CommandLine
 
     public const string Usage = """
         Usage: encspect [options] [--] <file-or-folder>...
+               encspect --learn [<topic>]
 
         Analyzes each file, and every file in each folder and its subfolders, hidden ones
         included. A link to a folder is followed only when it leads outside the folder named and
@@ -30,6 +31,14 @@ internal static class CommandLine
                                 or --csv.
           --hide <sections>     Leave out sections of the text tree or JSON, comma-separated:
                                 tags, frames, side-info, statistics. Not with --csv.
+          --explain             Say what each node is: its description, and the topic that
+                                --learn explains, under each node of the text tree, or as
+                                "description" and "topic" in JSON. Not with --csv.
+
+        Background:
+          --learn [<topic>]     Print the article on a topic, such as mid-side-stereo: why a
+                                coding tool exists and what seeing it in a file means. Without
+                                a topic, list the topics.
 
         Selection:
           --only-format <names> Analyze only files of these formats, comma-separated, by the
@@ -58,6 +67,7 @@ internal static class CommandLine
 
         Output? output = null;
         bool offsets = false;
+        bool explain = false;
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
         Severity? failOn = null;
@@ -99,6 +109,18 @@ internal static class CommandLine
                 case "--offsets" when inline is null:
                     offsets = true;
                     break;
+                case "--explain" when inline is null:
+                    explain = true;
+                    break;
+                case "--learn":
+                    // The topic is the next argument unless it is another option.
+                    string? topic = inline ?? (i + 1 < args.Count && !args[i + 1].StartsWith('-') ? args[++i] : null);
+                    if (i + 1 < args.Count || args.Count > (topic is null || inline is not null ? 1 : 2))
+                    {
+                        return Fail(stderr, "--learn takes a topic and no other arguments.");
+                    }
+
+                    return Learn(topic, stdout, stderr);
                 case "--":
                     optionsEnded = true;
                     break;
@@ -194,6 +216,11 @@ internal static class CommandLine
             return Fail(stderr, "--hide does not apply to --csv, which writes one summary row per file.");
         }
 
+        if (explain && chosenOutput == Output.Csv)
+        {
+            return Fail(stderr, "--explain is for the text tree and JSON; CSV has one summary row per file.");
+        }
+
         var analyzer = Analyzer.CreateDefault();
         var filter = new ReportFilter(hidden);
         bool unreadable = false;
@@ -204,11 +231,11 @@ internal static class CommandLine
             switch (chosenOutput)
             {
                 case Output.Json:
-                    ReportJsonWriter.Write(Reports(), stream, filter);
+                    ReportJsonWriter.Write(Reports(), stream, filter, explain);
                     stream.WriteByte((byte)'\n');
                     break;
                 case Output.Ndjson:
-                    ReportJsonWriter.WriteLines(Reports(), stream, filter);
+                    ReportJsonWriter.WriteLines(Reports(), stream, filter, explain);
                     break;
                 case Output.Csv:
                     using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
@@ -223,7 +250,7 @@ internal static class CommandLine
                     {
                         foreach (Report report in Reports())
                         {
-                            ReportTextWriter.Write(report, writer, offsets, filter);
+                            ReportTextWriter.Write(report, writer, offsets, filter, explain);
                             writer.WriteLine();
                         }
                     }
@@ -314,6 +341,33 @@ internal static class CommandLine
             stderr.WriteLine($"Could not write the output: {ex.Message}");
             return OutputFailed;
         }
+    }
+
+    // Prints one topic's article, or the list of topics.
+    private static int Learn(string? id, Stream stdout, TextWriter stderr)
+    {
+        Topic? topic = null;
+        if (id is not null && (topic = TopicLibrary.Find(id)) is null)
+        {
+            return Fail(stderr, $"Unknown topic: {id}. Run encspect --learn for the list.");
+        }
+
+        return Write(new GuardedStream(stdout), stderr, stream =>
+        {
+            using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true);
+            if (topic is not null)
+            {
+                writer.Write(TopicLibrary.ToPlainText(topic).ReplaceLineEndings());
+                return;
+            }
+
+            writer.WriteLine("Topics (encspect --learn <topic>):");
+            int width = TopicLibrary.All.Max(t => t.Id.Length);
+            foreach (Topic each in TopicLibrary.All)
+            {
+                writer.WriteLine($"  {each.Id.PadRight(width)}  {each.Title}");
+            }
+        });
     }
 
     private static int Fail(TextWriter stderr, string message)

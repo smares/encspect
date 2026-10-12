@@ -41,7 +41,7 @@ public static class FileReports
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        var root = new Node("File", 0, 0);
+        var root = new Node("File", 0, 0) { Description = HostText.File };
         return new Report(source, root, [new Finding(Severity.Error, code, message, root) { Path = [] }]);
     }
 }

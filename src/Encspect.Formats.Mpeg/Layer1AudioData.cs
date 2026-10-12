@@ -116,12 +116,14 @@ internal sealed class Layer1AudioData
     public IEnumerable<Node> ToNodes(long frameOffset, long frameLength)
     {
         int end = (int)Math.Min(End, frameLength * 8);
-        Node allocation = Layer2AudioData.Span("Bit Allocation", frameOffset, AllocationStart, ScalefactorStart, kind: NodeKind.SideInfo);
-        Node scalefactors = Layer2AudioData.Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart, kind: NodeKind.SideInfo);
+        Node allocation = Layer2AudioData.Span("Bit Allocation", frameOffset, AllocationStart, ScalefactorStart, kind: NodeKind.SideInfo,
+            description: Explain.Layer1Allocation, topic: Topics.SubbandCoding);
+        Node scalefactors = Layer2AudioData.Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart, kind: NodeKind.SideInfo,
+            description: Explain.Layer1Scalefactors, topic: Topics.SubbandCoding);
         for (int sb = 0; sb < Subbands; sb++)
         {
             int coded = sb < Bound ? Channels : 1;
-            Node subband = allocation.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, AllocationBit[0, sb], AllocationBit[coded - 1, sb] + 4));
+            Node subband = allocation.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, AllocationBit[0, sb], AllocationBit[coded - 1, sb] + 4, description: Explain.Subband));
             for (int ch = 0; ch < coded; ch++)
             {
                 int value = Allocation[ch, sb];
@@ -140,7 +142,8 @@ internal sealed class Layer1AudioData
                 continue;
             }
 
-            Node scalefactor = scalefactors.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, ScalefactorBit[allocated[0], sb], ScalefactorBit[allocated[^1], sb] + 6));
+            Node scalefactor = scalefactors.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, ScalefactorBit[allocated[0], sb], ScalefactorBit[allocated[^1], sb] + 6,
+                description: Explain.Subband));
             foreach (int ch in allocated)
             {
                 scalefactor.Add(ScalefactorNode(frameOffset, ch, sb, NodeValue.Integer(Scalefactor[ch, sb])));
@@ -155,15 +158,17 @@ internal sealed class Layer1AudioData
 
         if (end > SampleStart)
         {
-            yield return Layer2AudioData.Span("Samples", frameOffset, SampleStart, end, NodeValue.Integer(end - SampleStart, "bits"));
+            yield return Layer2AudioData.Span("Samples", frameOffset, SampleStart, end, NodeValue.Integer(end - SampleStart, "bits"), description: Explain.Layer1Samples);
         }
     }
 
     // The node of one channel's allocation in a subband; above the intensity stereo bound one
     // allocation serves both channels.
     public Node AllocationNode(long frameOffset, int ch, int sb, NodeValue? value = null) =>
-        Layer2AudioData.Span(sb >= Bound && Channels > 1 ? "Channels 0 and 1" : $"Channel {ch}", frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + 4, value);
+        sb >= Bound && Channels > 1
+            ? Layer2AudioData.Span("Channels 0 and 1", frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + 4, value, description: Explain.SharedAllocation, topic: Topics.IntensityStereo)
+            : Layer2AudioData.Span($"Channel {ch}", frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + 4, value, description: Explain.Layer1ChannelAllocation);
 
     public Node ScalefactorNode(long frameOffset, int ch, int sb, NodeValue? value = null) =>
-        Layer2AudioData.Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + 6, value);
+        Layer2AudioData.Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + 6, value, description: Explain.Layer1Scalefactor);
 }

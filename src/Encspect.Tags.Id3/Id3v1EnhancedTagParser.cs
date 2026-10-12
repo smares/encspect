@@ -27,21 +27,21 @@ public sealed class Id3v1EnhancedTagParser : ITagParser
         }
 
         byte[] data = reader.ReadBytesAt(start, TagSize);
-        var tag = new Node(Name, start, TagSize) { Kind = NodeKind.Tag };
+        var tag = new Node(Name, start, TagSize) { Kind = NodeKind.Tag, Description = Explain.EnhancedTag, Topic = Topics.Id3v1 };
         var nonText = new List<string>();
 
-        tag.Add("Signature", start, 4, "TAG+");
-        Id3v1TagParser.AddText(tag, "Title", data, start, 4, 60, nonText);
-        Id3v1TagParser.AddText(tag, "Artist", data, start, 64, 60, nonText);
-        Id3v1TagParser.AddText(tag, "Album", data, start, 124, 60, nonText);
+        tag.Add("Signature", start, 4, "TAG+", Explain.EnhancedSignature);
+        Id3v1TagParser.AddText(tag, "Title", data, start, 4, 60, nonText, Explain.EnhancedTitle);
+        Id3v1TagParser.AddText(tag, "Artist", data, start, 64, 60, nonText, Explain.EnhancedArtist);
+        Id3v1TagParser.AddText(tag, "Album", data, start, 124, 60, nonText, Explain.EnhancedAlbum);
 
         byte speed = data[184];
         string speedName = speed < SpeedNames.Length ? SpeedNames[speed] : "unknown";
-        tag.Add("Speed", start + 184, 1, $"{speed} ({speedName})");
+        tag.Add("Speed", start + 184, 1, $"{speed} ({speedName})", Explain.EnhancedSpeed);
 
-        Id3v1TagParser.AddText(tag, "Genre", data, start, 185, 30, nonText);
-        Id3v1TagParser.AddText(tag, "Start Time", data, start, 215, 6, nonText);
-        Id3v1TagParser.AddText(tag, "End Time", data, start, 221, 6, nonText);
+        Id3v1TagParser.AddText(tag, "Genre", data, start, 185, 30, nonText, Explain.EnhancedGenre);
+        Id3v1TagParser.AddText(tag, "Start Time", data, start, 215, 6, nonText, Explain.EnhancedStart);
+        Id3v1TagParser.AddText(tag, "End Time", data, start, 221, 6, nonText, Explain.EnhancedEnd);
 
         var evidence = new List<Evidence> { new("Signature \"TAG+\" 227 bytes before the anchor", start, 4) };
         var findings = new List<Finding>();
