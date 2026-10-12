@@ -14,6 +14,7 @@ public sealed partial class SpeexParser
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
+            Description = Explain.Packet,
         };
     }
 
@@ -68,23 +69,23 @@ public sealed partial class SpeexParser
         {
             FrameRecord frame = records.Frames[packet.FirstFrame + f];
             long end = position + frame.Bits;
-            Node node = at.Node("Frame", position, end, Modes(frame, records.Mode));
+            Node node = at.Node("Frame", position, end, Modes(frame, records.Mode), Explain.Frame);
             long p = position;
             if (frame.PrefixBits > 0)
             {
-                node.Add(at.Node("In-band Data", p, p + frame.PrefixBits, NodeValue.Integer(frame.PrefixBits, "bits", "bit")));
+                node.Add(at.Node("In-band Data", p, p + frame.PrefixBits, NodeValue.Integer(frame.PrefixBits, "bits", "bit"), Explain.InBandData));
                 p += frame.PrefixBits;
             }
 
-            p = AddLayer(node, at, "Narrowband Layer", p, false, 4, frame.Narrowband, SpeexFrames.NarrowbandBits[frame.Narrowband]);
+            p = AddLayer(node, at, Narrowband, p, frame.Narrowband, SpeexFrames.NarrowbandBits[frame.Narrowband]);
             if (frame.Wideband != FrameRecord.Absent)
             {
-                p = AddLayer(node, at, "Wideband Layer", p, true, 3, frame.Wideband, SpeexFrames.WidebandBits[frame.Wideband]);
+                p = AddLayer(node, at, Wideband, p, frame.Wideband, SpeexFrames.WidebandBits[frame.Wideband]);
             }
 
             if (frame.UltraWideband != FrameRecord.Absent)
             {
-                AddLayer(node, at, "Ultra-Wideband Layer", p, true, 3, frame.UltraWideband, SpeexFrames.UltraWidebandBits[frame.UltraWideband]);
+                AddLayer(node, at, UltraWideband, p, frame.UltraWideband, SpeexFrames.UltraWidebandBits[frame.UltraWideband]);
             }
 
             nodes.Add(node);
@@ -96,31 +97,39 @@ public sealed partial class SpeexParser
         {
             if (records.Irregular.TryGetValue(index, out PacketWalk walk))
             {
-                string name = walk.End == WalkEnd.FrameLimit ? "Ignored Data" : "Unparsed";
-                string value = walk.End == WalkEnd.FrameLimit
+                bool ignored = walk.End == WalkEnd.FrameLimit;
+                string value = ignored
                     ? $"{total - position} bits after the frames the header gives, which decoders ignore"
                     : $"{total - position} bits: {walk.Error}";
-                nodes.Add(at.Node(name, position, total, value));
+                nodes.Add(at.Node(ignored ? "Ignored Data" : "Unparsed", position, total, value, ignored ? Explain.IgnoredData : Explain.Unparsed));
             }
             else
             {
-                nodes.Add(at.Node("Padding", position, total, NodeValue.Integer(total - position, "bits", "bit")));
+                nodes.Add(at.Node("Padding", position, total, NodeValue.Integer(total - position, "bits", "bit"), Explain.Padding));
             }
         }
 
         return nodes;
     }
 
+    // The three layers a frame may have, with what their nodes say.
+    private sealed record Layer(string Name, bool IsWideband, int SubmodeBits, string Description, string Submode, string Coded);
+
+    private static readonly Layer Narrowband = new("Narrowband Layer", false, 4, Explain.NarrowbandLayer, Explain.NarrowbandSubmode, Explain.NarrowbandCoded);
+    private static readonly Layer Wideband = new("Wideband Layer", true, 3, Explain.WidebandLayer, Explain.WidebandSubmode, Explain.HighBandCoded);
+    private static readonly Layer UltraWideband = new("Ultra-Wideband Layer", true, 3, Explain.UltraWidebandLayer, Explain.UltraWidebandSubmode, Explain.HighBandCoded);
+
     // A layer: the bit that marks it (0 for the narrowband layer, 1 for a wideband one), its
     // submode, then its coded data.
-    private static long AddLayer(Node frame, BitPlace at, string name, long start, bool wideband, int submodeBits, int submode, int bits)
+    private static long AddLayer(Node frame, BitPlace at, Layer kind, long start, int submode, int bits)
     {
-        Node layer = at.Node(name, start, start + bits, NodeValue.Integer(bits, "bits", "bit"));
-        layer.Add(at.Node("IsWidebandLayer", start, start + 1, NodeValue.Boolean(wideband)));
-        layer.Add(at.Node("Submode", start + 1, start + 1 + submodeBits, NodeValue.Integer(submode)));
+        int submodeBits = kind.SubmodeBits;
+        Node layer = at.Node(kind.Name, start, start + bits, NodeValue.Integer(bits, "bits", "bit"), kind.Description);
+        layer.Add(at.Node("IsWidebandLayer", start, start + 1, NodeValue.Boolean(kind.IsWideband), kind.IsWideband ? Explain.IsWidebandBit : Explain.IsNarrowbandBit));
+        layer.Add(at.Node("Submode", start + 1, start + 1 + submodeBits, NodeValue.Integer(submode), kind.Submode));
         if (bits > 1 + submodeBits)
         {
-            layer.Add(at.Node("Coded Data", start + 1 + submodeBits, start + bits, NodeValue.Integer(bits - 1 - submodeBits, "bits", "bit")));
+            layer.Add(at.Node("Coded Data", start + 1 + submodeBits, start + bits, NodeValue.Integer(bits - 1 - submodeBits, "bits", "bit"), kind.Coded));
         }
 
         frame.Add(layer);
@@ -131,8 +140,9 @@ public sealed partial class SpeexParser
     // through its ranges when it spans pages.
     private sealed class BitPlace(long offset, MappedBytes? mapped)
     {
-        public Node Node(string name, long start, long end, NodeValue? value) =>
-            mapped is null ? Core.Node.FromBits(name, offset, start, end, value) : Core.Node.FromBits(name, mapped, start, end, value);
+        public Node Node(string name, long start, long end, NodeValue? value, string description) => mapped is null
+            ? Core.Node.FromBits(name, offset, start, end, value, description: description)
+            : Core.Node.FromBits(name, mapped, start, end, value, description: description);
     }
 
     // The audio packets of a stream, built from the records in blocks when first read and held

@@ -171,21 +171,33 @@ public sealed partial class OggParser
     {
         OggCodec? codec = stream.Magic is { } magic ? OggCodecs.Identify(magic) : null;
         ref PageRecord first = ref region.Pages[stream.FirstPage];
-        Node node = parent.Add(new Node("Logical Stream", stream.Start, stream.End - stream.Start, codec?.Name ?? "Unknown"));
-        node.Add(new Node("Serial Number", first.Offset + 14, 4, NodeValue.Hex(stream.Serial, 8)));
+        Node node = parent.Add(new Node("Logical Stream", stream.Start, stream.End - stream.Start, codec?.Name ?? "Unknown")
+        {
+            Description = Explain.LogicalStream,
+            Topic = Topics.OggPages,
+        });
+        node.Add(new Node("Serial Number", first.Offset + 14, 4, NodeValue.Hex(stream.Serial, 8)) { Description = Explain.StreamSerialNumber });
+        string codecText = codec is null ? Explain.CodecUnknown : Explain.Codec;
         node.Add(stream.Magic is { } start
-            ? new Node("Codec", stream.MagicOffset, start.Length, codec?.Name ?? "Unknown")
-            : new Node("Codec", stream.Start, 0, "Unknown"));
-        node.Add(new Node("Chain Link", first.Offset + 5, 1, NodeValue.Integer(stream.Link)));
-        node.Add(new Node("Page Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Pages.Count, "pages", "page")));
-        node.Add(new Node("Packet Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Assembler.Completed, "packets", "packet")));
+            ? new Node("Codec", stream.MagicOffset, start.Length, codec?.Name ?? "Unknown") { Description = codecText }
+            : new Node("Codec", stream.Start, 0, "Unknown") { Description = codecText });
+        node.Add(new Node("Chain Link", first.Offset + 5, 1, NodeValue.Integer(stream.Link)) { Description = Explain.ChainLink });
+        node.Add(new Node("Page Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Pages.Count, "pages", "page")) { Description = Explain.PageCount });
+        node.Add(new Node("Packet Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Assembler.Completed, "packets", "packet"))
+        {
+            Description = Explain.PacketCount,
+        });
         if (stream.LastGranulePage >= 0)
         {
             ref PageRecord page = ref region.Pages[stream.LastGranulePage];
-            node.Add(new Node("Last Granule Position", page.Offset + 6, 8, NodeValue.Integer(page.Granule)));
+            node.Add(new Node("Last Granule Position", page.Offset + 6, 8, NodeValue.Integer(page.Granule))
+            {
+                Description = Explain.LastGranulePosition,
+                Topic = Topics.GranulePosition,
+            });
         }
 
-        node.Add(new Node("HasEndOfStream", region.Pages[stream.LastPage].Offset + 5, 1, NodeValue.Boolean(stream.HasEos)));
+        node.Add(new Node("HasEndOfStream", region.Pages[stream.LastPage].Offset + 5, 1, NodeValue.Boolean(stream.HasEos)) { Description = Explain.HasEndOfStream });
 
         if (codec is null)
         {

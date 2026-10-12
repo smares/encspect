@@ -76,8 +76,8 @@ public sealed partial class SpeexParser
 
             long start = evidence.Min(e => e.Offset);
             long end = evidence.Max(e => e.End);
-            var node = new Node("Encoder", start, end - start, name);
-            node.Add("Confidence", start, end - start, confidence.ToString());
+            var node = new Node("Encoder", start, end - start, name) { Description = Explain.Encoder, Topic = Topics.EncoderDetection };
+            node.Add("Confidence", start, end - start, confidence.ToString(), Explain.Confidence);
             foreach (Node item in evidence)
             {
                 node.Add(item);
@@ -86,7 +86,7 @@ public sealed partial class SpeexParser
             return _parent.Add(node);
         }
 
-        private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
+        private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence };
 
         // Figures over the audio packets, as the MPEG statistics are: counts, the samples the
         // granule positions give, the bitrate from the packets' bytes over the samples they code,
@@ -105,74 +105,76 @@ public sealed partial class SpeexParser
                 HasTime ? $"{Count(_packets, "packet", "packets")}, {(samples / (double)Rate).ToString("F3", CultureInfo.InvariantCulture)} s" : Count(_packets, "packet", "packets"))
             {
                 Kind = NodeKind.Statistics,
+                Description = Explain.Statistics,
+                Topic = Topics.SpeexModes,
             });
 
-            void Add(string name, NodeValue value) => node.Add(name, start, length, value);
+            void Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
-            Add("Packets", NodeValue.Integer(_packets));
-            Add("Frames", NodeValue.Integer(_frames));
+            Add("Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add("Frames", NodeValue.Integer(_frames), Explain.Frames);
             if (HasTime)
             {
-                Add("Coded Samples", NodeValue.Integer(_coded, "samples", "sample"));
+                Add("Coded Samples", NodeValue.Integer(_coded, "samples", "sample"), Explain.CodedSamples);
                 if (_firstDelay is { } delay)
                 {
-                    Add("Encoder Delay", NodeValue.Integer(delay, "samples", "sample"));
-                    Add("End Trimming", NodeValue.Integer(trim, "samples", "sample"));
+                    Add("Encoder Delay", NodeValue.Integer(delay, "samples", "sample"), Explain.EncoderDelay, Topics.GranulePosition);
+                    Add("End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimming, Topics.GranulePosition);
                 }
 
-                Add("Samples", NodeValue.Integer(samples, "samples", "sample"));
-                Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"));
-                Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1));
-                Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _coded / 1000, 1, "kbps"));
-                Add("Minimum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.First().Key), 1, "kbps"));
-                Add("Maximum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.Last().Key), 1, "kbps"));
+                Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
+                Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
+                Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
+                Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _coded / 1000, 1, "kbps"), Explain.AverageBitrate);
+                Add("Minimum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.First().Key), 1, "kbps"), Explain.MinimumBitrate);
+                Add("Maximum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.Last().Key), 1, "kbps"), Explain.MaximumBitrate);
             }
 
-            Node distribution = node.Add("Packet Sizes", start, length, NodeValue.Integer(_sizes.Count, "sizes", "size"));
+            Node distribution = node.Add("Packet Sizes", start, length, NodeValue.Integer(_sizes.Count, "sizes", "size"), Explain.PacketSizes);
             foreach ((int size, long count) in _sizes)
             {
                 string bitrate = HasTime ? $", {PacketBitrate(size).ToString("F1", CultureInfo.InvariantCulture)} kbps" : string.Empty;
-                distribution.Add($"{size} bytes", start, length, $"{Share(count, _packets, "packet", "packets")}{bitrate}");
+                distribution.Add($"{size} bytes", start, length, $"{Share(count, _packets, "packet", "packets")}{bitrate}", Explain.PacketSize);
             }
 
             if (Mode >= 0 && _frames > 0)
             {
-                AddSubmodes(node, "Narrowband Submodes", _narrowband, SpeexFrames.NarrowbandBits, null);
+                AddSubmodes(node, "Narrowband Submodes", Explain.NarrowbandSubmodes, _narrowband, SpeexFrames.NarrowbandBits, null);
                 if (Mode >= 1)
                 {
-                    AddSubmodes(node, "Wideband Submodes", _wideband, SpeexFrames.WidebandBits, "No wideband layer");
+                    AddSubmodes(node, "Wideband Submodes", Explain.WidebandSubmodes, _wideband, SpeexFrames.WidebandBits, "No wideband layer");
                 }
 
                 if (Mode >= 2)
                 {
-                    AddSubmodes(node, "Ultra-Wideband Submodes", _ultraWideband, SpeexFrames.UltraWidebandBits, "No ultra-wideband layer");
+                    AddSubmodes(node, "Ultra-Wideband Submodes", Explain.UltraWidebandSubmodes, _ultraWideband, SpeexFrames.UltraWidebandBits, "No ultra-wideband layer");
                 }
             }
 
             if (_inBand > 0)
             {
-                Add("In-band Requests", NodeValue.Integer(_inBand));
-                Add("Stereo Parameters", NodeValue.Integer(_stereo));
+                Add("In-band Requests", NodeValue.Integer(_inBand), Explain.InBandRequests);
+                Add("Stereo Parameters", NodeValue.Integer(_stereo), Explain.StereoParameters);
             }
 
             return distribution;
         }
 
-        private void AddSubmodes(Node statistics, string name, long[] counts, ReadOnlySpan<int> bits, string? absent)
+        private void AddSubmodes(Node statistics, string name, string description, long[] counts, ReadOnlySpan<int> bits, string? absent)
         {
             int kinds = counts.Count(c => c > 0);
-            Node node = statistics.Add(name, statistics.Offset, statistics.Length, NodeValue.Integer(kinds, "submodes", "submode"));
+            Node node = statistics.Add(name, statistics.Offset, statistics.Length, NodeValue.Integer(kinds, "submodes", "submode"), description);
             for (int submode = 0; submode < bits.Length; submode++)
             {
                 if (counts[submode] > 0)
                 {
-                    node.Add($"Submode {submode} ({bits[submode]} bits)", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"));
+                    node.Add($"Submode {submode} ({bits[submode]} bits)", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
                 }
             }
 
             if (absent is not null && counts[FrameRecord.Absent] > 0)
             {
-                node.Add(absent, statistics.Offset, statistics.Length, Share(counts[FrameRecord.Absent], _frames, "frame", "frames"));
+                node.Add(absent, statistics.Offset, statistics.Length, Share(counts[FrameRecord.Absent], _frames, "frame", "frames"), Explain.LayerAbsent);
             }
         }
 
@@ -193,6 +195,8 @@ public sealed partial class SpeexParser
             return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new PacketList(records))
             {
                 Kind = NodeKind.Stream,
+                Description = Explain.AudioPackets,
+                Topic = Topics.SpeexModes,
             });
         }
 
@@ -242,8 +246,8 @@ public sealed partial class SpeexParser
             double[] rates = seconds
                 .Select(s => s.Packets > 0 ? Math.Round(s.Bits * (double)Rate / (s.Packets * perPacket) / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
-            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates);
-            return perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution)] : [bitrate];
+            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
+            return perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution) { Description = SeriesText.BitrateOverTime }] : [bitrate];
         }
     }
 

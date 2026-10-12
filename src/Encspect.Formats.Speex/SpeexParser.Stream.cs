@@ -90,7 +90,7 @@ public sealed partial class SpeexParser
             }
             else if (_header is { } header && index < 2 + (long)Math.Max(0, header.ExtraHeaders))
             {
-                _parent.Add(Node.FromMapped("Extra Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte")));
+                _parent.Add(Node.FromMapped("Extra Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.ExtraHeader));
             }
             else
             {
@@ -103,7 +103,8 @@ public sealed partial class SpeexParser
             _header = SpeexHeader.Read(packet.Span);
             if (_header is not { } header)
             {
-                Node node = _parent.Add(Node.FromMapped("Speex Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte")));
+                Node node = _parent.Add(Node.FromMapped("Speex Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeaderShort,
+                    topic: Topics.SpeexModes));
                 _findings.Add(Severity.Warning, "speex.header-short", node, _ =>
                     $"The Speex header packet holds {packet.Length} bytes, fewer than the header's {SpeexHeader.Length}; decoders reject the stream, and its audio packets are only counted.");
                 return;
@@ -113,7 +114,8 @@ public sealed partial class SpeexParser
             _records.Mode = Mode;
             if (packet.Length > SpeexHeader.Length)
             {
-                Node extra = _parent.Add(Node.FromMapped("Header Extra Data", packet, SpeexHeader.Length, packet.Length, NodeValue.Integer(packet.Length - SpeexHeader.Length, "bytes", "byte")));
+                Node extra = _parent.Add(Node.FromMapped("Header Extra Data", packet, SpeexHeader.Length, packet.Length, NodeValue.Integer(packet.Length - SpeexHeader.Length, "bytes", "byte"),
+                    description: Explain.HeaderExtraData));
                 _findings.Add(Severity.Info, "speex.header-extra-data", extra, _ =>
                     $"The Speex header packet holds {packet.Length - SpeexHeader.Length} bytes after the 80-byte header, which decoders ignore.");
             }
@@ -193,7 +195,8 @@ public sealed partial class SpeexParser
             int end = BytesBefore(packet, _comment.End);
             if (end < packet.Length)
             {
-                Node trailing = _parent.Add(Node.FromMapped("Comment Trailing Data", packet, end, packet.Length, NodeValue.Integer(packet.Length - end, "bytes", "byte")));
+                Node trailing = _parent.Add(Node.FromMapped("Comment Trailing Data", packet, end, packet.Length, NodeValue.Integer(packet.Length - end, "bytes", "byte"),
+                    description: Explain.CommentTrailingData));
                 _findings.Add(Severity.Info, "speex.comment-trailing-data", trailing, _ =>
                     $"The comment packet holds {packet.Length - end} bytes after the comment, which readers ignore.");
             }

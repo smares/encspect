@@ -51,22 +51,22 @@ internal sealed record SpeexHeader(string Version, int VersionId, int HeaderSize
 
     public Node ToNode(MappedBytes packet)
     {
-        Node header = Node.FromMapped("Speex Header", packet, 0, Math.Min(packet.Length, Length), $"{ModeName}, {Rate} Hz");
-        header.Add(Node.FromMapped("Speex String", packet, 0, 8, "Speex   "));
-        header.Add(Node.FromMapped("Speex Version", packet, 8, 28, Version));
-        header.Add(Node.FromMapped("Version ID", packet, 28, 32, NodeValue.Integer(VersionId)));
-        header.Add(Node.FromMapped("Header Size", packet, 32, 36, NodeValue.Integer(HeaderSize, "bytes", "byte")));
-        header.Add(Node.FromMapped("Sample Rate", packet, 36, 40, NodeValue.Integer(Rate, "Hz")));
-        header.Add(Node.FromMapped("Mode", packet, 40, 44, IsModeValid ? ModeName : $"{Mode} (undefined)"));
-        header.Add(Node.FromMapped("Mode Bitstream Version", packet, 44, 48, NodeValue.Integer(ModeBitstreamVersion)));
-        header.Add(Node.FromMapped("Channels", packet, 48, 52, NodeValue.Integer(Channels)));
-        header.Add(Node.FromMapped("Bitrate", packet, 52, 56, Bitrate == -1 ? "-1 (not given)" : NodeValue.Integer(Bitrate, "bps")));
-        header.Add(Node.FromMapped("Frame Size", packet, 56, 60, NodeValue.Integer(FrameSize, "samples", "sample")));
-        header.Add(Node.FromMapped("IsVbr", packet, 60, 64, Vbr is 0 or 1 ? NodeValue.Boolean(Vbr == 1) : NodeValue.Integer(Vbr)));
-        header.Add(Node.FromMapped("Frames Per Packet", packet, 64, 68, NodeValue.Integer(FramesPerPacket)));
-        header.Add(Node.FromMapped("Extra Headers", packet, 68, 72, NodeValue.Integer(ExtraHeaders)));
-        header.Add(Node.FromMapped("Reserved 1", packet, 72, 76, NodeValue.Integer(Reserved1)));
-        header.Add(Node.FromMapped("Reserved 2", packet, 76, 80, NodeValue.Integer(Reserved2)));
+        Node header = Node.FromMapped("Speex Header", packet, 0, Math.Min(packet.Length, Length), $"{ModeName}, {Rate} Hz", description: Explain.Header, topic: Topics.SpeexModes);
+        header.Add(Node.FromMapped("Speex String", packet, 0, 8, "Speex   ", description: Explain.SpeexString));
+        header.Add(Node.FromMapped("Speex Version", packet, 8, 28, Version, description: Explain.SpeexVersion));
+        header.Add(Node.FromMapped("Version ID", packet, 28, 32, NodeValue.Integer(VersionId), description: Explain.VersionId));
+        header.Add(Node.FromMapped("Header Size", packet, 32, 36, NodeValue.Integer(HeaderSize, "bytes", "byte"), description: Explain.HeaderSize));
+        header.Add(Node.FromMapped("Sample Rate", packet, 36, 40, NodeValue.Integer(Rate, "Hz"), description: Explain.SampleRate));
+        header.Add(Node.FromMapped("Mode", packet, 40, 44, IsModeValid ? ModeName : $"{Mode} (undefined)", description: IsModeValid ? Explain.Mode : Explain.ModeInvalid));
+        header.Add(Node.FromMapped("Mode Bitstream Version", packet, 44, 48, NodeValue.Integer(ModeBitstreamVersion), description: Explain.ModeBitstreamVersion));
+        header.Add(Node.FromMapped("Channels", packet, 48, 52, NodeValue.Integer(Channels), description: Explain.Channels));
+        header.Add(Node.FromMapped("Bitrate", packet, 52, 56, Bitrate == -1 ? "-1 (not given)" : NodeValue.Integer(Bitrate, "bps"), description: Explain.Bitrate));
+        header.Add(Node.FromMapped("Frame Size", packet, 56, 60, NodeValue.Integer(FrameSize, "samples", "sample"), description: Explain.FrameSize));
+        header.Add(Node.FromMapped("IsVbr", packet, 60, 64, Vbr is 0 or 1 ? NodeValue.Boolean(Vbr == 1) : NodeValue.Integer(Vbr), description: Explain.IsVbr, topic: Topics.BitrateModes));
+        header.Add(Node.FromMapped("Frames Per Packet", packet, 64, 68, NodeValue.Integer(FramesPerPacket), description: Explain.FramesPerPacket));
+        header.Add(Node.FromMapped("Extra Headers", packet, 68, 72, NodeValue.Integer(ExtraHeaders), description: Explain.ExtraHeaders));
+        header.Add(Node.FromMapped("Reserved 1", packet, 72, 76, NodeValue.Integer(Reserved1), description: Explain.Reserved));
+        header.Add(Node.FromMapped("Reserved 2", packet, 76, 80, NodeValue.Integer(Reserved2), description: Explain.Reserved));
         return header;
     }
 

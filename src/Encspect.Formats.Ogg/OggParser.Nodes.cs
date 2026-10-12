@@ -10,10 +10,10 @@ public sealed partial class OggParser
         PageRecord page = region.Pages[index];
         if (page.IsGap)
         {
-            return new Node("Gap", page.Offset, page.Length, NodeValue.Integer(page.Length, "bytes", "byte"));
+            return new Node("Gap", page.Offset, page.Length, NodeValue.Integer(page.Length, "bytes", "byte")) { Description = Explain.Gap };
         }
 
-        return new Node("Page", page.Offset, page.Length, Summary(page), () => PageFields(region, index)) { Kind = NodeKind.Frame };
+        return new Node("Page", page.Offset, page.Length, Summary(page), () => PageFields(region, index)) { Kind = NodeKind.Frame, Description = Explain.Page };
     }
 
     private static string Summary(in PageRecord page)
@@ -50,39 +50,43 @@ public sealed partial class OggParser
     {
         PageRecord page = region.Pages[index];
         long offset = page.Offset;
-        var fields = new List<Node> { new("Capture Pattern", offset, Math.Min(4L, page.Length), "OggS") };
+        var fields = new List<Node> { new("Capture Pattern", offset, Math.Min(4L, page.Length), "OggS") { Description = Explain.CapturePattern } };
         if ((page.Status & PageStatus.HeaderCut) != 0)
         {
             if (page.Length > 4)
             {
-                fields.Add(new Node("Unparsed", offset + 4, page.Length - 4, NodeValue.Integer(page.Length - 4, "bytes", "byte")));
+                fields.Add(new Node("Unparsed", offset + 4, page.Length - 4, NodeValue.Integer(page.Length - 4, "bytes", "byte")) { Description = Explain.UnparsedHeader });
             }
 
             return fields;
         }
 
-        fields.Add(new Node("Version", offset + 4, 1, NodeValue.Integer(0)));
-        Node flags = new("Header Type", offset + 5, 1, NodeValue.Hex(page.Flags, 2));
-        flags.Add(Node.FromBits("IsContinued", offset + 5, 7, 8, NodeValue.Boolean((page.Flags & Pages.Continued) != 0)));
-        flags.Add(Node.FromBits("IsBeginningOfStream", offset + 5, 6, 7, NodeValue.Boolean((page.Flags & Pages.Beginning) != 0)));
-        flags.Add(Node.FromBits("IsEndOfStream", offset + 5, 5, 6, NodeValue.Boolean((page.Flags & Pages.End) != 0)));
+        fields.Add(new Node("Version", offset + 4, 1, NodeValue.Integer(0)) { Description = Explain.Version });
+        Node flags = new("Header Type", offset + 5, 1, NodeValue.Hex(page.Flags, 2)) { Description = Explain.HeaderType };
+        flags.Add(Node.FromBits("IsContinued", offset + 5, 7, 8, NodeValue.Boolean((page.Flags & Pages.Continued) != 0), description: Explain.IsContinued));
+        flags.Add(Node.FromBits("IsBeginningOfStream", offset + 5, 6, 7, NodeValue.Boolean((page.Flags & Pages.Beginning) != 0), description: Explain.IsBeginningOfStream));
+        flags.Add(Node.FromBits("IsEndOfStream", offset + 5, 5, 6, NodeValue.Boolean((page.Flags & Pages.End) != 0), description: Explain.IsEndOfStream));
         if ((page.Flags & 0xF8) != 0)
         {
-            flags.Add(Node.FromBits("Undefined Flags", offset + 5, 0, 5, NodeValue.Hex(page.Flags >> 3, 2)));
+            flags.Add(Node.FromBits("Undefined Flags", offset + 5, 0, 5, NodeValue.Hex(page.Flags >> 3, 2), description: Explain.UndefinedFlags));
         }
 
         fields.Add(flags);
-        fields.Add(new Node("Granule Position", offset + 6, 8, NodeValue.Integer(page.Granule)));
-        fields.Add(new Node("Serial Number", offset + 14, 4, NodeValue.Hex(page.Serial, 8)));
-        fields.Add(new Node("Sequence Number", offset + 18, 4, NodeValue.Integer(page.Sequence)));
-        Node crc = new("CRC", offset + 22, 4, NodeValue.Hex(page.Crc, 8));
+        fields.Add(new Node("Granule Position", offset + 6, 8, NodeValue.Integer(page.Granule))
+        {
+            Description = page.Granule == -1 ? Explain.GranuleNone : Explain.GranulePosition,
+            Topic = Topics.GranulePosition,
+        });
+        fields.Add(new Node("Serial Number", offset + 14, 4, NodeValue.Hex(page.Serial, 8)) { Description = Explain.SerialNumber });
+        fields.Add(new Node("Sequence Number", offset + 18, 4, NodeValue.Integer(page.Sequence)) { Description = Explain.SequenceNumber });
+        Node crc = new("CRC", offset + 22, 4, NodeValue.Hex(page.Crc, 8)) { Description = Explain.Crc };
         if ((page.Status & PageStatus.Truncated) == 0)
         {
-            crc.Add("Computed", offset + 22, 4, NodeValue.Hex(page.ComputedCrc, 8));
+            crc.Add("Computed", offset + 22, 4, NodeValue.Hex(page.ComputedCrc, 8), Explain.ComputedCrc);
         }
 
         fields.Add(crc);
-        fields.Add(new Node("Segments", offset + 26, 1, NodeValue.Integer(page.Segments)));
+        fields.Add(new Node("Segments", offset + 26, 1, NodeValue.Integer(page.Segments)) { Description = Explain.Segments });
 
         int present = page.LacingPresent;
         if (present > 0)
@@ -94,11 +98,14 @@ public sealed partial class OggParser
                 var nodes = new Node[values.Length];
                 for (int i = 0; i < values.Length; i++)
                 {
-                    nodes[i] = new Node("Lacing Value", offset + 27 + i, 1, NodeValue.Integer(values[i], "bytes", "byte"));
+                    nodes[i] = new Node("Lacing Value", offset + 27 + i, 1, NodeValue.Integer(values[i], "bytes", "byte")) { Description = Explain.Lacing(values[i]) };
                 }
 
                 return nodes;
-            }));
+            })
+            {
+                Description = Explain.SegmentTable,
+            });
         }
 
         long bodyOffset = page.BodyOffset;
@@ -111,7 +118,7 @@ public sealed partial class OggParser
         if (page.IsLost)
         {
             string why = (page.Status & PageStatus.Truncated) != 0 ? "the page is cut short" : "the page fails its CRC check";
-            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{bodyPresent} bytes, not read as packets: {why}"));
+            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{bodyPresent} bytes, not read as packets: {why}") { Description = Explain.LostBody });
             return fields;
         }
 
@@ -137,7 +144,13 @@ public sealed partial class OggParser
                 _ when run.Ends => $"packet {run.Packet}",
                 _ => $"the start of packet {run.Packet}, which continues on the next page",
             };
-            yield return new Node("Packet Data", page.BodyOffset + run.Start, run.Length, $"{run.Length} bytes, {what}");
+            string description = run.Kind switch
+            {
+                RunKind.Orphan => Explain.OrphanData,
+                RunKind.TooLarge => Explain.TooLargeData,
+                _ => Explain.PacketData,
+            };
+            yield return new Node("Packet Data", page.BodyOffset + run.Start, run.Length, $"{run.Length} bytes, {what}") { Description = description };
         }
     }
 

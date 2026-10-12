@@ -82,7 +82,7 @@ public sealed class VorbisCommentTagParser : ITagParser
                 }
             }
 
-            Node tag = Node.FromMapped("Vorbis Comment", data, 0, position, NodeValue.Integer(parsed, "comments", "comment"), NodeKind.Tag);
+            Node tag = Node.FromMapped("Vorbis Comment", data, 0, position, NodeValue.Integer(parsed, "comments", "comment"), NodeKind.Tag, Explain.Tag, Topics.VorbisComments);
             foreach (Node child in _children)
             {
                 tag.Add(child);
@@ -141,16 +141,18 @@ public sealed class VorbisCommentTagParser : ITagParser
             bool isFieldName = separator > 0 && !text[..separator].ContainsAnyExceptInRange((byte)0x20, (byte)0x7D);
 
             // A field name that breaks the rules, or a very long one, does not name the node.
-            Node comment = Node.FromMapped(isFieldName && separator <= 64 ? name : "Comment", data, start, end, separator < 0 ? name : value);
-            comment.Add(Node.FromMapped("Length", data, start, textStart, NodeValue.Integer(end - textStart, "bytes")));
+            string description = separator < 0 ? Explain.NoSeparator : isFieldName ? Explain.Field(name) : Explain.InvalidName;
+            string? topic = isFieldName ? Explain.FieldTopic(name) : null;
+            Node comment = Node.FromMapped(isFieldName && separator <= 64 ? name : "Comment", data, start, end, separator < 0 ? name : value, description: description, topic: topic);
+            comment.Add(Node.FromMapped("Length", data, start, textStart, NodeValue.Integer(end - textStart, "bytes"), description: Explain.Length));
             if (separator < 0)
             {
-                comment.Add(Node.FromMapped("Text", data, textStart, end, name));
+                comment.Add(Node.FromMapped("Text", data, textStart, end, name, description: Explain.Text));
             }
             else
             {
-                comment.Add(Node.FromMapped("Field Name", data, textStart, textStart + separator, name));
-                comment.Add(Node.FromMapped("Value", data, textStart + separator + 1, end, value));
+                comment.Add(Node.FromMapped("Field Name", data, textStart, textStart + separator, name, description: Explain.FieldName));
+                comment.Add(Node.FromMapped("Value", data, textStart + separator + 1, end, value, description: Explain.Value));
             }
 
             _children.Add(comment);
@@ -160,7 +162,7 @@ public sealed class VorbisCommentTagParser : ITagParser
                 Problem(comment, "vorbis-comment.not-utf8", "A comment is not valid UTF-8, which the Vorbis comment requires; the invalid bytes are shown as U+FFFD.", Confidence.Medium);
             }
 
-            // Section 5.2.3: "A case-insensitive field name that may consist of ASCII 0x20 through
+            // Section 5.2.2: "A case-insensitive field name that may consist of ASCII 0x20 through
             // 0x7D, 0x3D ('=') excluded."
             if (separator < 0)
             {
@@ -184,7 +186,7 @@ public sealed class VorbisCommentTagParser : ITagParser
             {
                 if (bytes.Length > position)
                 {
-                    _children.Add(Node.FromMapped("Unparsed", data, position, bytes.Length, NodeValue.Integer(bytes.Length - position, "bytes")));
+                    _children.Add(Node.FromMapped("Unparsed", data, position, bytes.Length, NodeValue.Integer(bytes.Length - position, "bytes"), description: Explain.Unparsed));
                 }
 
                 Problem(null, "vorbis-comment.truncated", $"The data ends {bytes.Length - position} bytes into the 4-byte length of {what}.", Confidence.Low);
@@ -195,7 +197,9 @@ public sealed class VorbisCommentTagParser : ITagParser
             uint value = BinaryPrimitives.ReadUInt32LittleEndian(bytes[position..]);
             if (name is not null)
             {
-                _children.Add(Node.FromMapped(name, data, position, position + 4, name == "Comment Count" ? NodeValue.Integer(value) : NodeValue.Integer(value, "bytes")));
+                bool isCount = name == "Comment Count";
+                _children.Add(Node.FromMapped(name, data, position, position + 4, isCount ? NodeValue.Integer(value) : NodeValue.Integer(value, "bytes"),
+                    description: isCount ? Explain.CommentCount : Explain.VendorLength));
             }
 
             position += 4;
@@ -206,7 +210,7 @@ public sealed class VorbisCommentTagParser : ITagParser
         {
             int end = (int)Math.Min(bytes.Length, position + (long)length);
             text = Decode(bytes[position..end], out _);
-            Node node = Node.FromMapped(name, data, position, end, text);
+            Node node = Node.FromMapped(name, data, position, end, text, description: Explain.Vendor);
             _children.Add(node);
             if (!Utf8.IsValid(bytes[position..end]))
             {

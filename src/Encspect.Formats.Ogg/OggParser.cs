@@ -95,7 +95,11 @@ public sealed partial class OggParser : IFormatParser
         Scan(region, window, context.CancellationToken);
         CloseStreams(region);
 
-        Node node = context.Root.Add(new Node("Ogg", start, end - start, NodeValue.Integer(region.PageCount, "pages", "page")));
+        Node node = context.Root.Add(new Node("Ogg", start, end - start, NodeValue.Integer(region.PageCount, "pages", "page"))
+        {
+            Description = Explain.Ogg,
+            Topic = Topics.OggPages,
+        });
         foreach (LogicalStream stream in region.Streams)
         {
             AddStream(context, region, window, node, stream);
@@ -104,6 +108,7 @@ public sealed partial class OggParser : IFormatParser
         node.Add(new Node("Pages", start, end - start, NodeValue.Integer(region.PageCount, "pages", "page"), () => new PageList(region))
         {
             Kind = NodeKind.Stream,
+            Description = Explain.Pages,
         });
 
         region.Findings.Flush(context);

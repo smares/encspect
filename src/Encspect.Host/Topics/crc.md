@@ -11,4 +11,4 @@ references: ISO/IEC 11172-3 2.4.3.1
 
 **In practice.** Most encoders write no CRC by default; LAME writes one with -p. The two bytes cost a little bitrate.
 
-**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs in a file serve other purposes: the LAME tag has a CRC of its own and one over the music, and the multichannel extension carries its own.
+**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs in a file serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension carries its own, and every [Ogg page](ogg-pages) a CRC-32 over the whole page.
