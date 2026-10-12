@@ -9,7 +9,7 @@ references: ISO/IEC 11172-3 2.4.1.7, 2.4.2.7
 
 **How it works.** The side information carries four scfsi bits per channel, one for each group of scalefactor bands: bands 0 to 5, 6 to 10, 11 to 15 and 16 to 20. Where a bit is set, granule 1 sends no scalefactors for that group and the decoder reuses those of granule 0. The bits saved go to the audio itself. The encoder decides group by group, so it can reuse the scalefactors of the steady low bands while sending new ones for high bands that changed.
 
-**Why not with short blocks.** The four groups are groups of the long-block scalefactor bands. A granule with short blocks has scalefactors per window over a different set of bands, and short blocks are used precisely where the sound changes suddenly. ISO/IEC 11172-3 therefore sets scfsi to 0 in a frame where either granule uses short blocks; libmad rejects frames that break this, and the analyzer reports them.
+**Why not with short blocks.** The four groups are groups of the long-block scalefactor bands. A granule with short blocks has scalefactors per window over a different set of bands, and short blocks are used precisely where the sound changes suddenly. ISO/IEC 11172-3 therefore calls for scfsi to be 0 where short blocks are used. minimp3 ignores the bits for a channel with short blocks, libmad rejects such frames, and the analyzer reports them.
 
 **MPEG-2 and 2.5** have one granule per frame, so there is nothing to reuse and no scfsi.
 
