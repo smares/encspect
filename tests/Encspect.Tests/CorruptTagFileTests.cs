@@ -3,9 +3,9 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4 and raw AAC fixture
-// must yield a report, never an exception or a hang, and every node must stay inside the file and its
-// parent.
+// Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4, raw AAC and Ogg
+// fixture must yield a report, never an exception or a hang, and every node must stay inside the
+// file and its parent.
 public class CorruptTagFileTests
 {
     private const int FlipsPerFixture = 300;
@@ -27,6 +27,11 @@ public class CorruptTagFileTests
             }
 
             foreach (string name in Fixtures.Mp4FixtureNames())
+            {
+                data.Add(name);
+            }
+
+            foreach (string name in Fixtures.OggFixtures())
             {
                 data.Add(name);
             }
@@ -151,11 +156,24 @@ public class CorruptTagFileTests
         }
 
         Assert.All(report.Findings, f => Assert.NotNull(f.Node));
+
+        // A parser exception the host caught is a bug, and every finding points at a node of the
+        // tree, as the fuzzer requires.
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
     }
 
     private static void CheckNode(Node node, Node parent)
     {
         Assert.True(node.Offset >= parent.Offset && node.End <= parent.End, $"{node.Name} [{node.Offset}, {node.End}) is outside {parent.Name} [{parent.Offset}, {parent.End}).");
+        if (parent.Ranges is { } ranges && node != parent)
+        {
+            foreach (ByteRange range in node.Ranges ?? [new ByteRange(node.Offset, node.Length)])
+            {
+                Assert.True(range.Length == 0 || ranges.Any(r => r.Offset <= range.Offset && range.End <= r.End), $"{node.Name} lies in a gap between the ranges of {parent.Name}.");
+            }
+        }
+
         foreach (Node child in node.Children)
         {
             CheckNode(child, node);

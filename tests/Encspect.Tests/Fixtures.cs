@@ -40,6 +40,22 @@ internal static class Fixtures
         return data;
     }
 
+    // Paths relative to tests/fixtures of the Ogg fixtures: every file in tests/fixtures/ogg that has
+    // a manifest.
+    public static TheoryData<string> OggFixtures()
+    {
+        var data = new TheoryData<string>();
+        string directory = Path.Combine(FixtureDirectory, "ogg");
+        foreach (string manifest in Directory.EnumerateFiles(directory, "*.expected.json").Order(StringComparer.Ordinal))
+        {
+            string stem = Path.GetFileName(manifest)[..^".expected.json".Length];
+            string file = Directory.EnumerateFiles(directory, stem + ".*").Single(p => !p.EndsWith(".json", StringComparison.Ordinal));
+            data.Add($"ogg/{Path.GetFileName(file)}");
+        }
+
+        return data;
+    }
+
     public static IEnumerable<string> Mp4FixtureNames()
     {
         string[] extensions = [".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"];

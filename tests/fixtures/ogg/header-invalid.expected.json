@@ -1,0 +1,216 @@
+{
+ "length": 340,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 340
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 3757,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 3757,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 40,
+   "serial": 3757,
+   "sequence": 2,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 208,
+   "length": 132,
+   "serial": 3757,
+   "sequence": 3,
+   "granule": 760,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x00000EAD",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 4,
+   "packets": 8,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "2",
+     "Header Size": "76 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "3",
+     "Channels": "3",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "200 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "0",
+     "Extra Headers": "1",
+     "Reserved 1": "1",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      240,
+      20
+     ],
+     [
+      260,
+      20
+     ],
+     [
+      280,
+      20
+     ],
+     [
+      300,
+      20
+     ],
+     [
+      320,
+      20
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "5",
+     "Frames": "5",
+     "Coded Samples": "800 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "760 samples",
+     "Duration": "0.095 s",
+     "IsVbr": "false",
+     "Average Bitrate": "8.0 kbps",
+     "Minimum Bitrate": "8.0 kbps",
+     "Maximum Bitrate": "8.0 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "5 packets (100.0%), 8.0 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "5 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 800
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 2,
+   "samples": 760,
+   "duration": 0.095,
+   "average_bitrate": 8.0,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "speex.header-size",
+   "contains": "gives its size as 76 bytes"
+  },
+  {
+   "code": "speex.frame-size",
+   "contains": "gives a frame size of 200 samples"
+  },
+  {
+   "code": "speex.bitstream-version",
+   "contains": "bit-stream version is 3"
+  },
+  {
+   "code": "speex.channels-invalid",
+   "contains": "gives 3 channels"
+  },
+  {
+   "code": "speex.frames-per-packet",
+   "contains": "gives 0 frames per packet"
+  },
+  {
+   "code": "speex.version-id",
+   "contains": "version ID is 2"
+  },
+  {
+   "code": "speex.reserved",
+   "contains": "A reserved header field is not 0"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "not_compared": {
+   "speexdec, ogginfo and ffprobe": "speexdec refuses the bit-stream version, as the finding says, and the others read the header as it stands"
+  }
+ }
+}

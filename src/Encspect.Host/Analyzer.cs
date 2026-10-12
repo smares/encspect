@@ -641,7 +641,14 @@ public sealed class Analyzer
     // The node the report shows for an accepted tag, also for one a container holds.
     internal static Node ShowTag(Node tag, Confidence confidence, IReadOnlyList<Evidence> evidence, out Node detection)
     {
-        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString()) { Description = HostText.Detection, Topic = Topics.TagPlacement };
+        // A tag a container took apart (a Vorbis comment packet that spans Ogg pages) keeps its
+        // ranges, so neither node covers the page headers between them.
+        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString())
+        {
+            Description = HostText.Detection,
+            Topic = Topics.TagPlacement,
+            Ranges = tag.Ranges,
+        };
         foreach (Evidence item in evidence)
         {
             shownDetection.Add("Evidence", item.Offset, item.Length, item.Description, HostText.Evidence);
@@ -653,6 +660,7 @@ public sealed class Analyzer
             Kind = NodeKind.Tag,
             Description = tag.Description,
             Topic = tag.Topic,
+            Ranges = tag.Ranges,
         };
     }
 

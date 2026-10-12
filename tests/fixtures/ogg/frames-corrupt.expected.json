@@ -1,0 +1,291 @@
+{
+ "length": 517,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 517
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 64017,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 64017,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 349,
+   "serial": 64017,
+   "sequence": 2,
+   "granule": 3160,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000FA11",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 12,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "2",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      205,
+      40
+     ],
+     [
+      245,
+      2
+     ],
+     [
+      247,
+      40
+     ],
+     [
+      287,
+      25
+     ],
+     [
+      312,
+      60
+     ],
+     [
+      372,
+      20
+     ],
+     [
+      392,
+      0
+     ],
+     [
+      392,
+      45
+     ],
+     [
+      437,
+      40
+     ],
+     [
+      477,
+      40
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [],
+     [
+      [
+       3,
+       null,
+       null,
+       36
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ],
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "10",
+     "Frames": "14",
+     "Coded Samples": "3200 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "3160 samples",
+     "Duration": "0.395 s",
+     "IsVbr": "true",
+     "Average Bitrate": "6.2 kbps",
+     "Minimum Bitrate": "0.0 kbps",
+     "Maximum Bitrate": "12.0 kbps",
+     "Packet Sizes": "7 sizes",
+     "Packet Sizes/0 bytes": "1 packet (10.0%), 0.0 kbps",
+     "Packet Sizes/2 bytes": "1 packet (10.0%), 0.4 kbps",
+     "Packet Sizes/20 bytes": "1 packet (10.0%), 4.0 kbps",
+     "Packet Sizes/25 bytes": "1 packet (10.0%), 5.0 kbps",
+     "Packet Sizes/40 bytes": "4 packets (40.0%), 8.0 kbps",
+     "Packet Sizes/45 bytes": "1 packet (10.0%), 9.0 kbps",
+     "Packet Sizes/60 bytes": "1 packet (10.0%), 12.0 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "14 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 2240
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 3160,
+   "duration": 0.395,
+   "average_bitrate": 6.24,
+   "is_vbr": true
+  }
+ ],
+ "findings": [
+  {
+   "code": "speex.frame-invalid",
+   "contains": "narrowband submode 10 is not defined"
+  },
+  {
+   "code": "speex.frame-overrun",
+   "contains": "the frame runs past the end of the packet"
+  },
+  {
+   "code": "speex.extra-frames",
+   "contains": "more frames than the 2 per packet"
+  },
+  {
+   "code": "speex.missing-frames",
+   "contains": "fewer frames than the 2 per packet"
+  },
+  {
+   "code": "speex.empty-packet",
+   "contains": "1 audio packet is empty"
+  },
+  {
+   "code": "speex.wideband-layer-in-narrowband",
+   "contains": "carry wideband layers"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "speexdec": true,
+  "not_compared": {
+   "ogginfo and ffprobe": "they do not read frames; speexdec's frame bitrates and samples are compared"
+  }
+ }
+}

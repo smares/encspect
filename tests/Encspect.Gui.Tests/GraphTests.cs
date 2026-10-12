@@ -183,6 +183,25 @@ public class GraphTests
     }
 
     [Fact]
+    public void Clicking_a_point_of_a_speex_stream_selects_its_packet()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Ogg("external-speexenc-wb-vbr.spx"));
+        ui.Until(() => load.IsCompleted);
+        var line = (LineGraph)model.Graphs.Graph!;
+        Assert.Equal("Bitrate", line.Series.Name);
+
+        model.Graphs.Activate(30);
+
+        TreeRow row = model.SelectedNode!;
+        Assert.Equal(NodeKind.Frame, row.Kind);
+        Assert.Equal("Packet", row.Node.Name);
+        Assert.Equal((long)line.Series.X.Span[30], row.Node.Offset);
+        Assert.Equal(30, model.Graphs.MarkedIndex);
+    }
+
+    [Fact]
     public void A_file_of_two_streams_offers_a_choice_and_a_click_selects_a_frame_of_the_chosen_one()
     {
         var ui = new TestDispatcher();

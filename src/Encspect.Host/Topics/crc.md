@@ -13,4 +13,4 @@ references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2
 
 **In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it means knowing where each element ends; where that takes the spectral data, which is not read yet, the analyzer says the CRC is not verified.
 
-**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs in a file serve other purposes: the LAME tag has a CRC of its own and one over the music, and the multichannel extension carries its own.
+**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs in a file serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension carries its own, and every [Ogg page](ogg-pages) a CRC-32 over the whole page.
