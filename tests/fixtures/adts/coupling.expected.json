@@ -1,0 +1,61 @@
+{
+ "description": "A channel pair and a coupling channel element coupled to both its channels, with a gain element list for the second, in a stream of channel configuration 2, which provides for no coupling channel element.",
+ "length": 324,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   80
+  ],
+  [
+   80,
+   81
+  ],
+  [
+   161,
+   82
+  ],
+  [
+   243,
+   81
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/CCE/Target": "CPE 0, both channels",
+  "ADTS/Frame/Raw Data Block/CCE/Gain Element Lists": "1",
+  "ADTS/Frame[1]/Raw Data Block/CCE/IsIndependentlySwitched": "true"
+ },
+ "findings": [
+  [
+   "aac.coupling-without-program",
+   "4 raw data blocks hold a coupling channel element, which channel configuration 2 does not provide for"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "ffprobe_streams": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 is built without coupling and stops at the element.",
+   "faad_trace": "faad2 is built without coupling and stops at the element.",
+   "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2.",
+   "ffprobe_streams": "ffmpeg cannot decode the frames, so it reports no sample rate."
+  }
+ }
+}

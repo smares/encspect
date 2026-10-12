@@ -1,0 +1,77 @@
+{
+ "length": 25413,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   14,
+   "SH"
+  ],
+  [
+   18,
+   12,
+   "RG"
+  ],
+  [
+   30,
+   7,
+   "EI"
+  ],
+  [
+   37,
+   8,
+   "SO"
+  ],
+  [
+   45,
+   25359,
+   "AP"
+  ],
+  [
+   25404,
+   6,
+   "ST"
+  ],
+  [
+   25410,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {
+  "Sample Count": "66150 samples",
+  "Beginning Silence": "0 samples",
+  "Channels": "2",
+  "Max Used Bands": "28",
+  "Mid/Side Stereo": "true",
+  "Audio Block Frames": "64 frames"
+ },
+ "frames": 58,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 66150,
+   "average_bitrate": 133.8998922413793,
+   "duration": 1.5,
+   "encoder": "mppenc 1.16, converted to SV8 by mpc2sv8",
+   "encoder_confidence": "High"
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 25413
+  }
+ ],
+ "encoder": {
+  "tool": "mpc2sv8 (musepack-tools 0.1~r495)",
+  "input": "external-mppenc-standard.mpc"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

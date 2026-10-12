@@ -26,6 +26,7 @@ internal static class Program
         "trun"u8.ToArray(), "ilst"u8.ToArray(), "meta"u8.ToArray(), "udta"u8.ToArray(), "----"u8.ToArray(), "data"u8.ToArray(), "ID32"u8.ToArray(),
         [0x2B, 0x7], [0x56, 0xE5], [0x05, 0x80, 0x80, 0x80],
         "OggS\0"u8.ToArray(), "Speex   "u8.ToArray(), [0x01, .. "vorbis"u8], "OpusHead"u8.ToArray(), [0xFF, 0xFF, 0xFF, 0xFF],
+        "MPCK"u8.ToArray(), "MP+\x07"u8.ToArray(), "SH"u8.ToArray(), "AP"u8.ToArray(), "SE\x03"u8.ToArray(), "ST"u8.ToArray(),
     ];
 
     private static readonly uint[] Sizes = [0, 1, 0x7F, 0x80, 0x7F7F7F7F, 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 10, 128];
@@ -50,7 +51,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".ac3" or ".eac3" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

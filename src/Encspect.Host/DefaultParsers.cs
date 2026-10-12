@@ -3,8 +3,11 @@ using Encspect.Formats.Aac;
 using Encspect.Formats.Ac3;
 using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
+using Encspect.Formats.Musepack;
 using Encspect.Formats.Ogg;
+using Encspect.Formats.Opus;
 using Encspect.Formats.Speex;
+using Encspect.Formats.Vorbis;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
@@ -38,13 +41,14 @@ public static class DefaultParsers
     // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
     // start of the data (91) outranks MPEG audio too, one further in (50) does not. Ogg is certain
     // of a chain of pages from the start (100), which no MP4 or ADTS file starts with, and takes one
-    // further in (60) only where nothing more certain claims the file. An AC-3 chain at the start of
-    // the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its 0x0B; one
-    // further in (50) ranks below both.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new Ac3Parser()];
+    // further in (60) only where nothing more certain claims the file. Musepack is certain of its
+    // magic number (100); a stream of version 4 to 6 has none and takes 60. An AC-3 chain at the
+    // start of the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its
+    // 0x0B; one further in (50) ranks below them all.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
-    // Speex in Ogg, AC-3 and E-AC-3 in MP4.
+    // Speex, Vorbis and Opus in Ogg, AC-3 and E-AC-3 in MP4.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
-        [Mpeg, new AacCodecParser(), new SpeexParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3)];
+        [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3)];
 }

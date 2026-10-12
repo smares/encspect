@@ -1,0 +1,188 @@
+{
+ "description": "Access units of one channel pair each, the fourth with two bytes after its END element.",
+ "length": 3562,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   612
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   496
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   396
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   311
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   251
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   103
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   87
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   524,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   564,
+   52
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   616,
+   24
+  ],
+  [
+   "mdat",
+   640,
+   2922
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 8192,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   648,
+   364
+  ],
+  [
+   1012,
+   364
+  ],
+  [
+   1376,
+   364
+  ],
+  [
+   1740,
+   366
+  ],
+  [
+   2106,
+   364
+  ],
+  [
+   2470,
+   364
+  ],
+  [
+   2834,
+   364
+  ],
+  [
+   3198,
+   364
+  ]
+ ],
+ "fields": {
+  "MP4/mdat/Track 1 Samples/AAC/Access Unit[3]/Trailing Bytes": "2 bytes"
+ },
+ "findings": [
+  [
+   "aac.unit-trailing-bytes",
+   "holds 2 bytes after the END element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "decode": false,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  },
+  "skip": {
+   "faad_trace": "faad2 reads the access unit's raw data block and does not show the bytes after it.",
+   "decode": "ffmpeg decodes the bytes after the END element as a further raw data block, which fails."
+  }
+ }
+}

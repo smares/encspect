@@ -246,9 +246,9 @@ public class CommandLineTests
             string both = Run("--csv", "--only-format", "MP4,AAC", folder).Output;
 
             Assert.Equal([Path.Combine(folder, "b.bin")], Rows(mp4).Select(r => r.Split(',')[0]));
-            Assert.StartsWith(Path.Combine(folder, "b.bin") + ",MP4,1,AAC LC (no SBR signaled explicitly),", Rows(mp4)[0]);
+            Assert.StartsWith(Path.Combine(folder, "b.bin") + ",MP4,1,AAC LC,", Rows(mp4)[0]);
             Assert.Equal([Path.Combine(folder, "c.mp4")], Rows(aac).Select(r => r.Split(',')[0]));
-            Assert.StartsWith(Path.Combine(folder, "c.mp4") + ",AAC,1,AAC LC (no SBR signaled explicitly),", Rows(aac)[0]);
+            Assert.StartsWith(Path.Combine(folder, "c.mp4") + ",AAC,1,AAC LC,", Rows(aac)[0]);
             Assert.Equal(2, Rows(both).Length);
         }
         finally

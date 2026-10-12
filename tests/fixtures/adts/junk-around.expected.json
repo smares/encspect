@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -102,10 +102,6 @@
  "fields": {},
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
    "aac.leading-junk",
    "100 bytes before the first ADTS frame"
   ],
@@ -119,7 +115,8 @@
   "faad": null,
   "skip": {
    "ffprobe": "ffmpeg's ADTS probe does not look past junk at the start.",
-   "faad": "faad2 reads ADTS only from the first byte."
+   "faad": "faad2 reads ADTS only from the first byte.",
+   "faad_trace": "faad2 reads ADTS only from the first byte."
   }
  }
 }

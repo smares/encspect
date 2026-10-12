@@ -99,7 +99,7 @@ public sealed partial class Mp4Parser
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
         }
 
-        CompareLayouts(state, entry, codec, streams, label);
+        CompareLayouts(state, entry, streams, label);
     }
 
     // What the file says about the bitrate: Apple's encoder records its mode in Encoding Params, and

@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -144,12 +144,7 @@
   "ADTS/Frame/Profile": "1 (AAC LC)",
   "ADTS/Frame/Raw Data Block": "CPE"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "faad": {

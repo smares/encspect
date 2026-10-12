@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 6,
    "channel_mode": "5.1",
@@ -225,12 +225,8 @@
  },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
    "mp4.channel-layout-differs",
-   "states 5.1 (front left, front right, front center, LFE, side left, side right), but the AAC LC (no SBR signaled explicitly)"
+   "states 5.1 (front left, front right, front center, LFE, side left, side right), but the AAC LC"
   ]
  ],
  "crosscheck": {

@@ -31,6 +31,7 @@ jobs:
   sources:
     name: every download address serves its pinned file
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
 

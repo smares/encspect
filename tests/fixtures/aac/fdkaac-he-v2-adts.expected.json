@@ -1,0 +1,200 @@
+{
+ "description": "{fdkaac} -S -p 29 -b 32000 -f 2 -o {out} {in} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{fdkaac}",
+   "-S",
+   "-p",
+   "29",
+   "-b",
+   "32000",
+   "-f",
+   "2",
+   "-o",
+   "{out}",
+   "{in}"
+  ]
+ },
+ "length": 6688,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "is_vbr": false,
+   "ffprobe_profile": "HE-AACv2",
+   "samples": 73728
+  }
+ ],
+ "units": [
+  [
+   0,
+   185
+  ],
+  [
+   185,
+   186
+  ],
+  [
+   371,
+   213
+  ],
+  [
+   584,
+   177
+  ],
+  [
+   761,
+   168
+  ],
+  [
+   929,
+   186
+  ],
+  [
+   1115,
+   186
+  ],
+  [
+   1301,
+   185
+  ],
+  [
+   1486,
+   186
+  ],
+  [
+   1672,
+   186
+  ],
+  [
+   1858,
+   186
+  ],
+  [
+   2044,
+   185
+  ],
+  [
+   2229,
+   186
+  ],
+  [
+   2415,
+   186
+  ],
+  [
+   2601,
+   186
+  ],
+  [
+   2787,
+   185
+  ],
+  [
+   2972,
+   186
+  ],
+  [
+   3158,
+   186
+  ],
+  [
+   3344,
+   186
+  ],
+  [
+   3530,
+   185
+  ],
+  [
+   3715,
+   186
+  ],
+  [
+   3901,
+   186
+  ],
+  [
+   4087,
+   186
+  ],
+  [
+   4273,
+   185
+  ],
+  [
+   4458,
+   186
+  ],
+  [
+   4644,
+   186
+  ],
+  [
+   4830,
+   186
+  ],
+  [
+   5016,
+   186
+  ],
+  [
+   5202,
+   185
+  ],
+  [
+   5387,
+   186
+  ],
+  [
+   5573,
+   186
+  ],
+  [
+   5759,
+   186
+  ],
+  [
+   5945,
+   185
+  ],
+  [
+   6130,
+   186
+  ],
+  [
+   6316,
+   198
+  ],
+  [
+   6514,
+   174
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR/Parametric Stereo": "36 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "36 of 36 raw data blocks hold SBR data, and 36 carry the parametric stereo extension"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}

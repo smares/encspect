@@ -203,6 +203,7 @@ public class ReportWriterTests
         Node header = root.Add("Header", 0, 4);
         header.Add(Node.FromBits("Layer", 0, 13, 15, "III"));
         header.Add(Node.FromBits("IsOriginal", 0, 29, 30, "true"));
+        header.Add(Node.FromBits("Blocksize", 0, 4, 8, "2048", order: BitOrder.LeastSignificantFirst));
         return new Report("bits.mp3", root, []);
     }
 
@@ -221,6 +222,9 @@ public class ReportWriterTests
         Assert.Equal((1L, 1L, 5, 2), (layer.GetProperty("offset").GetInt64(), layer.GetProperty("length").GetInt64(),
             layer.GetProperty("bitOffset").GetInt32(), layer.GetProperty("bitLength").GetInt32()));
         Assert.Equal(["name", "value", "offset", "length", "bitOffset", "bitLength"], layer.EnumerateObject().Select(p => p.Name));
+        JsonElement blocksize = header.GetProperty("children")[2];
+        Assert.Equal(["name", "value", "offset", "length", "bitOffset", "bitLength", "bitOrder"], blocksize.EnumerateObject().Select(p => p.Name));
+        Assert.Equal("leastSignificantFirst", blocksize.GetProperty("bitOrder").GetString());
     }
 
     [Fact]
@@ -234,6 +238,7 @@ public class ReportWriterTests
         Assert.Contains("    Header [0x0, 4 bytes]" + Environment.NewLine, text);
         Assert.Contains("      Layer: III [0x1+5, 2 bits]" + Environment.NewLine, text);
         Assert.Contains("      IsOriginal: true [0x3+5, 1 bit]" + Environment.NewLine, text);
+        Assert.Contains("      Blocksize: 2048 [0x0+4, 4 bits, LSB first]" + Environment.NewLine, text);
     }
 
     // A damaged container can nest boxes thousands deep. Writers stop at Node.MaxDepth instead of

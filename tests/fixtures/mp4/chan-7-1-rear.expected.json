@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 8,
    "channel_mode": "7.1",
@@ -225,18 +225,14 @@
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan": "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Channel Configuration": "12 (7.1: center, left/right, left/right surround, left/right rear, LFE)"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,
   "faad": null,
   "skip": {
-   "faad": "faad2 2.11 does not read channel configuration 12."
+   "faad": "faad2 2.11 does not read channel configuration 12.",
+   "faad_trace": "faad2 2.11 does not read channel configuration 12."
   }
  }
 }

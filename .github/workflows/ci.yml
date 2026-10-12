@@ -144,10 +144,21 @@ jobs:
       - name: Regenerate the hand-built MP4 and raw AAC fixtures
         run: python3 scripts/fixtures/make_mp4_fixtures.py
 
+      # The parser's and the model's Huffman and band tables agree and are complete prefix codes.
+      - name: Check the AAC tables
+        run: python3 scripts/fixtures/check_aac_tables.py
+
       - name: Regenerate the hand-built Ogg fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ogg_fixtures.py
           python3 scripts/fixtures/make_external_ogg_fixtures.py --manifests-only
+          python3 scripts/fixtures/make_vorbis_opus_fixtures.py
+          python3 scripts/fixtures/make_external_vorbis_opus_fixtures.py --manifests-only
+
+      - name: Regenerate the hand-built Musepack fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_musepack_fixtures.py
+          python3 scripts/fixtures/make_external_musepack_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
@@ -235,13 +246,29 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install ffmpeg, oggz-tools, vorbis-tools and speex
+      - name: Install ffmpeg, oggz-tools, vorbis-tools, speex and opus-tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg oggz-tools vorbis-tools speex
+          sudo apt-get install -y ffmpeg oggz-tools vorbis-tools speex opus-tools
 
       - name: Cross-check the Ogg fixtures
         run: python3 scripts/fixtures/crosscheck_ogg_fixtures.py
+
+  musepack-crosscheck:
+    name: Musepack fixtures agree with mpcdec, ffprobe and libmpcdec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
+      # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source.
+      - name: Install musepack-tools and ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musepack-tools ffmpeg
+
+      - name: Cross-check the Musepack fixtures
+        run: python3 scripts/fixtures/crosscheck_musepack_fixtures.py
 
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg and liba52

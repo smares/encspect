@@ -36,6 +36,21 @@ public class HexTests
     }
 
     [Fact]
+    public void A_bit_field_counted_from_the_least_significant_bit_marks_its_bits_mirrored()
+    {
+        // Vorbis packs fields from the least significant bit: four bits from bit 2 take the bits
+        // 0x3C of the byte, which counted from the most significant bit are 2 to 6.
+        HexHighlight nibble = HexHighlight.For(Node.FromBits("Blocksize", 0x20, 2, 6, order: BitOrder.LeastSignificantFirst))!;
+        Assert.Equal((2, 6), nibble.BitsOf(0x20));
+
+        // Ten bits from bit 5: the top three bits of the first byte, then the low seven of the next.
+        HexHighlight wide = HexHighlight.For(Node.FromBits("Field", 0x20, 5, 15, order: BitOrder.LeastSignificantFirst))!;
+        Assert.Equal((0, 3), wide.BitsOf(0x20));
+        Assert.Equal((1, 8), wide.BitsOf(0x21));
+        Assert.Null(wide.BitsOf(0x22));
+    }
+
+    [Fact]
     public void A_node_with_ranges_marks_only_the_bytes_it_holds()
     {
         var packet = new Node("Packet", 0x1A, 40) { Ranges = [new ByteRange(0x1A, 2), new ByteRange(0x40, 2)] };

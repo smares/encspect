@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 
+import aotuv_tool
 import blade_tool
 import check_mp3pro_samples
 import conformance_mpeg_audio
@@ -21,6 +22,7 @@ import gogo_tool
 import helix_tool
 import lame_win_tool
 import mctoolamed_tool
+import musepack_tool
 import old_lame_tool
 import xing_tool
 
@@ -48,6 +50,12 @@ def sources():
         yield build["archive"], build["sha256"], build["addresses"]
     for version, digest in old_lame_tool.RELEASES.items():
         yield f"lame-{version}.tar.gz", digest, old_lame_tool.addresses(version)
+    for archive, digest in aotuv_tool.SOURCES.values():
+        yield archive, digest, aotuv_tool.addresses(archive)
+    for archive, digest in aotuv_tool.WINDOWS.values():
+        yield archive, digest, aotuv_tool.windows_addresses(archive)
+    yield musepack_tool.MPPENC
+    yield musepack_tool.LIBMPC
 
 
 def main():

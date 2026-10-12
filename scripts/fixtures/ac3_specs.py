@@ -34,7 +34,7 @@ def main():
     original = downloads.download
 
     def as_browser(url, path):
-        result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--connect-timeout", "30", "-A", AGENT, "-o", str(path), url],
+        result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--connect-timeout", "30", "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900", "-A", AGENT, "-o", str(path), url],
                                 capture_output=True, text=True)
         return None if result.returncode == 0 else result.stderr.strip() or f"curl exit {result.returncode}"
 

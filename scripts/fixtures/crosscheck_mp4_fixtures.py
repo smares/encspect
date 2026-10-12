@@ -27,6 +27,14 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   implicitly, and 0 for a program config element. For
   ADTS, it must print the duration of 1024 samples per frame (whatever number of raw data blocks a frame
   holds) and the sample rate.
+- the faad2 trace (faad_trace_tool.py, faad2 2.11.1 built with a trace of what it reads): for every raw data block the analyzer read, the
+  golden report (<name>.report.json, which the tests hold equal to the analyzer's report) must show what faad2 reads: the elements and the
+  bit each starts at, each channel pair's common window, ms_mask_present and ms_used flags, each channel stream's window sequence and
+  shape, max_sfb, window groups, global gain, pulse, TNS and gain control flags, predictor flag, TNS filters and the codebook of every
+  band, the extension payloads' types, the SBR headers' start, stop and crossover fields, the parametric stereo extension, and the
+  block's length in bits. It runs on every fixture whose report holds read raw data blocks.
+  Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
+- "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
 
 The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureTests). Exits non-zero
@@ -41,6 +49,7 @@ import sys
 import tempfile
 
 import channel_layouts
+import faad_trace_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 DIRECTORIES = [ROOT / "mp4", ROOT / "adts", ROOT / "aac"]
@@ -165,9 +174,177 @@ def faad_info(path):
     return None
 
 
+def analyzer_blocks(report):
+    """The raw data blocks the analyzer read, from a report's JSON: MP4 access units, the raw data blocks of ADTS frames and ADIF's."""
+    blocks = []
+
+    def walk(node):
+        children = node.get("children") or []
+        if node.get("kind") == "Frame":
+            if node["name"] == "Raw Data Block" and (node.get("children") or []):
+                blocks.append(node)
+            if node["name"] == "Access Unit" and any(c["name"] == "END" or child_id(c) is not None for c in children):
+                blocks.append(node)
+            blocks.extend(c for c in children if c["name"] == "Raw Data Block" and (c.get("children") or []))
+            return
+        for child in children:
+            walk(child)
+
+    walk(report["root"])
+    return blocks
+
+
+def child_id(node):
+    element = next((c for c in node.get("children") or [] if c["name"] == "Element ID"), None)
+    return int(element["value"].split()[0]) if element else None
+
+
+def bit_of(node, base):
+    return (node["offset"] - base) * 8 + (node.get("bitOffset") or 0)
+
+
+def end_of(node, base):
+    return bit_of(node, base) + (node.get("bitLength") if node.get("bitLength") is not None else node["length"] * 8)
+
+
+def field(node, name, default=None):
+    found = next((c for c in node.get("children") or [] if c["name"] == name), None)
+    return found["value"] if found else default
+
+
+def flag(node, name):
+    return 1 if field(node, name, False) is True else 0
+
+
+def analyzer_records(block):
+    """A block of the report as faad2's trace records it (faad_trace_tool.py)."""
+    base = block["offset"]
+    records = []
+    end = None
+    for element in block.get("children") or []:
+        if element["name"] == "END":
+            end = end_of(element, base)
+            continue
+        if element["name"] == "Byte Alignment":
+            end = end_of(element, base)
+            continue
+        number = child_id(element)
+        if number is None:
+            continue
+        records.append(["EL", str(number), str(bit_of(element, base))])
+        shared = next((c for c in element.get("children") or [] if c["name"] == "ICS Info"), None)
+        if element["name"] == "CPE":
+            mask = field(element, "Mid/Side Mask Present", "0").split()[0] if shared else "0"
+            flags = ""
+            if mask == "1":
+                flags = band_flags(field(element, "Mid/Side Bands", "none"), groups_of(shared), int(field(shared, "Max SFB")))
+            records.append(["CPE", str(flag(element, "HasCommonWindow")), mask, flags] if flags else ["CPE", str(flag(element, "HasCommonWindow")), mask])
+        for child in element.get("children") or []:
+            if child["name"].startswith("Channel"):
+                records.append(stream_record(child, shared))
+            elif child["name"] == "Extension Payload":
+                kind = int(field(child, "Extension Type").split()[0])
+                records.append(["EXT", str(kind)])
+                header = next((c for c in child.get("children") or [] if c["name"] == "SBR Header"), None)
+                if header:
+                    records.append(["SBRHDR", str(field(header, "bs_start_freq")), str(field(header, "bs_stop_freq")), str(field(header, "bs_xover_band"))])
+                data = next((c for c in child.get("children") or [] if c["name"] == "SBR Data"), None)
+                if data and any(c["name"] == "Parametric Stereo Extension" for c in data.get("children") or []):
+                    records.append(["PS"])
+    return end, records
+
+
+def groups_of(info):
+    grouping = field(info, "Scale Factor Grouping")
+    match = re.search(r"\((\d+) groups", grouping) if grouping else None
+    return int(match.group(1)) if match else 1
+
+
+def band_flags(text, groups, max_sfb):
+    flags = [["0"] * max_sfb for _ in range(groups)]
+    if text != "none":
+        for part in text.split("; "):
+            group = 0
+            match = re.match(r"group (\d+): (.*)", part)
+            if match:
+                group, part = int(match.group(1)), match.group(2)
+            for item in part.split(", "):
+                first, _, last = item.partition("-")
+                for band in range(int(first), int(last or first) + 1):
+                    flags[group][band] = "1"
+    return "".join("".join(row) for row in flags)
+
+
+def stream_record(channel, shared):
+    info = next((c for c in channel.get("children") or [] if c["name"] == "ICS Info"), shared)
+    sequence = int(field(info, "Window Sequence").split()[0])
+    shape = int(field(info, "Window Shape").split()[0])
+    max_sfb = int(field(info, "Max SFB"))
+    groups = groups_of(info)
+    books = [[0] * max_sfb for _ in range(groups)]
+    sections = next((c for c in channel.get("children") or [] if c["name"] == "Section Data"), None)
+    for section in (sections or {}).get("children") or []:
+        match = re.match(r"(?:group (\d+): )?codebook (\d+) \(.*\), (?:bands? (\d+)(?:-(\d+))?|no bands)$", section["value"])
+        if match and match.group(3) is not None:
+            for band in range(int(match.group(3)), int(match.group(4) or match.group(3)) + 1):
+                books[int(match.group(1) or 0)][band] = int(match.group(2))
+    tns = next((c for c in channel.get("children") or [] if c["name"] == "TNS Data"), None)
+    filters = int(str(tns["value"]).split()[0]) if tns else 0
+    return ["ICS", str(sequence), str(shape), str(max_sfb), str(groups), str(field(channel, "Global Gain")), str(flag(channel, "HasPulseData")),
+            str(flag(channel, "HasTnsData")), str(flag(channel, "HasGainControlData")), str(flag(info, "HasPredictorData")), str(filters),
+            "".join(format(b, "x") for row in books for b in row)]
+
+
+def faad_records(block):
+    """faad2's trace of a block in the same form: its first SBR extension ID only, as the analyzer reads only the first, and that as PS where it is 2."""
+    records = []
+    previous = None
+    for record in block["records"]:
+        if record[0] == "SBREXT":
+            if previous == "EXT" or previous == "SBRHDR":
+                if record[1] == "2":
+                    records.append(["PS"])
+            previous = record[0]
+            continue
+        if record[0] == "CPE" and len(record) == 3:
+            record = record[:3]
+        records.append(record)
+        previous = record[0]
+    return block.get("bits"), records
+
+
+def decode_messages(path):
+    result = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(path), "-f", "null", "-"], capture_output=True)
+    return result.stderr.decode("utf-8", "replace").strip()
+
+
+def check_trace(path, report, problems, skipped=()):
+    """Compares the raw data blocks of the golden report with faad2's trace; returns how many blocks were compared."""
+    ours = analyzer_blocks(report)
+    if not ours:
+        return 0
+    theirs = faad_trace_tool.trace(path)
+    if len(theirs) != len(ours):
+        problems.append(f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}")
+    for index, (mine, faad) in enumerate(zip(ours, theirs)):
+        # A block the analyzer could not read to its end is damaged, which decoders handle each in their own way.
+        if analyzer_records(mine)[0] is None or str(index) in skipped:
+            continue
+        if analyzer_records(mine) != faad_records(faad):
+            end, records = analyzer_records(mine)
+            bits, theirs_records = faad_records(faad)
+            first = next((i for i, (a, b) in enumerate(zip(records, theirs_records)) if a != b), min(len(records), len(theirs_records)))
+            problems.append(f"raw data block {index}: the analyzer reads {records[first:first + 2]} (block of {end} bits), "
+                            f"faad2 {theirs_records[first:first + 2]} (block of {bits} bits)")
+            break
+    compared = min(len(ours), len(theirs))
+    return compared - sum(1 for key in skipped if int(key) < compared)
+
+
 def main():
     failures = 0
     checked = 0
+    traced = 0
     for directory in DIRECTORIES:
         if not directory.exists():
             continue
@@ -215,11 +392,18 @@ def main():
                     ok = line.startswith(faad["label"] + "\t") and f", {faad['channels']} ch, {faad['rate']} Hz" in line
                 if not ok:
                     problems.append(f"faad -i prints {line!r}, expected {faad}")
+            if not {"faad_trace", "all"} & set(check.get("skip", {})) and (directory / (path.stem + ".report.json")).exists():
+                report = json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
+                traced += check_trace(path, report, problems, check.get("faad_trace_skip", {}))
+            if check.get("decode"):
+                messages = decode_messages(path)
+                if messages:
+                    problems.append(f"ffmpeg decodes with messages: {messages.splitlines()[0]}")
             checked += 1
             for problem in problems:
                 print(f"{path.relative_to(ROOT)}: {problem}")
             failures += bool(problems)
-    print(f"{checked} fixtures checked, {failures} disagree.")
+    print(f"{checked} fixtures checked, {traced} raw data blocks against faad2's trace, {failures} disagree.")
     return 1 if failures else 0
 
 
