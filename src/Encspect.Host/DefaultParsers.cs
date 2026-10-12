@@ -3,6 +3,7 @@ using Encspect.Formats.Mpeg;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
+using Encspect.Tags.VorbisComment;
 
 namespace Encspect.Host;
 
@@ -20,6 +21,9 @@ public static class DefaultParsers
         new Id3v2TagParser(),
         new Id3v1TagParser(),
         new Id3v1EnhancedTagParser(),
+
+        // Never found in a file, only where a container or codec says one is (ParseTag).
+        new VorbisCommentTagParser(),
     ];
 
     private static readonly MpegAudioParser Mpeg = new();
