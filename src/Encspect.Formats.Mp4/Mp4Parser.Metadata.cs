@@ -69,7 +69,31 @@ public sealed partial class Mp4Parser
             return index >= 1 && index <= state.Keys.Count ? state.Keys[(int)index - 1] : header.Type;
         }
 
-        return BoxNames.Item(header.Type) ?? header.Type;
+        return header.Type == "----" ? FreeformName(state, header) ?? header.Type : BoxNames.Item(header.Type) ?? header.Type;
+    }
+
+    // A freeform item is named by its name atom, which follows its mean atom inside it.
+    private static string? FreeformName(State state, BoxHeader header)
+    {
+        long position = header.PayloadStart;
+        while (position + 12 <= header.End && ReadHeader(state.Reader, position, header.End) is { } child && child.End <= header.End)
+        {
+            if (child.Type == "name" && child.Size > 12)
+            {
+                byte[] bytes = state.Reader.ReadBytesAt(child.Offset + 12, (int)Math.Min(child.Size - 12, 256));
+                int end = Array.IndexOf(bytes, (byte)0);
+                return Latin1OrUtf8(end < 0 ? bytes : bytes[..end]);
+            }
+
+            if (child.IsToEnd)
+            {
+                break;
+            }
+
+            position = child.End;
+        }
+
+        return null;
     }
 
     // An item: its data atoms, and for a freeform item its mean and name.

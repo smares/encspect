@@ -1,0 +1,243 @@
+{
+ "description": "A QuickTime movie (brand qt) with a sound sample description of version 1, whose esds box sits in a wave box.",
+ "length": 1318,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   20
+  ],
+  [
+   "moov",
+   20,
+   707
+  ],
+  [
+   "moov/mvhd",
+   28,
+   108
+  ],
+  [
+   "moov/trak",
+   136,
+   591
+  ],
+  [
+   "moov/trak/tkhd",
+   144,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   236,
+   491
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   244,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   276,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   321,
+   406
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   329,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   345,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   353,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   369,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   381,
+   346
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   389,
+   162
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   405,
+   146
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/wave",
+   457,
+   94
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/wave/frma",
+   465,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/wave/mp4a",
+   477,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/wave/esds",
+   489,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/wave/....",
+   543,
+   8
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   551,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   575,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   603,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   703,
+   24
+  ],
+  [
+   "mdat",
+   727,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   735,
+   6
+  ],
+  [
+   741,
+   45
+  ],
+  [
+   786,
+   42
+  ],
+  [
+   828,
+   39
+  ],
+  [
+   867,
+   36
+  ],
+  [
+   903,
+   33
+  ],
+  [
+   936,
+   30
+  ],
+  [
+   966,
+   27
+  ],
+  [
+   993,
+   24
+  ],
+  [
+   1017,
+   20
+  ],
+  [
+   1037,
+   17
+  ],
+  [
+   1054,
+   14
+  ],
+  [
+   1068,
+   11
+  ],
+  [
+   1079,
+   8
+  ],
+  [
+   1087,
+   46
+  ],
+  [
+   1133,
+   43
+  ],
+  [
+   1176,
+   40
+  ],
+  [
+   1216,
+   37
+  ],
+  [
+   1253,
+   34
+  ],
+  [
+   1287,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Samples Per Packet": "1024",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Version": "1",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/wave/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig": "AAC LC"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2's MP4 reader does not look for esds inside a wave box."
+  }
+ }
+}

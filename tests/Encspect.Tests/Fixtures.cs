@@ -28,6 +28,29 @@ internal static class Fixtures
         return data;
     }
 
+    // Paths relative to tests/fixtures of the MP4 and raw AAC fixtures, hand-built and encoder-written.
+    public static TheoryData<string> Mp4Fixtures()
+    {
+        var data = new TheoryData<string>();
+        string[] extensions = [".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"];
+        foreach (string directory in new[] { "mp4", "adts", "aac" })
+        {
+            string path = Path.Combine(FixtureDirectory, directory);
+            if (!Directory.Exists(path))
+            {
+                continue;
+            }
+
+            foreach (string file in Directory.EnumerateFiles(path)
+                .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
+            {
+                data.Add($"{directory}/{Path.GetFileName(file)}");
+            }
+        }
+
+        return data;
+    }
+
     public static Report AnalyzeMpeg(string name)
     {
         using FileStream stream = File.OpenRead(Path.Combine(FixtureDirectory, name));

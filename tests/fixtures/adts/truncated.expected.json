@@ -1,0 +1,85 @@
+{
+ "description": "The last frame is cut 5 bytes short.",
+ "length": 412,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 12288,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   13
+  ],
+  [
+   13,
+   52
+  ],
+  [
+   65,
+   49
+  ],
+  [
+   114,
+   46
+  ],
+  [
+   160,
+   43
+  ],
+  [
+   203,
+   40
+  ],
+  [
+   243,
+   37
+  ],
+  [
+   280,
+   34
+  ],
+  [
+   314,
+   31
+  ],
+  [
+   345,
+   27
+  ],
+  [
+   372,
+   24
+  ],
+  [
+   396,
+   16
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.frame-truncated",
+   "of its"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg drops the cut frame.",
+   "faad": "faad2 does not count the cut frame."
+  }
+ }
+}

@@ -282,9 +282,9 @@ public sealed partial class Mp4Parser
         }
     }
 
-    // mdhd's duration is the sum of the media's sample durations (8.4.2.3); mvhd's and tkhd's are the
-    // presentation's, in the movie's timescale: the edit list's segments where there is one, else the
-    // media's duration.
+    // mdhd's duration is the sum of the media's sample durations (8.4.2.3); tkhd's is the track's
+    // presentation, in the movie's timescale: the edit list's segments where there is one, else the
+    // media's duration (8.3.2.3).
     private static void CheckDurations(State state, Track track)
     {
         if (track.TimeToSample is not { } stts || track.MediaHeader is not { } mdhd || state.Fragments > 0)
@@ -305,18 +305,19 @@ public sealed partial class Mp4Parser
                 $"The mdhd box of {label} gives a duration of {BoxFields.DurationText(media, track.Timescale)}, but its samples' durations in stts add up to {BoxFields.DurationText(total, track.Timescale)}.", mdhd);
         }
 
-        if (track.Timescale == 0 || state.MovieTimescale == 0 || track.TrackDuration is not { } presented || track.TrackHeader is not { } tkhd)
+        if (track.Timescale == 0 || state.MovieTimescale == 0 || track.TrackDuration is not { } presented || track.TrackHeader is not { } tkhd
+            || track.MediaDuration is not { } mediaDuration)
         {
             return;
         }
 
         double expected = track.Edits is { Count: > 0 } edits
             ? edits.Sum(e => (double)e.SegmentDuration)
-            : total * (double)state.MovieTimescale / track.Timescale;
+            : mediaDuration * (double)state.MovieTimescale / track.Timescale;
         if (Math.Abs(presented - expected) > 1)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.duration-mismatch",
-                $"The tkhd box of {label} gives a duration of {BoxFields.DurationText(presented, state.MovieTimescale)}, but its {(track.Edits is { Count: > 0 } ? "edit list" : "samples")} come to {(expected / state.MovieTimescale).ToString("F3", CultureInfo.InvariantCulture)} s.", tkhd);
+                $"The tkhd box of {label} gives a duration of {BoxFields.DurationText(presented, state.MovieTimescale)}, but its {(track.Edits is { Count: > 0 } ? "edit list comes" : "media's duration comes")} to {(expected / state.MovieTimescale).ToString("F3", CultureInfo.InvariantCulture)} s.", tkhd);
         }
     }
 

@@ -1,0 +1,35 @@
+{
+ "description": "ftyp and mdat without moov.",
+ "length": 100,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "mdat",
+   28,
+   72
+  ]
+ ],
+ "streams": [],
+ "units": [],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.moov-missing",
+   "no moov box"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg refuses a file without moov.",
+   "faad": "faad2 finds no track."
+  }
+ }
+}
