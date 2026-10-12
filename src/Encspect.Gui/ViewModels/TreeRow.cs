@@ -34,6 +34,13 @@ public sealed class TreeRow : ObservableObject
 
     public string? Value => Node.Value?.ToString();
 
+    // What the row's tooltip shows: the name and value, then what the field is.
+    public string Heading => Value is { } value ? $"{Name}: {value}" : Name;
+
+    public string? Description => Node.Description;
+
+    public bool HasDescription => Node.Description is not null;
+
     public NodeKind Kind => Node.Kind;
 
     // Tags, streams and statistics stand out from the details and frames around them.

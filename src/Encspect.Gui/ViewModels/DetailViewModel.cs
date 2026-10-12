@@ -33,6 +33,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _isGraphsShown;
     private string? _exportError;
     private string? _folderError;
+    private bool _isTopicOpen;
+    private Topic? _shownTopic;
 
     public DetailViewModel(Analyzer analyzer, Action<Action>? post = null)
     {
@@ -113,8 +115,79 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 BitStrip = BitStrip.For(_highlight, _document);
                 Graphs.MarkFrame(FrameOf(value)?.Node.Offset);
                 Raise(nameof(SelectionText));
+                Raise(nameof(SelectionDescription));
+                Raise(nameof(SelectionTopic));
+                Raise(nameof(LearnMoreText));
+                if (_isTopicOpen && SelectionTopic is { } topic)
+                {
+                    ShownTopic = topic;
+                }
             }
         }
+    }
+
+    // What the selected node is, as its parser describes it.
+    public string? SelectionDescription => _selectedNode?.Node.Description;
+
+    // The background article of the selected node, or of its nearest ancestor that has one.
+    public Topic? SelectionTopic
+    {
+        get
+        {
+            for (TreeRow? row = _selectedNode; row is not null; row = row.Parent)
+            {
+                if (TopicLibrary.Find(row.Node.Topic) is { } topic)
+                {
+                    return topic;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public string? LearnMoreText => SelectionTopic is { } topic ? $"Learn more: {topic.Title}" : null;
+
+    // The side pane with a background article, or with the list of topics while ShownTopic is
+    // null. Closed by default; the window remembers whether it was open.
+    public bool IsTopicOpen
+    {
+        get => _isTopicOpen;
+        set => Set(ref _isTopicOpen, value);
+    }
+
+    public Topic? ShownTopic
+    {
+        get => _shownTopic;
+        set
+        {
+            if (Set(ref _shownTopic, value))
+            {
+                Raise(nameof(IsTopicIndexShown));
+            }
+        }
+    }
+
+    public bool IsTopicIndexShown => _shownTopic is null;
+
+    public IReadOnlyList<Topic> AllTopics => TopicLibrary.All;
+
+    // Opens the pane on a topic by its ID, or on the list of topics for null or an unknown ID.
+    public void ShowTopic(string? id)
+    {
+        ShownTopic = TopicLibrary.Find(id);
+        IsTopicOpen = true;
+    }
+
+    // Closes the pane, or opens it on the selected node's topic, or the list where it has none.
+    public void ToggleTopics()
+    {
+        if (!_isTopicOpen)
+        {
+            ShownTopic = SelectionTopic;
+        }
+
+        IsTopicOpen = !_isTopicOpen;
     }
 
     // What the selected node is and where: "Bitrate index: 1010 · 0x1A2+0, 4 bits".
