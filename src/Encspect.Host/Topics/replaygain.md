@@ -1,7 +1,7 @@
 ---
 id: replaygain
 title: ReplayGain
-related: lame-tag, global-gain, ape-tag
+related: lame-tag, global-gain, ape-tag, musepack-sv8-packets
 references: ReplayGain specification (David Robinson, 2001); LAME tag specification (Gabriel Bouvigne)
 ---
 
@@ -12,3 +12,5 @@ references: ReplayGain specification (David Robinson, 2001); LAME tag specificat
 **In MP3 files.** LAME computes ReplayGain while encoding and stores a track ("radio") gain and the peak in its [LAME tag](lame-tag); LAME before 3.95 used a reference of 83 dB, so its gains read 6 dB lower than later versions'. Taggers more often store ReplayGain in APE items (REPLAYGAIN_TRACK_GAIN and so on) or in ID3v2 TXXX frames. MP3Gain instead changes the frames' [global gain](global-gain), which changes the audio data itself, in steps of 1.5 dB.
 
 **What you see.** Radio and Audiophile Replay Gain and Peak in the LAME tag, and ReplayGain items in tags.
+
+**In Musepack.** SV7 stores the track and album gain in its header as an adjustment in hundredths of a dB and the peaks as sample values; SV8 stores them in its ReplayGain packet as loudness and peak in dB, which mpcgain computes after encoding, and mpcdec prints 64.82 dB minus the loudness as the gain ([SV8 packets](musepack-sv8-packets)).

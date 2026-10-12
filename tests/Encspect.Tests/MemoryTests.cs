@@ -142,6 +142,23 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A Musepack SV7 stream keeps a 24-byte record per frame and its per-frame series and figures,
+    // 42 bytes in all on linux-x64, with a peak of 59; the frames' nodes are built in blocks when
+    // read. The bounds are about twice that and below what keeping a frame's node would cost.
+    [Fact]
+    public void ManyMusepackFramesStayCompact()
+    {
+        const int frames = 100_000;
+
+        (Report report, long kept, long peak) = Measure("frames.mpc", Sv7Frames(frames), Sv7Frames(100));
+
+        Assert.Equal(frames * 1152L - 481, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * MusepackKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MusepackPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
     // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
     // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak
@@ -315,5 +332,43 @@ public class MemoryTests(ITestOutputHelper output)
     {
         byte[] frame = [0xFF, 0xFB, 0x10, 0x00, 0x00, 0x00, 0x01, 0x90, .. new byte[96]];
         return Enumerable.Repeat(frame, count).SelectMany(b => b).ToArray();
+    }
+
+    private const long MusepackKeptBound = 90;
+
+    private const long MusepackPeakBound = 120;
+
+    // An SV7 stream (libmpcdec r495 streaminfo_read_header_sv7): a header with mid/side, max band 1
+    // and no true gapless, then frames of 400 zero bits, which read as subband 0 left out and
+    // subband 1 filled with noise, in 32-bit little-endian words from their most significant bit.
+    private static byte[] Sv7Frames(int frames)
+    {
+        var words = new List<uint> { 0x072B504D, (uint)frames, (1u << 30) | (1u << 24) | (10u << 20), 0, 0, 0 };
+        long bit = 192;
+        void Write(uint value, int count)
+        {
+            for (int i = count - 1; i >= 0; i--, bit++)
+            {
+                while (words.Count <= bit >> 5)
+                {
+                    words.Add(0);
+                }
+
+                if (((value >> i) & 1) != 0)
+                {
+                    words[(int)(bit >> 5)] |= 1u << (31 - (int)(bit & 31));
+                }
+            }
+        }
+
+        Write(116, 8);
+        for (int i = 0; i < frames; i++)
+        {
+            Write(400, 20);
+            bit += 400;
+        }
+
+        Write(0, 11);
+        return words.SelectMany(BitConverter.GetBytes).ToArray()[..(int)(((bit + 31) >> 5) << 2)];
     }
 }

@@ -1,0 +1,82 @@
+{
+ "length": 6924,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   14,
+   "SH"
+  ],
+  [
+   18,
+   12,
+   "RG"
+  ],
+  [
+   30,
+   7,
+   "EI"
+  ],
+  [
+   37,
+   8,
+   "SO"
+  ],
+  [
+   45,
+   6870,
+   "AP"
+  ],
+  [
+   6915,
+   6,
+   "ST"
+  ],
+  [
+   6921,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {
+  "Sample Count": "66150 samples",
+  "Beginning Silence": "0 samples",
+  "Channels": "1",
+  "Max Used Bands": "14",
+  "Mid/Side Stereo": "true",
+  "Audio Block Frames": "64 frames"
+ },
+ "frames": 58,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 66150,
+   "average_bitrate": 36.274784482758626,
+   "duration": 1.5,
+   "encoder": "mpcenc 1.30.1",
+   "encoder_confidence": "High"
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 6924
+  }
+ ],
+ "encoder": {
+  "tool": " (musepack-tools 0.1~r495)",
+  "arguments": [
+   "--telephone"
+  ],
+  "rate": 44100,
+  "channels": 1,
+  "samples": 66150
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

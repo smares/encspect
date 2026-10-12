@@ -1,0 +1,126 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv5.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 32,
+      "children": [
+        {
+          "name": "Musepack SV5",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Bitrate",
+                  "value": 0,
+                  "unit": "kbps",
+                  "offset": 2,
+                  "length": 2
+                },
+                {
+                  "name": "Intensity Stereo",
+                  "value": false,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Mid/Side Stereo",
+                  "value": true,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Stream Version",
+                  "value": 5,
+                  "offset": 1,
+                  "length": 2
+                },
+                {
+                  "name": "Max Band",
+                  "value": 27,
+                  "offset": 0,
+                  "length": 2
+                },
+                {
+                  "name": "Block Size",
+                  "value": 1,
+                  "offset": 0,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6
+                },
+                {
+                  "name": "Frame Count",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 4,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Audio Data",
+              "value": 24,
+              "unit": "bytes",
+              "offset": 8,
+              "length": 24
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Musepack SV5",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 0,
+        "duration": 0,
+        "isVbr": true,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "musepack.version-not-analyzed",
+        "message": "The stream is Musepack SV5, which the analyzer reads only as far as its header; its frames are not analyzed.",
+        "offset": 1,
+        "length": 2,
+        "path": [
+          0,
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

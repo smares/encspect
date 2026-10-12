@@ -1,0 +1,46 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv7-header-truncated.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 20,
+      "children": [
+        {
+          "name": "Musepack SV7",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 20,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 20
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "musepack.header-truncated",
+        "message": "The SV7 header needs 28 bytes; the data holds 20.",
+        "offset": 0,
+        "length": 20,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
