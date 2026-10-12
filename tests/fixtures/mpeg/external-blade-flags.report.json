@@ -104,12 +104,181 @@
                       "name": "320 kbps",
                       "value": "77 frames (100.0%)",
                       "offset": 0,
-                      "length": 80458
+                      "length": 80458,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "7 frames of 1044 bytes",
+                          "offset": 0,
+                          "length": 80458
+                        },
+                        {
+                          "name": "Padded",
+                          "value": "70 frames of 1045 bytes",
+                          "offset": 0,
+                          "length": 80458
+                        }
+                      ]
                     }
                   ]
                 },
                 {
                   "name": "Maximum Reservoir Fill",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 80458,
+                  "children": [
+                    {
+                      "name": "Stereo",
+                      "value": "77 frames (100.0%)",
+                      "offset": 0,
+                      "length": 80458
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Usage",
+                  "value": 308,
+                  "unit": "granules",
+                  "offset": 0,
+                  "length": 80458,
+                  "children": [
+                    {
+                      "name": "Long",
+                      "value": "282 granules (91.6%)",
+                      "offset": 0,
+                      "length": 80458
+                    },
+                    {
+                      "name": "Start",
+                      "value": "8 granules (2.6%)",
+                      "offset": 0,
+                      "length": 80458
+                    },
+                    {
+                      "name": "Short",
+                      "value": "12 granules (3.9%)",
+                      "offset": 0,
+                      "length": 80458
+                    },
+                    {
+                      "name": "Stop",
+                      "value": "6 granules (1.9%)",
+                      "offset": 0,
+                      "length": 80458
+                    }
+                  ]
+                },
+                {
+                  "name": "Global Gain",
+                  "offset": 0,
+                  "length": 80458,
+                  "children": [
+                    {
+                      "name": "Channel 0",
+                      "offset": 0,
+                      "length": 80458,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 80,
+                          "offset": 0,
+                          "length": 80458
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 210,
+                          "offset": 0,
+                          "length": 80458
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Channel 1",
+                      "offset": 0,
+                      "length": 80458,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 79,
+                          "offset": 0,
+                          "length": 80458
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 210,
+                          "offset": 0,
+                          "length": 80458
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 80458,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 0,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 80458
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 0,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 80458
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": true,
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "UsesScfsi",
+                  "value": false,
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "UsesScalefactorScaling",
+                  "value": false,
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "Scalefactor Scaling",
+                  "value": 0,
+                  "unit": "%",
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "Average Main Data Begin",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 80458
+                },
+                {
+                  "name": "Maximum Main Data Begin",
                   "value": 0,
                   "unit": "bytes",
                   "offset": 0,

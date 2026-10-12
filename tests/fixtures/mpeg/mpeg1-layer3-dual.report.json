@@ -84,13 +84,172 @@
                       "name": "192 kbps",
                       "value": "10 frames (100.0%)",
                       "offset": 0,
-                      "length": 5760
+                      "length": 5760,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "10 frames of 576 bytes",
+                          "offset": 0,
+                          "length": 5760
+                        }
+                      ]
                     }
                   ]
                 },
                 {
                   "name": "Maximum Reservoir Fill",
                   "value": 511,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 5760,
+                  "children": [
+                    {
+                      "name": "Dual channel",
+                      "value": "10 frames (100.0%)",
+                      "offset": 0,
+                      "length": 5760
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Usage",
+                  "value": 40,
+                  "unit": "granules",
+                  "offset": 0,
+                  "length": 5760,
+                  "children": [
+                    {
+                      "name": "Long",
+                      "value": "40 granules (100.0%)",
+                      "offset": 0,
+                      "length": 5760
+                    }
+                  ]
+                },
+                {
+                  "name": "Global Gain",
+                  "offset": 0,
+                  "length": 5760,
+                  "children": [
+                    {
+                      "name": "Channel 0",
+                      "offset": 0,
+                      "length": 5760,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 5760
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 5760
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Channel 1",
+                      "offset": 0,
+                      "length": 5760,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 5760
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 5760
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 5400,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 5760,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 93.8,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 5760
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 180,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 5760
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 540,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 5760
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 540,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 5760
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": false,
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "UsesScfsi",
+                  "value": false,
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "UsesScalefactorScaling",
+                  "value": false,
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "Scalefactor Scaling",
+                  "value": 0,
+                  "unit": "%",
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "Average Main Data Begin",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 5760
+                },
+                {
+                  "name": "Maximum Main Data Begin",
+                  "value": 0,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 5760

@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # minimp3 and mp3guessenc are built from third_party.
+      # minimp3, mp3guessenc and EncSpot are built from third_party with the runner's C and C++ compilers.
       - name: Install ffmpeg, madplay and mpg123
         run: |
           sudo apt-get update

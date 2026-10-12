@@ -84,9 +84,81 @@
                       "name": "384 kbps",
                       "value": "10 frames (100.0%)",
                       "offset": 0,
+                      "length": 4176,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "6 frames of 416 bytes",
+                          "offset": 0,
+                          "length": 4176
+                        },
+                        {
+                          "name": "Padded",
+                          "value": "4 frames of 420 bytes",
+                          "offset": 0,
+                          "length": 4176
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 4176,
+                  "children": [
+                    {
+                      "name": "Stereo",
+                      "value": "10 frames (100.0%)",
+                      "offset": 0,
                       "length": 4176
                     }
                   ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 3800,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4176,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 91,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 4176
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 349.1,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 4176
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 380,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4176
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 380,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4176
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": true,
+                  "offset": 0,
+                  "length": 4176
                 }
               ]
             },

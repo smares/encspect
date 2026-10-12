@@ -84,9 +84,108 @@
                       "name": "256 kbps",
                       "value": "8 frames (100.0%)",
                       "offset": 0,
+                      "length": 2048,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "8 frames of 256 bytes",
+                          "offset": 0,
+                          "length": 2048
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 2048,
+                  "children": [
+                    {
+                      "name": "Joint stereo",
+                      "value": "8 frames (100.0%)",
+                      "offset": 0,
                       "length": 2048
                     }
                   ]
+                },
+                {
+                  "name": "Intensity Stereo Bounds",
+                  "value": 8,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2048,
+                  "children": [
+                    {
+                      "name": "Bands 4 to 31",
+                      "value": "2 frames (25.0%)",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Bands 8 to 31",
+                      "value": "2 frames (25.0%)",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Bands 12 to 31",
+                      "value": "2 frames (25.0%)",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Bands 16 to 31",
+                      "value": "2 frames (25.0%)",
+                      "offset": 0,
+                      "length": 2048
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 1848,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 2048,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 90.2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 231,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 228,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 2048
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 234,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 2048
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": false,
+                  "offset": 0,
+                  "length": 2048
                 }
               ]
             },

@@ -1,0 +1,14 @@
+Source: encspot
+Section: sound
+Priority: extra
+Maintainer: Francis Russell <francis@unchartedbackwaters.co.uk>
+Build-Depends: debhelper (>= 7.0.50), cmake
+Standards-Version: 3.9.1
+Homepage: http://www.unchartedbackwaters.co.uk/pyblosxom/static/encspot
+
+Package: encspot
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Displays technical information about MP3 files
+ Attempts to guess which encoder was used to create an MP3 file and
+ other technical attributes.

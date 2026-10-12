@@ -269,13 +269,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
         }
 
-        Layer2Record? layer2 = header.Layer == 2 ? ReadLayer2(blocks, position, available, length, header, ref computed, findings) : null;
-        byte[]? layer1 = header.Layer == 1 ? ReadLayer1(blocks, position, available, length, header, findings) : null;
+        // Where Layer I and II audio data ends, in bits from the frame's start, for the statistics.
+        int audioEnd = -1;
+        Layer2Record? layer2 = header.Layer == 2 ? ReadLayer2(blocks, position, available, length, header, ref computed, findings, out audioEnd) : null;
+        byte[]? layer1 = header.Layer == 1 ? ReadLayer1(blocks, position, available, length, header, findings, out audioEnd) : null;
         byte[]? vbrFrame = HasVbrMagic(blocks, position, available, header) ? blocks.Read(position, (int)available) : null;
         VbrHeader? vbr = vbrFrame is null ? null : VbrHeader.TryRead(vbrFrame, header);
 
         var frame = new Entry(position, available, header.Raw) { Crc = stored, ComputedCrc = computed, IsTruncated = available < length };
         MainDataPlacement? placement = null;
+        Layer3SideInfo? audioSideInfo = null;
         long sideInfoOffset = position + 4 + (header.IsProtected ? 2 : 0);
         if (vbr is null && header.Layer == 3 && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
         {
@@ -298,6 +301,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (isComplete)
             {
                 region.Traits.Add(info, position, position + available);
+                audioSideInfo = info;
             }
         }
         else if (vbr is not null && sideInfoOffset + Layer3SideInfo.Size(header) <= position + available)
@@ -342,6 +346,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (vbr is null && isComplete)
         {
             region.AddAudio(frame);
+            region.Tally.Add(header, length, audioSideInfo, audioEnd);
         }
 
         if (vbr is not null)
@@ -617,11 +622,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     }
 
     // Reads a Layer I frame's audio data and reports what breaks ISO/IEC 11172-3 in it.
-    private static byte[]? ReadLayer1(BlockReader blocks, long position, long available, int length, MpegHeader header, FindingCollector findings)
+    // audioEnd: where its samples end, in bits from the frame's start, or int.MaxValue where its
+    // allocation and scalefactors do not fit.
+    private static byte[]? ReadLayer1(BlockReader blocks, long position, long available, int length, MpegHeader header, FindingCollector findings,
+        out int audioEnd)
     {
         byte[] bytes = blocks.Read(position, (int)available);
         var audio = Layer1AudioData.Read(bytes, header);
         bool hasScalefactors = audio.SampleStart <= bytes.Length * 8;
+        audioEnd = hasScalefactors ? audio.End : int.MaxValue;
         foreach ((int ch, int sb) in audio.Coded().Where(c => hasScalefactors && audio.Allocation[c.Channel, c.Subband] == Layer1AudioData.ForbiddenAllocation).Take(1))
         {
             findings.Add(Severity.Warning, "mpeg.allocation-forbidden", audio.AllocationNode(position, ch, sb), count =>
@@ -648,10 +657,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // Reads a Layer II frame's audio data, verifies its CRC over the header bits, the bit allocation
     // and scfsi (ISO/IEC 11172-3 2.4.3.1), and reads a multichannel candidate after the samples.
     private static Layer2Record? ReadLayer2(BlockReader blocks, long position, long available, int length, MpegHeader header,
-        ref int computed, FindingCollector findings)
+        ref int computed, FindingCollector findings, out int audioEnd)
     {
         byte[] bytes = blocks.Read(position, (int)available);
         var audio = Layer2AudioData.Read(bytes, header);
+        audioEnd = audio.SampleStart <= bytes.Length * 8 ? audio.End : int.MaxValue;
         if (header.IsProtected && audio.ScalefactorStart <= bytes.Length * 8)
         {
             computed = Crc16.ComputeBits(bytes, audio.AllocationStart, audio.ScalefactorStart - audio.AllocationStart, Crc16.ComputeBits(bytes, 16, 16));
@@ -1255,6 +1265,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public long AudioEnd { get; private set; }
 
         public Layer3Traits Traits { get; } = new();
+
+        public FrameTally Tally { get; } = new();
 
         // Its complete Layer II frames with their audio data, and the first scalefactor with index 63
         // in them.
