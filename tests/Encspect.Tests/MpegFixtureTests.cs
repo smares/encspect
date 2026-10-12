@@ -615,6 +615,12 @@ public class MpegFixtureTests
                 Assert.Equal(isVbr.GetBoolean(), stream.IsVbr);
             }
 
+            if (wanted.TryGetProperty("channel_layout", out JsonElement layout))
+            {
+                Assert.Equal(layout.EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
+                Assert.Equal(layout.GetArrayLength(), stream.Channels);
+            }
+
             Assert.Equal(Text(wanted, "bitrate_over_time"), Series(stream, "Bitrate Over Time"));
             Assert.Equal(Text(wanted, "reservoir_fill_over_time"), Series(stream, "Reservoir Fill Over Time"));
 

@@ -13,6 +13,7 @@ internal static class Topics
     public const string Crc = "crc";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
+    public const string ChannelLayouts = "channel-layouts";
 }
 
 // What each AAC node is, in the words the report shows next to it. Constants only: access unit and

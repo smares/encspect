@@ -108,6 +108,39 @@ internal sealed class Layer2Multichannel
         }
     }
 
+    // The speaker channels of the configuration, as the decoder outputs them (ISO/IEC 13818-3): the
+    // base frame's left and right, the center (a reserved center value reads as none), the
+    // surround channels or the second stereo program, whose two channels feed no speakers of the
+    // first, then the LFE.
+    public IReadOnlyList<Speaker> Layout
+    {
+        get
+        {
+            var speakers = new List<Speaker> { Speaker.FrontLeft, Speaker.FrontRight };
+            if (Center is 1 or 3)
+            {
+                speakers.Add(Speaker.FrontCenter);
+            }
+
+            speakers.AddRange(Surround switch
+            {
+                1 => [Speaker.BackCenter],
+                2 => [Speaker.BackLeft, Speaker.BackRight],
+                3 => [Speaker.Discrete, Speaker.Discrete],
+                _ => [],
+            });
+            if (HasLfe)
+            {
+                speakers.Add(Speaker.LowFrequency);
+            }
+
+            return speakers;
+        }
+    }
+
+    // What decides the stream's channels: the configuration and the multilingual channels.
+    public (bool, int, bool, int) ChannelKey => (Center is 1 or 3, Surround, HasLfe, MultilingualChannels);
+
     // data holds the bits from start to end (in bits); baseAllocation the allocation index of the
     // base frame's two channels per subband; rate selects the allocation table.
     public static Layer2Multichannel Read(byte[] data, int start, int end, int[,] baseAllocation, int rate)

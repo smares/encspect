@@ -483,7 +483,8 @@ def oggs_in_mp3():
     data = b"".join(frames)
     (OUT / "oggs-in-mp3.mp3").write_bytes(data)
     # Six frames of 1152 samples, 417 bytes each.
-    info = {"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "samples": 6912, "duration": 6912 / 44100,
+    info = {"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_layout": ["front left", "front right"], "samples": 6912,
+            "duration": 6912 / 44100,
             "average_bitrate": 6 * 417 * 8 * 44100 / 6912 / 1000, "is_vbr": False}
     manifest = {"length": len(data), "format": "MPEG Audio", "regions": [{"name": "MPEG Audio", "offset": 0, "length": len(data)}],
                 "pages": [], "streams": [], "stream_infos": [info], "findings": [], "crosscheck": {"valid": False, "mpeg_frames": 6}}

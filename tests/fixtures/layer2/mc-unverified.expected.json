@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 128 kbps whose multichannel side information (3/2 + LFE) continues in an extension bitstream in every frame: 255 bytes of MPEG-1 ancillary data, the most n_ad_bytes can announce, leave too little room in the base frame. Without the extension bitstream no multichannel CRC can be checked, so the extension is reported as possible, not as fact.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 128 kbps whose multichannel side information (3/2 + LFE) continues in an extension bitstream in every frame: 255 bytes of MPEG-1 ancillary data, the most n_ad_bytes can announce, leave too little room in the base frame. Without the extension bitstream no multichannel CRC can be checked, so the extension is reported as possible, not as fact, and the stream as its stereo base.",
  "length": 2304,
  "crosscheck": true,
  "regions": [
@@ -2193,6 +2193,10 @@
    "sample_rate": 48000,
    "samples": 6912,
    "duration": "0.144 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
    "average_bitrate": "128.0 kbps",
    "is_vbr": false,
    "bitrate_over_time": "128"

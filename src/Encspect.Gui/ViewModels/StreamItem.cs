@@ -3,8 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Gui.ViewModels;
 
-// One stream of the report in a line: "MPEG-1 Layer III · 44.1 kHz · Joint stereo · 3:25 ·
-// 192 kbps VBR · LAME 3.100 (high)".
+// One stream of the report in a line: "MPEG-1 Layer III · 44.1 kHz · Joint stereo · stereo (front
+// left, front right) · 3:25 · 192 kbps VBR · LAME 3.100 (high)".
 public sealed class StreamItem(StreamInfo stream)
 {
     public StreamInfo Stream { get; } = stream;
@@ -26,6 +26,16 @@ public sealed class StreamItem(StreamInfo stream)
             else if (Stream.Channels > 0)
             {
                 parts.Add(Format.Count(Stream.Channels, "channel", "channels"));
+            }
+
+            if (Stream.ChannelLayout is { } layout)
+            {
+                parts.Add(ChannelLayouts.Describe(layout));
+            }
+
+            if (Stream.MultilingualChannels > 0)
+            {
+                parts.Add(Format.Count(Stream.MultilingualChannels, "multilingual channel", "multilingual channels"));
             }
 
             if (Stream.BitsPerSample is { } bits)

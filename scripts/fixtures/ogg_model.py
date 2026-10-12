@@ -485,6 +485,8 @@ def speex_expectations(header, packets, positions, gaps=()):
         "codec": f"Speex {MODE_NAMES[mode].lower()}" if valid_mode else "Speex",
         "sample_rate": max(0, rate),
         "channels": min(max(channels, 1), 2),
+        # Speex codes one channel, or two as intensity stereo, which decodes to left and right.
+        "channel_layout": ["front center"] if channels <= 1 else ["front left", "front right"],
         "samples": samples,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": total_bytes * 8.0 * rate / coded / 1000 if has_time and coded else None,

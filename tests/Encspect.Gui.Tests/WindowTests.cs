@@ -410,7 +410,7 @@ public sealed class WindowTests : IDisposable
         model.SelectedRowChanged += (_, _) => changes++;
         foreach (FileRow row in rows)
         {
-            row.Apply(new FileSummary(new ReportSummary(row.Path, "MPEG Audio", 1, "MPEG-1 Layer III", 100 - rows.IndexOf(row), 1, 128, 44100, null, null, null, [], 0, 0, 0), false, null));
+            row.Apply(new FileSummary(new ReportSummary(row.Path, "MPEG Audio", 1, "MPEG-1 Layer III", 100 - rows.IndexOf(row), 1, 128, 44100, null, null, null, null, [], 0, 0, 0), false, null));
         }
 
         model.SortAgain();

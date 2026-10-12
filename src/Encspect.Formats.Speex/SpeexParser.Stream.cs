@@ -391,6 +391,7 @@ public sealed partial class SpeexParser
                     SampleRate = Math.Max(0, header.Rate),
                     Channels = header.DecodedChannels,
                     ChannelMode = header.DecodedChannels == 1 ? "Mono" : "Stereo",
+                    ChannelLayout = header.DecodedChannels == 1 ? ChannelLayouts.Mono : ChannelLayouts.Stereo,
                     Samples = samples,
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _coded > 0 ? _bytes * 8.0 * Rate / _coded / 1000 : null,

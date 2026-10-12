@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Aac;
 
 // What a stream's configuration says, from an AudioSpecificConfig (ISO/IEC 14496-3 1.6.2.1) or an
@@ -17,6 +19,10 @@ internal sealed record AacConfig
     // The core's channels, from the channel configuration or a program config element; null where
     // neither says.
     public int? Channels { get; init; }
+
+    // The core's speakers where a program config element or USAC's channel positions give them;
+    // otherwise the channel configuration's (Table 1.19).
+    public IReadOnlyList<Speaker>? Layout { get; init; }
 
     // True where SBR or PS is signaled present, false where signaled absent, null where the
     // configuration says nothing (implicit signaling remains possible).
@@ -51,6 +57,10 @@ internal sealed record AacConfig
         ?? (CoreSampleRate > 0 ? (int)((long)CoreFrameLength * OutputSampleRate / CoreSampleRate) : CoreFrameLength);
 
     public int? OutputChannels => Ps == true ? 2 : Channels;
+
+    // With PS a mono core gives left and right.
+    public IReadOnlyList<Speaker>? OutputLayout => Ps == true ? ChannelLayouts.Stereo
+        : Layout ?? (ChannelConfiguration == 0 ? null : AacTables.Layout(ChannelConfiguration));
 
     // Whether implicit signaling could still add SBR or PS: SBR to a GA core that signals nothing
     // about it, PS to an SBR stream of one channel.

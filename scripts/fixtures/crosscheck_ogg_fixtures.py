@@ -12,8 +12,9 @@ For every manifest in tests/fixtures/ogg (make_ogg_fixtures.py, make_external_og
   packet, must be the manifest's.
 - ogginfo (vorbis-tools): each Speex stream's version, mode, channels, rate, vendor string and
   comments.
-- ffprobe: each Speex stream's sample rate and channels, the size of every audio packet, and the
-  duration in samples, which ffmpeg counts from the start the first granule position implies to
+- ffprobe: each Speex stream's sample rate and channels, its channel layout's speakers where ffmpeg
+  names a layout (channel_layouts.py; ffmpeg 6.1 leaves Speex's unspecified), the size of every
+  audio packet, and the duration in samples, which ffmpeg counts from the start the first granule position implies to
   the last granule position: the manifest's samples plus the encoder delay.
 - speexdec -V (speex): the header line ("Decoding 16000 Hz audio using wideband mode (mono)"), the
   vendor string, the bitrate it prints for every frame it decodes, which follows from each frame's
@@ -30,6 +31,7 @@ import subprocess
 import sys
 import tempfile
 
+import channel_layouts
 import ogg_model as m
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -200,6 +202,8 @@ def check_ffprobe(name, manifest, problems, chained):
         info = next(i for i in manifest["stream_infos"] if i["sample_rate"] == int(stream["sample_rate"]) and i["codec"].startswith("Speex"))
         if int(stream["sample_rate"]) != info["sample_rate"] or stream["channels"] != info["channels"]:
             problems.append(f"ffprobe: {stream['sample_rate']} Hz, {stream['channels']} channels differ from the manifest's")
+        if "channel_layout" in stream and channel_layouts.same_speakers(stream["channel_layout"], info["channel_layout"]) is not True:
+            problems.append(f"ffprobe's channel layout {stream.get('channel_layout')} differs from the manifest's {info['channel_layout']}")
         sizes = [int(p["size"]) for p in probe["packets"] if p["stream_index"] == stream["index"]]
         if sizes != [p[1] for p in entry["speex"]["packets"]]:
             problems.append(f"ffprobe: the audio packet sizes of {entry['serial']} differ from the manifest's")

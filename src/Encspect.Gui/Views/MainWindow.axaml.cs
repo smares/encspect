@@ -25,7 +25,8 @@ public partial class MainWindow : Window
         ["Duration"] = "The playing time of all the file's audio streams together.",
         ["Bitrate"] = "The average bitrate of the audio, weighted by duration: VBR where the frames use more than one bitrate, CBR where they all use the same.",
         ["Sample Rate"] = "Samples per second in each channel of the first stream.",
-        ["Channel Mode"] = "How the first stream's channels are coded: stereo, joint stereo, dual channel or mono.",
+        ["Channel Mode"] = "How the first stream's channels are coded, as its format names it, such as joint stereo or dual channel in MPEG audio, or parametric stereo in HE-AAC v2.",
+        ["Channel Layout"] = "Which speakers the first stream's channels feed, by the layout's common name such as stereo or 5.1; the cell's tooltip lists the speakers in the stream's channel order. Discrete channels feed no speaker of their own, such as the two programs of dual channel.",
         ["Encoder"] = "Which program encoded the file, and how sure the analysis is: high when the encoder wrote its name, low when only its habits match.",
         ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APE.",
         ["Findings"] = "Problems and notes found, by severity: errors, warnings and infos.",
@@ -113,6 +114,13 @@ public partial class MainWindow : Window
         grid.Columns.Add(Column("Bitrate", CompiledBinding.Create<FileRow, string?>(r => r.BitrateText), nameof(FileRow.Bitrate), new DataGridLength(112), 0, "numeric"));
         grid.Columns.Add(Column("Sample Rate", CompiledBinding.Create<FileRow, string?>(r => r.SampleRateText), nameof(FileRow.SampleRate), new DataGridLength(98), 0, "numeric"));
         grid.Columns.Add(Column("Channel Mode", CompiledBinding.Create<FileRow, string?>(r => r.ChannelMode), nameof(FileRow.ChannelMode), new DataGridLength(110)));
+        grid.Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Channel Layout",
+            SortMemberPath = nameof(FileRow.ChannelLayout),
+            Width = new DataGridLength(110),
+            CellTemplate = new FuncDataTemplate<FileRow>((_, _) => LayoutCell()),
+        });
         grid.Columns.Add(Column("Encoder", CompiledBinding.Create<FileRow, string?>(r => r.EncoderText), nameof(FileRow.EncoderText), new DataGridLength(150)));
         grid.Columns.Add(Column("Tags", CompiledBinding.Create<FileRow, string?>(r => r.Tags), nameof(FileRow.Tags), new DataGridLength(110)));
         grid.Columns.Add(new DataGridTemplateColumn
@@ -140,6 +148,15 @@ public partial class MainWindow : Window
         }
 
         return column;
+    }
+
+    // The layout's name, with its speakers as the tooltip.
+    private static TextBlock LayoutCell()
+    {
+        var text = new TextBlock { Margin = new Avalonia.Thickness(12, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
+        text.Bind(TextBlock.TextProperty, CompiledBinding.Create<FileRow, string?>(r => r.ChannelLayout));
+        text.Bind(ToolTip.TipProperty, CompiledBinding.Create<FileRow, string?>(r => r.ChannelLayoutTip));
+        return text;
     }
 
     // The counts of errors, warnings and infos, each after a dot of its severity's color; zero

@@ -91,7 +91,7 @@ def fill(bits, count):
 
 
 def raw_data_block(layout, padding=0, zero_bands=0):
-    """layout: "mono", "stereo" or "5.1" (SCE, CPE, CPE, LFE). padding: fill bytes after the channels."""
+    """layout: "mono", "stereo", "5.1" (SCE, CPE, CPE, LFE) or "7.1" (SCE, CPE, CPE, CPE, LFE). padding: fill bytes after the channels."""
     bits = Bits()
     if layout == "mono":
         sce(bits, zero_bands=zero_bands)
@@ -101,6 +101,12 @@ def raw_data_block(layout, padding=0, zero_bands=0):
         sce(bits)
         cpe(bits, 0)
         cpe(bits, 1)
+        sce(bits, element=3)
+    elif layout == "7.1":
+        sce(bits)
+        cpe(bits, 0)
+        cpe(bits, 1)
+        cpe(bits, 2)
         sce(bits, element=3)
     if padding:
         fill(bits, padding)
@@ -289,6 +295,34 @@ def mp4a(channels, rate, *children, version=0, extra=b"", format=b"mp4a"):
     rate_field = u32(rate << 16) if rate < 65536 else u32(0)
     fields = bytes(6) + u16(1) + u16(version) + u16(0) + u32(0) + u16(channels) + u16(16) + u16(0) + u16(0) + rate_field + extra
     return box(format, fields, *children)
+
+
+def chan(tag, bitmap=0, descriptions=()):
+    """QuickTime's channel layout atom: Core Audio's AudioChannelLayout, big-endian (a layout tag, a channel
+    bitmap and AudioChannelDescriptions of label, flags and three 32-bit float coordinates)."""
+    body = u32(tag) + u32(bitmap) + u32(len(descriptions))
+    for label, flags, coordinates in descriptions:
+        body += u32(label) + u32(flags) + b"".join(struct.pack(">f", c) for c in coordinates)
+    return fullbox("chan", 0, 0, body)
+
+
+def chnl(defined=0, positions=(), omitted=0, objects=None):
+    """ISO/IEC 14496-12's channel layout box, version 0: channels as a defined layout with its omitted
+    channels, or a speaker position per channel (126 followed by azimuth and elevation), and an object count
+    where objects is set."""
+    structure = 1 | (2 if objects is not None else 0)
+    body = u8(structure) + u8(defined)
+    if defined:
+        body += u64(omitted)
+    else:
+        for position in positions:
+            if isinstance(position, tuple):
+                body += u8(126) + struct.pack(">hb", *position)
+            else:
+                body += u8(position)
+    if objects is not None:
+        body += u8(objects)
+    return fullbox("chnl", 0, 0, body)
 
 
 def stsd(*entries, version=0):

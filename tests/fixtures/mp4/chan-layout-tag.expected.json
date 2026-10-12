@@ -1,0 +1,241 @@
+{
+ "description": "AAC LC 5.1 with a chan atom whose layout tag is AAC_5_1 (MPEG_5_1_D: C L R Ls Rs LFE), as Apple's encoder labels AAC 5.1: the same speakers as the channel configuration.",
+ "length": 1551,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   672
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   556
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   456
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   371
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   311
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   127
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   111
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chan",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   524,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   548,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   576,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   676,
+   24
+  ],
+  [
+   "mdat",
+   700,
+   851
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "5.1",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   708,
+   19
+  ],
+  [
+   727,
+   58
+  ],
+  [
+   785,
+   55
+  ],
+  [
+   840,
+   52
+  ],
+  [
+   892,
+   49
+  ],
+  [
+   941,
+   46
+  ],
+  [
+   987,
+   43
+  ],
+  [
+   1030,
+   40
+  ],
+  [
+   1070,
+   37
+  ],
+  [
+   1107,
+   33
+  ],
+  [
+   1140,
+   30
+  ],
+  [
+   1170,
+   27
+  ],
+  [
+   1197,
+   24
+  ],
+  [
+   1221,
+   21
+  ],
+  [
+   1242,
+   59
+  ],
+  [
+   1301,
+   56
+  ],
+  [
+   1357,
+   53
+  ],
+  [
+   1410,
+   50
+  ],
+  [
+   1460,
+   47
+  ],
+  [
+   1507,
+   44
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan": "5.1 (front center, front left, front right, back left, back right, LFE)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Layout Tag": "MPEG_5_1_D: C L R Ls Rs LFE (0x007C0006)"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 6,
+   "rate": 48000
+  }
+ }
+}

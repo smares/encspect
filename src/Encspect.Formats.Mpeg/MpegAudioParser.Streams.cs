@@ -85,14 +85,17 @@ public sealed partial class MpegAudioParser
 
         Node? encoder = regions.Select(r => r.Encoder).FirstOrDefault(e => e is not null);
         string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (IReadOnlyList<Speaker> layout, int multilingual) = Layout(state, start, end, header);
 
         return new StreamInfo
         {
             Nodes = regions.Select(r => r.Node!).ToList(),
             Codec = $"{header.VersionName} Layer {header.LayerName}",
             SampleRate = header.SampleRate,
-            Channels = header.IsMono ? 1 : 2,
+            Channels = layout.Count,
             ChannelMode = header.ChannelMode,
+            ChannelLayout = layout,
+            MultilingualChannels = multilingual,
             Samples = samples,
             Duration = ticks / (double)Clock,
             AverageBitrate = ticks > 0 ? bits * (double)Clock / (ticks * 1000.0) : null,
@@ -101,6 +104,56 @@ public sealed partial class MpegAudioParser
             EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
             Series = Series(state, start, end, audio),
         };
+    }
+
+    // The channels of the stream's first frame: one for mono, two independent programs without
+    // speaker positions for dual channel, left and right for stereo and joint stereo. Where the file
+    // carries the MPEG-2 multichannel extension (ISO/IEC 13818-3) and every frame of the stream
+    // that carries it states the same configuration, the stream has the configuration's channels in
+    // the order of the decoder's output: left and right, which the base frames carry, the center,
+    // the surround channels or the second stereo program, then the LFE. Multilingual channels are
+    // other programs, not speakers, so they are counted apart.
+    private static (IReadOnlyList<Speaker> Layout, int Multilingual) Layout(StreamState state, int start, int end, MpegHeader header)
+    {
+        IReadOnlyList<Speaker> layout = header.IsMono ? ChannelLayouts.Mono : header.ChannelModeBits == 2 ? ChannelLayouts.Discrete(2) : ChannelLayouts.Stereo;
+        if (!state.Build.HasMultichannel)
+        {
+            return (layout, 0);
+        }
+
+        ChunkedList<Entry> frames = state.Build.Frames;
+        Layer2Multichannel? first = null;
+        int firstIndex = -1;
+        for (int i = start; i < end; i++)
+        {
+            state.CheckCancellation(i - start);
+            ref readonly Entry frame = ref frames[i];
+            if (frame.IsGap || !frame.IsMultichannelCandidate)
+            {
+                continue;
+            }
+
+            Layer2Multichannel mc = ReadMultichannel(state.Build, frame, new MpegHeader(frame.Header)).Mc;
+            if (!mc.IsCrcValid && (mc.Fits || !mc.HasExtension || mc.HasAncillaryOverflow))
+            {
+                continue;
+            }
+
+            if (first is null)
+            {
+                (first, firstIndex) = (mc, i);
+            }
+            else if (mc.ChannelKey != first.ChannelKey)
+            {
+                Layer2Multichannel from = first;
+                long offset = frame.Offset;
+                state.Findings.Add(Severity.Info, "mpeg.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
+                    $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at 0x{offset:X}, so the stream reports the channels of its stereo base.");
+                return (layout, 0);
+            }
+        }
+
+        return first is null ? (layout, 0) : (first.Layout, first.MultilingualChannels);
     }
 
     // The region that holds a record: the last that starts at or before it.

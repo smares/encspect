@@ -14688,8 +14688,15 @@
         ],
         "codec": "MPEG-1 Layer II",
         "sampleRate": 48000,
-        "channels": 2,
+        "channels": 4,
         "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "back left",
+          "back right"
+        ],
+        "channelLayoutName": "quadraphonic",
         "samples": 6912,
         "duration": 0.144,
         "averageBitrate": 384,

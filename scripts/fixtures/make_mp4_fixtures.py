@@ -35,7 +35,7 @@ import struct
 import sys
 
 from mp4_boxes import (
-    Bits, Box, Track, asc, box, data_atom, dinf, elst, esds, freeform, fullbox, ftyp, hdlr, ilst_meta, interleave, item, mdhd, meta_hdlr, movie, mp4a,
+    Bits, Box, Track, asc, box, chan, chnl, data_atom, dinf, elst, esds, freeform, fullbox, ftyp, hdlr, ilst_meta, interleave, item, mdhd, meta_hdlr, movie, mp4a,
     mvhd, pce_5_1, raw_data_block, rate_index, sbgp, sgpd_roll, stco, stsc, stsd, stsz, stts, text_item, tkhd, u8, u16, u32, u64, udta, units, write,
 )
 
@@ -51,8 +51,16 @@ IMPLICIT_PS = ["aac.implicit-signaling-not-checked", "PS can also be signaled im
 MOOV_AFTER = ["mp4.moov-after-mdat", "not optimized for streaming"]
 
 
+# The speakers of AAC's channel configurations 1, 2, 6 and 12 in their order (ISO/IEC 14496-3 Table
+# 1.19); the 5.1 program config elements here list the same elements in the same order.
+SPEAKERS = {1: ["front center"], 2: ["front left", "front right"],
+            6: ["front center", "front left", "front right", "back left", "back right", "LFE"],
+            8: ["front center", "front left", "front right", "side left", "side right", "back left", "back right", "LFE"]}
+
+
 def stream(codec, rate, channels, mode, samples, vbr=False, encoder=None):
-    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "samples": samples, "is_vbr": vbr}
+    entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels],
+             "samples": samples, "is_vbr": vbr}
     if encoder:
         entry["encoder"] = list(encoder)
     return entry
@@ -76,8 +84,8 @@ def unit_list(offsets, samples, chunk):
     return result
 
 
-def aac_entry(config, rate, channels, average=0, maximum=0, oti=0x40):
-    return mp4a(channels, rate, esds(oti, config, average, maximum))
+def aac_entry(config, rate, channels, average=0, maximum=0, oti=0x40, extra=()):
+    return mp4a(channels, rate, esds(oti, config, average, maximum), *extra)
 
 
 # --- MP4 fixtures ---------------------------------------------------------------------------------
@@ -87,10 +95,10 @@ def faad_line(label, channels, rate):
 
 
 def plain(name, description, config, layout, codec, rate, channels, mode, samples=None, output_rate=None, output_channels=None, frame=1024,
-          findings=(), fields=None, faad=None, chunk=10, timescale=None, ffprobe_channels=None, faad_channels=None, **options):
+          findings=(), fields=None, faad=None, chunk=10, timescale=None, ffprobe_channels=None, faad_channels=None, extra=(), skip=None, **options):
     samples = samples or units(layout, 30)
     output_rate = output_rate or rate
-    entry = aac_entry(config, rate, channels)
+    entry = aac_entry(config, rate, channels, extra=extra)
     track = Track(1, samples, rate, channels, entry, timescale=timescale, chunk=chunk)
     data, records, offsets = movie([track], **options)
     entry = stream(codec, output_rate, output_channels or channels, mode, len(samples) * frame, vbr=True)
@@ -108,6 +116,10 @@ def plain(name, description, config, layout, codec, rate, channels, mode, sample
         "crosscheck": {"ffprobe": True, "mp4box": True,
                        "faad": faad_line(faad, output_channels or channels if faad_channels is None else faad_channels, output_rate) if faad else None},
     }
+    if skip:
+        manifest["crosscheck"]["skip"] = skip
+        manifest["crosscheck"]["ffprobe"] = "ffprobe" not in skip
+        manifest["crosscheck"]["mp4box"] = "mp4box" not in skip
     return name, data, manifest
 
 
@@ -142,6 +154,80 @@ def he_aac_configs():
               asc(2, 48000, 0, pce=pce_5_1), "5.1", "AAC LC (no SBR signaled explicitly)", 48000, 6, "6 channels", samples=units("5.1", 20),
               findings=[IMPLICIT], fields={ASC + "/Channel Configuration": "0 (defined in a program config element)", ASC + "/Program Config Element": "6 channels",
                                            ASC + "/Program Config Element/Front Channel Elements": "2"}, faad="LC AAC", faad_channels=0),
+    ]
+
+
+# Core Audio's layout tags (CoreAudioBaseTypes.h): the upper 16 bits name the layout, the lower the channels.
+TAG_STEREO = (101 << 16) | 2
+TAG_AAC_5_1 = (124 << 16) | 6
+TAG_MPEG_7_1_C = (128 << 16) | 8
+USE_BITMAP = 1 << 16
+USE_DESCRIPTIONS = 0
+CHAN = STSD + "/chan"
+CHNL = STSD + "/chnl"
+DIFFERS = "mp4.channel-layout-differs"
+AAC_5_1 = "5.1 (front center, front left, front right, back left, back right, LFE)"
+
+
+def channel_layouts():
+    """The container's statement of the speakers, in QuickTime's chan atom (a layout tag, a channel bitmap or
+    channel descriptions) and ISO/IEC 14496-12's chnl box (a defined layout or a position per channel), next to
+    AAC configurations that state their own."""
+    five = asc(2, 48000, 6)
+    lc = "AAC LC (no SBR signaled explicitly)"
+    return [
+        plain("chan-layout-tag", "AAC LC 5.1 with a chan atom whose layout tag is AAC_5_1 (MPEG_5_1_D: C L R Ls Rs LFE), as Apple's encoder "
+              "labels AAC 5.1: the same speakers as the channel configuration.", five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20),
+              findings=[IMPLICIT], extra=[chan(TAG_AAC_5_1)],
+              fields={CHAN: AAC_5_1, CHAN + "/Layout Tag": "MPEG_5_1_D: C L R Ls Rs LFE (0x007C0006)"}, faad="LC AAC"),
+        plain("chan-bitmap", "AAC LC stereo with a chan atom that names its channels by the bitmap: left and right (bits 0 and 1).",
+              asc(2, 44100, 2), "stereo", lc, 44100, 2, "Stereo", findings=[IMPLICIT], extra=[chan(USE_BITMAP, 0x3)],
+              fields={CHAN: "stereo (front left, front right)", CHAN + "/Layout Tag": "UseChannelBitmap (0x00010000)", CHAN + "/Channel Bitmap": "0x00000003"},
+              faad="LC AAC"),
+        plain("chan-bitmap-side", "AAC LC 5.1 with a chan atom whose bitmap puts the surround pair at the sides (left and right surround "
+              "direct, bits 9 and 10), where the channel configuration's surround pair is at the back: the codec's speakers count, with a warning.",
+              five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20), extra=[chan(USE_BITMAP, 0x60F)],
+              findings=[IMPLICIT, [DIFFERS, "states 5.1 (front left, front right, front center, LFE, side left, side right), but the " + lc]],
+              fields={CHAN: "5.1 (front left, front right, front center, LFE, side left, side right)", CHAN + "/Channel Bitmap": "0x0000060F"},
+              faad="LC AAC"),
+        plain("chan-descriptions", "AAC LC 5.1 with a chan atom that describes each channel by its label, in the WAVE order L R C LFE Ls Rs, "
+              "the first with spherical coordinates: the same speakers as the channel configuration in another order, so no finding.",
+              five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20), findings=[IMPLICIT],
+              extra=[chan(USE_DESCRIPTIONS, 0, [(1, 2, (-30.0, 0.0, 1.0)), (2, 0, (0, 0, 0)), (3, 0, (0, 0, 0)), (4, 0, (0, 0, 0)),
+                                                (5, 0, (0, 0, 0)), (6, 0, (0, 0, 0))])],
+              fields={CHAN: "5.1 (front left, front right, front center, LFE, back left, back right)", CHAN + "/Channel Descriptions": "6",
+                      CHAN + "/Channel Description": "Left (1)", CHAN + "/Channel Description/Coordinates": "-30, 0, 1"}, faad="LC AAC"),
+        plain("chan-mono-core", "AAC LC mono with a chan atom that says stereo: the core may carry parametric stereo signaled only in its "
+              "access units, so the difference is an info.", asc(2, 44100, 1), "mono", lc, 44100, 1, "Mono", extra=[chan(TAG_STEREO)],
+              findings=[IMPLICIT, [DIFFERS, "may use parametric stereo signaled only inside its access units"]],
+              fields={CHAN: "stereo (front left, front right)", CHAN + "/Layout Tag": "Stereo: L R (0x00650002)"}, faad="LC AAC", faad_channels=2),
+        plain("chan-completes-reserved", "AAC LC whose configuration names the reserved channel configuration 8, so it states no speakers, "
+              "with a chan atom that says stereo: the stream reports the container's layout.", asc(2, 44100, 8), "stereo", lc, 44100, 2,
+              "Reserved", extra=[chan(TAG_STEREO)],
+              findings=[IMPLICIT, ["aac.reserved-channel-configuration", "channel configuration 8 is reserved"]],
+              fields={CHAN: "stereo (front left, front right)"}, faad=None,
+              skip={"ffprobe": "ffmpeg's decoder rejects the reserved channel configuration.", "faad": "faad2 rejects the reserved channel configuration."}),
+        plain("chan-7-1-rear", "AAC LC 7.1 (channel configuration 12: C L R Ls Rs Lsr Rsr LFE) with a chan atom whose layout tag is "
+              "MPEG_7_1_C (L R C LFE Ls Rs Rls Rrs): with a rear pair, both put the surround pair at the sides, so they agree.",
+              asc(2, 48000, 12), "7.1", lc, 48000, 8, "7.1", samples=units("7.1", 20), findings=[IMPLICIT], extra=[chan(TAG_MPEG_7_1_C)],
+              fields={CHAN: "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
+                      ASC + "/Channel Configuration": "12 (7.1: center, left/right, left/right surround, left/right rear, LFE)"},
+              skip={"faad": "faad2 2.11 does not read channel configuration 12."}),
+        plain("chnl-defined", "AAC LC 5.1 with a chnl box that gives ISO/IEC 23091-3's ChannelConfiguration 6 (C L R Ls Rs LFE) and omits "
+              "no channel.", five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20), findings=[IMPLICIT], extra=[chnl(defined=6)],
+              fields={CHNL: AAC_5_1, CHNL + "/Defined Layout": "6 (" + AAC_5_1 + ")", CHNL + "/Omitted Channels": "0x0000000000000000"},
+              faad="LC AAC"),
+        plain("chnl-omitted", "AAC LC 5.1 with a chnl box that gives ChannelConfiguration 6 but omits its sixth channel, the LFE: 5.0 "
+              "against the configuration's 5.1, a warning.", five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20), extra=[chnl(defined=6, omitted=1 << 5)],
+              findings=[IMPLICIT, [DIFFERS, "states 5.0 (front center, front left, front right, back left, back right)"]],
+              fields={CHNL: "5.0 (front center, front left, front right, back left, back right)", CHNL + "/Omitted Channels": "0x0000000000000020"},
+              faad="LC AAC", skip={"ffprobe": "ffmpeg 6.1 does not read a chnl box that omits channels (\"Not yet implemented\")."}),
+        plain("chnl-positions", "AAC LC stereo with a chnl box that lists a speaker position per channel (0, left front, and 1, right front) "
+              "and an object count of 0.", asc(2, 44100, 2), "stereo", lc, 44100, 2, "Stereo", findings=[IMPLICIT],
+              extra=[chnl(positions=(0, 1), objects=0)],
+              fields={CHNL: "stereo (front left, front right)", CHNL + "/Stream Structure": "3 (channels and objects)",
+                      CHNL + "/Speaker Position": "0 (left front)", CHNL + "/Object Count": "0"}, faad="LC AAC",
+              skip={"mp4box": "GPAC 2.2 reads the omitted channels map in place of the speaker positions, runs past the box and drops it."}),
     ]
 
 
@@ -389,7 +475,8 @@ def mp3_in_mp4():
     return [("mp3-in-mp4", data, {
         "description": "MPEG-1 Layer III in MP4 (object type 0x6B), one chunk of 12 frames, which the MPEG audio parser reads as the same bytes in a file.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-        "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "samples": 12 * 1152, "is_vbr": False}],
+        "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2],
+                     "samples": 12 * 1152, "is_vbr": False}],
         "units": unit_list(offsets[0], frames, 12),
         "fields": {ESDS: "0x6B (MPEG-1 Audio)"},
         "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
@@ -840,7 +927,8 @@ def adts_fixtures():
     out.append(("adif.aac", data, {
         "description": "ADIF: a constant bitrate of 128000 bit/s and one program config element with a channel pair, then 20 raw data blocks.",
         "length": len(data), "format": "AAC", "boxes": [],
-        "streams": [{"codec": "AAC LC (no SBR signaled explicitly)", "sample_rate": 44100, "channels": 2, "channel_mode": "2 channels", "samples": 0, "is_vbr": False}],
+        "streams": [{"codec": "AAC LC (no SBR signaled explicitly)", "sample_rate": 44100, "channels": 2, "channel_mode": "2 channels",
+                     "channel_layout": SPEAKERS[2], "samples": 0, "is_vbr": False}],
         "units": [], "fields": {"ADIF/ADIF Header/Bitrate": "128000 bit/s", "ADIF/Raw Data Blocks": f"{len(body)} bytes"},
         "findings": [IMPLICIT, ["aac.adif-blocks-not-analyzed", "ADIF delimits no raw data blocks"]],
         "crosscheck": {"ffprobe": False, "faad": None, "skip": {"ffprobe": "ffmpeg does not read ADIF.", "faad": "faad2 reads ADIF headers but reports no duration."}},
@@ -853,7 +941,8 @@ def adts_fixtures():
     out.append(("adts-inside-mp3.mp3", data, {
         "description": "Ten MPEG-1 Layer III frames with three consistent ADTS frames between the fifth and sixth: MPEG audio wins, the ADTS bytes are a gap.",
         "length": len(data), "format": "MPEG Audio", "boxes": [],
-        "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "samples": 10 * 1152, "is_vbr": False}],
+        "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2],
+                     "samples": 10 * 1152, "is_vbr": False}],
         "units": [[i * 417 + (len(adts) if i >= 5 else 0), 417] for i in range(10)], "fields": {},
         "findings": [["mpeg.sync-lost", f"Sync is lost for {len(adts)} bytes"]],
         "crosscheck": {"ffprobe": False, "faad": None, "skip": {"ffprobe": "the MPEG fixtures' cross-check covers MPEG audio; ffmpeg resyncs inside the gap its own way."}},
@@ -872,7 +961,7 @@ def write_fixture(directory, name, data, manifest):
 
 
 def main():
-    fixtures = he_aac_configs() + [xhe(), eld()] + layout_variants() + gapless() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + layout_variants() + channel_layouts() + gapless() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

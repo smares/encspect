@@ -208,6 +208,7 @@ public class OggFixtureTests
             Assert.Equal(info.GetProperty("codec").GetString(), stream.Codec);
             Assert.Equal(info.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
             Assert.Equal(info.GetProperty("channels").GetInt32(), stream.Channels);
+            Assert.Equal(info.GetProperty("channel_layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
             Assert.Equal(info.GetProperty("samples").GetInt64(), stream.Samples);
             Assert.Equal(info.GetProperty("duration").GetDouble(), stream.Duration, 9);
             if (info.GetProperty("average_bitrate").ValueKind == JsonValueKind.Null)

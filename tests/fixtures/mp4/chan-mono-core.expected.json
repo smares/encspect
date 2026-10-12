@@ -1,0 +1,280 @@
+{
+ "description": "AAC LC mono with a chan atom that says stereo: the core may carry parametric stereo signaled only in its access units, so the difference is an info.",
+ "length": 1535,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   716
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   600
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   500
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   415
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   355
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   127
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   111
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chan",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   524,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   548,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   576,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   716,
+   28
+  ],
+  [
+   "mdat",
+   744,
+   791
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   752,
+   4
+  ],
+  [
+   756,
+   43
+  ],
+  [
+   799,
+   40
+  ],
+  [
+   839,
+   37
+  ],
+  [
+   876,
+   34
+  ],
+  [
+   910,
+   31
+  ],
+  [
+   941,
+   28
+  ],
+  [
+   969,
+   25
+  ],
+  [
+   994,
+   22
+  ],
+  [
+   1016,
+   18
+  ],
+  [
+   1034,
+   15
+  ],
+  [
+   1049,
+   12
+  ],
+  [
+   1061,
+   9
+  ],
+  [
+   1070,
+   6
+  ],
+  [
+   1076,
+   44
+  ],
+  [
+   1120,
+   41
+  ],
+  [
+   1161,
+   38
+  ],
+  [
+   1199,
+   35
+  ],
+  [
+   1234,
+   32
+  ],
+  [
+   1266,
+   29
+  ],
+  [
+   1295,
+   26
+  ],
+  [
+   1321,
+   23
+  ],
+  [
+   1344,
+   19
+  ],
+  [
+   1363,
+   16
+  ],
+  [
+   1379,
+   13
+  ],
+  [
+   1392,
+   10
+  ],
+  [
+   1402,
+   7
+  ],
+  [
+   1409,
+   45
+  ],
+  [
+   1454,
+   42
+  ],
+  [
+   1496,
+   39
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan": "stereo (front left, front right)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Layout Tag": "Stereo: L R (0x00650002)"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "mp4.channel-layout-differs",
+   "may use parametric stereo signaled only inside its access units"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}
