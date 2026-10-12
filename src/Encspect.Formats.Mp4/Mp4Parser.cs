@@ -84,12 +84,12 @@ public sealed partial class Mp4Parser : IFormatParser
     {
         ByteReader reader = context.Reader;
         var state = new State(context, reader);
-        Node file = context.Root.Add(new Node("MP4", reader.Start, reader.Length));
+        Node file = context.Root.Add(new Node("MP4", reader.Start, reader.Length) { Description = Explain.File, Topic = Topics.IsoBaseMediaFormat });
         state.File = file;
         long end = ReadChildren(state, file, reader.Start, reader.End, 0, topLevel: true);
         if (end < reader.End)
         {
-            Node data = file.Add(new Node("Trailing Data", end, reader.End - end, NodeValue.Integer(reader.End - end, "bytes")));
+            Node data = file.Add(new Node("Trailing Data", end, reader.End - end, NodeValue.Integer(reader.End - end, "bytes")) { Description = Explain.TrailingData });
             state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{reader.End - end} bytes after the last box at 0x{end:X} are not a box.", data);
         }
 
@@ -171,7 +171,7 @@ public sealed partial class Mp4Parser : IFormatParser
     // Reads a box's payload, where the box's type alone does not say how (a sample entry, an item).
     private delegate void PayloadParser(State state, Node node, BoxHeader header, BoxFields fields, int depth);
 
-    private delegate (string Name, NodeKind Kind) BoxNaming(BoxHeader header);
+    private delegate BoxName BoxNaming(BoxHeader header);
 
     // Reads the boxes in [start, end) as children of parent and returns where they end: end, or the
     // start of bytes that are no box.
@@ -190,7 +190,7 @@ public sealed partial class Mp4Parser : IFormatParser
                     return position;
                 }
 
-                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")));
+                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for a box header.", rest);
                 return end;
             }
@@ -203,7 +203,7 @@ public sealed partial class Mp4Parser : IFormatParser
                     return position;
                 }
 
-                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")));
+                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-size-invalid",
                     $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {end - position} bytes from there are not read as boxes.", rest);
                 return end;
@@ -224,13 +224,13 @@ public sealed partial class Mp4Parser : IFormatParser
                     return position;
                 }
 
-                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")));
+                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for the {header.Type} box's header.", rest);
                 return end;
             }
 
-            (string name, NodeKind kind) = naming?.Invoke(header) ?? Naming(state, header);
-            Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name, kind);
+            BoxName name = naming?.Invoke(header) ?? Naming(state, header);
+            Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name);
             if (header.IsToEnd && !topLevel)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.box-to-end",
@@ -257,35 +257,35 @@ public sealed partial class Mp4Parser : IFormatParser
 
     // An item list is the file's iTunes or QuickTime metadata, a tag of the container; every other
     // box is named by its type.
-    private static (string Name, NodeKind Kind) Naming(State state, BoxHeader header) => header.Type == "ilst"
-        ? (state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag)
-        : (header.Type, NodeKind.Detail);
+    private static BoxName Naming(State state, BoxHeader header) => header.Type == "ilst"
+        ? new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata)
+        : new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
 
     // The box's node with its header fields, then its payload by type.
-    private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, string name, NodeKind kind)
+    private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, BoxName name)
     {
-        var node = new Node(name, header.Offset, header.Size, BoxNames.Describe(header.Type)) { Kind = kind };
+        var node = new Node(name.Name, header.Offset, header.Size, BoxNames.Describe(header.Type)) { Kind = name.Kind, Description = name.Description, Topic = name.Topic };
         parent.Add(node);
         long position = header.Offset;
-        node.Add(new Node("Size", position, 4, header.IsToEnd ? "0 (to the end of the file)" : header.IsLarge ? "1 (a 64-bit size follows)" : NodeValue.Integer(declared, "bytes")));
-        node.Add(new Node("Type", position + 4, 4, header.Type));
+        node.Add(new Node("Size", position, 4, header.IsToEnd ? "0 (to the end of the file)" : header.IsLarge ? "1 (a 64-bit size follows)" : NodeValue.Integer(declared, "bytes")) { Description = Explain.Size });
+        node.Add(new Node("Type", position + 4, 4, header.Type) { Description = Explain.Type });
         if (header.IsLarge)
         {
-            node.Add(new Node("Large Size", position + 8, 8, NodeValue.Integer(declared, "bytes")));
+            node.Add(new Node("Large Size", position + 8, 8, NodeValue.Integer(declared, "bytes")) { Description = Explain.LargeSize });
         }
 
         if (header.Type == "uuid")
         {
             long at = header.Offset + header.HeaderLength - 16;
             byte[] user = state.Reader.ReadBytesAt(at, 16);
-            node.Add(new Node("User Type", at, 16, new Guid(user, bigEndian: true).ToString()));
+            node.Add(new Node("User Type", at, 16, new Guid(user, bigEndian: true).ToString()) { Description = Explain.UserType });
         }
 
         if (depth >= MaxBoxDepth)
         {
             if (header.Size > header.HeaderLength)
             {
-                node.Add(new Node("Payload", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")));
+                node.Add(new Node("Payload", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.Payload });
             }
 
             state.Findings.AddNow(Severity.Warning, "mp4.nesting-too-deep", $"Boxes nest more than {MaxBoxDepth} levels deep at 0x{header.Offset:X}; the boxes inside are not read.", node);
@@ -321,21 +321,21 @@ public sealed partial class Mp4Parser : IFormatParser
                 state.FirstMdat ??= header.Offset;
                 if (header.End > header.PayloadStart)
                 {
-                    node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")));
+                    node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.MediaData });
                 }
 
                 break;
             case "free" or "skip" or "wide" or "junk":
                 if (header.End > header.PayloadStart)
                 {
-                    node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")));
+                    node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.FreeData });
                 }
 
                 break;
             default:
                 if (!ParseKnown(state, node, header, f, depth) && f.Remaining > 0)
                 {
-                    node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")));
+                    node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")) { Description = Explain.UnreadData });
                 }
 
                 break;
@@ -385,12 +385,12 @@ public sealed partial class Mp4Parser : IFormatParser
     // ISO/IEC 14496-12 4.3 (ftyp): the major brand, its version and the compatible brands.
     private static void FileType(State state, Node node, BoxHeader header, BoxFields f)
     {
-        string major = f.FourCc(node, "Major Brand");
-        f.U32(node, "Minor Version");
+        string major = f.FourCc(node, "Major Brand", Explain.MajorBrand);
+        f.U32(node, "Minor Version", Explain.MinorVersion);
         var brands = new List<string>();
         while (f.Remaining >= 4)
         {
-            brands.Add(f.FourCc(node, "Compatible Brand"));
+            brands.Add(f.FourCc(node, "Compatible Brand", Explain.CompatibleBrand));
         }
 
         if (header.Type == "ftyp")
@@ -506,3 +506,7 @@ internal readonly record struct BoxHeader(long Offset, long Size, string Type, i
 
     public long PayloadStart => Offset + HeaderLength;
 }
+
+// How a box's node is named and described: by its type, or for an item of an item list by what the
+// item is.
+internal readonly record struct BoxName(string Name, NodeKind Kind, string Description, string? Topic);

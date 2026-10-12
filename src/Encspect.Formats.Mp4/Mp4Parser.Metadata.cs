@@ -32,7 +32,7 @@ public sealed partial class Mp4Parser
     private static void Keys(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.KeyEntries);
         for (uint i = 0; i < count && f.Remaining >= 8 && i < MaxListedEntries; i++)
         {
             long at = f.Position;
@@ -45,10 +45,10 @@ public sealed partial class Mp4Parser
 
             string space = BoxFields.FourCcText((uint)f.Take(4));
             string key = Latin1OrUtf8(f.TakeBytes(size - 8));
-            var entry = new Node("Key", at, size, key);
-            entry.Add(new Node("Key Size", at, 4, NodeValue.Integer(size, "bytes")));
-            entry.Add(new Node("Namespace", at + 4, 4, space));
-            entry.Add(new Node("Value", at + 8, size - 8, key));
+            var entry = new Node("Key", at, size, key) { Description = Explain.Key };
+            entry.Add(new Node("Key Size", at, 4, NodeValue.Integer(size, "bytes")) { Description = Explain.KeySize });
+            entry.Add(new Node("Namespace", at + 4, 4, space) { Description = Explain.KeyNamespace });
+            entry.Add(new Node("Value", at + 8, size - 8, key) { Description = Explain.KeyValue });
             node.Add(entry);
             state.Keys.Add(key);
         }
@@ -57,7 +57,8 @@ public sealed partial class Mp4Parser
     private static void ItemList(State state, Node node, BoxHeader header, BoxFields f, int depth)
     {
         int before = node.Children.Count;
-        ReadChildren(state, node, f.Position, header.End, depth + 1, custom: Item, naming: h => (ItemName(state, h), NodeKind.Detail));
+        ReadChildren(state, node, f.Position, header.End, depth + 1, custom: Item,
+            naming: h => new BoxName(ItemName(state, h), NodeKind.Detail, ItemDescription(state, h), Topics.ItunesMetadata));
         node.Value = NodeValue.Integer(node.Children.Count - before, "items", "item");
     }
 
@@ -67,6 +68,11 @@ public sealed partial class Mp4Parser
         string name = DataName(state, header);
         return name.Length > 0 ? name : header.Type;
     }
+
+    private static string ItemDescription(State state, BoxHeader header) =>
+        state.MetaHandler == "mdta" ? Explain.QuickTimeItem
+        : header.Type == "----" ? Explain.Freeform(FreeformName(state, header))
+        : Explain.Item(header.Type);
 
     private static string DataName(State state, BoxHeader header)
     {
@@ -114,12 +120,12 @@ public sealed partial class Mp4Parser
             {
                 case "mean":
                     FullBox(child, fields);
-                    mean = fields.CString(child, "Value");
+                    mean = fields.CString(child, "Value", Explain.MeanValue);
                     child.Value = mean;
                     break;
                 case "name":
                     FullBox(child, fields);
-                    name = fields.CString(child, "Value");
+                    name = fields.CString(child, "Value", Explain.NameValue);
                     child.Value = name;
                     break;
                 case "data":
@@ -133,7 +139,7 @@ public sealed partial class Mp4Parser
                 default:
                     if (fields.Remaining > 0)
                     {
-                        child.Add(new Node("Data", fields.Position, fields.Remaining, NodeValue.Integer(fields.Remaining, "bytes")));
+                        child.Add(new Node("Data", fields.Position, fields.Remaining, NodeValue.Integer(fields.Remaining, "bytes")) { Description = Explain.UnreadData });
                     }
 
                     break;
@@ -150,12 +156,12 @@ public sealed partial class Mp4Parser
     // well-known type), a locale and the value.
     private static NodeValue? Data(State state, Node item, Node node, BoxFields f, string itemType, string? freeform)
     {
-        uint type = (uint)f.Field(node, "Data Type", 4, v => $"{v & 0xFFFFFF} ({DataTypeName((int)(v & 0xFFFFFF))})") & 0xFFFFFF;
-        f.U32(node, "Locale");
+        uint type = (uint)f.Field(node, "Data Type", 4, Explain.DataType, v => $"{v & 0xFFFFFF} ({DataTypeName((int)(v & 0xFFFFFF))})") & 0xFFFFFF;
+        f.U32(node, "Locale", Explain.Locale);
         long at = f.Position;
         byte[] bytes = f.TakeBytes(f.Remaining);
         NodeValue value = Value((int)type, bytes, itemType, freeform);
-        Node shown = node.Add(new Node("Value", at, bytes.Length, value));
+        Node shown = node.Add(new Node("Value", at, bytes.Length, value) { Description = Explain.DataValue });
         node.Value = value;
         string? text = value.AsText();
         if (itemType == "©too" && text is { Length: > 0 })
@@ -310,7 +316,7 @@ public sealed partial class Mp4Parser
             }
         }
 
-        long? Word(int index, string name)
+        long? Word(int index, string name, string description)
         {
             if (index >= words.Count)
             {
@@ -324,13 +330,13 @@ public sealed partial class Mp4Parser
                 return null;
             }
 
-            value.Add(new Node(name, at + start, length, NodeValue.Integer(number, "samples", "sample")));
+            value.Add(new Node(name, at + start, length, NodeValue.Integer(number, "samples", "sample")) { Description = description, Topic = Topics.EditListsAndPriming });
             return number;
         }
 
-        long? delay = Word(1, "Encoder Delay");
-        long? padding = Word(2, "Padding");
-        long? samples = Word(3, "Original Samples");
+        long? delay = Word(1, "Encoder Delay", Explain.SmpbDelay);
+        long? padding = Word(2, "Padding", Explain.SmpbPadding);
+        long? samples = Word(3, "Original Samples", Explain.SmpbSamples);
         if (delay is null || padding is null || samples is null)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-invalid", "The iTunSMPB atom does not hold the hexadecimal words of an encoder delay, padding and sample count.", value);
@@ -358,9 +364,20 @@ public sealed partial class Mp4Parser
                 "cdcv" => NodeValue.Hex(number, 8),
                 _ => NodeValue.Integer(number),
             };
-            var pair = new Node(key switch { "vers" => "Version", "acbf" => "Bitrate Mode", "brat" => "Bitrate", "cdcv" => "Codec Version", _ => key }, at + i, 8, shown);
-            pair.Add(new Node("Key", at + i, 4, key));
-            pair.Add(new Node("Value", at + i + 4, 4, NodeValue.Integer(number)));
+            var pair = new Node(key switch { "vers" => "Version", "acbf" => "Bitrate Mode", "brat" => "Bitrate", "cdcv" => "Codec Version", _ => key }, at + i, 8, shown)
+            {
+                Description = key switch
+                {
+                    "vers" => Explain.ParamsVersion,
+                    "acbf" => Explain.ParamsMode,
+                    "brat" => Explain.ParamsBitrate,
+                    "cdcv" => Explain.ParamsCodecVersion,
+                    _ => Explain.ParamsOther,
+                },
+                Topic = key is "acbf" or "brat" ? Topics.BitrateModes : null,
+            };
+            pair.Add(new Node("Key", at + i, 4, key) { Description = Explain.ParamsKey });
+            pair.Add(new Node("Value", at + i + 4, 4, NodeValue.Integer(number)) { Description = Explain.ParamsValue });
             value.Add(pair);
             if (key == "acbf")
             {
@@ -389,7 +406,7 @@ public sealed partial class Mp4Parser
     private static void Id32(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        f.Field(node, "Language", 2, v =>
+        f.Field(node, "Language", 2, Explain.Id3Language, v =>
             new string([(char)(((v >> 10) & 0x1F) + 0x60), (char)(((v >> 5) & 0x1F) + 0x60), (char)((v & 0x1F) + 0x60)]));
         if (f.Remaining > 0)
         {
@@ -404,10 +421,10 @@ public sealed partial class Mp4Parser
         int version = FullBox(node, f).Version;
         if (version != 0)
         {
-            f.U32(node, "Reserved");
+            f.U32(node, "Reserved", Explain.ChaptersReserved);
         }
 
-        int count = f.U8(node, "Chapters");
+        int count = f.U8(node, "Chapters", Explain.ChapterCount);
         for (int i = 0; i < count && f.Remaining >= 9; i++)
         {
             long at = f.Position;
@@ -415,10 +432,10 @@ public sealed partial class Mp4Parser
             int length = (int)f.Take(1);
             string title = Latin1OrUtf8(f.TakeBytes(Math.Min(length, f.Remaining)));
             TimeSpan time = TimeSpan.FromTicks((long)Math.Min(start, (ulong)TimeSpan.MaxValue.Ticks));
-            var chapter = new Node("Chapter", at, f.Position - at, $"{time.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture)} {title}");
-            chapter.Add(new Node("Start", at, 8, NodeValue.Decimal(start / 1e7, 3, "s")));
-            chapter.Add(new Node("Title Length", at + 8, 1, NodeValue.Integer(length, "bytes")));
-            chapter.Add(new Node("Title", at + 9, f.Position - at - 9, title));
+            var chapter = new Node("Chapter", at, f.Position - at, $"{time.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture)} {title}") { Description = Explain.Chapter };
+            chapter.Add(new Node("Start", at, 8, NodeValue.Decimal(start / 1e7, 3, "s")) { Description = Explain.ChapterStart });
+            chapter.Add(new Node("Title Length", at + 8, 1, NodeValue.Integer(length, "bytes")) { Description = Explain.ChapterTitleLength });
+            chapter.Add(new Node("Title", at + 9, f.Position - at - 9, title) { Description = Explain.ChapterTitle });
             node.Add(chapter);
         }
     }

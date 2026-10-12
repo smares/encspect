@@ -27,12 +27,12 @@ public sealed partial class Mp4Parser
                 return true;
             case "smhd":
                 FullBox(node, f);
-                f.Fixed(node, "Balance", 2, 8);
-                f.U16(node, "Reserved");
+                f.Fixed(node, "Balance", 2, 8, Explain.Balance);
+                f.U16(node, "Reserved", Explain.Reserved);
                 return true;
             case "dref":
                 FullBox(node, f);
-                f.U32(node, "Entries");
+                f.U32(node, "Entries", Explain.DataEntries);
                 ReadChildren(state, node, f.Position, f.End, depth + 1);
                 return true;
             case "url " or "urn ":
@@ -40,12 +40,12 @@ public sealed partial class Mp4Parser
                 node.Value = (flags & 1) != 0 ? "media data in this file" : "media data elsewhere";
                 if (f.Remaining > 0)
                 {
-                    f.CString(node, header.Type == "urn " ? "Name" : "Location");
+                    f.CString(node, header.Type == "urn " ? "Name" : "Location", header.Type == "urn " ? Explain.DataName : Explain.DataLocation);
                 }
 
                 if (header.Type == "urn " && f.Remaining > 0)
                 {
-                    f.CString(node, "Location");
+                    f.CString(node, "Location", Explain.DataLocation);
                 }
 
                 return true;
@@ -59,12 +59,12 @@ public sealed partial class Mp4Parser
                 ElementaryStreamDescriptor(state, node, f);
                 return true;
             case "btrt":
-                f.U32(node, "Buffer Size", "bytes");
-                f.U32(node, "Maximum Bitrate", "bit/s");
-                f.U32(node, "Average Bitrate", "bit/s");
+                f.U32(node, "Buffer Size", Explain.BtrtBufferSize, unit: "bytes");
+                f.U32(node, "Maximum Bitrate", Explain.BtrtMaxBitrate, unit: "bit/s");
+                f.U32(node, "Average Bitrate", Explain.BtrtAverageBitrate, unit: "bit/s");
                 return true;
             case "frma":
-                node.Value = f.FourCc(node, "Format");
+                node.Value = f.FourCc(node, "Format", Explain.OriginalFormat);
                 return true;
             case "stts":
                 TimeToSample(state, node, f);
@@ -124,8 +124,8 @@ public sealed partial class Mp4Parser
     // ISO/IEC 14496-12 4.2: version and flags open a full box.
     private static (int Version, uint Flags) FullBox(Node node, BoxFields f)
     {
-        int version = f.U8(node, "Version");
-        uint flags = (uint)f.Field(node, "Flags", 3, v => NodeValue.Hex((long)v, 6));
+        int version = f.U8(node, "Version", Explain.Version);
+        uint flags = (uint)f.Field(node, "Flags", 3, Explain.Flags, v => NodeValue.Hex((long)v, 6));
         return (version, flags);
     }
 
@@ -133,16 +133,16 @@ public sealed partial class Mp4Parser
     private static void MovieHeader(State state, Node node, BoxFields f)
     {
         int size = FullBox(node, f).Version == 1 ? 8 : 4;
-        f.Time(node, "Creation Time", size);
-        f.Time(node, "Modification Time", size);
-        uint timescale = f.U32(node, "Timescale", "units per second");
-        ulong duration = f.Duration(node, "Duration", size, timescale);
-        f.Fixed(node, "Rate", 4, 16);
-        f.Fixed(node, "Volume", 2, 8);
+        f.Time(node, "Creation Time", size, Explain.CreationTime);
+        f.Time(node, "Modification Time", size, Explain.ModificationTime);
+        uint timescale = f.U32(node, "Timescale", Explain.MovieTimescale, unit: "units per second");
+        ulong duration = f.Duration(node, "Duration", size, timescale, Explain.MovieDuration);
+        f.Fixed(node, "Rate", 4, 16, Explain.Rate);
+        f.Fixed(node, "Volume", 2, 8, Explain.MovieVolume);
         f.Skip(10);
-        f.Bytes(node, "Matrix", 36);
+        f.Bytes(node, "Matrix", 36, Explain.Matrix);
         f.Skip(24);
-        f.U32(node, "Next Track ID");
+        f.U32(node, "Next Track ID", Explain.NextTrackId);
         if (state.MovieHeader is null)
         {
             state.MovieTimescale = timescale;
@@ -156,20 +156,20 @@ public sealed partial class Mp4Parser
     {
         (int version, uint flags) = FullBox(node, f);
         int size = version == 1 ? 8 : 4;
-        node.Add(Node.FromBits("IsEnabled", node.Children[^1].Offset + 2, 7, 8, NodeValue.Boolean((flags & 1) != 0)));
-        f.Time(node, "Creation Time", size);
-        f.Time(node, "Modification Time", size);
-        uint id = f.U32(node, "Track ID");
+        node.Add(Node.FromBits("IsEnabled", node.Children[^1].Offset + 2, 7, 8, NodeValue.Boolean((flags & 1) != 0), description: Explain.IsEnabled));
+        f.Time(node, "Creation Time", size, Explain.CreationTime);
+        f.Time(node, "Modification Time", size, Explain.ModificationTime);
+        uint id = f.U32(node, "Track ID", Explain.TrackId);
         f.Skip(4);
-        ulong duration = f.Duration(node, "Duration", size, state.MovieTimescale);
+        ulong duration = f.Duration(node, "Duration", size, state.MovieTimescale, Explain.TrackDuration);
         f.Skip(8);
-        f.U16(node, "Layer");
-        f.U16(node, "Alternate Group");
-        f.Fixed(node, "Volume", 2, 8);
+        f.U16(node, "Layer", Explain.Layer);
+        f.U16(node, "Alternate Group", Explain.AlternateGroup);
+        f.Fixed(node, "Volume", 2, 8, Explain.TrackVolume);
         f.Skip(2);
-        f.Bytes(node, "Matrix", 36);
-        f.Fixed(node, "Width", 4, 16);
-        f.Fixed(node, "Height", 4, 16);
+        f.Bytes(node, "Matrix", 36, Explain.Matrix);
+        f.Fixed(node, "Width", 4, 16, Explain.Width);
+        f.Fixed(node, "Height", 4, 16, Explain.Height);
         if (state.Track is { TrackHeader: null } track)
         {
             track.Id = id;
@@ -184,14 +184,14 @@ public sealed partial class Mp4Parser
     private static void MediaHeader(State state, Node node, BoxFields f)
     {
         int size = FullBox(node, f).Version == 1 ? 8 : 4;
-        f.Time(node, "Creation Time", size);
-        f.Time(node, "Modification Time", size);
-        uint timescale = f.U32(node, "Timescale", "units per second");
-        ulong duration = f.Duration(node, "Duration", size, timescale);
+        f.Time(node, "Creation Time", size, Explain.CreationTime);
+        f.Time(node, "Modification Time", size, Explain.ModificationTime);
+        uint timescale = f.U32(node, "Timescale", Explain.MediaTimescale, unit: "units per second");
+        ulong duration = f.Duration(node, "Duration", size, timescale, Explain.MediaDuration);
         // QuickTime takes a value below 0x400 for a Macintosh language code (0 is English).
-        f.Field(node, "Language", 2, v => v < 0x400 ? $"{v} (Macintosh language code)"
+        f.Field(node, "Language", 2, Explain.Language, v => v < 0x400 ? $"{v} (Macintosh language code)"
             : new string([(char)(((v >> 10) & 0x1F) + 0x60), (char)(((v >> 5) & 0x1F) + 0x60), (char)((v & 0x1F) + 0x60)]));
-        f.U16(node, "Quality");
+        f.U16(node, "Quality", Explain.Quality);
         if (state.Track is { MediaHeader: null } track)
         {
             track.Timescale = timescale;
@@ -205,8 +205,8 @@ public sealed partial class Mp4Parser
     private static void Handler(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        string component = f.FourCc(node, "Component Type");
-        string handler = f.FourCc(node, "Handler Type");
+        string component = f.FourCc(node, "Component Type", Explain.ComponentType);
+        string handler = f.FourCc(node, "Handler Type", Explain.HandlerType);
         f.Skip(Math.Min(12, f.Remaining));
         if (f.Remaining > 0)
         {
@@ -215,12 +215,12 @@ public sealed partial class Mp4Parser
             if (component == "mhlr" || component == "dhlr" || (first == f.Remaining && first > 0))
             {
                 byte[] name = f.TakeBytes(Math.Min(first, f.Remaining));
-                node.Add(new Node("Name", at, 1 + name.Length, Latin1OrUtf8(name)));
+                node.Add(new Node("Name", at, 1 + name.Length, Latin1OrUtf8(name)) { Description = Explain.HandlerName });
             }
             else
             {
                 var rest = new BoxFields(f.Reader, at, f.End);
-                rest.CString(node, "Name");
+                rest.CString(node, "Name", Explain.HandlerName);
             }
         }
 
@@ -253,21 +253,22 @@ public sealed partial class Mp4Parser
     private static void EditList(State state, Node node, BoxFields f)
     {
         int size = FullBox(node, f).Version == 1 ? 8 : 4;
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.EditEntries);
         var edits = new List<Edit>();
         for (uint i = 0; i < count; i++)
         {
             long start = f.Position;
-            var edit = new Node("Edit", start, (2 * size) + 4);
-            ulong duration = f.Duration(edit, "Segment Duration", size, state.MovieTimescale);
+            var edit = new Node("Edit", start, (2 * size) + 4) { Description = Explain.Edit };
+            ulong duration = f.Duration(edit, "Segment Duration", size, state.MovieTimescale, Explain.SegmentDuration);
             long mediaTime = size == 8 ? (long)f.Take(8) : (int)(uint)f.Take(4);
-            edit.Add(new Node("Media Time", start + size, size, mediaTime switch
+            NodeValue shown = mediaTime switch
             {
                 -1 => "-1 (empty edit)",
                 < 0 => $"{mediaTime} (invalid)",
                 _ => NodeValue.Integer(mediaTime, "units of the media's timescale"),
-            }));
-            double rate = f.Fixed(edit, "Media Rate", 4, 16);
+            };
+            edit.Add(new Node("Media Time", start + size, size, shown) { Description = Explain.MediaTime });
+            double rate = f.Fixed(edit, "Media Rate", 4, 16, Explain.MediaRate);
             if (i < MaxListedEntries)
             {
                 node.Add(edit);
@@ -278,7 +279,7 @@ public sealed partial class Mp4Parser
 
         if (count > MaxListedEntries)
         {
-            node.Add(new Node("More Entries", node.Children[^1].End, f.Position - node.Children[^1].End, NodeValue.Integer(count - MaxListedEntries, "entries")));
+            node.Add(new Node("More Entries", node.Children[^1].End, f.Position - node.Children[^1].End, NodeValue.Integer(count - MaxListedEntries, "entries")) { Description = Explain.MoreEntries });
         }
 
         if (state.Track is { Edits: null } track)
@@ -296,9 +297,9 @@ public sealed partial class Mp4Parser
             return false;
         }
 
-        int length = f.U16(node, "Text Length", "bytes");
-        f.U16(node, "Language");
-        string text = Latin1OrUtf8(f.Bytes(node, "Text", Math.Min(length, f.Remaining), b => Latin1OrUtf8(b)));
+        int length = f.U16(node, "Text Length", Explain.TextLength, unit: "bytes");
+        f.U16(node, "Language", Explain.TextLanguage);
+        string text = Latin1OrUtf8(f.Bytes(node, "Text", Math.Min(length, f.Remaining), Explain.Text, b => Latin1OrUtf8(b)));
         node.Value = text;
         if (header.Type is "©swr" or "©too" && text.Length > 0)
         {

@@ -21,25 +21,25 @@ public sealed partial class Mp4Parser
         switch (header.Type)
         {
             case "mehd":
-                f.Duration(node, "Fragment Duration", size, state.MovieTimescale);
+                f.Duration(node, "Fragment Duration", size, state.MovieTimescale, Explain.FragmentDuration);
                 break;
             case "trex":
-                uint id = f.U32(node, "Track ID");
-                uint description = f.U32(node, "Default Sample Description Index");
-                uint duration = f.U32(node, "Default Sample Duration");
-                uint sampleSize = f.U32(node, "Default Sample Size", "bytes");
-                uint sampleFlags = (uint)f.Field(node, "Default Sample Flags", 4, v => NodeValue.Hex((long)v, 8));
+                uint id = f.U32(node, "Track ID", Explain.TrexTrackId);
+                uint description = f.U32(node, "Default Sample Description Index", Explain.TrexDescriptionIndex);
+                uint duration = f.U32(node, "Default Sample Duration", Explain.TrexDuration);
+                uint sampleSize = f.U32(node, "Default Sample Size", Explain.TrexSize, unit: "bytes");
+                uint sampleFlags = (uint)f.Field(node, "Default Sample Flags", 4, Explain.SampleFlags, v => NodeValue.Hex((long)v, 8));
                 state.TrackDefaults.TryAdd(id, new TrackDefaults(description, duration, sampleSize, sampleFlags));
                 node.Value = $"Track Extends, track {id}";
                 break;
             case "mfhd":
-                node.Value = $"Movie Fragment Header, sequence {f.U32(node, "Sequence Number")}";
+                node.Value = $"Movie Fragment Header, sequence {f.U32(node, "Sequence Number", Explain.SequenceNumber)}";
                 break;
             case "tfhd":
                 TrackFragmentHeader(state, node, f, flags);
                 break;
             case "tfdt":
-                f.Field(node, "Base Media Decode Time", size);
+                f.Field(node, "Base Media Decode Time", size, Explain.BaseMediaDecodeTime);
                 break;
             case "trun":
                 TrackRun(state, node, f, version, flags);
@@ -51,7 +51,7 @@ public sealed partial class Mp4Parser
                 TrackFragmentRandomAccess(node, f, size);
                 break;
             case "mfro":
-                f.U32(node, "Size", "bytes");
+                f.U32(node, "Size", Explain.MfroSize, unit: "bytes");
                 break;
         }
     }
@@ -59,23 +59,23 @@ public sealed partial class Mp4Parser
     // 8.8.7: the flags say which fields follow the track ID.
     private static void TrackFragmentHeader(State state, Node node, BoxFields f, uint flags)
     {
-        uint id = f.U32(node, "Track ID");
+        uint id = f.U32(node, "Track ID", Explain.TfhdTrackId);
         node.Value = $"Track Fragment Header, track {id}";
-        ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8)) : null;
+        ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, Explain.BaseDataOffset, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8)) : null;
         if ((flags & 0x2) != 0)
         {
-            f.U32(node, "Sample Description Index");
+            f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
         }
 
         if ((flags & 0x8) != 0)
         {
-            f.U32(node, "Default Sample Duration");
+            f.U32(node, "Default Sample Duration", Explain.TfhdDuration);
         }
 
-        uint? defaultSize = (flags & 0x10) != 0 ? f.U32(node, "Default Sample Size", "bytes") : null;
+        uint? defaultSize = (flags & 0x10) != 0 ? f.U32(node, "Default Sample Size", Explain.TfhdSize, unit: "bytes") : null;
         if ((flags & 0x20) != 0)
         {
-            f.Field(node, "Default Sample Flags", 4, v => NodeValue.Hex((long)v, 8));
+            f.Field(node, "Default Sample Flags", 4, Explain.SampleFlags, v => NodeValue.Hex((long)v, 8));
         }
 
         if (state.Fragment is { } fragment)
@@ -91,11 +91,11 @@ public sealed partial class Mp4Parser
     // sample a duration, size, flags and composition offset.
     private static void TrackRun(State state, Node node, BoxFields f, int version, uint flags)
     {
-        uint count = f.U32(node, "Sample Count");
-        long? dataOffset = (flags & 0x1) != 0 ? (int)(uint)f.Field(node, "Data Offset", 4, v => NodeValue.Integer((int)(uint)v, "bytes")) : null;
+        uint count = f.U32(node, "Sample Count", Explain.RunSamples);
+        long? dataOffset = (flags & 0x1) != 0 ? (int)(uint)f.Field(node, "Data Offset", 4, Explain.DataOffset, v => NodeValue.Integer((int)(uint)v, "bytes")) : null;
         if ((flags & 0x4) != 0)
         {
-            f.Field(node, "First Sample Flags", 4, v => NodeValue.Hex((long)v, 8));
+            f.Field(node, "First Sample Flags", 4, Explain.FirstSampleFlags, v => NodeValue.Hex((long)v, 8));
         }
 
         int entrySize = 4 * (int)(((flags >> 8) & 1) + ((flags >> 9) & 1) + ((flags >> 10) & 1) + ((flags >> 11) & 1));
@@ -117,32 +117,32 @@ public sealed partial class Mp4Parser
             }
 
             long at = f.Position;
-            Node? entry = entrySize > 0 && i < MaxListedEntries ? new Node("Sample", at, entrySize) : null;
+            Node? entry = entrySize > 0 && i < MaxListedEntries ? new Node("Sample", at, entrySize) { Description = Explain.RunSample } : null;
             uint? size = null;
             if ((flags & 0x100) != 0)
             {
                 uint duration = (uint)f.Take(4);
-                entry?.Add(new Node("Duration", at, 4, NodeValue.Integer(duration)));
+                entry?.Add(new Node("Duration", at, 4, NodeValue.Integer(duration)) { Description = Explain.RunSampleDuration });
             }
 
             if ((flags & 0x200) != 0)
             {
                 long sizeAt = f.Position;
                 size = (uint)f.Take(4);
-                entry?.Add(new Node("Size", sizeAt, 4, NodeValue.Integer(size.Value, "bytes")));
+                entry?.Add(new Node("Size", sizeAt, 4, NodeValue.Integer(size.Value, "bytes")) { Description = Explain.RunSampleSize });
             }
 
             if ((flags & 0x400) != 0)
             {
                 long flagsAt = f.Position;
-                entry?.Add(new Node("Flags", flagsAt, 4, NodeValue.Hex((long)f.Take(4), 8)));
+                entry?.Add(new Node("Flags", flagsAt, 4, NodeValue.Hex((long)f.Take(4), 8)) { Description = Explain.RunSampleFlags });
             }
 
             if ((flags & 0x800) != 0)
             {
                 long offsetAt = f.Position;
                 uint offset = (uint)f.Take(4);
-                entry?.Add(new Node("Composition Offset", offsetAt, 4, NodeValue.Integer(version == 1 ? (int)offset : offset)));
+                entry?.Add(new Node("Composition Offset", offsetAt, 4, NodeValue.Integer(version == 1 ? (int)offset : offset)) { Description = Explain.RunCompositionOffset });
             }
 
             if (entry is not null)
@@ -224,25 +224,25 @@ public sealed partial class Mp4Parser
     // 8.16.3: references to subsegments with their sizes, durations and stream access points.
     private static void SegmentIndex(Node node, BoxFields f, int size)
     {
-        f.U32(node, "Reference ID");
-        uint timescale = f.U32(node, "Timescale", "units per second");
-        f.Duration(node, "Earliest Presentation Time", size, timescale);
-        f.Field(node, "First Offset", size, unit: "bytes");
+        f.U32(node, "Reference ID", Explain.ReferenceId);
+        uint timescale = f.U32(node, "Timescale", Explain.SidxTimescale, unit: "units per second");
+        f.Duration(node, "Earliest Presentation Time", size, timescale, Explain.EarliestPresentationTime);
+        f.Field(node, "First Offset", size, Explain.FirstOffset, unit: "bytes");
         f.Skip(2);
-        int count = f.U16(node, "References");
+        int count = f.U16(node, "References", Explain.ReferenceCount);
         for (int i = 0; i < count && i < MaxListedEntries && f.Remaining >= 12; i++)
         {
             long at = f.Position;
             uint first = (uint)f.Take(4);
             uint duration = (uint)f.Take(4);
             uint sap = (uint)f.Take(4);
-            var reference = new Node("Reference", at, 12, $"{first & 0x7FFFFFFF} bytes, {BoxFields.DurationText(duration, timescale)}");
-            reference.Add(Node.FromBits("Reference Type", at, 0, 1, (first >> 31) == 0 ? "0 (media)" : "1 (segment index)"));
-            reference.Add(Node.FromBits("Referenced Size", at, 1, 32, NodeValue.Integer(first & 0x7FFFFFFF, "bytes")));
-            reference.Add(new Node("Subsegment Duration", at + 4, 4, BoxFields.DurationText(duration, timescale)));
-            reference.Add(Node.FromBits("StartsWithSap", at + 8, 0, 1, NodeValue.Boolean((sap >> 31) != 0)));
-            reference.Add(Node.FromBits("SAP Type", at + 8, 1, 4, NodeValue.Integer((sap >> 28) & 7)));
-            reference.Add(Node.FromBits("SAP Delta Time", at + 8, 4, 32, NodeValue.Integer(sap & 0x0FFFFFFF)));
+            var reference = new Node("Reference", at, 12, $"{first & 0x7FFFFFFF} bytes, {BoxFields.DurationText(duration, timescale)}") { Description = Explain.Reference };
+            reference.Add(Node.FromBits("Reference Type", at, 0, 1, (first >> 31) == 0 ? "0 (media)" : "1 (segment index)", description: Explain.ReferenceType));
+            reference.Add(Node.FromBits("Referenced Size", at, 1, 32, NodeValue.Integer(first & 0x7FFFFFFF, "bytes"), description: Explain.ReferencedSize));
+            reference.Add(new Node("Subsegment Duration", at + 4, 4, BoxFields.DurationText(duration, timescale)) { Description = Explain.SubsegmentDuration });
+            reference.Add(Node.FromBits("StartsWithSap", at + 8, 0, 1, NodeValue.Boolean((sap >> 31) != 0), description: Explain.StartsWithSap));
+            reference.Add(Node.FromBits("SAP Type", at + 8, 1, 4, NodeValue.Integer((sap >> 28) & 7), description: Explain.SapType));
+            reference.Add(Node.FromBits("SAP Delta Time", at + 8, 4, 32, NodeValue.Integer(sap & 0x0FFFFFFF), description: Explain.SapDeltaTime));
             node.Add(reference);
         }
     }
@@ -250,21 +250,21 @@ public sealed partial class Mp4Parser
     // 8.8.10: the moof boxes and samples a player can start at.
     private static void TrackFragmentRandomAccess(Node node, BoxFields f, int size)
     {
-        node.Value = $"Track Fragment Random Access, track {f.U32(node, "Track ID")}";
-        uint lengths = (uint)f.Field(node, "Length Sizes", 4, v => NodeValue.Hex((long)v, 8));
-        uint count = f.U32(node, "Entries");
+        node.Value = $"Track Fragment Random Access, track {f.U32(node, "Track ID", Explain.TfraTrackId)}";
+        uint lengths = (uint)f.Field(node, "Length Sizes", 4, Explain.LengthSizes, v => NodeValue.Hex((long)v, 8));
+        uint count = f.U32(node, "Entries", Explain.TfraEntries);
         int traf = (int)((lengths >> 4) & 3) + 1;
         int trun = (int)((lengths >> 2) & 3) + 1;
         int sample = (int)(lengths & 3) + 1;
         for (uint i = 0; i < count && i < MaxListedEntries && f.Remaining >= (2 * size) + traf + trun + sample; i++)
         {
             long at = f.Position;
-            var entry = new Node("Entry", at, (2 * size) + traf + trun + sample);
-            f.Field(entry, "Time", size);
-            f.Field(entry, "Moof Offset", size, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8));
-            f.Field(entry, "Track Fragment Number", traf);
-            f.Field(entry, "Track Run Number", trun);
-            f.Field(entry, "Sample Number", sample);
+            var entry = new Node("Entry", at, (2 * size) + traf + trun + sample) { Description = Explain.TfraEntry };
+            f.Field(entry, "Time", size, Explain.TfraTime);
+            f.Field(entry, "Moof Offset", size, Explain.MoofOffset, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8));
+            f.Field(entry, "Track Fragment Number", traf, Explain.TrafNumber);
+            f.Field(entry, "Track Run Number", trun, Explain.TrunNumber);
+            f.Field(entry, "Sample Number", sample, Explain.TfraSampleNumber);
             node.Add(entry);
         }
     }

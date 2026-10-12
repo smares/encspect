@@ -42,7 +42,7 @@ public sealed partial class Mp4Parser
     {
         if (count > MaxListedEntries && end > start)
         {
-            node.Add(new Node("More Entries", start, end - start, NodeValue.Integer(count - MaxListedEntries, "entries", "entry")));
+            node.Add(new Node("More Entries", start, end - start, NodeValue.Integer(count - MaxListedEntries, "entries", "entry")) { Description = Explain.MoreEntries });
         }
     }
 
@@ -53,8 +53,9 @@ public sealed partial class Mp4Parser
     private static void SampleDescription(State state, Node node, BoxHeader header, BoxFields f, int depth)
     {
         int version = FullBox(node, f).Version;
-        uint count = f.U32(node, "Entries");
-        ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version));
+        uint count = f.U32(node, "Entries", Explain.SampleEntryCount);
+        ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
+            naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
         if (read != count)
         {
@@ -65,8 +66,8 @@ public sealed partial class Mp4Parser
 
     private static void SampleEntryBox(State state, Node node, BoxHeader header, BoxFields f, int depth, int stsdVersion)
     {
-        f.Bytes(node, "Reserved", 6);
-        f.U16(node, "Data Reference Index");
+        f.Bytes(node, "Reserved", 6, Explain.SampleEntryReserved);
+        f.U16(node, "Data Reference Index", Explain.DataReferenceIndex);
         var entry = new SampleEntry(header.Type, node);
         node.Value = $"{header.Type} ({FormatName(header.Type)})";
         state.Track?.Entries.Add(entry);
@@ -74,20 +75,20 @@ public sealed partial class Mp4Parser
         {
             if (f.Remaining > 0)
             {
-                node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")));
+                node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")) { Description = Explain.SampleEntryData });
             }
 
             return;
         }
 
-        int version = f.U16(node, "Version");
-        f.U16(node, "Revision Level");
-        f.FourCc(node, "Vendor");
-        entry.Channels = f.U16(node, "Channels");
-        entry.SampleSize = f.U16(node, "Sample Size", "bits");
-        f.Field(node, "Compression ID", 2, v => NodeValue.Integer((short)(ushort)v));
-        f.U16(node, "Packet Size");
-        entry.SampleRate = f.Fixed(node, "Sample Rate", 4, 16, "Hz", isUnsigned: true);
+        int version = f.U16(node, "Version", Explain.SoundVersion);
+        f.U16(node, "Revision Level", Explain.RevisionLevel);
+        f.FourCc(node, "Vendor", Explain.Vendor);
+        entry.Channels = f.U16(node, "Channels", Explain.Channels);
+        entry.SampleSize = f.U16(node, "Sample Size", Explain.SampleSize, unit: "bits");
+        f.Field(node, "Compression ID", 2, Explain.CompressionId, v => NodeValue.Integer((short)(ushort)v));
+        f.U16(node, "Packet Size", Explain.PacketSize);
+        entry.SampleRate = f.Fixed(node, "Sample Rate", 4, 16, Explain.EntrySampleRate, "Hz", isUnsigned: true);
 
         // QuickTime File Format, "Sound sample description (version 1 and 2)"; ISO/IEC 14496-12's own
         // version 1 keeps version 0's layout, so as in ffmpeg, the QuickTime layout applies where the
@@ -95,24 +96,24 @@ public sealed partial class Mp4Parser
         bool quickTime = state.IsQuickTime || state.HasQuickTimeBrand || (stsdVersion == 0 && version > 0);
         if (quickTime && version == 1 && f.Remaining >= 16)
         {
-            f.U32(node, "Samples Per Packet");
-            f.U32(node, "Bytes Per Packet");
-            f.U32(node, "Bytes Per Frame");
-            f.U32(node, "Bytes Per Sample");
+            f.U32(node, "Samples Per Packet", Explain.SamplesPerPacket);
+            f.U32(node, "Bytes Per Packet", Explain.BytesPerPacket);
+            f.U32(node, "Bytes Per Frame", Explain.BytesPerFrame);
+            f.U32(node, "Bytes Per Sample", Explain.BytesPerSample);
         }
         else if (quickTime && version == 2 && f.Remaining >= 36)
         {
-            f.U32(node, "Structure Size", "bytes");
+            f.U32(node, "Structure Size", Explain.StructureSize, unit: "bytes");
             long at = f.Position;
             double rate = BitConverter.Int64BitsToDouble((long)f.Take(8));
-            node.Add(new Node("Audio Sample Rate", at, 8, double.IsFinite(rate) ? NodeValue.Decimal(rate, 3, "Hz") : "not a number"));
+            node.Add(new Node("Audio Sample Rate", at, 8, double.IsFinite(rate) ? NodeValue.Decimal(rate, 3, "Hz") : "not a number") { Description = Explain.AudioSampleRate });
             entry.SampleRate = double.IsFinite(rate) ? rate : 0;
-            entry.Channels = (int)Math.Min(f.U32(node, "Audio Channels"), int.MaxValue);
-            f.Field(node, "Always 0x7F000000", 4, v => NodeValue.Hex((long)v, 8));
-            f.U32(node, "Bits Per Channel");
-            f.Field(node, "Format Flags", 4, v => NodeValue.Hex((long)v, 8));
-            f.U32(node, "Bytes Per Audio Packet");
-            f.U32(node, "Frames Per Audio Packet");
+            entry.Channels = (int)Math.Min(f.U32(node, "Audio Channels", Explain.AudioChannels), int.MaxValue);
+            f.Field(node, "Always 0x7F000000", 4, Explain.AlwaysValue, v => NodeValue.Hex((long)v, 8));
+            f.U32(node, "Bits Per Channel", Explain.BitsPerChannel);
+            f.Field(node, "Format Flags", 4, Explain.FormatFlags, v => NodeValue.Hex((long)v, 8));
+            f.U32(node, "Bytes Per Audio Packet", Explain.BytesPerAudioPacket);
+            f.U32(node, "Frames Per Audio Packet", Explain.FramesPerAudioPacket);
         }
 
         SampleEntry? outer = state.CurrentEntry;
@@ -188,42 +189,53 @@ public sealed partial class Mp4Parser
             bodyEnd = f.End;
         }
 
-        var node = new Node(name, start, bodyEnd - start);
+        var node = new Node(name, start, bodyEnd - start)
+        {
+            Description = tag switch
+            {
+                3 => Explain.EsDescriptor,
+                4 => Explain.DecoderConfigDescriptor,
+                5 => Explain.DecoderSpecificInfo,
+                6 => Explain.SlConfigDescriptor,
+                _ => Explain.OtherDescriptor,
+            },
+            Topic = tag == 5 ? Topics.AudioSpecificConfig : null,
+        };
         parent.Add(node);
-        node.Add(new Node("Tag", start, 1, NodeValue.Hex(tag, 2)));
-        node.Add(new Node("Length", start + 1, lengthBytes, NodeValue.Integer(size, "bytes")));
+        node.Add(new Node("Tag", start, 1, NodeValue.Hex(tag, 2)) { Description = Explain.DescriptorTag });
+        node.Add(new Node("Length", start + 1, lengthBytes, NodeValue.Integer(size, "bytes")) { Description = Explain.DescriptorLength });
         var body = new BoxFields(f.Reader, bodyStart, bodyEnd);
         try
         {
             switch (tag)
             {
                 case 3:
-                    body.U16(node, "ES ID");
-                    int flags = (int)body.Field(node, "Flags", 1, v => NodeValue.Hex((long)v, 2));
+                    body.U16(node, "ES ID", Explain.EsId);
+                    int flags = (int)body.Field(node, "Flags", 1, Explain.EsFlags, v => NodeValue.Hex((long)v, 2));
                     if ((flags & 0x80) != 0)
                     {
-                        body.U16(node, "Depends On ES ID");
+                        body.U16(node, "Depends On ES ID", Explain.DependsOnEsId);
                     }
 
                     if ((flags & 0x40) != 0)
                     {
-                        int length = body.U8(node, "URL Length");
-                        body.Bytes(node, "URL", length, b => Latin1OrUtf8(b));
+                        int length = body.U8(node, "URL Length", Explain.UrlLength);
+                        body.Bytes(node, "URL", length, Explain.Url, b => Latin1OrUtf8(b));
                     }
 
                     if ((flags & 0x20) != 0)
                     {
-                        body.U16(node, "OCR ES ID");
+                        body.U16(node, "OCR ES ID", Explain.OcrEsId);
                     }
 
                     SubDescriptors(state, node, body, depth);
                     break;
                 case 4:
-                    int type = (int)body.Field(node, "Object Type Indication", 1, v => $"0x{v:X2} ({ObjectTypeName((int)v)})");
-                    body.Field(node, "Stream Type", 1, v => $"{v >> 2} ({((v >> 2) == 5 ? "audio" : "other")}){((v & 2) != 0 ? ", upstream" : string.Empty)}");
-                    body.Field(node, "Buffer Size", 3, unit: "bytes");
-                    uint max = (uint)body.Field(node, "Maximum Bitrate", 4, unit: "bit/s");
-                    uint average = (uint)body.Field(node, "Average Bitrate", 4, v => v == 0 ? "0 (variable bitrate)" : NodeValue.Integer((long)v, "bit/s"));
+                    int type = (int)body.Field(node, "Object Type Indication", 1, Explain.ObjectTypeIndication, v => $"0x{v:X2} ({ObjectTypeName((int)v)})");
+                    body.Field(node, "Stream Type", 1, Explain.StreamType, v => $"{v >> 2} ({((v >> 2) == 5 ? "audio" : "other")}){((v & 2) != 0 ? ", upstream" : string.Empty)}");
+                    body.Field(node, "Buffer Size", 3, Explain.DecoderBufferSize, unit: "bytes");
+                    uint max = (uint)body.Field(node, "Maximum Bitrate", 4, Explain.DecoderMaxBitrate, unit: "bit/s", topic: Topics.BitrateModes);
+                    uint average = (uint)body.Field(node, "Average Bitrate", 4, Explain.DecoderAverageBitrate, topic: Topics.BitrateModes, describe: v => v == 0 ? "0 (variable bitrate)" : NodeValue.Integer((long)v, "bit/s"));
                     node.Value = $"0x{type:X2} ({ObjectTypeName(type)})";
                     if (state.CurrentEntry is { ObjectType: null } entry)
                     {
@@ -244,22 +256,22 @@ public sealed partial class Mp4Parser
                     }
                     else if (data.Length > 0)
                     {
-                        node.Add(new Node("Data", bodyStart, data.Length, NodeValue.Integer(data.Length, "bytes")));
+                        node.Add(new Node("Data", bodyStart, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.DescriptorData });
                     }
 
                     break;
                 case 6:
-                    body.Field(node, "Predefined", 1, v => v switch { 0 => "0 (custom)", 1 => "1 (null)", 2 => "2 (MP4 files)", _ => $"{v} (reserved)" });
+                    body.Field(node, "Predefined", 1, Explain.SlPredefined, v => v switch { 0 => "0 (custom)", 1 => "1 (null)", 2 => "2 (MP4 files)", _ => $"{v} (reserved)" });
                     if (body.Remaining > 0)
                     {
-                        node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")));
+                        node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")) { Description = Explain.DescriptorData });
                     }
 
                     break;
                 default:
                     if (body.Remaining > 0)
                     {
-                        node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")));
+                        node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")) { Description = Explain.DescriptorData });
                     }
 
                     break;
@@ -279,7 +291,7 @@ public sealed partial class Mp4Parser
         {
             if (depth >= 4)
             {
-                node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")));
+                node.Add(new Node("Data", body.Position, body.Remaining, NodeValue.Integer(body.Remaining, "bytes")) { Description = Explain.DescriptorData });
                 return;
             }
 
@@ -309,7 +321,7 @@ public sealed partial class Mp4Parser
     private static void TimeToSample(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.TimeToSampleEntries);
         var entries = new List<(uint Count, uint Delta)>();
         long start = f.Position;
         ulong samples = 0;
@@ -323,9 +335,9 @@ public sealed partial class Mp4Parser
             duration += (ulong)samplesInRun * delta;
             if (i < MaxListedEntries)
             {
-                var entry = new Node("Entry", at, 8, $"{samplesInRun} × {delta}");
-                entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samplesInRun)));
-                entry.Add(new Node("Sample Delta", at + 4, 4, NodeValue.Integer(delta)));
+                var entry = new Node("Entry", at, 8, $"{samplesInRun} × {delta}") { Description = Explain.TimeToSampleEntry };
+                entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samplesInRun)) { Description = Explain.RunSampleCount });
+                entry.Add(new Node("Sample Delta", at + 4, 4, NodeValue.Integer(delta)) { Description = Explain.SampleDelta });
                 node.Add(entry);
             }
         });
@@ -342,16 +354,16 @@ public sealed partial class Mp4Parser
     private static void CompositionOffsets(Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.CompositionEntries);
         long start = f.Position;
         for (uint i = 0; i < count && f.Remaining >= 8 && i < MaxListedEntries; i++)
         {
             long at = f.Position;
             uint samples = (uint)f.Take(4);
             uint offset = (uint)f.Take(4);
-            var entry = new Node("Entry", at, 8, $"{samples} × {(version == 1 ? (int)offset : offset)}");
-            entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samples)));
-            entry.Add(new Node("Sample Offset", at + 4, 4, NodeValue.Integer(version == 1 ? (int)offset : offset)));
+            var entry = new Node("Entry", at, 8, $"{samples} × {(version == 1 ? (int)offset : offset)}") { Description = Explain.CompositionEntry };
+            entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samples)) { Description = Explain.CompositionRunCount });
+            entry.Add(new Node("Sample Offset", at + 4, 4, NodeValue.Integer(version == 1 ? (int)offset : offset)) { Description = Explain.CompositionOffset });
             node.Add(entry);
         }
 
@@ -362,7 +374,7 @@ public sealed partial class Mp4Parser
     private static void SampleToChunk(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.ChunkEntries);
         var entries = new List<(uint, uint, uint)>();
         long start = f.Position;
         ReadEntries(state, node, f, count, 12, "entries", (b, i, at) =>
@@ -373,10 +385,10 @@ public sealed partial class Mp4Parser
             entries.Add((first, samples, description));
             if (i < MaxListedEntries)
             {
-                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} samples, description {description}");
-                entry.Add(new Node("First Chunk", at, 4, NodeValue.Integer(first)));
-                entry.Add(new Node("Samples Per Chunk", at + 4, 4, NodeValue.Integer(samples)));
-                entry.Add(new Node("Sample Description Index", at + 8, 4, NodeValue.Integer(description)));
+                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} samples, description {description}") { Description = Explain.ChunkEntry };
+                entry.Add(new Node("First Chunk", at, 4, NodeValue.Integer(first)) { Description = Explain.FirstChunk });
+                entry.Add(new Node("Samples Per Chunk", at + 4, 4, NodeValue.Integer(samples)) { Description = Explain.SamplesPerChunk });
+                entry.Add(new Node("Sample Description Index", at + 8, 4, NodeValue.Integer(description)) { Description = Explain.SampleDescriptionIndex });
                 node.Add(entry);
             }
         });
@@ -392,8 +404,8 @@ public sealed partial class Mp4Parser
     private static void SampleSizes(State state, Node node, BoxFields f)
     {
         FullBox(node, f);
-        uint size = f.U32(node, "Sample Size", "bytes");
-        uint count = f.U32(node, "Sample Count");
+        uint size = f.U32(node, "Sample Size", Explain.ConstantSampleSize, unit: "bytes");
+        uint count = f.U32(node, "Sample Count", Explain.SampleCount);
         node.Value = size != 0 ? $"{count} samples of {size} bytes" : NodeValue.Integer(count, "samples", "sample");
         int[]? sizes = null;
         if (size == 0)
@@ -406,7 +418,7 @@ public sealed partial class Mp4Parser
                 sizes[i] = (int)Math.Min(value, int.MaxValue);
                 if (i < MaxListedEntries)
                 {
-                    node.Add(new Node("Entry Size", at, 4, NodeValue.Integer(value, "bytes")));
+                    node.Add(new Node("Entry Size", at, 4, NodeValue.Integer(value, "bytes")) { Description = Explain.EntrySize });
                 }
             });
             MoreEntries(node, count, start + (MaxListedEntries * 4L), f.Position);
@@ -426,8 +438,8 @@ public sealed partial class Mp4Parser
     {
         FullBox(node, f);
         f.Skip(3);
-        int field = f.U8(node, "Field Size", "bits");
-        uint count = f.U32(node, "Sample Count");
+        int field = f.U8(node, "Field Size", Explain.FieldSize, unit: "bits");
+        uint count = f.U32(node, "Sample Count", Explain.SampleCount);
         node.Value = NodeValue.Integer(count, "samples", "sample");
         if (field is not (4 or 8 or 16))
         {
@@ -454,7 +466,7 @@ public sealed partial class Mp4Parser
             };
         }
 
-        node.Add(new Node("Entries", f.Position - data.Length, data.Length, NodeValue.Integer(available, "entries", "entry")));
+        node.Add(new Node("Entries", f.Position - data.Length, data.Length, NodeValue.Integer(available, "entries", "entry")) { Description = Explain.CompactEntries });
         if (state.Track is { SampleSizeNode: null } track)
         {
             track.SampleCount = available;
@@ -467,7 +479,7 @@ public sealed partial class Mp4Parser
     private static void ChunkOffsets(State state, Node node, BoxFields f, int size)
     {
         FullBox(node, f);
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.ChunkOffsetEntries);
         var offsets = new long[Math.Min(count, f.Remaining / size)];
         long start = f.Position;
         ReadEntries(state, node, f, count, size, "chunk offsets", (b, i, at) =>
@@ -476,7 +488,7 @@ public sealed partial class Mp4Parser
             offsets[i] = offset;
             if (i < MaxListedEntries)
             {
-                node.Add(new Node("Chunk Offset", at, size, NodeValue.Hex(offset, 8)));
+                node.Add(new Node("Chunk Offset", at, size, NodeValue.Hex(offset, 8)) { Description = Explain.ChunkOffset });
             }
         });
         MoreEntries(node, count, start + (MaxListedEntries * (long)size), f.Position);
@@ -492,12 +504,12 @@ public sealed partial class Mp4Parser
     private static void SyncSamples(Node node, BoxFields f)
     {
         FullBox(node, f);
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.SyncSampleEntries);
         node.Value = NodeValue.Integer(count, "sync samples", "sync sample");
         long start = f.Position;
         for (uint i = 0; i < count && i < MaxListedEntries && f.Remaining >= 4; i++)
         {
-            f.U32(node, "Sample Number");
+            f.U32(node, "Sample Number", Explain.SyncSampleNumber);
         }
 
         MoreEntries(node, count, start + (MaxListedEntries * 4L), Math.Min(f.End, start + (count * 4L)));
@@ -508,30 +520,30 @@ public sealed partial class Mp4Parser
     private static void SampleGroupDescription(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
-        string grouping = f.FourCc(node, "Grouping Type");
-        uint defaultLength = version == 1 ? f.U32(node, "Default Length", "bytes") : 0;
+        string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        uint defaultLength = version == 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
         if (version >= 2)
         {
-            f.U32(node, "Default Sample Description Index");
+            f.U32(node, "Default Sample Description Index", Explain.DefaultSampleDescriptionIndex);
         }
 
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.GroupDescriptionEntries);
         node.Value = $"{grouping} ({GroupingName(grouping)})";
         for (uint i = 0; i < count && i < MaxListedEntries && f.Remaining > 0; i++)
         {
-            long length = version == 1 && defaultLength == 0 ? f.U32(node, "Description Length", "bytes") : defaultLength;
+            long length = version == 1 && defaultLength == 0 ? f.U32(node, "Description Length", Explain.DescriptionLength, unit: "bytes") : defaultLength;
             long at = f.Position;
             if (grouping is "roll" or "prol" && (length == 2 || version == 0))
             {
                 int distance = (short)(ushort)f.Take(2);
-                var entry = new Node("Entry", at, 2, NodeValue.Integer(distance, "samples"));
-                entry.Add(new Node("Roll Distance", at, 2, NodeValue.Integer(distance, "samples")));
+                var entry = new Node("Entry", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollEntry };
+                entry.Add(new Node("Roll Distance", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollDistance });
                 node.Add(entry);
                 state.Track?.Rolls.Add((grouping, distance, entry));
             }
             else if (length > 0)
             {
-                f.Bytes(node, "Entry", Math.Min(length, f.Remaining));
+                f.Bytes(node, "Entry", Math.Min(length, f.Remaining), Explain.GroupDescription);
             }
             else
             {
@@ -555,22 +567,22 @@ public sealed partial class Mp4Parser
     private static void SampleToGroup(Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
-        node.Value = f.FourCc(node, "Grouping Type");
+        node.Value = f.FourCc(node, "Grouping Type", Explain.GroupingType);
         if (version == 1)
         {
-            f.U32(node, "Grouping Type Parameter");
+            f.U32(node, "Grouping Type Parameter", Explain.GroupingTypeParameter);
         }
 
-        uint count = f.U32(node, "Entries");
+        uint count = f.U32(node, "Entries", Explain.SampleToGroupEntries);
         long start = f.Position;
         for (uint i = 0; i < count && i < MaxListedEntries && f.Remaining >= 8; i++)
         {
             long at = f.Position;
             uint samples = (uint)f.Take(4);
             uint index = (uint)f.Take(4);
-            var entry = new Node("Entry", at, 8, $"{samples} samples in group {index}");
-            entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samples)));
-            entry.Add(new Node("Group Description Index", at + 4, 4, NodeValue.Integer(index)));
+            var entry = new Node("Entry", at, 8, $"{samples} samples in group {index}") { Description = Explain.SampleToGroupEntry };
+            entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samples)) { Description = Explain.GroupSampleCount });
+            entry.Add(new Node("Group Description Index", at + 4, 4, NodeValue.Integer(index)) { Description = Explain.GroupDescriptionIndex });
             node.Add(entry);
         }
 

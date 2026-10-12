@@ -70,53 +70,53 @@ internal sealed class BoxFields(ByteReader reader, long position, long end)
 
     // An unsigned field of bytes bytes with a node whose value describe gives (the number, with
     // unit, when it is null).
-    public ulong Field(Node parent, string name, int bytes, Func<ulong, NodeValue?>? describe = null, string? unit = null)
+    public ulong Field(Node parent, string name, int bytes, string description, Func<ulong, NodeValue?>? describe = null, string? unit = null, string? topic = null)
     {
         long start = Position;
         ulong value = Take(bytes);
-        parent.Add(new Node(name, start, bytes, describe?.Invoke(value) ?? NodeValue.Integer((long)value, unit!)));
+        parent.Add(new Node(name, start, bytes, describe?.Invoke(value) ?? NodeValue.Integer((long)value, unit!)) { Description = description, Topic = topic });
         return value;
     }
 
-    public uint U32(Node parent, string name, string? unit = null) => (uint)Field(parent, name, 4, unit: unit);
+    public uint U32(Node parent, string name, string description, string? unit = null) => (uint)Field(parent, name, 4, description, unit: unit);
 
-    public ushort U16(Node parent, string name, string? unit = null) => (ushort)Field(parent, name, 2, unit: unit);
+    public ushort U16(Node parent, string name, string description, string? unit = null) => (ushort)Field(parent, name, 2, description, unit: unit);
 
-    public byte U8(Node parent, string name, string? unit = null) => (byte)Field(parent, name, 1, unit: unit);
+    public byte U8(Node parent, string name, string description, string? unit = null) => (byte)Field(parent, name, 1, description, unit: unit);
 
-    public bool Flag8(Node parent, string name) => Field(parent, name, 1, v => NodeValue.Boolean(v != 0)) != 0;
+    public bool Flag8(Node parent, string name, string description) => Field(parent, name, 1, description, v => NodeValue.Boolean(v != 0)) != 0;
 
     // A four-character code.
-    public string FourCc(Node parent, string name)
+    public string FourCc(Node parent, string name, string description)
     {
         long start = Position;
         string code = FourCcText((uint)Take(4));
-        parent.Add(new Node(name, start, 4, code));
+        parent.Add(new Node(name, start, 4, code) { Description = description });
         return code;
     }
 
     // A 16.16 or 8.8 fixed-point number, signed but where isUnsigned says otherwise (a sample rate).
-    public double Fixed(Node parent, string name, int bytes, int fraction, string? unit = null, bool isUnsigned = false)
+    public double Fixed(Node parent, string name, int bytes, int fraction, string description, string? unit = null, bool isUnsigned = false)
     {
         long start = Position;
         ulong raw = Take(bytes);
         long signed = isUnsigned ? (long)raw : bytes == 4 ? (int)(uint)raw : (short)(ushort)raw;
         double value = signed / (double)(1 << fraction);
-        parent.Add(new Node(name, start, bytes, NodeValue.Decimal(value, fraction == 16 ? 4 : 2, unit)));
+        parent.Add(new Node(name, start, bytes, NodeValue.Decimal(value, fraction == 16 ? 4 : 2, unit)) { Description = description });
         return value;
     }
 
     // Bytes shown as a node of their length, or of their text where text is set.
-    public byte[] Bytes(Node parent, string name, long count, Func<byte[], NodeValue?>? describe = null)
+    public byte[] Bytes(Node parent, string name, long count, string description, Func<byte[], NodeValue?>? describe = null)
     {
         long start = Position;
         byte[] bytes = TakeBytes(count);
-        parent.Add(new Node(name, start, count, describe?.Invoke(bytes) ?? NodeValue.Integer(count, "bytes")));
+        parent.Add(new Node(name, start, count, describe?.Invoke(bytes) ?? NodeValue.Integer(count, "bytes")) { Description = description });
         return bytes;
     }
 
     // A null-terminated UTF-8 string that may also end with the box.
-    public string CString(Node parent, string name)
+    public string CString(Node parent, string name, string description)
     {
         long start = Position;
         var bytes = new List<byte>();
@@ -132,12 +132,12 @@ internal sealed class BoxFields(ByteReader reader, long position, long end)
         }
 
         string text = Encoding.UTF8.GetString([.. bytes]);
-        parent.Add(new Node(name, start, Position - start, text));
+        parent.Add(new Node(name, start, Position - start, text) { Description = description });
         return text;
     }
 
     // Seconds since midnight, January 1, 1904, in UTC (ISO/IEC 14496-12 8.2.2.3).
-    public void Time(Node parent, string name, int bytes)
+    public void Time(Node parent, string name, int bytes, string description)
     {
         long start = Position;
         ulong seconds = Take(bytes);
@@ -145,15 +145,15 @@ internal sealed class BoxFields(ByteReader reader, long position, long end)
             : seconds < (ulong)(DateTime.MaxValue - Epoch).TotalSeconds
                 ? $"{seconds} ({Epoch.AddSeconds(seconds).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)} UTC)"
                 : $"{seconds} (beyond the year 9999)";
-        parent.Add(new Node(name, start, bytes, text));
+        parent.Add(new Node(name, start, bytes, text) { Description = description });
     }
 
     // A duration in a timescale's units, with the seconds it comes to.
-    public ulong Duration(Node parent, string name, int bytes, uint timescale)
+    public ulong Duration(Node parent, string name, int bytes, uint timescale, string description)
     {
         long start = Position;
         ulong value = Take(bytes);
-        parent.Add(new Node(name, start, bytes, DurationText(value, timescale, bytes)));
+        parent.Add(new Node(name, start, bytes, DurationText(value, timescale, bytes)) { Description = description });
         return value;
     }
 

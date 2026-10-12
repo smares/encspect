@@ -76,6 +76,7 @@ public sealed partial class Mp4Parser
         var samples = new Node($"Track {track.Id?.ToString(CultureInfo.InvariantCulture) ?? "?"} Samples", start, end - start, NodeValue.Integer(count, "samples", "sample"))
         {
             Ranges = ranges.Count > 1 ? ranges : null,
+            Description = Explain.TrackSamples,
         };
         parent.Add(samples);
         if (codec == "mpeg-audio" && ranges.Count == 1)
@@ -341,7 +342,8 @@ public sealed partial class Mp4Parser
     {
         GaplessInfo? smpb = first ? state.Smpb : null;
         var nodes = new List<Node>();
-        Node Cover(string name, NodeValue value) => new(name, track.Box.Offset, track.Box.Length, value);
+        Node Cover(string name, NodeValue value, string description) =>
+            new(name, track.Box.Offset, track.Box.Length, value) { Description = description, Topic = Topics.EditListsAndPriming };
         NodeValue Units(long count) => NodeValue.Integer(count, "samples", "sample");
         ulong total = 0;
         foreach ((uint count, uint delta) in track.TimeToSample ?? [])
@@ -360,26 +362,26 @@ public sealed partial class Mp4Parser
                 Edit edit = media[0];
                 long presented = (long)Math.Round(edit.SegmentDuration * (double)track.Timescale / state.MovieTimescale, MidpointRounding.ToEven);
                 editDelay = edit.MediaTime;
-                nodes.Add(Cover("Encoder Delay (Edit List)", Units(edit.MediaTime)));
-                nodes.Add(Cover("Samples (Edit List)", Units(presented)));
+                nodes.Add(Cover("Encoder Delay (Edit List)", Units(edit.MediaTime), Explain.EditDelay));
+                nodes.Add(Cover("Samples (Edit List)", Units(presented), Explain.EditSamples));
                 if (total > 0 && (long)total - edit.MediaTime - presented is var padding and >= 0)
                 {
                     editPadding = padding;
-                    nodes.Add(Cover("Padding (Edit List)", Units(padding)));
+                    nodes.Add(Cover("Padding (Edit List)", Units(padding), Explain.EditPadding));
                 }
             }
         }
 
         foreach ((string type, int distance, Node _) in track.Rolls)
         {
-            nodes.Add(Cover(type == "prol" ? "Pre-Roll Distance" : "Roll Distance", NodeValue.Integer(distance, "samples", "sample")));
+            nodes.Add(Cover(type == "prol" ? "Pre-Roll Distance" : "Roll Distance", NodeValue.Integer(distance, "samples", "sample"), type == "prol" ? Explain.GaplessPreRoll : Explain.GaplessRoll));
         }
 
         if (smpb is not null)
         {
-            nodes.Add(Cover("Encoder Delay (iTunSMPB)", Units(smpb.Delay)));
-            nodes.Add(Cover("Samples (iTunSMPB)", Units(smpb.Samples)));
-            nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding)));
+            nodes.Add(Cover("Encoder Delay (iTunSMPB)", Units(smpb.Delay), Explain.SmpbGaplessDelay));
+            nodes.Add(Cover("Samples (iTunSMPB)", Units(smpb.Samples), Explain.SmpbGaplessSamples));
+            nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
             if (total > 0 && state.Fragments == 0 && (ulong)sum != total)
             {
@@ -401,7 +403,7 @@ public sealed partial class Mp4Parser
 
         if (nodes.Count > 0)
         {
-            Node gapless = track.Box.Add(new Node("Gapless", track.Box.Offset, track.Box.Length) { Kind = NodeKind.Statistics });
+            Node gapless = track.Box.Add(new Node("Gapless", track.Box.Offset, track.Box.Length) { Kind = NodeKind.Statistics, Description = Explain.Gapless, Topic = Topics.GaplessPlayback });
             foreach (Node node in nodes)
             {
                 gapless.Add(node);
