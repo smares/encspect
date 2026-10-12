@@ -125,8 +125,25 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     public HexDocument? Document
     {
         get => _document;
-        private set => Set(ref _document, value);
+        private set
+        {
+            if (_document is not null)
+            {
+                _document.Changed -= OnDocumentChanged;
+            }
+
+            Set(ref _document, value);
+            if (value is not null)
+            {
+                value.Changed += OnDocumentChanged;
+            }
+
+            Raise(nameof(HasFileChanged));
+        }
     }
+
+    // The file on disk is no longer the one analyzed, so the hex view shows none of its bytes.
+    public bool HasFileChanged => _document?.HasChanged == true;
 
     public HexHighlight? Highlight
     {
@@ -463,11 +480,12 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         // A folder or a file that is gone has no length; the analysis then reports what it is.
         var info = new FileInfo(path);
         length = info.Exists ? info.Length : 0;
+        DateTime lastWrite = info.Exists ? info.LastWriteTimeUtc : default;
         document = null;
         Report report = _analyzer.AnalyzeFile(path, options);
         if (!FileReports.IsNotAnalyzed(report))
         {
-            document = HexDocument.Open(path);
+            document = HexDocument.Open(path, length, lastWrite);
         }
 
         return report;
@@ -538,6 +556,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         ExportError = null;
         IsLoading = false;
     }
+
+    private void OnDocumentChanged(object? sender, EventArgs e) => Raise(nameof(HasFileChanged));
 
     // The frame a row is or lies in, which the graphs mark.
     private static TreeRow? FrameOf(TreeRow? row)

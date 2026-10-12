@@ -15,6 +15,9 @@
           <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap" />
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
+          <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
+                     VerticalAlignment="Center" ToolTip.Tip="Refresh or open the file again to analyze it as it is now."
+                     IsVisible="{Binding HasFileChanged}" />
           <TextBlock Name="ExportErrorText" Text="{Binding ExportError}" Classes="error" MaxWidth="320" Margin="0,0,6,0"
                      VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ExportError}"
                      IsVisible="{Binding ExportError, Converter={x:Static ObjectConverters.IsNotNull}}" />
