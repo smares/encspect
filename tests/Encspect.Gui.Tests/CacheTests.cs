@@ -241,7 +241,9 @@ public sealed class CacheTests : IDisposable
         {
             cache.Put(file, fingerprint, Summarize(file));
             cache.Put(file + ".other", fingerprint, Summarize(file));
-            SpinWait.SpinUntil(() => File.Exists(StorePath), TimeSpan.FromSeconds(20));
+
+            // A scheduled flush may have written the first entry alone; this writes both.
+            cache.Flush();
             written = File.ReadAllBytes(StorePath);
 
             for (int i = 0; i < 100; i++)
