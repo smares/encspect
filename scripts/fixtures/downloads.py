@@ -47,7 +47,10 @@ def download(url, path):
         return f"{TOKEN} is not set"
     # The token reaches curl on its standard input, not its command line, which other processes can read.
     header = f"Authorization: Bearer {os.environ[TOKEN]}\n" if url.startswith(PRIVATE) else ""
+    # A server that stops sending mid-transfer would otherwise hold curl until the job's timeout: below
+    # 1 KB/s for a minute, or 15 minutes in all, counts as an error and is retried.
     result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--retry-all-errors", "--connect-timeout", "30",
+                             "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900",
                              "-H", "@-", "-o", str(path), url], input=header, capture_output=True, text=True)
     return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
 
