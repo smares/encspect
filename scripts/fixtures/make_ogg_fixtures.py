@@ -36,6 +36,11 @@ import ogg_model as m
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "ogg"
 
 VENDOR = b"Encoded with Speex 1.2.1"
+
+# Expectations of other codecs by name (make_vorbis_opus_fixtures.py fills it): a function of the
+# stream's entry, the file's bytes, its packets, its pages with the packets that end on them, and the
+# stream's spec, which returns the entry and the stream's figures for the summary.
+CODECS = {}
 RATES = [8000, 16000, 32000]
 
 
@@ -167,6 +172,8 @@ def expect_stream(data, records, s):
         "serial": f"0x{serial:08X}", "codec": s["codec"], "link": s["link"], "pages": len(pages), "packets": len(packets),
         "has_eos": any(r["flags"] & m.EOS and r["crc_ok"] and not r.get("truncated") for r in pages),
     }
+    if s["codec"] in CODECS and s["analyzed"] and packets:
+        return CODECS[s["codec"]](entry, data, packets, page_ends, s)
     if s["codec"] != "Speex" or not s["analyzed"] or not packets:
         return entry, None
 
@@ -331,19 +338,20 @@ def comment_empty():
 
 def unknown_codec():
     # A stream whose first packet names no Ogg mapping, multiplexed with a Speex stream, and a
-    # Vorbis identification header that is recognized but not analyzed.
+    # Theora identification header that is recognized but not analyzed, whose beginning-of-stream
+    # page comes first, as RFC 3533's grouping wants for video.
     f = Fixture("unknown-codec", ".ogg")
     speex, granules = speex_packets(0, cbr(10, 2))
     unknown = m.pages_for(0x0BADC0DE, [b"XYZcodec header", b"payload one", b"payload two"], [0, 0, 0], [1, 2])
-    vorbis = m.pages_for(0x00F0F0F0, [b"\x01vorbis" + bytes(23), b"\x03vorbis" + bytes(8) + b"\x01", b"\x05vorbis"], [0, 0, 0], [1, 2])
+    theora = m.pages_for(0x00F0F0F0, [b"\x80theora" + bytes(35), b"\x81theora" + bytes(8), b"\x82theora"], [0, 0, 0], [1, 2])
     s = m.pages_for(0x5EED0000, speex, granules, default_cuts(10))
-    for p in [s[0], unknown[0], vorbis[0], s[1], unknown[1], vorbis[1], s[2]]:
+    for p in [theora[0], s[0], unknown[0], s[1], unknown[1], theora[1], s[2]]:
         f.w.write(p)
+    f.stream(0x00F0F0F0, theora, codec="Theora", analyzed=False)
     f.stream(0x5EED0000, s)
     f.stream(0x0BADC0DE, unknown, codec="Unknown")
-    f.stream(0x00F0F0F0, vorbis, codec="Vorbis", analyzed=False)
     f.finding("ogg.codec-unknown", "0x0BADC0DE starts with bytes no Ogg mapping is known for (58595A636F646563)")
-    f.finding("ogg.codec-not-analyzed", "0x00F0F0F0 holds Vorbis")
+    f.finding("ogg.codec-not-analyzed", "0x00F0F0F0 holds Theora")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
         "oggz info and dump": "oggz 1.1.1 miscounts every stream of a file that holds a stream whose codec it does not know (it lists 2 of the Speex stream's 12 packets here)",
         "ogginfo, ffprobe and speexdec": "they read only the Speex stream, whose figures the valid fixtures compare, and say nothing about the others"}}

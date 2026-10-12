@@ -1,0 +1,585 @@
+{
+ "length": 2274,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 2274
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 47,
+   "serial": 252642049,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 47,
+   "length": 82,
+   "serial": 252642049,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 129,
+   "length": 1691,
+   "serial": 252642049,
+   "sequence": 2,
+   "granule": 22080,
+   "flags": 4,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 1820,
+   "length": 52,
+   "serial": 252642050,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 1872,
+   "length": 82,
+   "serial": 252642050,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 1954,
+   "length": 320,
+   "serial": 252642050,
+   "sequence": 2,
+   "granule": 5760,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0F0F0301",
+   "codec": "Opus",
+   "link": 1,
+   "pages": 3,
+   "packets": 21,
+   "has_eos": true,
+   "opus": {
+    "header": {
+     "Magic Signature": "OpusHead",
+     "Version": "1",
+     "Channels": "1",
+     "Channel Layout": "Mono: mono",
+     "Pre-skip": "312 samples",
+     "Input Sample Rate": "48000 Hz",
+     "Output Gain": "+0.00 dB",
+     "Mapping Family": "0 (mono or stereo)"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": [
+      "TITLE=Opus fixture"
+     ]
+    },
+    "packets": [
+     [
+      180,
+      21
+     ],
+     [
+      201,
+      0
+     ],
+     [
+      201,
+      21
+     ],
+     [
+      222,
+      1301
+     ],
+     [
+      1523,
+      21
+     ],
+     [
+      1544,
+      22
+     ],
+     [
+      1566,
+      21
+     ],
+     [
+      1587,
+      13
+     ],
+     [
+      1600,
+      21
+     ],
+     [
+      1621,
+      12
+     ],
+     [
+      1633,
+      21
+     ],
+     [
+      1654,
+      12
+     ],
+     [
+      1666,
+      21
+     ],
+     [
+      1687,
+      12
+     ],
+     [
+      1699,
+      21
+     ],
+     [
+      1720,
+      4
+     ],
+     [
+      1724,
+      21
+     ],
+     [
+      1745,
+      54
+     ],
+     [
+      1799,
+      21
+     ]
+    ],
+    "tocs": [
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      null
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       1,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       2,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "19",
+     "Frames": "10",
+     "Decoded Samples": "22080 samples",
+     "Pre-skip": "312 samples",
+     "Start Offset": "0 samples",
+     "End Trimming": "0 samples",
+     "Samples": "21768 samples",
+     "Duration": "0.454 s",
+     "IsVbr": "true",
+     "Average Bitrate": "28.5 kbps",
+     "Minimum Bitrate": "0.8 kbps",
+     "Maximum Bitrate": "520.4 kbps",
+     "Packet Sizes": "0 to 1301 bytes, 86.3 on average",
+     "Modes": "1 mode",
+     "Modes/CELT-only": "10 frames (100.0%)",
+     "Bandwidths": "1 bandwidth",
+     "Bandwidths/Fullband (20 kHz)": "10 frames (100.0%)",
+     "Frame Sizes": "1 size",
+     "Frame Sizes/20 ms": "10 frames (100.0%)",
+     "Stereo Coding": "0 stereo packets",
+     "Stereo Coding/Stereo": "0 packets (0.0%)",
+     "Stereo Coding/Mono": "18 packets (100.0%)",
+     "Frame Packing": "4 codes",
+     "Frame Packing/Code 0 (one frame)": "11 packets (61.1%)",
+     "Frame Packing/Code 1 (two frames of equal size)": "1 packet (5.6%)",
+     "Frame Packing/Code 2 (two frames of different sizes)": "1 packet (5.6%)",
+     "Frame Packing/Code 3 (any number of frames)": "5 packets (27.8%)"
+    }
+   }
+  },
+  {
+   "serial": "0x0F0F0302",
+   "codec": "Opus",
+   "link": 2,
+   "pages": 3,
+   "packets": 8,
+   "has_eos": true,
+   "opus": {
+    "header": {
+     "Magic Signature": "OpusHead",
+     "Version": "1",
+     "Channels": "3",
+     "Channel Layout": "Linear surround: left, center, right",
+     "Pre-skip": "312 samples",
+     "Input Sample Rate": "48000 Hz",
+     "Output Gain": "+0.00 dB",
+     "Mapping Family": "1 (Vorbis channel order)",
+     "Stream Count": "2",
+     "Coupled Count": "1"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": [
+      "TITLE=Opus fixture"
+     ]
+    },
+    "packets": [
+     [
+      1987,
+      53
+     ],
+     [
+      2040,
+      53
+     ],
+     [
+      2093,
+      22
+     ],
+     [
+      2115,
+      53
+     ],
+     [
+      2168,
+      53
+     ],
+     [
+      2221,
+      53
+     ]
+    ],
+    "tocs": [
+     [
+      [
+       31,
+       1,
+       0,
+       1
+      ],
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       1,
+       0,
+       1
+      ],
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       1,
+       0,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       1,
+       0,
+       1
+      ],
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       1,
+       0,
+       1
+      ],
+      [
+       30,
+       0,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       31,
+       1,
+       0,
+       1
+      ],
+      [
+       31,
+       0,
+       0,
+       1
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "6",
+     "Frames": "10",
+     "Decoded Samples": "5760 samples",
+     "Pre-skip": "312 samples",
+     "Start Offset": "0 samples",
+     "End Trimming": "0 samples",
+     "Samples": "5448 samples",
+     "Duration": "0.114 s",
+     "IsVbr": "true",
+     "Average Bitrate": "19.1 kbps",
+     "Minimum Bitrate": "8.8 kbps",
+     "Maximum Bitrate": "21.2 kbps",
+     "Packet Sizes": "22 to 53 bytes, 47.8 on average",
+     "Modes": "1 mode",
+     "Modes/CELT-only": "10 frames (100.0%)",
+     "Bandwidths": "1 bandwidth",
+     "Bandwidths/Fullband (20 kHz)": "10 frames (100.0%)",
+     "Frame Sizes": "2 sizes",
+     "Frame Sizes/10 ms": "1 frame (10.0%)",
+     "Frame Sizes/20 ms": "9 frames (90.0%)",
+     "Stereo Coding": "6 stereo stream packets",
+     "Stereo Coding/Stereo": "6 stream packets (54.5%)",
+     "Stereo Coding/Mono": "5 stream packets (45.5%)",
+     "Frame Packing": "1 code",
+     "Frame Packing/Code 0 (one frame)": "11 stream packets (100.0%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1,
+   "samples": 21768,
+   "duration": 0.4535,
+   "average_bitrate": 28.521739130434785,
+   "is_vbr": true,
+   "channel_mode": "Mono"
+  },
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 3,
+   "samples": 5448,
+   "duration": 0.1135,
+   "average_bitrate": 19.133333333333333,
+   "is_vbr": true,
+   "channel_mode": "Linear surround"
+  }
+ ],
+ "findings": [
+  {
+   "code": "opus.packet-r1",
+   "contains": "the packet is empty"
+  },
+  {
+   "code": "opus.packet-r2",
+   "contains": "its frame of 1300 bytes is longer than the 1275 bytes"
+  },
+  {
+   "code": "opus.packet-r3",
+   "contains": "do not split into two frames of equal size"
+  },
+  {
+   "code": "opus.packet-r4",
+   "contains": "the first frame's length is missing or larger"
+  },
+  {
+   "code": "opus.packet-r5",
+   "contains": "2 packets break rule R5"
+  },
+  {
+   "code": "opus.packet-r6",
+   "contains": "2 packets break rule R6"
+  },
+  {
+   "code": "opus.packet-r7",
+   "contains": "take more bytes than the packet holds"
+  },
+  {
+   "code": "opus.self-delimiting",
+   "contains": "self-delimited framing (RFC 6716, appendix B) does not fit"
+  },
+  {
+   "code": "opus.stream-durations-differ",
+   "contains": "stream 1 codes 480 samples where stream 0 codes 960"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "not_compared": {
+   "opusinfo, opusdec and ffprobe": "they read a chain's later links as one stream, and libopus refuses the corrupt packets, as the findings say"
+  }
+ }
+}

@@ -1,0 +1,234 @@
+{
+ "length": 301,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 301
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 185270278,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 129,
+   "serial": 185270278,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 187,
+   "length": 75,
+   "serial": 185270278,
+   "sequence": 2,
+   "granule": 15360,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 262,
+   "length": 39,
+   "serial": 185270278,
+   "sequence": 3,
+   "granule": 19406,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0B0B0006",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 4,
+   "packets": 23,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "6",
+     "Channel Layout": "5.1: front left, center, front right, rear left, rear right, LFE",
+     "Sample Rate": "48000 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "256000 bps",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "Only the nominal: VBR or ABR that averages it",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": []
+    },
+    "setup": {
+     "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 2 modes",
+     "groups": {
+      "Codebooks": "1 codebook",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "1 floor, type 1",
+      "Residues": "1 residue, type 0",
+      "Mappings": "1 mapping, 2 coupling steps",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      230,
+      2
+     ],
+     [
+      232,
+      2
+     ],
+     [
+      234,
+      2
+     ],
+     [
+      236,
+      2
+     ],
+     [
+      238,
+      2
+     ],
+     [
+      240,
+      2
+     ],
+     [
+      242,
+      2
+     ],
+     [
+      244,
+      2
+     ],
+     [
+      246,
+      2
+     ],
+     [
+      248,
+      2
+     ],
+     [
+      250,
+      2
+     ],
+     [
+      252,
+      2
+     ],
+     [
+      254,
+      2
+     ],
+     [
+      256,
+      2
+     ],
+     [
+      258,
+      2
+     ],
+     [
+      260,
+      2
+     ],
+     [
+      293,
+      2
+     ],
+     [
+      295,
+      2
+     ],
+     [
+      297,
+      2
+     ],
+     [
+      299,
+      2
+     ]
+    ],
+    "blocks": [
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "20",
+     "Long Blocks": "20 packets (100.0%)",
+     "Short Blocks": "0 packets (0.0%)",
+     "Decoded Samples": "19456 samples",
+     "Start Offset": "0 samples",
+     "Start Trimming": "0 samples",
+     "End Trimming": "50 samples",
+     "Samples": "19406 samples",
+     "Duration": "0.404 s",
+     "IsVbr": "false",
+     "Average Bitrate": "0.8 kbps",
+     "Minimum Bitrate": "0.8 kbps",
+     "Maximum Bitrate": "0.8 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/Long Blocks": "2 to 2 bytes, 2.0 on average",
+     "Modes": "1 mode used",
+     "Modes/Mode 1 (long block)": "20 packets (100.0%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 48000,
+   "channels": 6,
+   "samples": 19406,
+   "duration": 0.40429166666666666,
+   "average_bitrate": 0.7894736842105263,
+   "is_vbr": false,
+   "channel_mode": "5.1"
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "skip": {}
+ }
+}

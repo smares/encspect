@@ -8,7 +8,9 @@ namespace Encspect.Tests;
 // confirmed by crosscheck_ogg_fixtures.py): the regions, every page and gap with its header fields
 // and CRC verdict, every logical stream with its codec, link and counts, and for Speex the header
 // fields, the comment, every audio packet with its file ranges and the submodes of its frames, the
-// statistics and the encoder; the streams the summary reads; and exactly the findings listed.
+// statistics and the encoder, for Vorbis and Opus the headers, every packet's block or TOC bytes and
+// the statistics (make_vorbis_opus_fixtures.py); the streams the summary reads; and exactly the
+// findings listed.
 public class OggFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.OggFixtures();
@@ -103,6 +105,18 @@ public class OggFixtureTests
             Assert.Equal(Count(stream.GetProperty("packets").GetInt32(), "packet", "packets"), Field(node, "Packet Count"));
             Assert.Equal(stream.GetProperty("has_eos").GetBoolean() ? "true" : "false", Field(node, "HasEndOfStream"));
 
+            if (stream.TryGetProperty("vorbis", out JsonElement vorbis))
+            {
+                CheckVorbis(vorbis, node, where);
+                continue;
+            }
+
+            if (stream.TryGetProperty("opus", out JsonElement opus))
+            {
+                CheckOpus(opus, node, where);
+                continue;
+            }
+
             if (!stream.TryGetProperty("speex", out JsonElement speex))
             {
                 Assert.DoesNotContain(node.Children, c => c.Name is "Speex Header" or "Audio Packets");
@@ -182,6 +196,162 @@ public class OggFixtureTests
         }
     }
 
+    // Vorbis: the identification header's fields, the comment, the setup header's summary and
+    // groups, every audio packet with its block, the statistics and the encoder.
+    private static void CheckVorbis(JsonElement vorbis, Node stream, string where)
+    {
+        CheckFields(vorbis.GetProperty("header"), stream.Children.Single(c => c.Name == "Identification Header"), where);
+        CheckComment(vorbis, stream);
+        if (vorbis.TryGetProperty("setup", out JsonElement setup))
+        {
+            Node node = stream.Children.Single(c => c.Name == "Setup Header");
+            Assert.Equal(NodeKind.Detail, node.Kind);
+            Assert.True(setup.GetProperty("value").GetString() == node.Value?.ToString(), $"{where}: setup header is \"{node.Value}\"");
+            CheckFields(setup.GetProperty("groups"), node, where);
+        }
+
+        string[] blocks = vorbis.GetProperty("blocks").EnumerateArray().Select(b => b.GetString()!).ToArray();
+        List<Node> packets = CheckPackets(vorbis, stream, where);
+        Assert.Equal(blocks, packets.Select(VorbisBlock));
+        CheckStatistics(vorbis, stream, where);
+        CheckEncoder(vorbis, stream);
+    }
+
+    private static string VorbisBlock(Node packet)
+    {
+        string summary = packet.Value!.ToString()!;
+        return summary switch
+        {
+            "empty" => "empty",
+            _ when summary.EndsWith("not audio", StringComparison.Ordinal) => "not-audio",
+            _ when summary.EndsWith("mode not readable", StringComparison.Ordinal) => "bad-mode",
+            _ when summary.Contains(" block of ", StringComparison.Ordinal) =>
+                (summary.Contains("long block", StringComparison.Ordinal) ? "L" : "S") + summary[(summary.LastIndexOf("mode ", StringComparison.Ordinal) + 5)..],
+            _ => "unread",
+        };
+    }
+
+    // Opus: OpusHead's fields, the comment and the data after it, every audio packet with each
+    // stream's TOC, the statistics and the encoder.
+    private static void CheckOpus(JsonElement opus, Node stream, string where)
+    {
+        if (opus.GetProperty("header").ValueKind == JsonValueKind.Object)
+        {
+            CheckFields(opus.GetProperty("header"), stream.Children.Single(c => c.Name == "Opus Head"), where);
+        }
+
+        CheckComment(opus, stream);
+        Assert.Equal(opus.TryGetProperty("extra", out JsonElement extra) ? extra.GetString() : null, stream.Children.SingleOrDefault(c => c.Name == "Extra Data")?.Value?.ToString());
+        List<Node> packets = CheckPackets(opus, stream, where);
+        JsonElement[] tocs = opus.GetProperty("tocs").EnumerateArray().ToArray();
+        for (int i = 0; i < packets.Count; i++)
+        {
+            Node packet = packets[i];
+            List<Node> parts = packet.Children.Any(c => c.Name.StartsWith("Stream ", StringComparison.Ordinal))
+                ? [.. packet.Children]
+                : [packet];
+            Assert.True(
+                tocs[i].EnumerateArray().Select(t => t.ValueKind == JsonValueKind.Null ? "-" : string.Join(",", t.EnumerateArray().Select(v => v.GetInt32()))).SequenceEqual(parts.Select(OpusToc)),
+                $"{where}: packet {i} has the TOCs {string.Join("; ", parts.Select(OpusToc))}, expected {tocs[i]}");
+        }
+
+        CheckStatistics(opus, stream, where);
+        CheckEncoder(opus, stream);
+    }
+
+    // "config,stereo,code,frames" of one stream's part, "-" without a TOC.
+    private static string OpusToc(Node part)
+    {
+        if (part.Children.FirstOrDefault(c => c.Name == "TOC") is not { } toc)
+        {
+            return "-";
+        }
+
+        string config = Field(toc, "Config")!.Split(':')[0];
+        string stereo = Field(toc, "IsStereo") == "true" ? "1" : "0";
+        string code = Field(toc, "Frame Count Code")!.Split(' ')[0];
+        return $"{config},{stereo},{code},{part.Children.Count(c => c.Name == "Frame")}";
+    }
+
+    private static void CheckFields(JsonElement expected, Node node, string where)
+    {
+        foreach (JsonProperty field in expected.EnumerateObject())
+        {
+            Assert.True(field.Value.GetString() == Field(node, field.Name), $"{where}: {node.Name} field {field.Name} is \"{Field(node, field.Name)}\", expected \"{field.Value.GetString()}\"");
+        }
+    }
+
+    private static void CheckComment(JsonElement codec, Node stream)
+    {
+        if (codec.TryGetProperty("comment", out JsonElement comment))
+        {
+            Node tag = stream.Children.Single(c => c.Kind == NodeKind.Tag);
+            Assert.Equal(comment.GetProperty("vendor").GetString(), Field(tag, "Vendor"));
+            Assert.Equal(comment.GetProperty("comments").EnumerateArray().Select(c => c.GetString()), tag.Children.Where(IsComment).Select(CommentText));
+        }
+        else
+        {
+            Assert.DoesNotContain(stream.Children, c => c.Kind == NodeKind.Tag);
+        }
+    }
+
+    // Every audio packet's offset, length and file ranges.
+    private static List<Node> CheckPackets(JsonElement codec, Node stream, string where)
+    {
+        Node? packets = stream.Children.SingleOrDefault(c => c.Name == "Audio Packets");
+        JsonElement[] expected = codec.GetProperty("packets").EnumerateArray().ToArray();
+        List<Node> actual = packets is null ? [] : [.. packets.Children];
+        Assert.Equal(expected.Length, actual.Count);
+        for (int i = 0; i < expected.Length; i++)
+        {
+            JsonElement[] item = expected[i].EnumerateArray().ToArray();
+            Node packet = actual[i];
+            Assert.Equal(NodeKind.Frame, packet.Kind);
+            Assert.True(item[0].GetInt64() == packet.Offset, $"{where}: packet {i} at {packet.Offset}, expected {item[0].GetInt64()}");
+            IReadOnlyList<ByteRange> ranges = packet.Ranges ?? [new ByteRange(packet.Offset, item[1].GetInt64())];
+            Assert.Equal(item[1].GetInt64(), ranges.Sum(r => r.Length));
+            if (item.Length > 2)
+            {
+                Assert.Equal(item.Skip(2).Select(r => $"{r[0].GetInt64()}+{r[1].GetInt64()}"), ranges.Select(r => $"{r.Offset}+{r.Length}"));
+            }
+            else
+            {
+                Assert.Null(packet.Ranges);
+            }
+        }
+
+        return actual;
+    }
+
+    private static void CheckStatistics(JsonElement codec, Node stream, string where)
+    {
+        if (codec.GetProperty("statistics").ValueKind == JsonValueKind.Object)
+        {
+            Node statistics = stream.Children.Single(c => c.Kind == NodeKind.Statistics);
+            foreach (JsonProperty field in codec.GetProperty("statistics").EnumerateObject())
+            {
+                string? value = Fixtures.Resolve(statistics, field.Name).FirstOrDefault()?.Value?.ToString();
+                Assert.True(field.Value.GetString() == value, $"{where}: statistics {field.Name} is \"{value}\", expected \"{field.Value.GetString()}\"");
+            }
+
+            Assert.Equal(codec.GetProperty("statistics").EnumerateObject().Count(), Leaves(statistics).Count());
+        }
+        else
+        {
+            Assert.DoesNotContain(stream.Children, c => c.Kind == NodeKind.Statistics);
+        }
+    }
+
+    private static void CheckEncoder(JsonElement codec, Node stream)
+    {
+        if (codec.TryGetProperty("encoder", out JsonElement encoder))
+        {
+            Node node = stream.Children.Single(c => c.Name == "Encoder");
+            Assert.Equal(encoder.GetProperty("name").GetString(), node.Value?.ToString());
+            Assert.Equal(encoder.GetProperty("confidence").GetString(), Field(node, "Confidence"));
+        }
+    }
+
     // Statistics figures, and the entries of each list among them, as the manifest names them.
     private static IEnumerable<Node> Leaves(Node statistics) => statistics.Children.SelectMany(c => c.Children.Count > 0 ? [c, .. c.Children] : new[] { c });
 
@@ -220,6 +390,11 @@ public class OggFixtureTests
             }
 
             Assert.Equal(info.GetProperty("is_vbr").GetBoolean(), stream.IsVbr);
+            if (info.TryGetProperty("channel_mode", out JsonElement mode))
+            {
+                Assert.Equal(mode.GetString(), stream.ChannelMode);
+            }
+
             Assert.All(stream.NodePaths, path => Assert.NotNull(path));
             if (info.TryGetProperty("encoder", out JsonElement encoder))
             {

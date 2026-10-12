@@ -106,6 +106,74 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
+    // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
+    // on linux-x64. The bound leaves about twice that, as the Speex one does.
+    [Fact]
+    public void ManyVorbisPacketsStayCompact()
+    {
+        const int packets = 200_000;
+        // Vorbis I, section 4.2.2: one channel at 44100 Hz, blocks of 256 and 2048 samples.
+        byte[] identification = new byte[30];
+        "\u0001vorbis"u8.CopyTo(identification);
+        identification[11] = 1;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(identification.AsSpan(12), 44100);
+        identification[28] = 0xB8;
+        identification[29] = 1;
+        byte[] comment = [0x03, .. "vorbis"u8, .. OggBuilder.VorbisComment("Encspect"), 0x01];
+        var builder = new OggBuilder()
+            .Page(5, 0, 2, identification)
+            .Page(5, 0, 0, comment, MinimalVorbisSetup);
+        byte[] block = [0x0E];
+        for (int done = 0; done < packets; done += 250)
+        {
+            builder.Page(5, (done + 249) * 1024L, done + 250 == packets ? (byte)4 : (byte)0, [.. Enumerable.Repeat(block, 250)]);
+        }
+
+        (Report report, long kept, long peak) = Measure("vorbis.ogg", builder.Bytes);
+
+        Assert.Equal((packets - 1) * 1024L, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * 60L, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * 1024L, $"The heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // An Opus stream keeps a 20-byte record per stream of each packet, 2 bytes per frame and its
+    // per-packet series (16 bytes), plus its share of the page records: 40 bytes in all on
+    // linux-x64. The bound leaves about twice that.
+    [Fact]
+    public void ManyOpusPacketsStayCompact()
+    {
+        const int packets = 200_000;
+        byte[] head = [.. "OpusHead"u8, 1, 1, 0x38, 0x01, 0x80, 0xBB, 0, 0, 0, 0, 0];
+        var builder = new OggBuilder()
+            .Page(6, 0, 2, head)
+            .Page(6, 0, 0, [.. "OpusTags"u8, .. OggBuilder.VorbisComment("Encspect")]);
+        byte[] packet = [0xF8, 0, 0, 0];
+        for (int done = 0; done < packets; done += 250)
+        {
+            builder.Page(6, (done + 250) * 960L, done + 250 == packets ? (byte)4 : (byte)0, [.. Enumerable.Repeat(packet, 250)]);
+        }
+
+        (Report report, long kept, long peak) = Measure("opus.opus", builder.Bytes);
+
+        Assert.Equal((packets * 960L) - 312, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * 90L, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * 1024L, $"The heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // The setup header of make_vorbis_opus_fixtures.py's minimal codec: one codebook, a floor of
+    // type 1 without partitions, a residue without passes, one mapping, a short and a long mode.
+    private static readonly byte[] MinimalVorbisSetup =
+    [
+        0x05, 0x76, 0x6F, 0x72, 0x62, 0x69, 0x73, 0x00, 0x42, 0x43, 0x56, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x80, 0x62, 0x40, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    ];
+
     // The heap the report keeps and the most it grew by while the analysis ran.
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data)
     {

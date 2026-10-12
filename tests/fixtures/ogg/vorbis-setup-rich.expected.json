@@ -1,0 +1,258 @@
+{
+ "length": 475,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 475
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 185270336,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 219,
+   "serial": 185270336,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 277,
+   "length": 123,
+   "serial": 185270336,
+   "sequence": 2,
+   "granule": 11776,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 400,
+   "length": 75,
+   "serial": 185270336,
+   "sequence": 3,
+   "granule": 19958,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0B0B0040",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 4,
+   "packets": 27,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "2",
+     "Channel Layout": "Stereo: left, right",
+     "Sample Rate": "44100 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "0 (not set)",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "None set: the encoder gives no hint",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": []
+    },
+    "setup": {
+     "value": "4 codebooks, 2 floors, 1 residue, 1 mapping, 2 modes",
+     "groups": {
+      "Codebooks": "4 codebooks",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "2 floors, type 0 and 1",
+      "Residues": "1 residue, type 2",
+      "Mappings": "1 mapping, 1 coupling step",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      320,
+      5
+     ],
+     [
+      325,
+      5
+     ],
+     [
+      330,
+      5
+     ],
+     [
+      335,
+      5
+     ],
+     [
+      340,
+      5
+     ],
+     [
+      345,
+      5
+     ],
+     [
+      350,
+      5
+     ],
+     [
+      355,
+      5
+     ],
+     [
+      360,
+      5
+     ],
+     [
+      365,
+      5
+     ],
+     [
+      370,
+      5
+     ],
+     [
+      375,
+      5
+     ],
+     [
+      380,
+      5
+     ],
+     [
+      385,
+      5
+     ],
+     [
+      390,
+      5
+     ],
+     [
+      395,
+      5
+     ],
+     [
+      435,
+      5
+     ],
+     [
+      440,
+      5
+     ],
+     [
+      445,
+      5
+     ],
+     [
+      450,
+      5
+     ],
+     [
+      455,
+      5
+     ],
+     [
+      460,
+      5
+     ],
+     [
+      465,
+      5
+     ],
+     [
+      470,
+      5
+     ]
+    ],
+    "blocks": [
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "24",
+     "Long Blocks": "20 packets (83.3%)",
+     "Short Blocks": "4 packets (16.7%)",
+     "Decoded Samples": "19968 samples",
+     "Start Offset": "0 samples",
+     "Start Trimming": "0 samples",
+     "End Trimming": "10 samples",
+     "Samples": "19958 samples",
+     "Duration": "0.453 s",
+     "IsVbr": "false",
+     "Average Bitrate": "2.1 kbps",
+     "Minimum Bitrate": "1.7 kbps",
+     "Maximum Bitrate": "13.8 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/Long Blocks": "5 to 5 bytes, 5.0 on average",
+     "Packet Sizes/Short Blocks": "5 to 5 bytes, 5.0 on average",
+     "Modes": "2 modes used",
+     "Modes/Mode 0 (short block)": "4 packets (16.7%)",
+     "Modes/Mode 1 (long block)": "20 packets (83.3%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 19958,
+   "duration": 0.452562358276644,
+   "average_bitrate": 2.1201923076923075,
+   "is_vbr": false,
+   "channel_mode": "Stereo"
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "skip": {
+   "ffprobe": "ffmpeg's native Vorbis decoder supports codebooks with lookup type 1 only and refuses codebook 1's type 2 (\"Codebook lookup type not supported\"), which libvorbis decodes; oggdec's samples are compared"
+  }
+ }
+}
