@@ -445,7 +445,18 @@
    265
   ]
  ],
- "fields": {},
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "600 units per second",
+  "MP4/moov/mvhd/Duration": "919 (1.532 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "919 (1.532 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "44100 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "67584 (1.533 s)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "2",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "98392 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "94584 bit/s"
+ },
  "findings": [
   [
    "aac.implicit-signaling-not-checked",

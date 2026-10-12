@@ -460,7 +460,8 @@ internal static class AudioSpecificConfig
                 }
                 else if (kind == 3)
                 {
-                    long extType = f.Escaped(element, "Extension Element Type", 4, 8, 16);
+                    long extensionType = f.Escaped(element, "Extension Element Type", 4, 8, 16);
+                    element.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 1 => "MPEG Surround", 2 => "SAOC", 3 => "audio pre-roll", 4 => "DRC", _ => "reserved" }})";
                     long length = f.Escaped(element, "Configuration Length", 4, 8, 16);
                     if (f.Flag(element, "HasDefaultLength"))
                     {
@@ -469,7 +470,6 @@ internal static class AudioSpecificConfig
 
                     f.Flag(element, "HasPayloadFragmentation");
                     f.Skip(length * 8);
-                    _ = extType;
                 }
 
                 string name = kind switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" };
@@ -492,7 +492,8 @@ internal static class AudioSpecificConfig
                 long count = f.Escaped(extensions, "Extensions", 2, 4, 8, add: 1);
                 for (long i = 0; i < count; i++)
                 {
-                    f.Escaped(extensions, "Extension Type", 4, 8, 16);
+                    long extensionType = f.Escaped(extensions, "Extension Type", 4, 8, 16);
+                    extensions.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 2 => "loudness info", 7 => "stream ID", _ => "reserved" }})";
                     long length = f.Escaped(extensions, "Extension Length", 4, 8, 16);
                     f.Skip(length * 8);
                 }

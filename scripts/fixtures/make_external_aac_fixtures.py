@@ -13,7 +13,9 @@ must report, mostly from independent tools at the time of encoding:
   6.1 cannot read, the sample sizes MP4Box -dtsx lists (offset null).
 - "streams": the codec, rate, channels, samples and encoder the settings give, with ffprobe's profile where
   ffmpeg names one, and "ffprobe_sample_rate" where ffmpeg finds SBR the configuration does not signal.
-- "fields", "findings" and "crosscheck" as in make_mp4_fixtures.py; "fdk_crc_errors" for protected ADTS,
+- "fields": the values MP4Box reads from the movie, track and media headers, the first edit, the audio sample
+  entry and the decoder configuration (crosscheck_mp4_fixtures.mp4box_fields), and the fields the settings give.
+- "findings" and "crosscheck" as in make_mp4_fixtures.py; "fdk_crc_errors" for protected ADTS,
   the access units fdk-aac's decoder rejects for their CRC.
 
     python3 scripts/fixtures/make_external_aac_fixtures.py --manifests-only [name ...]
@@ -37,7 +39,7 @@ import tempfile
 
 import exhale_tool
 import fdk_tool
-from crosscheck_mp4_fixtures import faad_info, ffprobe_packets, ffprobe_streams, mp4box_boxes, mp4box_sample_sizes
+from crosscheck_mp4_fixtures import ffprobe_packets, mp4box_boxes, mp4box_fields, mp4box_sample_sizes
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "aac"
@@ -184,7 +186,7 @@ def manifest_for(name, path, command, streams, fields, findings, check, values):
         "boxes": boxes,
         "streams": out,
         "units": units,
-        "fields": fields,
+        "fields": {**(mp4box_fields(path) if is_mp4 else {}), **fields},
         "findings": findings,
         "crosscheck": crosscheck,
     }

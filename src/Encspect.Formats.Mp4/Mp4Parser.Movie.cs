@@ -188,11 +188,9 @@ public sealed partial class Mp4Parser
         f.Time(node, "Modification Time", size);
         uint timescale = f.U32(node, "Timescale", "units per second");
         ulong duration = f.Duration(node, "Duration", size, timescale);
-        f.Field(node, "Language", 2, v =>
-        {
-            string language = new([(char)(((v >> 10) & 0x1F) + 0x60), (char)(((v >> 5) & 0x1F) + 0x60), (char)((v & 0x1F) + 0x60)]);
-            return v == 0x7FFF || v == 0 ? $"0x{v:X4} (unspecified)" : language;
-        });
+        // QuickTime takes a value below 0x400 for a Macintosh language code (0 is English).
+        f.Field(node, "Language", 2, v => v < 0x400 ? $"{v} (Macintosh language code)"
+            : new string([(char)(((v >> 10) & 0x1F) + 0x60), (char)(((v >> 5) & 0x1F) + 0x60), (char)((v & 0x1F) + 0x60)]));
         f.U16(node, "Quality");
         if (state.Track is { MediaHeader: null } track)
         {

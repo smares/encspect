@@ -431,7 +431,20 @@
    418
   ]
  ],
- "fields": {},
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "44100 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "67255 (1.525 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "1105 units of the media's timescale",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "2",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "129353 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "129353 bit/s"
+ },
  "findings": [
   [
    "mp4.moov-after-mdat",

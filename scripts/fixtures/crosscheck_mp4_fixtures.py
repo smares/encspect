@@ -90,6 +90,55 @@ def mp4box_boxes(path):
     return rows
 
 
+def mp4box_fields(path):
+    """Fields of the first movie, track and media header, edit, audio sample entry and decoder configuration that MP4Box reads, as the
+    analyzer's node paths and the values it must show for them."""
+    with tempfile.TemporaryDirectory() as directory:
+        out = pathlib.Path(directory) / "dump.xml"
+        subprocess.run(["MP4Box", "-quiet", "-diso", str(path), "-out", str(out)], capture_output=True)
+        if not out.exists():
+            return {}
+        text = out.read_text(encoding="utf-8", errors="replace")
+
+    def attributes(element):
+        match = re.search(rf"<{element}\s([^>]*)>", text)
+        return dict(re.findall(r'(\w+)="([^"]*)"', match.group(1))) if match else {}
+
+    def duration(value, scale):
+        return f"{value} ({int(value) / int(scale):.3f} s)" if int(scale) else f"{value} (no timescale)"
+
+    fields = {}
+    movie = attributes("MovieHeaderBox")
+    if movie:
+        fields["MP4/moov/mvhd/Timescale"] = f"{movie['TimeScale']} units per second"
+        fields["MP4/moov/mvhd/Duration"] = duration(movie["Duration"], movie["TimeScale"])
+    track = attributes("TrackHeaderBox")
+    if track:
+        fields["MP4/moov/trak/tkhd/Track ID"] = track["TrackID"]
+        if movie:
+            fields["MP4/moov/trak/tkhd/Duration"] = duration(track["Duration"], movie["TimeScale"])
+    media = attributes("MediaHeaderBox")
+    if media:
+        fields["MP4/moov/trak/mdia/mdhd/Timescale"] = f"{media['TimeScale']} units per second"
+        fields["MP4/moov/trak/mdia/mdhd/Duration"] = duration(media["Duration"], media["TimeScale"])
+    edit = attributes("EditListEntry")
+    if edit and movie:
+        fields["MP4/moov/trak/edts/elst/Edit/Segment Duration"] = duration(edit["Duration"], movie["TimeScale"])
+        fields["MP4/moov/trak/edts/elst/Edit/Media Time"] = edit["MediaTime"] if edit["MediaTime"] == "-1" else f"{edit['MediaTime']} units of the media's timescale"
+    entry = attributes("MPEGAudioSampleDescriptionBox")
+    if entry:
+        fields["MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels"] = entry["Channels"]
+        fields["MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size"] = f"{entry['BitsPerSample']} bits"
+    decoder = attributes("DecoderConfigDescriptor")
+    if decoder:
+        path = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor"
+        if "maxBitrate" in decoder:
+            fields[path + "/Maximum Bitrate"] = f"{decoder['maxBitrate']} bit/s"
+        if "avgBitrate" in decoder:
+            fields[path + "/Average Bitrate"] = "0 (variable bitrate)" if decoder["avgBitrate"] == "0" else f"{decoder['avgBitrate']} bit/s"
+    return fields
+
+
 def mp4box_sample_sizes(path):
     """The sample sizes MP4Box -dtsx lists, track after track."""
     with tempfile.TemporaryDirectory() as directory:
