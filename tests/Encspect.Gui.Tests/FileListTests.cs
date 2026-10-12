@@ -59,7 +59,7 @@ public class FileListTests
         Assert.Equal("fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", he.EncoderText);
         Assert.Contains("iTunes Metadata", he.Tags, StringComparison.Ordinal);
         FileRow lc = model.Rows.Single(r => r.Name == "lc.aac");
-        Assert.Equal(("AAC", "AAC LC (no SBR signaled explicitly)", "FFmpeg (Lavc60.31.102) (high)"), (lc.Format, lc.Codec, lc.EncoderText));
+        Assert.Equal(("AAC", "AAC LC", "FFmpeg (Lavc60.31.102) (high)"), (lc.Format, lc.Codec, lc.EncoderText));
         Assert.EndsWith("VBR", lc.BitrateText, StringComparison.Ordinal);
     }
 

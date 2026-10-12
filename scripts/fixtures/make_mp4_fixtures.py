@@ -204,13 +204,14 @@ def channel_layouts():
               "Reserved", extra=[chan(TAG_STEREO)],
               findings=[["aac.reserved-channel-configuration", "channel configuration 8 is reserved"]],
               fields={CHAN: "stereo (front left, front right)"}, faad=None,
-              skip={"ffprobe": "ffmpeg's decoder rejects the reserved channel configuration.", "faad": "faad2 rejects the reserved channel configuration."}),
+              skip={"ffprobe": "ffmpeg's decoder rejects the reserved channel configuration.", "faad": "faad2 rejects the reserved channel configuration.",
+                    "faad_trace": "faad2 rejects the reserved channel configuration."}),
         plain("chan-7-1-rear", "AAC LC 7.1 (channel configuration 12: C L R Ls Rs Lsr Rsr LFE) with a chan atom whose layout tag is "
               "MPEG_7_1_C (L R C LFE Ls Rs Rls Rrs): with a rear pair, both put the surround pair at the sides, so they agree.",
               asc(2, 48000, 12), "7.1", lc, 48000, 8, "7.1", samples=units("7.1", 20), findings=[], extra=[chan(TAG_MPEG_7_1_C)],
               fields={CHAN: "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
                       ASC + "/Channel Configuration": "12 (7.1: center, left/right, left/right surround, left/right rear, LFE)"},
-              skip={"faad": "faad2 2.11 does not read channel configuration 12."}),
+              skip={"faad": "faad2 2.11 does not read channel configuration 12.", "faad_trace": "faad2 2.11 does not read channel configuration 12."}),
         plain("chnl-defined", "AAC LC 5.1 with a chnl box that gives ISO/IEC 23091-3's ChannelConfiguration 6 (C L R Ls Rs LFE) and omits "
               "no channel.", five, "5.1", lc, 48000, 6, "5.1", samples=units("5.1", 20), findings=[], extra=[chnl(defined=6)],
               fields={CHNL: AAC_5_1, CHNL + "/Defined Layout": "6 (" + AAC_5_1 + ")", CHNL + "/Omitted Channels": "0x0000000000000000"},
