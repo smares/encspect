@@ -13,7 +13,7 @@ Tools the fixture scripts build to cross-check the analyzer. They are committed 
 
 # GUI dependencies
 
-The GUI (`src/Encspect.Gui`) uses Avalonia from NuGet, at the exact versions in `Directory.Packages.props`. Every package it brings in is free and open source; Avalonia's TreeDataGrid, which moved to a commercial license, is not used. Skia and HarfBuzz are native libraries that Avalonia draws and shapes text with; they are the one kind of native library the project ships (see the plan's non-goals).
+The GUI (`src/Encspect.Gui`) uses Avalonia from NuGet, at the exact versions in `Directory.Packages.props`. Every package it brings in is free and open source; Avalonia's TreeDataGrid, which moved to a commercial license, is not used. The only native libraries the project ships are the ones Avalonia needs (see the plan's non-goals): Skia and HarfBuzz, which it draws and shapes text with, on every platform; ANGLE (`av_libglesv2.dll`), through which it draws with Direct3D, on Windows; and Avalonia.Native (`libAvaloniaNative.dylib`), its macOS backend. Linux builds have no other: the X11 backend is managed code over the system's own libraries. The GUI's `--self-check` loads each of them.
 
 | Package | Version | What | License |
 |---|---|---|---|

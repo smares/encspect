@@ -4,7 +4,7 @@ Audio file analyzer with a GUI and a CLI. Read `docs/PLAN.md` for goals, archite
 
 ## Stack
 
-C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one project per format. No playback, no runtime-loadable plugins, no bundled decoders or audio libraries; the native rendering libraries the UI framework itself needs (Skia, HarfBuzz) are the one exception.
+C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one project per format. No playback, no runtime-loadable plugins, no bundled decoders or audio libraries; the native libraries the UI framework itself needs are the one exception: Skia and HarfBuzz, and the platform backends ANGLE on Windows and Avalonia.Native on macOS.
 
 ## Layout
 

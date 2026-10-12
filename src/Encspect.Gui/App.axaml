@@ -4,7 +4,8 @@
              Name="Encspect"
              RequestedThemeVariant="Default">
   <Application.Resources>
-    <!-- The system's UI font: Fluent asks for Inter first, which this app does not bundle. -->
+    <!-- The system's UI font: Fluent asks for Inter first, which this app does not bundle. App.Initialize
+         names macOS's own. -->
     <FontFamily x:Key="ContentControlThemeFontFamily">$Default</FontFamily>
     <!-- Hex and bits: the platforms' own monospaced fonts, then common ones. -->
     <FontFamily x:Key="MonospaceFontFamily">Cascadia Mono, Consolas, Menlo, SF Mono, DejaVu Sans Mono, Liberation Mono, Noto Sans Mono, monospace</FontFamily>

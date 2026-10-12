@@ -38,6 +38,23 @@ internal sealed class BlockingParser : IFormatParser
     public Analyzer Analyzer() => new(DefaultParsers.Tags, [this, .. DefaultParsers.Formats], DefaultParsers.Codecs);
 }
 
+// A format of files that start with "BOOM", whose parser runs out of memory, which the host does
+// not turn into a finding but passes on.
+internal sealed class ThrowingParser : IFormatParser
+{
+    public const string Message = "Out of memory in a test.";
+
+    public static byte[] File => "BOOM and some bytes"u8.ToArray();
+
+    public string Name => "Throwing";
+
+    public int Sniff(SniffContext context) => context.Reader.Length >= 4 && context.Reader.MatchesAt(context.Reader.Start, "BOOM"u8) ? 100 : 0;
+
+    public void Parse(ParseContext context) => throw new OutOfMemoryException(Message);
+
+    public Analyzer Analyzer() => new(DefaultParsers.Tags, [this, .. DefaultParsers.Formats], DefaultParsers.Codecs);
+}
+
 // The default format parser, counting the files it parses, so tests see which files a run
 // analyzed rather than took from the cache.
 internal sealed class CountingParser(IFormatParser inner) : IFormatParser

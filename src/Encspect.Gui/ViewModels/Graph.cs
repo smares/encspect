@@ -18,10 +18,8 @@ public abstract class Graph
 
     public string Unit { get; }
 
-    // Points of a line, or bars.
     public abstract int Count { get; }
 
-    // The largest value, which the y axis must reach.
     public abstract double Maximum { get; }
 
     public abstract double ValueAt(int index);

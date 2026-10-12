@@ -48,14 +48,63 @@ public class FolderTests
     }
 
     [Fact]
-    public void The_roots_start_with_the_home_folder_and_list_volumes()
+    public void The_roots_start_with_the_home_folder_and_list_volumes_without_waiting_for_them()
     {
-        IReadOnlyList<FolderItem> roots = FolderRoots.Create(new TestDispatcher().Post);
+        using var gate = new ManualResetEventSlim();
+        IReadOnlyList<FolderItem> roots = FolderRoots.Create(new TestDispatcher().Post, _ =>
+        {
+            gate.Wait();
+            return new VolumeState(true, null);
+        });
 
         Assert.Equal(FolderKind.Home, roots[0].Kind);
         Assert.Equal(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), roots[0].Path);
         Assert.Contains(roots, r => r.Kind == FolderKind.Volume);
         Assert.All(roots, r => Assert.False(r.IsLoaded));
+        gate.Set();
+    }
+
+    [Fact]
+    public void A_volume_shows_at_once_and_its_probe_fills_in_its_name_or_marks_it_unavailable()
+    {
+        var ui = new TestDispatcher();
+        using var gate = new ManualResetEventSlim();
+        var slow = new FolderItem("D:", "/slow", FolderKind.Volume, ui.Post);
+        var gone = new FolderItem("E:", "/gone", FolderKind.Volume, ui.Post);
+        var broken = new FolderItem("F:", "/broken", FolderKind.Volume, ui.Post);
+
+        Task slowProbe = FolderRoots.Probe(slow, _ =>
+        {
+            gate.Wait();
+            return new VolumeState(true, "Music (D:)");
+        }, ui.Post);
+        Task goneProbe = FolderRoots.Probe(gone, _ => new VolumeState(false, null), ui.Post);
+        Task brokenProbe = FolderRoots.Probe(broken, _ => throw new InvalidOperationException("No such volume."), ui.Post);
+        ui.Until(() => goneProbe.IsCompleted && brokenProbe.IsCompleted);
+
+        Assert.False(slowProbe.IsCompleted);
+        Assert.Equal("D:", slow.Name);
+        Assert.True(gone.HasError);
+        Assert.True(broken.HasError);
+        Assert.Equal("E:", gone.Name);
+
+        gate.Set();
+        ui.Until(() => slow.Name == "Music (D:)");
+        Assert.False(slow.HasError);
+    }
+
+    [Fact]
+    public void A_folder_whose_listing_fails_unexpectedly_still_ends_loading()
+    {
+        var ui = new TestDispatcher();
+        var folder = new FolderItem("bad", "bad\0name", FolderKind.Folder, ui.Post);
+
+        Task load = folder.LoadChildrenAsync();
+        ui.Until(() => load.IsCompleted);
+
+        Assert.True(folder.IsLoaded);
+        Assert.True(folder.HasError);
+        Assert.Empty(folder.Children);
     }
 
     [Fact]

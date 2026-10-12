@@ -54,6 +54,14 @@ public class ScreenshotTests
         detail.Model.SelectedNode = field;
         Save(detail, $"detail-{variant}.png");
 
+        // An export that failed, and an error of the system in the main window's status bar.
+        detail.PickExportTarget = () => Task.FromResult<ExportTarget?>(new ExportTarget(folder["gone/report.txt"], null, ReportFormat.Text));
+        Task export = detail.ExportAsync();
+        UiPump.Until(() => export.IsCompleted);
+        Save(detail, $"detail-export-error-{variant}.png");
+        main.Model.ShowError("The path was not copied: the clipboard is not available.");
+        Save(main, $"main-error-{variant}.png");
+
         main.Close();
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
