@@ -43,6 +43,8 @@ internal static class BoxNames
         "csgp" => "Compact Sample to Group",
         "esds" => "Elementary Stream Descriptor",
         "btrt" => "Bitrate",
+        "dac3" => "AC-3 Specific",
+        "dec3" => "E-AC-3 Specific",
         "chan" => "Channel Layout",
         "chnl" => "Channel Layout",
         "wave" => "Sound Decompression Parameters",

@@ -346,6 +346,10 @@ internal static class Explain
         "schi" => "Scheme information box: the data of a protection scheme (ISO/IEC 14496-12 8.12).",
         "pdin" => "Progressive download information: download rates and the initial delays they need for playback (ISO/IEC 14496-12 8.1.3).",
         "mp4a" => "MPEG-4 audio sample entry: audio coded by an MPEG audio codec, usually AAC, whose configuration its esds box holds (ISO/IEC 14496-14 5.6).",
+        "ac-3" => "AC-3 sample entry: Dolby Digital audio, one syncframe per sample, configured by its dac3 box (ETSI TS 102 366 F.3).",
+        "ec-3" => "E-AC-3 sample entry: Dolby Digital Plus audio, the syncframes of six blocks of every substream per sample, configured by its dec3 box (ETSI TS 102 366 F.5).",
+        "dac3" => "AC3SpecificBox: the AC-3 stream's sample rate, version, service, channels and bitrate, as its frames hold them (ETSI TS 102 366 F.4).",
+        "dec3" => "EC3SpecificBox: the E-AC-3 stream's data rate and, per independent substream, its sample rate, version, service, channels and dependent substreams (ETSI TS 102 366 F.6).",
         ".mp3" => "QuickTime's MP3 sample entry: MPEG-1 or MPEG-2 Layer III audio (QuickTime File Format, Sound sample descriptions).",
         _ when type.StartsWith('©') => "QuickTime user data text, such as a name or the encoding software, with a length and language before the text (QuickTime File Format, User data atoms).",
         _ => UnknownBox,
@@ -354,7 +358,7 @@ internal static class Explain
     // A sample entry of an stsd box, by its coding.
     public static string SampleEntry(string type) => type switch
     {
-        "mp4a" or ".mp3" => Box(type),
+        "mp4a" or ".mp3" or "ac-3" or "ec-3" => Box(type),
         _ => "A sample entry: how the track's samples are coded, named by the four-character code of the coding, such as alac or Opus (ISO/IEC 14496-12 8.5.2.2).",
     };
 

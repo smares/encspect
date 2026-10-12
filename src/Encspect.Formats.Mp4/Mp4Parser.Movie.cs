@@ -58,6 +58,9 @@ public sealed partial class Mp4Parser
             case "esds":
                 ElementaryStreamDescriptor(state, node, f);
                 return true;
+            case "dac3" or "dec3":
+                CodecSpecificBox(state, node, f);
+                return true;
             case "btrt":
                 f.U32(node, "Buffer Size", Explain.BtrtBufferSize, unit: "bytes");
                 f.U32(node, "Maximum Bitrate", Explain.BtrtMaxBitrate, unit: "bit/s");
@@ -124,6 +127,24 @@ public sealed partial class Mp4Parser
                 }
 
                 return false;
+        }
+    }
+
+    // ETSI TS 102 366 F.4 and F.6: AC-3's and E-AC-3's configuration, which the codec parser reads
+    // field by field (as the AudioSpecificConfig of an esds box).
+    private static void CodecSpecificBox(State state, Node node, BoxFields f)
+    {
+        long start = f.Position;
+        byte[] data = f.TakeBytes(f.Remaining);
+        node.Value = NodeValue.Integer(data.Length, "bytes");
+        if (state.CurrentEntry is { DecoderSpecificInfo: null } entry)
+        {
+            entry.DecoderSpecificInfo = new MappedBytes(data, start);
+            entry.DecoderSpecificInfoNode = node;
+        }
+        else if (data.Length > 0)
+        {
+            node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
         }
     }
 
