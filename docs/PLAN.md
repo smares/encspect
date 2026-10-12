@@ -219,7 +219,7 @@ MP3 comes first, and each later phase starts only after the previous one passes 
 | Phase | Scope |
 | --- | --- |
 | 1 (v1) | MP1/2/3 and tags: all tags, side info, Xing, LAME, VBRI, reference tests |
-| Gate 1 | Pipeline green everywhere, review findings fixed, abstractions settled |
+| Gate 1 (passed) | Pipeline green everywhere, review findings fixed, abstractions settled |
 | 2 | FLAC, WAV, AIFF, Ogg with Vorbis and Opus (Ogg hands streams to codec parsers) |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
 | 3 | MP4 with AAC and ALAC, WavPack, Monkey's Audio, TTA |
@@ -227,7 +227,7 @@ MP3 comes first, and each later phase starts only after the previous one passes 
 | 4 | Long tail: Musepack, WMA, AC-3; TAK and OptimFROG at header level only |
 | Later, order not fixed | MP3 scalefactor and Huffman analysis; decoders for waveform and spectrogram, format by format |
 
-A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. TAK and OptimFROG are poorly documented, so they stay at header level. The deeper MP3 pass and the decoders are not tied to a phase yet.
+A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The deeper MP3 pass and the decoders are not tied to a phase yet.
 
 ## CLI and GUI
 
@@ -241,8 +241,11 @@ Both front ends are thin views over the same result model, so neither can show s
 
 **GUI**
 
-- Folder tree and file list using native OS dialogs; drag and drop; batch analysis in the background.
-- Report view with the structure tree, where selecting a node highlights its bytes in a hex view.
+- An Explorer-like main window: a folder tree on the left (drives or volumes, subfolders loaded on demand, quick links to the home, music and desktop folders) and a sortable details list of the files on the right. Its columns are the per-file summary: name, format, codec, duration, bitrate with VBR or CBR, sample rate, channel mode, encoder with its confidence, tags, and finding counts by severity. Rows fill in as the background analysis gets to them, with progress and cancellation; an "include subfolders" toggle analyzes a whole tree; files and folders can be dropped onto the window.
+- Details in one reusable, non-modal window, so nothing piles up: Enter or a double-click opens it, opening another file reuses it, and while it is open it follows the list's selection, with Previous and Next to step through the folder. It first opens centered over the main window, remembers its placement, and closes with Esc. A second window only comes from the context menu's "Open in new window", for comparing two files.
+- A summary cache for folder views, per user: the per-file summary and finding counts, keyed by path, size, last-write time, file ID, analyzer version and schema version, plus a hash of the first and last 64 KiB, which catches taggers that rewrite tags and keep the time. No hash of the whole file, which would cost as much reading as the analysis. Opening a file always analyzes it again, so the detail window never shows a cached report; the CLI keeps no cache.
+- Native where it matters, on an Avalonia Fluent theme that looks the same on every platform: the operating system's file and folder dialogs, the macOS menu bar with the standard app menu and window menu, shortcuts with Cmd on macOS and Ctrl elsewhere, light and dark mode and the accent color following the system, the system UI font, and drag and drop from the file manager.
+- Report view with the structure tree, where selecting a node highlights its bytes (and bits) in a hex view.
 - Findings list with severity, filterable and linked to the node that caused them.
 - Graphs: bitrate over time, bitrate distribution, bit reservoir fill, all from header-level data and available in v1.
 - Waveform and spectrogram panels that need decoded audio. These appear only for formats that have a decoder and otherwise say so.
