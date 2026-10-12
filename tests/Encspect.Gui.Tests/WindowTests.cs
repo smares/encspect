@@ -193,36 +193,67 @@ public sealed class WindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Refresh_keeps_the_selected_file_and_the_windows_on_it()
+    public void Refresh_reads_the_files_of_the_open_windows_again()
     {
         MainWindow main = OpenMain();
         FileRow selected = main.Model.Rows[1];
         DetailWindow shared = main.DetailWindows.Open(selected);
         DetailWindow other = main.DetailWindows.OpenNew(main.Model.Rows[3]);
         UiPump.Until(() => shared.Model.Tree is not null && other.Model.Tree is not null);
-        Report report = shared.Model.Report!;
+        Report sharedReport = shared.Model.Report!;
+        Report otherReport = other.Model.Report!;
+        Assert.Contains("BladeEnc", shared.Model.StreamsText, StringComparison.Ordinal);
+
+        // A frame selected in one window, and the other's file replaced by another on disk.
+        StructureTree tree = other.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow frame = tree[tree.IndexOf(stream) + 4];
+        other.Model.SelectedNode = frame;
+        string replacement = _folder["replacement.tmp"];
+        File.Copy(Fixtures.Mpeg("external-lame-tagged.mp3"), replacement);
+        File.Move(replacement, selected.Path, overwrite: true);
 
         main.Model.Refresh();
-        UiPump.Until(() => !main.Model.IsRunning);
+        UiPump.Until(() => !main.Model.IsRunning && shared.Model.Report is { } a && a != sharedReport && other.Model.Report is { } b && b != otherReport);
 
-        FileRow again = main.Model.Rows[1];
-        Assert.NotSame(selected, again);
-        Assert.Same(again, main.Model.SelectedRow);
-        Assert.Same(again, main.Files.SelectedItem);
-        Assert.Same(again, shared.Row);
+        Assert.Same(main.Model.Rows[1], main.Model.SelectedRow);
+        Assert.Same(main.Model.SelectedRow, main.Files.SelectedItem);
+        Assert.Same(main.Model.Rows[1], shared.Row);
         Assert.Same(main.Model.Rows[3], other.Row);
-
-        // The window moved to the new row without analyzing the file again.
-        Assert.Same(report, shared.Model.Report);
+        Assert.Contains("LAME 3.100", shared.Model.StreamsText, StringComparison.Ordinal);
+        Assert.Equal([frame.Parent!.ChildIndex, frame.ChildIndex], [other.Model.SelectedNode!.Parent!.ChildIndex, other.Model.SelectedNode.ChildIndex]);
+        Assert.Equal(frame.Node.Offset, other.Model.SelectedNode.Node.Offset);
         Assert.True(shared.Model.CanGoPrevious);
         Assert.True(shared.Model.CanGoNext);
         Assert.True(other.Model.CanGoPrevious);
         Assert.False(other.Model.CanGoNext);
 
+        // Clearing the cache reads them again too.
+        sharedReport = shared.Model.Report!;
+        main.Model.ClearCache();
+        UiPump.Until(() => !main.Model.IsRunning && shared.Model.Report is { } c && c != sharedReport);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void Include_subfolders_keeps_the_selected_file_and_the_windows_on_it_without_reading_it_again()
+    {
+        MainWindow main = OpenMain();
+        FileRow selected = main.Model.Rows[1];
+        DetailWindow shared = main.DetailWindows.Open(selected);
+        UiPump.Until(() => shared.Model.Tree is not null);
+        Report report = shared.Model.Report!;
+
         main.Model.IncludeSubfolders = true;
         UiPump.Until(() => !main.Model.IsRunning);
+
+        Assert.NotSame(selected, main.Model.SelectedRow);
         Assert.Equal(selected.Path, main.Model.SelectedRow!.Path);
         Assert.Same(main.Model.SelectedRow, shared.Row);
+        Assert.Same(report, shared.Model.Report);
+        Assert.False(shared.Model.IsLoading);
+        Assert.True(shared.Model.CanGoNext);
         main.Close();
     }
 

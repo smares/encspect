@@ -13,8 +13,9 @@ namespace Encspect.Gui.Views;
 // its own.
 //
 // Previous and Next follow the list as it fills in, at a cost per added row that does not grow
-// with the list (ListNeighbors). When the list is listed again (Refresh, Include Subfolders), a
-// window whose row left the list moves to the new row of the same file once that is listed.
+// with the list (ListNeighbors). When the list is listed again, a window whose row left the list
+// moves to the new row of the same file once that is listed; after Refresh or Clear Summary Cache
+// it also analyzes the file again, keeping its selected node where the new tree has it.
 public sealed class DetailWindows
 {
     private const int CascadeStep = 32;
@@ -168,6 +169,10 @@ public sealed class DetailWindows
                 window.Row = added;
                 neighbors.Track(added);
                 ShowNeighbors(window);
+                if (_model.IsRereading)
+                {
+                    _ = window.Model.ReloadAsync();
+                }
             }
             else if (neighbors.Update(e))
             {

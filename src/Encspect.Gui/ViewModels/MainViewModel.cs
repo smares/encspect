@@ -12,7 +12,8 @@ namespace Encspect.Gui.ViewModels;
 // summary cache, each file is looked up there first, which takes a stat and a read of 128 KiB, and
 // only files the cache does not hold as they are now are analyzed, their summaries then cached.
 // Opening another source, or changing whether subfolders are included, cancels the run before it.
-// Listing the same source again keeps the selected file selected once it is listed again.
+// Listing the same source again keeps the selected file selected once it is listed again; Refresh
+// and Clear Summary Cache also mean the open detail windows read their files again.
 public sealed class MainViewModel : ObservableObject, IDisposable
 {
     // Rows are handed to the UI thread in batches, so a folder of thousands of files does not post
@@ -116,7 +117,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _includeSubfolders, value) && _source is not null)
             {
-                Start(keepSelection: true);
+                Start(keepSelection: true, isRereading: false);
             }
         }
     }
@@ -168,6 +169,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     public bool HasError => _error is not null;
+
+    // Whether the current listing was asked for to read the files again (Refresh, Clear Summary
+    // Cache), rather than to show the same files otherwise (Include Subfolders).
+    public bool IsRereading { get; private set; }
 
     // The task of the current run, which ends once every row it listed is analyzed or the run is
     // canceled; its rows reach the list on the UI thread after that.
@@ -225,7 +230,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         if (_source is not null)
         {
-            Start(keepSelection: true);
+            Start(keepSelection: true, isRereading: true);
         }
     }
 
@@ -274,12 +279,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Raise(nameof(Title));
         Raise(nameof(HasSource));
         Raise(nameof(CanIncludeSubfolders));
-        Start(keepSelection: false);
+        Start(keepSelection: false, isRereading: false);
     }
 
-    private void Start(bool keepSelection)
+    private void Start(bool keepSelection, bool isRereading)
     {
         _run?.Cancellation.Cancel();
+        IsRereading = isRereading;
         _reselectPath = keepSelection ? _selectedRow?.Path : null;
         SelectedRow = null;
         Rows.Clear();

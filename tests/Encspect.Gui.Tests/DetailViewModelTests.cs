@@ -162,6 +162,25 @@ public class DetailViewModelTests
     }
 
     [Fact]
+    public void A_reload_that_a_newer_load_replaced_never_shows()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Mpeg("external-lame-vbr-v2.mp3"));
+        ui.Until(() => load.IsCompleted);
+
+        Task reload = model.ReloadAsync();
+        Task newer = model.LoadAsync(Fixtures.Mpeg("external-blade-stereo.mp3"));
+        Thread.Sleep(200);
+        ui.Until(() => reload.IsCompleted && newer.IsCompleted);
+        ui.RunPending();
+
+        Assert.Equal("external-blade-stereo.mp3", model.Title);
+        Assert.Equal(Fixtures.Mpeg("external-blade-stereo.mp3"), model.Report!.Source);
+        Assert.Contains("BladeEnc", model.StreamsText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Collapsing_a_row_above_the_selection_selects_the_row()
     {
         var ui = new TestDispatcher();

@@ -32,6 +32,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _canGoNext;
     private bool _isGraphsShown;
     private string? _exportError;
+    private string? _folderError;
 
     public DetailViewModel(Analyzer analyzer, Action<Action>? post = null)
     {
@@ -240,7 +241,27 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     // Analyzes the file on a background thread; a folder that could not be listed shows why. The
     // task ends once the result is shown, or at once when another load replaced this one.
-    public Task LoadAsync(string path, string? folderError = null)
+    public Task LoadAsync(string path, string? folderError = null) => Load(path, folderError, keep: null);
+
+    // Analyzes the file shown again, as it is on disk now, and selects the node at the place the
+    // selected one was (its child indexes), or the root when the new tree has none there.
+    public Task ReloadAsync()
+    {
+        if (_path is not { } path)
+        {
+            return Task.CompletedTask;
+        }
+
+        var keep = new List<int>();
+        for (TreeRow? row = _selectedNode; row?.Parent is not null; row = row.Parent)
+        {
+            keep.Insert(0, row.ChildIndex);
+        }
+
+        return Load(path, _folderError, keep);
+    }
+
+    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -250,6 +271,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         int generation = ++_generation;
 
         _path = path;
+        _folderError = folderError;
         Raise(nameof(Path));
         Raise(nameof(Title));
         Raise(nameof(Folder));
@@ -299,7 +321,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                     }
                     else
                     {
-                        Show(report, document);
+                        Show(report, document, keep);
                     }
 
                     shown.TrySetResult();
@@ -482,7 +504,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return false;
     }
 
-    private void Show(Report report, HexDocument? document)
+    private void Show(Report report, HexDocument? document, IReadOnlyList<int>? keep)
     {
         Document = document;
         Report = report;
@@ -496,7 +518,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Raise(nameof(StreamsText));
         Graphs.Load(report);
         Raise(nameof(HasNoGraphs));
-        SelectedNode = Tree.Root;
+        SelectedNode = keep is { Count: > 0 } && Tree.Reveal(keep) is { } kept ? kept : Tree.Root;
     }
 
     private void Clear()
