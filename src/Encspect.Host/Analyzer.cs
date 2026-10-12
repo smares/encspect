@@ -123,7 +123,7 @@ public sealed class Analyzer
         List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
         List<Finding> layout = CheckTrailingLayout(trailing);
-        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings, failures);
+        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, container, findings, failures);
         pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
 
         var detectionNodes = new HashSet<Node>();
@@ -376,8 +376,10 @@ public sealed class Analyzer
     // next such tag found at an anchor starts at or after that point, the pointer is satisfied;
     // otherwise the unclaimed data from there on is searched, at most 1 MiB of it. Tags found
     // this way are followed in turn, and each search starts after the previous tag, so it ends.
-    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, List<Finding> findings,
-        List<Failure> failures)
+    // The bytes up to the end a container declares are its own, as for trailing tags, so a pointer
+    // into them is searched from that end.
+    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, Container? container,
+        List<Finding> findings, List<Failure> failures)
     {
         var embedded = new List<Claim>();
         var queue = new Queue<Claim>(leading.Concat(trailing));
@@ -415,6 +417,12 @@ public sealed class Analyzer
             }
 
             long from = Math.Max(target, dataStart);
+            bool intoContainer = container is { } owner && from < owner.End;
+            if (intoContainer)
+            {
+                from = container!.End;
+            }
+
             long limit = Math.Min(Math.Min(dataEnd, next?.Tag.Offset ?? dataEnd), from + MaxNextTagSearch);
             limit = Math.Min(limit, embeddedIndex.FirstFrom(from)?.Tag.Offset ?? limit);
 
@@ -443,6 +451,14 @@ public sealed class Analyzer
                 embeddedIndex.Add(foundClaim);
                 ParserIndex(claim.Parser).Add(foundClaim);
                 queue.Enqueue(foundClaim);
+            }
+            else if (next is null && intoContainer)
+            {
+                findings.Add(new Finding(
+                    Severity.Warning,
+                    "tag.next-in-container",
+                    $"{label}, inside the {container!.Format} data, which by its own size extends to 0x{container.End:X}; no tag of its kind follows that.",
+                    tag));
             }
             else if (next is null)
             {
