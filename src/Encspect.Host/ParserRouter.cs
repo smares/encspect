@@ -20,7 +20,14 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     public bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets) =>
         RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, caller.EncoderClaims, this));
 
-    public Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent)
+    public Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent) =>
+        RunTag(caller, tagName, parent, slice.Start, slice.End, parser => parser.ParseWhole(new TagProbeContext(slice)));
+
+    public Node? ParseTag(AnalysisContext caller, string tagName, MappedBytes tag, Node parent) =>
+        RunTag(caller, tagName, parent, tag.FileStart, tag.FileEnd, parser => parser.ParseWhole(tag, caller.CancellationToken));
+
+    // The tag must start at start and end by end, the file range the container gave it.
+    private Node? RunTag(AnalysisContext caller, string tagName, Node parent, long start, long end, Func<ITagParser, TagProbe?> parse)
     {
         ITagParser? parser = tags.FirstOrDefault(t => t.Name == tagName);
         if (parser is null || !Enter(caller, $"the {tagName} tag", parent))
@@ -31,24 +38,24 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         TagProbe? probe;
         try
         {
-            probe = parser.ParseWhole(new TagProbeContext(slice));
-            if (probe?.Tag is { } outside && (outside.Offset != slice.Start || outside.End > slice.End))
+            probe = parse(parser);
+            if (probe?.Tag is { } outside && (outside.Offset != start || outside.End > end))
             {
-                probe = TagProbe.Reject(probe.SignatureOffset, $"the parser returned a tag at 0x{outside.Offset:X} that does not fit [0x{slice.Start:X}, 0x{slice.End:X})");
+                probe = TagProbe.Reject(probe.SignatureOffset, $"the parser returned a tag at 0x{outside.Offset:X} that does not fit [0x{start:X}, 0x{end:X})");
             }
         }
         catch (EndOfStreamException)
         {
-            probe = TagProbe.Reject(slice.Start, "the data ends inside the tag");
+            probe = TagProbe.Reject(start, "the data ends inside the tag");
         }
         catch (InvalidDataException ex)
         {
-            probe = TagProbe.Reject(slice.Start, ex.Message);
+            probe = TagProbe.Reject(start, ex.Message);
         }
         catch (Exception ex) when (Analyzer.IsParserBug(ex))
         {
-            caller.AddFinding(Severity.Error, "parse.failed", $"The {parser.Name} parser failed parsing a tag at 0x{slice.Start:X}: {ex.GetType().Name}: {ex.Message}", parent);
-            probe = TagProbe.Reject(slice.Start, $"the parser failed with {ex.GetType().Name}");
+            caller.AddFinding(Severity.Error, "parse.failed", $"The {parser.Name} parser failed parsing a tag at 0x{start:X}: {ex.GetType().Name}: {ex.Message}", parent);
+            probe = TagProbe.Reject(start, $"the parser failed with {ex.GetType().Name}");
         }
         finally
         {
@@ -57,7 +64,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
         if (probe is null)
         {
-            caller.AddFinding(Severity.Warning, "tag.not-found", $"No {parser.Name} tag starts at 0x{slice.Start:X}, where the container places one.", parent);
+            caller.AddFinding(Severity.Warning, "tag.not-found", $"No {parser.Name} tag starts at 0x{start:X}, where the container places one.", parent);
             return null;
         }
 

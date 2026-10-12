@@ -230,6 +230,26 @@ public class CommandLineTests
         }
     }
 
+    [Fact]
+    public void OnlyFormatOggKeepsOggFiles()
+    {
+        string folder = Directory.CreateTempSubdirectory("encspect-").FullName;
+        try
+        {
+            File.Copy(Tagged, Path.Combine(folder, "a.mp3"));
+            File.Copy(Path.Combine(Fixtures.FixtureDirectory, "ogg", "external-speexenc-nb.spx"), Path.Combine(folder, "b.spx"));
+
+            string ogg = Run("--csv", "--only-format", "ogg", folder).Output;
+
+            Assert.Contains("b.spx,Ogg,1,Speex narrowband", ogg);
+            Assert.DoesNotContain("a.mp3", ogg);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("--bogus")]
     [InlineData("--json", "--csv")]

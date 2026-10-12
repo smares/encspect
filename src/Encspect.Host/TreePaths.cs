@@ -73,12 +73,16 @@ internal sealed class TreePaths(Node root)
     }
 
     // The children whose bytes contain a range, found without looking at every child when there
-    // are many: they are sorted by offset, and a tree over that order holds the furthest end in
-    // each part, so only parts that can reach the range's end are searched.
+    // are many. Each child is read once, in order, since a long list such as a stream's frames or
+    // packets builds its nodes when read and need not keep them. Children in file order whose ends
+    // never go back, as frames, pages and packets are, are searched by bisection and need no arrays;
+    // others are sorted by offset, and a tree over that order holds the furthest end in each part,
+    // so only parts that can reach the range's end are searched.
     private sealed class ChildIndex
     {
         private const int LinearLimit = 16;
 
+        private readonly bool _ordered;
         private readonly int[] _order = [];
         private readonly long[] _offsets = [];
         private readonly long[] _maxEnds = [];
@@ -87,25 +91,50 @@ internal sealed class TreePaths(Node root)
         public ChildIndex(IReadOnlyList<Node> children)
         {
             Children = children;
-            if (children.Count <= LinearLimit)
+            int count = children.Count;
+            if (count <= LinearLimit)
             {
                 return;
             }
 
-            _order = Enumerable.Range(0, children.Count).ToArray();
-            Array.Sort(_order, (a, b) => children[a].Offset != children[b].Offset ? children[a].Offset.CompareTo(children[b].Offset) : a.CompareTo(b));
-            _offsets = _order.Select(i => children[i].Offset).ToArray();
-            _leaves = (int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)children.Count);
-            _maxEnds = new long[2 * _leaves];
-            Array.Fill(_maxEnds, long.MinValue);
-            for (int i = 0; i < _order.Length; i++)
+            _ordered = true;
+            long lastOffset = long.MinValue;
+            long lastEnd = long.MinValue;
+            foreach (Node child in children)
             {
-                _maxEnds[_leaves + i] = children[_order[i]].End;
+                _ordered &= lastOffset <= child.Offset && lastEnd <= child.End;
+                (lastOffset, lastEnd) = (child.Offset, child.End);
             }
 
-            for (int i = _leaves - 1; i > 0; i--)
+            if (_ordered)
             {
-                _maxEnds[i] = Math.Max(_maxEnds[2 * i], _maxEnds[(2 * i) + 1]);
+                return;
+            }
+
+            var offsets = new long[count];
+            var ends = new long[count];
+            int i = 0;
+            foreach (Node child in children)
+            {
+                offsets[i] = child.Offset;
+                ends[i] = child.End;
+                i++;
+            }
+
+            _order = Enumerable.Range(0, count).ToArray();
+            Array.Sort(_order, (a, b) => offsets[a] != offsets[b] ? offsets[a].CompareTo(offsets[b]) : a.CompareTo(b));
+            _offsets = _order.Select(o => offsets[o]).ToArray();
+            _leaves = (int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)count);
+            _maxEnds = new long[2 * _leaves];
+            Array.Fill(_maxEnds, long.MinValue);
+            for (int j = 0; j < _order.Length; j++)
+            {
+                _maxEnds[_leaves + j] = ends[_order[j]];
+            }
+
+            for (int j = _leaves - 1; j > 0; j--)
+            {
+                _maxEnds[j] = Math.Max(_maxEnds[2 * j], _maxEnds[(2 * j) + 1]);
             }
         }
 
@@ -115,6 +144,19 @@ internal sealed class TreePaths(Node root)
         public List<int> Containing(Node target)
         {
             var found = new List<int>();
+            if (_ordered)
+            {
+                // The children that start at or before the range, of which those from the first that
+                // reaches the range's end on contain it, since their ends never go back.
+                int last = FirstIndex(i => Children[i].Offset > target.Offset) - 1;
+                for (int i = FirstIndex(i => Children[i].End >= target.End); i <= last; i++)
+                {
+                    found.Add(i);
+                }
+
+                return found;
+            }
+
             if (_maxEnds.Length == 0)
             {
                 for (int i = 0; i < Children.Count; i++)
@@ -133,6 +175,20 @@ internal sealed class TreePaths(Node root)
             Collect(1, 0, _leaves, count, target.End, found);
             found.Sort();
             return found;
+        }
+
+        // The first index for which a condition that holds from some index on holds, or Count.
+        private int FirstIndex(Func<int, bool> holds)
+        {
+            int low = 0;
+            int high = Children.Count;
+            while (low < high)
+            {
+                int middle = (low + high) / 2;
+                (low, high) = holds(middle) ? (low, middle) : (middle + 1, high);
+            }
+
+            return low;
         }
 
         private static bool Contains(Node node, Node target) => node.Offset <= target.Offset && target.End <= node.End;

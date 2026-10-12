@@ -1,0 +1,99 @@
+{
+ "length": 231,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 231
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 81,
+   "serial": 5,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 81,
+   "length": 60,
+   "serial": 5,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 141,
+   "length": 90,
+   "serial": 5,
+   "sequence": 2,
+   "granule": 440,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x00000005",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 5,
+   "has_eos": true,
+   "speex": {
+    "header": null,
+    "packets": [
+     [
+      171,
+      20
+     ],
+     [
+      191,
+      20
+     ],
+     [
+      211,
+      20
+     ]
+    ],
+    "frames": [
+     [],
+     [],
+     []
+    ],
+    "statistics": {
+     "Packets": "3",
+     "Frames": "0",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "3 packets (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    }
+   }
+  }
+ ],
+ "stream_infos": [],
+ "findings": [
+  {
+   "code": "speex.header-short",
+   "contains": "holds 53 bytes, fewer than the header's 80"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "not_compared": {
+   "speexdec, ogginfo and ffprobe": "decoders reject the short header, as the finding says"
+  }
+ }
+}

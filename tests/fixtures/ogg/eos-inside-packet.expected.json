@@ -1,0 +1,244 @@
+{
+ "length": 661,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 661
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 57825,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 57825,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 493,
+   "serial": 57825,
+   "sequence": 2,
+   "granule": 1560,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000E1E1",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 12,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      206,
+      20
+     ],
+     [
+      226,
+      20
+     ],
+     [
+      246,
+      20
+     ],
+     [
+      266,
+      20
+     ],
+     [
+      286,
+      20
+     ],
+     [
+      306,
+      20
+     ],
+     [
+      326,
+      20
+     ],
+     [
+      346,
+      20
+     ],
+     [
+      366,
+      20
+     ],
+     [
+      386,
+      20
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "10",
+     "Frames": "10",
+     "Coded Samples": "1600 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "1560 samples",
+     "Duration": "0.195 s",
+     "IsVbr": "false",
+     "Average Bitrate": "8.0 kbps",
+     "Minimum Bitrate": "8.0 kbps",
+     "Maximum Bitrate": "8.0 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "10 packets (100.0%), 8.0 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "10 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 1600
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 1560,
+   "duration": 0.195,
+   "average_bitrate": 8.0,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "ogg.packet-unfinished",
+   "contains": "ends inside a packet, which is never completed"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "speexdec": true,
+  "not_compared": {
+   "oggz validate's verdict": "oggz validate does not check packets left unfinished at the end of a stream",
+   "ogginfo and ffprobe": "they do not report a packet left unfinished"
+  }
+ }
+}

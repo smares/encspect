@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Globalization;
 using Encspect.Core;
@@ -20,9 +21,21 @@ internal static class Program
         "ID3"u8.ToArray(), "3DI"u8.ToArray(), "TAG"u8.ToArray(), "TAG+"u8.ToArray(), "APETAGEX"u8.ToArray(),
         "LYRICSBEGIN"u8.ToArray(), "LYRICSEND"u8.ToArray(), "LYRICS200"u8.ToArray(), "Xing"u8.ToArray(),
         "Info"u8.ToArray(), "VBRI"u8.ToArray(), "LAME"u8.ToArray(), [0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xE3], [0xFF, 0xFD],
+        "OggS\0"u8.ToArray(), "Speex   "u8.ToArray(), [0x01, .. "vorbis"u8], "OpusHead"u8.ToArray(), [0xFF, 0xFF, 0xFF, 0xFF],
     ];
 
     private static readonly uint[] Sizes = [0, 1, 0x7F, 0x80, 0x7F7F7F7F, 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 10, 128];
+
+    private static readonly uint[] CrcTable = Enumerable.Range(0, 256).Select(i =>
+    {
+        uint r = (uint)i << 24;
+        for (int bit = 0; bit < 8; bit++)
+        {
+            r = (r & 0x80000000) != 0 ? (r << 1) ^ 0x04C11DB7 : r << 1;
+        }
+
+        return r;
+    }).ToArray();
 
     private static int Main(string[] args)
     {
@@ -33,7 +46,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".ogg" or ".spx" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();
@@ -209,7 +222,54 @@ internal static class Program
             }
         }
 
+        // Ogg pages that fail their CRC are dropped before their packets reach a codec, so half the
+        // time the mutant's pages get their CRCs back and the mutations reach Speex and the comments.
+        if (random.Next(2) == 0)
+        {
+            FixOggCrcs(data);
+        }
+
         return [.. data];
+    }
+
+    // Every "OggS" with version 0 whose header, segment table and body fit gets the CRC its bytes
+    // give (RFC 3533: polynomial 0x04C11DB7, initial value 0, unreflected, CRC field zeroed).
+    private static void FixOggCrcs(List<byte> data)
+    {
+        byte[] bytes = [.. data];
+        for (int at = 0; at + 27 <= bytes.Length; at++)
+        {
+            if (bytes[at] != 'O' || bytes[at + 1] != 'g' || bytes[at + 2] != 'g' || bytes[at + 3] != 'S' || bytes[at + 4] != 0)
+            {
+                continue;
+            }
+
+            int segments = bytes[at + 26];
+            if (at + 27 + segments > bytes.Length)
+            {
+                continue;
+            }
+
+            int length = 27 + segments + bytes.AsSpan(at + 27, segments).ToArray().Sum(b => b);
+            if (at + length > bytes.Length)
+            {
+                continue;
+            }
+
+            bytes.AsSpan(at + 22, 4).Clear();
+            uint crc = 0;
+            foreach (byte b in bytes.AsSpan(at, length))
+            {
+                crc = (crc << 8) ^ CrcTable[(crc >> 24) ^ b];
+            }
+
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(at + 22, 4), crc);
+        }
+
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            data[i] = bytes[i];
+        }
     }
 
     // Tags sit at both ends of a file, so half the positions fall within 1 KiB of an end.

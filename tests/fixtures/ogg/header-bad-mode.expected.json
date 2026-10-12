@@ -1,0 +1,130 @@
+{
+ "length": 279,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 279
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 2829,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 2829,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 111,
+   "serial": 2829,
+   "sequence": 2,
+   "granule": 600,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x00000B0D",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 6,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "7 (undefined)",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      199,
+      20
+     ],
+     [
+      219,
+      20
+     ],
+     [
+      239,
+      20
+     ],
+     [
+      259,
+      20
+     ]
+    ],
+    "frames": [
+     [],
+     [],
+     [],
+     []
+    ],
+    "statistics": {
+     "Packets": "4",
+     "Frames": "0",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/20 bytes": "4 packets (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 0,
+   "duration": 0,
+   "average_bitrate": null,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "speex.mode-invalid",
+   "contains": "mode 7 is none of"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "not_compared": {
+   "speexdec, ogginfo and ffprobe": "decoders reject the mode, as the finding says"
+  }
+ }
+}

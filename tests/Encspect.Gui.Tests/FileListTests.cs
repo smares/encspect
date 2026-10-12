@@ -42,6 +42,33 @@ public class FileListTests
     }
 
     [Fact]
+    public void An_ogg_speex_file_fills_its_row_from_its_streams()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Ogg("external-speexenc-wb-vbr.spx"), "voice.spx");
+        temp.Copy(Fixtures.Ogg("external-chained.spx"), "chained.spx");
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+
+        FileRow voice = model.Rows.Single(r => r.Name == "voice.spx");
+        Assert.Equal("Ogg", voice.Format);
+        Assert.Equal("Speex wideband", voice.Codec);
+        Assert.Equal("speexenc 1.2.1 (high)", voice.EncoderText);
+        Assert.EndsWith("kbps VBR", voice.BitrateText, StringComparison.Ordinal);
+        Assert.Equal("16 kHz", voice.SampleRateText);
+        Assert.Equal("Mono", voice.ChannelMode);
+        Assert.Equal("Vorbis Comment", voice.Tags);
+
+        // Two links: the first stream's codec, both streams' duration.
+        FileRow chained = model.Rows.Single(r => r.Name == "chained.spx");
+        Assert.Equal("Speex narrowband", chained.Codec);
+        Assert.Equal(1.5 + (23857 / 16000.0), chained.Duration!.Value, 6);
+    }
+
+    [Fact]
     public void Include_subfolders_analyzes_the_whole_tree()
     {
         using var temp = new TempFolder();

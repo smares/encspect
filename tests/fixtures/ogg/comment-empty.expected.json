@@ -1,0 +1,172 @@
+{
+ "length": 206,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 206
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 57344,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 36,
+   "serial": 57344,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 144,
+   "length": 62,
+   "serial": 57344,
+   "sequence": 2,
+   "granule": 760,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000E000",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 7,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      176,
+      6
+     ],
+     [
+      182,
+      6
+     ],
+     [
+      188,
+      6
+     ],
+     [
+      194,
+      6
+     ],
+     [
+      200,
+      6
+     ]
+    ],
+    "frames": [
+     [
+      [
+       1,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       1,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       1,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       1,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       1,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "5",
+     "Frames": "5",
+     "Coded Samples": "800 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "760 samples",
+     "Duration": "0.095 s",
+     "IsVbr": "false",
+     "Average Bitrate": "2.4 kbps",
+     "Minimum Bitrate": "2.4 kbps",
+     "Maximum Bitrate": "2.4 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/6 bytes": "5 packets (100.0%), 2.4 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 1 (43 bits)": "5 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "",
+     "comments": []
+    },
+    "speexdec_samples": 800
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 760,
+   "duration": 0.095,
+   "average_bitrate": 2.4,
+   "is_vbr": false
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

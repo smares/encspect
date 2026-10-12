@@ -1,0 +1,63 @@
+{
+ "length": 474,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 474
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 237,
+   "serial": 45232,
+   "sequence": 2,
+   "granule": 1560,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 237,
+   "length": 237,
+   "serial": 45232,
+   "sequence": 3,
+   "granule": 3160,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000B0B0",
+   "codec": "Unknown",
+   "link": 1,
+   "pages": 2,
+   "packets": 20,
+   "has_eos": true
+  }
+ ],
+ "stream_infos": [],
+ "findings": [
+  {
+   "code": "ogg.bos-missing",
+   "contains": "without a beginning-of-stream page"
+  },
+  {
+   "code": "ogg.codec-unknown",
+   "contains": "starts with bytes no Ogg mapping is known for"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": [
+   "missing *** bos"
+  ],
+  "not_compared": {
+   "oggz info and dump": "oggz cannot name the stream's codec without its first page and lists none of its packets",
+   "ogginfo, ffprobe and speexdec": "no decoder reads a Speex stream without its header"
+  }
+ }
+}

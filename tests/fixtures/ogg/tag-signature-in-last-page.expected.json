@@ -1,0 +1,238 @@
+{
+ "length": 714,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 714
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 61441,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 61441,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 546,
+   "serial": 61441,
+   "sequence": 2,
+   "granule": 1560,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0000F001",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 12,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      205,
+      38
+     ],
+     [
+      243,
+      38
+     ],
+     [
+      281,
+      38
+     ],
+     [
+      319,
+      38
+     ],
+     [
+      357,
+      38
+     ],
+     [
+      395,
+      38
+     ],
+     [
+      433,
+      38
+     ],
+     [
+      471,
+      38
+     ],
+     [
+      509,
+      38
+     ],
+     [
+      547,
+      167
+     ]
+    ],
+    "frames": [
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       5,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "10",
+     "Frames": "10",
+     "Coded Samples": "1600 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "1560 samples",
+     "Duration": "0.195 s",
+     "IsVbr": "true",
+     "Average Bitrate": "20.4 kbps",
+     "Minimum Bitrate": "15.2 kbps",
+     "Maximum Bitrate": "66.8 kbps",
+     "Packet Sizes": "2 sizes",
+     "Packet Sizes/38 bytes": "9 packets (90.0%), 15.2 kbps",
+     "Packet Sizes/167 bytes": "1 packet (10.0%), 66.8 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 5 (300 bits)": "10 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 1600
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 1560,
+   "duration": 0.195,
+   "average_bitrate": 20.36,
+   "is_vbr": true
+  }
+ ],
+ "findings": [
+  {
+   "code": "tag.near-miss",
+   "contains": "rejected: part of the Ogg data"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

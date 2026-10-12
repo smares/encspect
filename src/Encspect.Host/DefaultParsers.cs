@@ -1,8 +1,11 @@
 using Encspect.Core;
 using Encspect.Formats.Mpeg;
+using Encspect.Formats.Ogg;
+using Encspect.Formats.Speex;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
+using Encspect.Tags.VorbisComment;
 
 namespace Encspect.Host;
 
@@ -20,12 +23,15 @@ public static class DefaultParsers
         new Id3v2TagParser(),
         new Id3v1TagParser(),
         new Id3v1EnhancedTagParser(),
+
+        // Never found in a file, only where a container or codec says one is (ParseTag).
+        new VorbisCommentTagParser(),
     ];
 
     private static readonly MpegAudioParser Mpeg = new();
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg];
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new OggParser()];
 
-    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4.
-    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg];
+    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, Speex in Ogg.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new SpeexParser()];
 }
