@@ -135,7 +135,7 @@ internal static class Explain
     public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
     public const string DecodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
     public const string StartOffset = "The first audio page's granule position less the samples returned up to it: 0 for a stream that starts at its beginning, below 0 where samples are discarded at the start, above where the stream starts later (section A.2).";
-    public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned (section A.2).";
+    public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned, at most what the first two blocks return (section A.2).";
     public const string EndTrimming = "Samples the packets return beyond the last granule position, which a decoder drops from the end (section A.2).";
     public const string Samples = "The samples a decoder outputs: the decoded samples less what the start and end trimming drop.";
     public const string Duration = "The samples over the sample rate, in seconds.";

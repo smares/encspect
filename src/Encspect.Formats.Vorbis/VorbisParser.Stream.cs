@@ -603,14 +603,15 @@ public sealed partial class VorbisParser
                 return 0;
             }
 
+            // libvorbisfile discards no more than the limit, which oggdec's output confirms.
             long limit = _firstReturned + _secondReturned;
             if (-offset > limit)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
-                    $"The first granule position discards {-offset} samples at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2).");
+                    $"The first granule position discards {-offset} samples at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); libvorbisfile discards {limit}.");
             }
 
-            return Math.Min(-offset, _decoded);
+            return Math.Min(Math.Min(-offset, limit), _decoded);
         }
 
         // What the last granule position cuts from the end: the end trimming.
