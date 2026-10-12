@@ -1,5 +1,6 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
+using Encspect.Formats.Ac3;
 using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Formats.Ogg;
@@ -37,10 +38,13 @@ public static class DefaultParsers
     // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
     // start of the data (91) outranks MPEG audio too, one further in (50) does not. Ogg is certain
     // of a chain of pages from the start (100), which no MP4 or ADTS file starts with, and takes one
-    // further in (60) only where nothing more certain claims the file.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser()];
+    // further in (60) only where nothing more certain claims the file. An AC-3 chain at the start of
+    // the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its 0x0B; one
+    // further in (50) ranks below both.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new Ac3Parser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
-    // Speex in Ogg.
-    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new AacCodecParser(), new SpeexParser()];
+    // Speex in Ogg, AC-3 and E-AC-3 in MP4.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } =
+        [Mpeg, new AacCodecParser(), new SpeexParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3)];
 }
