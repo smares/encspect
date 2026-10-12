@@ -313,6 +313,10 @@ public static class ReportJsonWriter
         if (node.BitLength is { } bitLength)
         {
             writer.WriteNumber("bitLength", bitLength);
+            if (node.BitOrder == BitOrder.LeastSignificantFirst)
+            {
+                writer.WriteString("bitOrder", "leastSignificantFirst");
+            }
         }
 
         if (node.Ranges is { } ranges)

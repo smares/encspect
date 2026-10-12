@@ -147,6 +147,25 @@ public class OggTests
         Assert.Equal(1.5 + (23857 / 16000.0), chained.Duration!.Value, 9);
     }
 
+    // Vorbis and Opus name their codec, encoder and channel layout in the summary; Opus always
+    // decodes at 48 kHz, whatever the input's rate (44100 Hz here), which its header keeps apart.
+    [Fact]
+    public void VorbisAndOpusSummariesComeFromTheirStreams()
+    {
+        Report[] reports = [.. new[] { "external-oggenc-51.ogg", "external-opusenc-cvbr.opus", "external-ffmpeg-opus.opus" }.Select(n => Fixtures.AnalyzeMpeg("ogg/" + n))];
+        var writer = new StringWriter();
+        ReportCsvWriter.Write(reports, writer);
+        string[] lines = writer.ToString().Split("\r\n");
+
+        Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,\"5.1 (front left, front center, front right, back left, back right, LFE)\",libvorbis 1.3.7,High,Vorbis Comment,0,0,0", lines[1]);
+        Assert.StartsWith("external-opusenc-cvbr.opus,Ogg,1,Opus,1.500,72000,", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",opusenc 0.2 (libopus 1.4),High,Vorbis Comment,0,0,0", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",FFmpeg (Lavc60.31.102 opus),Medium,Vorbis Comment,0,0,0", lines[3], StringComparison.Ordinal);
+        Node head = reports[1].Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Name == "Opus Head");
+        Assert.Equal("44100 Hz", head.Children.Single(c => c.Name == "Input Sample Rate").Value?.ToString());
+        Assert.False(reports[2].Streams.Single().IsVbr);
+    }
+
     [Fact]
     public void CancelingMidFileStopsTheAnalysis()
     {
@@ -193,7 +212,8 @@ public class OggTests
     }
 
     // Inputs the fuzzer found, each a hang or a parser exception before its fix: a Speex header
-    // with two billion frames per packet once made the per-second series count centuries.
+    // with two billion frames per packet once made the per-second series count centuries, and a
+    // Vorbis setup header cut inside a codebook's multiplicands left that node outside its group.
     [Theory]
     [MemberData(nameof(FuzzFindings))]
     public async Task FuzzFindingsAreAnalyzedQuickly(string name)

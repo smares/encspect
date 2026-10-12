@@ -1,7 +1,7 @@
 ---
 id: gapless-playback
 title: Encoder delay, padding and gapless playback
-related: lame-tag, granules-and-frames, filter-bank
+related: lame-tag, granules-and-frames, filter-bank, opus-pre-skip, vorbis-blocks
 references: LAME tag specification (Gabriel Bouvigne); Fraunhofer Original File Length
 ---
 

@@ -24,6 +24,7 @@ public class FormatTests
         Assert.Equal("LAME 3.100 (high)", Format.Encoder("LAME 3.100", Confidence.High));
         Assert.Equal("0x1A, 4 bytes", Format.Location(new Node("x", 0x1A, 4)));
         Assert.Equal("0x1+3, 2 bits", Format.Location(Node.FromBits("x", 1, 3, 5)));
+        Assert.Equal("0x1+3, 2 bits, LSB first", Format.Location(Node.FromBits("x", 1, 3, 5, order: BitOrder.LeastSignificantFirst)));
         Assert.Equal("0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes", Format.Location(new Node("x", 0x1A, 40) { Ranges = [new ByteRange(0x1A, 2), new ByteRange(0x40, 2)] }));
         Assert.Equal("0x0, 1 byte", Format.Location(new Node("x", 0, 1)));
     }

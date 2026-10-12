@@ -1,8 +1,8 @@
 ---
 id: mid-side-stereo
 title: Mid/side stereo
-related: joint-stereo, intensity-stereo, channel-modes
-references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3
+related: joint-stereo, intensity-stereo, channel-modes, square-polar-coupling, opus-modes
+references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3; RFC 6716, sections 4.2 and 4.3
 ---
 
 **The problem.** In most stereo music the left and right channels are very much alike: the singer, the bass and the drums sit in the middle and reach both speakers almost equally. Coding the two channels separately spends bits twice on what is nearly the same signal.
@@ -13,4 +13,4 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **What you see.** Mode Extension shows "Mid/side stereo" or "Mid/side and intensity stereo" in frames that use it. A file of joint stereo frames that never use mid/side stereo codes left and right in every frame, as plain stereo would.
 
-AAC and Opus can choose it for each band. Vorbis uses a related mapping, square polar coupling, which codes a magnitude and an angle.
+AAC can choose it for each band, the CELT layer of Opus for each frame ([Opus modes](opus-modes)). Vorbis uses a related mapping, [square polar coupling](square-polar-coupling), which codes a magnitude and an angle.

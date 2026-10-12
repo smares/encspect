@@ -1,0 +1,309 @@
+{
+ "length": 456,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 456
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 185270288,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 127,
+   "serial": 185270288,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 185,
+   "length": 43,
+   "serial": 185270288,
+   "sequence": 2,
+   "granule": 0,
+   "flags": 4,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 228,
+   "length": 58,
+   "serial": 185270289,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 286,
+   "length": 127,
+   "serial": 185270289,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 413,
+   "length": 43,
+   "serial": 185270289,
+   "sequence": 2,
+   "granule": 0,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0B0B0010",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 3,
+   "packets": 11,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "1",
+     "Channels": "1",
+     "Channel Layout": "Mono: mono",
+     "Sample Rate": "44100 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "0 (not set)",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "None set: the encoder gives no hint",
+     "Blocksize 0": "32 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "false"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": []
+    },
+    "setup": {
+     "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 2 modes",
+     "groups": {
+      "Codebooks": "1 codebook",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "1 floor, type 1",
+      "Residues": "1 residue, type 0",
+      "Mappings": "1 mapping, no coupling",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      220,
+      1
+     ],
+     [
+      221,
+      1
+     ],
+     [
+      222,
+      1
+     ],
+     [
+      223,
+      1
+     ],
+     [
+      224,
+      1
+     ],
+     [
+      225,
+      1
+     ],
+     [
+      226,
+      1
+     ],
+     [
+      227,
+      1
+     ]
+    ],
+    "blocks": [
+     "unread",
+     "unread",
+     "unread",
+     "unread",
+     "unread",
+     "unread",
+     "unread",
+     "unread"
+    ],
+    "statistics": {
+     "Packets": "8",
+     "Packet Sizes": "1 size"
+    }
+   }
+  },
+  {
+   "serial": "0x0B0B0011",
+   "codec": "Vorbis",
+   "link": 2,
+   "pages": 3,
+   "packets": 11,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "0",
+     "Sample Rate": "0 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "0 (not set)",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "None set: the encoder gives no hint",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": []
+    },
+    "setup": {
+     "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 2 modes",
+     "groups": {
+      "Codebooks": "1 codebook",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "1 floor, type 1",
+      "Residues": "1 residue, type 0",
+      "Mappings": "1 mapping, no coupling",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      448,
+      1
+     ],
+     [
+      449,
+      1
+     ],
+     [
+      450,
+      1
+     ],
+     [
+      451,
+      1
+     ],
+     [
+      452,
+      1
+     ],
+     [
+      453,
+      1
+     ],
+     [
+      454,
+      1
+     ],
+     [
+      455,
+      1
+     ]
+    ],
+    "blocks": [
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "8",
+     "Long Blocks": "8 packets (100.0%)",
+     "Short Blocks": "0 packets (0.0%)",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/Long Blocks": "1 to 1 bytes, 1.0 on average",
+     "Modes": "1 mode used",
+     "Modes/Mode 1 (long block)": "8 packets (100.0%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 0,
+   "duration": 0,
+   "average_bitrate": null,
+   "is_vbr": false,
+   "channel_mode": "Mono"
+  },
+  {
+   "codec": "Vorbis",
+   "sample_rate": 0,
+   "channels": 0,
+   "channel_layout": [],
+   "samples": 0,
+   "duration": 0,
+   "average_bitrate": null,
+   "is_vbr": false
+  }
+ ],
+ "findings": [
+  {
+   "code": "vorbis.version",
+   "contains": "gives the Vorbis version 1"
+  },
+  {
+   "code": "vorbis.blocksize-invalid",
+   "contains": "gives the block sizes 32 and 2048"
+  },
+  {
+   "code": "vorbis.framing-missing",
+   "contains": "identification header's framing bit is 0"
+  },
+  {
+   "code": "vorbis.channels-invalid",
+   "contains": "gives 0 channels"
+  },
+  {
+   "code": "vorbis.rate-invalid",
+   "contains": "sample rate of 0 Hz"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "not_compared": {
+   "ogginfo, ffprobe and oggdec": "they refuse the headers, as the findings say"
+  }
+ }
+}
