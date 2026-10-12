@@ -23,11 +23,12 @@ public class FuzzRegressionTests
 
     [Theory]
     [MemberData(nameof(Names))]
-    public void FormerFailuresYieldCleanReports(string name)
+    public async Task FormerFailuresYieldCleanReports(string name)
     {
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name));
 
-        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
+        // Some of these once hung, as the fuzzer's 20 s limit found; this fails instead of waiting.
+        Report report = await Task.Run(() => Analyzer.CreateDefault().Analyze(name, new MemoryStream(data))).WaitAsync(TimeSpan.FromSeconds(20));
 
         Assert.Equal(data.Length, report.Root.Length);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
