@@ -10,7 +10,7 @@ internal static class Id3v2RepeatKeys
     // Field names the shared field, Shown its value for a message (null when the field is the
     // frame's whole content) and Key what is compared, kind and field included.
     // isWhole is false when the decode limit cut data short, which leaves the contents unknown.
-    public static List<(string Field, string? Shown, string Key)> For(int major, string id, byte[] data, bool isWhole)
+    public static List<(string Field, string? Shown, string Key)> For(int major, string id, ReadOnlyMemory<byte> data, bool isWhole)
     {
         string kind = major == 2
             ? id switch
@@ -95,7 +95,7 @@ internal static class Id3v2RepeatKeys
             // "No two may be identical" holds for COMR and SIGN from ID3v2.4 on.
             case "LINK" or "PRIV" when isWhole:
             case "COMR" or "SIGN" when major == 4 && isWhole:
-                Add("contents", null, Convert.ToHexString(SHA256.HashData(data)));
+                Add("contents", null, Convert.ToHexString(SHA256.HashData(data.Span)));
                 break;
         }
 
@@ -104,7 +104,7 @@ internal static class Id3v2RepeatKeys
 
     private static string Quote(string text) => $"\"{text}\"";
 
-    private sealed class Reader(byte[] data)
+    private sealed class Reader(ReadOnlyMemory<byte> data)
     {
         private int _position;
 
@@ -117,7 +117,7 @@ internal static class Id3v2RepeatKeys
                 return null;
             }
 
-            string text = System.Text.Encoding.Latin1.GetString(data, _position, length);
+            string text = System.Text.Encoding.Latin1.GetString(data.Span.Slice(_position, length));
             _position += length;
             return text;
         }
@@ -125,14 +125,14 @@ internal static class Id3v2RepeatKeys
         // A terminated string; null when the terminator is missing.
         public string? Text(byte encoding)
         {
-            int end = Id3v2Text.FindTerminator(data, _position, data.Length, encoding);
+            int end = Id3v2Text.FindTerminator(data.Span, _position, data.Length, encoding);
             if (end >= data.Length)
             {
                 return null;
             }
 
             bool? bigEndian = null;
-            string text = Id3v2Text.Decode(data, _position, end, encoding, isCut: false, ref bigEndian).Text;
+            string text = Id3v2Text.Decode(data.Span, _position, end, encoding, isCut: false, ref bigEndian).Text;
             _position = end + Id3v2Text.TerminatorWidth(encoding);
             return text;
         }

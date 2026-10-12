@@ -31,7 +31,18 @@ public sealed class BitReader
     {
     }
 
+    // Positions map back to the file through the bytes' map: FileOffsetOf, and Node.FromBits with
+    // Source for a field read here.
+    public BitReader(MappedBytes bytes, BitOrder order = BitOrder.MostSignificantFirst)
+        : this((bytes ?? throw new ArgumentNullException(nameof(bytes))).Data, order)
+    {
+        Source = bytes;
+    }
+
     public BitOrder Order { get; }
+
+    // The mapped bytes this reader reads, or null when it was given bare bytes.
+    public MappedBytes? Source { get; }
 
     // In bits from the start of the data.
     public int Position { get; private set; }
@@ -39,6 +50,20 @@ public sealed class BitReader
     public int Length => _data.Length * 8;
 
     public bool IsOverrun => Position > Length;
+
+    // The file offset of the byte that holds the bit at bitPosition; Length maps to the end of the
+    // source. Only for a reader over mapped bytes.
+    public long FileOffsetOf(int bitPosition)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(bitPosition);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(bitPosition, Length);
+        if (Source is null)
+        {
+            throw new InvalidOperationException("A reader over bare bytes has no file offsets.");
+        }
+
+        return Source.OffsetOf(bitPosition / 8);
+    }
 
     // Up to 31 bits, so the value is never negative.
     public int Read(int count)

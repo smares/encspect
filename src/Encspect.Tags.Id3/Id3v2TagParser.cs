@@ -323,13 +323,13 @@ public sealed class Id3v2TagParser : ITagParser
             var body = new Id3v2BodyReader(reader, start, bodyEnd, unsync);
             while (remaining > 0)
             {
-                DecodedBytes chunk = body.Read((int)Math.Min(remaining, 1 << 16));
+                MappedBytes chunk = body.Read((int)Math.Min(remaining, 1 << 16));
                 if (chunk.Length == 0)
                 {
                     break;
                 }
 
-                crc = Crc32.Append(crc, chunk.Data);
+                crc = Crc32.Append(crc, chunk.Span);
                 remaining -= chunk.Length;
             }
 
@@ -399,14 +399,14 @@ public sealed class Id3v2TagParser : ITagParser
     private static long? ParseExtendedHeader23(Id3v2BodyReader body, ParseState state)
     {
         long start = body.FilePosition;
-        DecodedBytes sizeBytes = body.Read(4);
+        MappedBytes sizeBytes = body.Read(4);
         if (sizeBytes.Length < 4)
         {
             AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header is cut off by the end of the tag.");
             return null;
         }
 
-        uint size = BinaryPrimitives.ReadUInt32BigEndian(sizeBytes.Data);
+        uint size = BinaryPrimitives.ReadUInt32BigEndian(sizeBytes.Span);
         if (size is not (6 or 10))
         {
             body.Skip(size);
@@ -414,7 +414,7 @@ public sealed class Id3v2TagParser : ITagParser
             return null;
         }
 
-        DecodedBytes data = body.Read((int)size);
+        MappedBytes data = body.Read((int)size);
         Node ext = state.Tag.Add("Extended Header", start, body.FilePosition - start);
         ext.Add("Size", sizeBytes.OffsetOf(0), sizeBytes.FileLength(0, 4), NodeValue.Integer(size));
         if (data.Length < size)
@@ -423,11 +423,11 @@ public sealed class Id3v2TagParser : ITagParser
             return null;
         }
 
-        int flags = BinaryPrimitives.ReadUInt16BigEndian(data.Data);
+        int flags = BinaryPrimitives.ReadUInt16BigEndian(data.Span);
         Node flagsNode = ext.Add("Flags", data.OffsetOf(0), data.FileLength(0, 2), NodeValue.Hex(flags, 4));
         flagsNode.Add("HasCrc", data.OffsetOf(0), data.FileLength(0, 2), Bool(flags & 0x8000));
 
-        uint padding = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(2));
+        uint padding = BinaryPrimitives.ReadUInt32BigEndian(data.Span[2..]);
         ext.Add("Padding Size", data.OffsetOf(2), data.FileLength(2, 6), NodeValue.Integer(padding));
 
         // "%x0000000 00000000": the CRC flag is the only one defined.
@@ -450,7 +450,7 @@ public sealed class Id3v2TagParser : ITagParser
             }
             else
             {
-                uint crc = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(6));
+                uint crc = BinaryPrimitives.ReadUInt32BigEndian(data.Span[6..]);
                 Node crcNode = ext.Add("CRC", data.OffsetOf(6), data.FileLength(6, 10), NodeValue.Hex(crc, 8));
                 state.StoredCrc = (crc, crcNode);
             }
@@ -464,21 +464,21 @@ public sealed class Id3v2TagParser : ITagParser
     private static long? ParseExtendedHeader24(Id3v2BodyReader body, ParseState state)
     {
         long start = body.FilePosition;
-        DecodedBytes sizeBytes = body.Read(4);
-        if (sizeBytes.Length < 4 || sizeBytes.Data.Any(b => b >= 0x80))
+        MappedBytes sizeBytes = body.Read(4);
+        if (sizeBytes.Length < 4 || sizeBytes.Span.ContainsAnyInRange((byte)0x80, (byte)0xFF))
         {
             AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header size is missing or not syncsafe.");
             return null;
         }
 
-        long size = Syncsafe(sizeBytes.Data, 0);
+        long size = Syncsafe(sizeBytes.Span, 0);
         if (size < 6)
         {
             AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header size is {size}; ID3v2.4 requires at least 6.");
             return null;
         }
 
-        DecodedBytes data = body.Read((int)Math.Min(size - 4, MaxDecodedFrameBytes));
+        MappedBytes data = body.Read((int)Math.Min(size - 4, MaxDecodedFrameBytes));
         body.Skip(size - 4 - data.Length);
         Node ext = state.Tag.Add("Extended Header", start, body.FilePosition - start);
         ext.Add("Size", sizeBytes.OffsetOf(0), 4, NodeValue.Integer(size));
@@ -488,9 +488,9 @@ public sealed class Id3v2TagParser : ITagParser
             return null;
         }
 
-        int flagBytes = data.Data[0];
+        int flagBytes = data.Span[0];
         ext.Add("Flag Bytes", data.OffsetOf(0), 1, NodeValue.Integer(flagBytes));
-        int flags = data.Data[1];
+        int flags = data.Span[1];
         Node flagsNode = ext.Add("Flags", data.OffsetOf(1), 1, NodeValue.Hex(flags, 2));
         flagsNode.Add("IsUpdate", data.OffsetOf(1), 1, Bool(flags & 0x40));
         flagsNode.Add("HasCrc", data.OffsetOf(1), 1, Bool(flags & 0x20));
@@ -516,14 +516,14 @@ public sealed class Id3v2TagParser : ITagParser
                 continue;
             }
 
-            if (i >= data.Length || i + 1 + data.Data[i] > data.Length)
+            if (i >= data.Length || i + 1 + data.Span[i] > data.Length)
             {
                 AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header ends before its {name.ToLowerInvariant()} data.");
                 return null;
             }
 
-            int length = data.Data[i];
-            ReadOnlySpan<byte> value = data.Data.AsSpan(i + 1, length);
+            int length = data.Span[i];
+            ReadOnlySpan<byte> value = data.Span.Slice(i + 1, length);
             Node node = ext.Add(name, data.OffsetOf(i), data.FileLength(i, i + 1 + length), FormatExtendedValue(name, value));
             if (length != expected)
             {
@@ -797,13 +797,13 @@ public sealed class Id3v2TagParser : ITagParser
         while (!body.AtEnd)
         {
             long frameStart = body.FilePosition;
-            DecodedBytes header = body.Read(headerLength);
+            MappedBytes header = body.Read(headerLength);
             if (header.Length == 0)
             {
                 break;
             }
 
-            if (header.Data[0] == 0)
+            if (header.Span[0] == 0)
             {
                 return ParsePadding(body, state, frameStart, header, framesStart);
             }
@@ -814,7 +814,7 @@ public sealed class Id3v2TagParser : ITagParser
                 return 0;
             }
 
-            string id = Encoding.Latin1.GetString(header.Data, 0, idLength);
+            string id = Encoding.Latin1.GetString(header.Span[..idLength]);
             if (!id.All(c => c is (>= 'A' and <= 'Z') or (>= '0' and <= '9')))
             {
                 body.Skip(long.MaxValue);
@@ -838,7 +838,7 @@ public sealed class Id3v2TagParser : ITagParser
         return 0;
     }
 
-    private static void ParseFrame(Id3v2BodyReader body, ParseState state, long frameStart, DecodedBytes header, string id, bool tagUnsync)
+    private static void ParseFrame(Id3v2BodyReader body, ParseState state, long frameStart, MappedBytes header, string id, bool tagUnsync)
     {
         int major = state.Major;
         int idLength = major == 2 ? 3 : 4;
@@ -849,24 +849,24 @@ public sealed class Id3v2TagParser : ITagParser
         bool plainSize = false;
         if (major == 2)
         {
-            frameSize = (header.Data[3] << 16) | (header.Data[4] << 8) | header.Data[5];
+            frameSize = (header.Span[3] << 16) | (header.Span[4] << 8) | header.Span[5];
         }
-        else if (major == 3 || state.PlainSizes || header.Data.AsSpan(4, 4).ContainsAnyInRange((byte)0x80, (byte)0xFF))
+        else if (major == 3 || state.PlainSizes || header.Span.Slice(4, 4).ContainsAnyInRange((byte)0x80, (byte)0xFF))
         {
             // 2.3 sizes are plain integers. A 2.4 size with a high bit set cannot be syncsafe,
             // which is what some writers (old iTunes versions) produced; read it as plain too.
-            frameSize = BinaryPrimitives.ReadUInt32BigEndian(header.Data.AsSpan(4));
+            frameSize = BinaryPrimitives.ReadUInt32BigEndian(header.Span[4..]);
             // Below 128 both readings agree, so only a size that differs shows the plain integer.
-            plainSize = major == 4 && frameSize != Syncsafe(header.Data, 4);
+            plainSize = major == 4 && frameSize != Syncsafe(header.Span, 4);
         }
         else
         {
-            frameSize = Syncsafe(header.Data, 4);
+            frameSize = Syncsafe(header.Span, 4);
         }
 
-        int flags = major == 2 ? 0 : BinaryPrimitives.ReadUInt16BigEndian(header.Data.AsSpan(8));
+        int flags = major == 2 ? 0 : BinaryPrimitives.ReadUInt16BigEndian(header.Span[8..]);
 
-        DecodedBytes raw = body.Read((int)Math.Min(frameSize, MaxDecodedFrameBytes));
+        MappedBytes raw = body.Read((int)Math.Min(frameSize, MaxDecodedFrameBytes));
         long readTotal = raw.Length + body.Skip(frameSize - raw.Length);
         long frameEnd = body.FilePosition;
 
@@ -942,13 +942,13 @@ public sealed class Id3v2TagParser : ITagParser
             NodeValue value;
             if (length == 4)
             {
-                long number = major == 4 ? Syncsafe(raw.Data, pos) : BinaryPrimitives.ReadUInt32BigEndian(raw.Data.AsSpan(pos));
+                long number = major == 4 ? Syncsafe(raw.Span, pos) : BinaryPrimitives.ReadUInt32BigEndian(raw.Span[pos..]);
                 dataLength = number;
                 value = NodeValue.Integer(number);
             }
             else
             {
-                value = NodeValue.Integer(raw.Data[pos]);
+                value = NodeValue.Integer(raw.Span[pos]);
             }
 
             headerNode.Add(name, raw.OffsetOf(pos), raw.FileLength(pos, pos + length), value);
@@ -962,15 +962,15 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         // Nodes and values use the measured length; a data length indicator only states it.
-        DecodedBytes content = raw.Slice(pos);
+        MappedBytes content = raw.Slice(pos);
         long decodedSize = readTotal - pos;
         if (major == 4 && (extras.IsUnsynchronized || tagUnsync))
         {
-            content = content.Resynchronize(out long? falseSync);
+            content = Unsynchronization.Resynchronize(content, out long? falseSync);
             decodedSize = content.Length;
             if (raw.Length < readTotal)
             {
-                (long rest, long? restFalseSync) = DecodedBytes.MeasureResynchronized(body.Reader, raw.OffsetOf(raw.Length), frameEnd, raw.Length > pos && raw.Data[^1] == 0xFF);
+                (long rest, long? restFalseSync) = Unsynchronization.MeasureResynchronized(body.Reader, raw.OffsetOf(raw.Length), frameEnd, raw.Length > pos && raw.Span[^1] == 0xFF);
                 decodedSize += rest;
                 falseSync ??= restFalseSync;
             }
@@ -998,7 +998,7 @@ public sealed class Id3v2TagParser : ITagParser
         {
             long offset = raw.OffsetOf(pos);
             frame.Add("Compressed Data", offset, frameEnd - offset, NodeValue.Integer(frameEnd - offset, "bytes"));
-            DecodedBytes? inflated = Decompress(state, frame, content, raw.Length < readTotal, dataLength, offset, frameEnd);
+            MappedBytes? inflated = Decompress(state, frame, content, raw.Length < readTotal, dataLength, offset, frameEnd);
             if (inflated is null)
             {
                 return;
@@ -1036,7 +1036,7 @@ public sealed class Id3v2TagParser : ITagParser
 
     // ID3v2.3 section 3.3.1 i and ID3v2.4 section 4.1.2 k: zlib (RFC 1950). Decompression stops
     // one byte past the decode limit, so a small frame cannot expand into unbounded memory or time.
-    private static DecodedBytes? Decompress(ParseState state, Node frame, DecodedBytes compressed, bool isCut, long? declared, long start, long end)
+    private static MappedBytes? Decompress(ParseState state, Node frame, MappedBytes compressed, bool isCut, long? declared, long start, long end)
     {
         string id = frame.Name;
         string field = state.Major == 3 ? "decompressed size" : "data length indicator";
@@ -1074,16 +1074,16 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed; its content is shown decompressed, with every field pointing at the compressed data.", frame));
-        return DecodedBytes.Opaque(output, start, end);
+        return MappedBytes.Opaque(output, start, end);
     }
 
     // Up to limit bytes of the zlib stream in data, or null when data is not one complete stream.
-    private static byte[]? Inflate(byte[] data, int limit)
+    private static byte[]? Inflate(ReadOnlyMemory<byte> data, int limit)
     {
         var output = new MemoryStream();
         try
         {
-            using var zlib = new ZLibStream(new MemoryStream(data), CompressionMode.Decompress);
+            using var zlib = new ZLibStream(new MemoryStream(data.ToArray()), CompressionMode.Decompress);
             byte[] buffer = new byte[1 << 16];
             int read;
             while (output.Length < limit && (read = zlib.Read(buffer, 0, (int)Math.Min(buffer.Length, limit - output.Length))) > 0)
@@ -1100,7 +1100,7 @@ public sealed class Id3v2TagParser : ITagParser
         // ZLibStream returns what it has when the stream breaks off, so the Adler-32 that ends a
         // complete stream (RFC 1950 section 2.2) must be the frame's last four bytes.
         byte[] result = output.ToArray();
-        if (result.Length < limit && (data.Length < 4 || BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(data.Length - 4)) != Adler32(result)))
+        if (result.Length < limit && (data.Length < 4 || BinaryPrimitives.ReadUInt32BigEndian(data.Span[^4..]) != Adler32(result)))
         {
             return null;
         }
@@ -1125,7 +1125,7 @@ public sealed class Id3v2TagParser : ITagParser
     // ID3v2.4 frames section 4.29: "Minimum offset to next tag $xx xx xx xx", "calculated from
     // the end of this tag to the beginning of the next". "There may only be one 'seek frame' in
     // a tag."
-    private static void ParseSeekFrame(ParseState state, Node frame, DecodedBytes content)
+    private static void ParseSeekFrame(ParseState state, Node frame, MappedBytes content)
     {
         if (content.Length != 4)
         {
@@ -1134,7 +1134,7 @@ public sealed class Id3v2TagParser : ITagParser
             return;
         }
 
-        uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Data);
+        uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Span);
         frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), NodeValue.Integer(offset));
         frame.Value = $"next tag at least {offset} bytes after this one";
 
@@ -1147,7 +1147,7 @@ public sealed class Id3v2TagParser : ITagParser
         state.SeekOffset = offset;
     }
 
-    private static void AddFrameFlags(Node headerNode, DecodedBytes header, int flags, int major, string id, List<Finding> findings, Node frame)
+    private static void AddFrameFlags(Node headerNode, MappedBytes header, int flags, int major, string id, List<Finding> findings, Node frame)
     {
         long offset = header.OffsetOf(8);
         long length = header.FileLength(8, 10);
@@ -1170,14 +1170,14 @@ public sealed class Id3v2TagParser : ITagParser
         }
     }
 
-    private static long ParsePadding(Id3v2BodyReader body, ParseState state, long start, DecodedBytes first, long framesStart)
+    private static long ParsePadding(Id3v2BodyReader body, ParseState state, long start, MappedBytes first, long framesStart)
     {
         // Reading stops at the first non-zero byte, so a tag declaring a huge padding costs no more
         // than its zero bytes.
         long? nonZero = FirstNonZero(first);
         while (nonZero is null && !body.AtEnd)
         {
-            DecodedBytes chunk = body.Read(1 << 16);
+            MappedBytes chunk = body.Read(1 << 16);
             if (chunk.Length == 0)
             {
                 break;
@@ -1213,9 +1213,9 @@ public sealed class Id3v2TagParser : ITagParser
         return length;
     }
 
-    private static long? FirstNonZero(DecodedBytes bytes)
+    private static long? FirstNonZero(MappedBytes bytes)
     {
-        int index = Array.FindIndex(bytes.Data, b => b != 0);
+        int index = bytes.Span.IndexOfAnyExcept((byte)0);
         return index < 0 ? null : bytes.OffsetOf(index);
     }
 
@@ -1260,7 +1260,7 @@ public sealed class Id3v2TagParser : ITagParser
         return result;
     }
 
-    private static long Syncsafe(byte[] data, int offset) =>
+    private static long Syncsafe(ReadOnlySpan<byte> data, int offset) =>
         ((long)(data[offset] & 0x7F) << 21) | ((long)(data[offset + 1] & 0x7F) << 14) | ((long)(data[offset + 2] & 0x7F) << 7) | (long)(data[offset + 3] & 0x7F);
 
     private static NodeValue Bool(int value) => NodeValue.Boolean(value != 0);

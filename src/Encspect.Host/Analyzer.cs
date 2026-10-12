@@ -1,3 +1,4 @@
+using System.Reflection;
 using Encspect.Core;
 
 namespace Encspect.Host;
@@ -6,24 +7,40 @@ public sealed class Analyzer
 {
     private readonly IReadOnlyList<ITagParser> _tagParsers;
     private readonly IReadOnlyList<IFormatParser> _formatParsers;
+    private readonly IReadOnlyList<ICodecParser> _codecParsers;
+    private readonly bool _hasContainers;
 
     public Analyzer(IEnumerable<IFormatParser> formatParsers)
         : this([], formatParsers)
     {
     }
 
-    // Tag parsers are probed in the given order at every anchor, and the first one that
-    // validates owns the bytes; see DefaultParsers for the order the plan requires.
     public Analyzer(IEnumerable<ITagParser> tagParsers, IEnumerable<IFormatParser> formatParsers)
+        : this(tagParsers, formatParsers, [])
+    {
+    }
+
+    // Tag parsers are probed in the given order at every anchor, and the first one that
+    // validates owns the bytes; see DefaultParsers for the order the plan requires. Codec
+    // parsers serve the containers' routes (ParseContext.ParseStream and ParsePackets) by their
+    // IDs, and tag parsers the ParseTag route by their names.
+    public Analyzer(IEnumerable<ITagParser> tagParsers, IEnumerable<IFormatParser> formatParsers, IEnumerable<ICodecParser> codecParsers)
     {
         ArgumentNullException.ThrowIfNull(tagParsers);
         ArgumentNullException.ThrowIfNull(formatParsers);
+        ArgumentNullException.ThrowIfNull(codecParsers);
 
         _tagParsers = tagParsers.ToList();
         _formatParsers = formatParsers.ToList();
+        _codecParsers = codecParsers.ToList();
+        _hasContainers = _formatParsers.Any(DeclaresEnd);
+        if (_codecParsers.GroupBy(c => c.Id).FirstOrDefault(g => g.Count() > 1) is { } duplicate)
+        {
+            throw new ArgumentException($"Two codec parsers have the ID {duplicate.Key}.", nameof(codecParsers));
+        }
     }
 
-    public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats);
+    public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs);
 
     // Anything that is not a regular file gets a report with a file.not-regular finding without
     // being read, since a FIFO blocks and a device can be read forever. A file that cannot be
@@ -58,7 +75,8 @@ public sealed class Analyzer
         var failures = new List<Failure>();
         List<Claim> leading = FindLeadingTags(reader, [], failures);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
-        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending, failures);
+        Container? container = FindContainer(reader, dataStart, Path.GetExtension(path), failures);
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
         return dataEnd > dataStart ? FindParser(new SniffContext(reader.Slice(dataStart, dataEnd - dataStart), Path.GetExtension(path)), failures)?.Name : null;
     }
@@ -100,7 +118,8 @@ public sealed class Analyzer
         var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
         List<Claim> leading = FindLeadingTags(reader, leadingRejections, failures);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
-        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending, failures);
+        Container? container = FindContainer(reader, dataStart, Path.GetExtension(source), failures);
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
         List<Finding> layout = CheckTrailingLayout(trailing);
         List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings, failures);
@@ -227,7 +246,11 @@ public sealed class Analyzer
     // longer one's structure: a "TAG" in an Enhanced TAG field or in Lyrics3 lyrics, or "LYRICSEND"
     // at the end of an ID3v1 comment. The containing tag accounts for those bytes and the contained
     // one cannot account for the rest, so the longer tag wins before the parser order is asked.
-    private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, List<PendingFinding> pending, List<Failure> failures)
+    //
+    // A candidate that starts before the end a container declares is one of its chunks (an AIFF
+    // file's ID3 chunk), so it is a near miss, and the walk stops at the container's end.
+    private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, Container? container, List<PendingFinding> pending,
+        List<Failure> failures)
     {
         var claims = new List<Claim>();
         long anchor = reader.Length;
@@ -256,7 +279,11 @@ public sealed class Analyzer
                     probe = confined;
                 }
 
-                if (probe.IsAccepted && probe.Tag!.Offset >= dataStart)
+                if (container is { } owner && (probe.Tag?.Offset ?? probe.SignatureOffset) < owner.End)
+                {
+                    pending.Add(OwnedByContainer(parser, probe, owner, reader));
+                }
+                else if (probe.IsAccepted && probe.Tag!.Offset >= dataStart)
                 {
                     candidates.Add((order, Candidate(parser, probe, claims.Count > 0 ? claims[0] : null)));
                 }
@@ -494,7 +521,7 @@ public sealed class Analyzer
 
     // Anything a parser throws but cancellation, and running out of memory, which nothing can
     // recover from.
-    private static bool IsParserBug(Exception ex) => ex is not (OperationCanceledException or OutOfMemoryException);
+    internal static bool IsParserBug(Exception ex) => ex is not (OperationCanceledException or OutOfMemoryException);
 
     private static PendingFinding Rejected(ITagParser parser, TagProbe probe, ByteReader reader)
     {
@@ -525,27 +552,86 @@ public sealed class Analyzer
             });
     }
 
+    private static PendingFinding OwnedByContainer(ITagParser parser, TagProbe probe, Container container, ByteReader reader)
+    {
+        string where = Describe(probe.SignatureOffset, reader);
+        return new PendingFinding(
+            Severity.Info,
+            "tag.near-miss",
+            probe.SignatureOffset,
+            (_, _) => $"{parser.Name} signature at {where} rejected: part of the {container.Format} data, which by its own size extends to 0x{container.End:X}.");
+    }
+
+    // The end the format declares for itself (IFormatParser.DeclaredEnd), asked of the parser that
+    // sniffs best on everything after the leading tags, before the trailing tags are looked for;
+    // null when it declares none, or an end that does not lie after the leading tags. An end past
+    // the end of the file still makes every trailing candidate part of the container: its size
+    // says so, and the format parser reports the truncation.
+    private Container? FindContainer(ByteReader reader, long dataStart, string? extension, List<Failure> failures)
+    {
+        if (!_hasContainers || dataStart >= reader.Length)
+        {
+            return null;
+        }
+
+        var context = new SniffContext(reader.Slice(dataStart, reader.Length - dataStart), extension);
+        if (FindParser(context, failures) is not { } parser)
+        {
+            return null;
+        }
+
+        long? end;
+        try
+        {
+            end = parser.DeclaredEnd(context);
+        }
+        catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
+        {
+            end = null;
+        }
+        catch (Exception ex) when (IsParserBug(ex))
+        {
+            AddFailure(failures, new Failure(parser.Name, "reading its declared end", ex));
+            end = null;
+        }
+
+        return end > dataStart ? new Container(parser.Name, end.Value) : null;
+    }
+
+    // Finding a container's end costs a sniff before the trailing tags are found, on top of the one
+    // after, so it is done only when a format parser implements DeclaredEnd.
+    private static bool DeclaresEnd(IFormatParser parser)
+    {
+        InterfaceMapping map = parser.GetType().GetInterfaceMap(typeof(IFormatParser));
+        int index = Array.FindIndex(map.InterfaceMethods, m => m.Name == nameof(IFormatParser.DeclaredEnd));
+        return map.TargetMethods[index].DeclaringType != typeof(IFormatParser);
+    }
+
     private static string Describe(long offset, ByteReader reader) => $"0x{offset:X} (EOF-{reader.Length - offset})";
 
     // The parser's node is never changed, so its children may be built on demand: the report shows
     // a node with the same name, value and bytes whose children are the parser's and Detection.
     private static void AddClaim(Node root, Claim claim, List<Finding> findings, HashSet<Node> detectionNodes, Dictionary<Node, Node> shown)
     {
-        Node tag = claim.Tag;
-        TagProbe probe = claim.Probe;
-
-        var detection = new Node("Detection", tag.Offset, tag.Length, claim.Confidence.ToString());
-        foreach (Evidence evidence in probe.Evidence)
-        {
-            detection.Add("Evidence", evidence.Offset, evidence.Length, evidence.Description);
-        }
-
-        var copy = new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, detection]) { Kind = NodeKind.Tag };
-        shown[tag] = copy;
+        Node copy = ShowTag(claim.Tag, claim.Confidence, claim.Probe.Evidence, out Node detection);
+        shown[claim.Tag] = copy;
         detectionNodes.Add(detection);
         root.Add(copy);
-        findings.AddRange(probe.Findings);
+        findings.AddRange(claim.Probe.Findings);
         findings.AddRange(claim.LayoutFindings);
+    }
+
+    // The node the report shows for an accepted tag, also for one a container holds.
+    internal static Node ShowTag(Node tag, Confidence confidence, IReadOnlyList<Evidence> evidence, out Node detection)
+    {
+        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString());
+        foreach (Evidence item in evidence)
+        {
+            shownDetection.Add("Evidence", item.Offset, item.Length, item.Description);
+        }
+
+        detection = shownDetection;
+        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection]) { Kind = NodeKind.Tag };
     }
 
     private IReadOnlyList<StreamInfo> ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings,
@@ -574,7 +660,7 @@ public sealed class Analyzer
         }
 
         root.Value = parser.Name;
-        var context = new ParseContext(window, root, embedded, claims);
+        var context = new ParseContext(window, root, embedded, claims, new ParserRouter(_codecParsers, _tagParsers));
 
         try
         {
@@ -618,7 +704,7 @@ public sealed class Analyzer
             }
             catch (Exception ex) when (IsParserBug(ex))
             {
-                failures.Add(new Failure(parser.Name, "sniffing the data", ex));
+                AddFailure(failures, new Failure(parser.Name, "sniffing the data", ex));
                 confidence = 0;
             }
 
@@ -768,7 +854,7 @@ public sealed class Analyzer
 
     // Full confidence needs everything to check out, so a tag with a warning or error is at most
     // medium, whatever its parser says (plan, rule 2).
-    private static Confidence Effective(TagProbe probe) =>
+    internal static Confidence Effective(TagProbe probe) =>
         probe.Confidence == Confidence.High && probe.Findings.Any(f => f.Severity >= Severity.Warning) ? Confidence.Medium : probe.Confidence;
 
     private sealed record Claim(ITagParser Parser, TagProbe Probe, Confidence Confidence, IReadOnlyList<Finding> LayoutFindings)
@@ -784,4 +870,16 @@ public sealed class Analyzer
     private sealed record PendingFinding(Severity Severity, string Code, long Offset, Func<Node, Node, string> Message);
 
     private sealed record Failure(string Parser, string Activity, Exception Error);
+
+    private sealed record Container(string Format, long End);
+
+    // The data is sniffed twice when a container may declare its end, so a sniff that fails is
+    // reported once.
+    private static void AddFailure(List<Failure> failures, Failure failure)
+    {
+        if (!failures.Any(f => f.Parser == failure.Parser && f.Activity == failure.Activity))
+        {
+            failures.Add(failure);
+        }
+    }
 }

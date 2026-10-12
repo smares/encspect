@@ -5,7 +5,8 @@ namespace Encspect.Host;
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode and
 // encoder are the first stream's; the duration and samples add up over all streams, and the
-// average bitrate is weighted by their durations.
+// average bitrate is weighted by their durations. Tags are the file's and those its container
+// holds in its chunks, in tree order.
 public sealed record ReportSummary(
     string Source,
     string? Format,
@@ -45,9 +46,38 @@ public sealed record ReportSummary(
             first?.ChannelMode,
             encoded?.Encoder,
             encoded?.EncoderConfidence,
-            report.Root.Children.Where(c => c.Kind == NodeKind.Tag).Select(c => c.Name).ToList(),
+            TagNames(report.Root),
             report.Findings.Count(f => f.Severity == Severity.Error),
             report.Findings.Count(f => f.Severity == Severity.Warning),
             report.Findings.Count(f => f.Severity == Severity.Info));
+    }
+
+    // Only plain details are searched below, as a container's chunks are, never streams, frames or
+    // other sections that parsers build by the thousand, nor a tag's own items.
+    private static List<string> TagNames(Node root)
+    {
+        var names = new List<string>();
+        var pending = new Stack<(Node Node, int Depth)>();
+        pending.Push((root, 0));
+        while (pending.Count > 0)
+        {
+            (Node node, int depth) = pending.Pop();
+            if (node.Kind == NodeKind.Tag)
+            {
+                names.Add(node.Name);
+                continue;
+            }
+
+            if ((node == root || node.Kind == NodeKind.Detail) && depth < Node.MaxDepth && node.HasChildren)
+            {
+                IReadOnlyList<Node> children = node.Children;
+                for (int i = children.Count - 1; i >= 0; i--)
+                {
+                    pending.Push((children[i], depth + 1));
+                }
+            }
+        }
+
+        return names;
     }
 }

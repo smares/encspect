@@ -22,5 +22,10 @@ public static class DefaultParsers
         new Id3v1EnhancedTagParser(),
     ];
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [new MpegAudioParser()];
+    private static readonly MpegAudioParser Mpeg = new();
+
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg];
+
+    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg];
 }

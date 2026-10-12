@@ -7,8 +7,8 @@ namespace Encspect.Host;
 
 // Schema version 1: per report schemaVersion, tool, source, root, streams and findings. A node has
 // name, kind (unless Detail), value as a JSON string, number or boolean, unit, offset, length,
-// bitOffset and bitLength, and children; a finding has severity, code, message, offset, length,
-// path and count.
+// bitOffset and bitLength, ranges (for bytes that are not contiguous), and children; a finding has
+// severity, code, message, offset, length, path and count.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -270,6 +270,20 @@ public static class ReportJsonWriter
         if (node.BitLength is { } bitLength)
         {
             writer.WriteNumber("bitLength", bitLength);
+        }
+
+        if (node.Ranges is { } ranges)
+        {
+            writer.WriteStartArray("ranges");
+            foreach (ByteRange range in ranges)
+            {
+                writer.WriteStartObject();
+                writer.WriteNumber("offset", range.Offset);
+                writer.WriteNumber("length", range.Length);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
         }
 
         if (depth >= Node.MaxDepth)
