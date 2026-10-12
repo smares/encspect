@@ -17,7 +17,9 @@ namespace Encspect.Gui.Cache;
 // with this process's changes, writes a temporary file and renames it over the store, so a reader
 // never sees half a file and two GUI instances at once at worst lose one batch of the other's
 // entries. A store that is corrupt, truncated or of another format version reads as empty and is
-// replaced by the next write. Past MaxEntries, the least recently used entries are dropped.
+// replaced by the next write. Past MaxEntries, the least recently used entries are dropped. A hit
+// only notes when the entry was used, in memory: that alone is no reason to rewrite the store, so
+// it is written with the next new entry or by the final Flush.
 //
 // Format, little-endian as BinaryWriter writes it: the magic line, the format version, the
 // analyzer versions in use, the number of entries, the entries (path, fingerprint, analyzer version
@@ -42,6 +44,7 @@ public sealed class SummaryCache : IDisposable
     private readonly Func<long> _clock;
     private Dictionary<string, Entry>? _entries;
     private Dictionary<string, Entry> _dirty = new(StringComparer.Ordinal);
+    private Dictionary<string, long> _touched = new(StringComparer.Ordinal);
     private (long Length, long Ticks)? _seen;
     private bool _isFlushScheduled;
     private bool _isDisposed;
@@ -110,7 +113,7 @@ public sealed class SummaryCache : IDisposable
 
             entry = entry with { LastUsed = _clock() };
             _entries![path] = entry;
-            MarkDirty(path, entry);
+            _touched[path] = entry.LastUsed;
             return entry.Summary;
         }
     }
@@ -129,23 +132,29 @@ public sealed class SummaryCache : IDisposable
         }
     }
 
-    // Writes the changes not written yet, merged with what is on disk now.
-    public void Flush()
+    // Writes the changes not written yet, also when entries were last used, merged with what is
+    // on disk now.
+    public void Flush() => Flush(isFinal: true);
+
+    private void Flush(bool isFinal)
     {
         _writing.Wait();
         try
         {
             Dictionary<string, Entry> dirty;
+            Dictionary<string, long> touched;
             lock (_lock)
             {
                 _isFlushScheduled = false;
-                if (_dirty.Count == 0)
+                if (_dirty.Count == 0 && (!isFinal || _touched.Count == 0))
                 {
                     return;
                 }
 
                 dirty = _dirty;
+                touched = _touched;
                 _dirty = new(StringComparer.Ordinal);
+                _touched = new(StringComparer.Ordinal);
             }
 
             Dictionary<string, Entry> merged;
@@ -169,6 +178,7 @@ public sealed class SummaryCache : IDisposable
                 }
             }
 
+            Touch(merged, touched);
             Evict(merged);
             bool isWritten = Write(merged);
             lock (_lock)
@@ -179,11 +189,17 @@ public sealed class SummaryCache : IDisposable
                     merged[path] = entry;
                 }
 
+                Touch(merged, _touched);
                 if (!isWritten)
                 {
                     foreach ((string path, Entry entry) in dirty)
                     {
                         _dirty.TryAdd(path, entry);
+                    }
+
+                    foreach ((string path, long lastUsed) in touched)
+                    {
+                        _touched.TryAdd(path, lastUsed);
                     }
                 }
 
@@ -206,6 +222,7 @@ public sealed class SummaryCache : IDisposable
             {
                 _entries = new(StringComparer.Ordinal);
                 _dirty.Clear();
+                _touched.Clear();
                 _seen = null;
             }
 
@@ -265,7 +282,18 @@ public sealed class SummaryCache : IDisposable
         }
 
         _isFlushScheduled = true;
-        _ = Task.Delay(_flushDelay).ContinueWith(_ => Flush(), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+        _ = Task.Delay(_flushDelay).ContinueWith(_ => Flush(isFinal: false), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+    }
+
+    private static void Touch(Dictionary<string, Entry> entries, Dictionary<string, long> touched)
+    {
+        foreach ((string path, long lastUsed) in touched)
+        {
+            if (entries.TryGetValue(path, out Entry? entry) && entry.LastUsed < lastUsed)
+            {
+                entries[path] = entry with { LastUsed = lastUsed };
+            }
+        }
     }
 
     private void Evict(Dictionary<string, Entry> entries)

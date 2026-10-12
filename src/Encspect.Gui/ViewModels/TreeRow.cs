@@ -23,10 +23,9 @@ public sealed class TreeRow : ObservableObject
 
     public TreeRow? Parent { get; }
 
-    // The index of the node among its parent's children.
     public int ChildIndex { get; }
 
-    // Levels below the report's root.
+    // 0 for the report's root.
     public int Depth { get; }
 
     public double Indent => Depth * IndentPerLevel;

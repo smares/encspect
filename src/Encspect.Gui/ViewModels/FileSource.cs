@@ -21,7 +21,7 @@ public sealed class FileSource
 
     public IReadOnlyList<string> Paths { get; }
 
-    // The folder, when the source is one folder.
+    // Null when the source is several items, even if one of them is a folder.
     public string? Folder { get; }
 
     public static FileSource ForFolder(string path)

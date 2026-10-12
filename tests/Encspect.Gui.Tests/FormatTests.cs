@@ -8,6 +8,8 @@ public class FormatTests
     [Theory]
     [InlineData(0.261, "0:00.3")]
     [InlineData(59.94, "0:59.9")]
+    [InlineData(59.96, "1:00")]
+    [InlineData(119.97, "2:00")]
     [InlineData(205.4, "3:25")]
     [InlineData(3723, "1:02:03")]
     public void Durations(double seconds, string expected) => Assert.Equal(expected, Format.Duration(seconds));

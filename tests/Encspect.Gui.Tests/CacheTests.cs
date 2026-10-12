@@ -126,6 +126,7 @@ public sealed class CacheTests : IDisposable
         Assert.StartsWith(ReportJsonWriter.ToolVersion + " ", version, StringComparison.Ordinal);
         Assert.Contains(typeof(Analyzer).Assembly.ManifestModule.ModuleVersionId.ToString("N"), version.Split(' '));
         Assert.Contains(DefaultParsers.Formats[0].GetType().Assembly.ManifestModule.ModuleVersionId.ToString("N"), version.Split(' '));
+        Assert.Contains(typeof(FileSummary).Assembly.ManifestModule.ModuleVersionId.ToString("N"), version.Split(' '));
 
         // Built from a git checkout, the version names the commit.
         if (Directory.Exists(Path.Combine(Fixtures.Directory, "..", "..", ".git")) || File.Exists(Path.Combine(Fixtures.Directory, "..", "..", ".git")))
@@ -227,6 +228,76 @@ public sealed class CacheTests : IDisposable
         Assert.Null(later.TryGet("/music/2.mp3", fingerprint));
         Assert.Null(later.TryGet("/music/16.mp3", fingerprint));
         Assert.True(new FileInfo(StorePath).Length < 10 * 1024);
+    }
+
+    [Fact]
+    public void A_hit_does_not_rewrite_the_store_until_the_final_flush()
+    {
+        string file = _folder.Copy(Fixtures.Mpeg("external-lame-vbr-v2.mp3"), "song.mp3");
+        FileFingerprint fingerprint = FileFingerprint.Read(file)!;
+        long now = 0;
+        byte[] written;
+        using (var cache = new SummaryCache(StorePath, Version, flushDelay: TimeSpan.FromMilliseconds(1), clock: () => ++now))
+        {
+            cache.Put(file, fingerprint, Summarize(file));
+            cache.Put(file + ".other", fingerprint, Summarize(file));
+
+            // A scheduled flush may have written the first entry alone; this writes both.
+            cache.Flush();
+            written = File.ReadAllBytes(StorePath);
+
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.NotNull(cache.TryGet(file, fingerprint));
+            }
+
+            // Many flush delays later, nothing was written for the hits.
+            Thread.Sleep(100);
+            Assert.Equal(written, File.ReadAllBytes(StorePath));
+        }
+
+        Assert.NotEqual(written, File.ReadAllBytes(StorePath));
+
+        // The hits made the entry the more recently used of the two, so a bound evicts the other.
+        using (var bounded = new SummaryCache(StorePath, Version, maxEntries: 2, flushDelay: TimeSpan.FromHours(1), clock: () => ++now))
+        {
+            bounded.Put(_folder["third.mp3"], fingerprint, Summarize(file));
+        }
+
+        using SummaryCache later = Cache();
+        Assert.NotNull(later.TryGet(file, fingerprint));
+        Assert.Null(later.TryGet(file + ".other", fingerprint));
+    }
+
+    [Fact]
+    public void Progress_never_counts_more_files_analyzed_than_listed()
+    {
+        string song = _folder.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "song.mp3");
+        for (int i = 0; i < 3000; i++)
+        {
+            _folder.Write($"many/{i:D4}.bin", []);
+        }
+
+        using SummaryCache cache = Cache();
+        cache.Put(song, FileFingerprint.Read(song)!, Summarize(song));
+
+        // The song is found in the cache while the folder after it is still being listed, so its
+        // result comes before its row is listed.
+        var queue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        var model = new MainViewModel(Analyzer.CreateDefault(), queue.Enqueue, parallelism: 2, roots: [], cache: cache);
+        model.Open(FileSource.ForItems([song, _folder["many"]]));
+        var clock = Stopwatch.StartNew();
+        while (model.IsRunning && clock.Elapsed < TimeSpan.FromSeconds(60))
+        {
+            if (queue.TryDequeue(out Action? action))
+            {
+                action();
+                Assert.True(model.Analyzed <= model.Total, $"{model.Analyzed} analyzed of {model.Total} listed.");
+            }
+        }
+
+        Assert.Equal(3001, model.Analyzed);
+        Assert.True(model.Rows[0].IsCached);
     }
 
     [Fact]

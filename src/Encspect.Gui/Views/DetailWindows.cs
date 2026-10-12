@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Encspect.Gui.ViewModels;
@@ -10,6 +11,11 @@ namespace Encspect.Gui.Views;
 // where it was last, also in later sessions. "Open in New Window" adds independent windows, which
 // stay on their file, for comparing two files. None is owned by the main window, so each moves on
 // its own.
+//
+// Previous and Next follow the list as it fills in, at a cost per added row that does not grow
+// with the list (ListNeighbors). When the list is listed again, a window whose row left the list
+// moves to the new row of the same file once that is listed; after Refresh or Clear Summary Cache
+// it also analyzes the file again, keeping its selected node where the new tree has it.
 public sealed class DetailWindows
 {
     private const int CascadeStep = 32;
@@ -19,6 +25,11 @@ public sealed class DetailWindows
     private readonly Analyzer _analyzer;
     private readonly Settings _settings;
     private readonly List<DetailWindow> _independent = [];
+    private readonly Dictionary<DetailWindow, ListNeighbors> _neighbors = [];
+
+    // Where the shared window was when it was last neither maximized nor minimized, which is what
+    // its placement keeps, with whether it is maximized.
+    private WindowPlacement? _normalPlacement;
 
     public DetailWindows(Window main, MainViewModel model, Analyzer analyzer, Settings settings)
     {
@@ -33,13 +44,7 @@ public sealed class DetailWindows
                 Load(window, row);
             }
         };
-        _model.RowsView.CollectionChanged += (_, _) =>
-        {
-            foreach (DetailWindow window in All)
-            {
-                UpdateNavigation(window);
-            }
-        };
+        _model.RowsView.CollectionChanged += OnRowsChanged;
     }
 
     public DetailWindow? Shared { get; private set; }
@@ -63,16 +68,29 @@ public sealed class DetailWindows
                     _model.SelectedRow = next;
                 }
             };
+            window.PositionChanged += (_, _) => RememberNormalPlacement(window);
+            window.PropertyChanged += (_, e) =>
+            {
+                if (e.Property == TopLevel.ClientSizeProperty)
+                {
+                    RememberNormalPlacement(window);
+                }
+            };
             window.Closing += (_, _) =>
             {
                 _settings.DetailWindow = PlacementOf(window);
                 _settings.Save();
             };
-            window.Closed += (_, _) => Shared = null;
-            Place(window, _settings.DetailWindow);
+            window.Closed += (_, _) =>
+            {
+                Shared = null;
+                _neighbors.Remove(window);
+            };
+            _normalPlacement = Place(window, _settings.DetailWindow);
             Shared = window;
             Load(window, row);
             window.Show();
+            RememberNormalPlacement(window);
         }
         else
         {
@@ -101,7 +119,11 @@ public sealed class DetailWindows
                 Load(window, next);
             }
         };
-        window.Closed += (_, _) => _independent.Remove(window);
+        window.Closed += (_, _) =>
+        {
+            _independent.Remove(window);
+            _neighbors.Remove(window);
+        };
         Place(window, null);
         int step = (_independent.Count + 1) * CascadeStep;
         window.Position = new PixelPoint(window.Position.X + step, window.Position.Y + step);
@@ -119,24 +141,64 @@ public sealed class DetailWindows
         }
     }
 
-    private DetailWindow Create() => new(new DetailViewModel(_analyzer));
+    // How often a window's row was looked up in the list to find its neighbors.
+    internal int NeighborLookups(DetailWindow window) => _neighbors.TryGetValue(window, out ListNeighbors? neighbors) ? neighbors.Lookups : 0;
+
+    private DetailWindow Create()
+    {
+        var window = new DetailWindow(new DetailViewModel(_analyzer));
+        _neighbors[window] = new ListNeighbors(_model.RowsView);
+        return window;
+    }
 
     private void Load(DetailWindow window, FileRow row)
     {
         window.Row = row;
-        _ = window.Model.LoadAsync(row.Path);
-        UpdateNavigation(window);
+        _ = window.Model.LoadAsync(row.Path, row.FolderError);
+        _neighbors[window].Track(row);
+        ShowNeighbors(window);
     }
 
-    private void UpdateNavigation(DetailWindow window)
+    private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        window.Model.CanGoPrevious = window.Row is { } row && _model.Neighbor(row, -1) is not null;
-        window.Model.CanGoNext = window.Row is { } current && _model.Neighbor(current, 1) is not null;
+        FileRow? added = e is { Action: NotifyCollectionChangedAction.Add, NewItems: [FileRow row] } ? row : null;
+        foreach ((DetailWindow window, ListNeighbors neighbors) in _neighbors)
+        {
+            if (added is not null && !neighbors.IsListed && window.Row is { } stale && stale.Path == added.Path)
+            {
+                window.Row = added;
+                neighbors.Track(added);
+                ShowNeighbors(window);
+                if (_model.IsRereading)
+                {
+                    _ = window.Model.ReloadAsync();
+                }
+            }
+            else if (neighbors.Update(e))
+            {
+                ShowNeighbors(window);
+            }
+        }
+    }
+
+    private void ShowNeighbors(DetailWindow window)
+    {
+        ListNeighbors neighbors = _neighbors[window];
+        window.Model.CanGoPrevious = neighbors.HasPrevious;
+        window.Model.CanGoNext = neighbors.HasNext;
+    }
+
+    private void RememberNormalPlacement(Window window)
+    {
+        if (window.WindowState == WindowState.Normal && window.IsVisible)
+        {
+            _normalPlacement = new WindowPlacement(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, false);
+        }
     }
 
     // Where the window was last, when that is still on a screen; otherwise centered over the main
-    // window.
-    private void Place(Window window, WindowPlacement? placement)
+    // window. Returns the placement used, or null when centered.
+    private WindowPlacement? Place(Window window, WindowPlacement? placement)
     {
         if (placement is { Width: > 0, Height: > 0 } && _main.Screens.ScreenFromPoint(new PixelPoint(placement.X + 40, placement.Y + 20)) is not null)
         {
@@ -148,7 +210,7 @@ public sealed class DetailWindows
                 window.WindowState = WindowState.Maximized;
             }
 
-            return;
+            return placement with { IsMaximized = false };
         }
 
         double scaling = _main.DesktopScaling;
@@ -156,8 +218,17 @@ public sealed class DetailWindows
         window.Position = new PixelPoint(
             _main.Position.X + (int)((main.Width - window.Width) * scaling / 2),
             _main.Position.Y + (int)((main.Height - window.Height) * scaling / 2));
+        return null;
     }
 
-    private static WindowPlacement PlacementOf(Window window) =>
-        new(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, window.WindowState == WindowState.Maximized);
+    private WindowPlacement PlacementOf(Window window)
+    {
+        bool isMaximized = window.WindowState == WindowState.Maximized;
+        if (window.WindowState == WindowState.Normal || _normalPlacement is null)
+        {
+            return new(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, isMaximized);
+        }
+
+        return _normalPlacement with { IsMaximized = isMaximized };
+    }
 }

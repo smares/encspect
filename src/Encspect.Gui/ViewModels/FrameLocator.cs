@@ -54,48 +54,42 @@ public static class FrameLocator
 
     // The children that hold the offset. A long list is the leading details of a stream followed
     // by its frames and gaps in file order: the leading ones are read in turn up to the first
-    // frame, and the rest is searched by offset. Should that order not hold, every child is read.
+    // frame, and the rest is searched by offset. Where that order may not hold, every other child
+    // is read in turn: when the search finds the children out of order, when what it finds does
+    // not hold the offset or leads to no frame (frames out of file order, a trailing child that
+    // starts before them). Only an offset past the last child is left at that, as in order.
     private static IEnumerable<int> Containing(IReadOnlyList<Node> children, long offset)
     {
         int count = children.Count;
-        if (count <= LinearLimit)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                if (Holds(children[i], offset))
-                {
-                    yield return i;
-                }
-            }
-
-            yield break;
-        }
-
         int first = 0;
-        while (first < count && children[first].Kind != NodeKind.Frame)
+        int found = -1;
+        if (count > LinearLimit)
         {
-            if (Holds(children[first], offset))
+            while (first < count && children[first].Kind != NodeKind.Frame)
             {
-                yield return first;
+                if (Holds(children[first], offset))
+                {
+                    yield return first;
+                }
+
+                first++;
             }
 
-            first++;
-        }
-
-        int found = Search(children, first, count, offset);
-        if (found != Unordered)
-        {
+            found = Search(children, first, count, offset);
             if (found >= 0 && Holds(children[found], offset))
             {
                 yield return found;
             }
-
-            yield break;
+            else if (found == count - 1)
+            {
+                yield break;
+            }
         }
 
+        // A short list, or a long one whose search found nothing that leads to a frame.
         for (int i = first; i < count; i++)
         {
-            if (Holds(children[i], offset))
+            if (i != found && Holds(children[i], offset))
             {
                 yield return i;
             }
