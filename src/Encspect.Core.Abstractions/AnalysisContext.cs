@@ -43,6 +43,22 @@ public abstract class AnalysisContext
         _streams.Add(stream);
     }
 
+    // Replaces a stream this context holds, such as one a codec reported through a route, by a
+    // completed copy: a container adds the channel layout it states where the codec states none.
+    public void UpdateStream(StreamInfo stream, StreamInfo updated)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(updated);
+
+        int index = _streams.FindIndex(s => ReferenceEquals(s, stream));
+        if (index < 0)
+        {
+            throw new ArgumentException("The stream is not one of this context's.", nameof(stream));
+        }
+
+        _streams[index] = updated;
+    }
+
     // Kept in file order, after claims from the same offset.
     public void AddEncoderClaim(EncoderClaim claim)
     {

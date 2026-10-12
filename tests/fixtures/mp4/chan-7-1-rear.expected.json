@@ -1,0 +1,242 @@
+{
+ "description": "AAC LC 7.1 (channel configuration 12: C L R Ls Rs Lsr Rsr LFE) with a chan atom whose layout tag is MPEG_7_1_C (L R C LFE Ls Rs Rls Rrs): with a rear pair, both put the surround pair at the sides, so they agree.",
+ "length": 1651,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   672
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   556
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   456
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   371
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   311
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   127
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   111
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chan",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   524,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   548,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   576,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   676,
+   24
+  ],
+  [
+   "mdat",
+   700,
+   951
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "7.1",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "side left",
+    "side right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   708,
+   24
+  ],
+  [
+   732,
+   63
+  ],
+  [
+   795,
+   60
+  ],
+  [
+   855,
+   57
+  ],
+  [
+   912,
+   54
+  ],
+  [
+   966,
+   51
+  ],
+  [
+   1017,
+   48
+  ],
+  [
+   1065,
+   45
+  ],
+  [
+   1110,
+   42
+  ],
+  [
+   1152,
+   38
+  ],
+  [
+   1190,
+   35
+  ],
+  [
+   1225,
+   32
+  ],
+  [
+   1257,
+   29
+  ],
+  [
+   1286,
+   26
+  ],
+  [
+   1312,
+   64
+  ],
+  [
+   1376,
+   61
+  ],
+  [
+   1437,
+   58
+  ],
+  [
+   1495,
+   55
+  ],
+  [
+   1550,
+   52
+  ],
+  [
+   1602,
+   49
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan": "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Channel Configuration": "12 (7.1: center, left/right, left/right surround, left/right rear, LFE)"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 2.11 does not read channel configuration 12."
+  }
+ }
+}

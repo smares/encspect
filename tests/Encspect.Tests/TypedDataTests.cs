@@ -49,6 +49,19 @@ public class NodeValueTests
     }
 
     [Fact]
+    public void HexValuesCanUseAll64Bits()
+    {
+        NodeValue mask = NodeValue.Hex(ulong.MaxValue, 16);
+        Assert.Equal("0xFFFFFFFFFFFFFFFF", mask.ToString());
+        Assert.Equal(ulong.MaxValue, mask.AsUnsigned());
+        Assert.Null(mask.AsInteger());
+        Span<char> text = stackalloc char[32];
+        Assert.True(mask.TryFormat(text, out int written));
+        Assert.Equal("0xFFFFFFFFFFFFFFFF", text[..written].ToString());
+        Assert.Throws<ArgumentOutOfRangeException>(() => NodeValue.Hex(-1L, 16));
+    }
+
+    [Fact]
     public void BooleansAndTextShowAsBefore()
     {
         Assert.Equal("true", NodeValue.Boolean(true).ToString());
@@ -305,7 +318,7 @@ public class StreamTests
         ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("stats/split-by-tag.mp3")], writer);
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal("split-by-tag.mp3,MPEG Audio,1,MPEG-1 Layer III,0.261,11520,139.0,44100,Joint stereo,,,\"ID3v2, ID3v2\",0,0,0", lines[1]);
+        Assert.Equal("split-by-tag.mp3,MPEG Audio,1,MPEG-1 Layer III,0.261,11520,139.0,44100,Joint stereo,\"stereo (front left, front right)\",,,\"ID3v2, ID3v2\",0,0,0", lines[1]);
     }
 
     // The tags of a summary are the nodes of kind Tag, whatever they are named.

@@ -22,7 +22,7 @@ public class DetailViewModelTests
         Assert.Equal("external-lame-cbr128-joint.mp3", model.Title);
         Assert.Same(model.Report!.Root, model.Tree!.Root.Node);
         Assert.Same(model.Tree.Root, model.SelectedNode);
-        Assert.Equal("MPEG-1 Layer III · 44.1 kHz · Joint stereo · 0:00.5 · 128 kbps CBR · LAME 3.100 (high)", model.StreamsText);
+        Assert.Equal("MPEG-1 Layer III · 44.1 kHz · Joint stereo · stereo (front left, front right) · 0:00.5 · 128 kbps CBR · LAME 3.100 (high)", model.StreamsText);
         Assert.NotNull(model.Document);
         Assert.True(model.HasNoFindings);
     }

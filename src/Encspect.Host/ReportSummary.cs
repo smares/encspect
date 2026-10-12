@@ -3,8 +3,8 @@ using Encspect.Core;
 namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
-// reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode and
-// encoder are the first stream's; the duration and samples add up over all streams, and the
+// reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
+// channel layout and encoder are the first stream's; the duration and samples add up over all streams, and the
 // average bitrate is weighted by their durations. Tags are the file's and those its container
 // holds in its chunks, in tree order.
 public sealed record ReportSummary(
@@ -17,6 +17,7 @@ public sealed record ReportSummary(
     double? AverageBitrate,
     int? SampleRate,
     string? ChannelMode,
+    IReadOnlyList<Speaker>? ChannelLayout,
     string? Encoder,
     Confidence? EncoderConfidence,
     IReadOnlyList<string> Tags,
@@ -24,6 +25,13 @@ public sealed record ReportSummary(
     int Warnings,
     int Infos)
 {
+    // The layout's common name, such as "5.1", or null.
+    public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
+
+    // The layout as the CSV writes it: "5.1 (front left, front right, front center, LFE, back left,
+    // back right)", or the speakers alone where the layout has no common name.
+    public string? ChannelLayoutText => ChannelLayout is { } layout ? ChannelLayouts.Describe(layout) : null;
+
     public static ReportSummary From(Report report)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -44,6 +52,7 @@ public sealed record ReportSummary(
             timedDuration > 0 ? timed.Sum(s => s.AverageBitrate!.Value * s.Duration) / timedDuration : null,
             first?.SampleRate,
             first?.ChannelMode,
+            first?.ChannelLayout,
             encoded?.Encoder,
             encoded?.EncoderConfidence,
             TagNames(report.Root),

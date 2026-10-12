@@ -12,6 +12,7 @@ internal static class Topics
     public const string GaplessPlayback = "gapless-playback";
     public const string BitrateModes = "bitrate-modes";
     public const string Id3v2 = "id3v2";
+    public const string ChannelLayouts = "channel-layouts";
 }
 
 // What each MP4 node is, in the words the report shows next to it. Constants only, picked per box
@@ -123,6 +124,20 @@ internal static class Explain
     public const string DecoderAverageBitrate = "The stream's average bitrate as the writer states it; 0 marks a variable bitrate (ISO/IEC 14496-1 7.2.6.6).";
     public const string SlPredefined = "Which predefined sync layer configuration applies: 2 is the one reserved for MP4 files (ISO/IEC 14496-1; ISO/IEC 14496-14).";
 
+    public const string ChanLayoutTag = "mChannelLayoutTag: a layout Core Audio defines, named by Apple's constant with its channels in order (CoreAudioBaseTypes.h, AudioChannelLayoutTag); UseChannelBitmap and UseChannelDescriptions defer to the fields after it. The lower 16 bits give the channel count.";
+    public const string ChanBitmap = "mChannelBitmap: one bit per speaker, in the order of the WAVE channel mask, which gives the channels where the layout tag is UseChannelBitmap, lowest bit first (CoreAudioBaseTypes.h, AudioChannelBitmap).";
+    public const string ChanDescriptionCount = "mNumberChannelDescriptions: how many channel descriptions follow, one per channel where the layout tag is UseChannelDescriptions (CoreAudioBaseTypes.h, AudioChannelLayout).";
+    public const string ChanDescription = "AudioChannelDescription: one channel's label, flags and coordinates, in the stream's channel order (CoreAudioBaseTypes.h).";
+    public const string ChanLabel = "mChannelLabel: what the channel feeds, such as Left or LeftSurround, named by Apple's constant (CoreAudioBaseTypes.h, AudioChannelLabel).";
+    public const string ChanFlags = "mChannelFlags: whether the coordinates are rectangular (1) or spherical (2), and in meters (4) (CoreAudioBaseTypes.h, AudioChannelFlags).";
+    public const string ChanCoordinates = "mCoordinates: a speaker position as three 32-bit floats, left/right, back/front and down/up, or azimuth, elevation and distance, as the flags say; unused where neither flag is set (CoreAudioBaseTypes.h).";
+    public const string ChnlStreamStructure = "stream_structure: 1 where the track carries channels, 2 where it carries audio objects, 3 for both (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlDefinedLayout = "definedLayout: a ChannelConfiguration of ISO/IEC 23091-3, such as 6 for 5.1 with the center first, or 0 where a speaker position follows for each channel of the sample entry (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlSpeakerPosition = "speaker_position: the speaker one channel feeds, an OutputChannelPosition of ISO/IEC 23091-3, in the stream's channel order; 126 means an explicit azimuth and elevation follow (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlAzimuth = "azimuth: the explicit speaker's direction in degrees from the front (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlElevation = "elevation: the explicit speaker's height in degrees above the listener's plane (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlOmittedChannels = "omittedChannelsMap: the defined layout's channels the track leaves out, one bit each, the lowest bit for its first channel (ISO/IEC 14496-12 12.2.4).";
+    public const string ChnlObjectCount = "object_count: how many audio objects the track carries (ISO/IEC 14496-12 12.2.4).";
     public const string BtrtBufferSize = "The size of the decoder's buffer the stream needs, in bytes (ISO/IEC 14496-12 8.5.2.2).";
     public const string BtrtMaxBitrate = "The highest bitrate over any one-second window, in bits per second (ISO/IEC 14496-12 8.5.2.2).";
     public const string BtrtAverageBitrate = "The average bitrate over the whole stream, in bits per second (ISO/IEC 14496-12 8.5.2.2).";
@@ -296,7 +311,8 @@ internal static class Explain
         "csgp" => "Compact sample to group: a compact form of the sample-to-group table (ISO/IEC 14496-12).",
         "esds" => "Elementary stream descriptor box: the MPEG-4 descriptors of the stream, with the decoder's configuration, for AAC the AudioSpecificConfig (ISO/IEC 14496-14 5.6).",
         "btrt" => "Bitrate box: the decoder's buffer size and the stream's maximum and average bitrate (ISO/IEC 14496-12 8.5.2.2).",
-        "chan" => "QuickTime channel layout: which speaker each channel feeds (QuickTime File Format, Audio channel layout atom).",
+        "chan" => "QuickTime channel layout: which speaker each channel feeds, as Core Audio's AudioChannelLayout: a layout tag, a channel bitmap or a description per channel (QuickTime File Format, Audio channel layout atom).",
+        "chnl" => "Channel layout box: whether the track carries channels or objects, and which speaker each channel feeds, as a channel configuration of ISO/IEC 23091-3 or a speaker position per channel (ISO/IEC 14496-12 12.2.4).",
         "wave" => "QuickTime sound decompression parameters: extensions of a sound sample description, such as an original format and an esds box (QuickTime File Format, Sound sample description extensions).",
         "frma" => "Original format box: the format of a sample entry that is wrapped, as in QuickTime's wave atom or a protected entry (ISO/IEC 14496-12 8.12.2).",
         "mvex" => "Movie extends box: says the file has movie fragments after moov, and gives the tracks' defaults for them (ISO/IEC 14496-12 8.8.1).",
@@ -352,6 +368,7 @@ internal static class Explain
         "esds" => Topics.AudioSpecificConfig,
         "btrt" => Topics.BitrateModes,
         "ID32" => Topics.Id3v2,
+        "chan" or "chnl" => Topics.ChannelLayouts,
         _ => null,
     };
 

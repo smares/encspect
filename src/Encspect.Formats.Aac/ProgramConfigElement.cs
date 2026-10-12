@@ -10,7 +10,18 @@ internal static class ProgramConfigElement
     // Reads the element from its instance tag on (the ID is the caller's) and returns its channels:
     // one per single channel element, two per channel pair, plus the LFE elements. anchor is the bit
     // the comment's byte alignment counts from.
-    public static int Read(BitFields f, Node node, int anchor, Action<Severity, string, string, Node> report)
+    public static int Read(BitFields f, Node node, int anchor, Action<Severity, string, string, Node> report) => Read(f, node, anchor, report, out _);
+
+    // As Read, with the speakers the element's lists give, in its own order: the front elements,
+    // then the side, back and LFE elements. The lists name no speakers, only where each element is:
+    // the front list runs from the center outward, so a single channel element first is the center
+    // and its pairs are the left and right fronts, beside the center first where there are two or
+    // more (as in channel configuration 7) and wide third; the side list runs from front to back and
+    // the back list from the sides to the center, so a back single channel element is the back
+    // center, and two back pairs without side elements are the side and back pairs (as in channel
+    // configuration 12). Elements beyond those positions are discrete, and so is a front single
+    // channel element after the first element.
+    public static int Read(BitFields f, Node node, int anchor, Action<Severity, string, string, Node> report, out IReadOnlyList<Speaker> layout)
     {
         f.Read(node, "Element Instance Tag", 4, Explain.PceTag);
         f.Read(node, "Object Type", 2, Explain.PceObjectType, v => $"{v} ({AacTables.ObjectTypeName((int)v + 1)})");
@@ -38,8 +49,10 @@ internal static class ProgramConfigElement
         }
 
         int channels = lfe;
-        foreach ((string position, int count) in new[] { ("Front", front), ("Side", side), ("Back", back) })
+        var pairs = new List<bool>[3];
+        foreach ((string position, int count, int list) in new[] { ("Front", front, 0), ("Side", side, 1), ("Back", back, 2) })
         {
+            pairs[list] = [];
             for (int i = 0; i < count; i++)
             {
                 int start = f.Position;
@@ -47,9 +60,12 @@ internal static class ProgramConfigElement
                 bool isPair = f.Flag(element, "IsChannelPair", Explain.IsChannelPair);
                 f.Read(element, "Tag", 4, Explain.ElementTag);
                 channels += isPair ? 2 : 1;
+                pairs[list].Add(isPair);
                 node.Add(f.Span($"{position} Element", start, isPair ? "CPE" : "SCE", Explain.PceChannelElement, element));
             }
         }
+
+        layout = Speakers(pairs[0], pairs[1], pairs[2], lfe);
 
         for (int i = 0; i < lfe; i++)
         {
@@ -90,5 +106,41 @@ internal static class ProgramConfigElement
         }
 
         return channels;
+    }
+
+    private static List<Speaker> Speakers(List<bool> front, List<bool> side, List<bool> back, int lfe)
+    {
+        var speakers = new List<Speaker>();
+        Speaker[] frontPairs = front.Count(p => p) >= 2
+            ? [Speaker.FrontLeftOfCenter, Speaker.FrontRightOfCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontLeftWide, Speaker.FrontRightWide]
+            : [Speaker.FrontLeft, Speaker.FrontRight];
+        Add(front, i => i == 0 ? Speaker.FrontCenter : Speaker.Discrete, frontPairs);
+        Add(side, _ => Speaker.Discrete, [Speaker.SideLeft, Speaker.SideRight]);
+        Speaker[] backPairs = back.Count(p => p) >= 2 && !side.Any(p => p)
+            ? [Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight]
+            : [Speaker.BackLeft, Speaker.BackRight];
+        Add(back, i => i == back.Count - 1 && back.Take(i).All(p => p) ? Speaker.BackCenter : Speaker.Discrete, backPairs);
+        speakers.AddRange(Enumerable.Range(0, lfe).Select(i => i switch { 0 => Speaker.LowFrequency, 1 => Speaker.LowFrequency2, _ => Speaker.Discrete }));
+        return speakers;
+
+        // single gives a single channel element's speaker by its index in the list; pairs the
+        // speakers of the list's pairs in order.
+        void Add(List<bool> list, Func<int, Speaker> single, Speaker[] pairs)
+        {
+            int pair = 0;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (!list[i])
+                {
+                    speakers.Add(single(i));
+                    continue;
+                }
+
+                bool named = (2 * pair) + 1 < pairs.Length;
+                speakers.Add(named ? pairs[2 * pair] : Speaker.Discrete);
+                speakers.Add(named ? pairs[(2 * pair) + 1] : Speaker.Discrete);
+                pair++;
+            }
+        }
     }
 }

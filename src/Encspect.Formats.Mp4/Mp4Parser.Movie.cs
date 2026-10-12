@@ -63,6 +63,12 @@ public sealed partial class Mp4Parser
                 f.U32(node, "Maximum Bitrate", Explain.BtrtMaxBitrate, unit: "bit/s");
                 f.U32(node, "Average Bitrate", Explain.BtrtAverageBitrate, unit: "bit/s");
                 return true;
+            case "chan":
+                QuickTimeChannelLayout(state, node, f);
+                return true;
+            case "chnl":
+                IsoChannelLayout(state, node, f);
+                return true;
             case "frma":
                 node.Value = f.FourCc(node, "Format", Explain.OriginalFormat);
                 return true;

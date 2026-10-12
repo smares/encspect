@@ -7,27 +7,32 @@ unmodified, for the purpose of the standard, but not redistributed, so they are 
 repository: this script downloads them into a cache directory and checks each archive's SHA-256
 against the manifest before using it.
 
-The manifest is ours. Per stream it records the version, layer, sample rate and frame count, and
-for the 22 MPEG-1 Layer II streams with the MPEG-2 multichannel extension, what the analyzer must
-report: the multichannel header (configuration, center, surround, LFE, extension bitstream,
+The manifest is ours. Per stream it records the version, layer, sample rate and frame count, the
+channels, speaker layout and multilingual channels the analyzer's stream reports, and for the 22
+MPEG-1 Layer II streams with the MPEG-2 multichannel extension, what the analyzer must report: the multichannel header (configuration, center, surround, LFE, extension bitstream,
 dematrix procedure, multilingual channels), whether any frame uses prediction or dynamic
 crosstalk, and how many frames have a multichannel CRC that holds and how many continue their
 multichannel side information in the extension bitstream, a separate file the analyzer does not
-read. The header values match ISO's description of every stream. This script confirms the
-manifest with independent tools:
+read, and how many channel files mctoolamed writes. The header values match ISO's description of
+every stream. This script confirms the manifest with independent tools:
 
-- ffprobe finds the listed number of frames.
+- ffprobe finds the listed number of frames, and the channels of the stereo or mono base: the
+  stream's channels, or two where the stream carries a multichannel extension the analyzer verifies.
 - mp3guessenc reports the listed multichannel parameters; it verifies the multichannel CRC
   before it reports any.
 - mctoolamed, a decoder derived from the ISO reference software, decodes every multichannel
-  stream, with its extension bitstream, without a multichannel CRC error.
+  stream, with its extension bitstream, without a multichannel CRC error, into the listed number of
+  channel files (one per channel, the LFE's included); where the analyzer verifies the extension,
+  that is the stream's number of channels, and the multilingual channels it writes apart are the
+  stream's multilingual channels.
 
 With --analyzer, the analyzer's report on every stream (encspect --ndjson) must match the
-manifest instead: frame count, version, layer and sample rate, the multichannel configuration and
-header, prediction and dynamic crosstalk, the frames whose multichannel CRC holds and those that
+manifest instead: frame count, version, layer and sample rate, the stream's channels, layout and
+multilingual channels, the multichannel configuration and header, prediction and dynamic crosstalk, the frames whose multichannel CRC holds and those that
 continue in the extension bitstream, and no warning or error beyond the stream's "findings". A
 stream whose multichannel side information never fits its base frame ("verified": false) cannot
-be verified at all, so the analyzer must report it as a possible extension instead.
+be verified at all, so the analyzer must report it as a possible extension instead, and its stream as
+the stereo base.
 
 Needs curl, ffprobe and a C compiler, which builds mctoolamed and mp3guessenc (from third_party). Usage:
 
@@ -77,6 +82,18 @@ def guessenc(path):
             "ml": field("Multi lingual channels"), "config": field("Channel configuration")}
 
 
+def ffprobe_channels(path):
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "json", str(path)],
+                            capture_output=True, text=True, check=True)
+    return [s["channels"] for s in json.loads(result.stdout).get("streams", [])]
+
+
+def verified(stream):
+    """Whether the stream carries a multichannel extension the analyzer verifies."""
+    mc = stream.get("multichannel")
+    return mc is not None and stream["layer"] == "II" and mc.get("verified") is not False
+
+
 def ffprobe_frames(path):
     result = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "frame=pkt_pos", "-of", "json", str(path)],
                             capture_output=True, text=True, check=True)
@@ -108,6 +125,10 @@ def analyzer_problems(analyzer, path, stream):
     expected = {"Version": stream["version"], "Layer": stream["layer"], "Sample Rate": stream["sample_rate"]}
     if {k: header.get(k) for k in expected} != expected:
         problems.append(f"the first frame is {header}, the manifest says {expected}")
+    streams = [(s["channels"], s.get("channelLayout"), s.get("multilingualChannels", 0)) for s in report["streams"]]
+    wanted = [(stream["channels"], stream["channel_layout"], stream.get("multilingual_channels", 0))]
+    if streams != wanted:
+        problems.append(f"the analyzer's streams have the channels, layout and multilingual channels {streams}, the manifest lists {wanted}")
     serious = sorted(f["code"] for f in report["findings"] if f["severity"] != "Info")
     if serious != sorted(stream.get("findings", [])):
         problems.append(f"the analyzer reports {serious}, the manifest expects {stream.get('findings', [])}")
@@ -170,13 +191,20 @@ def main():
         found = []
         if ffprobe_frames(path) != stream["frames"]:
             found.append(f"ffprobe finds {ffprobe_frames(path)} frames, the manifest lists {stream['frames']}")
+        base = 2 if verified(stream) else stream["channels"]
+        if ffprobe_channels(path) != [base]:
+            found.append(f"ffprobe finds the channels {ffprobe_channels(path)}, the manifest's stream has a base of {base}")
         if guessenc(path) != stream.get("mp3guessenc"):
             found.append(f"mp3guessenc reports {guessenc(path)}, the manifest {stream.get('mp3guessenc')}")
         if "multichannel" in stream and stream["layer"] == "II":
             extension = directory / stream["extension_file"] if stream["extension_file"] else None
-            errors, _, channels = mctoolamed_tool.decode(decoder, path, extension)
-            if errors or not channels:
+            errors, _, channels, multilingual = mctoolamed_tool.decode_all(decoder, path, extension)
+            if errors or channels != stream["multichannel"]["decoded_channels"]:
                 found.append(f"mctoolamed reports {errors} multichannel CRC errors and writes {channels} channels")
+            if verified(stream) and stream["multichannel"]["decoded_channels"] != stream["channels"]:
+                found.append(f"mctoolamed writes {channels} channels, the manifest's stream has {stream['channels']}")
+            if multilingual != stream["multichannel"]["multilingual_channels"] or (verified(stream) and multilingual != stream.get("multilingual_channels", 0)):
+                found.append(f"mctoolamed reports {multilingual} multilingual channels")
         for problem in found:
             problems += 1
             print(f"{stream['name']}: {problem}")

@@ -1,0 +1,278 @@
+{
+ "description": "AAC LC stereo with a chan atom that names its channels by the bitmap: left and right (bits 0 and 1).",
+ "length": 1595,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   716
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   600
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   500
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   415
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   355
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   127
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   111
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/chan",
+   500,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   524,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   548,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   576,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   716,
+   28
+  ],
+  [
+   "mdat",
+   744,
+   851
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   752,
+   6
+  ],
+  [
+   758,
+   45
+  ],
+  [
+   803,
+   42
+  ],
+  [
+   845,
+   39
+  ],
+  [
+   884,
+   36
+  ],
+  [
+   920,
+   33
+  ],
+  [
+   953,
+   30
+  ],
+  [
+   983,
+   27
+  ],
+  [
+   1010,
+   24
+  ],
+  [
+   1034,
+   20
+  ],
+  [
+   1054,
+   17
+  ],
+  [
+   1071,
+   14
+  ],
+  [
+   1085,
+   11
+  ],
+  [
+   1096,
+   8
+  ],
+  [
+   1104,
+   46
+  ],
+  [
+   1150,
+   43
+  ],
+  [
+   1193,
+   40
+  ],
+  [
+   1233,
+   37
+  ],
+  [
+   1270,
+   34
+  ],
+  [
+   1304,
+   31
+  ],
+  [
+   1335,
+   28
+  ],
+  [
+   1363,
+   25
+  ],
+  [
+   1388,
+   21
+  ],
+  [
+   1409,
+   18
+  ],
+  [
+   1427,
+   15
+  ],
+  [
+   1442,
+   12
+  ],
+  [
+   1454,
+   9
+  ],
+  [
+   1463,
+   47
+  ],
+  [
+   1510,
+   44
+  ],
+  [
+   1554,
+   41
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan": "stereo (front left, front right)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Layout Tag": "UseChannelBitmap (0x00010000)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Channel Bitmap": "0x00000003"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

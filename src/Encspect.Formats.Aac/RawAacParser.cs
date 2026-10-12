@@ -208,6 +208,7 @@ public sealed class RawAacParser : IFormatParser
         if (details.Channels is { } channels)
         {
             region.PceChannels ??= channels;
+            region.PceLayout ??= details.Layout;
         }
 
         state.Frames.Add(new Frame(position, length, header.Raw)
@@ -312,22 +313,23 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
-        int? channels = null;
+        IReadOnlyList<Speaker>? layout = null;
         if (result[0].Element.Id == 5 && header.ChannelConfiguration == 0)
         {
             try
             {
                 var fields = new BitFields(new MappedBytes(frame[starts[0]..].ToArray(), 0));
                 fields.Skip(3);
-                channels = ProgramConfigElement.Read(fields, new Node("PCE", 0, 1), 0, (_, _, _, _) => { });
+                ProgramConfigElement.Read(fields, new Node("PCE", 0, 1), 0, (_, _, _, _) => { }, out IReadOnlyList<Speaker> read);
+                layout = read;
             }
             catch (EndOfStreamException)
             {
-                channels = null;
+                layout = null;
             }
         }
 
-        return new FrameDetails(result, positions, crc, overall, badPositions, channels);
+        return new FrameDetails(result, positions, crc, overall, badPositions, layout);
     }
 
     private static CrcState Worst(CrcState a, CrcState b) => (CrcState)Math.Max((int)a, (int)b);
@@ -602,7 +604,11 @@ public sealed class RawAacParser : IFormatParser
         var header = new AdtsHeader(state.Frames[start].Header);
         List<Region> regions = state.Regions.Where(r => r.First < end && (r.End ?? state.Frames.Count) > start).ToList();
         Region first = regions[0];
-        AacConfig config = header.Config with { Channels = header.ChannelConfiguration == 0 ? first.PceChannels : AacTables.Channels(header.ChannelConfiguration) };
+        AacConfig config = header.Config with
+        {
+            Channels = header.ChannelConfiguration == 0 ? first.PceChannels : AacTables.Channels(header.ChannelConfiguration),
+            Layout = header.ChannelConfiguration == 0 ? first.PceLayout : null,
+        };
         var figures = new StreamFigures(config.OutputSampleRate);
         int vbr = 0;
         int frames = 0;
@@ -668,6 +674,7 @@ public sealed class RawAacParser : IFormatParser
             SampleRate = config.OutputSampleRate,
             Channels = config.OutputChannels ?? 0,
             ChannelMode = config.ChannelMode,
+            ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
@@ -688,7 +695,11 @@ public sealed class RawAacParser : IFormatParser
 
     private sealed record Block(int Start, int Length, FirstElement Element, string? Text, int Crc, CrcState CrcState);
 
-    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, int? Channels);
+    // Layout: the speakers of a program config element that starts the frame's first block.
+    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, IReadOnlyList<Speaker>? Layout)
+    {
+        public int? Channels => Layout?.Count;
+    }
 
     // A frame or, with a zero header (never a valid one), a gap, in about 32 bytes.
     [StructLayout(LayoutKind.Auto)]
@@ -726,6 +737,8 @@ public sealed class RawAacParser : IFormatParser
         public List<Node> Leading { get; } = [];
 
         public int? PceChannels { get; set; }
+
+        public IReadOnlyList<Speaker>? PceLayout { get; set; }
     }
 
     private sealed class State(BlockCache cache, CancellationToken cancellation)

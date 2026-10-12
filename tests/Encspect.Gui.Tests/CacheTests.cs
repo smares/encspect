@@ -439,7 +439,8 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(expected.IsVbr, actual.IsVbr);
         Assert.Equal(expected.Problem, actual.Problem);
         Assert.Equal(expected.Summary.Tags, actual.Summary.Tags);
-        Assert.Equal(expected.Summary with { Tags = [] }, actual.Summary with { Tags = [] });
+        Assert.Equal(expected.Summary.ChannelLayout, actual.Summary.ChannelLayout);
+        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null }, actual.Summary with { Tags = [], ChannelLayout = null });
     }
 
     private static FileId? IdOf(string path)

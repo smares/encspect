@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps whose ancillary data reads as a multichannel extension in all 20 frames, but whose multichannel CRC holds in only two, as random data passes it about once in 65,536 frames: two passes among 20 frames are chance, so no multichannel extension is reported.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps whose ancillary data reads as a multichannel extension in all 20 frames, but whose multichannel CRC holds in only two, as random data passes it about once in 65,536 frames: two passes among 20 frames are chance, so no multichannel extension is reported and the stream is its stereo base.",
  "length": 23040,
  "crosscheck": true,
  "regions": [
@@ -8151,6 +8151,10 @@
    "sample_rate": 48000,
    "samples": 23040,
    "duration": "0.480 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
    "average_bitrate": "384.0 kbps",
    "is_vbr": false,
    "bitrate_over_time": "384"
