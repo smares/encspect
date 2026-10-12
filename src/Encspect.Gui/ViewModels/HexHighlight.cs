@@ -4,7 +4,8 @@ namespace Encspect.Gui.ViewModels;
 
 // The bytes of a node, and for a field that does not cover whole bytes the bits within them: its
 // ranges when its bytes are not contiguous (Node.Ranges), and its bit offset and width
-// (Node.BitOffset, Node.BitLength), whose bits run on across the ranges in order.
+// (Node.BitOffset, Node.BitLength), whose bits run on across the ranges in order, from the most
+// or the least significant bit of each byte (Node.BitOrder).
 public sealed class HexHighlight
 {
     private readonly long[] _starts;
@@ -12,11 +13,12 @@ public sealed class HexHighlight
     // Bytes of the node before each range, for finding where its bits are.
     private readonly long[] _before;
 
-    private HexHighlight(IReadOnlyList<ByteRange> ranges, int? bitOffset, int? bitLength)
+    private HexHighlight(IReadOnlyList<ByteRange> ranges, int? bitOffset, int? bitLength, BitOrder bitOrder)
     {
         Ranges = ranges;
         BitOffset = bitOffset;
         BitLength = bitLength;
+        BitOrder = bitOrder;
         _starts = ranges.Select(r => r.Offset).ToArray();
         _before = new long[ranges.Count];
         for (int i = 1; i < ranges.Count; i++)
@@ -31,6 +33,8 @@ public sealed class HexHighlight
 
     public int? BitLength { get; }
 
+    public BitOrder BitOrder { get; }
+
     public long Start => Ranges[0].Offset;
 
     public long End => Ranges[^1].End;
@@ -41,12 +45,13 @@ public sealed class HexHighlight
         ArgumentNullException.ThrowIfNull(node);
 
         IReadOnlyList<ByteRange> ranges = node.Ranges ?? [new ByteRange(node.Offset, node.Length)];
-        return node.Length == 0 ? null : new HexHighlight(ranges, node.BitOffset, node.BitLength);
+        return node.Length == 0 ? null : new HexHighlight(ranges, node.BitOffset, node.BitLength, node.BitOrder);
     }
 
     public bool Contains(long offset) => RangeOf(offset) >= 0;
 
-    // The bits of the byte at offset that belong to the node, from the most significant bit:
+    // The bits of the byte at offset that belong to the node, counted from the most significant bit
+    // whatever the node's bit order:
     // [Start, End) within 0 to 8, or null for a byte outside it. A node of whole bytes covers
     // every bit of its bytes.
     public (int Start, int End)? BitsOf(long offset)
@@ -65,7 +70,13 @@ public sealed class HexHighlight
         long relative = ((_before[range] + offset - Ranges[range].Offset) * 8) - bitOffset;
         int start = (int)Math.Max(0, -relative);
         int end = (int)Math.Min(8, bitLength - relative);
-        return end > start ? (start, end) : null;
+        if (end <= start)
+        {
+            return null;
+        }
+
+        // Counted from the least significant bit, the same bits lie mirrored in the byte.
+        return BitOrder == BitOrder.LeastSignificantFirst ? (8 - end, 8 - start) : (start, end);
     }
 
     private int RangeOf(long offset)
