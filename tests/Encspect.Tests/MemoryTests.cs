@@ -25,14 +25,17 @@ public class MemoryTests
         analyzer.Analyze("warm-up.mp3", new MemoryStream(data[..(104 * 100)]));
         long before = GC.GetTotalMemory(forceFullCollection: true);
 
-        // The heap after each collection while the analysis runs: what it holds at once.
+        // The heap after each collection while the analysis runs, without the free space the
+        // collection left in it, whose amount depends on the machine's GC settings: what the
+        // analysis holds at once.
         long peak = before;
         bool done = false;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
             {
-                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), GC.GetGCMemoryInfo(GCKind.Any).HeapSizeBytes));
+                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.Any);
+                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), info.HeapSizeBytes - info.FragmentedBytes));
                 Thread.Sleep(1);
             }
         });

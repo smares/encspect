@@ -21,6 +21,7 @@ public sealed class FolderItem : ObservableObject
     private static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
 
     private readonly Action<Action> _post;
+    private string _name;
     private bool _isExpanded;
     private bool _isLoaded;
     private string? _error;
@@ -28,7 +29,7 @@ public sealed class FolderItem : ObservableObject
 
     public FolderItem(string name, string path, FolderKind kind, Action<Action> post)
     {
-        Name = name;
+        _name = name;
         Path = path;
         Kind = kind;
         _post = post;
@@ -38,7 +39,11 @@ public sealed class FolderItem : ObservableObject
         }
     }
 
-    public string Name { get; }
+    public string Name
+    {
+        get => _name;
+        private set => Set(ref _name, value);
+    }
 
     public string Path { get; }
 
@@ -63,6 +68,11 @@ public sealed class FolderItem : ObservableObject
     }
 
     public bool HasError => _error is not null;
+
+    // A volume's name once its probe has found its label.
+    internal void Rename(string name) => Name = name;
+
+    internal void MarkUnavailable(string reason) => Error = reason;
 
     public bool IsExpanded
     {
@@ -99,27 +109,31 @@ public sealed class FolderItem : ObservableObject
             {
                 folders = ListSubfolders(Path);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            catch (Exception ex)
             {
+                if (ex is not (IOException or UnauthorizedAccessException or System.Security.SecurityException))
+                {
+                    ErrorLog.Write($"listing {Path}", ex);
+                }
+
                 error = ex.Message;
             }
-
-            _post(() =>
+            finally
             {
-                Children.Clear();
-                if (folders is not null)
+                _post(() =>
                 {
-                    foreach ((string name, string path) in folders)
+                    Children.Clear();
+                    foreach ((string name, string path) in folders ?? [])
                     {
                         Children.Add(new FolderItem(name, path, FolderKind.Folder, _post));
                     }
-                }
 
-                Error = error;
-                _isLoaded = true;
-                Raise(nameof(IsLoaded));
-                done.SetResult();
-            });
+                    Error = error;
+                    _isLoaded = true;
+                    Raise(nameof(IsLoaded));
+                    done.SetResult();
+                });
+            }
         });
 
         return _loading;

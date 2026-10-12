@@ -21,6 +21,8 @@ public static class Icons
 
     public static Geometry Up { get; } = Geometry.Parse("M2.5,10.5 L8,5 L13.5,10.5 L12.3,11.7 L8,7.4 L3.7,11.7 Z");
 
+    public static Geometry Close { get; } = Geometry.Parse("M3.6,2.4 L8,6.8 L12.4,2.4 L13.6,3.6 L9.2,8 L13.6,12.4 L12.4,13.6 L8,9.2 L3.6,13.6 L2.4,12.4 L6.8,8 L2.4,3.6 Z");
+
     public static Geometry Down { get; } = Geometry.Parse("M2.5,5.5 L8,11 L13.5,5.5 L12.3,4.3 L8,8.6 L3.7,4.3 Z");
 
     public static IValueConverter ForFolderKind { get; } = new FuncValueConverter<FolderKind, Geometry?>(kind => kind switch

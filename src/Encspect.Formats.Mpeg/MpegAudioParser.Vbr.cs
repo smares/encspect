@@ -286,7 +286,7 @@ public sealed partial class MpegAudioParser
 
         Coverage covered = Covered(state, leading.Index);
         (int own, long from, long span) = AudioIn(state, region, covered);
-        Node scope = own > 0 ? new Node("Evidence", from, span) : leading.TagNode;
+        Node scope = own > 0 ? new Node("Evidence", from, span) { Description = Explain.Evidence } : leading.TagNode;
         return WithEvidence(encoder, Evidence(scope, $"The {leading.Vbr.Type} header describes only the {FramesText(covered.Frames)} after it; the region holds {FramesText(audio)}, so files were probably joined"),
             "Medium");
     }
@@ -437,16 +437,19 @@ public sealed partial class MpegAudioParser
 
     private static bool IsFfmpeg(string text) => text.StartsWith("Lavc", StringComparison.Ordinal) || text.StartsWith("Lavf", StringComparison.Ordinal);
 
-    private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text);
+    private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence };
 
-    private static Node Evidence(Node from, Node to, string text) => new("Evidence", from.Offset, to.End - from.Offset, text);
+    private static Node Evidence(Node from, Node to, string text) => new("Evidence", from.Offset, to.End - from.Offset, text) { Description = Explain.Evidence };
+
+    private static Node EncoderNode(long offset, long length, string name) =>
+        new("Encoder", offset, length, name) { Description = Explain.Encoder, Topic = Topics.EncoderDetection };
 
     private static Node Encoder(string name, string confidence, params Node[] evidence)
     {
         long start = evidence.Min(e => e.Offset);
         long end = evidence.Max(e => e.End);
-        Node node = new("Encoder", start, end - start, name);
-        node.Add("Confidence", start, end - start, confidence);
+        Node node = EncoderNode(start, end - start, name);
+        node.Add("Confidence", start, end - start, confidence, Explain.Confidence);
         foreach (Node item in evidence)
         {
             node.Add(item);
@@ -483,6 +486,9 @@ public sealed partial class MpegAudioParser
             Signature = signature;
             Ancillary = signature is { } found
                 ? new Node("Evidence", found.Offset, found.Length, found.IsCut ? $"\"{found.Text}\" in ancillary data, cut off where the ancillary data ends" : $"\"{found.Text}\" in ancillary data")
+                {
+                    Description = Explain.Evidence,
+                }
                 : null;
             if (region.Enhancement is { } enhanced)
             {

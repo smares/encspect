@@ -69,8 +69,9 @@ jobs:
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
 
       # Not uploaded either. A runner has no display to open a window on, so the published GUI runs
-      # its self-check: it loads Skia's and HarfBuzz's native libraries from the single file and
-      # analyzes a fixture through the host, without opening a window.
+      # its self-check: it loads Skia's and HarfBuzz's native libraries and the platform backend's
+      # (ANGLE on Windows, Avalonia.Native on macOS) from the single file and analyzes a fixture
+      # through the host, without opening a window.
       - name: Publish the self-contained GUI
         run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
 
@@ -79,6 +80,7 @@ jobs:
         run: |
           publish/gui-${{ matrix.rid }}/encspect-gui --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/gui.txt"
           grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/gui.txt"
+          grep -q 'Platform backend' "$RUNNER_TEMP/gui.txt"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
 
   fuzz:
@@ -164,7 +166,7 @@ jobs:
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py
 
-      # ISO's licence does not allow redistributing the conformance streams, so they are fetched,
+      # ISO's license does not allow redistributing the conformance streams, so they are fetched,
       # checked against their SHA-256 and cached rather than committed.
       - name: Cache the ISO conformance streams
         uses: actions/cache@v4

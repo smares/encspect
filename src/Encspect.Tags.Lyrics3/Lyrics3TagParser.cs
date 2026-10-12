@@ -81,11 +81,11 @@ public sealed class Lyrics3TagParser : ITagParser
         long lyricsStart = start + Begin.Length;
         long lyricsLength = marker - lyricsStart;
         ReadOnlySpan<byte> lyricsBytes = span[(index + Begin.Length)..];
-        var tag = new Node(Name, start, end - start, "1.00") { Kind = NodeKind.Tag };
-        tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
+        var tag = new Node(Name, start, end - start, "1.00") { Kind = NodeKind.Tag, Description = Explain.V1Tag, Topic = Topics.Lyrics3 };
+        tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN", Explain.Begin);
         string lyrics = Encoding.Latin1.GetString(lyricsBytes);
-        Node lyricsNode = tag.Add("Lyrics", lyricsStart, lyricsLength, lyrics);
-        tag.Add("End", marker, MarkerSize, "LYRICSEND");
+        Node lyricsNode = tag.Add("Lyrics", lyricsStart, lyricsLength, lyrics, Explain.Lyrics);
+        tag.Add("End", marker, MarkerSize, "LYRICSEND", Explain.V1End);
 
         var findings = new List<Finding>();
         var evidence = new List<Evidence>
@@ -169,9 +169,9 @@ public sealed class Lyrics3TagParser : ITagParser
         }
 
         byte[] data = reader.ReadBytesAt(start, (int)size);
-        var tag = new Node(Name, start, end - start, "2.00") { Kind = NodeKind.Tag };
+        var tag = new Node(Name, start, end - start, "2.00") { Kind = NodeKind.Tag, Description = Explain.V2Tag, Topic = Topics.Lyrics3 };
         var findings = new List<Finding>();
-        tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
+        tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN", Explain.Begin);
 
         var evidence = new List<Evidence>
         {
@@ -220,7 +220,7 @@ public sealed class Lyrics3TagParser : ITagParser
 
             if (problem is not null)
             {
-                Node unparsed = tag.Add("Unparsed", start + pos, data.Length - pos, NodeValue.Integer(data.Length - pos, "bytes"));
+                Node unparsed = tag.Add("Unparsed", start + pos, data.Length - pos, NodeValue.Integer(data.Length - pos, "bytes"), Explain.Unparsed);
                 findings.Add(new Finding(Severity.Warning, "lyrics3.fields-invalid", $"{problem} The rest of the fields is not parsed.", unparsed));
                 confidence = Confidence.Low;
                 break;
@@ -228,10 +228,10 @@ public sealed class Lyrics3TagParser : ITagParser
 
             long fieldStart = start + pos;
             string value = Encoding.Latin1.GetString(data, pos + 8, fieldSize);
-            Node field = tag.Add(id, fieldStart, 8 + fieldSize, value);
-            field.Add("ID", fieldStart, 3, id);
-            field.Add("Size", fieldStart + 3, 5, NodeValue.Integer(fieldSize));
-            Node dataNode = field.Add("Data", fieldStart + 8, fieldSize, value);
+            Node field = tag.Add(id, fieldStart, 8 + fieldSize, value, Explain.Field(id));
+            field.Add("ID", fieldStart, 3, id, Explain.FieldId);
+            field.Add("Size", fieldStart + 3, 5, NodeValue.Integer(fieldSize), Explain.FieldSize);
+            Node dataNode = field.Add("Data", fieldStart + 8, fieldSize, value, Explain.FieldData);
 
             // Lyrics3 v2.00: field data consists of characters 01 to 254.
             int bad = data.AsSpan(pos + 8, fieldSize).IndexOfAny((byte)0x00, (byte)0xFF);
@@ -256,9 +256,10 @@ public sealed class Lyrics3TagParser : ITagParser
                 // Characters: lyrics present, timestamps in the lyrics, inhibit random selection.
                 // "This is always three (3) characters big in v2.00."
                 string[] indicators = ["HasLyrics", "HasTimestamps", "IsRandomSelectionInhibited"];
+                string[] texts = [Explain.HasLyrics, Explain.HasTimestamps, Explain.IsRandomSelectionInhibited];
                 for (int i = 0; i < Math.Min(fieldSize, indicators.Length); i++)
                 {
-                    field.Add(indicators[i], fieldStart + 8 + i, 1, NodeValue.Boolean(IsSet(value, i)));
+                    field.Add(indicators[i], fieldStart + 8 + i, 1, NodeValue.Boolean(IsSet(value, i)), texts[i]);
                 }
 
                 // The 1998 Lyrics3 v2.00 text defines 2 characters, id3.org's later one 3.
@@ -304,8 +305,8 @@ public sealed class Lyrics3TagParser : ITagParser
             }
         }
 
-        tag.Add("Size", sizeStart, SizeFieldLength, NodeValue.Integer(size));
-        tag.Add("End", marker, MarkerSize, "LYRICS200");
+        tag.Add("Size", sizeStart, SizeFieldLength, NodeValue.Integer(size), Explain.V2Size);
+        tag.Add("End", marker, MarkerSize, "LYRICS200", Explain.V2End);
 
         if (confidence == Confidence.High)
         {
@@ -323,11 +324,11 @@ public sealed class Lyrics3TagParser : ITagParser
         foreach ((int start, int length) in Lines(text))
         {
             string line = text.Substring(start, length);
-            Node lineNode = data.Add("Line", data.Offset + start, length, line);
+            Node lineNode = data.Add("Line", data.Offset + start, length, line, Explain.Line);
             foreach (Match match in Timestamp.Matches(line))
             {
                 any = true;
-                Node stamp = lineNode.Add("Timestamp", lineNode.Offset + match.Index, match.Length, $"{match.Groups[1].Value}:{match.Groups[2].Value}");
+                Node stamp = lineNode.Add("Timestamp", lineNode.Offset + match.Index, match.Length, $"{match.Groups[1].Value}:{match.Groups[2].Value}", Explain.LineTimestamp);
                 CheckSeconds(match, stamp, findings);
             }
         }
@@ -342,7 +343,7 @@ public sealed class Lyrics3TagParser : ITagParser
         foreach ((int start, int length) in Lines(text))
         {
             string line = text.Substring(start, length);
-            Node image = data.Add("Image", data.Offset + start, length, line);
+            Node image = data.Add("Image", data.Offset + start, length, line, Explain.Image);
             string[] parts = line.Split("||");
             if (parts.Length > 3 || parts[0].Length == 0)
             {
@@ -350,10 +351,11 @@ public sealed class Lyrics3TagParser : ITagParser
             }
 
             string[] names = ["Filename", "Description", "Timestamp"];
+            string[] texts = [Explain.ImageFilename, Explain.ImageDescription, Explain.ImageTimestamp];
             int offset = 0;
             for (int i = 0; i < Math.Min(parts.Length, names.Length); i++)
             {
-                Node part = image.Add(names[i], image.Offset + offset, parts[i].Length, parts[i]);
+                Node part = image.Add(names[i], image.Offset + offset, parts[i].Length, parts[i], texts[i]);
                 if (i == 1 && parts[i].Length > 250)
                 {
                     findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"An IMG description holds {parts[i].Length} characters; Lyrics3 v2.00 allows at most 250.", part));

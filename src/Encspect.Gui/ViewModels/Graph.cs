@@ -18,10 +18,11 @@ public abstract class Graph
 
     public string Unit { get; }
 
-    // Points of a line, or bars.
+    // What the chart shows, for its chip's tooltip; from the series, as its parser describes it.
+    public abstract string? Description { get; }
+
     public abstract int Count { get; }
 
-    // The largest value, which the y axis must reach.
     public abstract double Maximum { get; }
 
     public abstract double ValueAt(int index);
@@ -91,6 +92,8 @@ public sealed class LineGraph : Graph
     public Series Series { get; }
 
     public SeriesAxis Axis => Series.Axis;
+
+    public override string? Description => Series.Description;
 
     public override int Count => Series.Values.Length;
 
@@ -197,12 +200,15 @@ public sealed class DistributionGraph : Graph
     private readonly Bar[] _bars;
     private readonly int _total;
 
+    public override string? Description { get; }
+
     public DistributionGraph(Series series)
         : base(series.Name + " Distribution", series.Unit)
     {
         ArgumentNullException.ThrowIfNull(series);
 
         _series = series;
+        Description = series.Description is { } description ? "How many frames have each value. " + description : "How many frames have each value.";
         ReadOnlySpan<double> values = series.Values.Span;
         var counts = new SortedDictionary<double, int>();
         foreach (double value in values)

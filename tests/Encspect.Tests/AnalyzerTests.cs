@@ -295,6 +295,30 @@ public class AnalyzerTests
         Assert.Null(analyzer.DetectFormat("/dev/zero"));
     }
 
+    // A device that yields nothing reads like an empty file; the system's file type tells it apart.
+    [Fact]
+    public void EmptyDevicesAreNotOpened()
+    {
+        if (OperatingSystem.IsWindows() || !File.Exists("/dev/null"))
+        {
+            return;
+        }
+
+        var analyzer = Analyzer.CreateDefault();
+
+        Report report = analyzer.AnalyzeFile("/dev/null");
+
+        Finding finding = Assert.Single(report.Findings);
+        Assert.Equal("file.not-regular", finding.Code);
+        Assert.Equal("This is a device, not a regular file, so it was not read.", finding.Message);
+        Assert.Null(analyzer.DetectFormat("/dev/null"));
+
+        using var folder = new TempFolder();
+        string empty = Path.Combine(folder.Path, "empty.mp3");
+        File.WriteAllBytes(empty, []);
+        Assert.Equal("file.empty", Assert.Single(analyzer.AnalyzeFile(empty).Findings).Code);
+    }
+
     [Fact]
     public async Task FifosAreNotOpened()
     {

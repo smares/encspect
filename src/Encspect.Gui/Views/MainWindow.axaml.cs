@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data.Converters;
@@ -15,6 +16,28 @@ namespace Encspect.Gui.Views;
 
 public partial class MainWindow : Window
 {
+    // What each column of the file list shows, as the tooltip of its header.
+    internal static readonly IReadOnlyDictionary<string, string> ColumnTips = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Name"] = "The file's name.",
+        ["Format"] = "The format the analysis found in the file's bytes, whatever its extension says.",
+        ["Codec"] = "How the first audio stream is coded, such as MPEG-1 Layer III.",
+        ["Duration"] = "The playing time of all the file's audio streams together.",
+        ["Bitrate"] = "The average bitrate of the audio, weighted by duration: VBR where the frames use more than one bitrate, CBR where they all use the same.",
+        ["Sample Rate"] = "Samples per second in each channel of the first stream.",
+        ["Channel Mode"] = "How the first stream's channels are coded: stereo, joint stereo, dual channel or mono.",
+        ["Encoder"] = "Which program encoded the file, and how sure the analysis is: high when the encoder wrote its name, low when only its habits match.",
+        ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APE.",
+        ["Findings"] = "Problems and notes found, by severity: errors, warnings and infos.",
+    };
+
+    static MainWindow()
+    {
+        // Headers are made by the grid's template, so their tooltips follow their content.
+        DataGridColumnHeader.ContentProperty.Changed.AddClassHandler<DataGridColumnHeader>((header, _) =>
+            ToolTip.SetTip(header, header.Content is string text && ColumnTips.TryGetValue(text, out string? tip) ? tip : null));
+    }
+
     // For the XAML previewer and loader only.
     public MainWindow()
         : this(Analyzer.CreateDefault(), new Settings())
@@ -28,6 +51,16 @@ public partial class MainWindow : Window
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
         DetailWindows = new DetailWindows(this, Model, analyzer, settings);
+        WindowList.Register(this);
+
+        // The grid does not scroll to a row selected from elsewhere, such as Previous and Next.
+        Model.SelectedRowChanged += (_, _) =>
+        {
+            if (Model.SelectedRow is { } row)
+            {
+                Files.ScrollIntoView(row, null);
+            }
+        };
 
         AddColumns(Files);
         Files.DoubleTapped += (_, e) =>
@@ -143,11 +176,10 @@ public partial class MainWindow : Window
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Open Selected File", null, () => OpenSelected(newWindow: false)),
             Shortcuts.Item(this, "Open Selected File in New Window", Shortcuts.WithCommand(Key.Enter), () => OpenSelected(newWindow: true)));
-        if (!OperatingSystem.IsMacOS())
-        {
-            file.Menu!.Add(new NativeMenuItemSeparator());
-            file.Menu.Add(Shortcuts.Item(this, "Exit", null, Close));
-        }
+        file.Menu!.Add(new NativeMenuItemSeparator());
+        file.Menu.Add(OperatingSystem.IsMacOS()
+            ? Shortcuts.Item(this, "Close Window", Shortcuts.WithCommand(Key.W), Close)
+            : Shortcuts.Item(this, "Exit", null, Close));
 
         var view = Shortcuts.Submenu(
             "View",
@@ -191,17 +223,37 @@ public partial class MainWindow : Window
 
     private async Task OpenFolderAsync()
     {
-        IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open Folder", AllowMultiple = false });
-        if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
+        try
         {
-            Model.Open(FileSource.ForFolder(path));
+            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open Folder", AllowMultiple = false });
+            if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
+            {
+                Model.Open(FileSource.ForFolder(path));
+            }
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The folder dialog failed", ex);
         }
     }
 
     private async Task OpenFilesAsync()
     {
-        IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Open Files", AllowMultiple = true });
-        OpenItems(files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList());
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Open Files", AllowMultiple = true });
+            OpenItems(files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList());
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The file dialog failed", ex);
+        }
+    }
+
+    private void ShowError(string what, Exception exception)
+    {
+        ErrorLog.Write(what, exception);
+        Model.ShowError($"{what}: {exception.Message}");
     }
 
     private void OnStop(object? sender, RoutedEventArgs e) => Model.Cancel();
@@ -212,9 +264,16 @@ public partial class MainWindow : Window
 
     private async void OnCopyPath(object? sender, RoutedEventArgs e)
     {
-        if (Model.SelectedRow is { } row && Clipboard is { } clipboard)
+        try
         {
-            await clipboard.SetTextAsync(row.Path);
+            if (Model.SelectedRow is { } row && Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(row.Path);
+            }
+        }
+        catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))
+        {
+            ShowError("The path was not copied", ex);
         }
     }
 

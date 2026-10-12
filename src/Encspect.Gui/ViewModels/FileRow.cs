@@ -37,8 +37,11 @@ public sealed class FileRow : ObservableObject
 
     public string Name { get; }
 
-    // Set when the row stands for a folder that could not be listed.
+    // Why the folder this row stands for could not be listed; null for a file.
     public string? FolderError { get; }
+
+    // Whether the row has reached the list, which the UI thread sets.
+    internal bool IsListed { get; set; }
 
     public FileState State
     {

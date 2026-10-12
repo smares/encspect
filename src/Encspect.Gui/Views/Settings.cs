@@ -14,9 +14,16 @@ public sealed class Settings
 
     public WindowPlacement? DetailWindow { get; set; }
 
+    // Whether the detail window's pane of background articles was open, and how wide it was.
+    public bool IsTopicPaneOpen { get; set; }
+
+    public double? TopicPaneWidth { get; set; }
+
     [JsonIgnore]
     public string? FilePath { get; private set; }
 
+    // %APPDATA% on Windows, $XDG_CONFIG_HOME or ~/.config on Linux; on macOS .NET maps
+    // ApplicationData to ~/Library/Application Support (NSApplicationSupportDirectory).
     public static string DefaultPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), "Encspect", "settings.json");
 

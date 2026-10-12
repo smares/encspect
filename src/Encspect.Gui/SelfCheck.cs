@@ -1,3 +1,6 @@
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Avalonia;
 using Encspect.Gui.Cache;
 using Encspect.Host;
 using HarfBuzzSharp;
@@ -7,8 +10,9 @@ namespace Encspect.Gui;
 
 // encspect-gui --self-check [file]: what CI runs on a published build, which has no display to
 // open a window on. It loads the native drawing (Skia) and text shaping (HarfBuzz) libraries the
-// way the window would, analyzes the file through the host and reads the file's ID as the summary
-// cache does, through the operating system's functions, then prints a line for each and exits.
+// way the window would, and the platform backend's own native library where it has one, analyzes
+// the file through the host and reads the file's ID as the summary cache does, through the
+// operating system's functions, then prints a line for each and exits.
 internal static class SelfCheck
 {
     public const string Argument = "--self-check";
@@ -29,6 +33,11 @@ internal static class SelfCheck
         }
 
         Console.Out.WriteLine($"Skia and HarfBuzz loaded ({glyphs} characters shaped).");
+        if (!LoadPlatformBackend())
+        {
+            return 1;
+        }
+
         Analyzer analyzer = Analyzer.CreateDefault();
         foreach (string file in files)
         {
@@ -49,5 +58,35 @@ internal static class SelfCheck
         }
 
         return 0;
+    }
+
+    // The backends load their libraries by DllImport from their own assemblies, which a
+    // single-file build resolves to the folder it extracts its native libraries to; loading
+    // through the same assembly takes the same path without starting the backend or opening a
+    // window. Windows draws through ANGLE (av_libGLESv2) and falls back to software drawing
+    // without it, so its absence is reported but is no failure; macOS has no window at all without
+    // Avalonia.Native. Linux's backend (X11) is managed code over the system's own libraries.
+    private static bool LoadPlatformBackend()
+    {
+        (string? library, Assembly? assembly, bool isRequired) = OperatingSystem.IsWindows() ? ("av_libGLESv2.dll", typeof(Win32PlatformOptions).Assembly, false)
+            : OperatingSystem.IsMacOS() ? ("libAvaloniaNative", typeof(AvaloniaNativePlatformOptions).Assembly, true)
+            : (null, null, false);
+        if (library is null || assembly is null)
+        {
+            Console.Out.WriteLine("Platform backend: no native library beyond Skia and HarfBuzz.");
+            return true;
+        }
+
+        try
+        {
+            NativeLibrary.Load(library, assembly, null);
+            Console.Out.WriteLine($"Platform backend: {library} loaded.");
+            return true;
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or BadImageFormatException)
+        {
+            Console.Out.WriteLine($"Platform backend: {library} not loaded: {ex.Message}");
+            return !isRequired;
+        }
     }
 }

@@ -91,4 +91,47 @@ public class HexTests
         Assert.Equal(10, document.Read(199_990, buffer));
         Assert.Equal(0, document.Read(200_000, buffer));
     }
+
+    // On Windows a file cannot be replaced while any handle to it is open, so a document that held
+    // one would keep a tagger from saving the file the detail window shows.
+    [Fact]
+    public void A_file_shown_can_be_replaced_and_its_document_then_reads_nothing_more()
+    {
+        using var folder = new TempFolder();
+        byte[] data = Enumerable.Range(0, 200_000).Select(i => (byte)i).ToArray();
+        string path = folder.Write("shown.bin", data);
+        using HexDocument document = HexDocument.Open(path, data.Length, File.GetLastWriteTimeUtc(path));
+        int changes = 0;
+        document.Changed += (_, _) => changes++;
+        var buffer = new byte[16];
+
+        Assert.Equal(16, document.Read(10, buffer));
+        Assert.Equal(data.AsSpan(10, 16).ToArray(), buffer);
+
+        string replacement = folder.Write("replacement.bin", new byte[1000]);
+        File.Move(replacement, path, overwrite: true);
+
+        Assert.Equal(16, document.Read(10, buffer));
+        Assert.Equal(data.AsSpan(10, 16).ToArray(), buffer);
+        Assert.Equal(0, document.Read(150_000, buffer));
+        Assert.Equal(0, document.Read(140_000, buffer));
+        Assert.True(document.HasChanged);
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public void A_file_rewritten_in_place_at_the_same_length_counts_as_changed()
+    {
+        using var folder = new TempFolder();
+        byte[] data = new byte[100_000];
+        string path = folder.Write("shown.bin", data);
+        DateTime analyzed = File.GetLastWriteTimeUtc(path);
+        using HexDocument document = HexDocument.Open(path, data.Length, analyzed);
+
+        File.WriteAllBytes(path, Enumerable.Repeat((byte)0xAA, data.Length).ToArray());
+        File.SetLastWriteTimeUtc(path, analyzed.AddSeconds(5));
+
+        Assert.Equal(0, document.Read(0, new byte[16]));
+        Assert.True(document.HasChanged);
+    }
 }

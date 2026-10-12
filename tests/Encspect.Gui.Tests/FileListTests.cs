@@ -137,6 +137,76 @@ public class FileListTests
     }
 
     [Fact]
+    public void A_file_whose_analysis_fails_unexpectedly_says_so_and_the_run_goes_on()
+    {
+        using var temp = new TempFolder();
+        temp.Write("a-boom.bin", ThrowingParser.File);
+        temp.Copy(Fixtures.Mpeg(Names[0]), "b.mp3");
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(new ThrowingParser().Analyzer(), ui.Post, parallelism: 1, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+
+        Assert.Equal("Not read", model.Rows[0].FormatText);
+        Assert.Equal("The analysis failed: " + ThrowingParser.Message, model.Rows[0].Problem);
+        Assert.Equal("MPEG Audio", model.Rows[1].Format);
+        Assert.Equal("2 files", model.Status);
+        Assert.Null(model.Error);
+    }
+
+    [Fact]
+    public void Opening_a_source_outside_the_folder_tree_clears_its_selection()
+    {
+        using var first = new TempFolder();
+        using var second = new TempFolder();
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, roots: []);
+        var folder = new FolderItem("first", first.Path, FolderKind.Folder, ui.Post);
+        model.SelectedFolder = folder;
+        Assert.Equal(first.Path, model.Source!.Folder);
+
+        model.Open(FileSource.ForFolder(second.Path));
+        Assert.Null(model.SelectedFolder);
+        Assert.Equal(second.Path, model.Source!.Folder);
+
+        // Choosing the folder again opens it again.
+        model.SelectedFolder = folder;
+        Assert.Equal(first.Path, model.Source!.Folder);
+        ui.Until(() => !model.IsRunning);
+    }
+
+    [Fact]
+    public void Listing_the_folder_again_keeps_the_selected_file_selected()
+    {
+        using var temp = new TempFolder();
+        foreach (string name in Names)
+        {
+            temp.Copy(Fixtures.Mpeg(name), name);
+        }
+
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, roots: []);
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+        model.SelectedRow = model.Rows[1];
+        string selected = model.Rows[1].Name;
+
+        foreach (Action again in new Action[] { model.Refresh, () => model.IncludeSubfolders = true, model.ClearCache })
+        {
+            again();
+            ui.Until(() => !model.IsRunning);
+            Assert.Same(model.Rows[1], model.SelectedRow);
+            Assert.Equal(selected, model.SelectedRow!.Name);
+        }
+
+        // Another folder starts without a selection.
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+        Assert.Null(model.SelectedRow);
+    }
+
+    [Fact]
     public void Rows_keep_the_summary_not_the_report()
     {
         Type[] held = typeof(FileRow).GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)

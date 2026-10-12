@@ -103,7 +103,7 @@ public sealed class Analyzer
         }
 
         var reader = new ByteReader(stream, options.CancellationToken);
-        var root = new Node("File", 0, reader.Length);
+        var root = new Node("File", 0, reader.Length) { Description = HostText.File };
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();
         var failures = new List<Failure>();
@@ -626,14 +626,25 @@ public sealed class Analyzer
     {
         // A tag a container took apart (a Vorbis comment packet that spans Ogg pages) keeps its
         // ranges, so neither node covers the page headers between them.
-        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString()) { Ranges = tag.Ranges };
+        var shownDetection = new Node("Detection", tag.Offset, tag.Length, confidence.ToString())
+        {
+            Description = HostText.Detection,
+            Topic = Topics.TagPlacement,
+            Ranges = tag.Ranges,
+        };
         foreach (Evidence item in evidence)
         {
-            shownDetection.Add("Evidence", item.Offset, item.Length, item.Description);
+            shownDetection.Add("Evidence", item.Offset, item.Length, item.Description, HostText.Evidence);
         }
 
         detection = shownDetection;
-        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection]) { Kind = NodeKind.Tag, Ranges = tag.Ranges };
+        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection])
+        {
+            Kind = NodeKind.Tag,
+            Description = tag.Description,
+            Topic = tag.Topic,
+            Ranges = tag.Ranges,
+        };
     }
 
     private IReadOnlyList<StreamInfo> ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings,
@@ -650,7 +661,7 @@ public sealed class Analyzer
                 long gapEnd = tag?.Offset ?? window.End;
                 if (gapEnd > position)
                 {
-                    Node data = root.Add("Data", position, gapEnd - position);
+                    Node data = root.Add("Data", position, gapEnd - position, null, HostText.UnrecognizedData);
                     first ??= data;
                 }
 

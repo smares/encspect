@@ -1,10 +1,13 @@
 using System.ComponentModel;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Input.Raw;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Encspect.Core;
 using Encspect.Gui.ViewModels;
@@ -78,17 +81,30 @@ public sealed class WindowTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void The_window_first_opens_centered_over_the_main_window()
+    {
+        MainWindow main = OpenMain();
+        main.Position = new PixelPoint(300, 200);
+        UiPump.Until(() => true);
+
+        DetailWindow window = main.DetailWindows.Open(main.Model.Rows[0]);
+        UiPump.Until(() => true);
+
+        // The centers of the two windows' client areas, in screen pixels.
+        Rect owner = new PixelRect(main.Position, PixelSize.FromSize(main.ClientSize, main.DesktopScaling)).ToRect(1);
+        Rect detail = new PixelRect(window.Position, PixelSize.FromSize(window.ClientSize, window.DesktopScaling)).ToRect(1);
+        Assert.InRange(detail.Center.X - owner.Center.X, -1, 1);
+        Assert.InRange(detail.Center.Y - owner.Center.Y, -1, 1);
+        Assert.True(owner.Contains(detail), $"{detail} lies outside {owner}.");
+        main.Close();
+    }
+
+    [AvaloniaFact]
     public void Escape_closes_the_window_and_the_next_one_opens_where_it_was()
     {
         string settingsPath = _folder["settings/settings.json"];
         MainWindow main = OpenMain(Settings.Load(settingsPath));
         DetailWindow window = main.DetailWindows.Open(main.Model.Rows[0]);
-
-        // Centered over the main window the first time.
-        PixelPoint expected = new(
-            main.Position.X + (int)((main.ClientSize.Width - window.Width) * main.DesktopScaling / 2),
-            main.Position.Y + (int)((main.ClientSize.Height - window.Height) * main.DesktopScaling / 2));
-        Assert.Equal(expected, window.Position);
 
         window.Position = new PixelPoint(40, 50);
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
@@ -129,6 +145,139 @@ public sealed class WindowTests : IDisposable
         main.MouseUp(center, MouseButton.Left);
         Assert.NotNull(main.DetailWindows.Shared);
         Assert.Equal(main.Model.Rows[2].Path, main.DetailWindows.Shared.Model.Path);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_maximized_window_keeps_its_normal_placement_and_opens_maximized()
+    {
+        string settingsPath = _folder["settings/settings.json"];
+        MainWindow main = OpenMain(Settings.Load(settingsPath));
+        DetailWindow window = main.DetailWindows.Open(main.Model.Rows[0]);
+        window.Position = new PixelPoint(40, 50);
+        window.Width = 700;
+        window.Height = 500;
+        UiPump.Until(() => true);
+
+        // Maximizing moves and resizes the window, as the system does.
+        window.WindowState = WindowState.Maximized;
+        window.Position = new PixelPoint(0, 0);
+        window.Width = 1600;
+        window.Height = 1000;
+        UiPump.Until(() => true);
+        window.Close();
+
+        WindowPlacement saved = Settings.Load(settingsPath).DetailWindow!;
+        Assert.Equal(new WindowPlacement(40, 50, 700, 500, true), saved);
+
+        DetailWindow again = main.DetailWindows.Open(main.Model.Rows[1]);
+        Assert.Equal(WindowState.Maximized, again.WindowState);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_context_menu_opens_the_selected_file_in_a_new_window()
+    {
+        MainWindow main = OpenMain();
+        DetailWindow shared = main.DetailWindows.Open(main.Model.Rows[0]);
+        main.Model.SelectedRow = main.Model.Rows[2];
+
+        MenuItem item = main.Files.ContextMenu!.Items.OfType<MenuItem>().Single(i => (string?)i.Header == "Open in New Window");
+        item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+        DetailWindow other = Assert.Single(main.DetailWindows.Independent);
+        Assert.True(other.IsVisible);
+        Assert.Equal(main.Model.Rows[2].Path, other.Model.Path);
+        Assert.Equal(main.Model.Rows[2].Path, shared.Model.Path);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void Refresh_reads_the_files_of_the_open_windows_again()
+    {
+        MainWindow main = OpenMain();
+        FileRow selected = main.Model.Rows[1];
+        DetailWindow shared = main.DetailWindows.Open(selected);
+        DetailWindow other = main.DetailWindows.OpenNew(main.Model.Rows[3]);
+        UiPump.Until(() => shared.Model.Tree is not null && other.Model.Tree is not null);
+        Report sharedReport = shared.Model.Report!;
+        Report otherReport = other.Model.Report!;
+        Assert.Contains("BladeEnc", shared.Model.StreamsText, StringComparison.Ordinal);
+
+        // A frame selected in one window, and the other's file replaced by another on disk.
+        StructureTree tree = other.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow frame = tree[tree.IndexOf(stream) + 4];
+        other.Model.SelectedNode = frame;
+        string replacement = _folder["replacement.tmp"];
+        File.Copy(Fixtures.Mpeg("external-lame-tagged.mp3"), replacement);
+        File.Move(replacement, selected.Path, overwrite: true);
+
+        main.Model.Refresh();
+        UiPump.Until(() => !main.Model.IsRunning && shared.Model.Report is { } a && a != sharedReport && other.Model.Report is { } b && b != otherReport);
+
+        Assert.Same(main.Model.Rows[1], main.Model.SelectedRow);
+        Assert.Same(main.Model.SelectedRow, main.Files.SelectedItem);
+        Assert.Same(main.Model.Rows[1], shared.Row);
+        Assert.Same(main.Model.Rows[3], other.Row);
+        Assert.Contains("LAME 3.100", shared.Model.StreamsText, StringComparison.Ordinal);
+        Assert.Equal([frame.Parent!.ChildIndex, frame.ChildIndex], [other.Model.SelectedNode!.Parent!.ChildIndex, other.Model.SelectedNode.ChildIndex]);
+        Assert.Equal(frame.Node.Offset, other.Model.SelectedNode.Node.Offset);
+        Assert.True(shared.Model.CanGoPrevious);
+        Assert.True(shared.Model.CanGoNext);
+        Assert.True(other.Model.CanGoPrevious);
+        Assert.False(other.Model.CanGoNext);
+
+        // Clearing the cache reads them again too.
+        sharedReport = shared.Model.Report!;
+        main.Model.ClearCache();
+        UiPump.Until(() => !main.Model.IsRunning && shared.Model.Report is { } c && c != sharedReport);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void Include_subfolders_keeps_the_selected_file_and_the_windows_on_it_without_reading_it_again()
+    {
+        MainWindow main = OpenMain();
+        FileRow selected = main.Model.Rows[1];
+        DetailWindow shared = main.DetailWindows.Open(selected);
+        UiPump.Until(() => shared.Model.Tree is not null);
+        Report report = shared.Model.Report!;
+
+        main.Model.IncludeSubfolders = true;
+        UiPump.Until(() => !main.Model.IsRunning);
+
+        Assert.NotSame(selected, main.Model.SelectedRow);
+        Assert.Equal(selected.Path, main.Model.SelectedRow!.Path);
+        Assert.Same(main.Model.SelectedRow, shared.Row);
+        Assert.Same(report, shared.Model.Report);
+        Assert.False(shared.Model.IsLoading);
+        Assert.True(shared.Model.CanGoNext);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_window_menu_lists_the_open_windows()
+    {
+        MainWindow main = OpenMain();
+        DetailWindow shared = main.DetailWindows.Open(main.Model.Rows[0]);
+        DetailWindow other = main.DetailWindows.OpenNew(main.Model.Rows[1]);
+
+        // Windows of other tests may still be open; these three opened last.
+        NativeMenu menu = NativeMenu.GetMenu(other)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Window").Menu!;
+        NativeMenuItem[] listed = [.. menu.Items.OfType<NativeMenuItem>().Where(i => i.ToggleType == MenuItemToggleType.CheckBox)];
+        Assert.Contains(menu.Items.OfType<NativeMenuItem>(), i => i.Header == "Bring All to Front");
+        Assert.Equal([main.Title, shared.Title, other.Title], listed.TakeLast(3).Select(i => i.Header));
+        Assert.Equal([true], listed.Where(i => i.IsChecked).Select(_ => true));
+        Assert.True(listed[^1].IsChecked);
+
+        other.Close();
+        NativeMenuItem[] after = [.. NativeMenu.GetMenu(shared)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Window").Menu!
+            .Items.OfType<NativeMenuItem>().Where(i => i.ToggleType == MenuItemToggleType.CheckBox)];
+        Assert.Equal(listed.Length - 1, after.Length);
+        Assert.Equal([main.Title, shared.Title], after.TakeLast(2).Select(i => i.Header));
+        Assert.True(after[^1].IsChecked);
         main.Close();
     }
 
@@ -213,13 +362,23 @@ public sealed class WindowTests : IDisposable
         using var other = new TempFolder();
         other.Copy(Fixtures.Mpeg("external-blade-stereo.mp3"), "album/one.mp3");
 
-        main.OpenItems([_folder["damaged-bitrate.mp3"], other["album"]]);
+        // Dragged from a file manager onto the file list.
+        Point point = main.Files.TranslatePoint(new Point(200, 120), main)!.Value;
+        Drop(main, point, Files(_folder["damaged-bitrate.mp3"], other["album"]));
+        Assert.Equal("2 items", main.Model.Title);
         UiPump.Until(() => !main.Model.IsRunning);
         Assert.Equal(["damaged-bitrate.mp3", Path.Join("album", "one.mp3")], main.Model.Rows.Select(r => r.Name));
         Assert.All(main.Model.Rows, r => Assert.Equal("MPEG Audio", r.Format));
 
-        main.OpenItems([other.Path]);
+        // Text is no file to open.
+        var text = new DataTransfer();
+        text.Add(DataTransferItem.CreateText(other.Path));
+        Drop(main, point, text);
+        Assert.Equal("2 items", main.Model.Title);
+
+        Drop(main, point, Files(other.Path));
         UiPump.Until(() => !main.Model.IsRunning);
+        Assert.Equal(other.Path, main.Model.Title);
         Assert.Empty(main.Model.Rows);
 
         main.KeyPress(Key.I, Shortcuts.Command == KeyModifiers.Meta ? RawInputModifiers.Meta : RawInputModifiers.Control, PhysicalKey.I, null);
@@ -285,6 +444,24 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    private static void Drop(MainWindow window, Point point, DataTransfer data)
+    {
+        window.DragDrop(point, RawDragEventType.DragEnter, data, DragDropEffects.Copy);
+        window.DragDrop(point, RawDragEventType.DragOver, data, DragDropEffects.Copy);
+        window.DragDrop(point, RawDragEventType.Drop, data, DragDropEffects.Copy);
+    }
+
+    private static DataTransfer Files(params string[] paths)
+    {
+        var data = new DataTransfer();
+        foreach (string path in paths)
+        {
+            data.Add(DataTransferItem.CreateFile(LocalStorageItem.Create(path)));
+        }
+
+        return data;
+    }
+
     private MainWindow OpenMain(Settings? settings = null)
     {
         var main = new MainWindow(Analyzer.CreateDefault(), settings ?? new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: []));
@@ -294,4 +471,28 @@ public sealed class WindowTests : IDisposable
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         return main;
     }
+}
+
+// A file or folder as a file manager's drag hands it over: a storage item with a file URI. Avalonia
+// keeps IStorageItem from being implemented by user code at compile time, so a proxy implements it
+// when the test runs.
+public class LocalStorageItem : DispatchProxy
+{
+    private string _path = string.Empty;
+
+    public static IStorageItem Create(string path)
+    {
+        IStorageItem item = Create<IStorageItem, LocalStorageItem>();
+        ((LocalStorageItem)(object)item)._path = path;
+        return item;
+    }
+
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => targetMethod?.Name switch
+    {
+        "get_Path" => new Uri(_path),
+        "get_Name" => Path.GetFileName(_path),
+        "get_CanBookmark" => false,
+        "Dispose" => null,
+        _ => throw new NotSupportedException(targetMethod?.Name),
+    };
 }

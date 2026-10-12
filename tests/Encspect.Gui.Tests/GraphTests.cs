@@ -257,6 +257,49 @@ public class GraphTests
         Assert.InRange(reads.Count, 1, 40);
     }
 
+    [Fact]
+    public void Frames_out_of_file_order_are_still_found()
+    {
+        var root = new Node("File", 0, 6000);
+        var stream = new Node("Stream", 0, 6000) { Kind = NodeKind.Stream };
+        root.Add(stream);
+        for (int i = 0; i < 60; i++)
+        {
+            int at = i switch { 30 => 31, 31 => 30, _ => i };
+            stream.Add(new Node("Frame", at * 100L, 100) { Kind = NodeKind.Frame });
+        }
+
+        foreach (long offset in new long[] { 0, 2950, 3000, 3050, 3100, 3199, 5999 })
+        {
+            List<int>? path = FrameLocator.PathFrom(root, offset);
+            Assert.NotNull(path);
+            Node frame = stream.Children[path[^1]];
+            Assert.InRange(offset, frame.Offset, frame.End - 1);
+        }
+    }
+
+    [Fact]
+    public void A_trailing_child_that_starts_before_the_frames_does_not_hide_them()
+    {
+        foreach (long statisticsOffset in new long[] { 0, 1000 })
+        {
+            var root = new Node("File", 0, 6000);
+            var stream = new Node("Stream", 0, 6000) { Kind = NodeKind.Stream };
+            root.Add(stream);
+            stream.Add(new Node("Header", 0, 1000));
+            for (int i = 0; i < 40; i++)
+            {
+                stream.Add(new Node("Frame", 1000 + (i * 100L), 100) { Kind = NodeKind.Frame });
+            }
+
+            stream.Add(new Node("Statistics", statisticsOffset, 5000 - statisticsOffset) { Kind = NodeKind.Statistics });
+
+            Assert.Equal([0, 1 + 25], FrameLocator.PathFrom(root, 3505));
+            Assert.Equal([0, 1], FrameLocator.PathFrom(root, 1000));
+            Assert.Null(FrameLocator.PathFrom(root, 500));
+        }
+    }
+
     // A stream whose node names say nothing a graph could read; its series alone make the graphs.
     private static StreamInfo Stream(int frames, out double[] bitrates, out double[] offsets)
     {

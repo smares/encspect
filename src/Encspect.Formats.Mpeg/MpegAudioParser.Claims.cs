@@ -57,9 +57,9 @@ public sealed partial class MpegAudioParser
                 {
                     long offset = region.AudioStart;
                     long length = region.AudioEnd - offset;
-                    encoder = new Node("Encoder", offset, length, ClaimedName(text, claimed));
-                    encoder.Add("Confidence", offset, length, "Low");
-                    encoder.Add("Evidence", offset, length, evidence);
+                    encoder = EncoderNode(offset, length, ClaimedName(text, claimed));
+                    encoder.Add("Confidence", offset, length, "Low", Explain.Confidence);
+                    encoder.Add("Evidence", offset, length, evidence, Explain.Evidence);
                 }
 
                 continue;
@@ -68,7 +68,7 @@ public sealed partial class MpegAudioParser
             HashSet<string> named = FamiliesOf(encoder.Value?.ToString() ?? string.Empty);
             if (claimed.Overlaps(named))
             {
-                encoder.Add("Evidence", encoder.Offset, encoder.Length, evidence);
+                encoder.Add("Evidence", encoder.Offset, encoder.Length, evidence, Explain.Evidence);
                 Node confidence = encoder.Children.First(c => c.Name == "Confidence");
                 if (confidence.Value == "Low")
                 {
@@ -77,7 +77,7 @@ public sealed partial class MpegAudioParser
             }
             else if (claimed.Contains("FFmpeg"))
             {
-                encoder.Add("Evidence", encoder.Offset, encoder.Length, evidence);
+                encoder.Add("Evidence", encoder.Offset, encoder.Length, evidence, Explain.Evidence);
             }
             else
             {

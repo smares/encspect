@@ -23,10 +23,9 @@ public sealed class TreeRow : ObservableObject
 
     public TreeRow? Parent { get; }
 
-    // The index of the node among its parent's children.
     public int ChildIndex { get; }
 
-    // Levels below the report's root.
+    // 0 for the report's root.
     public int Depth { get; }
 
     public double Indent => Depth * IndentPerLevel;
@@ -34,6 +33,13 @@ public sealed class TreeRow : ObservableObject
     public string Name => Node.Name;
 
     public string? Value => Node.Value?.ToString();
+
+    // What the row's tooltip shows: the name and value, then what the field is.
+    public string Heading => Value is { } value ? $"{Name}: {value}" : Name;
+
+    public string? Description => Node.Description;
+
+    public bool HasDescription => Node.Description is not null;
 
     public NodeKind Kind => Node.Kind;
 
