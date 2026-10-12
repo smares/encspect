@@ -1,0 +1,189 @@
+{
+ "description": "MPEG-1 Layer III in MP4 (object type 0x6B), one chunk of 12 frames, which the MPEG audio parser reads as the same bytes in a file.",
+ "length": 5645,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   605
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   489
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   389
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   304
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   244
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   96
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   493,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   517,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   545,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   613,
+   20
+  ],
+  [
+   "mdat",
+   633,
+   5012
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 13824,
+   "is_vbr": false
+  }
+ ],
+ "units": [
+  [
+   641,
+   417
+  ],
+  [
+   1058,
+   417
+  ],
+  [
+   1475,
+   417
+  ],
+  [
+   1892,
+   417
+  ],
+  [
+   2309,
+   417
+  ],
+  [
+   2726,
+   417
+  ],
+  [
+   3143,
+   417
+  ],
+  [
+   3560,
+   417
+  ],
+  [
+   3977,
+   417
+  ],
+  [
+   4394,
+   417
+  ],
+  [
+   4811,
+   417
+  ],
+  [
+   5228,
+   417
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor": "0x6B (MPEG-1 Audio)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only."
+  }
+ }
+}

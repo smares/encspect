@@ -54,6 +54,25 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(data);
     }
 
+    // An MP4 file keeps a compact record per access unit and the arrays of its graphs, and reads its
+    // sample tables into arrays of the entries the boxes hold, never the samples' bytes at once
+    // (plan, "Large inputs"): 35 bytes kept per sample on linux-x64. The bound leaves room for a
+    // platform that measures twice that, as macOS on arm64 did for the Ogg records, and stays below
+    // what keeping a sample's node or bytes would cost.
+    [Fact]
+    public void ManySamplesStayCompact()
+    {
+        const int samples = 100_000;
+
+        (Report report, long kept, long peak) = Measure("samples.m4a", Mp4Samples(samples));
+
+        Assert.Equal(samples, Assert.Single(report.Streams).Samples / 1024);
+        output.WriteLine($"{kept / samples} bytes kept and {peak / samples} bytes peak per sample");
+        Assert.True(kept < samples * 80L, $"The report keeps {kept / samples} bytes per sample.");
+        Assert.True(peak < samples * 1024L, $"The heap grew by {peak / samples} bytes per sample.");
+        GC.KeepAlive(report);
+    }
+
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
     // scan never holds the pages' nodes or data (64 bytes kept per page and a few more for its
     // segment table and place in its stream, 72 in all on linux-x64, where macOS on arm64
@@ -142,6 +161,46 @@ public class MemoryTests(ITestOutputHelper output)
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
         return GC.GetTotalMemory(forceFullCollection: false);
+    }
+
+    // An M4A file of count silent AAC LC stereo access units of 6 bytes (a channel pair element with
+    // max_sfb 0 and an END element), in one chunk after moov (ISO/IEC 14496-12 8.5 to 8.7).
+    private static byte[] Mp4Samples(int count)
+    {
+        static byte[] Box(string type, params byte[][] parts)
+        {
+            byte[] payload = parts.SelectMany(p => p).ToArray();
+            return [.. BigEndian(8 + payload.Length), .. System.Text.Encoding.ASCII.GetBytes(type), .. payload];
+        }
+
+        static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
+
+        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x01, 0x9C];
+        byte[] Moov(int mdatPayload)
+        {
+            byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);
+            byte[] mp4a = Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
+            byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Enumerable.Range(0, count).SelectMany(_ => BigEndian(unit.Length)).ToArray());
+            byte[] stbl = Box("stbl",
+                Box("stsd", [0, 0, 0, 0], BigEndian(1), mp4a),
+                Box("stts", [0, 0, 0, 0], BigEndian(1), BigEndian(count), BigEndian(1024)),
+                Box("stsc", [0, 0, 0, 0], BigEndian(1), BigEndian(1), BigEndian(count), BigEndian(1)),
+                stsz,
+                Box("stco", [0, 0, 0, 0], BigEndian(1), BigEndian(mdatPayload)));
+            byte[] mdia = Box("mdia",
+                Box("mdhd", [0, 0, 0, 0], new byte[8], BigEndian(44100), BigEndian(count * 1024), [0x55, 0xC4, 0, 0]),
+                Box("hdlr", [0, 0, 0, 0], new byte[4], System.Text.Encoding.ASCII.GetBytes("soun"), new byte[13]),
+                Box("minf", Box("smhd", new byte[8]), Box("stbl", stbl[8..])));
+            byte[] tkhd = Box("tkhd", [0, 0, 0, 3], new byte[8], BigEndian(1), new byte[4], BigEndian(count * 1024 / 44100 * 1000), new byte[60]);
+            byte[] mvhd = Box("mvhd", [0, 0, 0, 0], new byte[8], BigEndian(1000), BigEndian(count * 1024 / 44100 * 1000), new byte[80]);
+            return Box("moov", mvhd, Box("trak", tkhd, mdia));
+        }
+
+        byte[] ftyp = Box("ftyp", System.Text.Encoding.ASCII.GetBytes("M4A "), new byte[4], System.Text.Encoding.ASCII.GetBytes("M4A isom"));
+        int moovLength = Moov(0).Length;
+        byte[] moov = Moov(ftyp.Length + moovLength + 8);
+        byte[] mdat = [.. BigEndian(8 + (count * unit.Length)), .. "mdat"u8, .. Enumerable.Repeat(unit, count).SelectMany(u => u)];
+        return [.. ftyp, .. moov, .. mdat];
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side

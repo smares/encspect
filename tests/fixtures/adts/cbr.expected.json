@@ -1,0 +1,156 @@
+{
+ "description": "ADTS AAC LC stereo at 44100 Hz with a buffer fullness of 0x100 in every frame, so a constant bitrate.",
+ "length": 1053,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 30720,
+   "is_vbr": false
+  }
+ ],
+ "units": [
+  [
+   0,
+   13
+  ],
+  [
+   13,
+   52
+  ],
+  [
+   65,
+   49
+  ],
+  [
+   114,
+   46
+  ],
+  [
+   160,
+   43
+  ],
+  [
+   203,
+   40
+  ],
+  [
+   243,
+   37
+  ],
+  [
+   280,
+   34
+  ],
+  [
+   314,
+   31
+  ],
+  [
+   345,
+   27
+  ],
+  [
+   372,
+   24
+  ],
+  [
+   396,
+   21
+  ],
+  [
+   417,
+   18
+  ],
+  [
+   435,
+   15
+  ],
+  [
+   450,
+   53
+  ],
+  [
+   503,
+   50
+  ],
+  [
+   553,
+   47
+  ],
+  [
+   600,
+   44
+  ],
+  [
+   644,
+   41
+  ],
+  [
+   685,
+   38
+  ],
+  [
+   723,
+   35
+  ],
+  [
+   758,
+   32
+  ],
+  [
+   790,
+   28
+  ],
+  [
+   818,
+   25
+  ],
+  [
+   843,
+   22
+  ],
+  [
+   865,
+   19
+  ],
+  [
+   884,
+   16
+  ],
+  [
+   900,
+   54
+  ],
+  [
+   954,
+   51
+  ],
+  [
+   1005,
+   48
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Buffer Fullness": "256",
+  "ADTS/Frame/Profile": "1 (AAC LC)",
+  "ADTS/Frame/Raw Data Block": "CPE"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "faad": {
+   "seconds": "0.697",
+   "rate": 44100
+  }
+ }
+}

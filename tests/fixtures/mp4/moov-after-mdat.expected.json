@@ -1,0 +1,265 @@
+{
+ "description": "moov after mdat: playable, but a player must reach the end of the file first.",
+ "length": 1574,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "mdat",
+   28,
+   851
+  ],
+  [
+   "moov",
+   879,
+   695
+  ],
+  [
+   "moov/mvhd",
+   887,
+   108
+  ],
+  [
+   "moov/trak",
+   995,
+   579
+  ],
+  [
+   "moov/trak/tkhd",
+   1003,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   1095,
+   479
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   1103,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   1135,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   1180,
+   394
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   1188,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   1204,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   1212,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   1228,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   1240,
+   334
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   1248,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   1264,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   1300,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   1354,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   1378,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   1406,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   1546,
+   28
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   36,
+   6
+  ],
+  [
+   42,
+   45
+  ],
+  [
+   87,
+   42
+  ],
+  [
+   129,
+   39
+  ],
+  [
+   168,
+   36
+  ],
+  [
+   204,
+   33
+  ],
+  [
+   237,
+   30
+  ],
+  [
+   267,
+   27
+  ],
+  [
+   294,
+   24
+  ],
+  [
+   318,
+   20
+  ],
+  [
+   338,
+   17
+  ],
+  [
+   355,
+   14
+  ],
+  [
+   369,
+   11
+  ],
+  [
+   380,
+   8
+  ],
+  [
+   388,
+   46
+  ],
+  [
+   434,
+   43
+  ],
+  [
+   477,
+   40
+  ],
+  [
+   517,
+   37
+  ],
+  [
+   554,
+   34
+  ],
+  [
+   588,
+   31
+  ],
+  [
+   619,
+   28
+  ],
+  [
+   647,
+   25
+  ],
+  [
+   672,
+   21
+  ],
+  [
+   693,
+   18
+  ],
+  [
+   711,
+   15
+  ],
+  [
+   726,
+   12
+  ],
+  [
+   738,
+   9
+  ],
+  [
+   747,
+   47
+  ],
+  [
+   794,
+   44
+  ],
+  [
+   838,
+   41
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

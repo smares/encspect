@@ -141,6 +141,9 @@ jobs:
       - name: Regenerate the hand-built statistics fixtures
         run: python3 scripts/fixtures/make_stats_fixtures.py
 
+      - name: Regenerate the hand-built MP4 and raw AAC fixtures
+        run: python3 scripts/fixtures/make_mp4_fixtures.py
+
       - name: Regenerate the hand-built Ogg fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ogg_fixtures.py
@@ -205,6 +208,21 @@ jobs:
 
       - name: Check the analyzer against the mp3PRO manifest
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
+
+  mp4-crosscheck:
+    name: MP4 and AAC fixtures agree with ffprobe, MP4Box and faad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 6.1, GPAC 2.2 and faad2 2.11 from Ubuntu 24.04, the versions the manifests were checked with.
+      - name: Install ffmpeg, gpac and faad
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg gpac faad
+
+      - name: Cross-check the MP4 and AAC fixtures
+        run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe and speexdec

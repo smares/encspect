@@ -1,0 +1,248 @@
+{
+ "description": "A second mvhd in moov and a second stsd in stbl.",
+ "length": 1484,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   865
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   641
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   541
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   456
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   396
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   655,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   679,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   695,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   731,
+   54
+  ],
+  [
+   "moov/mvhd",
+   785,
+   108
+  ],
+  [
+   "mdat",
+   893,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   901,
+   6
+  ],
+  [
+   907,
+   45
+  ],
+  [
+   952,
+   42
+  ],
+  [
+   994,
+   39
+  ],
+  [
+   1033,
+   36
+  ],
+  [
+   1069,
+   33
+  ],
+  [
+   1102,
+   30
+  ],
+  [
+   1132,
+   27
+  ],
+  [
+   1159,
+   24
+  ],
+  [
+   1183,
+   20
+  ],
+  [
+   1203,
+   17
+  ],
+  [
+   1220,
+   14
+  ],
+  [
+   1234,
+   11
+  ],
+  [
+   1245,
+   8
+  ],
+  [
+   1253,
+   46
+  ],
+  [
+   1299,
+   43
+  ],
+  [
+   1342,
+   40
+  ],
+  [
+   1382,
+   37
+  ],
+  [
+   1419,
+   34
+  ],
+  [
+   1453,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.duplicate-box",
+   "second mvhd box"
+  ],
+  [
+   "mp4.duplicate-box",
+   "second stsd box"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

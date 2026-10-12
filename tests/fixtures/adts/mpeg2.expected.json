@@ -1,0 +1,114 @@
+{
+ "description": "MPEG-2 ADTS (ID 1), whose profile 1 is LC as in MPEG-4.",
+ "length": 723,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   13
+  ],
+  [
+   13,
+   52
+  ],
+  [
+   65,
+   49
+  ],
+  [
+   114,
+   46
+  ],
+  [
+   160,
+   43
+  ],
+  [
+   203,
+   40
+  ],
+  [
+   243,
+   37
+  ],
+  [
+   280,
+   34
+  ],
+  [
+   314,
+   31
+  ],
+  [
+   345,
+   27
+  ],
+  [
+   372,
+   24
+  ],
+  [
+   396,
+   21
+  ],
+  [
+   417,
+   18
+  ],
+  [
+   435,
+   15
+  ],
+  [
+   450,
+   53
+  ],
+  [
+   503,
+   50
+  ],
+  [
+   553,
+   47
+  ],
+  [
+   600,
+   44
+  ],
+  [
+   644,
+   41
+  ],
+  [
+   685,
+   38
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Version": "MPEG-2"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "faad": {
+   "seconds": "0.464",
+   "rate": 44100
+  }
+ }
+}

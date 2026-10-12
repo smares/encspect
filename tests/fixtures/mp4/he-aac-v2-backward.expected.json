@@ -1,0 +1,263 @@
+{
+ "description": "HE-AAC v2 signaled backward compatibly: the sync extensions 0x2B7 (SBR) and 0x548 (PS) after a mono AAC LC configuration.",
+ "length": 1516,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   697
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   581
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   481
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   396
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   336
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   108
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   92
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   56
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   505,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   529,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   557,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   697,
+   28
+  ],
+  [
+   "mdat",
+   725,
+   791
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "samples": 61440,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   733,
+   4
+  ],
+  [
+   737,
+   43
+  ],
+  [
+   780,
+   40
+  ],
+  [
+   820,
+   37
+  ],
+  [
+   857,
+   34
+  ],
+  [
+   891,
+   31
+  ],
+  [
+   922,
+   28
+  ],
+  [
+   950,
+   25
+  ],
+  [
+   975,
+   22
+  ],
+  [
+   997,
+   18
+  ],
+  [
+   1015,
+   15
+  ],
+  [
+   1030,
+   12
+  ],
+  [
+   1042,
+   9
+  ],
+  [
+   1051,
+   6
+  ],
+  [
+   1057,
+   44
+  ],
+  [
+   1101,
+   41
+  ],
+  [
+   1142,
+   38
+  ],
+  [
+   1180,
+   35
+  ],
+  [
+   1215,
+   32
+  ],
+  [
+   1247,
+   29
+  ],
+  [
+   1276,
+   26
+  ],
+  [
+   1302,
+   23
+  ],
+  [
+   1325,
+   19
+  ],
+  [
+   1344,
+   16
+  ],
+  [
+   1360,
+   13
+  ],
+  [
+   1373,
+   10
+  ],
+  [
+   1383,
+   7
+  ],
+  [
+   1390,
+   45
+  ],
+  [
+   1435,
+   42
+  ],
+  [
+   1477,
+   39
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Sync Extension": "SBR and PS present",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Sync Extension/HasPs": "true"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "HE AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}
