@@ -73,8 +73,9 @@ def samples_per_frame(version, layer):
 class FrameInfo:
     """What the statistics need of one frame."""
 
-    def __init__(self, offset, length, version, layer, rate, bitrate, header=None, truncated=False, fill=None, coding=None):
+    def __init__(self, offset, length, version, layer, rate, bitrate, header=None, truncated=False, fill=None, coding=None, mode=None):
         self.offset, self.length, self.version, self.layer, self.rate = offset, length, version, layer, rate
+        self.mode = mode  # the channel mode as the report names it, where the caller knows it
         self.bitrate = bitrate  # kbps, or None for free format
         self.header = header  # the vbr_tags.read() result for a frame holding a VBR header
         self.truncated, self.fill = truncated, fill
@@ -218,6 +219,8 @@ def stream_fields(frames):
         "samples": sum(f.samples for f in audio),
         "duration": duration_text(ticks),
     }
+    if first.mode is not None:
+        fields["channel_layout"] = channel_layout(first.mode)
     if not audio:
         return fields
     fields["average_bitrate"] = kbps_tenths_text(sum(f.length * 8 for f in audio), ticks)
@@ -240,6 +243,12 @@ def stream_fields(frames):
         fields["reservoir_fill_over_time"] = ",".join(
             str(rounded(Fraction(per_second[s][2], per_second[s][3]))) if s in per_second else "0" for s in seconds)
     return fields
+
+
+def channel_layout(mode):
+    """The speakers of a stream whose first frame has this channel mode: the two programs of dual
+    channel feed no speaker positions."""
+    return {"Mono": ["front center"], "Dual channel": ["discrete", "discrete"]}.get(mode, ["front left", "front right"])
 
 
 def exact(frames):

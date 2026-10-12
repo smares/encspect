@@ -18,7 +18,8 @@ public sealed class FileRow : ObservableObject
     private static readonly string[] Changed =
     [
         nameof(Format), nameof(FormatText), nameof(Codec), nameof(Duration), nameof(DurationText), nameof(Bitrate), nameof(IsVbr),
-        nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(Encoder), nameof(EncoderConfidence),
+        nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(ChannelLayout),
+        nameof(ChannelLayoutTip), nameof(Encoder), nameof(EncoderConfidence),
         nameof(EncoderText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
         nameof(InfosText), nameof(FindingsRank), nameof(Problem),
     ];
@@ -81,6 +82,15 @@ public sealed class FileRow : ObservableObject
     public string? SampleRateText => SampleRate is > 0 and var hertz ? ViewModels.Format.SampleRate(hertz) : null;
 
     public string? ChannelMode => _summary?.Summary.ChannelMode;
+
+    // The first stream's layout by its common name, such as "5.1", or by its speakers where it has
+    // none.
+    public string? ChannelLayout => _summary?.Summary is { ChannelLayout: { } layout } summary
+        ? summary.ChannelLayoutName ?? ChannelLayouts.Speakers(layout)
+        : null;
+
+    // The speakers in the stream's channel order, for the cell's tooltip.
+    public string? ChannelLayoutTip => _summary?.Summary.ChannelLayout is { } layout ? ChannelLayouts.Speakers(layout) : null;
 
     public string? Encoder => _summary?.Summary.Encoder;
 

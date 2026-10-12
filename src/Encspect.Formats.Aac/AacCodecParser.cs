@@ -154,6 +154,7 @@ public sealed class AacCodecParser : ICodecParser
             SampleRate = rate,
             Channels = config.OutputChannels ?? 0,
             ChannelMode = config.ChannelMode,
+            ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,

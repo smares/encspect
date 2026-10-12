@@ -517,6 +517,7 @@ public sealed partial class OpusParser
                     SampleRate = Rate,
                     Channels = head.Channels,
                     ChannelMode = head.Channels > 0 ? head.ChannelMode : null,
+                    ChannelLayout = head.Speakers,
                     Samples = samples,
                     Duration = samples / (double)Rate,
                     AverageBitrate = _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,

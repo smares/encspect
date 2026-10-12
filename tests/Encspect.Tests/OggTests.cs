@@ -139,7 +139,7 @@ public class OggTests
         var writer = new StringWriter();
         ReportCsvWriter.Write([report], writer);
 
-        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,speexenc 1.2.1,High,Vorbis Comment,0,0,0",
+        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,mono (front center),speexenc 1.2.1,High,Vorbis Comment,0,0,0",
             writer.ToString().Split("\r\n")[1]);
 
         ReportSummary chained = ReportSummary.From(Fixtures.AnalyzeMpeg("ogg/external-chained.spx"));
@@ -157,10 +157,10 @@ public class OggTests
         ReportCsvWriter.Write(reports, writer);
         string[] lines = writer.ToString().Split("\r\n");
 
-        Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,libvorbis 1.3.7,High,Vorbis Comment,0,0,0", lines[1]);
+        Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,\"5.1 (front left, front center, front right, back left, back right, LFE)\",libvorbis 1.3.7,High,Vorbis Comment,0,0,0", lines[1]);
         Assert.StartsWith("external-opusenc-cvbr.opus,Ogg,1,Opus,1.500,72000,", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",48000,Stereo,opusenc 0.2 (libopus 1.4),High,Vorbis Comment,0,0,0", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",48000,Stereo,FFmpeg (Lavc60.31.102 opus),Medium,Vorbis Comment,0,0,0", lines[3], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",opusenc 0.2 (libopus 1.4),High,Vorbis Comment,0,0,0", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",FFmpeg (Lavc60.31.102 opus),Medium,Vorbis Comment,0,0,0", lines[3], StringComparison.Ordinal);
         Node head = reports[1].Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Name == "Opus Head");
         Assert.Equal("44100 Hz", head.Children.Single(c => c.Name == "Input Sample Rate").Value?.ToString());
         Assert.False(reports[2].Streams.Single().IsVbr);

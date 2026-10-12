@@ -544,6 +544,7 @@ public sealed partial class VorbisParser
                     SampleRate = (int)Math.Min(id.Rate, int.MaxValue),
                     Channels = id.Channels,
                     ChannelMode = id.Channels > 0 ? ChannelMode(id.Channels) : null,
+                    ChannelLayout = VorbisParser.Speakers(id.Channels),
                     Samples = samples,
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,

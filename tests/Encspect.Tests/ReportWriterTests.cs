@@ -111,6 +111,21 @@ public class ReportWriterTests
     }
 
     [Fact]
+    public void JsonWritesA64BitHexValueAsAnUnsignedNumber()
+    {
+        var root = new Node("File", 0, 8);
+        root.Add("Mask", 0, 8, NodeValue.Hex(ulong.MaxValue, 16));
+        using var output = new MemoryStream();
+
+        ReportJsonWriter.Write([new Report("mask.bin", root, [])], output);
+
+        string json = System.Text.Encoding.UTF8.GetString(output.ToArray());
+        using JsonDocument document = JsonDocument.Parse(json);
+        Assert.Equal(JsonValueKind.Array, document.RootElement.ValueKind);
+        Assert.Contains("18446744073709551615", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void JsonOutputIsFlushedWhileALargeReportIsWritten()
     {
         var root = new Node("File", 0, 100_000);

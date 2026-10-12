@@ -9,7 +9,7 @@ public static class ReportCsvWriter
     private static readonly string[] Columns =
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
-        "Encoder", "Encoder Confidence", "Tags", "Errors", "Warnings", "Infos",
+        "Channel Layout", "Encoder", "Encoder Confidence", "Tags", "Errors", "Warnings", "Infos",
     ];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer)
@@ -24,7 +24,7 @@ public static class ReportCsvWriter
             WriteRow(writer,
             [
                 s.Source, s.Format, Count(s.Streams), s.Codec, Fixed(s.Duration, 3), s.Samples?.ToString(CultureInfo.InvariantCulture),
-                Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.Encoder,
+                Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.ChannelLayoutText, s.Encoder,
                 s.EncoderConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
             ]);
             writer.Flush();

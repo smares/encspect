@@ -45,6 +45,7 @@ internal static class AudioSpecificConfig
             CoreSampleRate = rate,
             ChannelConfiguration = configuration,
             Channels = state.Channels ?? (configuration == 0 ? null : AacTables.Channels(configuration)),
+            Layout = state.Layout,
             Sbr = state.Sbr,
             Ps = state.Ps,
             Signaling = state.Signaling,
@@ -60,7 +61,7 @@ internal static class AudioSpecificConfig
     {
         int type = ObjectType(f, node, "Audio Object Type", Explain.ObjectType);
         int rate = SampleRate(f, node, "Sample Rate", Explain.SampleRate, report);
-        int configuration = (int)f.Read(node, "Channel Configuration", 4, Explain.ChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
+        int configuration = (int)f.Read(node, "Channel Configuration", 4, Explain.ChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})", Topics.ChannelLayouts);
         state.SampleRate = rate;
         state.ChannelConfiguration = configuration;
         if (AacTables.Channels(configuration) is null && configuration != 0)
@@ -222,9 +223,10 @@ internal static class AudioSpecificConfig
         {
             var pce = new Node("Program Config Element", 0, 0);
             int start = f.Position;
-            int channels = ProgramConfigElement.Read(f, pce, 0, report);
-            node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), Explain.ProgramConfigElement, pce));
+            int channels = ProgramConfigElement.Read(f, pce, 0, report, out IReadOnlyList<Speaker> layout);
+            node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), Explain.ProgramConfigElement, pce, Topics.ChannelLayouts));
             state.Channels = channels;
+            state.Layout = layout;
         }
 
         if (type is 6 or 20)
@@ -398,19 +400,22 @@ internal static class AudioSpecificConfig
                 report(Severity.Warning, "aac.usac-reserved-frame-length", $"The coreSbrFrameLengthIndex {frameIndex} is reserved.", node);
             }
 
-            int channelIndex = (int)f.Read(usac, "Channel Configuration", 5, Explain.UsacChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
-            state.Channels = AacTables.Channels(channelIndex);
+            int channelIndex = (int)f.Read(usac, "Channel Configuration", 5, Explain.UsacChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})", Topics.ChannelLayouts);
+            state.Layout = AacTables.UsacLayout(channelIndex);
+            state.Channels = state.Layout?.Count;
             if (channelIndex == 0)
             {
                 int channelStart = f.Position;
                 var channels = new Node("UsacChannelConfig", 0, 0);
                 long count = f.Escaped(channels, "Output Channels", Explain.OutputChannels, 5, 8, 16);
+                var positions = new List<int>();
                 for (long i = 0; i < count; i++)
                 {
-                    f.Read(channels, "Output Channel Position", 5, Explain.OutputChannelPosition);
+                    positions.Add((int)f.Read(channels, "Output Channel Position", 5, Explain.OutputChannelPosition));
                 }
 
                 state.Channels = (int)count;
+                state.Layout = AacTables.UsacPositions(positions);
                 node.Add(f.Span("UsacChannelConfig", channelStart, NodeValue.Integer(count, "channels"), Explain.UsacChannelConfig, channels));
             }
 
@@ -523,6 +528,8 @@ internal static class AudioSpecificConfig
         public int? ChannelConfiguration { get; set; }
 
         public int? Channels { get; set; }
+
+        public IReadOnlyList<Speaker>? Layout { get; set; }
 
         public bool? Sbr { get; set; }
 

@@ -17,6 +17,28 @@ import struct
 
 import ogg_model as m
 
+# The speakers of Vorbis I section 4.3.9's channel order, which Opus's mapping family 1 shares (RFC
+# 7845, section 5.1.1.2), as the analyzer names them: the lone surround pair of 4 to 6 channels is
+# the back pair, and with a rear pair as well the surround pair is the side pair.
+VORBIS_SPEAKERS = {
+    1: ["front center"],
+    2: ["front left", "front right"],
+    3: ["front left", "front center", "front right"],
+    4: ["front left", "front right", "back left", "back right"],
+    5: ["front left", "front center", "front right", "back left", "back right"],
+    6: ["front left", "front center", "front right", "back left", "back right", "LFE"],
+    7: ["front left", "front center", "front right", "side left", "side right", "back center", "LFE"],
+    8: ["front left", "front center", "front right", "side left", "side right", "back left", "back right", "LFE"],
+}
+
+
+def opus_speakers(head):
+    """The speakers of families 0 and 1; none for ambisonics and family 255, which name none."""
+    family, channels = head[18], head[9]
+    if (family == 0 and channels in (1, 2)) or (family == 1 and 1 <= channels <= 8):
+        return VORBIS_SPEAKERS[channels]
+    return []
+
 # --- Bits -----------------------------------------------------------------------------------------
 
 
@@ -581,7 +603,8 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 statistics[f"Modes/Mode {mode} ({'long' if modes[mode] else 'short'} block)"] = m.share(mode_counts[mode], block_count, "packet", "packets")
 
     info = None if fields is None else {
-        "codec": "Vorbis", "sample_rate": min(rate, 2 ** 31 - 1), "channels": channels, "samples": samples,
+        "codec": "Vorbis", "sample_rate": min(rate, 2 ** 31 - 1), "channels": channels, "channel_layout": VORBIS_SPEAKERS.get(channels, []),
+        "samples": samples,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": sum(len(d) for _, d, _ in packets) * 8.0 * rate / decoded / 1000 if has_time and decoded else None,
         "is_vbr": len(sizes) > 1,
@@ -968,7 +991,7 @@ def opus_expectations(head, packets, positions, gaps=()):
     info = None if len(head) < 19 or not has_head else {
         "codec": "Opus", "sample_rate": 48000, "channels": head[9], "samples": samples, "duration": samples / 48000,
         "average_bitrate": sum(sizes) * 8.0 * 48000 / decoded / 1000 if decoded else None, "is_vbr": varies,
-        "channel_mode": opus_channel_mode(head) if head[9] else None,
+        "channel_mode": opus_channel_mode(head) if head[9] else None, "channel_layout": opus_speakers(head),
     }
     return {
         "packets": [[o, len(d)] + ([list(x) for x in ranges] if len(ranges) > 1 else []) for o, d, ranges in packets],

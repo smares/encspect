@@ -79,6 +79,7 @@ public sealed partial class Mp4Parser
             Description = Explain.TrackSamples,
         };
         parent.Add(samples);
+        int streams = state.Context.Streams.Count;
         if (codec == "mpeg-audio" && ranges.Count == 1)
         {
             // MPEG audio in one stretch is read as the same bytes in a file would be.
@@ -94,6 +95,8 @@ public sealed partial class Mp4Parser
 
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
         }
+
+        CompareLayouts(state, entry, codec, streams, label);
     }
 
     // What the file says about the bitrate: Apple's encoder records its mode in Encoding Params, and

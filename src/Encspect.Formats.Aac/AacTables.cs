@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Aac;
 
 // The tables of ISO/IEC 14496-3 that the configuration and the ADTS header index.
@@ -104,6 +106,85 @@ internal static class AacTables
         14 => "7.1: center, left/right, left/right surround, LFE, left/right front height",
         _ => "reserved",
     };
+
+    // The speakers of a channel configuration in the order of its elements (Table 1.19), which is
+    // the decoder's output order: the center first. The surround pair is at the back, and at the
+    // sides where a rear pair follows (12 and 13); 7's first pair is the one beside the center and
+    // its second the outside front pair. ffmpeg's decoder maps them the same way
+    // (ff_aac_channel_layout_map in libavcodec/aac/aacdec_tab.c). Null for 0 (a program config
+    // element says) and the reserved values.
+    public static IReadOnlyList<Speaker>? Layout(int configuration) => configuration switch
+    {
+        1 => [Speaker.FrontCenter],
+        2 => [Speaker.FrontLeft, Speaker.FrontRight],
+        3 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight],
+        4 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackCenter],
+        5 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        6 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+        7 => [Speaker.FrontCenter, Speaker.FrontLeftOfCenter, Speaker.FrontRightOfCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft,
+            Speaker.BackRight, Speaker.LowFrequency],
+        11 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.BackCenter, Speaker.LowFrequency],
+        12 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight,
+            Speaker.LowFrequency],
+        13 => [Speaker.FrontCenter, Speaker.FrontLeftOfCenter, Speaker.FrontRightOfCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.SideLeft,
+            Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.BackCenter, Speaker.LowFrequency, Speaker.LowFrequency2,
+            Speaker.TopFrontCenter, Speaker.TopFrontLeft, Speaker.TopFrontRight, Speaker.TopSideLeft, Speaker.TopSideRight, Speaker.TopCenter,
+            Speaker.TopBackLeft, Speaker.TopBackRight, Speaker.TopBackCenter, Speaker.BottomFrontCenter, Speaker.BottomFrontLeft, Speaker.BottomFrontRight],
+        14 => [Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency, Speaker.TopFrontLeft,
+            Speaker.TopFrontRight],
+        _ => null,
+    };
+
+    // USAC's channelConfigurationIndex is ISO/IEC 23091-3's ChannelConfiguration (ISO/IEC 23003-3
+    // 5.2), which agrees with Table 1.19 and adds 8 (two independent mono channels), 9 and 10.
+    public static IReadOnlyList<Speaker>? UsacLayout(int index) => index switch
+    {
+        8 => [Speaker.Discrete, Speaker.Discrete],
+        9 => [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackCenter],
+        10 => [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        _ => Layout(index),
+    };
+
+    // USAC's bsOutputChannelPos, an ISO/IEC 23091-3 speaker position (ISO/IEC 23003-3 5.2), as
+    // ffmpeg reads them (iso_channel_position in libavformat/mov_chan.c). The surround pair (4 and
+    // 5) is at the back, and at the sides where the rear pair (8 and 9) is also present; positions
+    // the speakers of the report have no name for are discrete.
+    public static IReadOnlyList<Speaker> UsacPositions(IReadOnlyList<int> positions)
+    {
+        bool hasRear = positions.Contains(8) || positions.Contains(9);
+        return [.. positions.Select(p => p switch
+        {
+            0 => Speaker.FrontLeft,
+            1 => Speaker.FrontRight,
+            2 => Speaker.FrontCenter,
+            3 => Speaker.LowFrequency,
+            4 => hasRear ? Speaker.SideLeft : Speaker.BackLeft,
+            5 => hasRear ? Speaker.SideRight : Speaker.BackRight,
+            6 => Speaker.FrontLeftOfCenter,
+            7 => Speaker.FrontRightOfCenter,
+            8 => Speaker.BackLeft,
+            9 => Speaker.BackRight,
+            10 => Speaker.BackCenter,
+            11 or 13 => Speaker.SideLeft,
+            12 or 14 => Speaker.SideRight,
+            15 => Speaker.FrontLeftWide,
+            16 => Speaker.FrontRightWide,
+            17 => Speaker.TopFrontLeft,
+            18 => Speaker.TopFrontRight,
+            19 => Speaker.TopFrontCenter,
+            20 => Speaker.TopBackLeft,
+            21 => Speaker.TopBackRight,
+            22 => Speaker.TopBackCenter,
+            23 => Speaker.TopSideLeft,
+            24 => Speaker.TopSideRight,
+            25 => Speaker.TopCenter,
+            26 => Speaker.LowFrequency2,
+            27 => Speaker.BottomFrontLeft,
+            28 => Speaker.BottomFrontRight,
+            29 => Speaker.BottomFrontCenter,
+            _ => Speaker.Discrete,
+        })];
+    }
 
     // The channel mode a stream reports for a channel configuration.
     public static string ChannelMode(int configuration) => configuration switch

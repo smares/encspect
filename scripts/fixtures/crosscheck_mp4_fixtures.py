@@ -14,6 +14,9 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   which ADTS can only signal implicitly ("ffprobe_sample_rate"). Where the
   manifest records ffprobe's profile ("ffprobe_profile"), it must match: ffmpeg names a stream HE-AAC only
   once it finds SBR data in an access unit, which the hand-built ones do not carry, so those record none.
+  ffprobe's channel layout must feed the speakers of the stream's "channel_layout", in any order
+  (channel_layouts.py), where ffprobe's channels are the manifest's: ffmpeg's decoder gives an AAC
+  stream the layout its configuration states, whatever a chan or chnl box says.
 - "mp4box": MP4Box -diso (GPAC 2.2) must list the same boxes with the same sizes, in the same order and
   nesting. MP4Box writes the type of an iTunes item whose first byte is 0xA9 as "A9" and three letters.
 - "mp4box_samples": where ffmpeg cannot read a track (USAC), MP4Box -dtsx must list the same sample sizes.
@@ -37,6 +40,8 @@ import subprocess
 import sys
 import tempfile
 
+import channel_layouts
+
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 DIRECTORIES = [ROOT / "mp4", ROOT / "adts", ROOT / "aac"]
 EXTENSIONS = {".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"}
@@ -53,7 +58,7 @@ def ffprobe_packets(path):
 
 
 def ffprobe_streams(path):
-    result = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=sample_rate,channels,profile", "-of", "json", str(path)],
+    result = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=sample_rate,channels,channel_layout,profile", "-of", "json", str(path)],
                             capture_output=True, text=True, check=True)
     return json.loads(result.stdout).get("streams", [])
 
@@ -183,6 +188,8 @@ def main():
                     rate = expected.get("ffprobe_sample_rate", expected["sample_rate"])
                     if int(actual.get("sample_rate", 0)) != rate or int(actual.get("channels", 0)) != channels:
                         problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {rate} Hz, {channels}")
+                    if "ffprobe_channels" not in expected and channel_layouts.same_speakers(actual.get("channel_layout"), expected["channel_layout"]) is not True:
+                        problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
                     if "ffprobe_profile" in expected and actual.get("profile") != expected["ffprobe_profile"]:
                         problems.append(f"ffprobe's profile {actual.get('profile')}, expected {expected['ffprobe_profile']}")
             if check.get("mp4box"):

@@ -85,9 +85,15 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
     public static NodeValue Hex(long value, int digits)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(value);
+        return Hex((ulong)value, digits);
+    }
+
+    // A hex value that may use all 64 bits, such as a channel mask.
+    public static NodeValue Hex(ulong value, int digits)
+    {
         ArgumentOutOfRangeException.ThrowIfNegative(digits);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(digits, 16);
-        return new NodeValue(NodeValueKind.Hex, null, value, 0, digits, null, null, false);
+        return new NodeValue(NodeValueKind.Hex, null, unchecked((long)value), 0, digits, null, null, false);
     }
 
     [return: NotNullIfNotNull(nameof(text))]
@@ -100,13 +106,18 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
     // The text of a Text value, or null.
     public string? AsText() => Kind == NodeValueKind.Text ? _text : null;
 
-    // The number of an Integer or Hex value, or null.
-    public long? AsInteger() => Kind is NodeValueKind.Integer or NodeValueKind.Hex ? _integer : null;
+    // The number of an Integer or Hex value, or null; also null for a Hex value above long.MaxValue,
+    // which AsUnsigned gives.
+    public long? AsInteger() => Kind == NodeValueKind.Integer || (Kind == NodeValueKind.Hex && _integer >= 0) ? _integer : null;
+
+    // The number of a Hex value, or null.
+    public ulong? AsUnsigned() => Kind == NodeValueKind.Hex ? Unsigned : null;
 
     // The number of an Integer, Hex or Decimal value, or null.
     public double? AsDouble() => Kind switch
     {
-        NodeValueKind.Integer or NodeValueKind.Hex => _integer,
+        NodeValueKind.Integer => _integer,
+        NodeValueKind.Hex => Unsigned,
         NodeValueKind.Decimal => _decimal,
         _ => null,
     };
@@ -119,7 +130,7 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
         NodeValueKind.Integer => WithUnit(_integer.ToString(CultureInfo.InvariantCulture), _integer == 1 && _singularUnit is not null ? _singularUnit : Unit),
         NodeValueKind.Decimal => WithUnit(FormatDecimal(), Unit),
         NodeValueKind.Boolean => _integer != 0 ? "true" : "false",
-        _ => "0x" + _integer.ToString("X" + Digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture),
+        _ => "0x" + Unsigned.ToString("X" + Digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture),
     };
 
     // Writes ToString's text without allocating; writers call it for every node.
@@ -134,7 +145,7 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
                 return Append(destination, ref charsWritten, _integer != 0 ? "true" : "false");
             case NodeValueKind.Hex:
                 return Append(destination, ref charsWritten, "0x")
-                    && _integer.TryFormat(destination[charsWritten..], out int hexWritten, Digits switch { 2 => "X2", 4 => "X4", 8 => "X8", _ => "X" + Digits.ToString(CultureInfo.InvariantCulture) }, CultureInfo.InvariantCulture)
+                    && Unsigned.TryFormat(destination[charsWritten..], out int hexWritten, Digits switch { 2 => "X2", 4 => "X4", 8 => "X8", _ => "X" + Digits.ToString(CultureInfo.InvariantCulture) }, CultureInfo.InvariantCulture)
                     && Advance(ref charsWritten, hexWritten);
             case NodeValueKind.Integer:
                 return _integer.TryFormat(destination, out charsWritten, default, CultureInfo.InvariantCulture)
@@ -154,6 +165,9 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
     public override bool Equals(object? obj) => obj is NodeValue other && Equals(other);
 
     public override int GetHashCode() => HashCode.Combine(Kind, _text, _integer, _decimal, Digits, Unit);
+
+    // A Hex value holds its 64 bits in _integer.
+    private ulong Unsigned => unchecked((ulong)_integer);
 
     private string FormatDecimal()
     {

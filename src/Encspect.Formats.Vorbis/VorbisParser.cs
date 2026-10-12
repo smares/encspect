@@ -60,4 +60,20 @@ public sealed partial class VorbisParser : ICodecParser
     ];
 
     internal static string ChannelMode(int channels) => Layout(channels)?.Name ?? $"{channels} channels";
+
+    // The same order as speaker positions: the rear pair of four to six channels is the lone
+    // surround pair, the back pair; with seven and eight it is the side pair.
+    internal static IReadOnlyList<Speaker>? Speakers(int channels) => channels is >= 1 and <= 8 ? SpeakerLayouts[channels - 1] : null;
+
+    private static readonly Speaker[][] SpeakerLayouts =
+    [
+        [Speaker.FrontCenter],
+        [Speaker.FrontLeft, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackCenter, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+    ];
 }

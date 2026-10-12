@@ -61,7 +61,7 @@ public sealed partial class Mp4Parser
     {
         uint id = f.U32(node, "Track ID", Explain.TfhdTrackId);
         node.Value = $"Track Fragment Header, track {id}";
-        ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, Explain.BaseDataOffset, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8)) : null;
+        ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, Explain.BaseDataOffset, v => NodeValue.Hex(v, 8)) : null;
         if ((flags & 0x2) != 0)
         {
             f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
@@ -261,7 +261,7 @@ public sealed partial class Mp4Parser
             long at = f.Position;
             var entry = new Node("Entry", at, (2 * size) + traf + trun + sample) { Description = Explain.TfraEntry };
             f.Field(entry, "Time", size, Explain.TfraTime);
-            f.Field(entry, "Moof Offset", size, Explain.MoofOffset, v => NodeValue.Hex((long)Math.Min(v, long.MaxValue), 8));
+            f.Field(entry, "Moof Offset", size, Explain.MoofOffset, v => NodeValue.Hex(v, 8));
             f.Field(entry, "Track Fragment Number", traf, Explain.TrafNumber);
             f.Field(entry, "Track Run Number", trun, Explain.TrunNumber);
             f.Field(entry, "Sample Number", sample, Explain.TfraSampleNumber);

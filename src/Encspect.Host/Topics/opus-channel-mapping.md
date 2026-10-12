@@ -1,7 +1,7 @@
 ---
 id: opus-channel-mapping
 title: Opus channel mapping and multistream
-related: opus-toc, opus-modes, mid-side-stereo
+related: opus-toc, opus-modes, mid-side-stereo, channel-layouts
 references: RFC 7845, sections 3 and 5.1.1; RFC 8486, sections 3 and 5
 ---
 

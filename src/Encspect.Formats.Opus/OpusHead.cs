@@ -117,6 +117,28 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
         _ => null,
     };
 
+    // The layout as speaker positions, in the same order: the rear pair of four to six channels is
+    // the lone surround pair, the back pair; with seven and eight it is the side pair. Ambisonics
+    // and family 255 name no speakers.
+    public IReadOnlyList<Speaker>? Speakers => Family switch
+    {
+        0 when Channels is 1 or 2 => SpeakerLayouts[Channels - 1],
+        1 when Channels is >= 1 and <= 8 => SpeakerLayouts[Channels - 1],
+        _ => null,
+    };
+
+    private static readonly Speaker[][] SpeakerLayouts =
+    [
+        [Speaker.FrontCenter],
+        [Speaker.FrontLeft, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackCenter, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+    ];
+
     private static readonly (string Name, string[] Speakers)[] Layouts =
     [
         ("Mono", ["mono"]),

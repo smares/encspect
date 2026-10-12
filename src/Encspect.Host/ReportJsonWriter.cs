@@ -152,6 +152,26 @@ public static class ReportJsonWriter
             writer.WriteString("channelMode", stream.ChannelMode);
         }
 
+        if (stream.ChannelLayout is { } layout)
+        {
+            writer.WriteStartArray("channelLayout");
+            foreach (Speaker speaker in layout)
+            {
+                writer.WriteStringValue(ChannelLayouts.Name(speaker));
+            }
+
+            writer.WriteEndArray();
+            if (stream.ChannelLayoutName is { } name)
+            {
+                writer.WriteString("channelLayoutName", name);
+            }
+        }
+
+        if (stream.MultilingualChannels > 0)
+        {
+            writer.WriteNumber("multilingualChannels", stream.MultilingualChannels);
+        }
+
         if (stream.BitsPerSample is { } bitsPerSample)
         {
             writer.WriteNumber("bitsPerSample", bitsPerSample);
@@ -234,8 +254,11 @@ public static class ReportJsonWriter
     {
         switch (value.Kind)
         {
-            case NodeValueKind.Integer or NodeValueKind.Hex:
+            case NodeValueKind.Integer:
                 writer.WriteNumber("value", value.AsInteger()!.Value);
+                break;
+            case NodeValueKind.Hex:
+                writer.WriteNumber("value", value.AsUnsigned()!.Value);
                 break;
             case NodeValueKind.Decimal:
                 writer.WriteNumber("value", value.AsDouble()!.Value);

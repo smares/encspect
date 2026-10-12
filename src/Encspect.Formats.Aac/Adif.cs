@@ -59,6 +59,7 @@ internal static class Adif
             CoreSampleRate = header.SampleRate,
             ChannelConfiguration = 0,
             Channels = header.Channels,
+            Layout = header.Layout,
             CoreFrameLength = 1024,
         };
         if (config.ImplicitPossible)
@@ -76,6 +77,7 @@ internal static class Adif
             SampleRate = config.OutputSampleRate,
             Channels = config.OutputChannels ?? 0,
             ChannelMode = config.ChannelMode,
+            ChannelLayout = config.OutputLayout,
             Duration = duration ?? 0,
             AverageBitrate = duration is null ? null : header.Bitrate / 1000.0,
             IsVbr = header.IsVbr,
@@ -101,6 +103,7 @@ internal static class Adif
         long bitrate = fields.Read(header, "Bitrate", 23, Explain.AdifBitrate, v => NodeValue.Integer(v, "bit/s"));
         int count = (int)fields.Read(header, "Program Config Elements", 4, Explain.PceCount, v => NodeValue.Integer(v + 1)) + 1;
         int? channels = null;
+        IReadOnlyList<Speaker>? layout = null;
         int objectType = 2;
         int sampleRate = 0;
         for (int i = 0; i < count; i++)
@@ -114,11 +117,12 @@ internal static class Adif
             var pce = new Node("PCE", 0, 0);
             int profile = (int)((fields.Look(6) >> 0) & 3);
             int rateIndex = (int)(fields.Look(10) & 0xF);
-            int elementChannels = ProgramConfigElement.Read(fields, pce, 0, (_, _, _, _) => { });
-            header.Add(fields.Span("Program Config Element", start, NodeValue.Integer(elementChannels, "channels"), Explain.ProgramConfigElement, pce));
+            int elementChannels = ProgramConfigElement.Read(fields, pce, 0, (_, _, _, _) => { }, out IReadOnlyList<Speaker> elementLayout);
+            header.Add(fields.Span("Program Config Element", start, NodeValue.Integer(elementChannels, "channels"), Explain.ProgramConfigElement, pce, Topics.ChannelLayouts));
             if (channels is null)
             {
                 channels = elementChannels;
+                layout = elementLayout;
                 objectType = profile + 1;
                 sampleRate = AacTables.SampleRate(rateIndex) ?? 0;
             }
@@ -126,8 +130,8 @@ internal static class Adif
 
         fields.Align(0);
         node = fields.Span("ADIF Header", 0, null, Explain.AdifHeader, header);
-        return channels is > 0 && sampleRate > 0 ? new Header(fields.Position / 8, objectType, sampleRate, channels.Value, isVbr, bitrate) : null;
+        return channels is > 0 && sampleRate > 0 ? new Header(fields.Position / 8, objectType, sampleRate, channels.Value, layout, isVbr, bitrate) : null;
     }
 
-    private sealed record Header(int Length, int ObjectType, int SampleRate, int Channels, bool IsVbr, long Bitrate);
+    private sealed record Header(int Length, int ObjectType, int SampleRate, int Channels, IReadOnlyList<Speaker>? Layout, bool IsVbr, long Bitrate);
 }

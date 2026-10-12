@@ -18,7 +18,10 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
 - "scale_info" per Layer II frame: minimp3 reads exactly this allocation, scfsi and these
   scalefactors.
 - "mctoolamed": the multichannel decoder decodes every channel to silence with exactly this many
-  multichannel CRC errors.
+  multichannel CRC errors, into one channel file for each of the stream's "channel_layout"
+  speakers, or as many as its "channels" where the stream reports only its stereo base.
+- "channel_layout" per stream: where ffprobe reads the frames ("crosscheck": true), it finds the
+  channels of the first frame: the layout's, or two for the stereo base of a multichannel stream.
 - "mp3guessenc_multichannel": the multichannel parameters mp3guessenc prints.
 - "side_info" per frame: minimp3 reads exactly these values (minimp3_side_info.c), or rejects the
   frame where the manifest says it does. Its reservoir before each frame must match, except where
@@ -1112,6 +1115,16 @@ def check(path, manifest, tools):
         errors, silent, channels = mctoolamed_tool.decode(decoder, path)
         if errors != manifest["mctoolamed"]["crc_errors"] or not silent:
             problems.append(f"mctoolamed reports {errors} multichannel CRC errors, silent {silent}, {channels} channels")
+        speakers = {len(s["channel_layout"]) for s in manifest.get("streams", []) if "channel_layout" in s}
+        if "channels" in manifest["mctoolamed"]:
+            speakers = {manifest["mctoolamed"]["channels"]}
+        if speakers and speakers != {channels}:
+            problems.append(f"mctoolamed writes {channels} channels, the manifest expects {sorted(speakers)}")
+    if manifest.get("crosscheck") is True and manifest.get("streams") and "channel_layout" in manifest["streams"][0]:
+        # A multichannel stream's base frames are stereo.
+        base = min(len(manifest["streams"][0]["channel_layout"]), 2)
+        if int(ffprobe_stream(path)["channels"]) != base:
+            problems.append(f"ffprobe finds {ffprobe_stream(path)['channels']} channels, the manifest's first stream {base}")
     if "mp3guessenc_multichannel" in manifest and guessenc_multichannel(path) != manifest["mp3guessenc_multichannel"]:
         problems.append(f"mp3guessenc reports {guessenc_multichannel(path)}, the manifest {manifest['mp3guessenc_multichannel']}")
     if manifest.get("frames") and "side_info" in manifest["frames"][0]:
