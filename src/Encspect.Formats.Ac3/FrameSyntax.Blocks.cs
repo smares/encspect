@@ -39,6 +39,12 @@ internal sealed partial class FrameSyntax
         Array.Clear(_count4);
         Array.Clear(_fixedBits);
         Array.Fill(_deltbae, 2);
+
+        // A block may keep the band structure of an earlier block of the frame; bands no block of
+        // this frame set start from the defaults, not from the frame read before, so the frame's
+        // nodes, built later from its record alone, read the same fields as the analysis did.
+        Array.Copy(Tables.DefaultSpxBandStructure, _spxbndstrc, _spxbndstrc.Length);
+        Array.Copy(Tables.DefaultCouplingBandStructure, _cplbndstrcAbsolute, _cplbndstrcAbsolute.Length);
         if (!_eac3)
         {
             Array.Fill(_firstCplCoords, true);
