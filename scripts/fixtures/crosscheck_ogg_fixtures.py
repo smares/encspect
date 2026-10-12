@@ -19,8 +19,22 @@ For every manifest in tests/fixtures/ogg (make_ogg_fixtures.py, make_external_og
   vendor string, the bitrate it prints for every frame it decodes, which follows from each frame's
   submodes (ogg_model.speexdec_bitrate), and the samples it writes (ogg_model.speexdec_samples).
 
-Fixtures that are not "valid" say which of these still apply and why the others do not; every
-check that is skipped prints its reason. Disagreements fail the run.
+For Vorbis and Opus streams (make_vorbis_opus_fixtures.py, make_external_vorbis_opus_fixtures.py):
+
+- ogginfo and vorbiscomment -l: each Vorbis stream's version, channels, rate, nominal bitrate,
+  vendor string and comments.
+- opusinfo: each Opus stream's pre-skip, playback gain, channels, input sample rate, stream and
+  coupled counts, vendor string and comments, the playback length, and whether it calls the
+  stream hard CBR, which the manifest's IsVbr must contradict.
+- ffprobe: codec, sample rate (48 kHz for Opus) and channels, the size of every audio packet, and
+  for Opus each packet's duration, the samples its TOC gives (vorbis_opus_model.declared_samples),
+  the last one's less the end trimming.
+- oggdec and opusdec: the samples they write, after their start and end trimming, which must be
+  the manifest's samples.
+
+Fixtures that are not "valid" say which of these still apply and why the others do not, and
+valid ones list in "skip" the checks a tool cannot make; every check that is skipped prints its
+reason. Disagreements fail the run.
 """
 
 import json
@@ -31,6 +45,7 @@ import sys
 import tempfile
 
 import ogg_model as m
+import vorbis_opus_model as vo
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "ogg"
@@ -41,8 +56,12 @@ def skip(name, check, reason):
     SKIPS.append(f"{name}: {check} skipped: {reason}")
 
 
+# The tools print comments in the locale's encoding.
+ENVIRONMENT = {**__import__("os").environ, "LC_ALL": "C.UTF-8"}
+
+
 def run(arguments):
-    return subprocess.run(arguments, capture_output=True)
+    return subprocess.run(arguments, capture_output=True, env=ENVIRONMENT)
 
 
 def oggz_validate(path):
@@ -57,8 +76,9 @@ def oggz_streams(path):
     for serial, packets, pages in re.findall(r"serialno (\d+)\n\t(\d+) packets in (\d+) pages", info):
         counts[int(serial) % (1 << 32)] = (int(packets), int(pages))
     sizes = {}
-    for serial, size in re.findall(r"serialno (\d+), .*?: (\d+) bytes?$", run(["oggz", "dump", str(path)]).stdout.decode(), re.M):
-        sizes.setdefault(int(serial) % (1 << 32), []).append(int(size))
+    # oggz prints sizes of 1024 bytes and more in kB, to three decimals.
+    for serial, size, unit in re.findall(r"serialno (\d+), .*?: ([\d.]+) (bytes?|kB)$", run(["oggz", "dump", str(path)]).stdout.decode(), re.M):
+        sizes.setdefault(int(serial) % (1 << 32), []).append(round(float(size) * 1024) if unit == "kB" else int(size))
     return counts, sizes
 
 
@@ -87,7 +107,10 @@ def ogginfo(path):
 
 def ffprobe(path):
     result = run(["ffprobe", "-v", "error", "-show_streams", "-show_packets", "-show_format", "-of", "json", str(path)])
-    return json.loads(result.stdout or b"{}")
+    try:
+        return json.loads(result.stdout or b"{}")
+    except json.JSONDecodeError:
+        return {}
 
 
 def speexdec(path, channels):
@@ -113,16 +136,20 @@ def check_packets(name, manifest, problems, pages=True):
     counts, sizes = oggz_streams(DIRECTORY / name)
     for stream in manifest["streams"]:
         serial = int(stream["serial"], 16)
+        if "opus" in stream:
+            skip(name, f"oggz info and dump of {stream['serial']}", "oggz 1.1.1 does not know Opus and lists only a stream's first two packets; ffprobe's packets are compared where it reads the stream")
+            continue
         if counts.get(serial) is None:
             problems.append(f"oggz info lists no stream {stream['serial']}")
             continue
         # Pages that fail their CRC or are cut short never reach oggz.
         if counts[serial][0] != stream["packets"] or (pages and counts[serial][1] != stream["pages"]):
             problems.append(f"oggz info: {stream['serial']} has {counts[serial][0]} packets in {counts[serial][1]} pages, the manifest {stream['packets']} in {stream['pages']}")
-        if "speex" in stream:
-            audio = [p[1] for p in stream["speex"]["packets"]]
-            if sizes.get(serial, [])[-len(audio):] != audio:
-                problems.append(f"oggz dump: the audio packet sizes of {stream['serial']} differ from the manifest's")
+        for codec in ("speex", "vorbis", "opus"):
+            if codec in stream:
+                audio = [p[1] for p in stream[codec]["packets"]]
+                if audio and sizes.get(serial, [])[-len(audio):] != audio:
+                    problems.append(f"oggz dump: the audio packet sizes of {stream['serial']} differ from the manifest's")
 
 
 def check_ogginfo(name, manifest, problems):
@@ -229,6 +256,119 @@ def check_speexdec(name, manifest, problems):
         problems.append(f"speexdec writes {samples} samples, the manifest expects {entry['speex']['speexdec_samples']}")
 
 
+def stream_pages(name, manifest, serial):
+    """The packets of one stream of the fixture, as (bytes) in order."""
+    data, pages = ogg_pages(name, manifest)
+    streams = m.stream_packets(data, pages)
+    return [p["data"] for p in streams[serial]["packets"]]
+
+
+def wav_samples(path, channels):
+    data = path.read_bytes() if path.exists() else b""
+    at = data.find(b"data")
+    return (len(data) - at - 8) // (2 * channels) if at >= 0 else None
+
+
+def check_vorbis(name, manifest, problems, skips):
+    """ogginfo, vorbiscomment, ffprobe and oggdec on a file of one Vorbis stream."""
+    stream = next(st for st in manifest["streams"] if "vorbis" in st)
+    vorbis, info = stream["vorbis"], manifest["stream_infos"][0]
+    header = vorbis["header"]
+    path = DIRECTORY / name
+    fields, comments = ogginfo(path)
+    found = fields.get(int(stream["serial"], 16), {})
+    for key, wanted in (("Version", header["Vorbis Version"]), ("Channels", header["Channels"]), ("Rate", header["Sample Rate"].split()[0])):
+        if found.get(key) != wanted:
+            problems.append(f"ogginfo: {key} is {found.get(key)!r}, the manifest's {wanted!r}")
+    text = run(["ogginfo", str(path)]).stdout.decode("utf-8", "replace")
+    nominal = header["Bitrate Nominal"]
+    wanted = f"Nominal bitrate: {int(nominal.split()[0]) / 1000:f} kb/s" if nominal.endswith("bps") else "Nominal bitrate not set"
+    if wanted not in text:
+        problems.append(f"ogginfo does not print {wanted!r}")
+    if "comment" in vorbis:
+        if not comments or comments[0][0] != vorbis["comment"]["vendor"] or comments[0][1] != vorbis["comment"]["comments"]:
+            problems.append(f"ogginfo: the vendor and comments {comments[:1]} differ from the manifest's {vorbis['comment']}")
+        listed = run(["vorbiscomment", "-l", str(path)]).stdout.decode("utf-8", "replace").splitlines()
+        if listed != vorbis["comment"]["comments"]:
+            problems.append(f"vorbiscomment lists {listed}, the manifest {vorbis['comment']['comments']}")
+
+    if "ffprobe" in skips:
+        probe = {"streams": [{"codec_name": "vorbis", "sample_rate": info["sample_rate"], "channels": info["channels"], "index": 0}], "packets": [
+            {"stream_index": 0, "size": pk[1]} for pk in vorbis["packets"]]}
+    else:
+        probe = ffprobe(path)
+    streams = [st for st in probe.get("streams", []) if st.get("codec_name") == "vorbis"]
+    if len(streams) != 1 or int(streams[0]["sample_rate"]) != info["sample_rate"] or streams[0]["channels"] != info["channels"]:
+        problems.append(f"ffprobe reads {[(st.get('sample_rate'), st.get('channels')) for st in streams]}, the manifest {info['sample_rate']} Hz, {info['channels']} channels")
+    packets = [pk for pk in probe.get("packets", []) if streams and pk["stream_index"] == streams[0]["index"]]
+    if [int(pk["size"]) for pk in packets] != [pk[1] for pk in vorbis["packets"]]:
+        problems.append("ffprobe: the audio packet sizes differ from the manifest's")
+    skip(name, "ffprobe's packet durations", "ffmpeg's Vorbis parser gives a short block after a long one 128 samples where the overlap rule "
+         "returns 576, and corrects its timestamps from the granule positions; libvorbis counts a quarter of each block "
+         "(lib/block.c, vorbis_synthesis_blockin), which every page's granule position confirms where the manifest has no granule finding")
+
+    if "oggdec" in skips:
+        return
+    with tempfile.TemporaryDirectory() as work:
+        out = pathlib.Path(work) / "out.raw"
+        run(["oggdec", "-Q", "-R", "-o", str(out), str(path)])
+        samples = out.stat().st_size // (2 * info["channels"]) if out.exists() else None
+    if samples != info["samples"]:
+        problems.append(f"oggdec writes {samples} samples, the manifest expects {info['samples']}")
+
+
+def check_opus(name, manifest, problems, skips):
+    """opusinfo, ffprobe and opusdec on a file of one Opus stream."""
+    stream = next(st for st in manifest["streams"] if "opus" in st)
+    opus, info = stream["opus"], manifest["stream_infos"][0]
+    header = opus["header"]
+    path = DIRECTORY / name
+    if "opusinfo" not in skips:
+        text = run(["opusinfo", str(path)]).stdout.decode("utf-8", "replace")
+        gain = float(header["Output Gain"].split()[0])
+        wanted = [f"Pre-skip: {header['Pre-skip'].split()[0]}", f"Channels: {header['Channels']}", f"Playback gain: {gain:g} dB"]
+        rate = header["Input Sample Rate"]
+        wanted.append(f"Original sample rate: {rate.split()[0]} Hz" if rate.endswith("Hz") else "Original sample rate")
+        if "Stream Count" in header:
+            wanted.append(f"Streams: {header['Stream Count']}, Coupled: {header['Coupled Count']}")
+        if "comment" in opus:
+            wanted.append(f"Encoded with {opus['comment']['vendor']}")
+            wanted += [f"\t{c}" for c in opus["comment"]["comments"]]
+        statistics = opus["statistics"]
+        if statistics.get("Start Offset", "0 samples") == "0 samples":
+            samples = info["samples"]
+            wanted.append(f"Playback length: {samples // 48000 // 60}m:{samples / 48000 % 60:06.3f}s")
+        for line in wanted:
+            if line not in text:
+                problems.append(f"opusinfo does not print {line!r}")
+        if ("(hard-CBR)" in text) == info["is_vbr"]:
+            problems.append(f"opusinfo {'calls' if '(hard-CBR)' in text else 'does not call'} the stream hard CBR, where IsVbr is {info['is_vbr']}")
+
+    if "ffprobe" not in skips:
+        probe = ffprobe(path)
+        streams = [st for st in probe.get("streams", []) if st.get("codec_name") == "opus"]
+        if len(streams) != 1 or int(streams[0]["sample_rate"]) != 48000 or streams[0]["channels"] != info["channels"]:
+            problems.append(f"ffprobe reads {[(st.get('sample_rate'), st.get('channels')) for st in streams]}, the manifest 48000 Hz, {info['channels']} channels")
+        packets = [pk for pk in probe.get("packets", []) if streams and pk["stream_index"] == streams[0]["index"]]
+        if [int(pk["size"]) for pk in packets] != [pk[1] for pk in opus["packets"]]:
+            problems.append("ffprobe: the audio packet sizes differ from the manifest's")
+        # The last packet's duration is less the end trimming.
+        audio = stream_pages(name, manifest, int(stream["serial"], 16))[2:]
+        durations = [vo.declared_samples(packet) for packet in audio]
+        if durations:
+            durations[-1] -= int(opus["statistics"].get("End Trimming", "0").split()[0])
+        if [int(pk.get("duration", -1)) for pk in packets] != durations:
+            problems.append("ffprobe: the packet durations differ from what the packets' TOC bytes give")
+
+    if "opusdec" not in skips:
+        with tempfile.TemporaryDirectory() as work:
+            out = pathlib.Path(work) / "out.wav"
+            run(["opusdec", "--quiet", "--rate", "48000", str(path), str(out)])
+            samples = wav_samples(out, info["channels"])
+        if samples != info["samples"]:
+            problems.append(f"opusdec writes {samples} samples, the manifest expects {info['samples']}")
+
+
 def check(name, manifest):
     problems = []
     checks = manifest["crosscheck"]
@@ -259,14 +399,22 @@ def check(name, manifest):
     if checks.get("valid"):
         chained = len({s["link"] for s in manifest["streams"]}) > 1
         check_packets(name, manifest, problems)
-        check_ogginfo(name, manifest, problems)
-        check_ffprobe(name, manifest, problems, chained)
-        if len(manifest["streams"]) > 1 and not chained:
-            skip(name, "speexdec", "speexdec 1.2.1 reads one logical stream; a second one in the same link makes it misread the comment packet")
-        else:
-            if chained:
-                skip(name, "speexdec after the first link", "speexdec stops at the first end-of-stream page")
-            check_speexdec(name, manifest, problems)
+        if speex_streams(manifest):
+            check_ogginfo(name, manifest, problems)
+            check_ffprobe(name, manifest, problems, chained)
+            if len(manifest["streams"]) > 1 and not chained:
+                skip(name, "speexdec", "speexdec 1.2.1 reads one logical stream; a second one in the same link makes it misread the comment packet")
+            else:
+                if chained:
+                    skip(name, "speexdec after the first link", "speexdec stops at the first end-of-stream page")
+                check_speexdec(name, manifest, problems)
+        skips = checks.get("skip", {})
+        for check_name, reason in skips.items():
+            skip(name, check_name, reason)
+        if any("vorbis" in st for st in manifest["streams"]):
+            check_vorbis(name, manifest, problems, skips)
+        if any("opus" in st for st in manifest["streams"]):
+            check_opus(name, manifest, problems, skips)
     else:
         if checks.get("packets"):
             check_packets(name, manifest, problems, pages=False)
@@ -278,9 +426,9 @@ def check(name, manifest):
 
 
 def main():
-    for tool in ("oggz", "ogginfo", "ffprobe", "speexdec"):
+    for tool in ("oggz", "ogginfo", "vorbiscomment", "oggdec", "ffprobe", "speexdec", "opusinfo", "opusdec"):
         if subprocess.run(["which", tool], capture_output=True).returncode:
-            raise SystemExit(f"{tool} is missing: install oggz-tools, vorbis-tools, ffmpeg and speex.")
+            raise SystemExit(f"{tool} is missing: install oggz-tools, vorbis-tools, ffmpeg, speex and opus-tools.")
     failed = checked = 0
     for manifest_path in sorted(DIRECTORY.glob("*.expected.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

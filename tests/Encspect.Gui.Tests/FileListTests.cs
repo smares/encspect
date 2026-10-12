@@ -69,6 +69,29 @@ public class FileListTests
     }
 
     [Fact]
+    public void Ogg_vorbis_and_opus_files_fill_their_rows_from_their_streams()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Ogg("external-oggenc-51.ogg"), "surround.ogg");
+        temp.Copy(Fixtures.Ogg("external-opusenc-hard-cbr.opus"), "cbr.opus");
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+
+        FileRow surround = model.Rows.Single(r => r.Name == "surround.ogg");
+        Assert.Equal(("Ogg", "Vorbis", "5.1", "48 kHz"), (surround.Format, surround.Codec, surround.ChannelMode, surround.SampleRateText));
+        Assert.Equal("libvorbis 1.3.7 (high)", surround.EncoderText);
+        Assert.EndsWith("kbps VBR", surround.BitrateText, StringComparison.Ordinal);
+
+        FileRow cbr = model.Rows.Single(r => r.Name == "cbr.opus");
+        Assert.Equal(("Opus", "Stereo", "48 kHz"), (cbr.Codec, cbr.ChannelMode, cbr.SampleRateText));
+        Assert.Equal("opusenc 0.2 (libopus 1.4) (high)", cbr.EncoderText);
+        Assert.EndsWith("kbps CBR", cbr.BitrateText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Include_subfolders_analyzes_the_whole_tree()
     {
         using var temp = new TempFolder();
