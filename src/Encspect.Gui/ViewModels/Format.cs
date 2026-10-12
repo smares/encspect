@@ -57,13 +57,13 @@ public static class Format
     public static string Hex(long offset) => "0x" + offset.ToString("X", Invariant);
 
     // The location of a node as the CLI's --offsets writes it: "0x1A, 4 bytes", "0x1+3, 2 bits",
-    // "0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes".
+    // "0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes", "0x1+3, 2 bits, LSB first" for a Vorbis field.
     public static string Location(Node node)
     {
         ArgumentNullException.ThrowIfNull(node);
 
         string text = node.BitOffset is { } bitOffset && node.BitLength is { } bitLength
-            ? $"{Hex(node.Offset)}+{bitOffset.ToString(Invariant)}, {Count(bitLength, "bit", "bits")}"
+            ? $"{Hex(node.Offset)}+{bitOffset.ToString(Invariant)}, {Count(bitLength, "bit", "bits")}{(node.BitOrder == BitOrder.LeastSignificantFirst ? ", LSB first" : string.Empty)}"
             : $"{Hex(node.Offset)}, {Count(node.Length, "byte", "bytes")}";
         if (node.Ranges is { } ranges)
         {

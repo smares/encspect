@@ -1,7 +1,7 @@
 ---
 id: granule-position
 title: Granule positions
-related: ogg-pages, gapless-playback, speex-modes
+related: ogg-pages, gapless-playback, speex-modes, opus-pre-skip, vorbis-blocks
 references: RFC 3533, sections 4 and 6; Speex manual, section 7.3; Vorbis I specification, appendix A.2; RFC 7845, section 4
 ---
 

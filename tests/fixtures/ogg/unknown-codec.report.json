@@ -10,30 +10,30 @@
       "name": "File",
       "value": "Ogg",
       "offset": 0,
-      "length": 559,
+      "length": 570,
       "children": [
         {
           "name": "Ogg",
           "value": 7,
           "unit": "pages",
           "offset": 0,
-          "length": 559,
+          "length": 570,
           "children": [
             {
               "name": "Logical Stream",
-              "value": "Speex",
+              "value": "Theora",
               "offset": 0,
-              "length": 559,
+              "length": 383,
               "children": [
                 {
                   "name": "Serial Number",
-                  "value": 1592590336,
+                  "value": 15790320,
                   "offset": 14,
                   "length": 4
                 },
                 {
                   "name": "Codec",
-                  "value": "Speex",
+                  "value": "Theora",
                   "offset": 28,
                   "length": 8
                 },
@@ -45,127 +45,179 @@
                 },
                 {
                   "name": "Page Count",
-                  "value": 3,
+                  "value": 2,
                   "unit": "pages",
                   "offset": 0,
-                  "length": 559
+                  "length": 383
                 },
                 {
                   "name": "Packet Count",
-                  "value": 12,
+                  "value": 3,
                   "unit": "packets",
                   "offset": 0,
-                  "length": 559
+                  "length": 383
                 },
                 {
                   "name": "Last Granule Position",
-                  "value": 1560,
-                  "offset": 378,
+                  "value": 0,
+                  "offset": 338,
                   "length": 8
                 },
                 {
                   "name": "HasEndOfStream",
                   "value": true,
-                  "offset": 377,
+                  "offset": 337,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Logical Stream",
+              "value": "Speex",
+              "offset": 70,
+              "length": 500,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 1592590336,
+                  "offset": 84,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Speex",
+                  "offset": 98,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 75,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 3,
+                  "unit": "pages",
+                  "offset": 70,
+                  "length": 500
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 12,
+                  "unit": "packets",
+                  "offset": 70,
+                  "length": 500
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 1560,
+                  "offset": 389,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": true,
+                  "offset": 388,
                   "length": 1
                 },
                 {
                   "name": "Speex Header",
                   "value": "Narrowband, 8000 Hz",
-                  "offset": 28,
+                  "offset": 98,
                   "length": 80,
                   "children": [
                     {
                       "name": "Speex String",
                       "value": "Speex   ",
-                      "offset": 28,
+                      "offset": 98,
                       "length": 8
                     },
                     {
                       "name": "Speex Version",
                       "value": "1.2.1",
-                      "offset": 36,
+                      "offset": 106,
                       "length": 20
                     },
                     {
                       "name": "Version ID",
                       "value": 1,
-                      "offset": 56,
+                      "offset": 126,
                       "length": 4
                     },
                     {
                       "name": "Header Size",
                       "value": 80,
                       "unit": "bytes",
-                      "offset": 60,
+                      "offset": 130,
                       "length": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": 8000,
                       "unit": "Hz",
-                      "offset": 64,
+                      "offset": 134,
                       "length": 4
                     },
                     {
                       "name": "Mode",
                       "value": "Narrowband",
-                      "offset": 68,
+                      "offset": 138,
                       "length": 4
                     },
                     {
                       "name": "Mode Bitstream Version",
                       "value": 4,
-                      "offset": 72,
+                      "offset": 142,
                       "length": 4
                     },
                     {
                       "name": "Channels",
                       "value": 1,
-                      "offset": 76,
+                      "offset": 146,
                       "length": 4
                     },
                     {
                       "name": "Bitrate",
                       "value": "-1 (not given)",
-                      "offset": 80,
+                      "offset": 150,
                       "length": 4
                     },
                     {
                       "name": "Frame Size",
                       "value": 160,
                       "unit": "samples",
-                      "offset": 84,
+                      "offset": 154,
                       "length": 4
                     },
                     {
                       "name": "IsVbr",
                       "value": false,
-                      "offset": 88,
+                      "offset": 158,
                       "length": 4
                     },
                     {
                       "name": "Frames Per Packet",
                       "value": 1,
-                      "offset": 92,
+                      "offset": 162,
                       "length": 4
                     },
                     {
                       "name": "Extra Headers",
                       "value": 0,
-                      "offset": 96,
+                      "offset": 166,
                       "length": 4
                     },
                     {
                       "name": "Reserved 1",
                       "value": 0,
-                      "offset": 100,
+                      "offset": 170,
                       "length": 4
                     },
                     {
                       "name": "Reserved 2",
                       "value": 0,
-                      "offset": 104,
+                      "offset": 174,
                       "length": 4
                     }
                   ]
@@ -175,38 +227,38 @@
                   "kind": "Tag",
                   "value": 0,
                   "unit": "comments",
-                  "offset": 237,
+                  "offset": 249,
                   "length": 32,
                   "children": [
                     {
                       "name": "Vendor Length",
                       "value": 24,
                       "unit": "bytes",
-                      "offset": 237,
+                      "offset": 249,
                       "length": 4
                     },
                     {
                       "name": "Vendor",
                       "value": "Encoded with Speex 1.2.1",
-                      "offset": 241,
+                      "offset": 253,
                       "length": 24
                     },
                     {
                       "name": "Comment Count",
                       "value": 0,
-                      "offset": 265,
+                      "offset": 277,
                       "length": 4
                     },
                     {
                       "name": "Detection",
                       "value": "High",
-                      "offset": 237,
+                      "offset": 249,
                       "length": 32,
                       "children": [
                         {
                           "name": "Evidence",
                           "value": "The vendor string and 0 comments fit the data",
-                          "offset": 237,
+                          "offset": 249,
                           "length": 32
                         }
                       ]
@@ -216,25 +268,25 @@
                 {
                   "name": "Encoder",
                   "value": "speexenc 1.2.1",
-                  "offset": 36,
-                  "length": 229,
+                  "offset": 106,
+                  "length": 171,
                   "children": [
                     {
                       "name": "Confidence",
                       "value": "High",
-                      "offset": 36,
-                      "length": 229
+                      "offset": 106,
+                      "length": 171
                     },
                     {
                       "name": "Evidence",
                       "value": "Vorbis comment vendor string \"Encoded with Speex 1.2.1\", which speexenc writes",
-                      "offset": 241,
+                      "offset": 253,
                       "length": 24
                     },
                     {
                       "name": "Evidence",
                       "value": "Speex header version \"1.2.1\", which libspeex writes, agrees",
-                      "offset": 36,
+                      "offset": 106,
                       "length": 20
                     }
                   ]
@@ -243,94 +295,94 @@
                   "name": "Statistics",
                   "kind": "Statistics",
                   "value": "10 packets, 0.195 s",
-                  "offset": 409,
+                  "offset": 420,
                   "length": 150,
                   "children": [
                     {
                       "name": "Packets",
                       "value": 10,
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Frames",
                       "value": 10,
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Coded Samples",
                       "value": 1600,
                       "unit": "samples",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Encoder Delay",
                       "value": 40,
                       "unit": "samples",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "End Trimming",
                       "value": 0,
                       "unit": "samples",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Samples",
                       "value": 1560,
                       "unit": "samples",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Duration",
                       "value": 0.195,
                       "unit": "s",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "IsVbr",
                       "value": false,
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Average Bitrate",
                       "value": 6,
                       "unit": "kbps",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Minimum Bitrate",
                       "value": 6,
                       "unit": "kbps",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Maximum Bitrate",
                       "value": 6,
                       "unit": "kbps",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150
                     },
                     {
                       "name": "Packet Sizes",
                       "value": 1,
                       "unit": "sizes",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150,
                       "children": [
                         {
                           "name": "15 bytes",
                           "value": "10 packets (100.0%), 6.0 kbps",
-                          "offset": 409,
+                          "offset": 420,
                           "length": 150
                         }
                       ]
@@ -339,13 +391,13 @@
                       "name": "Narrowband Submodes",
                       "value": 1,
                       "unit": "submodes",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 150,
                       "children": [
                         {
                           "name": "Submode 2 (119 bits)",
                           "value": "10 frames (100.0%)",
-                          "offset": 409,
+                          "offset": 420,
                           "length": 150
                         }
                       ]
@@ -357,20 +409,20 @@
                   "kind": "Stream",
                   "value": 10,
                   "unit": "packets",
-                  "offset": 409,
+                  "offset": 420,
                   "length": 150,
                   "children": [
                     {
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 409,
+                          "offset": 420,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -379,7 +431,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 409,
+                              "offset": 420,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -387,7 +439,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 409,
+                                  "offset": 420,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -395,7 +447,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 409,
+                                  "offset": 420,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -404,7 +456,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 409,
+                                  "offset": 420,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -417,7 +469,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 423,
+                          "offset": 434,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -428,13 +480,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 424,
+                      "offset": 435,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 424,
+                          "offset": 435,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -443,7 +495,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 424,
+                              "offset": 435,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -451,7 +503,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 424,
+                                  "offset": 435,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -459,7 +511,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 424,
+                                  "offset": 435,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -468,7 +520,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 424,
+                                  "offset": 435,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -481,7 +533,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 438,
+                          "offset": 449,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -492,13 +544,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 439,
+                      "offset": 450,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 439,
+                          "offset": 450,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -507,7 +559,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 439,
+                              "offset": 450,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -515,7 +567,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 439,
+                                  "offset": 450,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -523,7 +575,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 439,
+                                  "offset": 450,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -532,7 +584,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 439,
+                                  "offset": 450,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -545,7 +597,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 453,
+                          "offset": 464,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -556,13 +608,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 454,
+                      "offset": 465,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 454,
+                          "offset": 465,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -571,7 +623,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 454,
+                              "offset": 465,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -579,7 +631,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 454,
+                                  "offset": 465,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -587,7 +639,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 454,
+                                  "offset": 465,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -596,7 +648,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 454,
+                                  "offset": 465,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -609,7 +661,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 468,
+                          "offset": 479,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -620,13 +672,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 469,
+                      "offset": 480,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 469,
+                          "offset": 480,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -635,7 +687,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 469,
+                              "offset": 480,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -643,7 +695,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 469,
+                                  "offset": 480,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -651,7 +703,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 469,
+                                  "offset": 480,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -660,7 +712,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 469,
+                                  "offset": 480,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -673,7 +725,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 483,
+                          "offset": 494,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -684,13 +736,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 484,
+                      "offset": 495,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 484,
+                          "offset": 495,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -699,7 +751,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 484,
+                              "offset": 495,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -707,7 +759,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 484,
+                                  "offset": 495,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -715,7 +767,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 484,
+                                  "offset": 495,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -724,7 +776,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 484,
+                                  "offset": 495,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -737,7 +789,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 498,
+                          "offset": 509,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -748,13 +800,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 499,
+                      "offset": 510,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 499,
+                          "offset": 510,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -763,7 +815,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 499,
+                              "offset": 510,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -771,7 +823,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 499,
+                                  "offset": 510,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -779,7 +831,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 499,
+                                  "offset": 510,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -788,7 +840,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 499,
+                                  "offset": 510,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -801,7 +853,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 513,
+                          "offset": 524,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -812,13 +864,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 514,
+                      "offset": 525,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 514,
+                          "offset": 525,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -827,7 +879,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 514,
+                              "offset": 525,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -835,7 +887,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 514,
+                                  "offset": 525,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -843,7 +895,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 514,
+                                  "offset": 525,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -852,7 +904,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 514,
+                                  "offset": 525,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -865,7 +917,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 528,
+                          "offset": 539,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -876,13 +928,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 529,
+                      "offset": 540,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 529,
+                          "offset": 540,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -891,7 +943,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 529,
+                              "offset": 540,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -899,7 +951,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 529,
+                                  "offset": 540,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -907,7 +959,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 529,
+                                  "offset": 540,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -916,7 +968,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 529,
+                                  "offset": 540,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -929,7 +981,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 543,
+                          "offset": 554,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -940,13 +992,13 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "15 bytes, narrowband submode 2",
-                      "offset": 544,
+                      "offset": 555,
                       "length": 15,
                       "children": [
                         {
                           "name": "Frame",
                           "value": "narrowband submode 2",
-                          "offset": 544,
+                          "offset": 555,
                           "length": 15,
                           "bitOffset": 0,
                           "bitLength": 119,
@@ -955,7 +1007,7 @@
                               "name": "Narrowband Layer",
                               "value": 119,
                               "unit": "bits",
-                              "offset": 544,
+                              "offset": 555,
                               "length": 15,
                               "bitOffset": 0,
                               "bitLength": 119,
@@ -963,7 +1015,7 @@
                                 {
                                   "name": "IsWidebandLayer",
                                   "value": false,
-                                  "offset": 544,
+                                  "offset": 555,
                                   "length": 1,
                                   "bitOffset": 0,
                                   "bitLength": 1
@@ -971,7 +1023,7 @@
                                 {
                                   "name": "Submode",
                                   "value": 2,
-                                  "offset": 544,
+                                  "offset": 555,
                                   "length": 1,
                                   "bitOffset": 1,
                                   "bitLength": 4
@@ -980,7 +1032,7 @@
                                   "name": "Coded Data",
                                   "value": 114,
                                   "unit": "bits",
-                                  "offset": 544,
+                                  "offset": 555,
                                   "length": 15,
                                   "bitOffset": 5,
                                   "bitLength": 114
@@ -993,7 +1045,7 @@
                           "name": "Padding",
                           "value": 1,
                           "unit": "bits",
-                          "offset": 558,
+                          "offset": 569,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1007,103 +1059,51 @@
             {
               "name": "Logical Stream",
               "value": "Unknown",
-              "offset": 108,
-              "length": 212,
+              "offset": 178,
+              "length": 154,
               "children": [
                 {
                   "name": "Serial Number",
                   "value": 195936478,
-                  "offset": 122,
+                  "offset": 192,
                   "length": 4
                 },
                 {
                   "name": "Codec",
                   "value": "Unknown",
-                  "offset": 136,
+                  "offset": 206,
                   "length": 8
                 },
                 {
                   "name": "Chain Link",
                   "value": 1,
-                  "offset": 113,
+                  "offset": 183,
                   "length": 1
                 },
                 {
                   "name": "Page Count",
                   "value": 2,
                   "unit": "pages",
-                  "offset": 108,
-                  "length": 212
+                  "offset": 178,
+                  "length": 154
                 },
                 {
                   "name": "Packet Count",
                   "value": 3,
                   "unit": "packets",
-                  "offset": 108,
-                  "length": 212
+                  "offset": 178,
+                  "length": 154
                 },
                 {
                   "name": "Last Granule Position",
                   "value": 0,
-                  "offset": 275,
+                  "offset": 287,
                   "length": 8
                 },
                 {
                   "name": "HasEndOfStream",
                   "value": true,
-                  "offset": 274,
-                  "length": 1
-                }
-              ]
-            },
-            {
-              "name": "Logical Stream",
-              "value": "Vorbis",
-              "offset": 151,
-              "length": 221,
-              "children": [
-                {
-                  "name": "Serial Number",
-                  "value": 15790320,
-                  "offset": 165,
-                  "length": 4
-                },
-                {
-                  "name": "Codec",
-                  "value": "Vorbis",
-                  "offset": 179,
-                  "length": 8
-                },
-                {
-                  "name": "Chain Link",
-                  "value": 1,
-                  "offset": 156,
-                  "length": 1
-                },
-                {
-                  "name": "Page Count",
-                  "value": 2,
-                  "unit": "pages",
-                  "offset": 151,
-                  "length": 221
-                },
-                {
-                  "name": "Packet Count",
-                  "value": 3,
-                  "unit": "packets",
-                  "offset": 151,
-                  "length": 221
-                },
-                {
-                  "name": "Last Granule Position",
-                  "value": 0,
-                  "offset": 326,
-                  "length": 8
-                },
-                {
-                  "name": "HasEndOfStream",
-                  "value": true,
-                  "offset": 325,
+                  "offset": 286,
                   "length": 1
                 }
               ]
@@ -1114,14 +1114,14 @@
               "value": 7,
               "unit": "pages",
               "offset": 0,
-              "length": 559,
+              "length": 570,
               "children": [
                 {
                   "name": "Page",
                   "kind": "Frame",
-                  "value": "serial 0x5EED0000, sequence 0, granule 0, beginning of stream",
+                  "value": "serial 0x00F0F0F0, sequence 0, granule 0, beginning of stream",
                   "offset": 0,
-                  "length": 108,
+                  "length": 70,
                   "children": [
                     {
                       "name": "Capture Pattern",
@@ -1175,7 +1175,7 @@
                     },
                     {
                       "name": "Serial Number",
-                      "value": 1592590336,
+                      "value": 15790320,
                       "offset": 14,
                       "length": 4
                     },
@@ -1187,13 +1187,13 @@
                     },
                     {
                       "name": "CRC",
-                      "value": 3582298315,
+                      "value": 836019232,
                       "offset": 22,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": 3582298315,
+                          "value": 836019232,
                           "offset": 22,
                           "length": 4
                         }
@@ -1214,7 +1214,7 @@
                       "children": [
                         {
                           "name": "Lacing Value",
-                          "value": 80,
+                          "value": 42,
                           "unit": "bytes",
                           "offset": 27,
                           "length": 1
@@ -1223,8 +1223,121 @@
                     },
                     {
                       "name": "Packet Data",
-                      "value": "80 bytes, packet 0",
+                      "value": "42 bytes, packet 0",
                       "offset": 28,
+                      "length": 42
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x5EED0000, sequence 0, granule 0, beginning of stream",
+                  "offset": 70,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 70,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 74,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 2,
+                      "offset": 75,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 75,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": true,
+                          "offset": 75,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 75,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 76,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1592590336,
+                      "offset": 84,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 0,
+                      "offset": 88,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3582298315,
+                      "offset": 92,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3582298315,
+                          "offset": 92,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 96,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 97,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 80,
+                          "unit": "bytes",
+                          "offset": 97,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "80 bytes, packet 0",
+                      "offset": 98,
                       "length": 80
                     }
                   ]
@@ -1233,31 +1346,31 @@
                   "name": "Page",
                   "kind": "Frame",
                   "value": "serial 0x0BADC0DE, sequence 0, granule 0, beginning of stream",
-                  "offset": 108,
+                  "offset": 178,
                   "length": 43,
                   "children": [
                     {
                       "name": "Capture Pattern",
                       "value": "OggS",
-                      "offset": 108,
+                      "offset": 178,
                       "length": 4
                     },
                     {
                       "name": "Version",
                       "value": 0,
-                      "offset": 112,
+                      "offset": 182,
                       "length": 1
                     },
                     {
                       "name": "Header Type",
                       "value": 2,
-                      "offset": 113,
+                      "offset": 183,
                       "length": 1,
                       "children": [
                         {
                           "name": "IsContinued",
                           "value": false,
-                          "offset": 113,
+                          "offset": 183,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1265,7 +1378,7 @@
                         {
                           "name": "IsBeginningOfStream",
                           "value": true,
-                          "offset": 113,
+                          "offset": 183,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 1
@@ -1273,7 +1386,7 @@
                         {
                           "name": "IsEndOfStream",
                           "value": false,
-                          "offset": 113,
+                          "offset": 183,
                           "length": 1,
                           "bitOffset": 5,
                           "bitLength": 1
@@ -1283,31 +1396,31 @@
                     {
                       "name": "Granule Position",
                       "value": 0,
-                      "offset": 114,
+                      "offset": 184,
                       "length": 8
                     },
                     {
                       "name": "Serial Number",
                       "value": 195936478,
-                      "offset": 122,
+                      "offset": 192,
                       "length": 4
                     },
                     {
                       "name": "Sequence Number",
                       "value": 0,
-                      "offset": 126,
+                      "offset": 196,
                       "length": 4
                     },
                     {
                       "name": "CRC",
                       "value": 4267996030,
-                      "offset": 130,
+                      "offset": 200,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
                           "value": 4267996030,
-                          "offset": 130,
+                          "offset": 200,
                           "length": 4
                         }
                       ]
@@ -1315,21 +1428,21 @@
                     {
                       "name": "Segments",
                       "value": 1,
-                      "offset": 134,
+                      "offset": 204,
                       "length": 1
                     },
                     {
                       "name": "Segment Table",
                       "value": 1,
                       "unit": "lacing values",
-                      "offset": 135,
+                      "offset": 205,
                       "length": 1,
                       "children": [
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 135,
+                          "offset": 205,
                           "length": 1
                         }
                       ]
@@ -1337,7 +1450,7 @@
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 0",
-                      "offset": 136,
+                      "offset": 206,
                       "length": 15
                     }
                   ]
@@ -1345,145 +1458,32 @@
                 {
                   "name": "Page",
                   "kind": "Frame",
-                  "value": "serial 0x00F0F0F0, sequence 0, granule 0, beginning of stream",
-                  "offset": 151,
-                  "length": 58,
-                  "children": [
-                    {
-                      "name": "Capture Pattern",
-                      "value": "OggS",
-                      "offset": 151,
-                      "length": 4
-                    },
-                    {
-                      "name": "Version",
-                      "value": 0,
-                      "offset": 155,
-                      "length": 1
-                    },
-                    {
-                      "name": "Header Type",
-                      "value": 2,
-                      "offset": 156,
-                      "length": 1,
-                      "children": [
-                        {
-                          "name": "IsContinued",
-                          "value": false,
-                          "offset": 156,
-                          "length": 1,
-                          "bitOffset": 7,
-                          "bitLength": 1
-                        },
-                        {
-                          "name": "IsBeginningOfStream",
-                          "value": true,
-                          "offset": 156,
-                          "length": 1,
-                          "bitOffset": 6,
-                          "bitLength": 1
-                        },
-                        {
-                          "name": "IsEndOfStream",
-                          "value": false,
-                          "offset": 156,
-                          "length": 1,
-                          "bitOffset": 5,
-                          "bitLength": 1
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Granule Position",
-                      "value": 0,
-                      "offset": 157,
-                      "length": 8
-                    },
-                    {
-                      "name": "Serial Number",
-                      "value": 15790320,
-                      "offset": 165,
-                      "length": 4
-                    },
-                    {
-                      "name": "Sequence Number",
-                      "value": 0,
-                      "offset": 169,
-                      "length": 4
-                    },
-                    {
-                      "name": "CRC",
-                      "value": 520222799,
-                      "offset": 173,
-                      "length": 4,
-                      "children": [
-                        {
-                          "name": "Computed",
-                          "value": 520222799,
-                          "offset": 173,
-                          "length": 4
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Segments",
-                      "value": 1,
-                      "offset": 177,
-                      "length": 1
-                    },
-                    {
-                      "name": "Segment Table",
-                      "value": 1,
-                      "unit": "lacing values",
-                      "offset": 178,
-                      "length": 1,
-                      "children": [
-                        {
-                          "name": "Lacing Value",
-                          "value": 30,
-                          "unit": "bytes",
-                          "offset": 178,
-                          "length": 1
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Packet Data",
-                      "value": "30 bytes, packet 0",
-                      "offset": 179,
-                      "length": 30
-                    }
-                  ]
-                },
-                {
-                  "name": "Page",
-                  "kind": "Frame",
                   "value": "serial 0x5EED0000, sequence 1, granule 0",
-                  "offset": 209,
+                  "offset": 221,
                   "length": 60,
                   "children": [
                     {
                       "name": "Capture Pattern",
                       "value": "OggS",
-                      "offset": 209,
+                      "offset": 221,
                       "length": 4
                     },
                     {
                       "name": "Version",
                       "value": 0,
-                      "offset": 213,
+                      "offset": 225,
                       "length": 1
                     },
                     {
                       "name": "Header Type",
                       "value": 0,
-                      "offset": 214,
+                      "offset": 226,
                       "length": 1,
                       "children": [
                         {
                           "name": "IsContinued",
                           "value": false,
-                          "offset": 214,
+                          "offset": 226,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1491,7 +1491,7 @@
                         {
                           "name": "IsBeginningOfStream",
                           "value": false,
-                          "offset": 214,
+                          "offset": 226,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 1
@@ -1499,7 +1499,7 @@
                         {
                           "name": "IsEndOfStream",
                           "value": false,
-                          "offset": 214,
+                          "offset": 226,
                           "length": 1,
                           "bitOffset": 5,
                           "bitLength": 1
@@ -1509,31 +1509,31 @@
                     {
                       "name": "Granule Position",
                       "value": 0,
-                      "offset": 215,
+                      "offset": 227,
                       "length": 8
                     },
                     {
                       "name": "Serial Number",
                       "value": 1592590336,
-                      "offset": 223,
+                      "offset": 235,
                       "length": 4
                     },
                     {
                       "name": "Sequence Number",
                       "value": 1,
-                      "offset": 227,
+                      "offset": 239,
                       "length": 4
                     },
                     {
                       "name": "CRC",
                       "value": 2078923301,
-                      "offset": 231,
+                      "offset": 243,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
                           "value": 2078923301,
-                          "offset": 231,
+                          "offset": 243,
                           "length": 4
                         }
                       ]
@@ -1541,21 +1541,21 @@
                     {
                       "name": "Segments",
                       "value": 1,
-                      "offset": 235,
+                      "offset": 247,
                       "length": 1
                     },
                     {
                       "name": "Segment Table",
                       "value": 1,
                       "unit": "lacing values",
-                      "offset": 236,
+                      "offset": 248,
                       "length": 1,
                       "children": [
                         {
                           "name": "Lacing Value",
                           "value": 32,
                           "unit": "bytes",
-                          "offset": 236,
+                          "offset": 248,
                           "length": 1
                         }
                       ]
@@ -1563,7 +1563,7 @@
                     {
                       "name": "Packet Data",
                       "value": "32 bytes, packet 1",
-                      "offset": 237,
+                      "offset": 249,
                       "length": 32
                     }
                   ]
@@ -1572,31 +1572,31 @@
                   "name": "Page",
                   "kind": "Frame",
                   "value": "serial 0x0BADC0DE, sequence 1, granule 0, end of stream",
-                  "offset": 269,
+                  "offset": 281,
                   "length": 51,
                   "children": [
                     {
                       "name": "Capture Pattern",
                       "value": "OggS",
-                      "offset": 269,
+                      "offset": 281,
                       "length": 4
                     },
                     {
                       "name": "Version",
                       "value": 0,
-                      "offset": 273,
+                      "offset": 285,
                       "length": 1
                     },
                     {
                       "name": "Header Type",
                       "value": 4,
-                      "offset": 274,
+                      "offset": 286,
                       "length": 1,
                       "children": [
                         {
                           "name": "IsContinued",
                           "value": false,
-                          "offset": 274,
+                          "offset": 286,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1604,7 +1604,7 @@
                         {
                           "name": "IsBeginningOfStream",
                           "value": false,
-                          "offset": 274,
+                          "offset": 286,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 1
@@ -1612,7 +1612,7 @@
                         {
                           "name": "IsEndOfStream",
                           "value": true,
-                          "offset": 274,
+                          "offset": 286,
                           "length": 1,
                           "bitOffset": 5,
                           "bitLength": 1
@@ -1622,31 +1622,31 @@
                     {
                       "name": "Granule Position",
                       "value": 0,
-                      "offset": 275,
+                      "offset": 287,
                       "length": 8
                     },
                     {
                       "name": "Serial Number",
                       "value": 195936478,
-                      "offset": 283,
+                      "offset": 295,
                       "length": 4
                     },
                     {
                       "name": "Sequence Number",
                       "value": 1,
-                      "offset": 287,
+                      "offset": 299,
                       "length": 4
                     },
                     {
                       "name": "CRC",
                       "value": 646236755,
-                      "offset": 291,
+                      "offset": 303,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
                           "value": 646236755,
-                          "offset": 291,
+                          "offset": 303,
                           "length": 4
                         }
                       ]
@@ -1654,28 +1654,28 @@
                     {
                       "name": "Segments",
                       "value": 2,
-                      "offset": 295,
+                      "offset": 307,
                       "length": 1
                     },
                     {
                       "name": "Segment Table",
                       "value": 2,
                       "unit": "lacing values",
-                      "offset": 296,
+                      "offset": 308,
                       "length": 2,
                       "children": [
                         {
                           "name": "Lacing Value",
                           "value": 11,
                           "unit": "bytes",
-                          "offset": 296,
+                          "offset": 308,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 11,
                           "unit": "bytes",
-                          "offset": 297,
+                          "offset": 309,
                           "length": 1
                         }
                       ]
@@ -1683,13 +1683,13 @@
                     {
                       "name": "Packet Data",
                       "value": "11 bytes, packet 1",
-                      "offset": 298,
+                      "offset": 310,
                       "length": 11
                     },
                     {
                       "name": "Packet Data",
                       "value": "11 bytes, packet 2",
-                      "offset": 309,
+                      "offset": 321,
                       "length": 11
                     }
                   ]
@@ -1698,31 +1698,31 @@
                   "name": "Page",
                   "kind": "Frame",
                   "value": "serial 0x00F0F0F0, sequence 1, granule 0, end of stream",
-                  "offset": 320,
-                  "length": 52,
+                  "offset": 332,
+                  "length": 51,
                   "children": [
                     {
                       "name": "Capture Pattern",
                       "value": "OggS",
-                      "offset": 320,
+                      "offset": 332,
                       "length": 4
                     },
                     {
                       "name": "Version",
                       "value": 0,
-                      "offset": 324,
+                      "offset": 336,
                       "length": 1
                     },
                     {
                       "name": "Header Type",
                       "value": 4,
-                      "offset": 325,
+                      "offset": 337,
                       "length": 1,
                       "children": [
                         {
                           "name": "IsContinued",
                           "value": false,
-                          "offset": 325,
+                          "offset": 337,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1730,7 +1730,7 @@
                         {
                           "name": "IsBeginningOfStream",
                           "value": false,
-                          "offset": 325,
+                          "offset": 337,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 1
@@ -1738,7 +1738,7 @@
                         {
                           "name": "IsEndOfStream",
                           "value": true,
-                          "offset": 325,
+                          "offset": 337,
                           "length": 1,
                           "bitOffset": 5,
                           "bitLength": 1
@@ -1748,31 +1748,31 @@
                     {
                       "name": "Granule Position",
                       "value": 0,
-                      "offset": 326,
+                      "offset": 338,
                       "length": 8
                     },
                     {
                       "name": "Serial Number",
                       "value": 15790320,
-                      "offset": 334,
+                      "offset": 346,
                       "length": 4
                     },
                     {
                       "name": "Sequence Number",
                       "value": 1,
-                      "offset": 338,
+                      "offset": 350,
                       "length": 4
                     },
                     {
                       "name": "CRC",
-                      "value": 1218403005,
-                      "offset": 342,
+                      "value": 1415325041,
+                      "offset": 354,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": 1218403005,
-                          "offset": 342,
+                          "value": 1415325041,
+                          "offset": 354,
                           "length": 4
                         }
                       ]
@@ -1780,42 +1780,42 @@
                     {
                       "name": "Segments",
                       "value": 2,
-                      "offset": 346,
+                      "offset": 358,
                       "length": 1
                     },
                     {
                       "name": "Segment Table",
                       "value": 2,
                       "unit": "lacing values",
-                      "offset": 347,
+                      "offset": 359,
                       "length": 2,
                       "children": [
                         {
                           "name": "Lacing Value",
-                          "value": 16,
+                          "value": 15,
                           "unit": "bytes",
-                          "offset": 347,
+                          "offset": 359,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 7,
                           "unit": "bytes",
-                          "offset": 348,
+                          "offset": 360,
                           "length": 1
                         }
                       ]
                     },
                     {
                       "name": "Packet Data",
-                      "value": "16 bytes, packet 1",
-                      "offset": 349,
-                      "length": 16
+                      "value": "15 bytes, packet 1",
+                      "offset": 361,
+                      "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "7 bytes, packet 2",
-                      "offset": 365,
+                      "offset": 376,
                       "length": 7
                     }
                   ]
@@ -1824,31 +1824,31 @@
                   "name": "Page",
                   "kind": "Frame",
                   "value": "serial 0x5EED0000, sequence 2, granule 1560, end of stream",
-                  "offset": 372,
+                  "offset": 383,
                   "length": 187,
                   "children": [
                     {
                       "name": "Capture Pattern",
                       "value": "OggS",
-                      "offset": 372,
+                      "offset": 383,
                       "length": 4
                     },
                     {
                       "name": "Version",
                       "value": 0,
-                      "offset": 376,
+                      "offset": 387,
                       "length": 1
                     },
                     {
                       "name": "Header Type",
                       "value": 4,
-                      "offset": 377,
+                      "offset": 388,
                       "length": 1,
                       "children": [
                         {
                           "name": "IsContinued",
                           "value": false,
-                          "offset": 377,
+                          "offset": 388,
                           "length": 1,
                           "bitOffset": 7,
                           "bitLength": 1
@@ -1856,7 +1856,7 @@
                         {
                           "name": "IsBeginningOfStream",
                           "value": false,
-                          "offset": 377,
+                          "offset": 388,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 1
@@ -1864,7 +1864,7 @@
                         {
                           "name": "IsEndOfStream",
                           "value": true,
-                          "offset": 377,
+                          "offset": 388,
                           "length": 1,
                           "bitOffset": 5,
                           "bitLength": 1
@@ -1874,31 +1874,31 @@
                     {
                       "name": "Granule Position",
                       "value": 1560,
-                      "offset": 378,
+                      "offset": 389,
                       "length": 8
                     },
                     {
                       "name": "Serial Number",
                       "value": 1592590336,
-                      "offset": 386,
+                      "offset": 397,
                       "length": 4
                     },
                     {
                       "name": "Sequence Number",
                       "value": 2,
-                      "offset": 390,
+                      "offset": 401,
                       "length": 4
                     },
                     {
                       "name": "CRC",
                       "value": 2635618794,
-                      "offset": 394,
+                      "offset": 405,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
                           "value": 2635618794,
-                          "offset": 394,
+                          "offset": 405,
                           "length": 4
                         }
                       ]
@@ -1906,84 +1906,84 @@
                     {
                       "name": "Segments",
                       "value": 10,
-                      "offset": 398,
+                      "offset": 409,
                       "length": 1
                     },
                     {
                       "name": "Segment Table",
                       "value": 10,
                       "unit": "lacing values",
-                      "offset": 399,
+                      "offset": 410,
                       "length": 10,
                       "children": [
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 399,
+                          "offset": 410,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 400,
+                          "offset": 411,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 401,
+                          "offset": 412,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 402,
+                          "offset": 413,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 403,
+                          "offset": 414,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 404,
+                          "offset": 415,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 405,
+                          "offset": 416,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 406,
+                          "offset": 417,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 407,
+                          "offset": 418,
                           "length": 1
                         },
                         {
                           "name": "Lacing Value",
                           "value": 15,
                           "unit": "bytes",
-                          "offset": 408,
+                          "offset": 419,
                           "length": 1
                         }
                       ]
@@ -1991,61 +1991,61 @@
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 2",
-                      "offset": 409,
+                      "offset": 420,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 3",
-                      "offset": 424,
+                      "offset": 435,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 4",
-                      "offset": 439,
+                      "offset": 450,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 5",
-                      "offset": 454,
+                      "offset": 465,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 6",
-                      "offset": 469,
+                      "offset": 480,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 7",
-                      "offset": 484,
+                      "offset": 495,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 8",
-                      "offset": 499,
+                      "offset": 510,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 9",
-                      "offset": 514,
+                      "offset": 525,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 10",
-                      "offset": 529,
+                      "offset": 540,
                       "length": 15
                     },
                     {
                       "name": "Packet Data",
                       "value": "15 bytes, packet 11",
-                      "offset": 544,
+                      "offset": 555,
                       "length": 15
                     }
                   ]
@@ -2061,7 +2061,7 @@
         "nodes": [
           [
             0,
-            0
+            1
           ]
         ],
         "codec": "Speex narrowband",
@@ -2084,16 +2084,16 @@
             "unit": "kbps",
             "axis": "frameOffset",
             "x": [
-              409,
-              424,
-              439,
-              454,
-              469,
-              484,
-              499,
-              514,
-              529,
-              544
+              420,
+              435,
+              450,
+              465,
+              480,
+              495,
+              510,
+              525,
+              540,
+              555
             ],
             "values": [
               6,
@@ -2125,22 +2125,22 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "ogg.codec-unknown",
-        "message": "The logical stream 0x0BADC0DE starts with bytes no Ogg mapping is known for (58595A636F646563); its packets are not analyzed.",
-        "offset": 108,
-        "length": 212,
+        "code": "ogg.codec-not-analyzed",
+        "message": "The logical stream 0x00F0F0F0 holds Theora, which is recognized but not analyzed yet; only its pages are.",
+        "offset": 0,
+        "length": 383,
         "path": [
           0,
-          1
+          0
         ],
         "count": 1
       },
       {
         "severity": "Info",
-        "code": "ogg.codec-not-analyzed",
-        "message": "The logical stream 0x00F0F0F0 holds Vorbis, which is recognized but not analyzed yet; only its pages are.",
-        "offset": 151,
-        "length": 221,
+        "code": "ogg.codec-unknown",
+        "message": "The logical stream 0x0BADC0DE starts with bytes no Ogg mapping is known for (58595A636F646563); its packets are not analyzed.",
+        "offset": 178,
+        "length": 154,
         "path": [
           0,
           2
