@@ -19,25 +19,37 @@ public sealed partial class MpegAudioParser
     private static void ScanAncillary(StreamState state, RegionState region)
     {
         var scan = new AncillaryScan(state.Blocks);
-        int count = 0;
-        foreach (Entry entry in region.Entries.Where(e => !e.IsGap))
+        ChunkedList<Entry> frames = state.Build.Frames;
+        int end = region.End ?? frames.Count;
+        long ticks = 0;
+        long samples = 0;
+        for (int i = region.First; i < end; i++)
         {
-            state.CheckCancellation(count++);
+            state.CheckCancellation(i - region.First);
+            ref readonly Entry entry = ref frames[i];
+            if (entry.IsGap)
+            {
+                continue;
+            }
+
             scan.Add(entry);
+            if (IsAudio(entry))
+            {
+                ticks += Ticks(entry);
+                samples += new MpegHeader(entry.Header).Samples;
+            }
         }
 
         scan.Close();
         region.Ancillary = scan;
-        List<Entry> audio = region.Entries.Where(IsAudio).ToList();
-        if (scan.First is not { } first || audio.Count == 0)
+        if (scan.First is not { } first || region.AudioFrames == 0)
         {
             return;
         }
 
         var header = new MpegHeader(first.Header);
-        long start = audio[0].Offset;
-        long length = audio[^1].End - start;
-        long ticks = audio.Sum(Ticks);
+        long start = region.AudioStart;
+        long length = region.AudioEnd - start;
         string? name = null;
         if (scan.Segments >= MinEnhancedSegments && scan.Bytes > 0)
         {
@@ -72,11 +84,11 @@ public sealed partial class MpegAudioParser
             node.Add("Sample Rate", ofl.Offset, ofl.Length, NodeValue.Integer(rate, "Hz"));
             node.Add("Duration", ofl.Offset, ofl.Length, Duration(ofl.Samples * (Clock / rate)));
             region.Ofl = node;
-            long samples = audio.Sum(e => (long)new MpegHeader(e.Header).Samples) * (rate / header.SampleRate);
-            if (ofl.Delay + ofl.Samples > samples)
+            long streamSamples = samples * (rate / header.SampleRate);
+            if (ofl.Delay + ofl.Samples > streamSamples)
             {
                 state.Findings.AddNow(Severity.Warning, "mpeg.ofl-exceeds-stream",
-                    $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Number(ofl.Samples)} samples of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(samples)} of the stream.",
+                    $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Number(ofl.Samples)} samples of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
                     node);
             }
         }
@@ -110,14 +122,14 @@ public sealed partial class MpegAudioParser
 
         public (long Offset, int Length, int Delay, long Samples, bool IsMp3Pro)? Ofl { get; private set; }
 
-        public void Add(Entry entry)
+        public void Add(in Entry entry)
         {
             var header = new MpegHeader(entry.Header);
             // A truncated last frame keeps its place as long as its side information is there: its
             // main data starts in the reservoir, which ends the previous frame's segment (BladeEnc
             // 0.80 to 0.83 cut the last frame short), and it has a segment of its own where its main
             // data fits what is left of it, as mp3guessenc reads it.
-            bool inReservoir = header.Layer == 3 && (entry.SideInfo is not null || entry.VbrFrame is not null);
+            bool inReservoir = header.Layer == 3 && (entry.HasSideInfo || entry.IsVbrHeader);
             if (!inReservoir || _stream is not { } stream || !stream.IsSameStream(header))
             {
                 Close();
@@ -137,15 +149,14 @@ public sealed partial class MpegAudioParser
             }
 
             _position += entry.End - dataOffset;
-            if (entry.SideInfo is null)
+            if (!entry.HasSideInfo)
             {
                 return;
             }
 
             First ??= entry;
-            var info = Layer3SideInfo.Read(entry.SideInfo, header);
-            long begin = start - info.MainDataBegin.Value;
-            long end = begin + info.MainDataLength;
+            long begin = start - entry.MainDataBegin;
+            long end = begin + entry.MainDataLength;
 
             // mp3guessenc skips the segment where this frame's main data starts before the stream or
             // inside the previous frame's, and the next one where it does not fit its frame.

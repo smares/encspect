@@ -26,7 +26,7 @@ public sealed partial class MpegAudioParser
             offset + 4 <= available && Enumerable.Range(0, 4).All(i => blocks.ByteAt(position + offset + i) == magic[i]);
     }
 
-    private static void ReportVbrHeader(StreamState state, Entry frame, VbrHeader vbr, bool midStream)
+    private static void ReportVbrHeader(StreamState state, int index, Entry frame, VbrHeader vbr, bool midStream)
     {
         FindingCollector findings = state.Findings;
         long position = frame.Offset;
@@ -78,7 +78,7 @@ public sealed partial class MpegAudioParser
 
         if (vbr.HasLameTag)
         {
-            state.LameTags.Add((frame, vbr));
+            state.LameTags.Add((index, vbr));
         }
     }
 
@@ -87,9 +87,9 @@ public sealed partial class MpegAudioParser
     private static void CheckMusicCrcs(StreamState state)
     {
         Dictionary<long, int> running = RunningCrcs(state);
-        FrameList? all = null;
-        foreach ((Entry frame, VbrHeader vbr) in state.LameTags)
+        foreach ((int index, VbrHeader vbr) in state.LameTags)
         {
+            Entry frame = state.Build.Frames[index];
             long position = frame.Offset;
             long end = frame.Offset + vbr.MusicLength;
             Node node = FindingNode(frame);
@@ -111,8 +111,7 @@ public sealed partial class MpegAudioParser
             if (end > state.Blocks.End)
             {
                 // A stream cut short is reported by its own findings; otherwise the tag is wrong.
-                all ??= AllFrames(state);
-                if (IsCutShort(frame, vbr, Covered(frame, all)))
+                if (IsCutShort(frame, vbr, Covered(state, index)))
                 {
                     state.Findings.Add(Severity.Info, "mpeg.music-crc-not-verified", node, count =>
                         $"The LAME tag of {Frames(count)} covers more music than the file holds after it, which is cut short, so the music CRC is not verified; the first at 0x{position:X}.");
@@ -154,8 +153,9 @@ public sealed partial class MpegAudioParser
     private static Dictionary<long, int> RunningCrcs(StreamState state)
     {
         var positions = new SortedSet<long>();
-        foreach ((Entry frame, VbrHeader vbr) in state.LameTags)
+        foreach ((int index, VbrHeader vbr) in state.LameTags)
         {
+            Entry frame = state.Build.Frames[index];
             long end = frame.Offset + vbr.MusicLength;
             if (end >= frame.End && end <= state.Blocks.End)
             {
@@ -197,18 +197,25 @@ public sealed partial class MpegAudioParser
     // is written by Fraunhofer's encoders.
     private static Node? DetectEncoder(StreamState state, RegionState region)
     {
-        List<Entry> entries = region.Entries;
-        var headers = entries.Where(e => e.VbrFrame is not null)
-            .Select(e => new HeaderFrame(e, VbrHeader.TryRead(e.VbrFrame!, new MpegHeader(e.Header))!)).ToList();
-        var context = new EncoderContext(state, region, FindSignature(state, entries));
+        ChunkedList<Entry> frames = state.Build.Frames;
+        int end = region.End ?? frames.Count;
+        var headers = new List<HeaderFrame>();
+        for (int i = region.First; i < end; i++)
+        {
+            state.CheckCancellation(i - region.First);
+            if (frames[i].IsVbrHeader)
+            {
+                headers.Add(new HeaderFrame(i, frames[i], ReadVbrHeader(state.Build, frames[i])));
+            }
+        }
+
+        var context = new EncoderContext(state, region, FindSignature(state, region));
         if (headers.Count == 0)
         {
             return StreamEncoder(context);
         }
 
-        FrameList all = AllFrames(state);
-        Entry first = entries.First(e => !e.IsGap);
-        if (headers[0].Frame.Offset != first.Offset)
+        if (headers[0].Index != FirstFrame(frames, region))
         {
             Node? found = StreamEncoder(context);
             var named = headers.Where(h => TagEncoder(h) is not null).ToList();
@@ -226,7 +233,7 @@ public sealed partial class MpegAudioParser
 
             string what = $"{TagEncoder(same[0])!.Value.What} at 0x{same[0].Frame.Offset:X}";
             Node evidence = Evidence(same[0].TagNode, same[^1].TagNode, same.Count == 1
-                ? $"{what}, which describes only the {FramesText(Covered(same[0].Frame, all).Count)} after it"
+                ? $"{what}, which describes only the {FramesText(Covered(state, same[0].Index).Frames)} after it"
                 : $"{what} and {Number(same.Count - 1)} more headers, which describe only the frames after them");
             return found is null ? Encoder(name, "Low", evidence) : WithEvidence(found, evidence, null);
         }
@@ -238,11 +245,29 @@ public sealed partial class MpegAudioParser
             return null;
         }
 
-        var described = new HashSet<long>(headers.SelectMany(h => Covered(h.Frame, all)).Select(e => e.Offset));
-        List<Entry> audio = entries.Where(e => !e.IsGap && e.VbrFrame is null).ToList();
+        // The headers' frames follow each other, each up to the next header.
+        List<Coverage> described = headers.Select(h => Covered(state, h.Index)).Where(c => c.Frames > 0).ToList();
+        bool isAllDescribed = true;
+        int audio = 0;
+        for (int i = region.First, next = 0; i < end; i++)
+        {
+            if (frames[i].IsGap || frames[i].IsVbrHeader)
+            {
+                continue;
+            }
+
+            audio++;
+            while (next < described.Count && described[next].End <= i)
+            {
+                next++;
+            }
+
+            isAllDescribed &= next < described.Count && described[next].FirstFrame <= i;
+        }
+
         string? leadingName = TagEncoder(leading)?.Name;
         bool joined = headers.Skip(1).Any(h => TagEncoder(h)?.Name != leadingName);
-        if (!joined && audio.All(e => described.Contains(e.Offset)))
+        if (!joined && isAllDescribed)
         {
             // Headers without a tag (Xing's, ffmpeg's "Lavf") name nothing to agree on.
             if (headers.Count == 1 || leadingName is null)
@@ -259,10 +284,10 @@ public sealed partial class MpegAudioParser
                 : $"{what} and {Number(headers.Count - 2)} more headers, which name the same encoder for the frames after them"), damaged ? "Medium" : null);
         }
 
-        var inRegion = audio.Select(e => e.Offset).ToHashSet();
-        List<Entry> own = Covered(leading.Frame, all).Where(e => inRegion.Contains(e.Offset) && IsAudio(e)).ToList();
-        Node scope = own.Count > 0 ? new Node("Evidence", own[0].Offset, own[^1].End - own[0].Offset) : leading.TagNode;
-        return WithEvidence(encoder, Evidence(scope, $"The {leading.Vbr.Type} header describes only the {FramesText(Covered(leading.Frame, all).Count)} after it; the region holds {FramesText(audio.Count)}, so files were probably joined"),
+        Coverage covered = Covered(state, leading.Index);
+        (int own, long from, long span) = AudioIn(state, region, covered);
+        Node scope = own > 0 ? new Node("Evidence", from, span) : leading.TagNode;
+        return WithEvidence(encoder, Evidence(scope, $"The {leading.Vbr.Type} header describes only the {FramesText(covered.Frames)} after it; the region holds {FramesText(audio)}, so files were probably joined"),
             "Medium");
     }
 
@@ -380,7 +405,7 @@ public sealed partial class MpegAudioParser
             return Encoder(name, "Medium", [.. context.AncillaryEvidence]);
         }
 
-        return context.Signature is { } signature ? Encoder(SignatureName(signature), "Low", context.Ancillary!) : TraitEncoder(context.State, context.Region);
+        return context.Signature is { } signature ? Encoder(SignatureName(signature), "Low", context.Ancillary!) : TraitEncoder(context.Region);
     }
 
     // What a header's tag alone names, or null: a LAME tag but ffmpeg's "Lavf", a VBRI header, or
@@ -430,14 +455,11 @@ public sealed partial class MpegAudioParser
         return node;
     }
 
-    // Whether a frame holding a VBR header follows an earlier frame of its stream: in its region,
-    // across gaps, or in an earlier region, as streams continue across tags.
-    private static bool IsMidStream(StreamState state, List<Entry> entries) =>
-        entries.Take(entries.Count - 1).Any(e => !e.IsGap) || state.Regions.Any(r => r.Entries != entries && r.Entries.Any(e => !e.IsGap));
-
-    private sealed class HeaderFrame(Entry frame, VbrHeader vbr)
+    private sealed class HeaderFrame(int index, Entry frame, VbrHeader vbr)
     {
         private List<Node>? _nodes;
+
+        public int Index => index;
 
         public Entry Frame => frame;
 
@@ -516,15 +538,21 @@ public sealed partial class MpegAudioParser
     // boundary, and runs on into the next frame's data when that frame's main data starts later, so
     // the pieces are searched joined. Without one, the longest version that runs to the end of the
     // data, then the first "LAME" alone, which LAME writes when fewer than 32 bits follow it.
-    private static Signature? FindSignature(StreamState state, List<Entry> entries)
+    private static Signature? FindSignature(StreamState state, RegionState region)
     {
-        List<MainDataRun> runs = state.Build.Runs;
+        ChunkedList<MainDataRun> runs = state.Build.Runs;
+        ChunkedList<Entry> frames = state.Build.Frames;
         var ancillary = new AncillaryStream();
-        int count = 0;
-        foreach (Entry frame in entries.Where(e => e.SideInfo is not null))
+        for (int index = region.First; index < (region.End ?? frames.Count); index++)
         {
-            state.CheckCancellation(count++);
-            long dataStart = frame.Offset + 4 + (frame.Crc >= 0 ? 2 : 0) + frame.SideInfo!.Length;
+            state.CheckCancellation(index - region.First);
+            Entry frame = frames[index];
+            if (!frame.HasSideInfo)
+            {
+                continue;
+            }
+
+            long dataStart = frame.Offset + 4 + (frame.Crc >= 0 ? 2 : 0) + frame.DataLength;
             long cursor = dataStart;
             int low = 0;
             int high = runs.Count;
