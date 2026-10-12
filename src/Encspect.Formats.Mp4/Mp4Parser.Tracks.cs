@@ -110,9 +110,12 @@ public sealed partial class Mp4Parser
 
     private static long SampleCount(Track track) => ((long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L)) + track.FragmentSamples.Count;
 
-    // Every sample of the track in order, as offset and size: the chunks' samples, as far as stsz
-    // gives sizes and stsc and stco place them, then the fragments'.
-    private static IEnumerable<(long Offset, long Size)> Samples(Track track)
+    // Every sample of the track in order, as offset, size and how many samples the entry stands
+    // for: the chunks' samples, as far as stsz gives sizes and stsc and stco place them, then the
+    // fragments'. With one size for every sample, stsz states a count that no table backs, up to
+    // 2^32 in a few bytes; a chunk's samples past the end of the file are then one entry, so the
+    // work stays bounded by the file's size.
+    private static IEnumerable<(long Offset, long Size, long Count)> Samples(Track track, long fileEnd)
     {
         long sizes = (long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L);
         if (track.ChunkOffsets is { } offsets && track.SampleToChunk is { Count: > 0 } runs && sizes > 0)
@@ -127,10 +130,18 @@ public sealed partial class Mp4Parser
                 }
 
                 long position = offsets[chunk];
-                for (uint i = 0; i < runs[run].Samples && index < sizes; i++)
+                long inChunk = Math.Min(runs[run].Samples, sizes - index);
+                for (long i = 0; i < inChunk; i++)
                 {
                     long size = track.Sizes is { } table ? table[index] : track.SampleSize;
-                    yield return (position, size);
+                    if (track.Sizes is null && (position < 0 || position > fileEnd - size))
+                    {
+                        yield return (position, size, inChunk - i);
+                        index += inChunk - i;
+                        break;
+                    }
+
+                    yield return (position, size, 1);
                     position += size;
                     index++;
                 }
@@ -140,7 +151,7 @@ public sealed partial class Mp4Parser
         for (int i = 0; i < track.FragmentSamples.Count; i++)
         {
             FragmentSample sample = track.FragmentSamples[i];
-            yield return (sample.Offset, sample.Size);
+            yield return (sample.Offset, sample.Size, 1);
         }
     }
 
@@ -158,16 +169,17 @@ public sealed partial class Mp4Parser
         (long Offset, long Size)? firstOutside = null;
         (long Offset, long Size)? firstOutsideMdat = null;
         long index = 0;
-        foreach ((long Offset, long Size) sample in Samples(track))
+        foreach ((long Offset, long Size, long Count) entry in Samples(track, state.Reader.End))
         {
             if (index++ % 4096 == 0)
             {
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
+            (long Offset, long Size) sample = (entry.Offset, entry.Size);
             if (!InFile(state, sample))
             {
-                outside++;
+                outside += entry.Count;
                 firstOutside ??= sample;
                 continue;
             }
@@ -234,8 +246,9 @@ public sealed partial class Mp4Parser
     private static IEnumerable<MappedBytes> Packets(State state, Track track)
     {
         long index = 0;
-        foreach ((long Offset, long Size) sample in Samples(track))
+        foreach ((long Offset, long Size, long _) entry in Samples(track, state.Reader.End))
         {
+            (long Offset, long Size) sample = (entry.Offset, entry.Size);
             if (index++ % 4096 == 0)
             {
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
