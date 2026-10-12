@@ -35,5 +35,13 @@ public class FuzzRegressionTests
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.All(report.Streams, s => Assert.All(s.NodePaths, p => Assert.NotNull(p)));
         TestFiles.CheckInsideParents(report.Root);
+
+        // As the fuzzer checks: top-level nodes own their bytes, a node with ranges only those.
+        long previousEnd = 0;
+        foreach (ByteRange range in report.Root.Children.SelectMany(TestFiles.RangesOf).OrderBy(r => r.Offset))
+        {
+            Assert.True(range.Offset >= previousEnd, $"A region at {range.Offset} overlaps the one before, which ends at {previousEnd}.");
+            previousEnd = Math.Max(previousEnd, range.End);
+        }
     }
 }
