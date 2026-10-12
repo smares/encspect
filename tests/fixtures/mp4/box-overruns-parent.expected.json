@@ -1,0 +1,234 @@
+{
+ "description": "A free box in udta that declares 1000 bytes, more than udta holds; it is read up to udta's end.",
+ "length": 1298,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   679
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   655,
+   24
+  ],
+  [
+   "moov/udta",
+   679,
+   28
+  ],
+  [
+   "moov/udta/free",
+   687,
+   20
+  ],
+  [
+   "mdat",
+   707,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   715,
+   6
+  ],
+  [
+   721,
+   45
+  ],
+  [
+   766,
+   42
+  ],
+  [
+   808,
+   39
+  ],
+  [
+   847,
+   36
+  ],
+  [
+   883,
+   33
+  ],
+  [
+   916,
+   30
+  ],
+  [
+   946,
+   27
+  ],
+  [
+   973,
+   24
+  ],
+  [
+   997,
+   20
+  ],
+  [
+   1017,
+   17
+  ],
+  [
+   1034,
+   14
+  ],
+  [
+   1048,
+   11
+  ],
+  [
+   1059,
+   8
+  ],
+  [
+   1067,
+   46
+  ],
+  [
+   1113,
+   43
+  ],
+  [
+   1156,
+   40
+  ],
+  [
+   1196,
+   37
+  ],
+  [
+   1233,
+   34
+  ],
+  [
+   1267,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.box-overruns-parent",
+   "declares 1000 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

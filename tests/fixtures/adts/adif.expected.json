@@ -1,0 +1,39 @@
+{
+ "description": "ADIF: a constant bitrate of 128000 bit/s and one program config element with a channel pair, then 20 raw data blocks.",
+ "length": 600,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "2 channels",
+   "samples": 0,
+   "is_vbr": false
+  }
+ ],
+ "units": [],
+ "fields": {
+  "ADIF/ADIF Header/Bitrate": "128000 bit/s",
+  "ADIF/Raw Data Blocks": "583 bytes"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.adif-blocks-not-analyzed",
+   "ADIF delimits no raw data blocks"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg does not read ADIF.",
+   "faad": "faad2 reads ADIF headers but reports no duration."
+  }
+ }
+}

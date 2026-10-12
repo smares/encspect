@@ -1,0 +1,191 @@
+{
+ "description": "{fdkaac} -S -p 5 -b 48000 -f 2 -o {out} {in} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{fdkaac}",
+   "-S",
+   "-p",
+   "5",
+   "-b",
+   "48000",
+   "-f",
+   "2",
+   "-o",
+   "{out}",
+   "{in}"
+  ]
+ },
+ "length": 9753,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "is_vbr": false,
+   "ffprobe_profile": "HE-AAC",
+   "ffprobe_sample_rate": 44100,
+   "samples": 35840
+  }
+ ],
+ "units": [
+  [
+   0,
+   278
+  ],
+  [
+   278,
+   356
+  ],
+  [
+   634,
+   290
+  ],
+  [
+   924,
+   191
+  ],
+  [
+   1115,
+   278
+  ],
+  [
+   1393,
+   279
+  ],
+  [
+   1672,
+   279
+  ],
+  [
+   1951,
+   278
+  ],
+  [
+   2229,
+   279
+  ],
+  [
+   2508,
+   279
+  ],
+  [
+   2787,
+   278
+  ],
+  [
+   3065,
+   279
+  ],
+  [
+   3344,
+   278
+  ],
+  [
+   3622,
+   279
+  ],
+  [
+   3901,
+   279
+  ],
+  [
+   4180,
+   278
+  ],
+  [
+   4458,
+   279
+  ],
+  [
+   4737,
+   279
+  ],
+  [
+   5016,
+   278
+  ],
+  [
+   5294,
+   279
+  ],
+  [
+   5573,
+   279
+  ],
+  [
+   5852,
+   278
+  ],
+  [
+   6130,
+   279
+  ],
+  [
+   6409,
+   278
+  ],
+  [
+   6687,
+   279
+  ],
+  [
+   6966,
+   279
+  ],
+  [
+   7245,
+   278
+  ],
+  [
+   7523,
+   279
+  ],
+  [
+   7802,
+   279
+  ],
+  [
+   8081,
+   278
+  ],
+  [
+   8359,
+   279
+  ],
+  [
+   8638,
+   279
+  ],
+  [
+   8917,
+   278
+  ],
+  [
+   9195,
+   316
+  ],
+  [
+   9511,
+   242
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 finds the SBR data that ADTS can only signal implicitly, which the analyzer does not check yet (slice B); ffprobe reports the doubled rate for the same reason."
+  }
+ }
+}

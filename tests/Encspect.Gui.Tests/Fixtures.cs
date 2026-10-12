@@ -8,6 +8,8 @@ internal static class Fixtures
 
     public static string Stats(string name) => Path.Combine(Directory, "stats", name);
 
+    public static string Aac(string name) => Path.Combine(Directory, "aac", name);
+
     public static string Ogg(string name) => Path.Combine(Directory, "ogg", name);
 
     private static string FindRepositoryRoot()

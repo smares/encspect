@@ -41,6 +41,28 @@ public class FileListTests
         Assert.Equal("4 files", model.Status);
     }
 
+    // The list reads streams, so MP4 and raw AAC fill in as MPEG audio does.
+    [Fact]
+    public void Mp4_and_aac_files_fill_in_from_their_streams()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Aac("fdkaac-he-v2.m4a"), "he-v2.m4a");
+        temp.Copy(Fixtures.Aac("ffmpeg-adts.aac"), "lc.aac");
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, parallelism: 2, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+
+        FileRow he = model.Rows.Single(r => r.Name == "he-v2.m4a");
+        Assert.Equal(("MP4", "HE-AAC v2", "44.1 kHz", "Parametric stereo"), (he.Format, he.Codec, he.SampleRateText, he.ChannelMode));
+        Assert.Equal("fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", he.EncoderText);
+        Assert.Contains("iTunes Metadata", he.Tags, StringComparison.Ordinal);
+        FileRow lc = model.Rows.Single(r => r.Name == "lc.aac");
+        Assert.Equal(("AAC", "AAC LC (no SBR signaled explicitly)", "FFmpeg (Lavc60.31.102) (high)"), (lc.Format, lc.Codec, lc.EncoderText));
+        Assert.EndsWith("VBR", lc.BitrateText, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void An_ogg_speex_file_fills_its_row_from_its_streams()
     {

@@ -1,0 +1,287 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "adif.aac",
+    "root": {
+      "name": "File",
+      "value": "AAC",
+      "offset": 0,
+      "length": 600,
+      "children": [
+        {
+          "name": "ADIF",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 600,
+          "children": [
+            {
+              "name": "ADIF Header",
+              "offset": 0,
+              "length": 17,
+              "children": [
+                {
+                  "name": "ADIF ID",
+                  "value": "ADIF",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "HasCopyrightId",
+                  "value": false,
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Bitstream Type",
+                  "value": "0 (constant bitrate)",
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Bitrate",
+                  "value": 128000,
+                  "unit": "bit/s",
+                  "offset": 4,
+                  "length": 4,
+                  "bitOffset": 4,
+                  "bitLength": 23
+                },
+                {
+                  "name": "Program Config Elements",
+                  "value": 1,
+                  "offset": 7,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 4
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": 0,
+                  "offset": 7,
+                  "length": 4,
+                  "bitOffset": 7,
+                  "bitLength": 20
+                },
+                {
+                  "name": "Program Config Element",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 10,
+                  "length": 7,
+                  "bitOffset": 3,
+                  "bitLength": 53,
+                  "children": [
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 10,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Object Type",
+                      "value": "1 (AAC LC)",
+                      "offset": 10,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 11,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Front Channel Elements",
+                      "value": 1,
+                      "offset": 11,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Side Channel Elements",
+                      "value": 0,
+                      "offset": 12,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Back Channel Elements",
+                      "value": 0,
+                      "offset": 12,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "LFE Channel Elements",
+                      "value": 0,
+                      "offset": 13,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Associated Data Elements",
+                      "value": 0,
+                      "offset": 13,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Valid Coupling Channel Elements",
+                      "value": 0,
+                      "offset": 13,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "HasMonoMixdown",
+                      "value": false,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasStereoMixdown",
+                      "value": false,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasMatrixMixdown",
+                      "value": false,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Front Element",
+                      "value": "CPE",
+                      "offset": 14,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5,
+                      "children": [
+                        {
+                          "name": "IsChannelPair",
+                          "value": true,
+                          "offset": 14,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "Tag",
+                          "value": 0,
+                          "offset": 14,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Comment Length",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 16,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Raw Data Blocks",
+              "value": 583,
+              "unit": "bytes",
+              "offset": 17,
+              "length": 583
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "AAC LC (no SBR signaled explicitly)",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "2 channels",
+        "samples": 0,
+        "duration": 0.0364375,
+        "averageBitrate": 128,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "aac.implicit-signaling-not-checked",
+        "message": "ADIF cannot signal SBR or PS explicitly. They can be signaled implicitly, in the fill elements of the raw data blocks, which are not checked yet; the stream may be HE-AAC or HE-AAC v2.",
+        "offset": 0,
+        "length": 600,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "aac.adif-blocks-not-analyzed",
+        "message": "ADIF delimits no raw data blocks; finding them needs the spectral data of every element parsed, which is not done yet, so they are not analyzed.",
+        "offset": 17,
+        "length": 583,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

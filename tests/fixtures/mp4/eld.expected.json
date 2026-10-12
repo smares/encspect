@@ -1,0 +1,224 @@
+{
+ "description": "AAC ELD, mono, 48000 Hz, 480 samples per frame: an error resilient object type, whose access units have no element IDs.",
+ "length": 1766,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   650
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   534
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   434
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   349
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   289
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   105
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   89
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   53
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   502,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   526,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   554,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   654,
+   24
+  ],
+  [
+   "mdat",
+   678,
+   1088
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "ER AAC ELD",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 9600,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   686,
+   40
+  ],
+  [
+   726,
+   47
+  ],
+  [
+   773,
+   54
+  ],
+  [
+   827,
+   61
+  ],
+  [
+   888,
+   68
+  ],
+  [
+   956,
+   45
+  ],
+  [
+   1001,
+   52
+  ],
+  [
+   1053,
+   59
+  ],
+  [
+   1112,
+   66
+  ],
+  [
+   1178,
+   43
+  ],
+  [
+   1221,
+   50
+  ],
+  [
+   1271,
+   57
+  ],
+  [
+   1328,
+   64
+  ],
+  [
+   1392,
+   41
+  ],
+  [
+   1433,
+   48
+  ],
+  [
+   1481,
+   55
+  ],
+  [
+   1536,
+   62
+  ],
+  [
+   1598,
+   69
+  ],
+  [
+   1667,
+   46
+  ],
+  [
+   1713,
+   53
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Audio Object Type": "39 (ER AAC ELD)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Frame Length": "480 samples",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/HasLowDelaySbr": "false",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Error Protection Config": "0"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 decodes ER AAC LD but not ELD."
+  }
+ }
+}

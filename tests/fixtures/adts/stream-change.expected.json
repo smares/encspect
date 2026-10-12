@@ -1,0 +1,171 @@
+{
+ "description": "15 frames at 44100 Hz, then 15 at 48000 Hz, as when two files are joined: two streams.",
+ "length": 1006,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 15360,
+   "is_vbr": true
+  },
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 15360,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   13
+  ],
+  [
+   13,
+   52
+  ],
+  [
+   65,
+   49
+  ],
+  [
+   114,
+   46
+  ],
+  [
+   160,
+   43
+  ],
+  [
+   203,
+   40
+  ],
+  [
+   243,
+   37
+  ],
+  [
+   280,
+   34
+  ],
+  [
+   314,
+   31
+  ],
+  [
+   345,
+   27
+  ],
+  [
+   372,
+   24
+  ],
+  [
+   396,
+   21
+  ],
+  [
+   417,
+   18
+  ],
+  [
+   435,
+   15
+  ],
+  [
+   450,
+   53
+  ],
+  [
+   503,
+   13
+  ],
+  [
+   516,
+   52
+  ],
+  [
+   568,
+   49
+  ],
+  [
+   617,
+   46
+  ],
+  [
+   663,
+   43
+  ],
+  [
+   706,
+   40
+  ],
+  [
+   746,
+   37
+  ],
+  [
+   783,
+   34
+  ],
+  [
+   817,
+   31
+  ],
+  [
+   848,
+   27
+  ],
+  [
+   875,
+   24
+  ],
+  [
+   899,
+   21
+  ],
+  [
+   920,
+   18
+  ],
+  [
+   938,
+   15
+  ],
+  [
+   953,
+   53
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.stream-changed",
+   "from AAC LC, 44100 Hz, channel configuration 2 to AAC LC, 48000 Hz"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": {
+   "seconds": "0.697",
+   "rate": 44100
+  },
+  "skip": {
+   "ffprobe": "ffmpeg keeps one stream across the change of sample rate."
+  }
+ }
+}

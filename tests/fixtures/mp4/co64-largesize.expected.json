@@ -1,0 +1,269 @@
+{
+ "description": "64-bit chunk offsets (co64) and an mdat box with a 64-bit size (size 1 and largesize), before moov.",
+ "length": 1594,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "mdat",
+   28,
+   859
+  ],
+  [
+   "moov",
+   887,
+   707
+  ],
+  [
+   "moov/mvhd",
+   895,
+   108
+  ],
+  [
+   "moov/trak",
+   1003,
+   591
+  ],
+  [
+   "moov/trak/tkhd",
+   1011,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   1103,
+   491
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   1111,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   1143,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   1188,
+   406
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   1196,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   1212,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   1220,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   1236,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   1248,
+   346
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   1256,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   1272,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   1308,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   1362,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   1386,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   1414,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/co64",
+   1554,
+   40
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 30720,
+   "is_vbr": false
+  }
+ ],
+ "units": [
+  [
+   44,
+   6
+  ],
+  [
+   50,
+   45
+  ],
+  [
+   95,
+   42
+  ],
+  [
+   137,
+   39
+  ],
+  [
+   176,
+   36
+  ],
+  [
+   212,
+   33
+  ],
+  [
+   245,
+   30
+  ],
+  [
+   275,
+   27
+  ],
+  [
+   302,
+   24
+  ],
+  [
+   326,
+   20
+  ],
+  [
+   346,
+   17
+  ],
+  [
+   363,
+   14
+  ],
+  [
+   377,
+   11
+  ],
+  [
+   388,
+   8
+  ],
+  [
+   396,
+   46
+  ],
+  [
+   442,
+   43
+  ],
+  [
+   485,
+   40
+  ],
+  [
+   525,
+   37
+  ],
+  [
+   562,
+   34
+  ],
+  [
+   596,
+   31
+  ],
+  [
+   627,
+   28
+  ],
+  [
+   655,
+   25
+  ],
+  [
+   680,
+   21
+  ],
+  [
+   701,
+   18
+  ],
+  [
+   719,
+   15
+  ],
+  [
+   734,
+   12
+  ],
+  [
+   746,
+   9
+  ],
+  [
+   755,
+   47
+  ],
+  [
+   802,
+   44
+  ],
+  [
+   846,
+   41
+  ]
+ ],
+ "fields": {
+  "MP4/mdat/Size": "1 (a 64-bit size follows)",
+  "MP4/mdat/Large Size": "859 bytes",
+  "MP4/moov/trak/mdia/minf/stbl/co64": "3 chunks",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "128000 bit/s"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2's MP4 reader does not read 64-bit box sizes or chunk offsets."
+  }
+ }
+}

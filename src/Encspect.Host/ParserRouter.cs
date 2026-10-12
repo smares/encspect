@@ -14,11 +14,11 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
     private int _depth;
 
-    public bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload) =>
-        RunCodec(caller, codecId, parent, () => new CodecContext(parent, payload, caller.EncoderClaims, this));
+    public bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration) =>
+        RunCodec(caller, codecId, parent, () => new CodecContext(parent, payload, caller.EncoderClaims, this, configuration));
 
-    public bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets) =>
-        RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, caller.EncoderClaims, this));
+    public bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration) =>
+        RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, caller.EncoderClaims, this, configuration));
 
     public Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent) =>
         RunTag(caller, tagName, parent, slice.Start, slice.End, parser => parser.ParseWhole(new TagProbeContext(slice)));
