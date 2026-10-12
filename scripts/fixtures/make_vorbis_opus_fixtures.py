@@ -403,7 +403,7 @@ def vorbis_setup_invalid():
     f.finding("vorbis.setup-invalid", "Mode 1 uses mapping 1, but the setup header has 1 mapping")
     f.finding("vorbis.framing-missing", "setup header's framing bit is 0")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "not_compared": {
-        "ogginfo, ffprobe and oggdec": "libvorbis refuses each of these setup headers, as the findings say; oggdec confirms it for each link"}}
+        "ogginfo, ffprobe and oggdec": "libvorbis refuses each of these setup headers, or with the codebooks that are no complete prefix code to decode the stream (oggdec: \"Vorbis library reported a stream error\" and no samples), as the findings say"}}
     f.write()
 
 
