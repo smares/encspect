@@ -1,5 +1,6 @@
 using Encspect.Core;
 using Encspect.Formats.Mpeg;
+using Encspect.Formats.Ogg;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
@@ -28,7 +29,7 @@ public static class DefaultParsers
 
     private static readonly MpegAudioParser Mpeg = new();
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg];
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new OggParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4.
     public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg];
