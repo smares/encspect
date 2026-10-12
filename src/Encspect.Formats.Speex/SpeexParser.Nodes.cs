@@ -10,7 +10,7 @@ public sealed partial class SpeexParser
         PacketRecord packet = records.Packets[index];
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
         long length = ranges is null ? packet.Length : ranges[^1].End - ranges[0].Offset;
-        return new Node("Packet", packet.Offset, length, Summary(records, index), () => PacketFields(records, index))
+        return new Node("Packet", records.OffsetOf(index), length, Summary(records, index), () => PacketFields(records, index))
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
@@ -61,7 +61,7 @@ public sealed partial class SpeexParser
     {
         PacketRecord packet = records.Packets[index];
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
-        var at = new BitPlace(packet.Offset, ranges is null ? null : new MappedBytes(new byte[packet.Length], ranges));
+        var at = new BitPlace(records.OffsetOf(index), ranges is null ? null : new MappedBytes(new byte[packet.Length], ranges));
         var nodes = new List<Node>();
         long position = 0;
         int frames = records.FrameCount(index);

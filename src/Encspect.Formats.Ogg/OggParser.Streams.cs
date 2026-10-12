@@ -289,7 +289,8 @@ public sealed partial class OggParser
                 }
 
                 bool positioned = r == lastEnding && page.Granule != -1;
-                completed.Add(new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), [.. _ranges], page.BodyOffset + run.Start + run.Length)
+                // MappedBytes copies the ranges, so the list is reused for the next packet.
+                completed.Add(new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), _ranges, page.BodyOffset + run.Start + run.Length)
                 {
                     EndPosition = positioned ? page.Granule : null,
                     EndPositionField = positioned ? GranuleField(page.Offset) : null,

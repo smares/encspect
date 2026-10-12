@@ -24,12 +24,15 @@ public sealed class MappedBytes
     {
         ArgumentNullException.ThrowIfNull(ranges);
 
-        var starts = new List<int>(ranges.Count);
-        var offsets = new List<long>(ranges.Count);
+        // Checked and counted first, then filled, so a packet handed over by the million allocates
+        // only its two arrays.
+        int segments = 0;
+        int used = 0;
         long total = 0;
         long previousEnd = -1;
-        foreach (ByteRange range in ranges)
+        for (; used < ranges.Count && total <= data.Length; used++)
         {
+            ByteRange range = ranges[used];
             if (range.Offset < 0 || range.Length < 0)
             {
                 throw new ArgumentException("A range cannot have a negative offset or length.", nameof(ranges));
@@ -48,16 +51,11 @@ public sealed class MappedBytes
             // Ranges that touch form one segment, so a contiguous packet maps in one step.
             if (range.Offset != previousEnd)
             {
-                starts.Add((int)total);
-                offsets.Add(range.Offset);
+                segments++;
             }
 
             total += range.Length;
             previousEnd = range.End;
-            if (total > data.Length)
-            {
-                break;
-            }
         }
 
         if (total != data.Length)
@@ -71,11 +69,33 @@ public sealed class MappedBytes
             throw new ArgumentException("The end lies before the last range ends.", nameof(fileEnd));
         }
 
+        _starts = new int[segments];
+        _offsets = new long[segments];
+        int segment = -1;
+        long position = 0;
+        previousEnd = -1;
+        for (int i = 0; i < used; i++)
+        {
+            ByteRange range = ranges[i];
+            if (range.Length == 0)
+            {
+                continue;
+            }
+
+            if (range.Offset != previousEnd)
+            {
+                segment++;
+                _starts[segment] = (int)position;
+                _offsets[segment] = range.Offset;
+            }
+
+            position += range.Length;
+            previousEnd = range.End;
+        }
+
         Data = data;
-        _starts = [.. starts];
-        _offsets = [.. offsets];
         FileEnd = fileEnd ?? end;
-        FileStart = offsets.Count > 0 ? offsets[0] : FileEnd;
+        FileStart = segments > 0 ? _offsets[0] : FileEnd;
     }
 
     private MappedBytes(ReadOnlyMemory<byte> data, long fileStart, long fileEnd)

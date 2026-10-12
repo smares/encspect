@@ -4,9 +4,9 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Speex;
 
-// A packet of audio: where it is, how long, and where its frames start among the stream's frame
-// records. 16 bytes.
-internal readonly record struct PacketRecord(long Offset, int Length, int FirstFrame);
+// A packet of audio: how long it is, and where its frames start among the stream's frame records.
+// 8 bytes; its offset is kept apart (Records.OffsetOf).
+internal readonly record struct PacketRecord(int Length, int FirstFrame);
 
 public sealed partial class SpeexParser
 {
@@ -15,6 +15,11 @@ public sealed partial class SpeexParser
     // The records audio packet nodes are built from once the stream is closed.
     private sealed class Records
     {
+        // Each packet's offset: while the stream is read, then as the x values of its bitrate
+        // series, which hold the same offsets, so they are kept once.
+        private ChunkedList<long>? _offsets = new();
+        private double[]? _seriesOffsets;
+
         public ChunkedList<PacketRecord> Packets { get; } = new();
 
         public ChunkedList<FrameRecord> Frames { get; } = new();
@@ -27,6 +32,34 @@ public sealed partial class SpeexParser
         public Dictionary<int, PacketWalk> Irregular { get; } = [];
 
         public int Mode { get; set; } = -1;
+
+        public long OffsetOf(int packet) => _seriesOffsets is { } offsets ? (long)offsets[packet] : _offsets![packet];
+
+        public void Add(long offset, int length, int firstFrame)
+        {
+            _offsets!.Add(offset);
+            Packets.Add(new PacketRecord(length, firstFrame));
+        }
+
+        // The offsets as doubles, which hold every file offset exactly, for the bitrate series; the
+        // records read them from there from now on.
+        public double[] OffsetsForSeries(CancellationToken cancellationToken)
+        {
+            var offsets = new double[Packets.Count];
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                if (i % 65536 == 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                offsets[i] = _offsets![i];
+            }
+
+            _seriesOffsets = offsets;
+            _offsets = null;
+            return offsets;
+        }
 
         public int FrameCount(int packet) => (packet + 1 < Packets.Count ? Packets[packet + 1].FirstFrame : Frames.Count) - Packets[packet].FirstFrame;
     }
@@ -224,11 +257,10 @@ public sealed partial class SpeexParser
         private void AddAudio(MappedBytes packet)
         {
             int index = _records.Packets.Count;
-            _records.Packets.Add(new PacketRecord(packet.FileStart, packet.Length, _records.Frames.Count));
-            IReadOnlyList<ByteRange> ranges = packet.FileRanges();
-            if (ranges.Count > 1)
+            _records.Add(packet.FileStart, packet.Length, _records.Frames.Count);
+            if (packet.FileEnd - packet.FileStart != packet.Length)
             {
-                _records.Ranges[index] = [.. ranges];
+                _records.Ranges[index] = [.. packet.FileRanges()];
             }
 
             _packets++;

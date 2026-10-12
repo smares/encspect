@@ -418,6 +418,93 @@ public class FindingPathTests
         Assert.InRange(built, 1, 2);
     }
 
+    // Children out of file order, or whose ends go back, are searched through the sorted index;
+    // children in order through bisection, also where several contain the node.
+    [Fact]
+    public void ResolvingAPathAmongUnorderedAndNestedChildren()
+    {
+        var parser = new FixedParser(context =>
+        {
+            Node unordered = context.Root.Add(new Node("Unordered", 0, 160));
+            for (int i = 0; i < 40; i++)
+            {
+                long offset = (39 - i) * 4;
+                unordered.Add(new Node("Item", offset, 4)).Add("Field", offset + 2, 1);
+            }
+
+            unordered.Add(new Node("Span", 0, 160)).Add("Inner", 50, 1);
+
+            Node ordered = context.Root.Add(new Node("Ordered", 200, 100));
+            for (int i = 0; i < 40; i++)
+            {
+                ordered.Add(new Node("Whole", 200, 100));
+            }
+
+            ordered.Children[^1].Add("Deep", 250, 1);
+            context.AddFinding(Severity.Info, "test.unordered", "found", new Node("Field", (20 * 4) + 2, 1));
+            context.AddFinding(Severity.Info, "test.span", "found", new Node("Inner", 50, 1));
+            context.AddFinding(Severity.Info, "test.ordered", "found", new Node("Deep", 250, 1));
+        });
+
+        Report report = new Analyzer([parser]).Analyze("nodes.bin", new MemoryStream(new byte[300]));
+
+        Assert.Equal([0, 19, 0], report.Findings.Single(f => f.Code == "test.unordered").Path);
+        Assert.Equal([0, 40, 0], report.Findings.Single(f => f.Code == "test.span").Path);
+        Assert.Equal([1, 39, 0], report.Findings.Single(f => f.Code == "test.ordered").Path);
+    }
+
+    // A long list in file order, such as a stream's packets that are built when read, is read once
+    // in order and then bisected, not sorted through its indexer, which rebuilt the nodes of blocks
+    // the collector had taken over and over.
+    [Fact]
+    public void ResolvingAPathReadsAnOrderedListOnce()
+    {
+        const int Frames = 100_000;
+        var frames = new CountingList(Enumerable.Range(0, Frames).Select(i => new Node("Frame", i * 4L, 4)).ToArray());
+        frames.Items[70_000].Add("Field", (70_000 * 4) + 1, 1);
+        var parser = new FixedParser(context =>
+        {
+            context.Root.Add(new Node("Stream", 0, Frames * 4, null, () => frames) { Kind = NodeKind.Stream });
+            context.AddFinding(Severity.Warning, "test.field", "found", new Node("Field", (70_000 * 4) + 1, 1));
+        });
+
+        Report report = new Analyzer([parser]).Analyze("frames.bin", new MemoryStream(new byte[Frames * 4]));
+
+        Assert.Equal([0, 70_000, 0], report.Findings.Single(f => f.Code == "test.field").Path);
+        Assert.InRange(frames.Reads, Frames, Frames + 200);
+    }
+
+    private sealed class CountingList(Node[] items) : IReadOnlyList<Node>
+    {
+        private int _reads;
+
+        public Node[] Items => items;
+
+        public int Reads => _reads;
+
+        public int Count => items.Length;
+
+        public Node this[int index]
+        {
+            get
+            {
+                Interlocked.Increment(ref _reads);
+                return items[index];
+            }
+        }
+
+        public IEnumerator<Node> GetEnumerator()
+        {
+            foreach (Node item in items)
+            {
+                Interlocked.Increment(ref _reads);
+                yield return item;
+            }
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
     private static List<string> Names(Node root, IReadOnlyList<int> path)
     {
         var names = new List<string>();

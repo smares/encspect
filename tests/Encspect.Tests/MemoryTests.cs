@@ -54,7 +54,7 @@ public class MemoryTests
 
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
     // scan never holds the pages' nodes or data (64 bytes kept per page and a few more for its
-    // segment table and place in its stream; the bounds leave room).
+    // segment table and place in its stream, 72 in all; the bounds leave room).
     [Fact]
     public void ManyPagesStayCompact()
     {
@@ -69,13 +69,15 @@ public class MemoryTests
         (Report report, long kept, long peak) = Measure("pages.ogg", builder.Bytes);
 
         Assert.Equal(NodeValue.Integer(pages, "pages", "page"), report.Root.Children.Single().Value);
-        Assert.True(kept < pages * 150L, $"The report keeps {kept / pages} bytes per page.");
+        Assert.True(kept < pages * 100L, $"The report keeps {kept / pages} bytes per page.");
         Assert.True(peak < pages * 1024L, $"The heap grew by {peak / pages} bytes per page.");
         GC.KeepAlive(report);
     }
 
-    // A Speex stream keeps a 16-byte record per packet, 4 bytes per frame and its per-packet series
-    // (16 bytes), plus its share of the page records; the bounds leave room.
+    // A Speex stream keeps an 8-byte record per packet, 4 bytes per frame and its per-packet series
+    // (16 bytes, whose x values are also the packets' offsets), plus its share of the page records:
+    // 30 bytes in all, where it kept 39 when the records held the offsets too. The bounds leave
+    // room.
     [Fact]
     public void ManySpeexPacketsStayCompact()
     {
@@ -92,7 +94,7 @@ public class MemoryTests
         (Report report, long kept, long peak) = Measure("speex.spx", builder.Bytes);
 
         Assert.Equal(packets * 160L / 8000.0 - (40 / 8000.0), report.Streams.Single().Duration, 9);
-        Assert.True(kept < packets * 100L, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(kept < packets * 40L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 1024L, $"The heap grew by {peak / packets} bytes per packet.");
         GC.KeepAlive(report);
     }
@@ -109,7 +111,8 @@ public class MemoryTests
         {
             while (!Volatile.Read(ref done))
             {
-                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), GC.GetGCMemoryInfo(GCKind.Any).HeapSizeBytes));
+                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.Any);
+                Interlocked.Exchange(ref peak, Math.Max(Interlocked.Read(ref peak), info.HeapSizeBytes - info.FragmentedBytes));
                 Thread.Sleep(1);
             }
         });

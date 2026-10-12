@@ -214,7 +214,7 @@ public sealed partial class SpeexParser
             bool perSecond = SamplesPerPacket <= Rate;
 
             int count = _records.Packets.Count;
-            var offsets = new double[count];
+            double[] offsets = _records.OffsetsForSeries(context.CancellationToken);
             var bitrates = new double[count];
             var seconds = new List<(long Bits, long Packets)>();
             long perPacket = SamplesPerPacket;
@@ -226,7 +226,6 @@ public sealed partial class SpeexParser
                 }
 
                 PacketRecord packet = _records.Packets[i];
-                offsets[i] = packet.Offset;
                 bitrates[i] = PacketBitrate(packet.Length);
                 if (!perSecond)
                 {
