@@ -2,7 +2,9 @@
 """Writes the encoder-made Vorbis and Opus fixtures in tests/fixtures/ogg (external-*.ogg, .opus).
 
 oggenc from Ubuntu's vorbis-tools (1.4.2, libvorbis 1.3.7) encodes at several qualities, with
-managed bitrate, in mono, stereo and 5.1; opusenc from opus-tools (0.2, libopus 1.4) at several
+managed bitrate, in mono, stereo and 5.1, and also with aoTuV's libraries of beta 5.7, beta 6.03 and
+its 2020 rebuild in their place (aotuv_tool.py); Rarewares' oggenc2.88 builds on aoTuV b6.03 (2020)
+and on Lancer, run under Wine, write their own vendor strings; opusenc from opus-tools (0.2, libopus 1.4) at several
 bitrates, in hard CBR and constrained VBR, mono, stereo and 5.1, with speech tuning and other
 frame sizes; ffmpeg encodes with libvorbis and libopus (also in the ambisonic mapping family 2)
 and with its native vorbis and opus encoders. The inputs are deterministic signals written here:
@@ -25,6 +27,7 @@ import subprocess
 import sys
 import tempfile
 
+import aotuv_tool
 import make_ogg_fixtures as hand
 import make_vorbis_opus_fixtures as hand_vo
 import ogg_model as m
@@ -36,6 +39,11 @@ OPUSENC = {"name": "opusenc 0.2 (libopus 1.4)", "confidence": "High"}
 FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium"}
 FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium"}
 FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium"}
+AOTUV_B57 = {"name": "aoTuV b5.7 (20090301)", "confidence": "High"}
+AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
+AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
+AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
+LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
 FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium"}
 
 # name: (tool, rate, channels, seconds, arguments, detected encoder, expected findings)
@@ -46,6 +54,13 @@ FIXTURES = {
     "external-oggenc-managed": ("oggenc", 44100, 2, 1.5, ["--managed", "-b", "96", "-m", "64", "-M", "128"], LIBVORBIS, []),
     "external-oggenc-mono": ("oggenc", 22050, 1, 1.5, ["-q", "3", "-t", "Mono title", "-a", "Ünïcödé artist"], LIBVORBIS, []),
     "external-oggenc-51": ("oggenc", 48000, 6, 1.0, ["-q", "4"], LIBVORBIS, []),
+    # oggenc with aoTuV's libraries (aotuv_tool.py), and Rarewares' oggenc2.88 builds under Wine.
+    "external-aotuv-b5.7-q5": ("aotuv:b5.7", 44100, 2, 1.5, ["-q", "5"], AOTUV_B57, []),
+    "external-aotuv-b6.03-q5": ("aotuv:b6.03", 44100, 2, 1.5, ["-q", "5"], AOTUV_B603, []),
+    "external-aotuv-b6.03-2020-q3": ("aotuv:b6.03 (2020)", 44100, 2, 1.5, ["-q", "3"], AOTUV_2020, []),
+    "external-aotuv-b6.03-2020-managed": ("aotuv:b6.03 (2020)", 44100, 2, 1.5, ["--managed", "-b", "96", "-m", "64", "-M", "128"], AOTUV_2020, []),
+    "external-oggenc2-aotuv-rarewares": ("wine:aotuv-rarewares", 44100, 2, 1.5, ["-q", "5"], AOTUV_RAREWARES, []),
+    "external-oggenc2-lancer-sse2": ("wine:lancer-sse2", 44100, 2, 1.5, ["-q", "5"], LANCER, []),
     "external-ffmpeg-libvorbis": ("ffmpeg", 44100, 2, 1.5, ["-c:a", "libvorbis", "-q:a", "4"], FFMPEG_LIBVORBIS, []),
     "external-ffmpeg-vorbis": ("ffmpeg", 44100, 2, 1.5, ["-strict", "-2", "-c:a", "vorbis"], FFMPEG_VORBIS, []),
     "external-opusenc-96": ("opusenc", 48000, 2, 1.5, ["--bitrate", "96"], OPUSENC, []),
@@ -68,7 +83,7 @@ SKIPS = {
 
 
 def extension(name):
-    return ".ogg" if FIXTURES[name][0] == "oggenc" or "vorbis" in name else ".opus"
+    return ".ogg" if FIXTURES[name][0].startswith(("oggenc", "aotuv", "wine")) or "vorbis" in name else ".opus"
 
 
 def signal(rate, channels, seconds):
@@ -102,6 +117,14 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     source.write_bytes(wav(signal(rate, channels, seconds), rate, channels))
     if tool == "oggenc":
         subprocess.run(["oggenc", "-Q", *arguments, "-o", str(target), str(source)], check=True)
+    elif tool.startswith("aotuv:"):
+        aotuv_tool.oggenc(tool[6:], arguments, source, target)
+        return {"tool": f"{version('oggenc')} with aoTuV {tool[6:]}'s libvorbis (aotuv_tool.py)", "arguments": arguments, "rate": rate,
+                "channels": channels, "seconds": seconds}
+    elif tool.startswith("wine:"):
+        aotuv_tool.windows(tool[5:], arguments, source, target)
+        return {"tool": f"{aotuv_tool.WINDOWS[tool[5:]][0]} (Rarewares) under Wine", "arguments": arguments, "rate": rate, "channels": channels,
+                "seconds": seconds}
     elif tool == "opusenc":
         subprocess.run(["opusenc", "--quiet", *arguments, str(source), str(target)], check=True)
     else:
@@ -140,9 +163,9 @@ def manifest(name, encoder, detected, findings):
 def main():
     only_manifests = "--manifests-only" in sys.argv
     if not only_manifests:
-        missing = [tool for tool in ("oggenc", "opusenc", "ffmpeg") if shutil.which(tool) is None]
+        missing = [tool for tool in ("oggenc", "opusenc", "ffmpeg", "wine", "autoreconf") if shutil.which(tool) is None]
         if missing:
-            raise SystemExit(f"Missing {', '.join(missing)}; install vorbis-tools, opus-tools and ffmpeg, or pass --manifests-only.")
+            raise SystemExit(f"Missing {', '.join(missing)}; install vorbis-tools, opus-tools, ffmpeg, wine and autoconf, or pass --manifests-only.")
     _ = hand_vo
     with tempfile.TemporaryDirectory() as work:
         for name, (tool, rate, channels, seconds, arguments, detected, findings) in FIXTURES.items():

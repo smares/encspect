@@ -81,9 +81,9 @@ class Fixture:
         self.regions_after = []
         self.ogg_start = 0
 
-    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0):
+    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0, encoder=None):
         self.streams.append({"serial": serial, "pages": pages, "link": link, "codec": codec, "analyzed": analyzed, "lost": set(lost),
-                             "extra_headers": extra_headers})
+                             "extra_headers": extra_headers, "encoder": encoder})
 
     def finding(self, code, contains):
         self.findings.append({"code": code, "contains": contains})

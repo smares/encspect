@@ -31,9 +31,48 @@ public sealed partial class VorbisParser
     [GeneratedRegex(@"^Xiph\.Org libVorbis I (\d{8})")]
     private static partial Regex LibvorbisVendor();
 
-    // aoTuV's (lib/info.c of aoTuV beta 6.03): "AO; aoTuV [20110424] (based on libvorbis 1.3.7)".
-    [GeneratedRegex(@"^AO; aoTuV")]
+    // The vendor string of each aoTuV release (Aoyumi's tuned libvorbis), from lib/info.c of its
+    // source releases on aoTuV's site (AO-Yumi/aotuv_web) and of the 2018 and 2020 rebuilds of
+    // beta 6.03 (AO-Yumi/vorbis_aotuv); a1 to a3 and b1 have no source left, and these come from
+    // their reference binaries there. aotuv_tool.py --vendors checks the table against the sources.
+    // beta 6.03 of 2011, 2014 and 2015 write the same string; the rebuilds name the libvorbis
+    // they are based on. Rarewares' build of oggenc2.88 on beta 6.03 (2020) writes its own.
+    private static readonly Dictionary<string, string> AotuvReleases = new(StringComparer.Ordinal)
+    {
+        ["AO; aoTuV a1 (based on Xiph.org's 1.0.1)"] = "aoTuV a1",
+        ["AO; aoTuV a2 (based on Xiph.org's 1.0.1)"] = "aoTuV a2",
+        ["AO; aoTuV a3 (based on Xiph.org's 1.0.1)"] = "aoTuV a3",
+        ["AO; aoTuV b1 (based on Xiph.Org's 1.0.1)"] = "aoTuV b1",
+        ["AO; aoTuV b1a (based on Xiph.Org's 1.0.1)"] = "aoTuV b1a",
+        ["AO; aoTuV b2 [20040420]  (based on Xiph.Org's 1.0.1)"] = "aoTuV b2 (20040420)",
+        ["AO; aoTuV b3 [20041120] (based on Xiph.Org's libVorbis)"] = "aoTuV b3 (20041120)",
+        ["AO; aoTuV b4 [20050617] (based on Xiph.Org's libVorbis)"] = "aoTuV b4 (20050617)",
+        ["AO; aoTuV b4a [20051105] (based on Xiph.Org's libVorbis)"] = "aoTuV b4.5 (20051105)",
+        ["AO; aoTuV b4b [20051117] (based on Xiph.Org's libVorbis)"] = "aoTuV b4.51 (20051117)",
+        ["AO; aoTuV r1 [20051117] (based on Xiph.Org's libVorbis)"] = "aoTuV r1 (20051117)",
+        ["AO; aoTuV b5 [20061024] (based on Xiph.Org's libVorbis)"] = "aoTuV b5 (20061024)",
+        ["AO; aoTuV b5a [20080330] (based on Xiph.Org's libVorbis)"] = "aoTuV b5.5 (20080330)",
+        ["AO; aoTuV b5b [20081209] (based on Xiph.Org's libVorbis)"] = "aoTuV b5.6 (20081209)",
+        ["AO; aoTuV b5c [20081215] (based on Xiph.Org's libVorbis)"] = "aoTuV b5.61 (20081215)",
+        ["AO; aoTuV b5d [20090301] (based on Xiph.Org's libVorbis)"] = "aoTuV b5.7 (20090301)",
+        ["AO; aoTuV [20110221] (based on Xiph.Org's libVorbis)"] = "aoTuV b6 (20110221)",
+        ["AO; aoTuV [20110223] (based on Xiph.Org's libVorbis)"] = "aoTuV b6.01 (20110223)",
+        ["AO; aoTuV [20110227] (based on Xiph.Org's libVorbis)"] = "aoTuV b6.02 (20110227)",
+        ["AO; aoTuV [20110424] (based on Xiph.Org's libVorbis)"] = "aoTuV b6.03 (20110424)",
+        ["AO; aoTuV [20110424] (based on libvorbis 1.3.6)"] = "aoTuV b6.03 (20110424, 2018 build on libvorbis 1.3.6)",
+        ["AO; aoTuV [20110424] (based on libvorbis 1.3.7)"] = "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)",
+        ["AO; aoTuV 6.03 (2020) (based on libVorbis 1.3.7)"] = "aoTuV b6.03 (2020, Rarewares build)",
+    };
+
+    [GeneratedRegex(@"^AO; aoTuV ?(.*)$")]
     private static partial Regex AotuvVendor();
+
+    // Lancer, an optimized aoTuV, writes a vendor string of its own: Rarewares' SSE2 build of
+    // oggenc2.88 on aoTuV b6.03 (2020) writes "BS; LancerMod(SSE2) (based on aoTuV 6.03 (2020))".
+    private const string LancerSse2 = "BS; LancerMod(SSE2) (based on aoTuV 6.03 (2020))";
+
+    [GeneratedRegex(@"^BS; LancerMod\((\w+)\) \(based on (aoTuV .*)\)$")]
+    private static partial Regex LancerVendor();
 
     // ffmpeg's ENCODER field after libvorbis or its native encoder: "Lavc60.31.102 libvorbis".
     [GeneratedRegex(@"^Lavc\S* (lib)?vorbis$")]
@@ -72,10 +111,23 @@ public sealed partial class VorbisParser
                 confidence = Confidence.High;
                 evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which libvorbis {release} writes"));
             }
-            else if (vendor is not null && AotuvVendor().IsMatch(vendor.Text))
+            else if (vendor is not null && AotuvReleases.TryGetValue(vendor.Text, out string? aotuv))
             {
-                name = vendor.Text.Length > 60 ? "aoTuV" : $"aoTuV ({vendor.Text})";
-                evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which aoTuV, a modified libvorbis, writes"));
+                name = aotuv;
+                confidence = Confidence.High;
+                evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which {aotuv} writes"));
+            }
+            else if (vendor is not null && LancerVendor().Match(vendor.Text) is { Success: true } lancer)
+            {
+                name = $"Lancer ({lancer.Groups[1].Value}, based on {lancer.Groups[2].Value})";
+                confidence = vendor.Text == LancerSse2 ? Confidence.High : Confidence.Medium;
+                evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which Lancer, an optimized aoTuV, writes"));
+            }
+            else if (vendor is not null && AotuvVendor().Match(vendor.Text) is { Success: true } other)
+            {
+                string version = other.Groups[1].Value;
+                name = version.Length is > 0 and <= 60 ? $"aoTuV ({version})" : "aoTuV";
+                evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", aoTuV's form, of no release the analyzer knows"));
             }
             else if (vendor is not null && LibvorbisVendor().Match(vendor.Text) is { Success: true } match)
             {

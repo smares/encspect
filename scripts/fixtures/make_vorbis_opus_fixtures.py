@@ -57,6 +57,8 @@ def expect_vorbis(entry, data, packets, page_ends, s):
     info = result["stream_info"]
     if info and channels:
         info["channel_mode"] = v.VORBIS_LAYOUTS[channels][0] if channels in v.VORBIS_LAYOUTS else f"{channels} channels"
+    if info and s.get("encoder"):
+        info["encoder"], info["encoder_confidence"] = s["encoder"]["name"], s["encoder"]["confidence"]
     return entry, info
 
 
@@ -497,6 +499,27 @@ def vorbis_setup_rich():
     f.write()
 
 
+def vorbis_vendors():
+    # Vendor strings of aoTuV's and Lancer's form that no known release writes: an aoTuV version
+    # the analyzer does not list, and the vendor string of Lancer's SSE3 build, which its binary
+    # holds but no fixture confirms. Both name their encoder with medium confidence.
+    f = Fixture("vorbis-vendor-variants", ".ogg")
+    variants = [
+        (b"AO; aoTuV b7 [20990101] (based on Xiph.Org's libVorbis)", {"name": "aoTuV (b7 [20990101] (based on Xiph.Org's libVorbis))", "confidence": "Medium"}),
+        (b"BS; LancerMod(SSE3) (based on aoTuV 6.03 (2020))", {"name": "Lancer (SSE3, based on aoTuV 6.03 (2020))", "confidence": "Medium"}),
+    ]
+    for link, (vendor, encoder) in enumerate(variants, 1):
+        serial = 0x0B0B0050 + link
+        packets, granules = vorbis_stream(2, 44100, [1] * 8, vendor=vendor)
+        pages = pages_for(serial, packets, granules, vorbis_cuts(8))
+        for p in pages:
+            f.w.write(p)
+        f.stream(serial, pages, link=link, codec="Vorbis", encoder=encoder)
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "not_compared": {
+        "ogginfo, ffprobe and oggdec": "the links differ only in their vendor strings, which the minimal fixtures' other checks already cover"}}
+    f.write()
+
+
 # --- Opus streams ---------------------------------------------------------------------------------
 
 
@@ -776,7 +799,7 @@ def opus_tags_variants():
 
 FIXTURES = [
     vorbis_mono, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
-    vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich,
+    vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_tags_variants,
 ]
