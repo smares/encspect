@@ -223,8 +223,17 @@ internal static class AudioSpecificConfig
         {
             var pce = new Node("Program Config Element", 0, 0);
             int start = f.Position;
-            int channels = ProgramConfigElement.Read(f, pce, 0, report, out IReadOnlyList<Speaker> layout);
-            node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), Explain.ProgramConfigElement, pce, Topics.ChannelLayouts));
+
+            // The element's findings wait for its node, which exists only once it is read: the
+            // scratch node it is read into is not in the tree.
+            var findings = new List<(Severity Severity, string Code, string Message)>();
+            int channels = ProgramConfigElement.Read(f, pce, 0, (severity, code, message, _) => findings.Add((severity, code, message)), out IReadOnlyList<Speaker> layout);
+            Node element = node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), Explain.ProgramConfigElement, pce, Topics.ChannelLayouts));
+            foreach ((Severity severity, string code, string message) in findings)
+            {
+                report(severity, code, message, element);
+            }
+
             state.Channels = channels;
             state.Layout = layout;
         }
