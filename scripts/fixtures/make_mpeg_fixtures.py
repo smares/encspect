@@ -402,7 +402,8 @@ class Fixture:
             infos.append(stream_stats.FrameInfo(
                 entry["offset"], entry["length"], fields["Header/Version"], fields["Header/Layer"],
                 int(fields["Header/Sample Rate"].split()[0]), None if bitrate == "free" else int(bitrate.split()[0]),
-                header=layout.get("header"), truncated=entry.get("truncated", False), fill=fill))
+                header=layout.get("header"), truncated=entry.get("truncated", False), fill=fill,
+                coding=stream_stats.read_frame(self.data, entry["offset"], entry["length"])))
         for region in self.regions:
             if region["name"] != "MPEG Audio":
                 continue

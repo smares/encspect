@@ -84,9 +84,61 @@
                       "name": "32 kbps",
                       "value": "6 frames (100.0%)",
                       "offset": 0,
+                      "length": 192,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "6 frames of 32 bytes",
+                          "offset": 0,
+                          "length": 192
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "Stereo",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
                       "length": 192
                     }
                   ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 0,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 192
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 0,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 192
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": false,
+                  "offset": 0,
+                  "length": 192
                 }
               ]
             },

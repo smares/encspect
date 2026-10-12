@@ -24,6 +24,33 @@ confirms both with mp3guessenc, mpg123 and ffmpeg. Its definitions:
 - Each header of a region has its own "VBR Header" and "Gapless" ("VBR Header[1]" for the second).
   Where a header is not in the region's first frame or does not describe all its frames (files were
   joined), their value says which frames they cover.
+
+The coding statistics, also over the complete audio frames, are read from each frame's bytes
+(read_frame), as mp3guessenc and EncSpot define them:
+
+- "Channel Modes": the frames of each channel mode, always listed, as the bitrate distribution is
+  for a single bitrate. "Joint Stereo Modes" (Layer III) counts the joint stereo frames by their
+  stereo coding, "Intensity Stereo Bounds" (Layers I and II) by the subband intensity stereo starts
+  at; each share is of the joint stereo frames.
+- Under each bitrate of the distribution, its frames without and with padding and their length,
+  mp3guessenc's "size distr".
+- Layer III: "Block Usage" counts granules per channel by block type: long (normal), start, short,
+  mixed (short with mixed_block_flag), stop and reserved (block type 0 with window switching).
+  mp3guessenc's "switch" granules are start, stop and reserved; EncSpot counts those as long.
+  "Global Gain" is the smallest and largest global_gain of each channel; "UsesScfsi" and
+  "UsesScalefactorScaling" whether any frame sets scfsi or scalefac_scale; "Scalefactor Scaling"
+  the share of granules per channel with scalefac_scale set (EncSpot's "Scalefac", over granules
+  times channels times frames); "Average Main Data Begin" and "Maximum Main Data Begin" the mean
+  and the largest main_data_begin (EncSpot's "Av. Reservoir", which it truncates to whole bytes,
+  and "Max. Reservoir", mp3guessenc's "Max reservoir").
+- "Ancillary Data" as mp3guessenc counts it: in Layer III each frame's segment from the end of its
+  main data, rounded up to a byte, to where the next frame's main data starts in the bit reservoir
+  (ancillary_segments, the analyzer's AncillaryScan), without a truncated frame's; in Layers I and
+  II the whole bytes after the audio data of a frame whose audio data fits, without the padding
+  slot. "Share" is of the audio
+  frames' bytes, "Data Rate" over their duration, and the smallest and largest amount leave out
+  frames without any, as mp3guessenc's "Min packet" and "Max packet" do.
+- "UsesPadding": whether any frame is padded.
 """
 
 from fractions import Fraction
@@ -46,11 +73,12 @@ def samples_per_frame(version, layer):
 class FrameInfo:
     """What the statistics need of one frame."""
 
-    def __init__(self, offset, length, version, layer, rate, bitrate, header=None, truncated=False, fill=None):
+    def __init__(self, offset, length, version, layer, rate, bitrate, header=None, truncated=False, fill=None, coding=None):
         self.offset, self.length, self.version, self.layer, self.rate = offset, length, version, layer, rate
         self.bitrate = bitrate  # kbps, or None for free format
         self.header = header  # the vbr_tags.read() result for a frame holding a VBR header
         self.truncated, self.fill = truncated, fill
+        self.coding = coding  # read_frame(), for the coding statistics
 
     @property
     def samples(self):
@@ -143,6 +171,9 @@ def region_fields(frames, all_frames):
 
     if all(f.layer == "III" for f in audio):
         fields["Statistics/Maximum Reservoir Fill"] = f"{max(f.fill for f in audio)} bytes"
+
+    if all(f.coding is not None for f in frames):
+        fields.update(coding_fields(frames, audio, ticks))
 
     counts = lames = 0
     for header_frame in (f for f in frames if f.header is not None):
@@ -287,3 +318,262 @@ def header_findings(header_frame, all_frames):
     if lame is not None and lame["delay"] + lame["padding"] > sum(f.samples for f in frames):
         result.append(("mpeg.gapless-exceeds-stream", at))
     return result
+
+
+# --- Coding statistics --------------------------------------------------------------------------
+
+BITRATES = {
+    ("1", 1): [None, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
+    ("1", 2): [None, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+    ("1", 3): [None, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+    ("2", 1): [None, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
+    ("2", 2): [None, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+    ("2", 3): [None, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+}
+RATES = {3: ("MPEG-1", [44100, 48000, 32000]), 2: ("MPEG-2", [22050, 24000, 16000]), 0: ("MPEG-2.5", [11025, 12000, 8000])}
+CHANNEL_MODES = ["Stereo", "Joint stereo", "Dual channel", "Mono"]
+JOINT_STEREO_MODES = ["Left/right stereo", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"]
+BLOCK_KINDS = ["Long", "Start", "Short", "Mixed", "Stop", "Reserved"]
+
+
+class BitStream:
+    """Bits of bytes, most significant first; reads past the end give None."""
+
+    def __init__(self, data):
+        self.value, self.size, self.position = int.from_bytes(data, "big"), len(data) * 8, 0
+
+    def read(self, count):
+        self.position += count
+        if self.position > self.size:
+            return None
+        return (self.value >> (self.size - self.position)) & ((1 << count) - 1)
+
+
+def read_frame(data, offset, available):
+    """What the coding statistics need of the frame at offset, of which available bytes are there:
+    its header fields, for Layer III the side information when it fits (ISO/IEC 11172-3 2.4.1.7,
+    13818-3 2.4.1.7), and for Layers I and II where the audio data ends."""
+    raw = int.from_bytes(data[offset : offset + 4], "big")
+    version_bits, layer = (raw >> 19) & 3, 4 - ((raw >> 17) & 3)
+    version, rates = RATES[version_bits]
+    mode = (raw >> 6) & 3
+    coding = {
+        "version": version, "layer": layer, "protected": not (raw >> 16) & 1, "bitrate_index": (raw >> 12) & 15,
+        "rate": rates[(raw >> 10) & 3], "padding": (raw >> 9) & 1, "mode": mode, "mode_ext": (raw >> 4) & 3,
+        "channels": 1 if mode == 3 else 2,
+    }
+    start = offset + 4 + (2 if coding["protected"] else 0)
+    if layer == 3:
+        mpeg1 = version == "MPEG-1"
+        size = (17 if mode == 3 else 32) if mpeg1 else (9 if mode == 3 else 17)
+        coding["side_info_end"] = start + size
+        if start + size <= offset + available:
+            coding["side_info"] = read_side_info(data[start : start + size], mpeg1, coding["channels"])
+    else:
+        coding["audio_end"] = audio_end(data[offset : offset + available], coding)
+    return coding
+
+
+def read_side_info(data, mpeg1, channels):
+    bits = BitStream(data)
+    info = {"main_data_begin": bits.read(9 if mpeg1 else 8)}
+    bits.read((5 if channels == 1 else 3) if mpeg1 else (1 if channels == 1 else 2))
+    info["scfsi"] = [bits.read(4) for _ in range(channels)] if mpeg1 else []
+    info["granules"] = []
+    for _ in range(2 if mpeg1 else 1):
+        for ch in range(channels):
+            part2_3, _, gain, _ = bits.read(12), bits.read(9), bits.read(8), bits.read(4 if mpeg1 else 9)
+            switched = bits.read(1)
+            if switched:
+                block_type, mixed = bits.read(2), bits.read(1)
+                bits.read(10 + 9)
+                kind = {1: "Start", 2: "Mixed" if mixed else "Short", 3: "Stop"}.get(block_type, "Reserved")
+            else:
+                bits.read(15 + 7)
+                kind = "Long"
+            if mpeg1:
+                bits.read(1)
+            scaled = bits.read(1)
+            bits.read(1)
+            info["granules"].append({"channel": ch, "part2_3_length": part2_3, "global_gain": gain, "block": kind, "scalefac_scale": scaled})
+    info["main_data_length"] = (sum(g["part2_3_length"] for g in info["granules"]) + 7) // 8
+    return info
+
+
+def audio_end(frame, coding):
+    """Where a Layer I or II frame's samples end, in bits from its start, or None where its
+    allocation, scfsi or scalefactors do not fit. Layer I: ISO/IEC 11172-3 2.4.1.5, with the
+    forbidden allocation 15 read as 16-bit samples as mpg123 reads it; Layer II: 2.4.1.6 with the
+    allocation tables of Annex B (make_layer2_fixtures.py)."""
+    import make_layer2_fixtures as layer2
+
+    bits = BitStream(frame)
+    bits.read(32 + (16 if coding["protected"] else 0))
+    channels = coding["channels"]
+    joint = coding["mode"] == 1
+    if coding["layer"] == 1:
+        bound = (coding["mode_ext"] + 1) * 4 if joint else 32
+        allocation = [[0] * 32 for _ in range(channels)]
+        for sb in range(32):
+            for ch in range(channels if sb < bound else 1):
+                allocation[ch][sb] = bits.read(4)
+            if sb >= bound:
+                for ch in range(1, channels):
+                    allocation[ch][sb] = allocation[0][sb]
+        if any(a is None for row in allocation for a in row):
+            return None
+        scalefactors = 6 * sum(1 for row in allocation for a in row if a)
+        samples = 12 * sum(allocation[ch][sb] + 1 for sb in range(32) for ch in range(channels if sb < bound else 1) if allocation[ch][sb])
+        end = bits.position + scalefactors
+        return None if end > len(frame) * 8 else end + samples
+    version = "1" if coding["version"] == "MPEG-1" else "2"
+    bitrate = BITRATES[(version, 2)][coding["bitrate_index"]]
+    table = layer2.TABLES[layer2.table_for(version, coding["rate"], bitrate, channels)]
+    bound = min((coding["mode_ext"] + 1) * 4, len(table)) if joint else len(table)
+    allocation = [[0] * len(table) for _ in range(channels)]
+    for sb in range(len(table)):
+        for ch in range(channels if sb < bound else 1):
+            allocation[ch][sb] = bits.read(layer2.NBAL[len(table[sb])])
+        if sb >= bound:
+            for ch in range(1, channels):
+                allocation[ch][sb] = allocation[0][sb]
+    if any(a is None for row in allocation for a in row):
+        return None
+    scalefactors = 0
+    for sb in range(len(table)):
+        for ch in range(channels):
+            if allocation[ch][sb]:
+                scfsi = bits.read(2)
+                if scfsi is None:
+                    return None
+                scalefactors += 6 * layer2.SCALEFACTORS_PER_SCFSI[scfsi]
+    samples = 12 * sum(layer2.zero_code(table[sb][allocation[ch][sb]])[0]
+                       for sb in range(len(table)) for ch in range(channels if sb < bound else 1) if allocation[ch][sb])
+    end = bits.position + scalefactors
+    return None if end > len(frame) * 8 else end + samples
+
+
+def ancillary_segments(frames):
+    """The ancillary segment of each Layer III frame of a region, in bytes, as mp3guessenc 0.27.6
+    scans them (scan_ancillary_III) and the analyzer's AncillaryScan follows it: main data runs
+    through the data of consecutive Layer III frames of one stream after their side information; a
+    frame's segment runs from the end of its main data to where the next frame's main data starts,
+    and the last frame's to the end of its data. It is left out where the next frame's main data
+    starts before the stream or inside this frame's, or this frame's main data does not fit. A frame
+    holding a VBR header keeps its place in the reservoir without main data or a segment; a frame of
+    another layer or stream ends the stream. A truncated frame's segment is left out, as mp3guessenc
+    leaves out the frame. frames: FrameInfo with coding, in file order."""
+    segments = []
+    state = {"key": None, "position": 0, "previous_end": None, "has_previous": False, "truncated": False}
+
+    def segment(length):
+        if not state["truncated"]:
+            segments.append(length)
+
+    def close():
+        if state["has_previous"] and state["previous_end"] is not None:
+            segment(state["position"] - state["previous_end"])
+        state.update(key=None, position=0, previous_end=None, has_previous=False)
+
+    for f in frames:
+        coding = f.coding
+        in_reservoir = coding["layer"] == 3 and (f.header is not None or "side_info" in coding)
+        key = (f.version, f.layer, f.rate, f.bitrate is None)
+        if not in_reservoir or state["key"] != key:
+            close()
+            if not in_reservoir:
+                continue
+            state["key"] = key
+        start = state["position"]
+        state["position"] += f.offset + f.length - coding["side_info_end"]
+        if f.header is not None:
+            continue
+        side = coding["side_info"]
+        begin = start - side["main_data_begin"]
+        end = begin + side["main_data_length"]
+        if state["has_previous"] and state["previous_end"] is not None and begin >= 0 and state["previous_end"] <= begin:
+            segment(begin - state["previous_end"])
+        state["has_previous"], state["truncated"] = True, f.truncated
+        state["previous_end"] = end if begin >= 0 and end <= state["position"] else None
+    close()
+    return segments
+
+
+def share(count, whole, unit):
+    tenths = rounded(Fraction(count * 1000, whole))
+    return f"{count} {unit if count != 1 else unit[:-1]} ({tenths // 10}.{tenths % 10}%)"
+
+
+def tenths_text(value, unit):
+    tenths = rounded(value * 10)
+    return f"{tenths // 10}.{tenths % 10} {unit}"
+
+
+def coding_fields(frames, audio, ticks):
+    """The coding statistics of a region (see the module docstring), by node path. frames are all
+    the region's frames in file order, audio its complete audio frames."""
+    fields = {}
+    modes = [sum(1 for f in audio if f.coding["mode"] == m) for m in range(4)]
+    used = [m for m in range(4) if modes[m]]
+    fields["Statistics/Channel Modes"] = f"{len(used)} mode" + ("s" if len(used) != 1 else "")
+    for m in used:
+        fields[f"Statistics/Channel Modes/{CHANNEL_MODES[m]}"] = share(modes[m], len(audio), "frames")
+    for name, layers, label in [("Joint Stereo Modes", (3,), lambda e: JOINT_STEREO_MODES[e]),
+                                ("Intensity Stereo Bounds", (1, 2), lambda e: f"Bands {(e + 1) * 4} to 31")]:
+        joint = [f for f in audio if f.coding["mode"] == 1 and f.coding["layer"] in layers]
+        if joint:
+            fields[f"Statistics/{name}"] = frames_text(len(joint))
+            for e in range(4):
+                count = sum(1 for f in joint if f.coding["mode_ext"] == e)
+                if count:
+                    fields[f"Statistics/{name}/{label(e)}"] = share(count, len(joint), "frames")
+
+    sizes = {}
+    for f in audio:
+        key = (f.bitrate, f.coding["padding"], f.length)
+        sizes[key] = sizes.get(key, 0) + 1
+    for bitrate in {b for b, _, _ in sizes}:
+        name = "free" if bitrate is None else f"{bitrate} kbps"
+        for padding, label in [(0, "Unpadded"), (1, "Padded")]:
+            lengths = sorted((length, count) for (b, p, length), count in sizes.items() if b == bitrate and p == padding)
+            if lengths:
+                fields[f"Statistics/Bitrate Distribution/{name}/{label}"] = ", ".join(f"{frames_text(c)} of {l} bytes" for l, c in lengths)
+
+    layer3 = [f.coding["side_info"] for f in audio if f.coding["layer"] == 3]
+    if layer3:
+        granules = [g for side in layer3 for g in side["granules"]]
+        fields["Statistics/Block Usage"] = f"{len(granules)} granule" + ("s" if len(granules) != 1 else "")
+        for kind in BLOCK_KINDS:
+            count = sum(1 for g in granules if g["block"] == kind)
+            if count:
+                fields[f"Statistics/Block Usage/{kind}"] = share(count, len(granules), "granules")
+        for ch in sorted({g["channel"] for g in granules}):
+            gains = [g["global_gain"] for g in granules if g["channel"] == ch]
+            fields[f"Statistics/Global Gain/Channel {ch}/Minimum"] = str(min(gains))
+            fields[f"Statistics/Global Gain/Channel {ch}/Maximum"] = str(max(gains))
+
+    segments = ancillary_segments(frames)
+    pieces = [s for s in segments if s > 0]
+    for f in audio:
+        if f.coding["layer"] != 3 and f.coding["audio_end"] is not None and f.coding["audio_end"] <= f.length * 8:
+            amount = (f.length * 8 - f.coding["audio_end"]) // 8 - f.coding["padding"] * (4 if f.coding["layer"] == 1 else 1)
+            if amount > 0:
+                pieces.append(amount)
+    total = sum(pieces)
+    fields["Statistics/Ancillary Data"] = f"{total} bytes"
+    fields["Statistics/Ancillary Data/Share"] = tenths_text(Fraction(total * 100, sum(f.length for f in audio)), "%")
+    fields["Statistics/Ancillary Data/Data Rate"] = kbps_tenths_text(total * 8, ticks)
+    if total:
+        fields["Statistics/Ancillary Data/Smallest Nonzero Amount"] = f"{min(pieces)} bytes"
+        fields["Statistics/Ancillary Data/Largest Amount"] = f"{max(pieces)} bytes"
+
+    fields["Statistics/UsesPadding"] = "true" if any(f.coding["padding"] for f in audio) else "false"
+    if layer3:
+        fields["Statistics/UsesScfsi"] = "true" if any(any(side["scfsi"]) for side in layer3) else "false"
+        scaled = sum(g["scalefac_scale"] for g in granules)
+        fields["Statistics/UsesScalefactorScaling"] = "true" if scaled else "false"
+        fields["Statistics/Scalefactor Scaling"] = tenths_text(Fraction(scaled * 100, len(granules)), "%")
+        begins = [side["main_data_begin"] for side in layer3]
+        fields["Statistics/Average Main Data Begin"] = tenths_text(Fraction(sum(begins), len(begins)), "bytes")
+        fields["Statistics/Maximum Main Data Begin"] = f"{max(begins)} bytes"
+    return fields

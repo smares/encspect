@@ -84,9 +84,75 @@
                       "name": "256 kbps",
                       "value": "6 frames (100.0%)",
                       "offset": 0,
+                      "length": 4608,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "6 frames of 768 bytes",
+                          "offset": 0,
+                          "length": 4608
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 4608,
+                  "children": [
+                    {
+                      "name": "Dual channel",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
                       "length": 4608
                     }
                   ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 3332,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4608,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 72.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 4608
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 185.1,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 4608
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 547,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4608
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 563,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 4608
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": false,
+                  "offset": 0,
+                  "length": 4608
                 }
               ]
             },

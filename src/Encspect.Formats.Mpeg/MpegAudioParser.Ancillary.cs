@@ -107,6 +107,7 @@ public sealed partial class MpegAudioParser
         private long? _previousEnd;
         private bool _hasPrevious;
         private bool _previousIsFirst;
+        private bool _previousIsTruncated;
 
         public Entry? First { get; private set; }
 
@@ -116,6 +117,16 @@ public sealed partial class MpegAudioParser
 
         // The bytes of the last segment, the last frame's ancillary data.
         public long LastSegmentBytes { get; private set; }
+
+        // The statistics' ancillary data: the bytes of the segments of complete frames, and the
+        // smallest and largest such segment that is not empty, 0 when there is none. mp3guessenc
+        // leaves out a truncated last frame with its segment, and empty segments from its "Min
+        // packet" and "Max packet".
+        public long AudioBytes { get; private set; }
+
+        public long SmallestSegment { get; private set; }
+
+        public long LargestSegment { get; private set; }
 
         // The AND of the first two bytes of every segment.
         public byte[] Signature { get; } = [0xFF, 0xFF];
@@ -167,6 +178,7 @@ public sealed partial class MpegAudioParser
 
             _hasPrevious = true;
             _previousIsFirst = entry.Offset == First.Value.Offset;
+            _previousIsTruncated = entry.IsTruncated;
             _previousEnd = begin >= 0 && end <= _position ? end : null;
 
             // main_data_begin reaches back at most 511 bytes.
@@ -192,6 +204,16 @@ public sealed partial class MpegAudioParser
             Segments++;
             Bytes += to - from;
             LastSegmentBytes = to - from;
+            if (!_previousIsTruncated)
+            {
+                AudioBytes += to - from;
+            }
+
+            if (to > from && !_previousIsTruncated)
+            {
+                SmallestSegment = SmallestSegment == 0 ? to - from : Math.Min(SmallestSegment, to - from);
+                LargestSegment = Math.Max(LargestSegment, to - from);
+            }
             if (to == from)
             {
                 Signature[0] = 0;

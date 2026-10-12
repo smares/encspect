@@ -104,12 +104,198 @@
                       "name": "64 kbps",
                       "value": "74 frames (100.0%)",
                       "offset": 0,
-                      "length": 15464
+                      "length": 15464,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "2 frames of 208 bytes",
+                          "offset": 0,
+                          "length": 15464
+                        },
+                        {
+                          "name": "Padded",
+                          "value": "72 frames of 209 bytes",
+                          "offset": 0,
+                          "length": 15464
+                        }
+                      ]
                     }
                   ]
                 },
                 {
                   "name": "Maximum Reservoir Fill",
+                  "value": 255,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 15464,
+                  "children": [
+                    {
+                      "name": "Joint stereo",
+                      "value": "74 frames (100.0%)",
+                      "offset": 0,
+                      "length": 15464
+                    }
+                  ]
+                },
+                {
+                  "name": "Joint Stereo Modes",
+                  "value": 74,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 15464,
+                  "children": [
+                    {
+                      "name": "Intensity stereo",
+                      "value": "28 frames (37.8%)",
+                      "offset": 0,
+                      "length": 15464
+                    },
+                    {
+                      "name": "Mid/side and intensity stereo",
+                      "value": "46 frames (62.2%)",
+                      "offset": 0,
+                      "length": 15464
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Usage",
+                  "value": 148,
+                  "unit": "granules",
+                  "offset": 0,
+                  "length": 15464,
+                  "children": [
+                    {
+                      "name": "Long",
+                      "value": "148 granules (100.0%)",
+                      "offset": 0,
+                      "length": 15464
+                    }
+                  ]
+                },
+                {
+                  "name": "Global Gain",
+                  "offset": 0,
+                  "length": 15464,
+                  "children": [
+                    {
+                      "name": "Channel 0",
+                      "offset": 0,
+                      "length": 15464,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 15464
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 184,
+                          "offset": 0,
+                          "length": 15464
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Channel 1",
+                      "offset": 0,
+                      "length": 15464,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 0,
+                          "offset": 0,
+                          "length": 15464
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 184,
+                          "offset": 0,
+                          "length": 15464
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 2551,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 15464,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 16.5,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 15464
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 10.6,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 15464
+                    },
+                    {
+                      "name": "Smallest Nonzero Amount",
+                      "value": 31,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 15464
+                    },
+                    {
+                      "name": "Largest Amount",
+                      "value": 337,
+                      "unit": "bytes",
+                      "offset": 0,
+                      "length": 15464
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": true,
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "UsesScfsi",
+                  "value": false,
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "UsesScalefactorScaling",
+                  "value": true,
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "Scalefactor Scaling",
+                  "value": 5.4,
+                  "unit": "%",
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "Average Main Data Begin",
+                  "value": 161.8,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 15464
+                },
+                {
+                  "name": "Maximum Main Data Begin",
                   "value": 255,
                   "unit": "bytes",
                   "offset": 0,

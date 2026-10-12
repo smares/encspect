@@ -26,6 +26,18 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   main data it could not find. Frames minimp3 skips before it locks on are only allowed before a
   gap or a stream change.
 - "mp3guessenc": the statistics mp3guessenc prints about the stream.
+- The coding statistics of each Layer III region ("statistics", stream_stats.py): mp3guessenc must
+  print the same stereo modes, block usage (its "switch" granules are start, stop and reserved
+  ones), global gain, ancillary data, largest main_data_begin ("Max reservoir"), use of scalefactor
+  scaling, scfsi and padding, and frame sizes per bitrate, wherever it takes the frames the
+  statistics count; GUESSENC_READS_OTHERWISE and guessenc_frames_differ say where and why it does
+  not. EncSpot (encspot_tool.py) must print the same Av. Reservoir (the mean main_data_begin,
+  which it truncates), Max. Reservoir, Scalefac (the share of granules with scalefactor scaling),
+  bitrate histogram, frame count and mode where it reads those frames; it skips the first frame
+  it finds and, without a VBR header, starts 2000 bytes on, so elsewhere its figures are compared
+  with an emulation of how it reads the file (encspot_frames). Its encoder for encoder-written
+  fixtures must be the analyzer's or one ENCSPOT_ENCODER_DIFFERENCES lists with the reason. Its
+  quality rating is not read: the analyzer gives no verdicts on quality.
 
 - "vbr_header": the raw values of the first frame's Xing, Info, LAME or VBRI header (vbr_tags.py).
   mp3guessenc must report the same header fields, LAME tag fields, tag CRC verdict and music CRC
@@ -56,17 +68,20 @@ mp3guessenc must still report what the manifest recorded.
 - getID3: for LAME 3.90 to 3.92, whose tag has no preset field, getID3 must read the same version
   and name the same preset where it names one (getid3_tool.py).
 
-Needs ffprobe, madplay, mpg123, php, curl, make and a C compiler on the PATH; minimp3 and mp3guessenc
-are built from third_party. Exits
+Needs ffprobe, madplay, mpg123, php, curl, make and a C and C++ compiler on the PATH; minimp3,
+mp3guessenc and EncSpot are built from third_party. Exits
 non-zero when anything disagrees.
 """
 
+import collections
 import json
 import pathlib
 import re
+import struct
 import subprocess
 import sys
 
+import encspot_tool
 import getid3_tool
 import guessenc_tool
 import mctoolamed_tool
@@ -652,6 +667,440 @@ def check_getid3(path, manifest):
     return problems
 
 
+# --- Coding statistics, mp3guessenc and EncSpot ---------------------------------------------------
+
+GUESSENC_STEREO = {"Simple stereo": "Left/right stereo", "Intensity stereo": "Intensity stereo", "Mid-side stereo": "Mid/side stereo",
+                   "Intensity and mid-side stereo": "Mid/side and intensity stereo"}
+
+
+def guessenc_coding(path):
+    """The coding statistics mp3guessenc 0.27.6 prints about the stream (mp3guessenc.c, show_info):
+    frames, stereo modes, block usage, global gain, ancillary data, the largest main_data_begin
+    ("Max reservoir"), whether scalefactor scaling, scfsi and padding are used, and the frame
+    histogram with its size distribution, each count with the share it prints."""
+    output = subprocess.run([guessenc_tool.binary(), "-e", str(path)], capture_output=True, text=True).stdout
+    report = {"stereo": {}, "blocks": {}, "gains": {}, "histogram": {}}
+    started = False
+    for line in output.splitlines():
+        started |= line.startswith("Detected MPEG stream")
+        if not started:
+            continue
+        bar = re.match(r"^\s*(?:(\d+) kbps|Custom frames)\s*:\s*(\d+)\s*\(\s*([\d.]+)%\), size distr: \[(.*)\]$", line)
+        if bar:
+            sizes = [(int(n), int(size)) for n, size in re.findall(r"(\d+) x\s*(\d+) B", bar[4])]
+            report["histogram"]["free" if bar[1] is None else int(bar[1])] = (int(bar[2]), bar[3], sizes)
+            continue
+        key, _, value = (part.strip() for part in line.partition(":"))
+        share = re.match(r"(\d+)\s*\(\s*([\d.]+)%\)", value)
+        if key in GUESSENC_STEREO and share:
+            report["stereo"][GUESSENC_STEREO[key]] = (int(share[1]), share[2])
+        elif key.endswith(" block granules") and share:
+            report["blocks"][key.split()[0]] = (int(share[1]), share[2])
+        elif key in ("Min global gain", "Max global gain"):
+            for channel, gain in re.findall(r"([lrc])=\s*(\d+)", value):
+                report["gains"].setdefault("1" if channel == "r" else "0", {})[key.split()[0]] = int(gain)
+        elif key == "Total amount":
+            total = re.match(r"(\d+) bytes \(\s*([\d.]+)%\)", value)
+            report["ancillary"], report["ancillary_share"] = int(total[1]), total[2]
+        elif key in ("Number of frames", "Audio samples per frame", "Min packet", "Max packet", "Max reservoir") and key not in report:
+            report[key] = int(value.split()[0])
+        elif key in ("Bitrate", "Audio frequency") and key not in report:
+            report[key] = value.split()[0]
+        elif key in ("Scalefactor scaling used", "Scalefactor selection information used", "Padding used"):
+            report[key] = value == "yes"
+    return report
+
+
+def count_of(text):
+    return int(text.split()[0]) if text else 0
+
+
+def statistics_of(manifest):
+    """The coding statistics of a fixture's single MPEG Audio region, by node path, or None where
+    it has several."""
+    if "statistics" in manifest:
+        return manifest["statistics"]
+    regions = [r["statistics"] for r in manifest["regions"] if "statistics" in r]
+    return regions[0] if len(regions) == 1 else None
+
+
+def statistics_frames(fields):
+    return sum(count_of(v) for k, v in fields.items() if k.startswith("Statistics/Channel Modes/"))
+
+
+def is_layer3(manifest):
+    if "encoder" in manifest:
+        return manifest["encoder"]["layer"] == 3
+    return bool(manifest["frames"]) and manifest["frames"][0]["fields"]["Header/Layer"] == "III"
+
+
+# Findings in whose files mp3guessenc reads other frames or other main data than the analyzer, though
+# it may count as many frames, and why.
+GUESSENC_READS_OTHERWISE = {
+    "mpeg.frame-cut": "mp3guessenc reads a frame whose header is damaged at the length that header gives",
+    "mpeg.free-format-length-changed": "mp3guessenc takes every free-format frame to be as long as the first",
+    "mpeg.main-data-in-vbr-header-frame": "mp3guessenc skips the VBR header frame, so it does not find main data that begins there "
+                                          "and leaves out the ancillary segments next to it",
+}
+
+
+def guessenc_frames_differ(path, manifest, counted, ours):
+    """Why mp3guessenc takes other frames than the statistics, or None where it takes theirs. It
+    reads the bit reservoir anew after data it resyncs over, reads the files of
+    GUESSENC_READS_OTHERWISE otherwise, and in hand-built fixtures skips or resyncs at the frames
+    guessenc_counts_like_us lists (header fields that change, a CRC that fails, a stream change),
+    where the analyzer keeps them. It leaves out a truncated last frame with its ancillary segment,
+    as the statistics do, but counts one whose main data is all there (BladeEnc 0.80 to 0.83 cut
+    only stuffing off the last frame), which the statistics leave out like every truncated frame."""
+    codes = {f["code"] if isinstance(f, dict) else f for f in manifest.get("findings", [])}
+    if manifest.get("gaps"):
+        return "mp3guessenc reads the bit reservoir anew after data it resyncs over"
+    for code in sorted(codes & set(GUESSENC_READS_OTHERWISE)):
+        return GUESSENC_READS_OTHERWISE[code]
+    if counted == ours:
+        return None
+    if counted == ours + 1 and "mpeg.frame-truncated" in codes:
+        return "mp3guessenc also counts the truncated last frame, whose main data is all there"
+    if "frames" in manifest:
+        kept = dict(manifest, findings=[f for f in manifest["findings"] if f["code"] != "mpeg.frame-truncated"])
+        if not guessenc_counts_like_us(path, kept):
+            return "mp3guessenc skips or resyncs at frames the analyzer keeps (guessenc_counts_like_us)"
+    return f"mp3guessenc counts {counted} frames, the statistics {ours}, for no known reason"
+
+
+def guessenc_coding_problems(path, manifest):
+    """mp3guessenc's coding statistics against the manifest's, for a Layer III fixture whose frames
+    it counts as the statistics do. Shares agree when mp3guessenc's floating-point text is the exact
+    share rounded half to even, or its other neighbor at an exact tie (stream_stats.agrees). Its
+    stereo mode shares are of all frames, so they are compared where every frame is joint stereo."""
+    fields = statistics_of(manifest)
+    if fields is None or not is_layer3(manifest):
+        return [], "skipped: not one Layer III region"
+    actual = guessenc_coding(path)
+    frames = statistics_frames(fields)
+    reason = guessenc_frames_differ(path, manifest, actual.get("Number of frames"), frames)
+    if reason is not None:
+        return ([reason] if reason.endswith("no known reason") else []), reason
+    problems = []
+    tenth = stream_stats.Fraction(1, 10)
+
+    def compare(name, ours, theirs, whole=None):
+        count, share = theirs if isinstance(theirs, tuple) else (theirs, None)
+        if ours != count:
+            problems.append(f"mp3guessenc: {name} {count}, the manifest {ours}")
+        elif share is not None and whole and not stream_stats.agrees(share, stream_stats.Fraction(count * 100, whole), tenth):
+            problems.append(f"mp3guessenc: {name} share {share}%, exact {float(stream_stats.Fraction(count * 100, whole)):.3f}%")
+
+    joint = count_of(fields.get("Statistics/Joint Stereo Modes"))
+    for name in GUESSENC_STEREO.values():
+        compare(name, count_of(fields.get(f"Statistics/Joint Stereo Modes/{name}")), actual["stereo"].get(name, (0, None)),
+                joint if joint == frames else None)
+    granules = count_of(fields.get("Statistics/Block Usage"))
+    blocks = {kind: count_of(fields.get(f"Statistics/Block Usage/{kind}")) for kind in stream_stats.BLOCK_KINDS}
+    # mp3guessenc's "switch" granules are start, stop and reserved ones.
+    ours = {"Long": blocks["Long"], "Switch": blocks["Start"] + blocks["Stop"] + blocks["Reserved"], "Short": blocks["Short"], "Mixed": blocks["Mixed"]}
+    for kind, count in ours.items():
+        compare(f"{kind.lower()} block granules", count, actual["blocks"].get(kind, (0, None)), granules)
+    gains = {ch: {"Min": int(fields[f"Statistics/Global Gain/Channel {ch}/Minimum"]), "Max": int(fields[f"Statistics/Global Gain/Channel {ch}/Maximum"])}
+             for ch in "01" if f"Statistics/Global Gain/Channel {ch}/Minimum" in fields}
+    if gains != actual["gains"]:
+        problems.append(f"mp3guessenc: global gain {actual['gains']}, the manifest {gains}")
+
+    total = count_of(fields["Statistics/Ancillary Data"])
+    compare("ancillary bytes", total, actual["ancillary"])
+    compare("smallest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Smallest Nonzero Amount")), actual.get("Min packet", 0))
+    compare("largest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Largest Amount")), actual.get("Max packet", 0))
+    # Its share is of the frames' lengths, which its histogram lists, and its data rate over their duration.
+    length = sum(n * size for _, _, sizes in actual["histogram"].values() for n, size in sizes)
+    exact_share = stream_stats.Fraction(total * 100, length)
+    if not stream_stats.agrees(actual["ancillary_share"], exact_share, tenth) or fields["Statistics/Ancillary Data/Share"] != stream_stats.tenths_text(exact_share, "%"):
+        problems.append(f"mp3guessenc: ancillary share {actual['ancillary_share']}%, the manifest {fields['Statistics/Ancillary Data/Share']}")
+    exact_rate = stream_stats.Fraction(total * 8 * int(actual["Audio frequency"]), actual["Number of frames"] * actual["Audio samples per frame"] * 1000)
+    if not stream_stats.agrees(actual["Bitrate"], exact_rate, tenth) or fields["Statistics/Ancillary Data/Data Rate"] != stream_stats.tenths_text(exact_rate, "kbps"):
+        problems.append(f"mp3guessenc: ancillary data rate {actual['Bitrate']} kbps, the manifest {fields['Statistics/Ancillary Data/Data Rate']}")
+    compare("max reservoir", count_of(fields["Statistics/Maximum Main Data Begin"]), actual["Max reservoir"])
+    for key, name in [("Scalefactor scaling used", "UsesScalefactorScaling"), ("Scalefactor selection information used", "UsesScfsi"),
+                      ("Padding used", "UsesPadding")]:
+        if (fields[f"Statistics/{name}"] == "true") != actual[key]:
+            problems.append(f"mp3guessenc: {key} {actual[key]}, the manifest {fields[f'Statistics/{name}']}")
+
+    histogram = {}
+    for path_, value in fields.items():
+        parts = path_.split("/")
+        if len(parts) == 4 and parts[1] == "Bitrate Distribution" and parts[3] in ("Unpadded", "Padded"):
+            sizes = [(int(n), int(size)) for n, size in re.findall(r"(\d+) frames? of (\d+) bytes", value)]
+            key = "free" if parts[2] == "free" else int(parts[2].split()[0])
+            histogram.setdefault(key, {})[parts[3]] = sizes
+    for key in set(histogram) | set(actual["histogram"]):
+        ours_sizes = histogram.get(key, {}).get("Unpadded", []) + histogram.get(key, {}).get("Padded", [])
+        count, share, sizes = actual["histogram"].get(key, (0, None, []))
+        if ours_sizes != sizes:
+            problems.append(f"mp3guessenc: {key} kbps frames {sizes}, the manifest {ours_sizes}")
+        elif share is not None and not stream_stats.agrees(share, stream_stats.Fraction(count * 100, frames), tenth):
+            problems.append(f"mp3guessenc: {key} kbps share {share}%")
+    return problems, None
+
+
+# EncSpot Console 2.01 (third_party/encspot, lib/Mp3File.cpp), emulated over a file's bytes to know
+# which frames it reads. It analyzes Layer III only (it reads every frame as Layer III) and rejects
+# free format. Its first steps (ProcessFrames): after an ID3v2 tag it finds the first frame
+# (SeekNextHeader: a header followed by four more at the lengths they give), looks for "Xing",
+# "Info" or "VBRI" in the 2000 bytes from there (GetVBRTags), and returns to that frame only where
+# it finds one; otherwise the file position stays 2000 bytes on, so it finds the first frame again
+# from there. It always skips the frame it finds, taking it for the VBR header frame, and reads the
+# frames after it up to an ID3v1 tag or the end of the file, counting a truncated last frame.
+ENCSPOT_TABSEL = [
+    [[128, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448], [128, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+     [128, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320]],
+    [[128, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256], [128, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+     [128, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160]],
+]
+ENCSPOT_FREQS = [44100, 48000, 32000, 22050, 24000, 16000, 11025, 12000, 8000]
+ENCSPOT_MODES = ["stereo", "joint stereo", "dual channel", "mono"]
+# sizeof(XHEADDATA) and sizeof(VBRIDATA) on x86-64: GetVBRTags takes a tag that leaves room for them.
+XHEADDATA_SIZE, VBRIDATA_SIZE = 96, 1048
+
+
+def encspot_header(data, pos):
+    """EncSpot's MakeHeader: (frame length, id, layer, channels, frequency, bitrate index, mode) of
+    the header at pos, or None where it takes none there."""
+    if pos + 4 > len(data):
+        return None
+    head = int.from_bytes(data[pos : pos + 4], "big")
+    if head & 0xFFE00000 != 0xFFE00000 or not (head >> 17) & 3 or (head >> 12) & 15 == 15 or (head >> 10) & 3 == 3:
+        return None
+    mpeg_id, idex, rate = (head >> 19) & 1, (head >> 20) & 1, (head >> 10) & 3
+    freq = ENCSPOT_FREQS[rate + (1 - mpeg_id) * 3 if idex else 6 + rate]
+    layer, index, mode = 4 - ((head >> 17) & 3), (head >> 12) & 15, (head >> 6) & 3
+    length = ENCSPOT_TABSEL[1 - mpeg_id][layer - 1][index] * 144000 // (freq << (1 - mpeg_id)) + ((head >> 9) & 1)
+    return length, mpeg_id, layer, 1 if mode == 3 else 2, freq, index, mode
+
+
+def encspot_seek(data, start):
+    """EncSpot's SeekNextHeader from start, or None where it fails."""
+    window = min(1000 * 1024, len(data) - start)
+    for i in range(max(window, 0) // 2):
+        if data[start + i] != 0xFF:
+            continue
+        j, safety, length = i, 0, 1
+        while safety < 5 and length:
+            header = encspot_header(data, start + j) if j + 4 <= window else None
+            length = header[0] if header else 0
+            j += length
+            if j + 4 >= window:
+                return None
+            safety += 1
+        if safety == 5:
+            return start + i
+    return None
+
+
+def encspot_frames(data):
+    """The offsets of the frames EncSpot reads and the header it skips, or a reason it fails or
+    resyncs, which is not emulated."""
+    tag_end = 10 + (data[6] << 21 | data[7] << 14 | data[8] << 7 | data[9]) if data[:3] == b"ID3" else 0
+    first = encspot_seek(data, tag_end)
+    if first is None:
+        return "EncSpot finds no frame"
+    read = min(2000, len(data) - first)
+    window = data[first : first + read]
+    found = [p for p in (window.find(b"Xing"), window.find(b"Info")) if p >= 0]
+    vbri = window.find(b"VBRI")
+    returns = (found and min(found) + XHEADDATA_SIZE <= read) or (vbri >= 0 and vbri + VBRIDATA_SIZE <= read)
+    skipped = encspot_seek(data, first if returns else first + read)
+    if skipped is None:
+        return "EncSpot finds no frame"
+    base = encspot_header(data, skipped)
+    if base[5] == 0:
+        return "EncSpot rejects free format"
+    id3v1 = len(data) - 128 if data[-128:-125] == b"TAG" else -1
+    frames = []
+    position = skipped + base[0]
+    while position != id3v1 and position < len(data):
+        header = encspot_header(data, position)
+        if header is None or header[2:5] != base[2:5] or header[5] == 0:
+            return "EncSpot resyncs (ReportOutOfSyncError or a header it does not take), which is not emulated"
+        frames.append(position)
+        position += header[0]
+    return skipped, frames
+
+
+def float32(value):
+    return struct.unpack("<f", struct.pack("<f", value))[0]
+
+
+def encspot_expected(data, skipped, frames):
+    """EncSpot's report over the frames it reads (mp3data_string::update and get_report)."""
+    base = encspot_header(data, skipped)
+    padded = data + bytes(64)  # readBits reads zeros past the end
+    begins, scaled, counts = [], 0, {}
+    for offset in frames:
+        header = encspot_header(data, offset)
+        coding = stream_stats.read_frame(padded, offset, header[0])
+        side = coding["side_info"]
+        begins.append(side["main_data_begin"])
+        scaled += sum(g["scalefac_scale"] for g in side["granules"])
+        counts[header[5]] = counts.get(header[5], 0) + 1
+    n = len(frames)
+    granules = (2 if base[1] else 1) * base[3] * n
+    return {
+        "Frames": str(n),
+        "Av. Reservoir": str(sum(begins) // n if n else 0),
+        "Max. Reservoir": str(max(begins, default=0)),
+        "Scalefac": "not used" if not scaled or not n else "%.1f%%" % (scaled * 100.0 / granules),
+        "Mode": ENCSPOT_MODES[base[6]],
+        "bitrates": {ENCSPOT_TABSEL[1 - base[1]][base[2] - 1][i]: "%.1f" % float32(float32(c * 100) / n) for i, c in counts.items()},
+    }
+
+
+def fixture_frames(manifest):
+    """The offsets of a fixture's frames the statistics count: complete, without a VBR header. An
+    encoder-written fixture lists the packets ffprobe found, all frames but the VBR header frame;
+    its last is truncated where its findings say."""
+    if "frames" in manifest:
+        return [f["offset"] for f in manifest["frames"]
+                if not f.get("truncated") and "Xing" not in f["fields"] and not any(k.startswith("VBRI") for k in f["fields"])]
+    packets = [offset for offset, _ in manifest["ffprobe_packets"]]
+    return packets[:-1] if "mpeg.frame-truncated" in manifest.get("findings", []) else packets
+
+
+# Encoders EncSpot names for encoder-written fixtures where the analyzer names another one or none:
+# EncSpot's name and why. Its label is the encoder field of a Xing or Info tag where there is one,
+# and otherwise a "LAME", "GOGO", "MPGE", "VBRI" or mp3PRO string in the first 1024 bytes after the
+# ID3v2 tag or in the last 1024 (GetLabels); without a label it names, EncSpot guesses from the habits of
+# the encoders of 2002 over the frames it reads (mp3data_string::guessenc); the analyzer names an
+# encoder only from a tag, a signature or habits that encodes with that encoder show every time
+# (docs/PLAN.md), so these stay differences. Hand-built frames come from no encoder, so EncSpot's
+# guess about them is not compared.
+BLADE_AS_GOGO = ("Gogo (before 3.0)", "short blocks without scfsi or scalefactor scaling in plain stereo or mono at one bitrate name BladeEnc "
+                 "in EncSpot only where the mean main_data_begin (its Av. Reservoir) is below 40 bytes and a frame is padded; these BladeEnc "
+                 "encodes use the bit reservoir more (47 to 63 bytes)")
+SHINE_AS_XING = ("Xing (new)", "without short blocks, intensity stereo or dual channel, EncSpot names Xing, the new one where scfsi is used; "
+                 "its Shine rule wants dual channel")
+NO_SCFSI_AS_XING = ("Xing (old)", "without short blocks, scfsi, intensity stereo or dual channel, EncSpot names the old Xing outside joint "
+                    "stereo (its Plugger rule wants plain stereo without scalefactor scaling or the original bit)")
+LAME_UNLABELED = ("Gogo (after 3.0)", "EncSpot's label is the encoder field of ffmpeg's Xing tag, \"Lavc\", which names nothing, so it guesses: "
+                  "short blocks with scfsi and scalefactor scaling name Gogo after 3.0; the analyzer reads LAME's version from the ancillary "
+                  "data behind ffmpeg's tag")
+HELIX_SCALING = ("Gogo (after 3.0)", "short blocks with scfsi and scalefactor scaling name Gogo after 3.0 in EncSpot's guess; the analyzer knows "
+                 "Helix without its tag from the copyright and original bits with scfsi and scalefactor scaling")
+HELIX_PLAIN = ("Lame (old) or m3e", "short blocks with scfsi but no scalefactor scaling name old LAME or m3e in EncSpot's guess; the analyzer "
+               "knows Helix without its tag from the copyright and original bits with scfsi and scalefactor scaling in other frames")
+ENCSPOT_ENCODER_DIFFERENCES = {
+    "external-blade-crc": BLADE_AS_GOGO,
+    "external-blade-mono": BLADE_AS_GOGO,
+    "external-blade-stereo": BLADE_AS_GOGO,
+    "external-blade082-stereo": BLADE_AS_GOGO,
+    "external-blade084-stereo": BLADE_AS_GOGO,
+    "external-blade0920-stereo": BLADE_AS_GOGO,
+    "external-blade0927-stereo": BLADE_AS_GOGO,
+    "external-blade0936-stereo": BLADE_AS_GOGO,
+    "external-ffmpeg-remux-blade": BLADE_AS_GOGO,
+    "external-blade080-stereo": ("Blade", "BladeEnc 0.80 drains an overflowing bit reservoir into ancillary data mid-stream, as the ISO dist10 "
+                                 "encoder does, which leaves it unnamed by the analyzer and mp3guessenc; EncSpot's mean main_data_begin "
+                                 "of 22 bytes is below its threshold of 40"),
+    "external-ffmpeg-cbr": LAME_UNLABELED,
+    "external-ffmpeg-mono": LAME_UNLABELED,
+    "external-lame399a-cbr": ("Gogo (after 3.0)", "EncSpot's label is the encoder field of the LAME tag, \"L3.99a12\", which it does not read "
+                              "as LAME, so it guesses: short blocks with scfsi and scalefactor scaling name Gogo after 3.0"),
+    "external-ffmpeg-shine": SHINE_AS_XING,
+    "external-shine-joint": SHINE_AS_XING,
+    "external-shine-mono": SHINE_AS_XING,
+    "external-shine-music": SHINE_AS_XING,
+    "external-shine-mpeg2": NO_SCFSI_AS_XING,
+    "external-shine-silence": NO_SCFSI_AS_XING,
+    "external-fhg-mono-cbr": NO_SCFSI_AS_XING,
+    "external-helix-no-tag-mono": HELIX_SCALING,
+    "external-helix-r11-mono": HELIX_SCALING,
+    "external-helix-no-tag": HELIX_PLAIN,
+    "external-helix-r11-cbr": HELIX_PLAIN,
+    "external-helix-r11-vbr": HELIX_PLAIN,
+}
+
+# EncSpot's names by the analyzer's: the start of EncSpot's name for each encoder the analyzer names.
+ENCSPOT_NAMES = {"LAME": ("Lame",), "BladeEnc": ("Blade",), "Fraunhofer": ("FhG",), "Shine": ("Shine",), "Xing": ("Xing",), "Gogo": ("Gogo",),
+                 "Helix MP3 Encoder": (), "TwoLAME or Xing": (), "mp3PRO": ("RCA", "Thomson")}
+
+
+def encspot_names_same(theirs, ours):
+    """Whether EncSpot's encoder name is the analyzer's encoder, or both name none."""
+    if ours is None:
+        return False
+    family = next((key for key in ENCSPOT_NAMES if ours.startswith(key)), ours)
+    return theirs.startswith(ENCSPOT_NAMES.get(family, (family,)) or ("\0",))
+
+
+def encspot_problems(path, manifest):
+    """EncSpot's report against the fixture's statistics (Av. Reservoir, which it truncates to whole
+    bytes, Max. Reservoir, Scalefac, the bitrate histogram, frames and mode) where it reads the
+    frames they count, and otherwise against its emulation over the frames it reads; and its
+    encoder against the one the analyzer names. Returns the problems and how it was compared."""
+    fields = statistics_of(manifest)
+    if fields is None or not is_layer3(manifest) or manifest.get("encoder", {}).get("free_format") or "ffprobe_packets" not in manifest and "frames" not in manifest:
+        return [], "skipped: not one Layer III region EncSpot reads (several regions, another layer or free format)"
+    data = path.read_bytes()
+    actual = encspot_tool.report(path)
+    emulated = encspot_frames(data)
+    if isinstance(emulated, str):
+        expected_error = emulated in ("EncSpot finds no frame", "EncSpot rejects free format")
+        if expected_error != ("error" in actual):
+            return [f"EncSpot: {actual.get('error', 'reads the file')}, the emulation: {emulated}"], None
+        return [], f"skipped: {emulated}"
+    skipped, frames = emulated
+    lame = (manifest.get("vbr_header") or {}).get("lame")
+    if "error" in actual and lame and (lame["misc"] >> 2) & 7 == 7:
+        # mp3data_string::update_lame indexes its seven stereo mode names with the field's eight values.
+        return [], "skipped: EncSpot aborts on the LAME tag's stereo mode 7, which the Helix encoder writes"
+    if "error" in actual:
+        return [f"EncSpot fails ({actual['error']}) where the emulation reads {len(frames)} frames"], None
+    problems = []
+    expected = encspot_expected(data, skipped, frames)
+    for key, value in expected.items():
+        if actual.get(key) != value:
+            problems.append(f"EncSpot: {key} {actual.get(key)!r}, its emulation {value!r}")
+    if actual.get("Sync Errors") != "none":
+        problems.append(f"EncSpot reports sync errors: {actual.get('Sync Errors')}")
+
+    direct = frames == fixture_frames(manifest)
+    if direct:
+        frames_count = statistics_frames(fields)
+        # The mean is shown to a tenth, so it lies within half a tenth of the text.
+        average = stream_stats.Fraction(fields["Statistics/Average Main Data Begin"].split()[0])
+        half = stream_stats.Fraction(1, 20)
+        if not (average - half) // 1 <= int(actual["Av. Reservoir"]) <= (average + half) // 1:
+            problems.append(f"EncSpot: Av. Reservoir {actual['Av. Reservoir']}, the manifest {fields['Statistics/Average Main Data Begin']}")
+        if actual["Max. Reservoir"] != fields["Statistics/Maximum Main Data Begin"].split()[0]:
+            problems.append(f"EncSpot: Max. Reservoir {actual['Max. Reservoir']}, the manifest {fields['Statistics/Maximum Main Data Begin']}")
+        scaling = "not used" if fields["Statistics/UsesScalefactorScaling"] == "false" else fields["Statistics/Scalefactor Scaling"].replace(" ", "")
+        if actual["Scalefac"] != scaling:
+            problems.append(f"EncSpot: Scalefac {actual['Scalefac']}, the manifest {scaling}")
+        if actual["Frames"] != str(frames_count):
+            problems.append(f"EncSpot: {actual['Frames']} frames, the manifest {frames_count}")
+        for key, value in fields.items():
+            parts = key.split("/")
+            if len(parts) == 3 and parts[1] == "Bitrate Distribution":
+                count = count_of(value)
+                share = actual["bitrates"].get(int(parts[2].split()[0]))
+                if share is None or not stream_stats.agrees(share, stream_stats.Fraction(count * 100, frames_count), stream_stats.Fraction(1, 10)):
+                    problems.append(f"EncSpot: {parts[2]} share {share}%, the manifest {value}")
+        # Its mode is the skipped frame's, which ffmpeg's VBR header frame gives as stereo in a joint stereo stream.
+        modes = [k.split("/")[-1] for k in fields if k.startswith("Statistics/Channel Modes/")]
+        if len(modes) == 1 and ENCSPOT_MODES[encspot_header(data, skipped)[6]] == modes[0].lower() and actual["Mode"] != modes[0].lower():
+            problems.append(f"EncSpot: mode {actual['Mode']}, the manifest {modes[0]}")
+
+    if "encoder" in manifest and actual["Encoder"] != "Unknown":
+        ours = manifest["detected_encoder"]["name"] if manifest["detected_encoder"] else None
+        theirs = actual["Encoder"]
+        known = ENCSPOT_ENCODER_DIFFERENCES.get(path.stem)
+        if encspot_names_same(theirs, ours):
+            if known is not None:
+                problems.append(f"EncSpot names {theirs!r} as the analyzer names {ours!r}; drop it from ENCSPOT_ENCODER_DIFFERENCES")
+        elif known is None or known[0] != theirs:
+            problems.append(f"EncSpot names the encoder {theirs!r}, the analyzer {ours!r}, which ENCSPOT_ENCODER_DIFFERENCES does not list")
+    how = None if direct else "compared with its emulation, as it reads other frames than the statistics"
+    return problems, how
+
+
 def check(path, manifest, tools):
     dumper, decoder = tools
     problems = []
@@ -684,6 +1133,10 @@ def check(path, manifest, tools):
         problems.append(f"mp3guessenc guesses {guessenc_guess(path)!r}, the manifest recorded {manifest['mp3guessenc_guess']!r}")
     if guessenc_ofl(path) != manifest.get("mp3guessenc_ofl"):
         problems.append(f"mp3guessenc reads the OFL block as {guessenc_ofl(path)}, the manifest recorded {manifest.get('mp3guessenc_ofl')}")
+    for tool, compare in (("mp3guessenc", guessenc_coding_problems), ("EncSpot", encspot_problems)):
+        found, how = compare(path, manifest)
+        problems += found
+        COMPARED[tool][how or "compared with the statistics"] += 1
     if not manifest.get("crosscheck"):
         return problems
 
@@ -762,6 +1215,10 @@ def check(path, manifest, tools):
     return problems
 
 
+# How each fixture's coding statistics were compared with mp3guessenc and EncSpot, or why not.
+COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter()}
+
+
 def main():
     failed = 0
     checked = 0
@@ -775,6 +1232,9 @@ def main():
         for problem in problems:
             failed += 1
             print(f"{path.name}: {problem}")
+    for tool, counts in COMPARED.items():
+        for how, count in sorted(counts.items(), key=lambda c: (-c[1], c[0])):
+            print(f"{tool}: {count} fixtures, {how}", file=sys.stderr)
     print(f"Cross-checked {checked} fixtures, {failed} problems.", file=sys.stderr)
     sys.exit(1 if failed else 0)
 

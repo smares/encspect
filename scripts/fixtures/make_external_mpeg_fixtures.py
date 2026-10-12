@@ -44,7 +44,14 @@ writes granules whose scalefactors are longer than their part2_3_length.
 
 For the statistics, "mp3guessenc_stream" records mp3guessenc's frame count, length, average bitrate
 and bitrate histogram, and, where a LAME tag gives an encoder delay and padding, "decoded_samples"
-the samples per channel ffmpeg and mpg123 output with their gapless trimming.
+the samples per channel ffmpeg and mpg123 output with their gapless trimming. "statistics" lists the
+coding statistics the analyzer must report (channel modes, stereo coding, frame sizes, block usage,
+global gain, ancillary data, padding, scfsi, scalefactor scaling and main_data_begin), computed by
+stream_stats.py from the file's frames (file_frames), which does not need the encoders:
+
+    python3 scripts/fixtures/make_external_mpeg_fixtures.py --statistics-only [name ...]
+
+rewrites only that entry of the committed manifests.
 
 For Layer III, the manifest also records the side information of every frame as minimp3 reads it
 ("minimp3_side_info", see minimp3_side_info.c), and the statistics mp3guessenc prints about the
@@ -78,6 +85,7 @@ import lame_win_tool
 import helix_tool
 import minimp3_tool
 import old_lame_tool
+import stream_stats
 import vbr_tags
 import xing_tool
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
@@ -445,6 +453,45 @@ def frame_length(header):
         return None
     coefficient = 72 if layer == 3 and not mpeg1 else 144
     return coefficient * bitrates[index] * 1000 // rate + ((header[2] >> 1) & 1)
+
+
+def file_frames(path, manifest):
+    """The frames of an encoder-written file as stream_stats.FrameInfo: from the first frame after an
+    ID3v2 tag, each where the one before ends, until no header of the stream follows, before an
+    ID3v1 tag. A last frame longer than the data left is truncated; the first frame holds the VBR
+    header the manifest records. A free-format frame is as long as the first plus its padding. The
+    frames must be the ones ffprobe listed, or as many as mpg123 decoded."""
+    data = path.read_bytes()
+    end = len(data) - (128 if data[-128:-125] == b"TAG" else 0)
+    offset, first_length = first_frame(data)
+    free = first_length - ((data[offset + 2] >> 1) & 1)
+    stream = data[offset + 1], data[offset + 2] & 0x0C
+    frames = []
+    while offset + 4 <= end and data[offset] == 0xFF and (data[offset + 1], data[offset + 2] & 0x0C) == stream:
+        header = data[offset : offset + 4]
+        length = frame_length(header)
+        if length is None:
+            length = free + (((header[2] >> 1) & 1) * (4 if (header[1] >> 1) & 3 == 3 else 1))
+        available = min(length, end - offset)
+        coding = stream_stats.read_frame(data, offset, available)
+        bitrate = stream_stats.BITRATES[("1" if coding["version"] == "MPEG-1" else "2", coding["layer"])][coding["bitrate_index"]]
+        frames.append(stream_stats.FrameInfo(offset, available, coding["version"], ["I", "II", "III"][coding["layer"] - 1], coding["rate"], bitrate,
+                                             header=manifest["vbr_header"] if not frames and manifest.get("vbr_header") else None,
+                                             truncated=available < length, coding=coding))
+        offset += length
+    audio = [[f.offset, f.length] for f in frames if f.header is None]
+    if "ffprobe_packets" in manifest:
+        assert audio == manifest["ffprobe_packets"], (path.name, audio[:3], manifest["ffprobe_packets"][:3])
+    else:
+        assert len(audio) == manifest["mpg123_frames"], (path.name, len(audio), manifest["mpg123_frames"])
+    return frames
+
+
+def coding_statistics(path, manifest):
+    """The coding statistics of the file's single MPEG Audio region (stream_stats.coding_fields)."""
+    frames = file_frames(path, manifest)
+    audio = [f for f in frames if f.is_audio]
+    return stream_stats.coding_fields(frames, audio, sum(f.ticks for f in audio))
 
 
 def truncated_last(path, packets):
@@ -836,6 +883,7 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["decoded_onset"] = decoded_onset(path)
     if manifest["vbr_header"] and manifest["vbr_header"].get("lame"):
         manifest["decoded_samples"] = decoded_samples(path, CHANNELS.get(settings["channel_mode"], 2))
+    manifest["statistics"] = coding_statistics(path, manifest)
     text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
     (OUT / f"{name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
 
@@ -848,6 +896,15 @@ BLADE_ENCODERS = {}
 GOGO_ENCODER = []
 OLD_LAME = {}
 WIN_LAME = {}
+
+
+def write_statistics(names):
+    """Rewrites the "statistics" of the committed manifests, or of the named ones, from their files."""
+    for name, extension, *_ in [f for f in FIXTURES if not names or f[0] in names] + [(n, ".mp3") for n, _ in NOGAP if not names or n in names]:
+        manifest_path = OUT / f"{name}.expected.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["statistics"] = coding_statistics(OUT / f"{name}{extension}", manifest)
+        manifest_path.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
 
 def main(names):
@@ -904,4 +961,7 @@ def main(names):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    if sys.argv[1:2] == ["--statistics-only"]:
+        write_statistics(sys.argv[2:])
+    else:
+        main(sys.argv[1:])

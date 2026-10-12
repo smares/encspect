@@ -134,6 +134,7 @@ public class MpegFixtureTests
         if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
         {
             CheckGuessencStatistics(guessenc, frames);
+            CheckStatisticsAgainstGuessenc(guessenc, report, frames.Length);
         }
 
         Assert.Equal(
@@ -258,7 +259,9 @@ public class MpegFixtureTests
         {
             // mp3guessenc leaves a truncated frame out of its statistics unless all of its main data
             // is there (BladeEnc 0.80 to 0.83 cut only stuffing off the last frame).
-            CheckGuessencStatistics(guessenc, audioFrames.Where(f => !truncated.Contains(f.Offset) || HasAllMainData(f)).ToArray());
+            Node[] counted = audioFrames.Where(f => !truncated.Contains(f.Offset) || HasAllMainData(f)).ToArray();
+            CheckGuessencStatistics(guessenc, counted);
+            CheckStatisticsAgainstGuessenc(guessenc, report, counted.Length);
         }
 
         if (manifest.TryGetProperty("vbr_header_fields", out JsonElement vbrFields))
@@ -302,6 +305,8 @@ public class MpegFixtureTests
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
         Assert.True(serious.Length == 0, $"Unexpected findings: {Describe(serious)}");
 
+        // The coding statistics stream_stats.py computes from the file's frames.
+        CheckFields(Streams(report).Single(), manifest.GetProperty("statistics"));
         CheckToolStatistics(manifest, report);
         CheckAncillary(manifest, report);
     }
@@ -546,6 +551,44 @@ public class MpegFixtureTests
             ["scfsi_used"] = $"{expected.GetProperty("scfsi_used").GetBoolean()}",
         };
         Assert.Equal(wanted, actual);
+    }
+
+    // The region's coding statistics against mp3guessenc's, where it counts the frames the statistics
+    // count: not where it also counts a truncated last frame whose main data is all there, or a
+    // file has several regions. mp3guessenc's "switch" granules are start, stop and reserved ones.
+    private static void CheckStatisticsAgainstGuessenc(JsonElement expected, Report report, int guessencFrames)
+    {
+        Node[] all = Streams(report).SelectMany(r => r.Children.Where(c => c.Name == "Statistics")).ToArray();
+        if (all.Length != 1 || Value(all[0], "Frames") != guessencFrames.ToString(CultureInfo.InvariantCulture))
+        {
+            return;
+        }
+
+        Node statistics = all[0];
+        int Count(string path) => Value(statistics, path) is { } text ? int.Parse(text.Split(' ')[0], CultureInfo.InvariantCulture) : 0;
+        JsonElement blocks = expected.GetProperty("blocks");
+        Assert.Equal(blocks.GetProperty("long").GetInt32(), Count("Block Usage/Long"));
+        Assert.Equal(blocks.GetProperty("switch").GetInt32(), Count("Block Usage/Start") + Count("Block Usage/Stop") + Count("Block Usage/Reserved"));
+        Assert.Equal(blocks.GetProperty("short").GetInt32(), Count("Block Usage/Short"));
+        Assert.Equal(blocks.GetProperty("mixed").GetInt32(), Count("Block Usage/Mixed"));
+        string[] modes = ["Left/right stereo", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"];
+        for (int e = 0; e < modes.Length; e++)
+        {
+            int wanted = expected.GetProperty("mode_extensions").TryGetProperty($"{e}", out JsonElement count) ? count.GetInt32() : 0;
+            Assert.Equal(wanted, Count($"Joint Stereo Modes/{modes[e]}"));
+        }
+
+        foreach (JsonProperty channel in expected.GetProperty("global_gain").EnumerateObject())
+        {
+            Assert.Equal($"{channel.Value[0].GetInt32()}", Value(statistics, $"Global Gain/Channel {channel.Name}/Minimum"));
+            Assert.Equal($"{channel.Value[1].GetInt32()}", Value(statistics, $"Global Gain/Channel {channel.Name}/Maximum"));
+        }
+
+        long[] ancillary = expected.GetProperty("ancillary").EnumerateArray().Select(a => a.GetInt64()).ToArray();
+        Assert.Equal(ancillary, new long[] { Count("Ancillary Data"), Count("Ancillary Data/Smallest Nonzero Amount"), Count("Ancillary Data/Largest Amount") });
+        Assert.Equal($"{expected.GetProperty("max_main_data_begin").GetInt32()} bytes", Value(statistics, "Maximum Main Data Begin"));
+        Assert.Equal(expected.GetProperty("scalefac_scale_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScalefactorScaling"));
+        Assert.Equal(expected.GetProperty("scfsi_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScfsi"));
     }
 
     private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value?.ToString();
