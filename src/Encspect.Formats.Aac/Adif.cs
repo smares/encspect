@@ -25,7 +25,7 @@ internal static class Adif
 
     public static void Parse(ByteReader reader, Node parent, AnalysisContext context)
     {
-        var region = parent.Add(new Node("ADIF", reader.Start, reader.Length) { Kind = NodeKind.Stream });
+        var region = parent.Add(new Node("ADIF", reader.Start, reader.Length) { Kind = NodeKind.Stream, Description = Explain.Adif, Topic = Topics.Adts });
         Header? header;
         try
         {
@@ -49,7 +49,7 @@ internal static class Adif
 
         long dataStart = reader.Start + header.Length;
         long dataLength = reader.End - dataStart;
-        Node data = region.Add(new Node("Raw Data Blocks", dataStart, dataLength, NodeValue.Integer(dataLength, "bytes")));
+        Node data = region.Add(new Node("Raw Data Blocks", dataStart, dataLength, NodeValue.Integer(dataLength, "bytes")) { Description = Explain.AdifBlocks, Topic = Topics.RawDataBlocks });
         context.AddFinding(Severity.Info, "aac.adif-blocks-not-analyzed",
             "ADIF delimits no raw data blocks; finding them needs the spectral data of every element parsed, which is not done yet, so they are not analyzed.", data);
 
@@ -88,18 +88,18 @@ internal static class Adif
         byte[] bytes = reader.ReadBytesAt(reader.Start, length);
         var fields = new BitFields(new MappedBytes(bytes, reader.Start));
         var header = new Node("ADIF Header", reader.Start, 1);
-        fields.Read(header, "ADIF ID", 32, _ => "ADIF");
-        if (fields.Flag(header, "HasCopyrightId"))
+        fields.Read(header, "ADIF ID", 32, Explain.AdifId, _ => "ADIF");
+        if (fields.Flag(header, "HasCopyrightId", Explain.HasCopyrightId))
         {
-            fields.Read(header, "Copyright ID", 72 - 63, v => NodeValue.Integer(v));
-            fields.Read(header, "Copyright ID (continued)", 63, v => NodeValue.Hex(v, 16));
+            fields.Read(header, "Copyright ID", 72 - 63, Explain.CopyrightId, v => NodeValue.Integer(v));
+            fields.Read(header, "Copyright ID (continued)", 63, Explain.CopyrightId, v => NodeValue.Hex(v, 16));
         }
 
-        fields.Flag(header, "IsOriginal");
-        fields.Flag(header, "IsHome");
-        bool isVbr = fields.Read(header, "Bitstream Type", 1, v => v == 0 ? "0 (constant bitrate)" : "1 (variable bitrate)") != 0;
-        long bitrate = fields.Read(header, "Bitrate", 23, v => NodeValue.Integer(v, "bit/s"));
-        int count = (int)fields.Read(header, "Program Config Elements", 4, v => NodeValue.Integer(v + 1)) + 1;
+        fields.Flag(header, "IsOriginal", Explain.AdifOriginal);
+        fields.Flag(header, "IsHome", Explain.AdifHome);
+        bool isVbr = fields.Read(header, "Bitstream Type", 1, Explain.BitstreamType, topic: Topics.BitrateModes, describe: v => v == 0 ? "0 (constant bitrate)" : "1 (variable bitrate)") != 0;
+        long bitrate = fields.Read(header, "Bitrate", 23, Explain.AdifBitrate, v => NodeValue.Integer(v, "bit/s"));
+        int count = (int)fields.Read(header, "Program Config Elements", 4, Explain.PceCount, v => NodeValue.Integer(v + 1)) + 1;
         int? channels = null;
         int objectType = 2;
         int sampleRate = 0;
@@ -107,7 +107,7 @@ internal static class Adif
         {
             if (!isVbr)
             {
-                fields.Read(header, "Buffer Fullness", 20);
+                fields.Read(header, "Buffer Fullness", 20, Explain.AdifBufferFullness);
             }
 
             int start = fields.Position;
@@ -115,7 +115,7 @@ internal static class Adif
             int profile = (int)((fields.Look(6) >> 0) & 3);
             int rateIndex = (int)(fields.Look(10) & 0xF);
             int elementChannels = ProgramConfigElement.Read(fields, pce, 0, (_, _, _, _) => { });
-            header.Add(fields.Span("Program Config Element", start, NodeValue.Integer(elementChannels, "channels"), pce));
+            header.Add(fields.Span("Program Config Element", start, NodeValue.Integer(elementChannels, "channels"), Explain.ProgramConfigElement, pce));
             if (channels is null)
             {
                 channels = elementChannels;
@@ -125,7 +125,7 @@ internal static class Adif
         }
 
         fields.Align(0);
-        node = fields.Span("ADIF Header", 0, null, header);
+        node = fields.Span("ADIF Header", 0, null, Explain.AdifHeader, header);
         return channels is > 0 && sampleRate > 0 ? new Header(fields.Position / 8, objectType, sampleRate, channels.Value, isVbr, bitrate) : null;
     }
 

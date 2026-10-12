@@ -159,7 +159,7 @@ internal readonly record struct FirstElement
             yield break;
         }
 
-        yield return unit.Bits("Element", startBit, startBit + 3, $"{AacTables.ElementName(Id)} ({AacTables.ElementDescription(Id)})");
+        yield return unit.Bits("Element", startBit, startBit + 3, $"{AacTables.ElementName(Id)} ({AacTables.ElementDescription(Id)})", Explain.Element);
         if (Id == 7 || startBit + 7 > unit.Length * 8)
         {
             yield break;
@@ -167,27 +167,27 @@ internal readonly record struct FirstElement
 
         if (Id == 6)
         {
-            yield return unit.Bits("Count", startBit + 3, startBit + 7, NodeValue.Integer(Tag));
+            yield return unit.Bits("Count", startBit + 3, startBit + 7, NodeValue.Integer(Tag), Explain.FillCount);
             int at = startBit + 7;
             if (Tag == 15 && EndBit >= 0)
             {
-                yield return unit.Bits("Escape Count", at, at + 8, NodeValue.Integer(((EndBit - at - 8) / 8) - 14));
+                yield return unit.Bits("Escape Count", at, at + 8, NodeValue.Integer(((EndBit - at - 8) / 8) - 14), Explain.FillEscapeCount);
                 at += 8;
             }
 
             if (ExtensionType >= 0)
             {
-                yield return unit.Bits("Extension Type", at, at + 4, $"{ExtensionType} ({AacTables.ExtensionTypeName(ExtensionType)})");
+                yield return unit.Bits("Extension Type", at, at + 4, $"{ExtensionType} ({AacTables.ExtensionTypeName(ExtensionType)})", Explain.FillExtensionType);
             }
         }
         else
         {
-            yield return unit.Bits("Element Instance Tag", startBit + 3, startBit + 7, NodeValue.Integer(Tag));
+            yield return unit.Bits("Element Instance Tag", startBit + 3, startBit + 7, NodeValue.Integer(Tag), Explain.ElementInstanceTag);
         }
 
         if (text is not null)
         {
-            yield return unit.Bytes("Text", TextStart, TextStart + TextLength, text);
+            yield return unit.Bytes("Text", TextStart, TextStart + TextLength, text, Explain.ElementText);
         }
     }
 }
@@ -200,11 +200,13 @@ internal readonly struct UnitBytes(long offset, int length, IReadOnlyList<ByteRa
 
     public int Length => length;
 
-    public Node Bits(string name, int startBit, int endBit, NodeValue? value = null) =>
-        ranges is null ? Node.FromBits(name, offset, startBit, endBit, value) : Node.FromBits(name, Mapped(), startBit, endBit, value);
+    public Node Bits(string name, int startBit, int endBit, NodeValue? value, string description) => ranges is null
+        ? Node.FromBits(name, offset, startBit, endBit, value, description: description)
+        : Node.FromBits(name, Mapped(), startBit, endBit, value, description: description);
 
-    public Node Bytes(string name, int start, int end, NodeValue? value = null) =>
-        ranges is null ? new Node(name, offset + start, end - start, value) : Node.FromMapped(name, Mapped(), start, end, value);
+    public Node Bytes(string name, int start, int end, NodeValue? value, string description) => ranges is null
+        ? new Node(name, offset + start, end - start, value) { Description = description }
+        : Node.FromMapped(name, Mapped(), start, end, value, description: description);
 
     private MappedBytes Mapped() => new(new byte[length], ranges!);
 }

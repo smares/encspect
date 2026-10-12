@@ -89,20 +89,20 @@ internal readonly record struct AdtsHeader(ulong Raw)
     // The header's fields at their bits, from the frame's offset (1.A.2.2.1).
     public IEnumerable<Node> Nodes(long offset)
     {
-        yield return Node.FromBits("Sync Word", offset, 0, 12, NodeValue.Hex(Sync, 3));
-        yield return Node.FromBits("Version", offset, 12, 13, Id == 0 ? "MPEG-4" : "MPEG-2");
-        yield return Node.FromBits("Layer", offset, 13, 15, NodeValue.Integer(Layer));
-        yield return Node.FromBits("IsProtected", offset, 15, 16, NodeValue.Boolean(IsProtected));
-        yield return Node.FromBits("Profile", offset, 16, 18, $"{Profile} ({ProfileName})");
-        yield return Node.FromBits("Sample Rate", offset, 18, 22, AacTables.SampleRate(SampleRateIndex) is { } rate ? NodeValue.Integer(rate, "Hz") : $"{SampleRateIndex} (reserved)");
-        yield return Node.FromBits("IsPrivate", offset, 22, 23, NodeValue.Boolean(IsPrivate));
-        yield return Node.FromBits("Channel Configuration", offset, 23, 26, $"{ChannelConfiguration} ({AacTables.ChannelLayout(ChannelConfiguration)})");
-        yield return Node.FromBits("IsOriginal", offset, 26, 27, NodeValue.Boolean(IsOriginal));
-        yield return Node.FromBits("IsHome", offset, 27, 28, NodeValue.Boolean(IsHome));
-        yield return Node.FromBits("Copyright ID Bit", offset, 28, 29, NodeValue.Integer(CopyrightIdBit ? 1 : 0));
-        yield return Node.FromBits("IsCopyrightIdStart", offset, 29, 30, NodeValue.Boolean(IsCopyrightIdStart));
-        yield return Node.FromBits("Frame Length", offset, 30, 43, NodeValue.Integer(FrameLength, "bytes"));
-        yield return Node.FromBits("Buffer Fullness", offset, 43, 54, IsVbr ? "0x7FF (variable bitrate)" : NodeValue.Integer(BufferFullness));
-        yield return Node.FromBits("Raw Data Blocks", offset, 54, 56, NodeValue.Integer(RawDataBlocks));
+        yield return Node.FromBits("Sync Word", offset, 0, 12, NodeValue.Hex(Sync, 3), description: Explain.SyncWord);
+        yield return Node.FromBits("Version", offset, 12, 13, Id == 0 ? "MPEG-4" : "MPEG-2", description: Explain.AdtsVersion);
+        yield return Node.FromBits("Layer", offset, 13, 15, NodeValue.Integer(Layer), description: Explain.AdtsLayer);
+        yield return Node.FromBits("IsProtected", offset, 15, 16, NodeValue.Boolean(IsProtected), description: Explain.AdtsProtected, topic: Topics.Crc);
+        yield return Node.FromBits("Profile", offset, 16, 18, $"{Profile} ({ProfileName})", description: Explain.AdtsProfile, topic: Topics.ObjectTypes);
+        yield return Node.FromBits("Sample Rate", offset, 18, 22, AacTables.SampleRate(SampleRateIndex) is { } rate ? NodeValue.Integer(rate, "Hz") : $"{SampleRateIndex} (reserved)", description: Explain.AdtsSampleRate);
+        yield return Node.FromBits("IsPrivate", offset, 22, 23, NodeValue.Boolean(IsPrivate), description: Explain.AdtsPrivate);
+        yield return Node.FromBits("Channel Configuration", offset, 23, 26, $"{ChannelConfiguration} ({AacTables.ChannelLayout(ChannelConfiguration)})", description: Explain.AdtsChannelConfiguration);
+        yield return Node.FromBits("IsOriginal", offset, 26, 27, NodeValue.Boolean(IsOriginal), description: Explain.AdtsOriginal);
+        yield return Node.FromBits("IsHome", offset, 27, 28, NodeValue.Boolean(IsHome), description: Explain.AdtsHome);
+        yield return Node.FromBits("Copyright ID Bit", offset, 28, 29, NodeValue.Integer(CopyrightIdBit ? 1 : 0), description: Explain.CopyrightIdBit);
+        yield return Node.FromBits("IsCopyrightIdStart", offset, 29, 30, NodeValue.Boolean(IsCopyrightIdStart), description: Explain.CopyrightIdStart);
+        yield return Node.FromBits("Frame Length", offset, 30, 43, NodeValue.Integer(FrameLength, "bytes"), description: Explain.AdtsFrameLength);
+        yield return Node.FromBits("Buffer Fullness", offset, 43, 54, IsVbr ? "0x7FF (variable bitrate)" : NodeValue.Integer(BufferFullness), description: Explain.BufferFullness, topic: Topics.BitrateModes);
+        yield return Node.FromBits("Raw Data Blocks", offset, 54, 56, NodeValue.Integer(RawDataBlocks), description: Explain.RawDataBlockCount);
     }
 }

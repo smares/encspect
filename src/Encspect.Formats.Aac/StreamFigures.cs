@@ -78,32 +78,32 @@ internal sealed class StreamFigures(int sampleRate)
             bitrates[i] = _points[i].Bitrate;
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
         if (_seconds.Count > 0)
         {
             double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor));
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
         }
 
         return series;
     }
 
     // The statistics node: counts, duration and bitrates, with the extra figures a caller adds.
-    // cover makes a node over the stream's bytes.
-    public Node Statistics(Func<string, NodeValue?, NodeKind, Node> cover, string unitName, string unitPlural, out Node bitrate)
+    // cover makes a node over the stream's bytes, with its description.
+    public Node Statistics(Func<string, NodeValue?, NodeKind, string, Node> cover, string unitName, string unitPlural, out Node bitrate)
     {
-        Node statistics = cover("Statistics", null, NodeKind.Statistics);
-        statistics.Add(cover(unitPlural, NodeValue.Integer(Count, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail));
-        statistics.Add(cover("Samples", NodeValue.Integer(Samples, "samples", "sample"), NodeKind.Detail));
-        statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail));
-        bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail));
+        Node statistics = cover("Statistics", null, NodeKind.Statistics, Explain.Statistics);
+        statistics.Add(cover(unitPlural, NodeValue.Integer(Count, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatUnits));
+        statistics.Add(cover("Samples", NodeValue.Integer(Samples, "samples", "sample"), NodeKind.Detail, Explain.StatSamples));
+        statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
+        bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)
         {
-            statistics.Add(cover($"Smallest {unitName}", NodeValue.Integer(Smallest, "bytes"), NodeKind.Detail));
-            statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail));
-            statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail));
-            statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail));
+            statistics.Add(cover($"Smallest {unitName}", NodeValue.Integer(Smallest, "bytes"), NodeKind.Detail, Explain.Smallest));
+            statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
+            statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
+            statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
         }
 
         return statistics;

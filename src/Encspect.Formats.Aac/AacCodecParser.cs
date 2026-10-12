@@ -31,7 +31,8 @@ public sealed class AacCodecParser : ICodecParser
         Node? configNode = null;
         if (context.Configuration is { } configuration)
         {
-            configNode = Node.FromMapped("AudioSpecificConfig", configuration.Data, 0, configuration.Data.Length);
+            configNode = Node.FromMapped("AudioSpecificConfig", configuration.Data, 0, configuration.Data.Length,
+                description: Explain.AudioSpecificConfig, topic: Topics.AudioSpecificConfig);
             configuration.Parent.Add(configNode);
             config = AudioSpecificConfig.Parse(configuration.Data, configNode, (severity, code, message, node) => findings.AddNow(severity, code, message, node));
             configNode.Value = config?.Codec ?? "unreadable";
@@ -61,8 +62,8 @@ public sealed class AacCodecParser : ICodecParser
 
     private static void Report(CodecContext context, Node parent, AacConfig? config, Node? configNode, UnitLog log, FindingCollector findings)
     {
-        Node Cover(string name, NodeValue? value, NodeKind kind = NodeKind.Detail) =>
-            new(name, parent.Offset, parent.Length, value) { Kind = kind, Ranges = parent.Ranges };
+        Node Cover(string name, NodeValue? value, string description, NodeKind kind = NodeKind.Detail, string? topic = null) =>
+            new(name, parent.Offset, parent.Length, value) { Kind = kind, Ranges = parent.Ranges, Description = description, Topic = topic };
 
         int rate = config?.OutputSampleRate ?? 0;
         int frame = config?.OutputFrameLength ?? 1024;
@@ -103,7 +104,7 @@ public sealed class AacCodecParser : ICodecParser
         Node? encoder = AacEncoder.Detect(
             log.Signature is { } found ? new AacEncoder.Signature(found.Text, signatureNode!, found.Index) : null,
             context.EncoderClaims,
-            (name, value) => Cover(name, value),
+            (name, value, description) => Cover(name, value, description, topic: name == "Encoder" ? Topics.EncoderDetection : null),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\", but the stream points to {name}; the file may have been written by other software, or kept its metadata when the audio was re-encoded."));
         if (encoder is not null)
@@ -111,23 +112,23 @@ public sealed class AacCodecParser : ICodecParser
             leading.Add(encoder);
         }
 
-        Node statistics = figures.Statistics((name, value, kind) => Cover(name, value, kind), "Access Unit", "Access Units", out Node bitrate);
+        Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, description, kind), "Access Unit", "Access Units", out Node bitrate);
         if (log.HasElements)
         {
-            Node elements = statistics.Add(Cover("First Elements", null));
+            Node elements = statistics.Add(Cover("First Elements", null, Explain.FirstElements, topic: Topics.RawDataBlocks));
             for (int id = 0; id < log.ElementCounts.Length; id++)
             {
                 if (log.ElementCounts[id] > 0)
                 {
                     string name = id < 8 ? AacTables.ElementName(id) : "None";
-                    elements.Add(Cover(name, NodeValue.Integer(log.ElementCounts[id], "access units", "access unit")));
+                    elements.Add(Cover(name, NodeValue.Integer(log.ElementCounts[id], "access units", "access unit"), Explain.FirstElementCount));
                 }
             }
         }
 
         if (config is { IsUsac: true })
         {
-            statistics.Add(Cover("Independent Access Units", NodeValue.Integer(log.Independent, "access units", "access unit")));
+            statistics.Add(Cover("Independent Access Units", NodeValue.Integer(log.Independent, "access units", "access unit"), Explain.IndependentUnits, topic: Topics.Usac));
         }
 
         leading.Add(statistics);
@@ -136,6 +137,8 @@ public sealed class AacCodecParser : ICodecParser
         {
             Kind = NodeKind.Stream,
             Ranges = parent.Ranges,
+            Description = Explain.Stream,
+            Topic = config switch { { IsUsac: true } => Topics.Usac, { Sbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
         });
 
         if (config is null)
@@ -175,6 +178,8 @@ public sealed class AacCodecParser : ICodecParser
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
+            Description = unit.Element == Usac ? Explain.UsacAccessUnit : Explain.AccessUnit,
+            Topic = unit.Element == Usac ? Topics.Usac : Topics.RawDataBlocks,
         };
     }
 
@@ -183,7 +188,7 @@ public sealed class AacCodecParser : ICodecParser
         var bytes = new UnitBytes(unit.Offset, unit.Length, ranges);
         if (unit.Element == Usac)
         {
-            return unit.Length > 0 ? [bytes.Bits("IsIndependent", 0, 1, NodeValue.Boolean(unit.Tag != 0))] : [];
+            return unit.Length > 0 ? [bytes.Bits("IsIndependent", 0, 1, NodeValue.Boolean(unit.Tag != 0), Explain.IsIndependent)] : [];
         }
 
         if (unit.Element < 0)

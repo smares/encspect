@@ -17,15 +17,16 @@ internal sealed class BitFields(MappedBytes bytes)
 
     // Reads width bits and adds a node named name under parent, whose value describe gives (the
     // raw number when describe is null).
-    public long Read(Node parent, string name, int width, Func<long, NodeValue?>? describe = null)
+    public long Read(Node parent, string name, int width, string description, Func<long, NodeValue?>? describe = null, string? topic = null)
     {
         int start = Position;
         long value = Take(width);
-        parent.Add(Node.FromBits(name, bytes, start, start + width, describe?.Invoke(value) ?? NodeValue.Integer(value)));
+        parent.Add(Node.FromBits(name, bytes, start, start + width, describe?.Invoke(value) ?? NodeValue.Integer(value), description: description, topic: topic));
         return value;
     }
 
-    public bool Flag(Node parent, string name) => Read(parent, name, 1, v => NodeValue.Boolean(v != 0)) != 0;
+    public bool Flag(Node parent, string name, string description, string? topic = null) =>
+        Read(parent, name, 1, description, v => NodeValue.Boolean(v != 0), topic) != 0;
 
     // Reads width bits, at most 63, without a node.
     public long Take(int width)
@@ -64,9 +65,9 @@ internal sealed class BitFields(MappedBytes bytes)
     }
 
     // A node for the bits from start to the current position, with the children of from.
-    public Node Span(string name, int start, NodeValue? value = null, Node? from = null)
+    public Node Span(string name, int start, NodeValue? value, string description, Node? from = null, string? topic = null)
     {
-        Node node = Node.FromBits(name, bytes, start, Position, value);
+        Node node = Node.FromBits(name, bytes, start, Position, value, description: description, topic: topic);
         foreach (Node child in from?.Children ?? [])
         {
             node.Add(child);
@@ -77,7 +78,7 @@ internal sealed class BitFields(MappedBytes bytes)
 
     // ISO/IEC 23003-3 5.2 (escapedValue): bits1, then bits2 more where those are all ones, and bits3
     // more where the second ones are too.
-    public long Escaped(Node parent, string name, int bits1, int bits2, int bits3, long add = 0)
+    public long Escaped(Node parent, string name, string description, int bits1, int bits2, int bits3, long add = 0)
     {
         int start = Position;
         long value = Take(bits1);
@@ -91,7 +92,7 @@ internal sealed class BitFields(MappedBytes bytes)
             }
         }
 
-        parent.Add(Node.FromBits(name, bytes, start, Position, NodeValue.Integer(value + add)));
+        parent.Add(Node.FromBits(name, bytes, start, Position, NodeValue.Integer(value + add), description: description));
         return value + add;
     }
 

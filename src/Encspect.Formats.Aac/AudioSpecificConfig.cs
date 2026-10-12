@@ -35,7 +35,7 @@ internal static class AudioSpecificConfig
         int remaining = fields.Length - fields.Position;
         if (!state.IsCut && !state.StoppedEarly && remaining >= 8)
         {
-            node.Add(Node.FromBits("Unread Bits", data, fields.Position, fields.Length, NodeValue.Integer(remaining, "bits")));
+            node.Add(Node.FromBits("Unread Bits", data, fields.Position, fields.Length, NodeValue.Integer(remaining, "bits"), description: Explain.UnreadBits));
             report(Severity.Info, "aac.config-trailing-bits", $"The AudioSpecificConfig holds {remaining} bits after its last field.", node);
         }
 
@@ -58,9 +58,9 @@ internal static class AudioSpecificConfig
 
     private static void Read(BitFields f, Node node, State state, Action<Severity, string, string, Node> report)
     {
-        int type = ObjectType(f, node, "Audio Object Type");
-        int rate = SampleRate(f, node, "Sample Rate", report);
-        int configuration = (int)f.Read(node, "Channel Configuration", 4, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
+        int type = ObjectType(f, node, "Audio Object Type", Explain.ObjectType);
+        int rate = SampleRate(f, node, "Sample Rate", Explain.SampleRate, report);
+        int configuration = (int)f.Read(node, "Channel Configuration", 4, Explain.ChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
         state.SampleRate = rate;
         state.ChannelConfiguration = configuration;
         if (AacTables.Channels(configuration) is null && configuration != 0)
@@ -74,11 +74,11 @@ internal static class AudioSpecificConfig
             state.Sbr = true;
             state.Ps = type == 29 ? true : null;
             state.Signaling = "hierarchical";
-            state.ExtensionSampleRate = SampleRate(f, node, "Extension Sample Rate", report);
-            type = ObjectType(f, node, "Core Audio Object Type");
+            state.ExtensionSampleRate = SampleRate(f, node, "Extension Sample Rate", Explain.ExtensionSampleRate, report, Topics.Sbr);
+            type = ObjectType(f, node, "Core Audio Object Type", Explain.CoreObjectType);
             if (type == 22)
             {
-                f.Read(node, "Extension Channel Configuration", 4);
+                f.Read(node, "Extension Channel Configuration", 4, Explain.ExtensionChannelConfiguration);
             }
         }
 
@@ -105,7 +105,7 @@ internal static class AudioSpecificConfig
 
         if (type is 17 or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 39)
         {
-            long epConfig = f.Read(node, "Error Protection Config", 2);
+            long epConfig = f.Read(node, "Error Protection Config", 2, Explain.ErrorProtectionConfig);
             if (epConfig is 2 or 3)
             {
                 report(Severity.Info, "aac.error-protection-not-analyzed", "The ErrorProtectionSpecificConfig is not analyzed.", node);
@@ -131,19 +131,19 @@ internal static class AudioSpecificConfig
 
         int start = f.Position;
         var extension = new Node("Sync Extension", 0, 0);
-        f.Read(extension, "Sync Extension Type", 11, v => NodeValue.Hex(v, 3));
-        int extensionType = ObjectType(f, extension, "Extension Audio Object Type");
+        f.Read(extension, "Sync Extension Type", 11, Explain.SyncExtensionType, v => NodeValue.Hex(v, 3));
+        int extensionType = ObjectType(f, extension, "Extension Audio Object Type", Explain.ExtensionObjectType);
         state.Signaling = "backward compatible";
         if (extensionType == 5)
         {
-            state.Sbr = f.Flag(extension, "HasSbr");
+            state.Sbr = f.Flag(extension, "HasSbr", Explain.HasSbr, Topics.Sbr);
             if (state.Sbr == true)
             {
-                state.ExtensionSampleRate = SampleRate(f, extension, "Extension Sample Rate", report);
+                state.ExtensionSampleRate = SampleRate(f, extension, "Extension Sample Rate", Explain.ExtensionSampleRate, report, Topics.Sbr);
                 if (f.Remaining >= 12 && f.Look(11) == SyncPs)
                 {
-                    f.Read(extension, "Sync Extension Type", 11, v => NodeValue.Hex(v, 3));
-                    state.Ps = f.Flag(extension, "HasPs");
+                    f.Read(extension, "Sync Extension Type", 11, Explain.SyncExtensionType, v => NodeValue.Hex(v, 3));
+                    state.Ps = f.Flag(extension, "HasPs", Explain.HasPs, Topics.ParametricStereo);
                 }
             }
             else
@@ -153,12 +153,12 @@ internal static class AudioSpecificConfig
         }
         else if (extensionType == 22)
         {
-            if (f.Flag(extension, "HasSbr"))
+            if (f.Flag(extension, "HasSbr", Explain.HasSbr, Topics.Sbr))
             {
-                SampleRate(f, extension, "Extension Sample Rate", report);
+                SampleRate(f, extension, "Extension Sample Rate", Explain.ExtensionSampleRate, report, Topics.Sbr);
             }
 
-            f.Read(extension, "Extension Channel Configuration", 4);
+            f.Read(extension, "Extension Channel Configuration", 4, Explain.ExtensionChannelConfiguration);
         }
         else
         {
@@ -167,10 +167,10 @@ internal static class AudioSpecificConfig
         }
 
         string summary = state.Sbr == true ? (state.Ps == true ? "SBR and PS present" : "SBR present") : "SBR absent";
-        node.Add(f.Span("Sync Extension", start, summary, extension));
+        node.Add(f.Span("Sync Extension", start, summary, Explain.SyncExtension, extension, Topics.Sbr));
     }
 
-    private static int ObjectType(BitFields f, Node node, string name)
+    private static int ObjectType(BitFields f, Node node, string name, string description)
     {
         int start = f.Position;
         int type = (int)f.Take(5);
@@ -179,22 +179,22 @@ internal static class AudioSpecificConfig
             type = 32 + (int)f.Take(6);
         }
 
-        node.Add(f.Span(name, start, $"{type} ({AacTables.ObjectTypeName(type)})"));
+        node.Add(f.Span(name, start, $"{type} ({AacTables.ObjectTypeName(type)})", description, topic: Topics.ObjectTypes));
         return type;
     }
 
-    private static int SampleRate(BitFields f, Node node, string name, Action<Severity, string, string, Node> report)
+    private static int SampleRate(BitFields f, Node node, string name, string description, Action<Severity, string, string, Node> report, string? topic = null)
     {
         int start = f.Position;
         int index = (int)f.Take(4);
         if (index == 15)
         {
             int rate = (int)f.Take(24);
-            node.Add(f.Span(name, start, NodeValue.Integer(rate, "Hz")));
+            node.Add(f.Span(name, start, NodeValue.Integer(rate, "Hz"), description, topic: topic));
             return rate;
         }
 
-        Node field = f.Span(name, start, AacTables.SampleRate(index) is { } known ? NodeValue.Integer(known, "Hz") : $"{index} (reserved)");
+        Node field = f.Span(name, start, AacTables.SampleRate(index) is { } known ? NodeValue.Integer(known, "Hz") : $"{index} (reserved)", description, topic: topic);
         node.Add(field);
         if (AacTables.SampleRate(index) is not { } value)
         {
@@ -210,44 +210,44 @@ internal static class AudioSpecificConfig
     {
         int full = type == 23 ? 512 : 1024;
         int shortened = type == 23 ? 480 : 960;
-        bool isShort = f.Read(node, "Frame Length", 1, v => NodeValue.Integer(v == 0 ? full : shortened, "samples")) != 0;
+        bool isShort = f.Read(node, "Frame Length", 1, Explain.FrameLength, v => NodeValue.Integer(v == 0 ? full : shortened, "samples")) != 0;
         state.FrameLength = isShort ? shortened : full;
-        if (f.Flag(node, "DependsOnCoreCoder"))
+        if (f.Flag(node, "DependsOnCoreCoder", Explain.DependsOnCoreCoder))
         {
-            f.Read(node, "Core Coder Delay", 14, v => NodeValue.Integer(v, "samples"));
+            f.Read(node, "Core Coder Delay", 14, Explain.CoreCoderDelay, v => NodeValue.Integer(v, "samples"));
         }
 
-        bool hasExtension = f.Flag(node, "HasExtension");
+        bool hasExtension = f.Flag(node, "HasExtension", Explain.HasExtension);
         if (configuration == 0)
         {
             var pce = new Node("Program Config Element", 0, 0);
             int start = f.Position;
             int channels = ProgramConfigElement.Read(f, pce, 0, report);
-            node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), pce));
+            node.Add(f.Span("Program Config Element", start, NodeValue.Integer(channels, "channels"), Explain.ProgramConfigElement, pce));
             state.Channels = channels;
         }
 
         if (type is 6 or 20)
         {
-            f.Read(node, "Layer Number", 3);
+            f.Read(node, "Layer Number", 3, Explain.LayerNumber);
         }
 
         if (hasExtension)
         {
             if (type == 22)
             {
-                f.Read(node, "Number of Subframes", 5);
-                f.Read(node, "Layer Length", 11);
+                f.Read(node, "Number of Subframes", 5, Explain.SubframeCount);
+                f.Read(node, "Layer Length", 11, Explain.LayerLength);
             }
 
             if (type is 17 or 19 or 20 or 23)
             {
-                f.Flag(node, "HasSectionDataResilience");
-                f.Flag(node, "HasScalefactorDataResilience");
-                f.Flag(node, "HasSpectralDataResilience");
+                f.Flag(node, "HasSectionDataResilience", Explain.SectionResilience);
+                f.Flag(node, "HasScalefactorDataResilience", Explain.ScalefactorResilience);
+                f.Flag(node, "HasSpectralDataResilience", Explain.SpectralResilience);
             }
 
-            if (f.Flag(node, "HasExtension3"))
+            if (f.Flag(node, "HasExtension3", Explain.HasExtension3))
             {
                 report(Severity.Info, "aac.extension3", "The GASpecificConfig sets extensionFlag3, whose contents the specification leaves to a later version.", node);
                 state.StoppedEarly = true;
@@ -258,15 +258,15 @@ internal static class AudioSpecificConfig
     // 4.4.1.2, Table 4.3, with ld_sbr_header (Table 4.5) and sbr_header (Table 4.63).
     private static void EldSpecificConfig(BitFields f, Node node, State state, int configuration)
     {
-        bool isShort = f.Read(node, "Frame Length", 1, v => NodeValue.Integer(v == 0 ? 512 : 480, "samples")) != 0;
+        bool isShort = f.Read(node, "Frame Length", 1, Explain.FrameLength, v => NodeValue.Integer(v == 0 ? 512 : 480, "samples")) != 0;
         state.FrameLength = isShort ? 480 : 512;
-        f.Flag(node, "HasSectionDataResilience");
-        f.Flag(node, "HasScalefactorDataResilience");
-        f.Flag(node, "HasSpectralDataResilience");
-        if (f.Flag(node, "HasLowDelaySbr"))
+        f.Flag(node, "HasSectionDataResilience", Explain.SectionResilience);
+        f.Flag(node, "HasScalefactorDataResilience", Explain.ScalefactorResilience);
+        f.Flag(node, "HasSpectralDataResilience", Explain.SpectralResilience);
+        if (f.Flag(node, "HasLowDelaySbr", Explain.HasLowDelaySbr, Topics.Sbr))
         {
-            bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
-            f.Flag(node, "HasLowDelaySbrCrc");
+            bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, Explain.LowDelaySbrRate, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
+            f.Flag(node, "HasLowDelaySbrCrc", Explain.HasLowDelaySbrCrc);
             int headers = configuration switch
             {
                 1 or 2 => 1,
@@ -281,7 +281,7 @@ internal static class AudioSpecificConfig
                 int start = f.Position;
                 var header = new Node("SBR Header", 0, 0);
                 SbrHeader(f, header);
-                node.Add(f.Span("SBR Header", start, null, header));
+                node.Add(f.Span("SBR Header", start, null, Explain.SbrHeader, header, Topics.Sbr));
             }
 
             state.Sbr = true;
@@ -298,51 +298,51 @@ internal static class AudioSpecificConfig
         {
             int start = f.Position;
             var extension = new Node("Extension", 0, 0);
-            long kind = f.Read(extension, "Type", 4);
+            long kind = f.Read(extension, "Type", 4, Explain.EldExtensionType);
             if (kind == 0)
             {
-                node.Add(f.Span("ELD Extension Terminator", start));
+                node.Add(f.Span("ELD Extension Terminator", start, null, Explain.EldTerminator));
                 break;
             }
 
-            long length = f.Read(extension, "Length", 4);
+            long length = f.Read(extension, "Length", 4, Explain.EldExtensionLength);
             if (length == 15)
             {
-                long more = f.Read(extension, "Additional Length", 8);
+                long more = f.Read(extension, "Additional Length", 8, Explain.EldExtensionLength);
                 length += more;
                 if (more == 255)
                 {
-                    length += f.Read(extension, "Further Length", 16);
+                    length += f.Read(extension, "Further Length", 16, Explain.EldExtensionLength);
                 }
             }
 
             f.Skip(length * 8);
-            node.Add(f.Span("ELD Extension", start, NodeValue.Integer(length, "bytes"), extension));
+            node.Add(f.Span("ELD Extension", start, NodeValue.Integer(length, "bytes"), Explain.EldExtension, extension));
         }
     }
 
     private static void SbrHeader(BitFields f, Node node)
     {
-        f.Read(node, "bs_amp_res", 1);
-        f.Read(node, "bs_start_freq", 4);
-        f.Read(node, "bs_stop_freq", 4);
-        f.Read(node, "bs_xover_band", 3);
-        f.Read(node, "bs_reserved", 2);
-        bool extra1 = f.Flag(node, "HasHeaderExtra1");
-        bool extra2 = f.Flag(node, "HasHeaderExtra2");
+        f.Read(node, "bs_amp_res", 1, Explain.SbrAmpRes);
+        f.Read(node, "bs_start_freq", 4, Explain.SbrStartFreq);
+        f.Read(node, "bs_stop_freq", 4, Explain.SbrStopFreq);
+        f.Read(node, "bs_xover_band", 3, Explain.SbrXoverBand);
+        f.Read(node, "bs_reserved", 2, Explain.SbrReserved);
+        bool extra1 = f.Flag(node, "HasHeaderExtra1", Explain.SbrHeaderExtra1);
+        bool extra2 = f.Flag(node, "HasHeaderExtra2", Explain.SbrHeaderExtra2);
         if (extra1)
         {
-            f.Read(node, "bs_freq_scale", 2);
-            f.Read(node, "bs_alter_scale", 1);
-            f.Read(node, "bs_noise_bands", 2);
+            f.Read(node, "bs_freq_scale", 2, Explain.SbrFreqScale);
+            f.Read(node, "bs_alter_scale", 1, Explain.SbrAlterScale);
+            f.Read(node, "bs_noise_bands", 2, Explain.SbrNoiseBands);
         }
 
         if (extra2)
         {
-            f.Read(node, "bs_limiter_bands", 2);
-            f.Read(node, "bs_limiter_gains", 2);
-            f.Read(node, "bs_interpol_freq", 1);
-            f.Read(node, "bs_smoothing_mode", 1);
+            f.Read(node, "bs_limiter_bands", 2, Explain.SbrLimiterBands);
+            f.Read(node, "bs_limiter_gains", 2, Explain.SbrLimiterGains);
+            f.Read(node, "bs_interpol_freq", 1, Explain.SbrInterpolFreq);
+            f.Read(node, "bs_smoothing_mode", 1, Explain.SbrSmoothingMode);
         }
     }
 
@@ -362,16 +362,16 @@ internal static class AudioSpecificConfig
             if (index == 31)
             {
                 rate = (int)f.Take(24);
-                usac.Add(f.Span("Sample Rate", start, NodeValue.Integer(rate, "Hz")));
+                usac.Add(f.Span("Sample Rate", start, NodeValue.Integer(rate, "Hz"), Explain.UsacSampleRate));
             }
             else
             {
                 rate = AacTables.UsacSampleRate(index) ?? 0;
-                usac.Add(f.Span("Sample Rate", start, rate > 0 ? NodeValue.Integer(rate, "Hz") : $"{index} (reserved)"));
+                usac.Add(f.Span("Sample Rate", start, rate > 0 ? NodeValue.Integer(rate, "Hz") : $"{index} (reserved)", Explain.UsacSampleRate));
             }
 
             state.UsacSampleRate = rate;
-            long frameIndex = f.Read(usac, "Core SBR Frame Length Index", 3, v => v switch
+            long frameIndex = f.Read(usac, "Core SBR Frame Length Index", 3, Explain.CoreSbrFrameLengthIndex, topic: Topics.Sbr, describe: v => v switch
             {
                 0 => "0 (768 samples, no SBR)",
                 1 => "1 (1024 samples, no SBR)",
@@ -398,116 +398,116 @@ internal static class AudioSpecificConfig
                 report(Severity.Warning, "aac.usac-reserved-frame-length", $"The coreSbrFrameLengthIndex {frameIndex} is reserved.", node);
             }
 
-            int channelIndex = (int)f.Read(usac, "Channel Configuration", 5, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
+            int channelIndex = (int)f.Read(usac, "Channel Configuration", 5, Explain.UsacChannelConfiguration, v => $"{v} ({AacTables.ChannelLayout((int)v)})");
             state.Channels = AacTables.Channels(channelIndex);
             if (channelIndex == 0)
             {
                 int channelStart = f.Position;
                 var channels = new Node("UsacChannelConfig", 0, 0);
-                long count = f.Escaped(channels, "Output Channels", 5, 8, 16);
+                long count = f.Escaped(channels, "Output Channels", Explain.OutputChannels, 5, 8, 16);
                 for (long i = 0; i < count; i++)
                 {
-                    f.Read(channels, "Output Channel Position", 5);
+                    f.Read(channels, "Output Channel Position", 5, Explain.OutputChannelPosition);
                 }
 
                 state.Channels = (int)count;
-                node.Add(f.Span("UsacChannelConfig", channelStart, NodeValue.Integer(count, "channels"), channels));
+                node.Add(f.Span("UsacChannelConfig", channelStart, NodeValue.Integer(count, "channels"), Explain.UsacChannelConfig, channels));
             }
 
             int decoderStart = f.Position;
             var decoder = new Node("UsacDecoderConfig", 0, 0);
-            long elements = f.Escaped(decoder, "Elements", 4, 8, 16, add: 1);
+            long elements = f.Escaped(decoder, "Elements", Explain.UsacElements, 4, 8, 16, add: 1);
             for (long i = 0; i < elements; i++)
             {
                 int elementStart = f.Position;
                 var element = new Node("Element", 0, 0);
-                long kind = f.Read(element, "Element Type", 2, v => v switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" });
+                long kind = f.Read(element, "Element Type", 2, Explain.UsacElementType, v => v switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" });
                 bool stop = false;
                 if (kind is 0 or 1)
                 {
-                    f.Flag(element, "HasTimeWarpedMdct");
-                    f.Flag(element, "HasNoiseFilling");
+                    f.Flag(element, "HasTimeWarpedMdct", Explain.TimeWarpedMdct);
+                    f.Flag(element, "HasNoiseFilling", Explain.NoiseFilling);
                     if (sbrRatio > 0)
                     {
-                        f.Flag(element, "HasHarmonicSbr");
-                        f.Flag(element, "HasInterTes");
-                        f.Flag(element, "HasPvc");
-                        f.Read(element, "Default Start Frequency", 4);
-                        f.Read(element, "Default Stop Frequency", 4);
-                        bool extra1 = f.Flag(element, "HasDefaultHeaderExtra1");
-                        bool extra2 = f.Flag(element, "HasDefaultHeaderExtra2");
+                        f.Flag(element, "HasHarmonicSbr", Explain.HarmonicSbr, Topics.Sbr);
+                        f.Flag(element, "HasInterTes", Explain.InterTes, Topics.Sbr);
+                        f.Flag(element, "HasPvc", Explain.Pvc, Topics.Sbr);
+                        f.Read(element, "Default Start Frequency", 4, Explain.DefaultStartFreq, topic: Topics.Sbr);
+                        f.Read(element, "Default Stop Frequency", 4, Explain.DefaultStopFreq, topic: Topics.Sbr);
+                        bool extra1 = f.Flag(element, "HasDefaultHeaderExtra1", Explain.DefaultHeaderExtra1);
+                        bool extra2 = f.Flag(element, "HasDefaultHeaderExtra2", Explain.DefaultHeaderExtra2);
                         if (extra1)
                         {
-                            f.Read(element, "Default Frequency Scale", 2);
-                            f.Read(element, "Default Alter Scale", 1);
-                            f.Read(element, "Default Noise Bands", 2);
+                            f.Read(element, "Default Frequency Scale", 2, Explain.DefaultFreqScale);
+                            f.Read(element, "Default Alter Scale", 1, Explain.DefaultAlterScale);
+                            f.Read(element, "Default Noise Bands", 2, Explain.DefaultNoiseBands);
                         }
 
                         if (extra2)
                         {
-                            f.Read(element, "Default Limiter Bands", 2);
-                            f.Read(element, "Default Limiter Gains", 2);
-                            f.Read(element, "Default Interpolated Frequency", 1);
-                            f.Read(element, "Default Smoothing Mode", 1);
+                            f.Read(element, "Default Limiter Bands", 2, Explain.DefaultLimiterBands);
+                            f.Read(element, "Default Limiter Gains", 2, Explain.DefaultLimiterGains);
+                            f.Read(element, "Default Interpolated Frequency", 1, Explain.DefaultInterpolFreq);
+                            f.Read(element, "Default Smoothing Mode", 1, Explain.DefaultSmoothingMode);
                         }
 
                         if (kind == 1)
                         {
-                            long stereo = f.Read(element, "Stereo Config Index", 2);
+                            long stereo = f.Read(element, "Stereo Config Index", 2, Explain.StereoConfigIndex);
                             stop = stereo > 0;
                         }
                     }
                 }
                 else if (kind == 3)
                 {
-                    long extensionType = f.Escaped(element, "Extension Element Type", 4, 8, 16);
+                    long extensionType = f.Escaped(element, "Extension Element Type", Explain.ExtElementType, 4, 8, 16);
                     element.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 1 => "MPEG Surround", 2 => "SAOC", 3 => "audio pre-roll", 4 => "DRC", _ => "reserved" }})";
-                    long length = f.Escaped(element, "Configuration Length", 4, 8, 16);
-                    if (f.Flag(element, "HasDefaultLength"))
+                    long length = f.Escaped(element, "Configuration Length", Explain.ExtConfigLength, 4, 8, 16);
+                    if (f.Flag(element, "HasDefaultLength", Explain.HasDefaultLength))
                     {
-                        f.Escaped(element, "Default Length", 8, 16, 0, add: 1);
+                        f.Escaped(element, "Default Length", Explain.DefaultLength, 8, 16, 0, add: 1);
                     }
 
-                    f.Flag(element, "HasPayloadFragmentation");
+                    f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
                     f.Skip(length * 8);
                 }
 
                 string name = kind switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" };
-                decoder.Add(f.Span("Element", elementStart, name, element));
+                decoder.Add(f.Span("Element", elementStart, name, Explain.UsacElement, element));
                 if (stop)
                 {
                     report(Severity.Info, "aac.usac-config-not-analyzed",
                         "The USAC configuration is read up to a channel pair element with MPEG Surround 2-1-2 stereo, whose configuration is not analyzed yet.", node);
                     state.StoppedEarly = true;
-                    node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", usac));
+                    node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
                     return;
                 }
             }
 
-            usac.Add(f.Span("UsacDecoderConfig", decoderStart, NodeValue.Integer(elements, "elements"), decoder));
-            if (f.Flag(usac, "HasConfigExtension"))
+            usac.Add(f.Span("UsacDecoderConfig", decoderStart, NodeValue.Integer(elements, "elements"), Explain.UsacDecoderConfig, decoder));
+            if (f.Flag(usac, "HasConfigExtension", Explain.HasConfigExtension))
             {
                 int extensionStart = f.Position;
                 var extensions = new Node("UsacConfigExtension", 0, 0);
-                long count = f.Escaped(extensions, "Extensions", 2, 4, 8, add: 1);
+                long count = f.Escaped(extensions, "Extensions", Explain.ConfigExtensionCount, 2, 4, 8, add: 1);
                 for (long i = 0; i < count; i++)
                 {
-                    long extensionType = f.Escaped(extensions, "Extension Type", 4, 8, 16);
+                    long extensionType = f.Escaped(extensions, "Extension Type", Explain.ConfigExtensionType, 4, 8, 16);
                     extensions.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 2 => "loudness info", 7 => "stream ID", _ => "reserved" }})";
-                    long length = f.Escaped(extensions, "Extension Length", 4, 8, 16);
+                    long length = f.Escaped(extensions, "Extension Length", Explain.ConfigExtensionLength, 4, 8, 16);
                     f.Skip(length * 8);
                 }
 
-                usac.Add(f.Span("UsacConfigExtension", extensionStart, NodeValue.Integer(count, "extensions"), extensions));
+                usac.Add(f.Span("UsacConfigExtension", extensionStart, NodeValue.Integer(count, "extensions"), Explain.UsacConfigExtension, extensions));
             }
 
-            node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", usac));
+            node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
         }
         catch (EndOfStreamException)
         {
             if (f.Position > usacStart)
             {
-                node.Add(f.Span("UsacConfig", usacStart, "cut short", usac));
+                node.Add(f.Span("UsacConfig", usacStart, "cut short", Explain.UsacConfig, usac, Topics.Usac));
             }
 
             throw;

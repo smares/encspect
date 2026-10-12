@@ -65,7 +65,12 @@ public sealed class RawAacParser : IFormatParser
     {
         var region = new Region(state.Frames.Count);
         state.Regions.Add(region);
-        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(state, region)) { Kind = NodeKind.Stream });
+        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(state, region))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Adts,
+            Topic = Topics.Adts,
+        });
         BlockCache cache = state.Cache;
         long position = start;
         AdtsHeader? stream = null;
@@ -132,7 +137,7 @@ public sealed class RawAacParser : IFormatParser
     private static void AddGap(State state, long start, long end, bool leading, bool trailing)
     {
         state.Frames.Add(Frame.Gap(start, end - start));
-        var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes"));
+        var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;
         if (leading)
         {
@@ -155,7 +160,7 @@ public sealed class RawAacParser : IFormatParser
         Span<byte> bytes = buffer.AsSpan(0, length);
         state.Cache.Read(position, bytes);
         int index = state.Frames.Count;
-        var node = new Node("Frame", position, length, header.Summary(length)) { Kind = NodeKind.Frame };
+        var node = new Node("Frame", position, length, header.Summary(length)) { Kind = NodeKind.Frame, Description = Explain.AdtsFrame };
         if (truncated)
         {
             state.Findings.AddNow(Severity.Warning, "aac.frame-truncated", $"The last ADTS frame at 0x{position:X} has {length} of its {header.FrameLength} bytes.", node);
@@ -471,11 +476,15 @@ public sealed class RawAacParser : IFormatParser
         Frame frame = state.Frames[index];
         if (frame.IsGap)
         {
-            return new Node("Gap", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes"));
+            return new Node("Gap", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes")) { Description = Explain.Gap };
         }
 
         var header = new AdtsHeader(frame.Header);
-        return new Node("Frame", frame.Offset, frame.Length, header.Summary(frame.Length), () => FrameChildren(state, index, frame, header)) { Kind = NodeKind.Frame };
+        return new Node("Frame", frame.Offset, frame.Length, header.Summary(frame.Length), () => FrameChildren(state, index, frame, header))
+        {
+            Kind = NodeKind.Frame,
+            Description = Explain.AdtsFrame,
+        };
     }
 
     private static List<Node> FrameChildren(State state, int index, Frame frame, AdtsHeader header)
@@ -491,7 +500,7 @@ public sealed class RawAacParser : IFormatParser
                 long at = offset + AdtsHeader.Length + (2 * i);
                 if (at + 2 <= frame.Offset + frame.Length)
                 {
-                    nodes.Add(new Node("Raw Data Block Position", at, 2, NodeValue.Integer(details.Positions[i], "bytes")));
+                    nodes.Add(new Node("Raw Data Block Position", at, 2, NodeValue.Integer(details.Positions[i], "bytes")) { Description = Explain.RawDataBlockPosition });
                 }
             }
         }
@@ -499,8 +508,8 @@ public sealed class RawAacParser : IFormatParser
         int headerLength = header.HeaderLength;
         if (frame.Crc >= 0)
         {
-            Node crc = new("CRC", offset + headerLength - 2, 2, NodeValue.Hex(frame.Crc, 4));
-            crc.Add(new Node("Check", crc.Offset, 2, Verdict(frame.CrcState)));
+            Node crc = new("CRC", offset + headerLength - 2, 2, NodeValue.Hex(frame.Crc, 4)) { Description = Explain.Crc, Topic = Topics.Crc };
+            crc.Add(new Node("Check", crc.Offset, 2, Verdict(frame.CrcState)) { Description = Explain.CrcCheck });
             nodes.Add(crc);
         }
 
@@ -515,7 +524,7 @@ public sealed class RawAacParser : IFormatParser
 
             long length = block.Length >= 0 ? block.Length : frame.Offset + frame.Length - start;
             var unit = new UnitBytes(start, (int)length, null);
-            Node node = new("Raw Data Block", start, length, block.Element.Summary);
+            Node node = new("Raw Data Block", start, length, block.Element.Summary) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
             foreach (Node child in block.Element.Nodes(unit, 0, block.Text))
             {
                 if (child.End <= node.End)
@@ -527,8 +536,8 @@ public sealed class RawAacParser : IFormatParser
             nodes.Add(node);
             if (block.Crc >= 0)
             {
-                Node crc = new("Raw Data Block CRC", start + length, 2, NodeValue.Hex(block.Crc, 4));
-                crc.Add(new Node("Check", crc.Offset, 2, Verdict(block.CrcState)));
+                Node crc = new("Raw Data Block CRC", start + length, 2, NodeValue.Hex(block.Crc, 4)) { Description = Explain.BlockCrc, Topic = Topics.Crc };
+                crc.Add(new Node("Check", crc.Offset, 2, Verdict(block.CrcState)) { Description = Explain.CrcCheck });
                 nodes.Add(crc);
             }
         }
@@ -632,14 +641,15 @@ public sealed class RawAacParser : IFormatParser
 
         // The encoder and statistics go into the stream's first region, which holds its first frame,
         // and cover it.
-        Node Cover(string name, NodeValue? value, NodeKind kind = NodeKind.Detail) => new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind };
+        Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
+            new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind, Description = description, Topic = topic };
 
         Node? encoder = AacEncoder.Detect(
             state.Signature is { } signature && signature.Index >= start && signature.Index < end
                 ? new AacEncoder.Signature(signature.Text, WithoutChildren(FrameNode(state, signature.Index)), signature.Index - start)
                 : null,
             claims,
-            (name, value) => Cover(name, value),
+            (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
             (claim, text, name) => state.Findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded."));
         if (encoder is not null)
@@ -647,7 +657,7 @@ public sealed class RawAacParser : IFormatParser
             first.Leading.Add(encoder);
         }
 
-        Node statistics = figures.Statistics(Cover, "Frame", "Frames", out Node bitrate);
+        Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Frame", "Frames", out Node bitrate);
         first.Leading.Add(statistics);
 
         string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();

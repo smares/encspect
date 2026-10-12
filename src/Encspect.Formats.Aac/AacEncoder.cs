@@ -44,15 +44,15 @@ internal static partial class AacEncoder
 
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a
     // claim that names another encoder than the stream's evidence.
-    public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, Node> cover, Action<EncoderClaim, string, string> differs)
+    public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs)
     {
         Node? encoder = null;
         if (signature is not null && LavcVersion().IsMatch(signature.Text))
         {
-            encoder = cover("Encoder", $"FFmpeg ({signature.Text})");
-            encoder.Add(cover("Confidence", "High"));
+            encoder = cover("Encoder", $"FFmpeg ({signature.Text})", Explain.Encoder);
+            encoder.Add(cover("Confidence", "High", Explain.Confidence));
             encoder.Add(cover("Evidence",
-                $"The fill element at the start of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which ffmpeg's AAC encoder writes"));
+                $"The fill element at the start of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which ffmpeg's AAC encoder writes", Explain.Evidence));
         }
 
         foreach (EncoderClaim claim in claims)
@@ -73,9 +73,9 @@ internal static partial class AacEncoder
                     continue;
                 }
 
-                encoder = cover("Encoder", ClaimedName(text));
-                encoder.Add(cover("Confidence", "Low"));
-                encoder.Add(cover("Evidence", evidence));
+                encoder = cover("Encoder", ClaimedName(text), Explain.Encoder);
+                encoder.Add(cover("Confidence", "Low", Explain.Confidence));
+                encoder.Add(cover("Evidence", evidence, Explain.Evidence));
                 continue;
             }
 
@@ -83,7 +83,7 @@ internal static partial class AacEncoder
             // Two claims that agree are still claims: they add evidence, not confidence.
             if (claimed.Overlaps(named) || claimed.Contains("FFmpeg"))
             {
-                encoder.Add(cover("Evidence", evidence));
+                encoder.Add(cover("Evidence", evidence, Explain.Evidence));
             }
             else
             {
