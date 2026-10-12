@@ -1,0 +1,81 @@
+{
+ "description": "Four 2/0 frames whose exponent strategies come from frmchexpstr (Table E2.10).",
+ "length": 1600,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   400
+  ],
+  [
+   400,
+   400
+  ],
+  [
+   800,
+   400
+  ],
+  [
+   1200,
+   400
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Audio Frame/Frame Exponent Strategy (left)": "0 (D15, R, R, R, R, R)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ },
+ "block_ends": {
+  "0": [
+   470,
+   474,
+   478,
+   482,
+   486,
+   490
+  ],
+  "400": [
+   470,
+   474,
+   478,
+   482,
+   486,
+   490
+  ],
+  "800": [
+   470,
+   474,
+   478,
+   482,
+   486,
+   490
+  ],
+  "1200": [
+   470,
+   474,
+   478,
+   482,
+   486,
+   490
+  ]
+ }
+}

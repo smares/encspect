@@ -1,0 +1,100 @@
+{
+ "description": "Encoded by ffmpeg from 1 channels at 48000 Hz (tones).",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "eac3",
+  "-b:a",
+  "48k"
+ ],
+ "length": 3072,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   192
+  ],
+  [
+   192,
+   192
+  ],
+  [
+   384,
+   192
+  ],
+  [
+   576,
+   192
+  ],
+  [
+   768,
+   192
+  ],
+  [
+   960,
+   192
+  ],
+  [
+   1152,
+   192
+  ],
+  [
+   1344,
+   192
+  ],
+  [
+   1536,
+   192
+  ],
+  [
+   1728,
+   192
+  ],
+  [
+   1920,
+   192
+  ],
+  [
+   2112,
+   192
+  ],
+  [
+   2304,
+   192
+  ],
+  [
+   2496,
+   192
+  ],
+  [
+   2688,
+   192
+  ],
+  [
+   2880,
+   192
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "1/0 (center)",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 24576,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ }
+}

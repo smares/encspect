@@ -1,0 +1,81 @@
+{
+ "description": "Four 2/0 frames with spectral extension in both channels from sub-band 4 to 7.",
+ "length": 1600,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   400
+  ],
+  [
+   400,
+   400
+  ],
+  [
+   800,
+   400
+  ],
+  [
+   1200,
+   400
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ },
+ "block_ends": {
+  "0": [
+   281,
+   287,
+   293,
+   299,
+   305,
+   311
+  ],
+  "400": [
+   281,
+   287,
+   293,
+   299,
+   305,
+   311
+  ],
+  "800": [
+   281,
+   287,
+   293,
+   299,
+   305,
+   311
+  ],
+  "1200": [
+   281,
+   287,
+   293,
+   299,
+   305,
+   311
+  ]
+ }
+}

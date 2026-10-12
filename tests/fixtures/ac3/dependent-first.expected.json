@@ -1,0 +1,90 @@
+{
+ "description": "A dependent frame, then three independent 2/0 frames.",
+ "length": 1520,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   320
+  ],
+  [
+   320,
+   400
+  ],
+  [
+   720,
+   400
+  ],
+  [
+   1120,
+   400
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4608,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.dependent-without-independent",
+   "before any independent substream"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": false,
+  "decode": true,
+  "damaged": [
+   0
+  ],
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg gives the bitrate of the first frame it decodes, not of the dependent frame before it."
+  }
+ },
+ "block_ends": {
+  "0": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "320": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ],
+  "720": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ],
+  "1120": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ]
+ }
+}

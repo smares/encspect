@@ -1,0 +1,2032 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "aht.eac3",
+    "root": {
+      "name": "File",
+      "value": "AC-3",
+      "offset": 0,
+      "length": 1200,
+      "children": [
+        {
+          "name": "AC-3",
+          "kind": "Stream",
+          "value": "E-AC-3",
+          "offset": 0,
+          "length": 1200,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "value": "independent substream 0",
+              "offset": 0,
+              "length": 1200,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Samples",
+                  "value": 4608,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.096,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 100,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 400,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 400,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 100,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 100,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Dialogue Normalization",
+                  "value": -27,
+                  "unit": "dB",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Frames With Compression Gain",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Frames Failing a CRC",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Audio Blocks",
+                  "value": 18,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 1200
+                },
+                {
+                  "name": "Audio Blocks Read",
+                  "value": 0,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 1200
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "E-AC-3, independent substream 0, 400 bytes, 2/0",
+              "offset": 0,
+              "length": 400,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 0,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 0,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 2,
+                  "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 38,
+                  "children": [
+                    {
+                      "name": "Stream Type",
+                      "value": "0 (independent)",
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Substream ID",
+                      "value": 0,
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Frame Size",
+                      "value": 400,
+                      "unit": "bytes",
+                      "offset": 2,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 11
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Blocks Code",
+                      "value": 6,
+                      "unit": "blocks",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "16 (E-AC-3)",
+                      "offset": 5,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 5,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasMixingMetadata",
+                      "value": false,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasInformationalMetadata",
+                      "value": false,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Frame",
+                  "offset": 6,
+                  "length": 9,
+                  "bitOffset": 6,
+                  "bitLength": 65,
+                  "children": [
+                    {
+                      "name": "HasBlockExponentStrategies",
+                      "value": true,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAht",
+                      "value": true,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "SNR Offset Strategy",
+                      "value": "0 (one offset per frame)",
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasTransientProcessing",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBlockSwitchFlags",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDitherFlags",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBitAllocationFields",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasFastGainCodes",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDeltaBitAllocation",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSkipFields",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionAttenuation",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCouplingInUse",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "D45",
+                      "offset": 9,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "D45",
+                      "offset": 9,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 9,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 9,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 10,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 10,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 10,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 10,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 11,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 11,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 11,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 11,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (left)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 12,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (right)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 12,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "IsAht (left)",
+                      "value": true,
+                      "offset": 13,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsAht (right)",
+                      "value": false,
+                      "offset": 13,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Frame Coarse SNR Offset",
+                      "value": 0,
+                      "offset": 13,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Frame Fine SNR Offset",
+                      "value": 0,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "HasBlockStartInfo",
+                      "value": false,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Block",
+                  "kind": "SideInfo",
+                  "value": 0,
+                  "offset": 14,
+                  "length": 16,
+                  "bitOffset": 7,
+                  "bitLength": 115,
+                  "children": [
+                    {
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 14,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsSpectralExtensionInUse",
+                      "value": false,
+                      "offset": 15,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Rematrixing Flags",
+                      "value": "left/right, left/right, left/right, left/right",
+                      "offset": 15,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Bandwidth Code (left)",
+                      "value": "0 (to bin 73)",
+                      "offset": 15,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Bandwidth Code (right)",
+                      "value": "0 (to bin 73)",
+                      "offset": 16,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Exponents (left)",
+                      "value": "D45",
+                      "offset": 17,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 17,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 17,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 22,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Exponents (right)",
+                      "value": "D45",
+                      "offset": 23,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 23,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 23,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 28,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 29,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2948,
+                  "unit": "bits",
+                  "offset": 29,
+                  "length": 369,
+                  "bitOffset": 2,
+                  "bitLength": 2948
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 397,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 397,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "Encoder Information",
+                      "value": 0,
+                      "offset": 397,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 37176,
+                      "offset": 398,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 398,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "E-AC-3, independent substream 0, 400 bytes, 2/0",
+              "offset": 400,
+              "length": 400,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 400,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 400,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 402,
+                  "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 38,
+                  "children": [
+                    {
+                      "name": "Stream Type",
+                      "value": "0 (independent)",
+                      "offset": 402,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Substream ID",
+                      "value": 0,
+                      "offset": 402,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Frame Size",
+                      "value": 400,
+                      "unit": "bytes",
+                      "offset": 402,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 11
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 404,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Blocks Code",
+                      "value": 6,
+                      "unit": "blocks",
+                      "offset": 404,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 404,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 404,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "16 (E-AC-3)",
+                      "offset": 405,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 405,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasMixingMetadata",
+                      "value": false,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasInformationalMetadata",
+                      "value": false,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Frame",
+                  "offset": 406,
+                  "length": 9,
+                  "bitOffset": 6,
+                  "bitLength": 65,
+                  "children": [
+                    {
+                      "name": "HasBlockExponentStrategies",
+                      "value": true,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAht",
+                      "value": true,
+                      "offset": 406,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "SNR Offset Strategy",
+                      "value": "0 (one offset per frame)",
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasTransientProcessing",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBlockSwitchFlags",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDitherFlags",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBitAllocationFields",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasFastGainCodes",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDeltaBitAllocation",
+                      "value": false,
+                      "offset": 407,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSkipFields",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionAttenuation",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCouplingInUse",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 408,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "D45",
+                      "offset": 409,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "D45",
+                      "offset": 409,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 409,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 409,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 410,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 410,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 410,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 410,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 411,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 411,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 411,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 411,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (left)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 412,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (right)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 412,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "IsAht (left)",
+                      "value": true,
+                      "offset": 413,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsAht (right)",
+                      "value": false,
+                      "offset": 413,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Frame Coarse SNR Offset",
+                      "value": 0,
+                      "offset": 413,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Frame Fine SNR Offset",
+                      "value": 0,
+                      "offset": 414,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "HasBlockStartInfo",
+                      "value": false,
+                      "offset": 414,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Block",
+                  "kind": "SideInfo",
+                  "value": 0,
+                  "offset": 414,
+                  "length": 16,
+                  "bitOffset": 7,
+                  "bitLength": 115,
+                  "children": [
+                    {
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 414,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsSpectralExtensionInUse",
+                      "value": false,
+                      "offset": 415,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Rematrixing Flags",
+                      "value": "left/right, left/right, left/right, left/right",
+                      "offset": 415,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Bandwidth Code (left)",
+                      "value": "0 (to bin 73)",
+                      "offset": 415,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Bandwidth Code (right)",
+                      "value": "0 (to bin 73)",
+                      "offset": 416,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Exponents (left)",
+                      "value": "D45",
+                      "offset": 417,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 417,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 417,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 422,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Exponents (right)",
+                      "value": "D45",
+                      "offset": 423,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 423,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 423,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 428,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 429,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2948,
+                  "unit": "bits",
+                  "offset": 429,
+                  "length": 369,
+                  "bitOffset": 2,
+                  "bitLength": 2948
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 797,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 797,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "Encoder Information",
+                      "value": 0,
+                      "offset": 797,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 37176,
+                      "offset": 798,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 798,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "E-AC-3, independent substream 0, 400 bytes, 2/0",
+              "offset": 800,
+              "length": 400,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 800,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 800,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 802,
+                  "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 38,
+                  "children": [
+                    {
+                      "name": "Stream Type",
+                      "value": "0 (independent)",
+                      "offset": 802,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Substream ID",
+                      "value": 0,
+                      "offset": 802,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Frame Size",
+                      "value": 400,
+                      "unit": "bytes",
+                      "offset": 802,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 11
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 804,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Blocks Code",
+                      "value": 6,
+                      "unit": "blocks",
+                      "offset": 804,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 804,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 804,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "16 (E-AC-3)",
+                      "offset": 805,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 805,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasMixingMetadata",
+                      "value": false,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasInformationalMetadata",
+                      "value": false,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Frame",
+                  "offset": 806,
+                  "length": 9,
+                  "bitOffset": 6,
+                  "bitLength": 65,
+                  "children": [
+                    {
+                      "name": "HasBlockExponentStrategies",
+                      "value": true,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAht",
+                      "value": true,
+                      "offset": 806,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "SNR Offset Strategy",
+                      "value": "0 (one offset per frame)",
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasTransientProcessing",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBlockSwitchFlags",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDitherFlags",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasBitAllocationFields",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasFastGainCodes",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDeltaBitAllocation",
+                      "value": false,
+                      "offset": 807,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSkipFields",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionAttenuation",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCouplingInUse",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 808,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "D45",
+                      "offset": 809,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "D45",
+                      "offset": 809,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 809,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 809,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 810,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 810,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 810,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 810,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 811,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 811,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (left)",
+                      "value": "reuse",
+                      "offset": 811,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Exponent Strategy (right)",
+                      "value": "reuse",
+                      "offset": 811,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (left)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 812,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Converter Exponent Strategy (right)",
+                      "value": "0 (D15, R, R, R, R, R)",
+                      "offset": 812,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "IsAht (left)",
+                      "value": true,
+                      "offset": 813,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsAht (right)",
+                      "value": false,
+                      "offset": 813,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Frame Coarse SNR Offset",
+                      "value": 0,
+                      "offset": 813,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Frame Fine SNR Offset",
+                      "value": 0,
+                      "offset": 814,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "HasBlockStartInfo",
+                      "value": false,
+                      "offset": 814,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Block",
+                  "kind": "SideInfo",
+                  "value": 0,
+                  "offset": 814,
+                  "length": 16,
+                  "bitOffset": 7,
+                  "bitLength": 115,
+                  "children": [
+                    {
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 814,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsSpectralExtensionInUse",
+                      "value": false,
+                      "offset": 815,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Rematrixing Flags",
+                      "value": "left/right, left/right, left/right, left/right",
+                      "offset": 815,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Bandwidth Code (left)",
+                      "value": "0 (to bin 73)",
+                      "offset": 815,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Bandwidth Code (right)",
+                      "value": "0 (to bin 73)",
+                      "offset": 816,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Exponents (left)",
+                      "value": "D45",
+                      "offset": 817,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 817,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 817,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 822,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Exponents (right)",
+                      "value": "D45",
+                      "offset": 823,
+                      "length": 7,
+                      "bitOffset": 1,
+                      "bitLength": 48,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 823,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 6,
+                          "unit": "groups",
+                          "offset": 823,
+                          "length": 6,
+                          "bitOffset": 5,
+                          "bitLength": 42
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 828,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 829,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2948,
+                  "unit": "bits",
+                  "offset": 829,
+                  "length": 369,
+                  "bitOffset": 2,
+                  "bitLength": 2948
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 1197,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 1197,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "Encoder Information",
+                      "value": 0,
+                      "offset": 1197,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 37176,
+                      "offset": 1198,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 1198,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "E-AC-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "2/0 (left, right)",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 4608,
+        "duration": 0.096,
+        "averageBitrate": 100,
+        "isVbr": false,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0,
+              400,
+              800
+            ],
+            "values": [
+              100,
+              100,
+              100
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              100
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "ac3.aht-not-read",
+        "message": "The frame codes channels with the adaptive hybrid transform (A/52 Annex E 3.4), whose mantissas the analyzer does not step over, so its audio blocks are read up to the first of them. First in the frame at 0x0 (3 times).",
+        "offset": 29,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          3,
+          7
+        ],
+        "count": 3
+      }
+    ]
+  }
+]

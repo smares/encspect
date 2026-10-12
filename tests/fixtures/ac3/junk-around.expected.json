@@ -1,0 +1,132 @@
+{
+ "description": "30 bytes of junk, three frames, 50 bytes of junk, three frames, 20 bytes of junk.",
+ "length": 4708,
+ "format": "AC-3",
+ "frames": [
+  [
+   30,
+   768
+  ],
+  [
+   798,
+   768
+  ],
+  [
+   1566,
+   768
+  ],
+  [
+   2384,
+   768
+  ],
+  [
+   3152,
+   768
+  ],
+  [
+   3920,
+   768
+  ]
+ ],
+ "gaps": [
+  [
+   0,
+   30
+  ],
+  [
+   2334,
+   50
+  ],
+  [
+   4688,
+   20
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.leading-junk",
+   "30 bytes before the first frame"
+  ],
+  [
+   "ac3.sync-lost",
+   "Sync is lost for 50 bytes"
+  ],
+  [
+   "ac3.trailing-data",
+   "20 bytes after"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "liba52": true,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the junk into the packets around it."
+  }
+ },
+ "block_ends": {
+  "30": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "798": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "1566": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2384": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3152": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3920": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}

@@ -110,6 +110,31 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An AC-3 stream keeps a record per frame (offset, length, header, CRC verdicts), the fields its
+    // nodes are built from without the exponent groups and mantissas, and its per-frame series:
+    // the frames repeat a committed mono fixture of 384-byte frames at 96 kbps, 116 bytes kept per
+    // frame on linux-x64 and a peak of 117. The bounds are about twice that and far below what
+    // keeping each frame's bytes would cost.
+    [Fact]
+    public void ManyAc3FramesStayCompact()
+    {
+        const int frames = 50_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "external-ffmpeg-mono-96k.ac3"));
+        byte[] data = new byte[source.Length * (frames / (source.Length / 384))];
+        for (int at = 0; at < data.Length; at += source.Length)
+        {
+            source.CopyTo(data, at);
+        }
+
+        (Report report, long kept, long peak) = Measure("frames.ac3", data, source);
+
+        Assert.Equal(frames * 1536L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * 220L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 300L, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // The heap the report keeps, and the most the analysis held live at once: while it runs, a
     // sampler thread forces a blocking full collection every few milliseconds and reads the heap
     // that survived it. Reading the collector's last figures instead measures nothing where no

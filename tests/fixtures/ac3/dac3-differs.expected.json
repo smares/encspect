@@ -1,0 +1,231 @@
+{
+ "description": "Six 2/0 frames in MP4 whose dac3 box gives 3/2 + LFE at 384 kbps and sets its reserved bits.",
+ "length": 5192,
+ "format": "MP4",
+ "frames": [
+  [
+   584,
+   768
+  ],
+  [
+   1352,
+   768
+  ],
+  [
+   2120,
+   768
+  ],
+  [
+   2888,
+   768
+  ],
+  [
+   3656,
+   768
+  ],
+  [
+   4424,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.config-differs",
+   "gives acmod 7"
+  ],
+  [
+   "ac3.config-differs",
+   "gives lfeon 1"
+  ],
+  [
+   "ac3.config-differs",
+   "gives bit_rate_code 14"
+  ],
+  [
+   "ac3.config-reserved",
+   "Reserved bits"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   548
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   432
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   332
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   247
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   187
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   63
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ac-3",
+   413,
+   47
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ac-3/dac3",
+   449,
+   11
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   460,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   484,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   512,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   556,
+   20
+  ],
+  [
+   "mdat",
+   576,
+   4616
+  ]
+ ],
+ "block_ends": {
+  "584": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "1352": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2120": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2888": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3656": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "4424": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}

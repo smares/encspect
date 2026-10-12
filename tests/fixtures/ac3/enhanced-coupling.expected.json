@@ -1,0 +1,53 @@
+{
+ "description": "Three 3/2 frames with enhanced coupling in block 0; the blocks are read up to it.",
+ "length": 1920,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   640
+  ],
+  [
+   640,
+   640
+  ],
+  [
+   1280,
+   640
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 5,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 4608,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.enhanced-coupling-not-read",
+   "enhanced coupling"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": false,
+  "decode": false,
+  "skip": {
+   "decode": "ffmpeg does not decode enhanced coupling.",
+   "ffprobe_bitrate": "ffmpeg gives no bitrate for frames it cannot decode."
+  }
+ }
+}

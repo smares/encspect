@@ -1,0 +1,92 @@
+{
+ "description": "Three 2/0 frames without rematrixing flags in block 0, three with chbwcod 61.",
+ "length": 4608,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ],
+  [
+   3840,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.block-inconsistent",
+   "rematstr is 0 in block 0"
+  ],
+  [
+   "ac3.block-invalid",
+   "chbwcod is above 60"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "liba52": false,
+  "skip": {
+   "decode": "ffmpeg rejects the frames with chbwcod 61, as A/52 5.4.3.24 says to.",
+   "liba52": "liba52 reads chbwcod 61 past the bins it has, so its block ends say nothing."
+  }
+ },
+ "block_ends": {
+  "0": [
+   222,
+   237,
+   252,
+   267,
+   282,
+   297
+  ],
+  "768": [
+   222,
+   237,
+   252,
+   267,
+   282,
+   297
+  ],
+  "1536": [
+   222,
+   237,
+   252,
+   267,
+   282,
+   297
+  ]
+ }
+}

@@ -1,0 +1,53 @@
+{
+ "description": "Four frames with bsid 9, which ffmpeg and liba52 decode at half the rate.",
+ "length": 1280,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   320
+  ],
+  [
+   320,
+   320
+  ],
+  [
+   640,
+   320
+  ],
+  [
+   960,
+   320
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 24000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.bsid-undefined",
+   "bsid 9 or 10"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": false,
+  "skip": {
+   "liba52": "The frames' audio blocks are not read, so there are no block positions to confirm."
+  }
+ }
+}
