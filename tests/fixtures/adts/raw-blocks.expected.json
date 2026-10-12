@@ -1,0 +1,74 @@
+{
+ "description": "Unprotected frames of three raw data blocks each: only the first block's start is known.",
+ "length": 913,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   100
+  ],
+  [
+   100,
+   115
+  ],
+  [
+   215,
+   88
+  ],
+  [
+   303,
+   58
+  ],
+  [
+   361,
+   72
+  ],
+  [
+   433,
+   127
+  ],
+  [
+   560,
+   100
+  ],
+  [
+   660,
+   71
+  ],
+  [
+   731,
+   43
+  ],
+  [
+   774,
+   139
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Blocks": "3"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "faad": {
+   "seconds": "0.232",
+   "rate": 44100
+  }
+ }
+}

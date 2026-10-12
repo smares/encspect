@@ -1,0 +1,248 @@
+{
+ "description": "A udta box whose last box has size 0, which only the last box of the file may have, so it is read to the end of udta; and a second udta box holding a box whose size of 4 is smaller than its header, which ends the reading of that udta.",
+ "length": 1330,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   711
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   655,
+   24
+  ],
+  [
+   "moov/udta",
+   679,
+   36
+  ],
+  [
+   "moov/udta/free",
+   687,
+   12
+  ],
+  [
+   "moov/udta/skip",
+   699,
+   16
+  ],
+  [
+   "moov/udta",
+   715,
+   24
+  ],
+  [
+   "mdat",
+   739,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   747,
+   6
+  ],
+  [
+   753,
+   45
+  ],
+  [
+   798,
+   42
+  ],
+  [
+   840,
+   39
+  ],
+  [
+   879,
+   36
+  ],
+  [
+   915,
+   33
+  ],
+  [
+   948,
+   30
+  ],
+  [
+   978,
+   27
+  ],
+  [
+   1005,
+   24
+  ],
+  [
+   1029,
+   20
+  ],
+  [
+   1049,
+   17
+  ],
+  [
+   1066,
+   14
+  ],
+  [
+   1080,
+   11
+  ],
+  [
+   1091,
+   8
+  ],
+  [
+   1099,
+   46
+  ],
+  [
+   1145,
+   43
+  ],
+  [
+   1188,
+   40
+  ],
+  [
+   1228,
+   37
+  ],
+  [
+   1265,
+   34
+  ],
+  [
+   1299,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.box-to-end",
+   "has size 0"
+  ],
+  [
+   "mp4.box-size-invalid",
+   "states a size smaller than its header"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

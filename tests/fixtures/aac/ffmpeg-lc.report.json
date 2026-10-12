@@ -1,0 +1,4193 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "ffmpeg-lc.m4a",
+    "root": {
+      "name": "File",
+      "value": "MP4",
+      "offset": 0,
+      "length": 24952,
+      "children": [
+        {
+          "name": "MP4",
+          "value": "M4A (Apple audio)",
+          "offset": 0,
+          "length": 24952,
+          "children": [
+            {
+              "name": "ftyp",
+              "value": "M4A (Apple audio)",
+              "offset": 0,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "ftyp",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "Major Brand",
+                  "value": "M4A ",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Minor Version",
+                  "value": 512,
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "M4A ",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "isom",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "iso2",
+                  "offset": 24,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "free",
+              "value": "Free Space",
+              "offset": 28,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "free",
+                  "offset": 32,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "mdat",
+              "value": "Media Data",
+              "offset": 36,
+              "length": 23889,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 23889,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "mdat",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Data",
+                  "value": 23881,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 23881
+                },
+                {
+                  "name": "Track 1 Samples",
+                  "value": 66,
+                  "unit": "samples",
+                  "offset": 44,
+                  "length": 23881,
+                  "children": [
+                    {
+                      "name": "AAC",
+                      "kind": "Stream",
+                      "value": 66,
+                      "unit": "access units",
+                      "offset": 44,
+                      "length": 23881,
+                      "children": [
+                        {
+                          "name": "Encoder",
+                          "value": "FFmpeg (Lavc60.31.102)",
+                          "offset": 44,
+                          "length": 23881,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "High",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "The fill element at the start of access unit 1 at 0x2C holds \"Lavc60.31.102\", which ffmpeg's AAC encoder writes",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 ©too atom (encoding tool) at 0x6153 names \"Lavf60.16.100\"",
+                              "offset": 44,
+                              "length": 23881
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Statistics",
+                          "kind": "Statistics",
+                          "offset": 44,
+                          "length": 23881,
+                          "children": [
+                            {
+                              "name": "Access Units",
+                              "value": 66,
+                              "unit": "access units",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Samples",
+                              "value": 67584,
+                              "unit": "samples",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Duration",
+                              "value": 1.5325170068027212,
+                              "unit": "s",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Average Bitrate",
+                              "value": 124.662890625,
+                              "unit": "kbps",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Smallest Access Unit",
+                              "value": 275,
+                              "unit": "bytes",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Largest Access Unit",
+                              "value": 437,
+                              "unit": "bytes",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Minimum Bitrate",
+                              "value": 94.74609375,
+                              "unit": "kbps",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Maximum Bitrate",
+                              "value": 150.56015625,
+                              "unit": "kbps",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "First Elements",
+                              "offset": 44,
+                              "length": 23881,
+                              "children": [
+                                {
+                                  "name": "CPE",
+                                  "value": 65,
+                                  "unit": "access units",
+                                  "offset": 44,
+                                  "length": 23881
+                                },
+                                {
+                                  "name": "FIL",
+                                  "value": 1,
+                                  "unit": "access units",
+                                  "offset": 44,
+                                  "length": 23881
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "358 bytes, FIL",
+                          "offset": 44,
+                          "length": 358,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "FIL (fill element)",
+                              "offset": 44,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Count",
+                              "value": 15,
+                              "offset": 44,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Escape Count",
+                              "value": 1,
+                              "offset": 44,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "Extension Type",
+                              "value": "0 (EXT_FILL)",
+                              "offset": 45,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Text",
+                              "value": "Lavc60.31.102",
+                              "offset": 47,
+                              "length": 13
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "326 bytes, CPE",
+                          "offset": 402,
+                          "length": 326,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 402,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 402,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "275 bytes, CPE",
+                          "offset": 728,
+                          "length": 275,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 728,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 728,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "325 bytes, CPE",
+                          "offset": 1003,
+                          "length": 325,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 1003,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 1003,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "298 bytes, CPE",
+                          "offset": 1328,
+                          "length": 298,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 1328,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 1328,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "333 bytes, CPE",
+                          "offset": 1626,
+                          "length": 333,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 1626,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 1626,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "319 bytes, CPE",
+                          "offset": 1959,
+                          "length": 319,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 1959,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 1959,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "324 bytes, CPE",
+                          "offset": 2278,
+                          "length": 324,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 2278,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 2278,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "306 bytes, CPE",
+                          "offset": 2602,
+                          "length": 306,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 2602,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 2602,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "341 bytes, CPE",
+                          "offset": 2908,
+                          "length": 341,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 2908,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 2908,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "326 bytes, CPE",
+                          "offset": 3249,
+                          "length": 326,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 3249,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 3249,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "384 bytes, CPE",
+                          "offset": 3575,
+                          "length": 384,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 3575,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 3575,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "365 bytes, CPE",
+                          "offset": 3959,
+                          "length": 365,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 3959,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 3959,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "348 bytes, CPE",
+                          "offset": 4324,
+                          "length": 348,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 4324,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 4324,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "397 bytes, CPE",
+                          "offset": 4672,
+                          "length": 397,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 4672,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 4672,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "368 bytes, CPE",
+                          "offset": 5069,
+                          "length": 368,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 5069,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 5069,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "321 bytes, CPE",
+                          "offset": 5437,
+                          "length": 321,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 5437,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 5437,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "333 bytes, CPE",
+                          "offset": 5758,
+                          "length": 333,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 5758,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 5758,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "352 bytes, CPE",
+                          "offset": 6091,
+                          "length": 352,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 6091,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 6091,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "359 bytes, CPE",
+                          "offset": 6443,
+                          "length": 359,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 6443,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 6443,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "391 bytes, CPE",
+                          "offset": 6802,
+                          "length": 391,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 6802,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 6802,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "411 bytes, CPE",
+                          "offset": 7193,
+                          "length": 411,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 7193,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 7193,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "361 bytes, CPE",
+                          "offset": 7604,
+                          "length": 361,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 7604,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 7604,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "340 bytes, CPE",
+                          "offset": 7965,
+                          "length": 340,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 7965,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 7965,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "358 bytes, CPE",
+                          "offset": 8305,
+                          "length": 358,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 8305,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 8305,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "389 bytes, CPE",
+                          "offset": 8663,
+                          "length": 389,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 8663,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 8663,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "410 bytes, CPE",
+                          "offset": 9052,
+                          "length": 410,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 9052,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 9052,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "363 bytes, CPE",
+                          "offset": 9462,
+                          "length": 363,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 9462,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 9462,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "393 bytes, CPE",
+                          "offset": 9825,
+                          "length": 393,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 9825,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 9825,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "395 bytes, CPE",
+                          "offset": 10218,
+                          "length": 395,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 10218,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 10218,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "353 bytes, CPE",
+                          "offset": 10613,
+                          "length": 353,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 10613,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 10613,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "391 bytes, CPE",
+                          "offset": 10966,
+                          "length": 391,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 10966,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 10966,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "380 bytes, CPE",
+                          "offset": 11357,
+                          "length": 380,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 11357,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 11357,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "363 bytes, CPE",
+                          "offset": 11737,
+                          "length": 363,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 11737,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 11737,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "373 bytes, CPE",
+                          "offset": 12100,
+                          "length": 373,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 12100,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 12100,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "377 bytes, CPE",
+                          "offset": 12473,
+                          "length": 377,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 12473,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 12473,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "375 bytes, CPE",
+                          "offset": 12850,
+                          "length": 375,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 12850,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 12850,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "321 bytes, CPE",
+                          "offset": 13225,
+                          "length": 321,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 13225,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 13225,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "413 bytes, CPE",
+                          "offset": 13546,
+                          "length": 413,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 13546,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 13546,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "375 bytes, CPE",
+                          "offset": 13959,
+                          "length": 375,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 13959,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 13959,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "340 bytes, CPE",
+                          "offset": 14334,
+                          "length": 340,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 14334,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 14334,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "381 bytes, CPE",
+                          "offset": 14674,
+                          "length": 381,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 14674,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 14674,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "437 bytes, CPE",
+                          "offset": 15055,
+                          "length": 437,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 15055,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 15055,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "344 bytes, CPE",
+                          "offset": 15492,
+                          "length": 344,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 15492,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 15492,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "387 bytes, CPE",
+                          "offset": 15836,
+                          "length": 387,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 15836,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 15836,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "364 bytes, CPE",
+                          "offset": 16223,
+                          "length": 364,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 16223,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 16223,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "373 bytes, CPE",
+                          "offset": 16587,
+                          "length": 373,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 16587,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 16587,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "362 bytes, CPE",
+                          "offset": 16960,
+                          "length": 362,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 16960,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 16960,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "357 bytes, CPE",
+                          "offset": 17322,
+                          "length": 357,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 17322,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 17322,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "354 bytes, CPE",
+                          "offset": 17679,
+                          "length": 354,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 17679,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 17679,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "362 bytes, CPE",
+                          "offset": 18033,
+                          "length": 362,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 18033,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 18033,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "392 bytes, CPE",
+                          "offset": 18395,
+                          "length": 392,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 18395,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 18395,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "334 bytes, CPE",
+                          "offset": 18787,
+                          "length": 334,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 18787,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 18787,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "370 bytes, CPE",
+                          "offset": 19121,
+                          "length": 370,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 19121,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 19121,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "362 bytes, CPE",
+                          "offset": 19491,
+                          "length": 362,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 19491,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 19491,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "379 bytes, CPE",
+                          "offset": 19853,
+                          "length": 379,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 19853,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 19853,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "379 bytes, CPE",
+                          "offset": 20232,
+                          "length": 379,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 20232,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 20232,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "378 bytes, CPE",
+                          "offset": 20611,
+                          "length": 378,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 20611,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 20611,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "375 bytes, CPE",
+                          "offset": 20989,
+                          "length": 375,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 20989,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 20989,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "395 bytes, CPE",
+                          "offset": 21364,
+                          "length": 395,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 21364,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 21364,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "348 bytes, CPE",
+                          "offset": 21759,
+                          "length": 348,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 21759,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 21759,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "429 bytes, CPE",
+                          "offset": 22107,
+                          "length": 429,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 22107,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 22107,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "327 bytes, CPE",
+                          "offset": 22536,
+                          "length": 327,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 22536,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 22536,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "361 bytes, CPE",
+                          "offset": 22863,
+                          "length": 361,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 22863,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 22863,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "371 bytes, CPE",
+                          "offset": 23224,
+                          "length": 371,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 23224,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 23224,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Access Unit",
+                          "kind": "Frame",
+                          "value": "330 bytes, CPE",
+                          "offset": 23595,
+                          "length": 330,
+                          "children": [
+                            {
+                              "name": "Element",
+                              "value": "CPE (channel pair element)",
+                              "offset": 23595,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Element Instance Tag",
+                              "value": 0,
+                              "offset": 23595,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "moov",
+              "value": "Movie",
+              "offset": 23925,
+              "length": 1027,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 1027,
+                  "unit": "bytes",
+                  "offset": 23925,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "moov",
+                  "offset": 23929,
+                  "length": 4
+                },
+                {
+                  "name": "mvhd",
+                  "value": "Movie Header",
+                  "offset": 23933,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 108,
+                      "unit": "bytes",
+                      "offset": 23933,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "mvhd",
+                      "offset": 23937,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 23941,
+                      "length": 1
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 23942,
+                      "length": 3
+                    },
+                    {
+                      "name": "Creation Time",
+                      "value": "0 (not set)",
+                      "offset": 23945,
+                      "length": 4
+                    },
+                    {
+                      "name": "Modification Time",
+                      "value": "0 (not set)",
+                      "offset": 23949,
+                      "length": 4
+                    },
+                    {
+                      "name": "Timescale",
+                      "value": 1000,
+                      "unit": "units per second",
+                      "offset": 23953,
+                      "length": 4
+                    },
+                    {
+                      "name": "Duration",
+                      "value": "1500 (1.500 s)",
+                      "offset": 23957,
+                      "length": 4
+                    },
+                    {
+                      "name": "Rate",
+                      "value": 1,
+                      "offset": 23961,
+                      "length": 4
+                    },
+                    {
+                      "name": "Volume",
+                      "value": 1,
+                      "offset": 23965,
+                      "length": 2
+                    },
+                    {
+                      "name": "Matrix",
+                      "value": 36,
+                      "unit": "bytes",
+                      "offset": 23977,
+                      "length": 36
+                    },
+                    {
+                      "name": "Next Track ID",
+                      "value": 2,
+                      "offset": 24037,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "trak",
+                  "value": "Track",
+                  "offset": 24041,
+                  "length": 813,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 813,
+                      "unit": "bytes",
+                      "offset": 24041,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "trak",
+                      "offset": 24045,
+                      "length": 4
+                    },
+                    {
+                      "name": "tkhd",
+                      "value": "Track Header, track 1",
+                      "offset": 24049,
+                      "length": 92,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 92,
+                          "unit": "bytes",
+                          "offset": 24049,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "tkhd",
+                          "offset": 24053,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 24057,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 3,
+                          "offset": 24058,
+                          "length": 3
+                        },
+                        {
+                          "name": "IsEnabled",
+                          "value": true,
+                          "offset": 24060,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "Creation Time",
+                          "value": "0 (not set)",
+                          "offset": 24061,
+                          "length": 4
+                        },
+                        {
+                          "name": "Modification Time",
+                          "value": "0 (not set)",
+                          "offset": 24065,
+                          "length": 4
+                        },
+                        {
+                          "name": "Track ID",
+                          "value": 1,
+                          "offset": 24069,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": "1500 (1.500 s)",
+                          "offset": 24077,
+                          "length": 4
+                        },
+                        {
+                          "name": "Layer",
+                          "value": 0,
+                          "offset": 24089,
+                          "length": 2
+                        },
+                        {
+                          "name": "Alternate Group",
+                          "value": 1,
+                          "offset": 24091,
+                          "length": 2
+                        },
+                        {
+                          "name": "Volume",
+                          "value": 1,
+                          "offset": 24093,
+                          "length": 2
+                        },
+                        {
+                          "name": "Matrix",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 24097,
+                          "length": 36
+                        },
+                        {
+                          "name": "Width",
+                          "value": 0,
+                          "offset": 24133,
+                          "length": 4
+                        },
+                        {
+                          "name": "Height",
+                          "value": 0,
+                          "offset": 24137,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "edts",
+                      "value": "Edit",
+                      "offset": 24141,
+                      "length": 36,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 24141,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "edts",
+                          "offset": 24145,
+                          "length": 4
+                        },
+                        {
+                          "name": "elst",
+                          "value": "Edit List",
+                          "offset": 24149,
+                          "length": 28,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 28,
+                              "unit": "bytes",
+                              "offset": 24149,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "elst",
+                              "offset": 24153,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 24157,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 24158,
+                              "length": 3
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 1,
+                              "offset": 24161,
+                              "length": 4
+                            },
+                            {
+                              "name": "Edit",
+                              "offset": 24165,
+                              "length": 12,
+                              "children": [
+                                {
+                                  "name": "Segment Duration",
+                                  "value": "1500 (1.500 s)",
+                                  "offset": 24165,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Time",
+                                  "value": 1024,
+                                  "unit": "units of the media's timescale",
+                                  "offset": 24169,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Rate",
+                                  "value": 1,
+                                  "offset": 24173,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "mdia",
+                      "value": "Media",
+                      "offset": 24177,
+                      "length": 677,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 677,
+                          "unit": "bytes",
+                          "offset": 24177,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "mdia",
+                          "offset": 24181,
+                          "length": 4
+                        },
+                        {
+                          "name": "mdhd",
+                          "value": "Media Header",
+                          "offset": 24185,
+                          "length": 32,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 24185,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "mdhd",
+                              "offset": 24189,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 24193,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 24194,
+                              "length": 3
+                            },
+                            {
+                              "name": "Creation Time",
+                              "value": "0 (not set)",
+                              "offset": 24197,
+                              "length": 4
+                            },
+                            {
+                              "name": "Modification Time",
+                              "value": "0 (not set)",
+                              "offset": 24201,
+                              "length": 4
+                            },
+                            {
+                              "name": "Timescale",
+                              "value": 44100,
+                              "unit": "units per second",
+                              "offset": 24205,
+                              "length": 4
+                            },
+                            {
+                              "name": "Duration",
+                              "value": "67174 (1.523 s)",
+                              "offset": 24209,
+                              "length": 4
+                            },
+                            {
+                              "name": "Language",
+                              "value": "und",
+                              "offset": 24213,
+                              "length": 2
+                            },
+                            {
+                              "name": "Quality",
+                              "value": 0,
+                              "offset": 24215,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "hdlr",
+                          "value": "soun (sound)",
+                          "offset": 24217,
+                          "length": 45,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 45,
+                              "unit": "bytes",
+                              "offset": 24217,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "hdlr",
+                              "offset": 24221,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 24225,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 24226,
+                              "length": 3
+                            },
+                            {
+                              "name": "Component Type",
+                              "value": "....",
+                              "offset": 24229,
+                              "length": 4
+                            },
+                            {
+                              "name": "Handler Type",
+                              "value": "soun",
+                              "offset": 24233,
+                              "length": 4
+                            },
+                            {
+                              "name": "Name",
+                              "value": "SoundHandler",
+                              "offset": 24249,
+                              "length": 13
+                            }
+                          ]
+                        },
+                        {
+                          "name": "minf",
+                          "value": "Media Information",
+                          "offset": 24262,
+                          "length": 592,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 592,
+                              "unit": "bytes",
+                              "offset": 24262,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "minf",
+                              "offset": 24266,
+                              "length": 4
+                            },
+                            {
+                              "name": "smhd",
+                              "value": "Sound Media Header",
+                              "offset": 24270,
+                              "length": 16,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 16,
+                                  "unit": "bytes",
+                                  "offset": 24270,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "smhd",
+                                  "offset": 24274,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Version",
+                                  "value": 0,
+                                  "offset": 24278,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 24279,
+                                  "length": 3
+                                },
+                                {
+                                  "name": "Balance",
+                                  "value": 0,
+                                  "offset": 24282,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Reserved",
+                                  "value": 0,
+                                  "offset": 24284,
+                                  "length": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "dinf",
+                              "value": "Data Information",
+                              "offset": 24286,
+                              "length": 36,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 36,
+                                  "unit": "bytes",
+                                  "offset": 24286,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "dinf",
+                                  "offset": 24290,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "dref",
+                                  "value": "Data Reference",
+                                  "offset": 24294,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 24294,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "dref",
+                                      "offset": 24298,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24302,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24303,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24306,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "url ",
+                                      "value": "media data in this file",
+                                      "offset": 24310,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 12,
+                                          "unit": "bytes",
+                                          "offset": 24310,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "url ",
+                                          "offset": 24314,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 0,
+                                          "offset": 24318,
+                                          "length": 1
+                                        },
+                                        {
+                                          "name": "Flags",
+                                          "value": 1,
+                                          "offset": 24319,
+                                          "length": 3
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "stbl",
+                              "value": "Sample Table",
+                              "offset": 24322,
+                              "length": 532,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 532,
+                                  "unit": "bytes",
+                                  "offset": 24322,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "stbl",
+                                  "offset": 24326,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "stsd",
+                                  "value": "Sample Description",
+                                  "offset": 24330,
+                                  "length": 106,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 106,
+                                      "unit": "bytes",
+                                      "offset": 24330,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsd",
+                                      "offset": 24334,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24338,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24339,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24342,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "mp4a",
+                                      "value": "mp4a (MPEG-4 audio)",
+                                      "offset": 24346,
+                                      "length": 90,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 90,
+                                          "unit": "bytes",
+                                          "offset": 24346,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "mp4a",
+                                          "offset": 24350,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Reserved",
+                                          "value": 6,
+                                          "unit": "bytes",
+                                          "offset": 24354,
+                                          "length": 6
+                                        },
+                                        {
+                                          "name": "Data Reference Index",
+                                          "value": 1,
+                                          "offset": 24360,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 0,
+                                          "offset": 24362,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Revision Level",
+                                          "value": 0,
+                                          "offset": 24364,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Vendor",
+                                          "value": "....",
+                                          "offset": 24366,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Channels",
+                                          "value": 2,
+                                          "offset": 24370,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Size",
+                                          "value": 16,
+                                          "unit": "bits",
+                                          "offset": 24372,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Compression ID",
+                                          "value": 0,
+                                          "offset": 24374,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Packet Size",
+                                          "value": 0,
+                                          "offset": 24376,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Rate",
+                                          "value": 44100,
+                                          "unit": "Hz",
+                                          "offset": 24378,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "esds",
+                                          "value": "Elementary Stream Descriptor",
+                                          "offset": 24382,
+                                          "length": 54,
+                                          "children": [
+                                            {
+                                              "name": "Size",
+                                              "value": 54,
+                                              "unit": "bytes",
+                                              "offset": 24382,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Type",
+                                              "value": "esds",
+                                              "offset": 24386,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Version",
+                                              "value": 0,
+                                              "offset": 24390,
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Flags",
+                                              "value": 0,
+                                              "offset": 24391,
+                                              "length": 3
+                                            },
+                                            {
+                                              "name": "ES_Descriptor",
+                                              "offset": 24394,
+                                              "length": 42,
+                                              "children": [
+                                                {
+                                                  "name": "Tag",
+                                                  "value": 3,
+                                                  "offset": 24394,
+                                                  "length": 1
+                                                },
+                                                {
+                                                  "name": "Length",
+                                                  "value": 37,
+                                                  "unit": "bytes",
+                                                  "offset": 24395,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "ES ID",
+                                                  "value": 1,
+                                                  "offset": 24399,
+                                                  "length": 2
+                                                },
+                                                {
+                                                  "name": "Flags",
+                                                  "value": 0,
+                                                  "offset": 24401,
+                                                  "length": 1
+                                                },
+                                                {
+                                                  "name": "DecoderConfigDescriptor",
+                                                  "value": "0x40 (MPEG-4 Audio)",
+                                                  "offset": 24402,
+                                                  "length": 28,
+                                                  "children": [
+                                                    {
+                                                      "name": "Tag",
+                                                      "value": 4,
+                                                      "offset": 24402,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Length",
+                                                      "value": 23,
+                                                      "unit": "bytes",
+                                                      "offset": 24403,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Object Type Indication",
+                                                      "value": "0x40 (MPEG-4 Audio)",
+                                                      "offset": 24407,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Stream Type",
+                                                      "value": "5 (audio)",
+                                                      "offset": 24408,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Buffer Size",
+                                                      "value": 0,
+                                                      "unit": "bytes",
+                                                      "offset": 24409,
+                                                      "length": 3
+                                                    },
+                                                    {
+                                                      "name": "Maximum Bitrate",
+                                                      "value": 128000,
+                                                      "unit": "bit/s",
+                                                      "offset": 24412,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Average Bitrate",
+                                                      "value": 125423,
+                                                      "unit": "bit/s",
+                                                      "offset": 24416,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "DecoderSpecificInfo",
+                                                      "value": 5,
+                                                      "unit": "bytes",
+                                                      "offset": 24420,
+                                                      "length": 10,
+                                                      "children": [
+                                                        {
+                                                          "name": "Tag",
+                                                          "value": 5,
+                                                          "offset": 24420,
+                                                          "length": 1
+                                                        },
+                                                        {
+                                                          "name": "Length",
+                                                          "value": 5,
+                                                          "unit": "bytes",
+                                                          "offset": 24421,
+                                                          "length": 4
+                                                        },
+                                                        {
+                                                          "name": "AudioSpecificConfig",
+                                                          "value": "AAC LC",
+                                                          "offset": 24425,
+                                                          "length": 5,
+                                                          "children": [
+                                                            {
+                                                              "name": "Audio Object Type",
+                                                              "value": "2 (AAC LC)",
+                                                              "offset": 24425,
+                                                              "length": 1,
+                                                              "bitOffset": 0,
+                                                              "bitLength": 5
+                                                            },
+                                                            {
+                                                              "name": "Sample Rate",
+                                                              "value": 44100,
+                                                              "unit": "Hz",
+                                                              "offset": 24425,
+                                                              "length": 2,
+                                                              "bitOffset": 5,
+                                                              "bitLength": 4
+                                                            },
+                                                            {
+                                                              "name": "Channel Configuration",
+                                                              "value": "2 (stereo)",
+                                                              "offset": 24426,
+                                                              "length": 1,
+                                                              "bitOffset": 1,
+                                                              "bitLength": 4
+                                                            },
+                                                            {
+                                                              "name": "Frame Length",
+                                                              "value": 1024,
+                                                              "unit": "samples",
+                                                              "offset": 24426,
+                                                              "length": 1,
+                                                              "bitOffset": 5,
+                                                              "bitLength": 1
+                                                            },
+                                                            {
+                                                              "name": "DependsOnCoreCoder",
+                                                              "value": false,
+                                                              "offset": 24426,
+                                                              "length": 1,
+                                                              "bitOffset": 6,
+                                                              "bitLength": 1
+                                                            },
+                                                            {
+                                                              "name": "HasExtension",
+                                                              "value": false,
+                                                              "offset": 24426,
+                                                              "length": 1,
+                                                              "bitOffset": 7,
+                                                              "bitLength": 1
+                                                            },
+                                                            {
+                                                              "name": "Sync Extension",
+                                                              "value": "SBR absent",
+                                                              "offset": 24427,
+                                                              "length": 3,
+                                                              "bitOffset": 0,
+                                                              "bitLength": 17,
+                                                              "children": [
+                                                                {
+                                                                  "name": "Sync Extension Type",
+                                                                  "value": 695,
+                                                                  "offset": 24427,
+                                                                  "length": 2,
+                                                                  "bitOffset": 0,
+                                                                  "bitLength": 11
+                                                                },
+                                                                {
+                                                                  "name": "Extension Audio Object Type",
+                                                                  "value": "5 (SBR)",
+                                                                  "offset": 24428,
+                                                                  "length": 1,
+                                                                  "bitOffset": 3,
+                                                                  "bitLength": 5
+                                                                },
+                                                                {
+                                                                  "name": "HasSbr",
+                                                                  "value": false,
+                                                                  "offset": 24429,
+                                                                  "length": 1,
+                                                                  "bitOffset": 0,
+                                                                  "bitLength": 1
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "name": "SLConfigDescriptor",
+                                                  "offset": 24430,
+                                                  "length": 6,
+                                                  "children": [
+                                                    {
+                                                      "name": "Tag",
+                                                      "value": 6,
+                                                      "offset": 24430,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Length",
+                                                      "value": 1,
+                                                      "unit": "bytes",
+                                                      "offset": 24431,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Predefined",
+                                                      "value": "2 (MP4 files)",
+                                                      "offset": 24435,
+                                                      "length": 1
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stts",
+                                  "value": "66 samples, 67174 (1.523 s)",
+                                  "offset": 24436,
+                                  "length": 32,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 32,
+                                      "unit": "bytes",
+                                      "offset": 24436,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stts",
+                                      "offset": 24440,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24444,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24445,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 2,
+                                      "offset": 24448,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "65 × 1024",
+                                      "offset": 24452,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 65,
+                                          "offset": 24452,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Delta",
+                                          "value": 1024,
+                                          "offset": 24456,
+                                          "length": 4
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "1 × 614",
+                                      "offset": 24460,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 1,
+                                          "offset": 24460,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Delta",
+                                          "value": 614,
+                                          "offset": 24464,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsc",
+                                  "value": "Sample to Chunk",
+                                  "offset": 24468,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 24468,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsc",
+                                      "offset": 24472,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24476,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24477,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24480,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "from chunk 1: 66 samples, description 1",
+                                      "offset": 24484,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "First Chunk",
+                                          "value": 1,
+                                          "offset": 24484,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Samples Per Chunk",
+                                          "value": 66,
+                                          "offset": 24488,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Description Index",
+                                          "value": 1,
+                                          "offset": 24492,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsz",
+                                  "value": 66,
+                                  "unit": "samples",
+                                  "offset": 24496,
+                                  "length": 284,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 284,
+                                      "unit": "bytes",
+                                      "offset": 24496,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsz",
+                                      "offset": 24500,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24504,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24505,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Sample Size",
+                                      "value": 0,
+                                      "unit": "bytes",
+                                      "offset": 24508,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Sample Count",
+                                      "value": 66,
+                                      "offset": 24512,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 358,
+                                      "unit": "bytes",
+                                      "offset": 24516,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 326,
+                                      "unit": "bytes",
+                                      "offset": 24520,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 275,
+                                      "unit": "bytes",
+                                      "offset": 24524,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 325,
+                                      "unit": "bytes",
+                                      "offset": 24528,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 298,
+                                      "unit": "bytes",
+                                      "offset": 24532,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 333,
+                                      "unit": "bytes",
+                                      "offset": 24536,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 319,
+                                      "unit": "bytes",
+                                      "offset": 24540,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 324,
+                                      "unit": "bytes",
+                                      "offset": 24544,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 306,
+                                      "unit": "bytes",
+                                      "offset": 24548,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 341,
+                                      "unit": "bytes",
+                                      "offset": 24552,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 326,
+                                      "unit": "bytes",
+                                      "offset": 24556,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 384,
+                                      "unit": "bytes",
+                                      "offset": 24560,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 365,
+                                      "unit": "bytes",
+                                      "offset": 24564,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 348,
+                                      "unit": "bytes",
+                                      "offset": 24568,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 397,
+                                      "unit": "bytes",
+                                      "offset": 24572,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 368,
+                                      "unit": "bytes",
+                                      "offset": 24576,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 321,
+                                      "unit": "bytes",
+                                      "offset": 24580,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 333,
+                                      "unit": "bytes",
+                                      "offset": 24584,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 352,
+                                      "unit": "bytes",
+                                      "offset": 24588,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 359,
+                                      "unit": "bytes",
+                                      "offset": 24592,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 391,
+                                      "unit": "bytes",
+                                      "offset": 24596,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 411,
+                                      "unit": "bytes",
+                                      "offset": 24600,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 361,
+                                      "unit": "bytes",
+                                      "offset": 24604,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 340,
+                                      "unit": "bytes",
+                                      "offset": 24608,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 358,
+                                      "unit": "bytes",
+                                      "offset": 24612,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 389,
+                                      "unit": "bytes",
+                                      "offset": 24616,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 410,
+                                      "unit": "bytes",
+                                      "offset": 24620,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 363,
+                                      "unit": "bytes",
+                                      "offset": 24624,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 393,
+                                      "unit": "bytes",
+                                      "offset": 24628,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 395,
+                                      "unit": "bytes",
+                                      "offset": 24632,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 353,
+                                      "unit": "bytes",
+                                      "offset": 24636,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 391,
+                                      "unit": "bytes",
+                                      "offset": 24640,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 380,
+                                      "unit": "bytes",
+                                      "offset": 24644,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 363,
+                                      "unit": "bytes",
+                                      "offset": 24648,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 373,
+                                      "unit": "bytes",
+                                      "offset": 24652,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 377,
+                                      "unit": "bytes",
+                                      "offset": 24656,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 375,
+                                      "unit": "bytes",
+                                      "offset": 24660,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 321,
+                                      "unit": "bytes",
+                                      "offset": 24664,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 413,
+                                      "unit": "bytes",
+                                      "offset": 24668,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 375,
+                                      "unit": "bytes",
+                                      "offset": 24672,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 340,
+                                      "unit": "bytes",
+                                      "offset": 24676,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 381,
+                                      "unit": "bytes",
+                                      "offset": 24680,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 437,
+                                      "unit": "bytes",
+                                      "offset": 24684,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 344,
+                                      "unit": "bytes",
+                                      "offset": 24688,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 387,
+                                      "unit": "bytes",
+                                      "offset": 24692,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 364,
+                                      "unit": "bytes",
+                                      "offset": 24696,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 373,
+                                      "unit": "bytes",
+                                      "offset": 24700,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 362,
+                                      "unit": "bytes",
+                                      "offset": 24704,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 357,
+                                      "unit": "bytes",
+                                      "offset": 24708,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 354,
+                                      "unit": "bytes",
+                                      "offset": 24712,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 362,
+                                      "unit": "bytes",
+                                      "offset": 24716,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 392,
+                                      "unit": "bytes",
+                                      "offset": 24720,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 334,
+                                      "unit": "bytes",
+                                      "offset": 24724,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 370,
+                                      "unit": "bytes",
+                                      "offset": 24728,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 362,
+                                      "unit": "bytes",
+                                      "offset": 24732,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 379,
+                                      "unit": "bytes",
+                                      "offset": 24736,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 379,
+                                      "unit": "bytes",
+                                      "offset": 24740,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 378,
+                                      "unit": "bytes",
+                                      "offset": 24744,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 375,
+                                      "unit": "bytes",
+                                      "offset": 24748,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 395,
+                                      "unit": "bytes",
+                                      "offset": 24752,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 348,
+                                      "unit": "bytes",
+                                      "offset": 24756,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 429,
+                                      "unit": "bytes",
+                                      "offset": 24760,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 327,
+                                      "unit": "bytes",
+                                      "offset": 24764,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 361,
+                                      "unit": "bytes",
+                                      "offset": 24768,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 371,
+                                      "unit": "bytes",
+                                      "offset": 24772,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 330,
+                                      "unit": "bytes",
+                                      "offset": 24776,
+                                      "length": 4
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stco",
+                                  "value": 1,
+                                  "unit": "chunks",
+                                  "offset": 24780,
+                                  "length": 20,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 20,
+                                      "unit": "bytes",
+                                      "offset": 24780,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stco",
+                                      "offset": 24784,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24788,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24789,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24792,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Chunk Offset",
+                                      "value": 44,
+                                      "offset": 24796,
+                                      "length": 4
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "sgpd",
+                                  "value": "roll (audio roll recovery)",
+                                  "offset": 24800,
+                                  "length": 26,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 26,
+                                      "unit": "bytes",
+                                      "offset": 24800,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "sgpd",
+                                      "offset": 24804,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 1,
+                                      "offset": 24808,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24809,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Grouping Type",
+                                      "value": "roll",
+                                      "offset": 24812,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Default Length",
+                                      "value": 2,
+                                      "unit": "bytes",
+                                      "offset": 24816,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24820,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": -1,
+                                      "unit": "samples",
+                                      "offset": 24824,
+                                      "length": 2,
+                                      "children": [
+                                        {
+                                          "name": "Roll Distance",
+                                          "value": -1,
+                                          "unit": "samples",
+                                          "offset": 24824,
+                                          "length": 2
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "sbgp",
+                                  "value": "roll",
+                                  "offset": 24826,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 24826,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "sbgp",
+                                      "offset": 24830,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 24834,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 24835,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Grouping Type",
+                                      "value": "roll",
+                                      "offset": 24838,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 24842,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "66 samples in group 1",
+                                      "offset": 24846,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 66,
+                                          "offset": 24846,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Group Description Index",
+                                          "value": 1,
+                                          "offset": 24850,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 24041,
+                      "length": 813,
+                      "children": [
+                        {
+                          "name": "Encoder Delay (Edit List)",
+                          "value": 1024,
+                          "unit": "samples",
+                          "offset": 24041,
+                          "length": 813
+                        },
+                        {
+                          "name": "Samples (Edit List)",
+                          "value": 66150,
+                          "unit": "samples",
+                          "offset": 24041,
+                          "length": 813
+                        },
+                        {
+                          "name": "Padding (Edit List)",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 24041,
+                          "length": 813
+                        },
+                        {
+                          "name": "Roll Distance",
+                          "value": -1,
+                          "unit": "samples",
+                          "offset": 24041,
+                          "length": 813
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "udta",
+                  "value": "User Data",
+                  "offset": 24854,
+                  "length": 98,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 98,
+                      "unit": "bytes",
+                      "offset": 24854,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "udta",
+                      "offset": 24858,
+                      "length": 4
+                    },
+                    {
+                      "name": "meta",
+                      "value": "Metadata",
+                      "offset": 24862,
+                      "length": 90,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 90,
+                          "unit": "bytes",
+                          "offset": 24862,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "meta",
+                          "offset": 24866,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 24870,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 24871,
+                          "length": 3
+                        },
+                        {
+                          "name": "hdlr",
+                          "value": "mdir (iTunes metadata)",
+                          "offset": 24874,
+                          "length": 33,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 33,
+                              "unit": "bytes",
+                              "offset": 24874,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "hdlr",
+                              "offset": 24878,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 24882,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 24883,
+                              "length": 3
+                            },
+                            {
+                              "name": "Component Type",
+                              "value": "....",
+                              "offset": 24886,
+                              "length": 4
+                            },
+                            {
+                              "name": "Handler Type",
+                              "value": "mdir",
+                              "offset": 24890,
+                              "length": 4
+                            },
+                            {
+                              "name": "Name",
+                              "value": "",
+                              "offset": 24906,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "iTunes Metadata",
+                          "kind": "Tag",
+                          "value": 1,
+                          "unit": "items",
+                          "offset": 24907,
+                          "length": 45,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 45,
+                              "unit": "bytes",
+                              "offset": 24907,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "ilst",
+                              "offset": 24911,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encoding Tool",
+                              "value": "Lavf60.16.100",
+                              "offset": 24915,
+                              "length": 37,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 37,
+                                  "unit": "bytes",
+                                  "offset": 24915,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "©too",
+                                  "offset": 24919,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "data",
+                                  "value": "Lavf60.16.100",
+                                  "offset": 24923,
+                                  "length": 29,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 29,
+                                      "unit": "bytes",
+                                      "offset": 24923,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "data",
+                                      "offset": 24927,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Data Type",
+                                      "value": "1 (UTF-8)",
+                                      "offset": 24931,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Locale",
+                                      "value": 0,
+                                      "offset": 24935,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Value",
+                                      "value": "Lavf60.16.100",
+                                      "offset": 24939,
+                                      "length": 13
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            2,
+            3,
+            0
+          ]
+        ],
+        "codec": "AAC LC",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "samples": 67584,
+        "duration": 1.5325170068027212,
+        "averageBitrate": 124.662890625,
+        "isVbr": false,
+        "encoder": "FFmpeg (Lavc60.31.102)",
+        "encoderConfidence": "High",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              44,
+              402,
+              728,
+              1003,
+              1328,
+              1626,
+              1959,
+              2278,
+              2602,
+              2908,
+              3249,
+              3575,
+              3959,
+              4324,
+              4672,
+              5069,
+              5437,
+              5758,
+              6091,
+              6443,
+              6802,
+              7193,
+              7604,
+              7965,
+              8305,
+              8663,
+              9052,
+              9462,
+              9825,
+              10218,
+              10613,
+              10966,
+              11357,
+              11737,
+              12100,
+              12473,
+              12850,
+              13225,
+              13546,
+              13959,
+              14334,
+              14674,
+              15055,
+              15492,
+              15836,
+              16223,
+              16587,
+              16960,
+              17322,
+              17679,
+              18033,
+              18395,
+              18787,
+              19121,
+              19491,
+              19853,
+              20232,
+              20611,
+              20989,
+              21364,
+              21759,
+              22107,
+              22536,
+              22863,
+              23224,
+              23595
+            ],
+            "values": [
+              123.3421875,
+              112.3171875,
+              94.74609375,
+              111.97265625,
+              102.6703125,
+              114.72890625,
+              109.90546875,
+              111.628125,
+              105.4265625,
+              117.48515625,
+              112.3171875,
+              132.3,
+              125.75390625,
+              119.896875,
+              136.77890625,
+              126.7875,
+              110.59453125,
+              114.72890625,
+              121.275,
+              123.68671875,
+              134.71171875,
+              141.60234375,
+              124.37578125,
+              117.140625,
+              123.3421875,
+              134.02265625,
+              141.2578125,
+              125.06484375,
+              135.40078125,
+              136.08984375,
+              121.61953125,
+              134.71171875,
+              130.921875,
+              125.06484375,
+              128.51015625,
+              129.88828125,
+              129.19921875,
+              110.59453125,
+              142.29140625,
+              129.19921875,
+              117.140625,
+              131.26640625,
+              150.56015625,
+              118.51875,
+              133.33359375,
+              125.409375,
+              128.51015625,
+              124.7203125,
+              122.99765625,
+              121.9640625,
+              124.7203125,
+              135.05625,
+              115.0734375,
+              127.4765625,
+              124.7203125,
+              130.57734375,
+              130.57734375,
+              130.2328125,
+              129.19921875,
+              136.08984375,
+              119.896875,
+              147.80390625,
+              112.66171875,
+              124.37578125,
+              127.82109375,
+              113.6953125
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              124,
+              127
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "mp4.moov-after-mdat",
+        "message": "The moov box follows the mdat box, so a player must read to the end of the file before it can play it (not optimized for streaming, no fast start).",
+        "offset": 23925,
+        "length": 1027,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

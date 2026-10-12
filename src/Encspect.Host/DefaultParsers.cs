@@ -1,4 +1,6 @@
 using Encspect.Core;
+using Encspect.Formats.Aac;
+using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Formats.Ogg;
 using Encspect.Formats.Opus;
@@ -32,9 +34,15 @@ public static class DefaultParsers
 
     private static readonly MpegAudioParser Mpeg = new();
 
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new OggParser()];
+    // The host takes the format that sniffs most confident, and the first of equals. MP4 is certain
+    // of an ftyp box (100) and sure of a run of top-level boxes (95), above MPEG audio's 90 for a
+    // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
+    // start of the data (91) outranks MPEG audio too, one further in (50) does not. Ogg is certain
+    // of a chain of pages from the start (100), which no MP4 or ADTS file starts with, and takes one
+    // further in (60) only where nothing more certain claims the file.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser()];
 
-    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, Speex,
-    // Vorbis and Opus in Ogg.
-    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new SpeexParser(), new VorbisParser(), new OpusParser()];
+    // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
+    // Speex, Vorbis and Opus in Ogg.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser()];
 }

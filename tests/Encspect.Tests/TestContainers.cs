@@ -124,8 +124,10 @@ internal sealed class ChunkedContainer(bool declaresEnd = true, IReadOnlyDiction
 // PagedContainer reads pages laid out like Ogg's (Ogg specification, "page header" and "packet
 // segmentation"): "PAGE", a segment count and that many lacing values, then the segments. A lacing
 // value below 255 ends a packet, so a packet continues across pages, with the next page's header
-// between its parts. Every packet goes to Codec through ParsePackets.
-internal sealed class PagedContainer(string codec = PacketCodec.CodecId) : IFormatParser
+// between its parts. Every packet goes to Codec through ParsePackets; with configured set, the first
+// packet is the codec's configuration instead, under the node of its first page, as MP4 hands AAC its
+// AudioSpecificConfig.
+internal sealed class PagedContainer(string codec = PacketCodec.CodecId, bool configured = false) : IFormatParser
 {
     public string Name => "Test pages";
 
@@ -161,7 +163,15 @@ internal sealed class PagedContainer(string codec = PacketCodec.CodecId) : IForm
             position = at;
         }
 
-        context.ParsePackets(codec, container, packets.Select(ranges => MappedBytes.Read(reader, ranges)));
+        CodecConfiguration? configuration = null;
+        if (configured && packets.Count > 0)
+        {
+            Node first = container.Children.First(c => c.Name == "Page");
+            configuration = new CodecConfiguration(MappedBytes.Read(reader, packets[0]), first) { IsVbr = true };
+            packets.RemoveAt(0);
+        }
+
+        context.ParsePackets(codec, container, packets.Select(ranges => MappedBytes.Read(reader, ranges)), configuration);
     }
 
     // The file and, per packet, the file ranges its bytes end up in. A page holds at most
@@ -221,8 +231,16 @@ internal sealed class PacketCodec : ICodecParser
 
     public List<(MappedBytes Packet, BitReader Bits, long StartBit)> Fields { get; } = [];
 
+    public CodecConfiguration? Configuration { get; private set; }
+
     public void Parse(CodecContext context)
     {
+        Configuration = context.Configuration;
+        if (context.Configuration is { } configuration)
+        {
+            configuration.Parent.Add(Node.FromMapped("Configuration", configuration.Data, 0, configuration.Data.Length));
+        }
+
         Node? first = null;
         bool reported = false;
         foreach (MappedBytes packet in context.Packets!)

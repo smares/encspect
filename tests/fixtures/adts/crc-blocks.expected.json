@@ -1,0 +1,60 @@
+{
+ "description": "Protected frames of four raw data blocks each: the header's CRC covers the header and the block positions, and each block ends in a CRC over its single channel element's first 192 bits.",
+ "length": 1558,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   327
+  ],
+  [
+   327,
+   321
+  ],
+  [
+   648,
+   270
+  ],
+  [
+   918,
+   303
+  ],
+  [
+   1221,
+   337
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Blocks": "4",
+  "ADTS/Frame/CRC/Check": "verified",
+  "ADTS/Frame/Raw Data Block CRC[2]/Check": "verified"
+ },
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "faad": {
+   "seconds": "0.116",
+   "rate": 44100
+  },
+  "ffprobe_streams": false,
+  "skip": {
+   "ffprobe_streams": "ffmpeg 6.1 does not decode ADTS frames of several protected raw data blocks, so it reports no sample rate."
+  }
+ }
+}

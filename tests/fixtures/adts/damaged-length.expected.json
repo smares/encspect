@@ -1,0 +1,157 @@
+{
+ "description": "Frame 8 states a length 50 bytes too long: the next frame's header inside it cuts it short where the damage is.",
+ "length": 1053,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 30720,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   13
+  ],
+  [
+   13,
+   52
+  ],
+  [
+   65,
+   49
+  ],
+  [
+   114,
+   46
+  ],
+  [
+   160,
+   43
+  ],
+  [
+   203,
+   40
+  ],
+  [
+   243,
+   37
+  ],
+  [
+   280,
+   34
+  ],
+  [
+   314,
+   31
+  ],
+  [
+   345,
+   27
+  ],
+  [
+   372,
+   24
+  ],
+  [
+   396,
+   21
+  ],
+  [
+   417,
+   18
+  ],
+  [
+   435,
+   15
+  ],
+  [
+   450,
+   53
+  ],
+  [
+   503,
+   50
+  ],
+  [
+   553,
+   47
+  ],
+  [
+   600,
+   44
+  ],
+  [
+   644,
+   41
+  ],
+  [
+   685,
+   38
+  ],
+  [
+   723,
+   35
+  ],
+  [
+   758,
+   32
+  ],
+  [
+   790,
+   28
+  ],
+  [
+   818,
+   25
+  ],
+  [
+   843,
+   22
+  ],
+  [
+   865,
+   19
+  ],
+  [
+   884,
+   16
+  ],
+  [
+   900,
+   54
+  ],
+  [
+   954,
+   51
+  ],
+  [
+   1005,
+   48
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.frame-damaged",
+   "cut short by the next frame's header"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg resyncs after damage in its own way.",
+   "faad": "faad2 stops at the damaged frame."
+  }
+ }
+}

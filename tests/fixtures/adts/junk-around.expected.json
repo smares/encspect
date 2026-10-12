@@ -1,0 +1,121 @@
+{
+ "description": "100 bytes of junk before the first frame and 14 after the last.",
+ "length": 837,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC (no SBR signaled explicitly)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   100,
+   13
+  ],
+  [
+   113,
+   52
+  ],
+  [
+   165,
+   49
+  ],
+  [
+   214,
+   46
+  ],
+  [
+   260,
+   43
+  ],
+  [
+   303,
+   40
+  ],
+  [
+   343,
+   37
+  ],
+  [
+   380,
+   34
+  ],
+  [
+   414,
+   31
+  ],
+  [
+   445,
+   27
+  ],
+  [
+   472,
+   24
+  ],
+  [
+   496,
+   21
+  ],
+  [
+   517,
+   18
+  ],
+  [
+   535,
+   15
+  ],
+  [
+   550,
+   53
+  ],
+  [
+   603,
+   50
+  ],
+  [
+   653,
+   47
+  ],
+  [
+   700,
+   44
+  ],
+  [
+   744,
+   41
+  ],
+  [
+   785,
+   38
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-signaling-not-checked",
+   "signaled implicitly"
+  ],
+  [
+   "aac.leading-junk",
+   "100 bytes before the first ADTS frame"
+  ],
+  [
+   "aac.trailing-data",
+   "14 bytes after the last ADTS frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg's ADTS probe does not look past junk at the start.",
+   "faad": "faad2 reads ADTS only from the first byte."
+  }
+ }
+}

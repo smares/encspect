@@ -1,0 +1,72 @@
+{
+ "description": "Ten MPEG-1 Layer III frames with three consistent ADTS frames between the fifth and sixth: MPEG audio wins, the ADTS bytes are a gap.",
+ "length": 4284,
+ "format": "MPEG Audio",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 11520,
+   "is_vbr": false
+  }
+ ],
+ "units": [
+  [
+   0,
+   417
+  ],
+  [
+   417,
+   417
+  ],
+  [
+   834,
+   417
+  ],
+  [
+   1251,
+   417
+  ],
+  [
+   1668,
+   417
+  ],
+  [
+   2199,
+   417
+  ],
+  [
+   2616,
+   417
+  ],
+  [
+   3033,
+   417
+  ],
+  [
+   3450,
+   417
+  ],
+  [
+   3867,
+   417
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mpeg.sync-lost",
+   "Sync is lost for 114 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "the MPEG fixtures' cross-check covers MPEG audio; ffmpeg resyncs inside the gap its own way."
+  }
+ }
+}

@@ -1,0 +1,3321 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "junk-around.aac",
+    "root": {
+      "name": "File",
+      "value": "AAC",
+      "offset": 0,
+      "length": 837,
+      "children": [
+        {
+          "name": "ADTS",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 837,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 837,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 20,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Samples",
+                  "value": 20480,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.46439909297052157,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 12.4548046875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 13,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 53,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 4.47890625,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 837
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 18.26015625,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 837
+                }
+              ]
+            },
+            {
+              "name": "Gap",
+              "value": 100,
+              "unit": "bytes",
+              "offset": 0,
+              "length": 100
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "13 bytes, 1 raw data block",
+              "offset": 100,
+              "length": 13,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 100,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 101,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 101,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 101,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 102,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 102,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 102,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 102,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 103,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 103,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 103,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 103,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 13,
+                  "unit": "bytes",
+                  "offset": 103,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 105,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 106,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 107,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 107,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 107,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "52 bytes, 1 raw data block",
+              "offset": 113,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 113,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 114,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 114,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 114,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 115,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 115,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 115,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 115,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 116,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 116,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 116,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 116,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 52,
+                  "unit": "bytes",
+                  "offset": 116,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 118,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 119,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 120,
+                  "length": 45,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 120,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 120,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "49 bytes, 1 raw data block",
+              "offset": 165,
+              "length": 49,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 165,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 166,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 166,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 166,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 167,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 167,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 167,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 167,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 168,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 168,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 168,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 168,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 49,
+                  "unit": "bytes",
+                  "offset": 168,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 170,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 171,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 172,
+                  "length": 42,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 172,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 172,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "46 bytes, 1 raw data block",
+              "offset": 214,
+              "length": 46,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 214,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 215,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 215,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 215,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 216,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 216,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 216,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 216,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 217,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 217,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 217,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 217,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 46,
+                  "unit": "bytes",
+                  "offset": 217,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 219,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 220,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 221,
+                  "length": 39,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 221,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 221,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "43 bytes, 1 raw data block",
+              "offset": 260,
+              "length": 43,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 260,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 261,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 261,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 261,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 262,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 262,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 262,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 262,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 263,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 263,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 263,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 263,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 43,
+                  "unit": "bytes",
+                  "offset": 263,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 265,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 266,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 267,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 267,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 267,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "40 bytes, 1 raw data block",
+              "offset": 303,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 303,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 304,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 304,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 304,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 305,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 305,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 305,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 305,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 306,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 306,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 306,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 306,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 306,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 308,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 309,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 310,
+                  "length": 33,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 310,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 310,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "37 bytes, 1 raw data block",
+              "offset": 343,
+              "length": 37,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 343,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 344,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 344,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 344,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 345,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 345,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 345,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 345,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 346,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 346,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 346,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 346,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 37,
+                  "unit": "bytes",
+                  "offset": 346,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 348,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 349,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 350,
+                  "length": 30,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 350,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 350,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "34 bytes, 1 raw data block",
+              "offset": 380,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 380,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 381,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 381,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 381,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 382,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 382,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 382,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 382,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 383,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 383,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 383,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 383,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 34,
+                  "unit": "bytes",
+                  "offset": 383,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 385,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 386,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 387,
+                  "length": 27,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 387,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 387,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "31 bytes, 1 raw data block",
+              "offset": 414,
+              "length": 31,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 414,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 415,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 415,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 415,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 416,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 416,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 416,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 416,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 417,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 417,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 417,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 417,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 31,
+                  "unit": "bytes",
+                  "offset": 417,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 419,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 420,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 421,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 421,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 421,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "27 bytes, 1 raw data block",
+              "offset": 445,
+              "length": 27,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 445,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 446,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 446,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 446,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 447,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 447,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 447,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 447,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 448,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 448,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 448,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 448,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 27,
+                  "unit": "bytes",
+                  "offset": 448,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 450,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 451,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 452,
+                  "length": 20,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 452,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 452,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "24 bytes, 1 raw data block",
+              "offset": 472,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 472,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 473,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 473,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 473,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 474,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 474,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 474,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 474,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 475,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 475,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 475,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 475,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 24,
+                  "unit": "bytes",
+                  "offset": 475,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 477,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 478,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 479,
+                  "length": 17,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 479,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 479,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "21 bytes, 1 raw data block",
+              "offset": 496,
+              "length": 21,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 496,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 497,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 497,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 497,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 498,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 498,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 498,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 498,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 499,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 499,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 499,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 499,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 21,
+                  "unit": "bytes",
+                  "offset": 499,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 501,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 502,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 503,
+                  "length": 14,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 503,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 503,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "18 bytes, 1 raw data block",
+              "offset": 517,
+              "length": 18,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 517,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 518,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 518,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 518,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 519,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 519,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 519,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 519,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 520,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 520,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 520,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 520,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 520,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 522,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 523,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 524,
+                  "length": 11,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 524,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 524,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "15 bytes, 1 raw data block",
+              "offset": 535,
+              "length": 15,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 535,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 536,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 536,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 536,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 537,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 537,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 537,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 537,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 538,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 538,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 538,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 538,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 15,
+                  "unit": "bytes",
+                  "offset": 538,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 540,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 541,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 542,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 542,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 542,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "53 bytes, 1 raw data block",
+              "offset": 550,
+              "length": 53,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 550,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 551,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 551,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 551,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 552,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 552,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 552,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 552,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 553,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 553,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 553,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 553,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 53,
+                  "unit": "bytes",
+                  "offset": 553,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 555,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 556,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 557,
+                  "length": 46,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 557,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 557,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "50 bytes, 1 raw data block",
+              "offset": 603,
+              "length": 50,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 603,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 604,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 604,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 604,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 605,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 605,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 605,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 605,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 606,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 606,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 606,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 606,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 50,
+                  "unit": "bytes",
+                  "offset": 606,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 608,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 609,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 610,
+                  "length": 43,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 610,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 610,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "47 bytes, 1 raw data block",
+              "offset": 653,
+              "length": 47,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 653,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 654,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 654,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 654,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 655,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 655,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 655,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 655,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 656,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 656,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 656,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 656,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 47,
+                  "unit": "bytes",
+                  "offset": 656,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 658,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 659,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 660,
+                  "length": 40,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 660,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 660,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "44 bytes, 1 raw data block",
+              "offset": 700,
+              "length": 44,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 700,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 701,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 701,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 701,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 702,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 702,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 702,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 702,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 703,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 703,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 703,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 703,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 703,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 705,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 706,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 707,
+                  "length": 37,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 707,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 707,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "41 bytes, 1 raw data block",
+              "offset": 744,
+              "length": 41,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 744,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 745,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 745,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 745,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 746,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 746,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 746,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 746,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 747,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 747,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 747,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 747,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 41,
+                  "unit": "bytes",
+                  "offset": 747,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 749,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 750,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 751,
+                  "length": 34,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 751,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 751,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "38 bytes, 1 raw data block",
+              "offset": 785,
+              "length": 38,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 785,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 786,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 786,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 786,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 787,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 787,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 787,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "2 (stereo)",
+                  "offset": 787,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 788,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 788,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 788,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 788,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 38,
+                  "unit": "bytes",
+                  "offset": 788,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 790,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 791,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "CPE",
+                  "offset": 792,
+                  "length": 31,
+                  "children": [
+                    {
+                      "name": "Element",
+                      "value": "CPE (channel pair element)",
+                      "offset": 792,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Element Instance Tag",
+                      "value": 0,
+                      "offset": 792,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Gap",
+              "value": 14,
+              "unit": "bytes",
+              "offset": 823,
+              "length": 14
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "AAC LC (no SBR signaled explicitly)",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "samples": 20480,
+        "duration": 0.46439909297052157,
+        "averageBitrate": 12.4548046875,
+        "isVbr": true,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              100,
+              113,
+              165,
+              214,
+              260,
+              303,
+              343,
+              380,
+              414,
+              445,
+              472,
+              496,
+              517,
+              535,
+              550,
+              603,
+              653,
+              700,
+              744,
+              785
+            ],
+            "values": [
+              4.47890625,
+              17.915625,
+              16.88203125,
+              15.8484375,
+              14.81484375,
+              13.78125,
+              12.74765625,
+              11.7140625,
+              10.68046875,
+              9.30234375,
+              8.26875,
+              7.23515625,
+              6.2015625,
+              5.16796875,
+              18.26015625,
+              17.2265625,
+              16.19296875,
+              15.159375,
+              14.12578125,
+              13.0921875
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              12
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "aac.leading-junk",
+        "message": "100 bytes before the first ADTS frame are not audio.",
+        "offset": 0,
+        "length": 100,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "aac.implicit-signaling-not-checked",
+        "message": "ADTS cannot signal SBR or PS explicitly. They can be signaled implicitly, in the fill elements of the access units, which are not checked yet; the stream may be HE-AAC or HE-AAC v2.",
+        "offset": 100,
+        "length": 13,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "aac.trailing-data",
+        "message": "14 bytes after the last ADTS frame at 0x337 are not a frame.",
+        "offset": 823,
+        "length": 14,
+        "path": [
+          0,
+          22
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

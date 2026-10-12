@@ -230,6 +230,35 @@ public class CommandLineTests
         }
     }
 
+    // MP4 and raw AAC are found by their bytes, whatever the files are called.
+    [Fact]
+    public void OnlyFormatTakesMp4AndAac()
+    {
+        string folder = Directory.CreateTempSubdirectory("encspect-").FullName;
+        try
+        {
+            File.Copy(Tagged, Path.Combine(folder, "a.mp3"));
+            File.Copy(Path.Combine(Fixtures.FixtureDirectory, "mp4", "lc-implicit.m4a"), Path.Combine(folder, "b.bin"));
+            File.Copy(Path.Combine(Fixtures.FixtureDirectory, "adts", "cbr.aac"), Path.Combine(folder, "c.mp4"));
+
+            string mp4 = Run("--csv", "--only-format", "mp4", folder).Output;
+            string aac = Run("--csv", "--only-format", "aac", folder).Output;
+            string both = Run("--csv", "--only-format", "MP4,AAC", folder).Output;
+
+            Assert.Equal([Path.Combine(folder, "b.bin")], Rows(mp4).Select(r => r.Split(',')[0]));
+            Assert.StartsWith(Path.Combine(folder, "b.bin") + ",MP4,1,AAC LC (no SBR signaled explicitly),", Rows(mp4)[0]);
+            Assert.Equal([Path.Combine(folder, "c.mp4")], Rows(aac).Select(r => r.Split(',')[0]));
+            Assert.StartsWith(Path.Combine(folder, "c.mp4") + ",AAC,1,AAC LC (no SBR signaled explicitly),", Rows(aac)[0]);
+            Assert.Equal(2, Rows(both).Length);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+
+        static string[] Rows(string csv) => csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Skip(1).ToArray();
+    }
+
     [Fact]
     public void OnlyFormatOggKeepsOggFiles()
     {

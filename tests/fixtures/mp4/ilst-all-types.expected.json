@@ -1,0 +1,630 @@
+{
+ "description": "iTunes metadata with every data type: UTF-8, UTF-16, their sort variants, S/JIS, implicit (track and disc number, ID3v1 genre, binary), signed and unsigned integers of every width, floats, point, rectangle, JPEG, PNG and BMP images, and freeform atoms: iTunNORM, Encoding Params and one of another mean. Encoding Params says constrained VBR, so the stream's bitrate is variable.",
+ "length": 2666,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   2047
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   655,
+   24
+  ],
+  [
+   "moov/udta",
+   679,
+   1396
+  ],
+  [
+   "moov/udta/meta",
+   687,
+   1388
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   699,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   732,
+   1343
+  ],
+  [
+   "moov/udta/meta/ilst/©nam",
+   740,
+   40
+  ],
+  [
+   "moov/udta/meta/ilst/©nam/data",
+   748,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/©ART",
+   780,
+   56
+  ],
+  [
+   "moov/udta/meta/ilst/©ART/data",
+   788,
+   48
+  ],
+  [
+   "moov/udta/meta/ilst/soar",
+   836,
+   35
+  ],
+  [
+   "moov/udta/meta/ilst/soar/data",
+   844,
+   27
+  ],
+  [
+   "moov/udta/meta/ilst/sonm",
+   871,
+   44
+  ],
+  [
+   "moov/udta/meta/ilst/sonm/data",
+   879,
+   36
+  ],
+  [
+   "moov/udta/meta/ilst/trkn",
+   915,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/trkn/data",
+   923,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/disk",
+   947,
+   30
+  ],
+  [
+   "moov/udta/meta/ilst/disk/data",
+   955,
+   22
+  ],
+  [
+   "moov/udta/meta/ilst/gnre",
+   977,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/gnre/data",
+   985,
+   18
+  ],
+  [
+   "moov/udta/meta/ilst/tmpo",
+   1003,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/tmpo/data",
+   1011,
+   18
+  ],
+  [
+   "moov/udta/meta/ilst/cpil",
+   1029,
+   25
+  ],
+  [
+   "moov/udta/meta/ilst/cpil/data",
+   1037,
+   17
+  ],
+  [
+   "moov/udta/meta/ilst/rtng",
+   1054,
+   25
+  ],
+  [
+   "moov/udta/meta/ilst/rtng/data",
+   1062,
+   17
+  ],
+  [
+   "moov/udta/meta/ilst/plID",
+   1079,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/plID/data",
+   1087,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/cnID",
+   1111,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/cnID/data",
+   1119,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/geID",
+   1139,
+   25
+  ],
+  [
+   "moov/udta/meta/ilst/geID/data",
+   1147,
+   17
+  ],
+  [
+   "moov/udta/meta/ilst/covr",
+   1164,
+   138
+  ],
+  [
+   "moov/udta/meta/ilst/covr/data",
+   1172,
+   50
+  ],
+  [
+   "moov/udta/meta/ilst/covr/data",
+   1222,
+   48
+  ],
+  [
+   "moov/udta/meta/ilst/covr/data",
+   1270,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xi08",
+   1302,
+   25
+  ],
+  [
+   "moov/udta/meta/ilst/xi08/data",
+   1310,
+   17
+  ],
+  [
+   "moov/udta/meta/ilst/xi16",
+   1327,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/xi16/data",
+   1335,
+   18
+  ],
+  [
+   "moov/udta/meta/ilst/xi32",
+   1353,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/xi32/data",
+   1361,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/xi64",
+   1381,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xi64/data",
+   1389,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/xu08",
+   1413,
+   25
+  ],
+  [
+   "moov/udta/meta/ilst/xu08/data",
+   1421,
+   17
+  ],
+  [
+   "moov/udta/meta/ilst/xu16",
+   1438,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/xu16/data",
+   1446,
+   18
+  ],
+  [
+   "moov/udta/meta/ilst/xu32",
+   1464,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/xu32/data",
+   1472,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/xu64",
+   1492,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xu64/data",
+   1500,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/xf32",
+   1524,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/xf32/data",
+   1532,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/xf64",
+   1552,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xf64/data",
+   1560,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/xpnt",
+   1584,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xpnt/data",
+   1592,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/xrct",
+   1616,
+   40
+  ],
+  [
+   "moov/udta/meta/ilst/xrct/data",
+   1624,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xsjs",
+   1656,
+   34
+  ],
+  [
+   "moov/udta/meta/ilst/xsjs/data",
+   1664,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/xbin",
+   1690,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/xbin/data",
+   1698,
+   24
+  ],
+  [
+   "moov/udta/meta/ilst/----",
+   1722,
+   162
+  ],
+  [
+   "moov/udta/meta/ilst/----/mean",
+   1730,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/----/name",
+   1758,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/----/data",
+   1778,
+   106
+  ],
+  [
+   "moov/udta/meta/ilst/----",
+   1884,
+   111
+  ],
+  [
+   "moov/udta/meta/ilst/----/mean",
+   1892,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/----/name",
+   1920,
+   27
+  ],
+  [
+   "moov/udta/meta/ilst/----/data",
+   1947,
+   48
+  ],
+  [
+   "moov/udta/meta/ilst/----",
+   1995,
+   80
+  ],
+  [
+   "moov/udta/meta/ilst/----/mean",
+   2003,
+   23
+  ],
+  [
+   "moov/udta/meta/ilst/----/name",
+   2026,
+   18
+  ],
+  [
+   "moov/udta/meta/ilst/----/data",
+   2044,
+   31
+  ],
+  [
+   "mdat",
+   2075,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   2083,
+   6
+  ],
+  [
+   2089,
+   45
+  ],
+  [
+   2134,
+   42
+  ],
+  [
+   2176,
+   39
+  ],
+  [
+   2215,
+   36
+  ],
+  [
+   2251,
+   33
+  ],
+  [
+   2284,
+   30
+  ],
+  [
+   2314,
+   27
+  ],
+  [
+   2341,
+   24
+  ],
+  [
+   2365,
+   20
+  ],
+  [
+   2385,
+   17
+  ],
+  [
+   2402,
+   14
+  ],
+  [
+   2416,
+   11
+  ],
+  [
+   2427,
+   8
+  ],
+  [
+   2435,
+   46
+  ],
+  [
+   2481,
+   43
+  ],
+  [
+   2524,
+   40
+  ],
+  [
+   2564,
+   37
+  ],
+  [
+   2601,
+   34
+  ],
+  [
+   2635,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/udta/meta/iTunes Metadata": "31 items",
+  "MP4/moov/udta/meta/iTunes Metadata/Title": "Hand-built title",
+  "MP4/moov/udta/meta/iTunes Metadata/Artist": "Artist in UTF-16",
+  "MP4/moov/udta/meta/iTunes Metadata/Sort Artist": "Sort artist",
+  "MP4/moov/udta/meta/iTunes Metadata/Sort Title": "Sort title",
+  "MP4/moov/udta/meta/iTunes Metadata/Track Number": "3 of 12",
+  "MP4/moov/udta/meta/iTunes Metadata/Disc Number": "1 of 2",
+  "MP4/moov/udta/meta/iTunes Metadata/Genre (ID3v1)": "18 (ID3v1 genre 17)",
+  "MP4/moov/udta/meta/iTunes Metadata/Tempo": "120",
+  "MP4/moov/udta/meta/iTunes Metadata/Compilation": "1",
+  "MP4/moov/udta/meta/iTunes Metadata/Content Rating": "-1",
+  "MP4/moov/udta/meta/iTunes Metadata/Playlist ID": "-2",
+  "MP4/moov/udta/meta/iTunes Metadata/Catalog ID": "4000000000",
+  "MP4/moov/udta/meta/iTunes Metadata/Genre ID": "7",
+  "MP4/moov/udta/meta/iTunes Metadata/Cover Art/data[0]": "JPEG image, 34 bytes",
+  "MP4/moov/udta/meta/iTunes Metadata/Cover Art/data[1]": "PNG image, 32 bytes",
+  "MP4/moov/udta/meta/iTunes Metadata/Cover Art/data[2]": "BMP image, 16 bytes",
+  "MP4/moov/udta/meta/iTunes Metadata/xi08": "-5",
+  "MP4/moov/udta/meta/iTunes Metadata/xi16": "-300",
+  "MP4/moov/udta/meta/iTunes Metadata/xi32": "-70000",
+  "MP4/moov/udta/meta/iTunes Metadata/xi64": "-5000000000",
+  "MP4/moov/udta/meta/iTunes Metadata/xu08": "200",
+  "MP4/moov/udta/meta/iTunes Metadata/xu16": "60000",
+  "MP4/moov/udta/meta/iTunes Metadata/xu32": "4000000000",
+  "MP4/moov/udta/meta/iTunes Metadata/xu64": "9000000000",
+  "MP4/moov/udta/meta/iTunes Metadata/xf32": "1.500",
+  "MP4/moov/udta/meta/iTunes Metadata/xf64": "-2.250",
+  "MP4/moov/udta/meta/iTunes Metadata/xpnt": "1, 2",
+  "MP4/moov/udta/meta/iTunes Metadata/xrct": "0, 0, 640, 480",
+  "MP4/moov/udta/meta/iTunes Metadata/xsjs": "S-JIS text",
+  "MP4/moov/udta/meta/iTunes Metadata/xbin": "0x0001020304050607",
+  "MP4/moov/udta/meta/iTunes Metadata/iTunNORM/data/Data Type": "1 (UTF-8)",
+  "MP4/moov/udta/meta/iTunes Metadata/Encoding Params/data/Value/Bitrate Mode": "2 (constrained VBR)",
+  "MP4/moov/udta/meta/iTunes Metadata/Encoding Params/data/Value/Bitrate": "256000 bit/s",
+  "MP4/moov/udta/meta/iTunes Metadata/Encoding Params/data/Value/Version": "1",
+  "MP4/moov/udta/meta/iTunes Metadata/Encoding Params/data/Value/Codec Version": "0x00010700",
+  "MP4/moov/udta/meta/iTunes Metadata/Custom": "A freeform text",
+  "MP4/moov/udta/meta/iTunes Metadata/Custom/mean": "org.example"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  },
+  "taglib": true
+ }
+}

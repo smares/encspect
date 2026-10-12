@@ -1,0 +1,242 @@
+{
+ "description": "An ID32 box (ID3 in MP4) in a meta box with the ID32 handler, holding an ID3v2.4 tag with a title and a TSSE frame. The TSSE frame names LAME, which names the AAC stream's encoder with low confidence, as a claim alone does.",
+ "length": 1383,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   764
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   655,
+   24
+  ],
+  [
+   "moov/meta",
+   679,
+   113
+  ],
+  [
+   "moov/meta/hdlr",
+   691,
+   33
+  ],
+  [
+   "moov/meta/ID32",
+   724,
+   68
+  ],
+  [
+   "mdat",
+   792,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "samples": 20480,
+   "is_vbr": true,
+   "encoder": [
+    "LAME 3.100",
+    "Low"
+   ]
+  }
+ ],
+ "units": [
+  [
+   800,
+   6
+  ],
+  [
+   806,
+   45
+  ],
+  [
+   851,
+   42
+  ],
+  [
+   893,
+   39
+  ],
+  [
+   932,
+   36
+  ],
+  [
+   968,
+   33
+  ],
+  [
+   1001,
+   30
+  ],
+  [
+   1031,
+   27
+  ],
+  [
+   1058,
+   24
+  ],
+  [
+   1082,
+   20
+  ],
+  [
+   1102,
+   17
+  ],
+  [
+   1119,
+   14
+  ],
+  [
+   1133,
+   11
+  ],
+  [
+   1144,
+   8
+  ],
+  [
+   1152,
+   46
+  ],
+  [
+   1198,
+   43
+  ],
+  [
+   1241,
+   40
+  ],
+  [
+   1281,
+   37
+  ],
+  [
+   1318,
+   34
+  ],
+  [
+   1352,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/meta/ID32/Language": "eng",
+  "MP4/moov/meta/ID32/ID3v2/TIT2": "Title in ID3"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}
