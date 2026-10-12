@@ -29,7 +29,8 @@ public sealed partial class Mp4Parser
     }
 
     // The sample entry's coding as the codec route names it: MPEG-4 audio by its esds box's object
-    // type (ISO/IEC 14496-1 Table 5, ISO/IEC 14496-14 5.6), and QuickTime's ".mp3".
+    // type (ISO/IEC 14496-1 Table 5, ISO/IEC 14496-14 5.6), QuickTime's ".mp3", and AC-3 and E-AC-3
+    // (ETSI TS 102 366 F.3, F.5).
     private static string? CodecOf(SampleEntry entry) => entry.Format switch
     {
         "mp4a" => entry.ObjectType switch
@@ -39,6 +40,8 @@ public sealed partial class Mp4Parser
             _ => null,
         },
         ".mp3" => "mpeg-audio",
+        "ac-3" => "ac-3",
+        "ec-3" => "e-ac-3",
         _ => null,
     };
 

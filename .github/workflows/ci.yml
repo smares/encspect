@@ -160,6 +160,11 @@ jobs:
           python3 scripts/fixtures/make_musepack_fixtures.py
           python3 scripts/fixtures/make_external_musepack_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_ac3_fixtures.py
+          python3 scripts/fixtures/make_external_ac3_fixtures.py --manifests-only
+
       - name: Fail if they differ from the committed files
         run: |
           git status --porcelain -- tests/fixtures
@@ -264,3 +269,26 @@ jobs:
 
       - name: Cross-check the Musepack fixtures
         run: python3 scripts/fixtures/crosscheck_musepack_fixtures.py
+
+  ac3-crosscheck:
+    name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg and liba52
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 6.1 and liba52 0.7.4 from Ubuntu 24.04; a52_blocks.c is built against liba52.
+      - name: Install ffmpeg and liba52
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg liba52-0.7.4-dev
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The skip field insertion check rewrites E-AC-3 frames at the analyzer's block positions.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      - name: Cross-check the AC-3 fixtures
+        run: python3 scripts/fixtures/crosscheck_ac3_fixtures.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect

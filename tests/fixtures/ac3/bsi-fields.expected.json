@@ -1,0 +1,137 @@
+{
+ "description": "Eight 2/0 frames with dialnorm 24, compr, production information, both time codes, addbsi and a dynrng word in block 0.",
+ "length": 6144,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ],
+  [
+   3840,
+   768
+  ],
+  [
+   4608,
+   768
+  ],
+  [
+   5376,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Bit Stream Information/Dialogue Normalization": "-24 dB",
+  "AC-3/Frame/Bit Stream Information/Compression Gain": "-6.30 dB",
+  "AC-3/Frame/Bit Stream Information/Mixing Level": "105 dB SPL",
+  "AC-3/Frame/Bit Stream Information/Room Type": "1 (large room, X curve monitor)",
+  "AC-3/Frame/Bit Stream Information/Time Code 1": "13:45:16",
+  "AC-3/Frame/Bit Stream Information/Additional Info": "45 6E 63 73 70 65 63 74",
+  "AC-3/Frame/Audio Block/Dynamic Range Gain": "+4.22 dB",
+  "AC-3/Frame/Sync Information/CRC1/Check": "verified",
+  "AC-3/Frame/Error Check/CRC2/Check": "verified"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": true
+ },
+ "block_ends": {
+  "0": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "768": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "1536": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "2304": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "3072": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "3840": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "4608": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ],
+  "5376": [
+   347,
+   362,
+   377,
+   392,
+   407,
+   422
+  ]
+ }
+}

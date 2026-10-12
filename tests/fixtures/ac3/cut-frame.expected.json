@@ -1,0 +1,107 @@
+{
+ "description": "Six 2/0 frames, the third cut to its first 400 bytes.",
+ "length": 4240,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   400
+  ],
+  [
+   1936,
+   768
+  ],
+  [
+   2704,
+   768
+  ],
+  [
+   3472,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.frame-damaged",
+   "cut short by the next frame's sync word"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "liba52": false,
+  "skip": {
+   "ffprobe": "ffmpeg's parser keeps the cut frame's bytes in a packet with the next frame.",
+   "liba52": "liba52's tool reads frames by their sizes, so it does not resync after the cut frame."
+  },
+  "damaged": [
+   1536
+  ]
+ },
+ "block_ends": {
+  "0": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "768": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "1936": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2704": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3472": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}

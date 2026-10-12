@@ -1,0 +1,109 @@
+{
+ "description": "Encoded by ffmpeg from 6 channels at 48000 Hz (tones).",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "ac3",
+  "-b:a",
+  "448k"
+ ],
+ "length": 29369,
+ "format": "MP4",
+ "frames": [
+  [
+   48,
+   1792
+  ],
+  [
+   1840,
+   1792
+  ],
+  [
+   3632,
+   1792
+  ],
+  [
+   5424,
+   1792
+  ],
+  [
+   7216,
+   1792
+  ],
+  [
+   9008,
+   1792
+  ],
+  [
+   10800,
+   1792
+  ],
+  [
+   12592,
+   1792
+  ],
+  [
+   14384,
+   1792
+  ],
+  [
+   16176,
+   1792
+  ],
+  [
+   17968,
+   1792
+  ],
+  [
+   19760,
+   1792
+  ],
+  [
+   21552,
+   1792
+  ],
+  [
+   23344,
+   1792
+  ],
+  [
+   25136,
+   1792
+  ],
+  [
+   26928,
+   1792
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 24576,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true
+ }
+}

@@ -1,0 +1,105 @@
+{
+ "description": "Six 2/0 frames, the last cut 300 bytes short.",
+ "length": 4308,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ],
+  [
+   3840,
+   468
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.frame-truncated",
+   "of its 768 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "liba52": false,
+  "skip": {
+   "ffprobe": "ffmpeg drops the truncated frame.",
+   "decode": "ffmpeg drops the truncated frame.",
+   "liba52": "liba52's tool reads whole frames only."
+  }
+ },
+ "block_ends": {
+  "0": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "768": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "1536": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2304": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3072": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}

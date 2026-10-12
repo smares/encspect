@@ -1,0 +1,49 @@
+{
+ "description": "Three 2/0 frames at 24 kHz (fscod2 0).",
+ "length": 768,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   256
+  ],
+  [
+   256,
+   256
+  ],
+  [
+   512,
+   256
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 24000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4608,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.reduced-rate-not-read",
+   "reduced sample rate"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 rejects reduced sample rates.",
+   "decode": "ffmpeg 6.1 rejects reduced sample rates."
+  }
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "description": "Six mono frames of two blocks each.",
+ "length": 768,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   128
+  ],
+  [
+   128,
+   128
+  ],
+  [
+   256,
+   128
+  ],
+  [
+   384,
+   128
+  ],
+  [
+   512,
+   128
+  ],
+  [
+   640,
+   128
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "1/0 (center)",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Bit Stream Information/Blocks Code": "2 blocks"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ },
+ "block_ends": {
+  "0": [
+   145,
+   148
+  ],
+  "128": [
+   145,
+   148
+  ],
+  "256": [
+   145,
+   148
+  ],
+  "384": [
+   145,
+   148
+  ],
+  "512": [
+   145,
+   148
+  ],
+  "640": [
+   145,
+   148
+  ]
+ }
+}

@@ -1,0 +1,1098 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "bsid-9.ac3",
+    "root": {
+      "name": "File",
+      "value": "AC-3",
+      "offset": 0,
+      "length": 1280,
+      "children": [
+        {
+          "name": "AC-3",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 1280,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 1280,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 4,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Samples",
+                  "value": 6144,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.256,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 40,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 320,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 320,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 40,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 40,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Nominal Bitrate",
+                  "value": 40,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Dialogue Normalization",
+                  "value": -27,
+                  "unit": "dB",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Bit Stream Mode",
+                  "value": "0 (main audio service: complete main)",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Frames With Compression Gain",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Frames Failing a CRC",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Audio Blocks",
+                  "value": 24,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 1280
+                },
+                {
+                  "name": "Audio Blocks Read",
+                  "value": 0,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 1280
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "AC-3, 40 kbps, 2/0",
+              "offset": 0,
+              "length": 320,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 0,
+                  "length": 5,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 0,
+                      "length": 2
+                    },
+                    {
+                      "name": "CRC1",
+                      "value": 14212,
+                      "offset": 2,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 2,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Frame Size Code",
+                      "value": "10 (80 kbps, 320 bytes)",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 5,
+                  "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 27,
+                  "children": [
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "9 (AC-3 at half the sample rate, not defined by A/52)",
+                      "offset": 5,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Bit Stream Mode",
+                      "value": "0 (main audio service: complete main)",
+                      "offset": 5,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Dolby Surround Mode",
+                      "value": "0 (not indicated)",
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 6,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 6,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasLanguageCode",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasProductionInfo",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": true,
+                      "offset": 7,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode1",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode2",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 8,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2475,
+                  "unit": "bits",
+                  "offset": 8,
+                  "length": 310,
+                  "bitOffset": 3,
+                  "bitLength": 2475
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 317,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 317,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "CRC Reserved Bit",
+                      "value": 0,
+                      "offset": 317,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 0,
+                      "offset": 318,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 318,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "AC-3, 40 kbps, 2/0",
+              "offset": 320,
+              "length": 320,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 320,
+                  "length": 5,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 320,
+                      "length": 2
+                    },
+                    {
+                      "name": "CRC1",
+                      "value": 14212,
+                      "offset": 322,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 322,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 324,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Frame Size Code",
+                      "value": "10 (80 kbps, 320 bytes)",
+                      "offset": 324,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 325,
+                  "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 27,
+                  "children": [
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "9 (AC-3 at half the sample rate, not defined by A/52)",
+                      "offset": 325,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Bit Stream Mode",
+                      "value": "0 (main audio service: complete main)",
+                      "offset": 325,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 326,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Dolby Surround Mode",
+                      "value": "0 (not indicated)",
+                      "offset": 326,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 326,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 326,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 327,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasLanguageCode",
+                      "value": false,
+                      "offset": 327,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasProductionInfo",
+                      "value": false,
+                      "offset": 327,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 327,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": true,
+                      "offset": 327,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode1",
+                      "value": false,
+                      "offset": 328,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode2",
+                      "value": false,
+                      "offset": 328,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 328,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2475,
+                  "unit": "bits",
+                  "offset": 328,
+                  "length": 310,
+                  "bitOffset": 3,
+                  "bitLength": 2475
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 637,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 637,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "CRC Reserved Bit",
+                      "value": 0,
+                      "offset": 637,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 0,
+                      "offset": 638,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 638,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "AC-3, 40 kbps, 2/0",
+              "offset": 640,
+              "length": 320,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 640,
+                  "length": 5,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 640,
+                      "length": 2
+                    },
+                    {
+                      "name": "CRC1",
+                      "value": 14212,
+                      "offset": 642,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 642,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 644,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Frame Size Code",
+                      "value": "10 (80 kbps, 320 bytes)",
+                      "offset": 644,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 645,
+                  "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 27,
+                  "children": [
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "9 (AC-3 at half the sample rate, not defined by A/52)",
+                      "offset": 645,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Bit Stream Mode",
+                      "value": "0 (main audio service: complete main)",
+                      "offset": 645,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 646,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Dolby Surround Mode",
+                      "value": "0 (not indicated)",
+                      "offset": 646,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 646,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 646,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 647,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasLanguageCode",
+                      "value": false,
+                      "offset": 647,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasProductionInfo",
+                      "value": false,
+                      "offset": 647,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 647,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": true,
+                      "offset": 647,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode1",
+                      "value": false,
+                      "offset": 648,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode2",
+                      "value": false,
+                      "offset": 648,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 648,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2475,
+                  "unit": "bits",
+                  "offset": 648,
+                  "length": 310,
+                  "bitOffset": 3,
+                  "bitLength": 2475
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 957,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 957,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "CRC Reserved Bit",
+                      "value": 0,
+                      "offset": 957,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 0,
+                      "offset": 958,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 958,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "AC-3, 40 kbps, 2/0",
+              "offset": 960,
+              "length": 320,
+              "children": [
+                {
+                  "name": "Sync Information",
+                  "offset": 960,
+                  "length": 5,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 2935,
+                      "offset": 960,
+                      "length": 2
+                    },
+                    {
+                      "name": "CRC1",
+                      "value": 14212,
+                      "offset": 962,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 962,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Sample Rate Code",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 964,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Frame Size Code",
+                      "value": "10 (80 kbps, 320 bytes)",
+                      "offset": 964,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    }
+                  ]
+                },
+                {
+                  "name": "Bit Stream Information",
+                  "offset": 965,
+                  "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 27,
+                  "children": [
+                    {
+                      "name": "Bit Stream ID",
+                      "value": "9 (AC-3 at half the sample rate, not defined by A/52)",
+                      "offset": 965,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Bit Stream Mode",
+                      "value": "0 (main audio service: complete main)",
+                      "offset": 965,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Audio Coding Mode",
+                      "value": "2: 2/0 (left, right)",
+                      "offset": 966,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Dolby Surround Mode",
+                      "value": "0 (not indicated)",
+                      "offset": 966,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasLfe",
+                      "value": false,
+                      "offset": 966,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": -27,
+                      "unit": "dB",
+                      "offset": 966,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "HasCompression",
+                      "value": false,
+                      "offset": 967,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasLanguageCode",
+                      "value": false,
+                      "offset": 967,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasProductionInfo",
+                      "value": false,
+                      "offset": 967,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 967,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": true,
+                      "offset": 967,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode1",
+                      "value": false,
+                      "offset": 968,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasTimeCode2",
+                      "value": false,
+                      "offset": 968,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasAdditionalInfo",
+                      "value": false,
+                      "offset": 968,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Unread Data",
+                  "value": 2475,
+                  "unit": "bits",
+                  "offset": 968,
+                  "length": 310,
+                  "bitOffset": 3,
+                  "bitLength": 2475
+                },
+                {
+                  "name": "HasAuxiliaryLength",
+                  "value": false,
+                  "offset": 1277,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Error Check",
+                  "offset": 1277,
+                  "length": 3,
+                  "bitOffset": 7,
+                  "bitLength": 17,
+                  "children": [
+                    {
+                      "name": "CRC Reserved Bit",
+                      "value": 0,
+                      "offset": 1277,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "CRC2",
+                      "value": 0,
+                      "offset": 1278,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Check",
+                          "value": "verified",
+                          "offset": 1278,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "AC-3",
+        "sampleRate": 24000,
+        "channels": 2,
+        "channelMode": "2/0 (left, right)",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 6144,
+        "duration": 0.256,
+        "averageBitrate": 40,
+        "isVbr": false,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0,
+              320,
+              640,
+              960
+            ],
+            "values": [
+              40,
+              40,
+              40,
+              40
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              40
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "ac3.bsid-undefined",
+        "message": "bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and liba52 decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in the frame at 0x0 (4 times).",
+        "offset": 8,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          1,
+          13
+        ],
+        "count": 4
+      }
+    ]
+  }
+]

@@ -1,0 +1,197 @@
+using Encspect.Core;
+
+namespace Encspect.Formats.Ac3;
+
+// Raw AC-3 and E-AC-3 files (.ac3, .eac3, .ec3): syncframes one after another (A/52 5.1). As with
+// MPEG sync, a sync word only starts a stream when a chain of frames follows it: two more at the
+// positions the frame sizes give, with the same sample rate, or frames that end exactly at the end
+// of the data. Once in sync, frames are followed by their lengths; a frame in which a new chain
+// starts is cut short there as damaged, and anything else is a gap, after which sync is searched
+// again.
+public sealed class Ac3Parser : IFormatParser
+{
+    private const int SniffLimit = 1 << 20;
+    private const int ChainLength = 3;
+
+    public string Name => "AC-3";
+
+    // A chain at the start of the data, after any zero bytes, outranks MPEG audio (90) and ADTS
+    // (91), since a chain of AC-3 frames is no MPEG or ADTS chain: their sync words, 0xFFE and
+    // 0xFFF, cannot start with 0x0B. One found further in ranks below MPEG audio and Ogg, so a stray
+    // run inside another format's junk never takes the file.
+    public int Sniff(SniffContext context)
+    {
+        ByteReader reader = context.Reader;
+        var cache = new BlockCache(reader);
+        long start = ZeroRunEnd(cache, reader.Start, reader.End);
+        long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
+        return found < 0 ? 0 : found == start ? 92 : 50;
+    }
+
+    public void Parse(ParseContext context)
+    {
+        var analysis = new Ac3Analysis(context);
+        var cache = new BlockCache(context.Reader);
+        long position = context.Reader.Start;
+        foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
+        {
+            long end = tag?.Offset ?? context.Reader.End;
+            if (end > position)
+            {
+                ParseSegment(analysis, cache, context.Root, position, end);
+            }
+
+            position = tag?.End ?? position;
+        }
+
+        analysis.Finish(context.EncoderClaims);
+    }
+
+    private static void ParseSegment(Ac3Analysis analysis, BlockCache cache, Node parent, long start, long end)
+    {
+        var region = new Ac3Analysis.Region(analysis.Frames.Count);
+        analysis.Regions.Add(region);
+        region.Node = parent.Add(new Node("AC-3", start, end - start, null, () => RegionChildren(analysis, region))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Stream,
+            Topic = Topics.FramesAndBsi,
+        });
+        long position = start;
+        SyncFrame? stream = null;
+        var buffer = new byte[Ac3Analysis.MaxFrame];
+        int frames = 0;
+        bool hasEac3 = false;
+        while (position < end)
+        {
+            if (frames % 4096 == 0)
+            {
+                analysis.Cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (stream is { } current && HeaderAt(cache, position, end) is { } header && header.Continues(current))
+            {
+                long frameEnd = position + header.FrameLength;
+                long cutAt = frameEnd;
+                if (frameEnd < end && (HeaderAt(cache, frameEnd, end) is not { } next || !next.Continues(header)))
+                {
+                    long restart = FindChain(cache, position + 1, Math.Min(frameEnd, end), end);
+                    if (restart > position)
+                    {
+                        cutAt = restart;
+                    }
+                }
+
+                long stop = Math.Min(cutAt, end);
+                int length = (int)(stop - position);
+                cache.Read(position, buffer.AsSpan(0, length));
+                analysis.AddFrame(region, position, buffer.AsSpan(0, length), header, cut: cutAt < frameEnd, truncated: cutAt == frameEnd && frameEnd > end);
+                hasEac3 |= header.IsEac3;
+                position = stop;
+                frames++;
+                continue;
+            }
+
+            long found = FindChain(cache, position, end, end);
+            long gapEnd = found < 0 ? end : found;
+            if (gapEnd > position)
+            {
+                analysis.AddGap(region, position, gapEnd, leading: frames == 0, trailing: found < 0 && frames > 0, cache);
+            }
+
+            if (found < 0)
+            {
+                break;
+            }
+
+            stream = HeaderAt(cache, found, end);
+            position = found;
+        }
+
+        region.End = analysis.Frames.Count;
+        if (hasEac3)
+        {
+            region.Node.Value = "E-AC-3";
+        }
+    }
+
+    private static IReadOnlyList<Node> RegionChildren(Ac3Analysis analysis, Ac3Analysis.Region region)
+    {
+        int end = region.End ?? analysis.Frames.Count;
+        return new BlockedChildren(region.Leading, end - region.First, i => analysis.FrameNode(region.First + i));
+    }
+
+    // The offset of the first sync word in [from, limit) that a chain of frames follows, or -1.
+    internal static long FindChain(BlockCache cache, long from, long limit, long end)
+    {
+        for (long position = cache.IndexOf(0x0B, from, limit); position >= 0; position = cache.IndexOf(0x0B, position + 1, limit))
+        {
+            if (cache.ByteAt(position + 1) != 0x77)
+            {
+                continue;
+            }
+
+            if (HeaderAt(cache, position, end) is { } header && Chains(cache, position, header, end))
+            {
+                return position;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool Chains(BlockCache cache, long position, SyncFrame header, long end)
+    {
+        long next = position + header.FrameLength;
+        SyncFrame previous = header;
+        for (int count = 1; count < ChainLength; count++)
+        {
+            if (next == end)
+            {
+                return true;
+            }
+
+            if (HeaderAt(cache, next, end) is not { } following || !following.Continues(previous))
+            {
+                return false;
+            }
+
+            next += following.FrameLength;
+            previous = following;
+            if (next > end)
+            {
+                return count >= 2;
+            }
+        }
+
+        return true;
+    }
+
+    internal static SyncFrame? HeaderAt(BlockCache cache, long position, long end)
+    {
+        if (position + SyncFrame.Length > end)
+        {
+            return null;
+        }
+
+        Span<byte> bytes = stackalloc byte[SyncFrame.Length];
+        if (cache.Read(position, bytes) < SyncFrame.Length)
+        {
+            return null;
+        }
+
+        SyncFrame header = SyncFrame.Read(bytes);
+        return header.IsValid ? header : null;
+    }
+
+    private static long ZeroRunEnd(BlockCache cache, long start, long end)
+    {
+        long position = start;
+        while (position < end && cache.ByteAt(position) == 0)
+        {
+            position++;
+        }
+
+        return position;
+    }
+}

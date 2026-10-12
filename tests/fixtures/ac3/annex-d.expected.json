@@ -1,0 +1,94 @@
+{
+ "description": "Four 3/2 + LFE frames with bsid 6: xbsi1 with a reserved Lt/Rt surround level, xbsi2 with reserved bits set.",
+ "length": 6144,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   1536
+  ],
+  [
+   1536,
+   1536
+  ],
+  [
+   3072,
+   1536
+  ],
+  [
+   4608,
+   1536
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Bit Stream Information/Extended Information 1/Preferred Downmix": "1 (Lt/Rt downmix preferred)",
+  "AC-3/Frame/Bit Stream Information/Extended Information 1/Lt/Rt Center Mix Level": "-1.5 dB",
+  "AC-3/Frame/Bit Stream Information/Extended Information 1/Lt/Rt Surround Mix Level": "1 (reserved)",
+  "AC-3/Frame/Bit Stream Information/Extended Information 2/Dolby Surround EX Mode": "2 (Dolby Surround EX or Dolby Pro Logic IIx encoded)",
+  "AC-3/Frame/Bit Stream Information/Extended Information 2/A/D Converter Type": "1 (HDCD)"
+ },
+ "findings": [
+  [
+   "ac3.reserved-value",
+   "reserves"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": true
+ },
+ "block_ends": {
+  "0": [
+   472,
+   499,
+   526,
+   553,
+   580,
+   607
+  ],
+  "1536": [
+   472,
+   499,
+   526,
+   553,
+   580,
+   607
+  ],
+  "3072": [
+   472,
+   499,
+   526,
+   553,
+   580,
+   607
+  ],
+  "4608": [
+   472,
+   499,
+   526,
+   553,
+   580,
+   607
+  ]
+ }
+}

@@ -1,0 +1,82 @@
+{
+ "description": "Four 3/2 frames with coupling from sub-band 3 in every block.",
+ "length": 2560,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   640
+  ],
+  [
+   640,
+   640
+  ],
+  [
+   1280,
+   640
+  ],
+  [
+   1920,
+   640
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 5,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ },
+ "block_ends": {
+  "0": [
+   808,
+   817,
+   826,
+   835,
+   844,
+   853
+  ],
+  "640": [
+   808,
+   817,
+   826,
+   835,
+   844,
+   853
+  ],
+  "1280": [
+   808,
+   817,
+   826,
+   835,
+   844,
+   853
+  ],
+  "1920": [
+   808,
+   817,
+   826,
+   835,
+   844,
+   853
+  ]
+ }
+}

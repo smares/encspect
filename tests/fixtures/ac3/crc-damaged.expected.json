@@ -1,0 +1,128 @@
+{
+ "description": "Eight 2/0 frames; frame 3 has a bit flipped in its first 5/8, frame 6 one in its last 3/8.",
+ "length": 6144,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ],
+  [
+   3840,
+   768
+  ],
+  [
+   4608,
+   768
+  ],
+  [
+   5376,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame[2]/Sync Information/CRC1/Check": "mismatch",
+  "AC-3/Frame[5]/Sync Information/CRC1/Check": "verified",
+  "AC-3/Frame[5]/Error Check/CRC2/Check": "mismatch"
+ },
+ "findings": [
+  [
+   "ac3.crc1-mismatch",
+   "fails in 1 frame"
+  ],
+  [
+   "ac3.crc2-mismatch",
+   "fails in 2 frames"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": true,
+  "damaged": [
+   1536,
+   3840
+  ]
+ },
+ "block_ends": {
+  "0": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "768": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2304": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3072": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "4608": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "5376": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}
