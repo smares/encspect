@@ -1,0 +1,57 @@
+{
+ "description": "Channel pairs whose second channel codes bands 20 to 39 with intensity stereo, codebook 15 in phase and 14 out of phase, where a mid/side mask on some of them inverts the sign, and whose channels code other bands with noise substitution.",
+ "length": 1298,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   327
+  ],
+  [
+   327,
+   322
+  ],
+  [
+   649,
+   327
+  ],
+  [
+   976,
+   322
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/CPE/Channel 1/Intensity Stereo Bands": "22-27, 31-39 in phase; 20-21, 28-30 out of phase",
+  "ADTS/Frame[1]/Raw Data Block/CPE/Channel 1/Intensity Stereo Bands": "20-25, 30-39 in phase; 26-29 out of phase",
+  "ADTS/Frame[0]/Raw Data Block/CPE/Channel 0/Noise Substitution Bands": "20-29",
+  "ADTS/Frame[0]/Raw Data Block/CPE/Channel 1/Noise Substitution Bands": "6-19",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "4 elements (100.0%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "50.0 %",
+  "ADTS/Statistics/Channel Pairs/Out of Phase": "18 bands (22.5%)",
+  "ADTS/Statistics/Noise Substitution": "8 channel streams (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  }
+ }
+}

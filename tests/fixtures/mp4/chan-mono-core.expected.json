@@ -1,5 +1,5 @@
 {
- "description": "AAC LC mono with a chan atom that says stereo: the core may carry parametric stereo signaled only in its access units, so the difference is an info.",
+ "description": "AAC LC mono with a chan atom that says stereo: its access units carry no parametric stereo, so they stay mono, with a warning.",
  "length": 1535,
  "format": "MP4",
  "boxes": [
@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -260,12 +260,8 @@
  },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
    "mp4.channel-layout-differs",
-   "may use parametric stereo signaled only inside its access units"
+   "states stereo (front left, front right), but the AAC LC stream states mono"
   ]
  ],
  "crosscheck": {

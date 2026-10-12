@@ -1,0 +1,57 @@
+{
+ "description": "Protected mono frames whose single channel element is shorter than 192 bits and followed by fill data: the CRC covers the element filled up with zero bits, not the fill element, and every frame's verifies.",
+ "length": 162,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   27
+  ],
+  [
+   27,
+   27
+  ],
+  [
+   54,
+   27
+  ],
+  [
+   81,
+   27
+  ],
+  [
+   108,
+   27
+  ],
+  [
+   135,
+   27
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[2]/CRC/Check": "verified"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  }
+ }
+}

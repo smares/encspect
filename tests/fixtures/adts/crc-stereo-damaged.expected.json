@@ -1,0 +1,67 @@
+{
+ "description": "Protected channel pair frames, the fourth with a wrong CRC, which fails.",
+ "length": 2238,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   373
+  ],
+  [
+   373,
+   373
+  ],
+  [
+   746,
+   373
+  ],
+  [
+   1119,
+   373
+  ],
+  [
+   1492,
+   373
+  ],
+  [
+   1865,
+   373
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[3]/CRC/Check": "mismatch",
+  "ADTS/Frame/CRC/Check": "verified"
+ },
+ "findings": [
+  [
+   "aac.crc-mismatch",
+   "1 ADTS frame fails the CRC check"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  },
+  "skip": {
+   "ffprobe": "ffmpeg does not check ADTS CRCs, and decodes every frame"
+  }
+ }
+}

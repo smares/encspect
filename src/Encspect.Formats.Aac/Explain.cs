@@ -13,13 +13,21 @@ internal static class Topics
     public const string Crc = "crc";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
+    public const string Windows = "aac-windows-and-blocks";
+    public const string Codebooks = "aac-section-data-and-codebooks";
+    public const string Tns = "tns";
+    public const string Pns = "pns";
+    public const string PulseData = "aac-pulse-data";
+    public const string DynamicRange = "aac-dynamic-range-control";
+    public const string MidSide = "mid-side-stereo";
+    public const string Intensity = "intensity-stereo";
     public const string ChannelLayouts = "channel-layouts";
 }
 
 // What each AAC node is, in the words the report shows next to it. Constants only: access unit and
 // frame nodes are built by the hundred thousand, so a description picks one of these and never
 // allocates.
-internal static class Explain
+internal static partial class Explain
 {
     public const string AudioSpecificConfig = "The AudioSpecificConfig: the object type, sample rate and channel configuration a decoder needs before the first access unit, which the container stores apart from the audio (ISO/IEC 14496-3 1.6.2.1).";
     public const string ObjectType = "The audio object type, the set of coding tools the stream uses: 2 is AAC LC, 5 SBR, 29 PS, 42 USAC. 31 escapes to six more bits for types from 32 on (ISO/IEC 14496-3 1.6.2.1, 1.5.1.1).";
@@ -184,6 +192,7 @@ internal static class Explain
     public const string PceCount = "num_program_config_elements plus one: how many programs the stream defines (ISO/IEC 14496-3 1.A.2.1).";
     public const string AdifBufferFullness = "adif_buffer_fullness: how full the decoder's buffer is after the first raw data block, for a constant bitrate (ISO/IEC 14496-3 1.A.2.1).";
     public const string AdifBlocks = "The raw data blocks after the header, back to back without lengths; finding their bounds needs every element parsed (ISO/IEC 14496-3 1.A.2.1).";
+    public const string AdifUnread = "The bytes after the longest extent of a raw data block that could not be read to its end: ADIF gives no block's length or start, so the blocks after one that breaks cannot be found (ISO/IEC 14496-3 1.A.2.1).";
 
     public const string Statistics = "Figures the analyzer computed over the stream's access units or frames.";
     public const string StatUnits = "How many access units or frames the stream has.";

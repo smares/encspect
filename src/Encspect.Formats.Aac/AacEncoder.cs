@@ -6,7 +6,8 @@ namespace Encspect.Formats.Aac;
 // The encoder of an AAC stream, from what the stream itself carries and what the container's
 // metadata and the file's tags say (EncoderClaim). ffmpeg's AAC encoder writes its version
 // ("Lavc60.31.102") into a fill element at the start of an access unit, unless told to be
-// bit-exact; that names it with high confidence. A claim, such as MP4's tool atom (©too) or an
+// bit-exact, and FAAC its library's ("libfaac 1.30") into one in the first access unit; either names
+// the encoder with high confidence. A claim, such as MP4's tool atom (©too) or an
 // ID3v2 TSSE frame, is written by whatever software wrote the file and survives a re-encode, so
 // alone it names the encoder as written with low confidence, as the MPEG parser weighs a TSSE
 // frame; agreeing with the stream's evidence it is listed as more evidence. ffmpeg's muxer writes its own version
@@ -38,6 +39,11 @@ internal static partial class AacEncoder
     [GeneratedRegex(@"^Lavc\d+\.\d+\.\d+$")]
     private static partial Regex LavcVersion();
 
+    // FAAC 1.30 writes "libfaac 1.30" into a fill element of the first access unit, in M4A and ADTS
+    // alike, as its fixtures show.
+    [GeneratedRegex(@"^libfaac (\d+\.\d+(?:\.\d+)?)$")]
+    private static partial Regex FaacVersion();
+
     // The stream's own signature: text from a fill element at the start of an access unit, the
     // access unit's node for the evidence, and its index.
     public sealed record Signature(string Text, Node Unit, int Index);
@@ -52,7 +58,14 @@ internal static partial class AacEncoder
             encoder = cover("Encoder", $"FFmpeg ({signature.Text})", Explain.Encoder);
             encoder.Add(cover("Confidence", "High", Explain.Confidence));
             encoder.Add(cover("Evidence",
-                $"The fill element at the start of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which ffmpeg's AAC encoder writes", Explain.Evidence));
+                $"A fill element of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which ffmpeg's AAC encoder writes", Explain.Evidence));
+        }
+        else if (signature is not null && FaacVersion().Match(signature.Text) is { Success: true } faac)
+        {
+            encoder = cover("Encoder", $"FAAC {faac.Groups[1].Value}", Explain.Encoder);
+            encoder.Add(cover("Confidence", "High", Explain.Confidence));
+            encoder.Add(cover("Evidence",
+                $"A fill element of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which libfaac writes", Explain.Evidence));
         }
 
         foreach (EncoderClaim claim in claims)

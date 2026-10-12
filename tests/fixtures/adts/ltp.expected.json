@@ -1,0 +1,53 @@
+{
+ "description": "AAC LTP (MPEG-4 ADTS profile 3): channel pairs with a common window whose ics_info carries long-term prediction data for the first channel, and in every other frame for the second.",
+ "length": 1759,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   437
+  ],
+  [
+   437,
+   442
+  ],
+  [
+   879,
+   438
+  ],
+  [
+   1317,
+   442
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/CPE/ICS Info/LTP Data/LTP Lag": "300 samples",
+  "ADTS/Frame/Raw Data Block/CPE/ICS Info/HasSecondLtpData": "false",
+  "ADTS/Frame[1]/Raw Data Block/CPE/ICS Info/Second LTP Data/LTP Lag": "700 samples",
+  "ADTS/Statistics/Long-Term Prediction": "6 channel streams (75.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP; the trace check covers the frames."
+  }
+ }
+}

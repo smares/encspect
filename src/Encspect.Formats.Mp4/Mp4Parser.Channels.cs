@@ -273,9 +273,9 @@ public sealed partial class Mp4Parser
 
     // After the codec has reported the track's streams: a stream whose codec states no layout gets
     // the container's, where the channel counts agree; a codec that states other speakers than the
-    // container keeps its own, with a finding. A mono AAC core that the container calls stereo may
-    // use parametric stereo signaled only inside its access units, which is not checked yet.
-    private static void CompareLayouts(State state, SampleEntry entry, string codec, int streamsBefore, string label)
+    // container keeps its own, with a finding. An AAC stream whose access units carry parametric
+    // stereo states stereo, signaled or not, so a mono one is mono.
+    private static void CompareLayouts(State state, SampleEntry entry, int streamsBefore, string label)
     {
         if (entry.Layout is not { } stated || entry.LayoutNode is not { } node)
         {
@@ -297,12 +297,9 @@ public sealed partial class Mp4Parser
             }
 
             string codedText = coded is null ? $"{stream.Channels} channels" : ChannelLayouts.Describe(coded);
-            bool maybeImplicitPs = codec == "aac" && coded is [Speaker.FrontCenter] && stated.Count == 2 && ChannelLayouts.HaveSameSpeakers(stated, ChannelLayouts.Stereo);
-            state.Findings.AddNow(maybeImplicitPs ? Severity.Info : Severity.Warning, "mp4.channel-layout-differs",
+            state.Findings.AddNow(Severity.Warning, "mp4.channel-layout-differs",
                 $"The {entry.LayoutBox} box of {label} states {ChannelLayouts.Describe(stated)}, but the {stream.Codec} stream states {codedText}"
-                + (maybeImplicitPs
-                    ? "; the stream may use parametric stereo signaled only inside its access units, which is not checked yet. The report gives the stream's channels."
-                    : "; players that follow the container place the channels differently from the coding. The report gives the stream's channels."),
+                + "; players that follow the container place the channels differently from the coding. The report gives the stream's channels.",
                 node);
         }
     }

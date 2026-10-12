@@ -159,7 +159,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -170,7 +170,7 @@
    "is_vbr": false,
    "encoder": [
     "FAAC 1.30",
-    "Low"
+    "High"
    ],
    "ffprobe_profile": "LC",
    "samples": 67584
@@ -458,10 +458,6 @@
   [
    "mp4.moov-after-mdat",
    "not optimized for streaming"
-  ],
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
   ],
   [
    "mp4.duration-mismatch",

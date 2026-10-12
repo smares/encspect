@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Reserved",
@@ -260,10 +260,6 @@
  },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
    "aac.reserved-channel-configuration",
    "channel configuration 8 is reserved"
   ]
@@ -274,7 +270,8 @@
   "faad": null,
   "skip": {
    "ffprobe": "ffmpeg's decoder rejects the reserved channel configuration.",
-   "faad": "faad2 rejects the reserved channel configuration."
+   "faad": "faad2 rejects the reserved channel configuration.",
+   "faad_trace": "faad2 rejects the reserved channel configuration."
   }
  }
 }

@@ -37,11 +37,12 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An MP4 file keeps a compact record per access unit and the arrays of its graphs, and reads its
-    // sample tables into arrays of the entries the boxes hold, never the samples' bytes at once
-    // (plan, "Large inputs"): 35 bytes kept per sample on linux-x64 and a peak of 56. The bounds
-    // leave room for a platform that measures twice that, as macOS on arm64 did for the Ogg
-    // records, and stay below what keeping a sample's node or bytes would cost.
+    // An MP4 file keeps a compact record per access unit, the arrays of its graphs and each raw data
+    // block without its Huffman-coded data, and reads its sample tables into arrays of the entries
+    // the boxes hold, never the samples' bytes at once (plan, "Large inputs"): 60 bytes kept per
+    // sample on linux-x64 and a peak of 100. The bounds leave room for a platform that measures
+    // nearly twice that, as macOS on arm64 did for the Ogg records, and stay below what keeping a
+    // sample's node or bytes would cost.
     [Fact]
     public void ManySamplesStayCompact()
     {
@@ -51,8 +52,39 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.Equal(samples, Assert.Single(report.Streams).Samples / 1024);
         output.WriteLine($"{kept / samples} bytes kept and {peak / samples} bytes peak per sample");
-        Assert.True(kept < samples * 80L, $"The report keeps {kept / samples} bytes per sample.");
-        Assert.True(peak < samples * 112L, $"The live heap grew by {peak / samples} bytes per sample.");
+        Assert.True(kept < samples * 110L, $"The report keeps {kept / samples} bytes per sample.");
+        Assert.True(peak < samples * 180L, $"The live heap grew by {peak / samples} bytes per sample.");
+        GC.KeepAlive(report);
+    }
+
+    // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
+    // from: the side information without the Huffman-coded scalefactors and spectral data
+    // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 116 bytes
+    // kept per frame on linux-x64 and a peak of 133, of the 281 a frame holds. The bounds leave room
+    // for a platform that measures nearly twice that and stay below what keeping the frames' bytes
+    // would cost.
+    [Fact]
+    public void ManyAdtsFramesStayCompact()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"));
+        var stream = new MemoryStream();
+        int frames = 0;
+        while (frames < 100_000)
+        {
+            for (int at = 0; at + 7 <= source.Length && frames < 100_000; frames++)
+            {
+                int length = ((source[at + 3] & 3) << 11) | (source[at + 4] << 3) | (source[at + 5] >> 5);
+                stream.Write(source, at, length);
+                at += length;
+            }
+        }
+
+        (Report report, long kept, long peak) = Measure("frames.aac", stream.ToArray());
+
+        Assert.Equal(frames * 1024L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame of {stream.Length / frames} bytes");
+        Assert.True(kept < frames * 220L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 250L, $"The live heap grew by {peak / frames} bytes per frame.");
         GC.KeepAlive(report);
     }
 
@@ -235,8 +267,9 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     // An M4A file of count silent AAC LC stereo access units of 100 bytes (a channel pair element with
-    // max_sfb 0 and an END element, then zero bytes no decoder reads, so that keeping a sample's
-    // bytes would show), in one chunk after moov (ISO/IEC 14496-12 8.5 to 8.7).
+    // a common window, max_sfb 0 and a global gain of 100 in each channel, and an END element, then
+    // zero bytes no decoder reads, so that keeping a sample's bytes would show), in one chunk after
+    // moov (ISO/IEC 14496-12 8.5 to 8.7).
     private static byte[] Mp4Samples(int count)
     {
         static byte[] Box(string type, params byte[][] parts)
@@ -247,7 +280,7 @@ public class MemoryTests(ITestOutputHelper output)
 
         static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 
-        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x01, 0x9C, .. new byte[94]];
+        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
         byte[] Moov(int mdatPayload)
         {
             byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);

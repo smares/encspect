@@ -1,0 +1,54 @@
+{
+ "description": "AAC Main (ADTS profile 0): long windows with predictor data, a predictor reset in every other frame and prediction in every third band.",
+ "length": 974,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   244
+  ],
+  [
+   244,
+   243
+  ],
+  [
+   487,
+   244
+  ],
+  [
+   731,
+   243
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/SCE/Channel/ICS Info/HasPredictorData": "true",
+  "ADTS/Frame/Raw Data Block/SCE/Channel/ICS Info/Predictor Reset Group": "5",
+  "ADTS/Frame/Raw Data Block/SCE/Channel/ICS Info/Prediction Used": "0, 2-3, 5-6, 8-9, 11-12, 14-15, 17-18, 20-21, 23-24, 26-27, 29",
+  "ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/HasPredictorReset": "false",
+  "ADTS/Statistics/Prediction": "4 channel streams (100.0%)",
+  "ADTS/Statistics/Prediction/Predictor Resets": "2 channel streams"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  }
+ }
+}
