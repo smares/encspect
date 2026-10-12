@@ -8,9 +8,9 @@ internal static class Id3v2Image
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
-    public static ImageInfo? Measure(byte[] data, int start, int end)
+    public static ImageInfo? Measure(ReadOnlySpan<byte> data, int start, int end)
     {
-        ReadOnlySpan<byte> image = data.AsSpan(start, end - start);
+        ReadOnlySpan<byte> image = data[start..end];
         if (image.StartsWith(PngSignature))
         {
             // PNG section 11.2.2: IHDR is the first chunk, width and height its first 8 bytes.
