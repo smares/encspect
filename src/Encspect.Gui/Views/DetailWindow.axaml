@@ -1,0 +1,105 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Encspect.Gui.ViewModels"
+        xmlns:views="using:Encspect.Gui.Views"
+        x:Class="Encspect.Gui.Views.DetailWindow"
+        x:DataType="vm:DetailViewModel"
+        Title="{Binding Title}"
+        Width="1120" Height="780" MinWidth="640" MinHeight="420"
+        WindowStartupLocation="Manual">
+  <Grid RowDefinitions="Auto,Auto,*">
+    <Border Classes="pane divider" BorderThickness="0,0,0,1" Padding="16,10,12,10">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="3" VerticalAlignment="Center">
+          <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
+          <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
+          <Button Name="PreviousButton" Click="OnPrevious" IsEnabled="{Binding CanGoPrevious}" Padding="8,6">
+            <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Up}" />
+          </Button>
+          <Button Name="NextButton" Click="OnNext" IsEnabled="{Binding CanGoNext}" Padding="8,6">
+            <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
+          </Button>
+          <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" Margin="6,0,0,0" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsLoading}" />
+
+    <Grid Grid.Row="2" RowDefinitions="*,1,190" ColumnDefinitions="5*,1,6*">
+      <ListBox Name="TreeList" Classes="compact" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}"
+               Background="Transparent" Padding="0,4">
+        <ListBox.ItemTemplate>
+          <DataTemplate DataType="vm:TreeRow">
+            <StackPanel Orientation="Horizontal" Spacing="6" Height="22">
+              <Border Width="{Binding Indent}" />
+              <Border Name="Expander" Width="14" Background="Transparent" Classes="expander">
+                <PathIcon Classes="chevron" Classes.expanded="{Binding IsExpanded}" Data="{x:Static views:Icons.Chevron}"
+                          IsVisible="{Binding HasChildren}" />
+              </Border>
+              <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Classes.section="{Binding IsSection}" />
+              <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Classes="secondary" />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+
+      <DockPanel Grid.Column="2">
+        <Border DockPanel.Dock="Bottom" Classes="divider" BorderThickness="0,1,0,0" Padding="12,8">
+          <StackPanel Spacing="6">
+            <TextBlock Name="SelectionText" Text="{Binding SelectionText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionText}" />
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <views:BitStripView Name="Bits" Strip="{Binding BitStrip}" HorizontalAlignment="Left" />
+            </ScrollViewer>
+          </StackPanel>
+        </Border>
+        <views:HexView Name="Hex" Document="{Binding Document}" Highlight="{Binding Highlight}" />
+      </DockPanel>
+
+      <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" ResizeDirection="Rows" />
+
+      <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="14,8,12,6">
+          <TextBlock Text="Findings" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <ToggleButton Name="ErrorsFilter" IsChecked="{Binding ShowErrors}" Classes="filter">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Ellipse Classes="severity error" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding ErrorFilterText}" />
+            </StackPanel>
+          </ToggleButton>
+          <ToggleButton Name="WarningsFilter" IsChecked="{Binding ShowWarnings}" Classes="filter">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Ellipse Classes="severity warning" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding WarningFilterText}" />
+            </StackPanel>
+          </ToggleButton>
+          <ToggleButton Name="InfosFilter" IsChecked="{Binding ShowInfos}" Classes="filter">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Ellipse Classes="severity info" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding InfoFilterText}" />
+            </StackPanel>
+          </ToggleButton>
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Top" Text="No findings." Classes="secondary" Margin="14,6" IsVisible="{Binding HasNoFindings}" />
+        <ListBox Name="FindingList" Classes="findings" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:FindingItem">
+              <Grid ColumnDefinitions="Auto,*">
+                <Ellipse Classes="severity" Classes.error="{Binding IsError}" Classes.warning="{Binding IsWarning}" Classes.info="{Binding IsInfo}"
+                         VerticalAlignment="Top" Margin="0,6,10,0" />
+                <StackPanel Grid.Column="1" Spacing="1">
+                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Detail}" Classes="secondary" FontSize="12" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Grid>
+  </Grid>
+</Window>

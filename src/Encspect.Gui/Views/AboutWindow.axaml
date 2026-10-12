@@ -1,0 +1,13 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Encspect.Gui.Views.AboutWindow"
+        Title="About Encspect"
+        SizeToContent="WidthAndHeight" CanResize="False" CanMinimize="False" CanMaximize="False"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="32,24" Spacing="6" MinWidth="300">
+    <TextBlock Text="Encspect" FontSize="20" FontWeight="SemiBold" />
+    <TextBlock Name="VersionText" Classes="secondary" />
+    <TextBlock Text="Reports what is knowable about an audio file's structure." Margin="0,8,0,0" />
+    <TextBlock Text="MIT License" Classes="secondary" />
+  </StackPanel>
+</Window>

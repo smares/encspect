@@ -1,0 +1,135 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="ErrorBrush" Color="#C42B1C" />
+          <SolidColorBrush x:Key="WarningBrush" Color="#9D5D00" />
+          <SolidColorBrush x:Key="InfoBrush" Color="#005FB8" />
+          <SolidColorBrush x:Key="PaneBrush" Color="#F6F6F6" />
+          <SolidColorBrush x:Key="DividerBrush" Color="#E0E0E0" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#14000000" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#20000000" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#2C000000" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#E4000000" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#E4000000" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#E4000000" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#E0E0E0" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="#D0D0D0" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="#C0C0C0" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="ErrorBrush" Color="#FF99A4" />
+          <SolidColorBrush x:Key="WarningBrush" Color="#FCE100" />
+          <SolidColorBrush x:Key="InfoBrush" Color="#60CDFF" />
+          <SolidColorBrush x:Key="PaneBrush" Color="#252525" />
+          <SolidColorBrush x:Key="DividerBrush" Color="#3A3A3A" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#1FFFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#2BFFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#38FFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#FFFFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#FFFFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#FFFFFFFF" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#3A3A3A" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="#4A4A4A" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="#5A5A5A" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <Style Selector="TextBlock.secondary">
+    <Setter Property="Opacity" Value="0.65" />
+  </Style>
+  <Style Selector="TextBlock.title">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.unreadable">
+    <Setter Property="Opacity" Value="0.5" />
+    <Setter Property="FontStyle" Value="Italic" />
+  </Style>
+  <Style Selector="TextBlock.section">
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Border.pane">
+    <Setter Property="Background" Value="{DynamicResource PaneBrush}" />
+  </Style>
+  <Style Selector="Border.divider">
+    <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+  </Style>
+  <Style Selector="GridSplitter">
+    <Setter Property="Background" Value="{DynamicResource DividerBrush}" />
+    <Setter Property="MinWidth" Value="1" />
+    <Setter Property="MinHeight" Value="1" />
+  </Style>
+
+  <Style Selector="Ellipse.severity">
+    <Setter Property="Width" Value="8" />
+    <Setter Property="Height" Value="8" />
+  </Style>
+  <Style Selector="Ellipse.error">
+    <Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+  <Style Selector="Ellipse.warning">
+    <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+  </Style>
+  <Style Selector="Ellipse.info">
+    <Setter Property="Fill" Value="{DynamicResource InfoBrush}" />
+  </Style>
+
+  <!-- Compact lists: the structure tree and the findings show many rows. -->
+  <Style Selector="ListBox.compact ListBoxItem">
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+  <Style Selector="ListBox.findings ListBoxItem">
+    <Setter Property="Padding" Value="12,5" />
+  </Style>
+
+  <Style Selector="PathIcon.chevron">
+    <Setter Property="Width" Value="10" />
+    <Setter Property="Height" Value="10" />
+    <Setter Property="Opacity" Value="0.7" />
+    <Setter Property="RenderTransform" Value="rotate(0deg)" />
+  </Style>
+  <Style Selector="PathIcon.chevron.expanded">
+    <Setter Property="RenderTransform" Value="rotate(90deg)" />
+  </Style>
+
+  <!-- A denser file list than Fluent's default, with long values cut short by an ellipsis. -->
+  <Style Selector="DataGrid">
+    <Style.Resources>
+      <x:Double x:Key="DataGridSortIconMinWidth">18</x:Double>
+      <ControlTheme x:Key="DataGridCellTextBlockTheme" TargetType="TextBlock">
+        <Setter Property="Margin" Value="10,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      </ControlTheme>
+    </Style.Resources>
+  </Style>
+  <Style Selector="DataGridCell">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+  <Style Selector="DataGridColumnHeader">
+    <Setter Property="Padding" Value="10,0,0,0" />
+  </Style>
+  <Style Selector="DataGridCell.numeric">
+    <Setter Property="HorizontalContentAlignment" Value="Right" />
+  </Style>
+
+  <!-- Severity filters: quiet chips, dimmed when their findings are hidden. -->
+  <Style Selector="ToggleButton.filter">
+    <Setter Property="Padding" Value="10,3" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ToggleButton.filter:not(:checked)">
+    <Setter Property="Opacity" Value="0.55" />
+  </Style>
+</Styles>

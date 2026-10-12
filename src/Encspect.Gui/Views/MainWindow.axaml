@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Encspect.Gui.ViewModels"
+        xmlns:views="using:Encspect.Gui.Views"
+        x:Class="Encspect.Gui.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Encspect"
+        Width="1400" Height="800" MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
+  <DockPanel>
+    <NativeMenuBar DockPanel.Dock="Top" />
+
+    <Border DockPanel.Dock="Bottom" Classes="pane divider" BorderThickness="0,1,0,0" Padding="12,4" MinHeight="32">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Name="StatusText" Text="{Binding Status}" VerticalAlignment="Center" Classes="secondary" TextTrimming="CharacterEllipsis" />
+        <ProgressBar Grid.Column="1" Width="180" Margin="12,0" VerticalAlignment="Center"
+                     IsVisible="{Binding IsRunning}" Maximum="{Binding Total}" Value="{Binding Analyzed}" />
+        <Button Grid.Column="2" Name="StopButton" Content="Stop" Padding="12,2" IsVisible="{Binding IsRunning}" Click="OnStop" />
+      </Grid>
+    </Border>
+
+    <Grid ColumnDefinitions="220,1,*">
+      <Border Classes="pane">
+        <TreeView Name="FolderTree" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder}" Padding="4,6" Background="Transparent">
+          <TreeView.Styles>
+            <Style Selector="TreeViewItem" x:DataType="vm:FolderItem">
+              <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+              <Setter Property="MinHeight" Value="28" />
+            </Style>
+          </TreeView.Styles>
+          <TreeView.ItemTemplate>
+            <TreeDataTemplate DataType="vm:FolderItem" ItemsSource="{Binding Children}">
+              <StackPanel Orientation="Horizontal" Spacing="7" ToolTip.Tip="{Binding Error}" Background="Transparent">
+                <PathIcon Width="14" Height="14" Data="{Binding Kind, Converter={x:Static views:Icons.ForFolderKind}}" IsVisible="{Binding !IsPlaceholder}" />
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                           Classes.secondary="{Binding IsPlaceholder}" Classes.unreadable="{Binding HasError}" />
+              </StackPanel>
+            </TreeDataTemplate>
+          </TreeView.ItemTemplate>
+        </TreeView>
+      </Border>
+
+      <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+
+      <DockPanel Grid.Column="2">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="14,8,12,8">
+          <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" VerticalAlignment="Center" TextTrimming="PathSegmentEllipsis" />
+          <CheckBox Grid.Column="1" Name="SubfoldersToggle" Content="Include subfolders" Margin="12,0,0,0"
+                    IsChecked="{Binding IncludeSubfolders}" IsEnabled="{Binding CanIncludeSubfolders}" />
+        </Grid>
+        <Panel>
+          <DataGrid Name="Files" ItemsSource="{Binding RowsView}" SelectedItem="{Binding SelectedRow}"
+                    IsReadOnly="True" SelectionMode="Single" CanUserSortColumns="True" CanUserResizeColumns="True"
+                    CanUserReorderColumns="True" GridLinesVisibility="None" HeadersVisibility="Column"
+                    Background="Transparent" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource DividerBrush}">
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Open" Click="OnOpenSelected" />
+                <MenuItem Header="Open in New Window" Click="OnOpenSelectedInNewWindow" />
+                <Separator />
+                <MenuItem Header="Copy Path" Click="OnCopyPath" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+          </DataGrid>
+          <StackPanel Name="Hint" IsVisible="{Binding !HasSource}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="Choose a folder, or drop files and folders here." HorizontalAlignment="Center" FontSize="15" />
+            <TextBlock Text="Each file is analyzed in the background; open one to see its structure." HorizontalAlignment="Center" Classes="secondary" />
+          </StackPanel>
+        </Panel>
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>
