@@ -4,9 +4,15 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
+[CollectionDefinition(nameof(ComplexityTests), DisableParallelization = true)]
+public class ComplexityCollection;
+
 // Inputs that once took minutes because some work grew with the square of their size, built in
 // memory. Each must finish well within a bound that a slow machine meets with the linear code and
-// that the quadratic code missed by far (each took 25 s to several minutes on a fast machine).
+// that the quadratic code missed by far (each took 25 s to several minutes on a fast machine). They
+// run alone, as the bound is on wall-clock time: beside the rest of the suite, a 4-core macOS
+// runner once took 42 s for what takes 3 s.
+[Collection(nameof(ComplexityTests))]
 public class ComplexityTests
 {
     private static readonly TimeSpan Bound = TimeSpan.FromSeconds(30);

@@ -5,11 +5,13 @@ namespace Encspect.Tests;
 
 // Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4, raw AAC and Ogg
 // fixture must yield a report, never an exception or a hang, and every node must stay inside the
-// file and its parent.
+// file and its parent. The hang guard is per variant: a variant takes milliseconds, so the limit is
+// far from anything CPU contention on a slow runner causes, where a limit on a fixture's 1,300 or so
+// variants together was not (macOS on x64 once took over a minute for one fixture's).
 public class CorruptTagFileTests
 {
     private const int FlipsPerFixture = 300;
-    private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan VariantLimit = TimeSpan.FromSeconds(10);
 
     public static TheoryData<string> Names
     {
@@ -46,17 +48,20 @@ public class CorruptTagFileTests
     {
         byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", name));
 
-        Task work = Task.Run(() =>
+        int index = 0;
+        foreach (byte[] variant in Variants(original, name))
         {
-            foreach (byte[] variant in Variants(original, name))
+            try
             {
-                AnalyzeAndCheck(variant);
+                await Task.Run(() => AnalyzeAndCheck(variant)).WaitAsync(VariantLimit);
             }
-        });
+            catch (TimeoutException)
+            {
+                Assert.Fail($"Variant {index} of {name} ({variant.Length} bytes) took longer than {VariantLimit}.");
+            }
 
-        Task finished = await Task.WhenAny(work, Task.Delay(TimeLimit));
-        Assert.True(finished == work, $"Analyzing the variants of {name} took longer than {TimeLimit}.");
-        await work;
+            index++;
+        }
     }
 
     [Fact]
