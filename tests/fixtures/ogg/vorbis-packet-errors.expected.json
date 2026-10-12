@@ -1,0 +1,222 @@
+{
+ "length": 256,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 256
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 185270282,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 132,
+   "serial": 185270282,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 190,
+   "length": 66,
+   "serial": 185270282,
+   "sequence": 2,
+   "granule": 11264,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0B0B000A",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 3,
+   "packets": 18,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "1",
+     "Channel Layout": "Mono: mono",
+     "Sample Rate": "22050 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "0 (not set)",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "None set: the encoder gives no hint",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": []
+    },
+    "setup": {
+     "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 3 modes",
+     "groups": {
+      "Codebooks": "1 codebook",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "1 floor, type 1",
+      "Residues": "1 residue, type 0",
+      "Mappings": "1 mapping, no coupling",
+      "Modes": "3 modes: 2 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      232,
+      1
+     ],
+     [
+      233,
+      1
+     ],
+     [
+      234,
+      1
+     ],
+     [
+      235,
+      1
+     ],
+     [
+      236,
+      1
+     ],
+     [
+      237,
+      1
+     ],
+     [
+      238,
+      1
+     ],
+     [
+      239,
+      1
+     ],
+     [
+      240,
+      1
+     ],
+     [
+      241,
+      11
+     ],
+     [
+      252,
+      0
+     ],
+     [
+      252,
+      1
+     ],
+     [
+      253,
+      1
+     ],
+     [
+      254,
+      1
+     ],
+     [
+      255,
+      1
+     ]
+    ],
+    "blocks": [
+     "L1",
+     "L1",
+     "L1",
+     "L2",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "bad-mode",
+     "not-audio",
+     "empty",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "15",
+     "Long Blocks": "12 packets (100.0%)",
+     "Short Blocks": "0 packets (0.0%)",
+     "Decoded Samples": "11264 samples",
+     "Start Offset": "0 samples",
+     "Start Trimming": "0 samples",
+     "End Trimming": "0 samples",
+     "Samples": "11264 samples",
+     "Duration": "0.511 s",
+     "IsVbr": "true",
+     "Average Bitrate": "0.4 kbps",
+     "Minimum Bitrate": "0.2 kbps",
+     "Maximum Bitrate": "0.2 kbps",
+     "Packet Sizes": "3 sizes",
+     "Packet Sizes/Long Blocks": "1 to 1 bytes, 1.0 on average",
+     "Modes": "2 modes used",
+     "Modes/Mode 1 (long block)": "11 packets (91.7%)",
+     "Modes/Mode 2 (long block)": "1 packet (8.3%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 22050,
+   "channels": 1,
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 11264,
+   "duration": 0.5108390022675737,
+   "average_bitrate": 0.37585227272727273,
+   "is_vbr": true,
+   "channel_mode": "Mono"
+  }
+ ],
+ "findings": [
+  {
+   "code": "vorbis.window-flag-mismatch",
+   "contains": "2 window flags do not match the size of the neighboring block"
+  },
+  {
+   "code": "vorbis.mode-invalid",
+   "contains": "names a mode the setup header does not define"
+  },
+  {
+   "code": "vorbis.not-audio",
+   "contains": "has the packet type bit set"
+  },
+  {
+   "code": "vorbis.empty-packet",
+   "contains": "1 audio packet is empty"
+  }
+ ],
+ "crosscheck": {
+  "valid": true,
+  "skip": {
+   "oggdec": "libvorbisfile's handling of the packets it skips is not modeled: oggdec writes 3072 samples fewer, a long block's worth for each of the three packets that code no block"
+  }
+ }
+}

@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "2 channels",
@@ -13,25 +13,100 @@
     "front left",
     "front right"
    ],
-   "samples": 0,
+   "samples": 20480,
    "is_vbr": false
   }
  ],
- "units": [],
- "fields": {
-  "ADIF/ADIF Header/Bitrate": "128000 bit/s",
-  "ADIF/Raw Data Blocks": "583 bytes"
- },
- "findings": [
+ "units": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
+   17,
+   6
   ],
   [
-   "aac.adif-blocks-not-analyzed",
-   "ADIF delimits no raw data blocks"
+   23,
+   45
+  ],
+  [
+   68,
+   42
+  ],
+  [
+   110,
+   39
+  ],
+  [
+   149,
+   36
+  ],
+  [
+   185,
+   33
+  ],
+  [
+   218,
+   30
+  ],
+  [
+   248,
+   27
+  ],
+  [
+   275,
+   24
+  ],
+  [
+   299,
+   20
+  ],
+  [
+   319,
+   17
+  ],
+  [
+   336,
+   14
+  ],
+  [
+   350,
+   11
+  ],
+  [
+   361,
+   8
+  ],
+  [
+   369,
+   46
+  ],
+  [
+   415,
+   43
+  ],
+  [
+   458,
+   40
+  ],
+  [
+   498,
+   37
+  ],
+  [
+   535,
+   34
+  ],
+  [
+   569,
+   31
   ]
  ],
+ "fields": {
+  "ADIF/ADIF Header/Bitrate": "128000 bit/s",
+  "ADIF/Raw Data Block": "CPE",
+  "ADIF/Raw Data Block[1]": "CPE, FIL",
+  "ADIF/Statistics/Blocks": "20 blocks",
+  "ADIF/Statistics/Largest Block": "46 bytes"
+ },
+ "findings": [],
  "crosscheck": {
   "ffprobe": false,
   "faad": null,

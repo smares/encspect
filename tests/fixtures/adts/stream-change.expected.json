@@ -5,7 +5,7 @@
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -17,7 +17,7 @@
    "is_vbr": true
   },
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 2,
    "channel_mode": "Stereo",
@@ -153,14 +153,6 @@
  ],
  "fields": {},
  "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
   [
    "aac.stream-changed",
    "from AAC LC, 44100 Hz, channel configuration 2 to AAC LC, 48000 Hz"

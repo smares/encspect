@@ -4,7 +4,9 @@ using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Formats.Musepack;
 using Encspect.Formats.Ogg;
+using Encspect.Formats.Opus;
 using Encspect.Formats.Speex;
+using Encspect.Formats.Vorbis;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
 using Encspect.Tags.Lyrics3;
@@ -43,6 +45,6 @@ public static class DefaultParsers
     public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
-    // Speex in Ogg.
-    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new AacCodecParser(), new SpeexParser()];
+    // Speex, Vorbis and Opus in Ogg.
+    public static IReadOnlyList<ICodecParser> Codecs { get; } = [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser()];
 }

@@ -1,7 +1,7 @@
 ---
 id: gapless-playback
 title: Encoder delay, padding and gapless playback
-related: lame-tag, granules-and-frames, filter-bank, musepack-sv7-stream
+related: lame-tag, granules-and-frames, filter-bank, opus-pre-skip, vorbis-blocks, musepack-sv7-stream
 references: LAME tag specification (Gabriel Bouvigne); Fraunhofer Original File Length
 ---
 

@@ -1,11 +1,11 @@
 {
- "description": "Protected mono frames, one of which has a wrong CRC. A single channel element may end before its 192 bits, which only its spectral data tells, so a CRC that does not match it is reported as not verified rather than as failing.",
+ "description": "Protected mono frames, one of which has a wrong CRC, which fails.",
  "length": 1623,
  "format": "AAC",
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
@@ -99,17 +99,13 @@
   ]
  ],
  "fields": {
-  "ADTS/Frame[5]/CRC/Check": "not verified: a channel element's end needs its spectral data",
+  "ADTS/Frame[5]/CRC/Check": "mismatch",
   "ADTS/Frame[4]/CRC/Check": "verified"
  },
  "findings": [
   [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
-  [
-   "aac.crc-not-verified",
-   "The CRC of 1 ADTS frame"
+   "aac.crc-mismatch",
+   "1 ADTS frame fails the CRC check"
   ]
  ],
  "crosscheck": {

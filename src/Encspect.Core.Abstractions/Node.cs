@@ -15,9 +15,12 @@ public sealed class Node
     private readonly object? _source;
     private WeakReference<IReadOnlyList<Node>>? _built;
 
-    // The bit offset in the low three bits and the bit length above them, or -1: reports hold
-    // hundreds of thousands of nodes, so the bit position takes no more than an int.
+    // The bit offset in the low three bits, the bit order in the fourth and the bit length above
+    // them, or -1: reports hold hundreds of thousands of nodes, so the bit position takes no more
+    // than an int.
     private int _bits = -1;
+
+    private const int LeastSignificantFirstFlag = 8;
 
     private readonly IReadOnlyList<ByteRange>? _ranges;
 
@@ -51,11 +54,18 @@ public sealed class Node
     public long Length { get; }
 
     // For a field that does not cover whole bytes: the bit within the byte at Offset where it
-    // starts, counted from the most significant bit (0 to 7), and its width in bits. Null for a
-    // field of whole bytes. Offset and Length still cover every byte the field touches.
+    // starts (0 to 7), counted as BitOrder says, and its width in bits. Null for a field of whole
+    // bytes. Offset and Length still cover every byte the field touches.
     public int? BitOffset => _bits < 0 ? null : _bits & 7;
 
-    public int? BitLength => _bits < 0 ? null : _bits >> 3;
+    public int? BitLength => _bits < 0 ? null : _bits >> 4;
+
+    // How BitOffset counts and where the field's bits run on: from the most significant bit of a
+    // byte toward the least, then into the next byte's most significant bit (MPEG, Speex, Opus),
+    // or from the least significant bit toward the most, then into the next byte's least
+    // significant bit (Vorbis I specification, section 2.1.4). Within each byte the field's bits
+    // are contiguous either way.
+    public BitOrder BitOrder => _bits >= 0 && (_bits & LeastSignificantFirstFlag) != 0 ? BitOrder.LeastSignificantFirst : BitOrder.MostSignificantFirst;
 
     // For a node whose bytes are not contiguous in the file, such as a packet that spans Ogg pages:
     // the ranges that hold them, in file order. Offset and Length cover them from the first to the
@@ -124,10 +134,11 @@ public sealed class Node
     public long End => Offset + Length;
 
     // A node for bits [startBit, endBit) counted from the most significant bit of the byte at
-    // offset. It covers every byte those bits touch, and carries the bit position unless the bits
-    // are whole bytes; an empty field inside a byte covers that byte.
+    // offset, or from its least significant bit in BitOrder.LeastSignificantFirst. It covers every
+    // byte those bits touch, and carries the bit position unless the bits are whole bytes; an empty
+    // field inside a byte covers that byte.
     public static Node FromBits(string name, long offset, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
-        string? description = null, string? topic = null)
+        string? description = null, string? topic = null, BitOrder order = BitOrder.MostSignificantFirst)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(startBit);
         ArgumentOutOfRangeException.ThrowIfLessThan(endBit, startBit);
@@ -136,13 +147,7 @@ public sealed class Node
         long length = endBit == startBit ? (startBit % 8 == 0 ? 0 : 1) : ((endBit - 1) / 8) - (startBit / 8) + 1;
         var node = new Node(name, first, length, value) { Kind = kind, Description = description, Topic = topic };
 
-        // A span of more than 256 Mbit is no field; its bytes alone place it.
-        bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
-        if (!isWholeBytes && endBit - startBit <= int.MaxValue >> 3)
-        {
-            node._bits = (int)(((endBit - startBit) << 3) | (startBit % 8));
-        }
-
+        node.SetBits(startBit, endBit, order);
         return node;
     }
 
@@ -168,12 +173,13 @@ public sealed class Node
     }
 
     // A node for bits [startBit, endBit) of mapped data, counted from the most significant bit of
-    // its first byte. Within one file range it is the node FromBits gives there; bits that continue
-    // after a gap (a field split by an Ogg page header) also get Ranges, and BitOffset is then the
-    // first bit in the byte at Offset and BitLength the field's width. Opaque data maps every field
-    // to its whole source, without a bit position.
+    // its first byte, or from its least significant bit in BitOrder.LeastSignificantFirst. Within
+    // one file range it is the node FromBits gives there; bits that continue after a gap (a field
+    // split by an Ogg page header) also get Ranges, and BitOffset is then the first bit in the byte
+    // at Offset and BitLength the field's width. Opaque data maps every field to its whole source,
+    // without a bit position.
     public static Node FromBits(string name, MappedBytes bytes, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail,
-        string? description = null, string? topic = null)
+        string? description = null, string? topic = null, BitOrder order = BitOrder.MostSignificantFirst)
     {
         ArgumentNullException.ThrowIfNull(bytes);
         ArgumentOutOfRangeException.ThrowIfNegative(startBit);
@@ -190,17 +196,24 @@ public sealed class Node
         IReadOnlyList<ByteRange> ranges = bytes.FileRanges(first, end);
         if (ranges.Count <= 1)
         {
-            return FromBits(name, bytes.OffsetOf(first), startBit % 8, (startBit % 8) + endBit - startBit, value, kind, description, topic);
+            return FromBits(name, bytes.OffsetOf(first), startBit % 8, (startBit % 8) + endBit - startBit, value, kind, description, topic, order);
         }
 
         var node = new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Kind = kind, Ranges = ranges, Description = description, Topic = topic };
-        bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
-        if (!isWholeBytes && endBit - startBit <= int.MaxValue >> 3)
-        {
-            node._bits = (int)(((endBit - startBit) << 3) | (startBit % 8));
-        }
-
+        node.SetBits(startBit, endBit, order);
         return node;
+    }
+
+    // Leaves a field of whole bytes, and a span of more than 128 Mbit, which is no field, without a
+    // bit position: its bytes alone place it.
+    private void SetBits(long startBit, long endBit, BitOrder order)
+    {
+        bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
+        if (!isWholeBytes && endBit - startBit <= int.MaxValue >> 4)
+        {
+            int flag = order == BitOrder.LeastSignificantFirst ? LeastSignificantFirstFlag : 0;
+            _bits = ((int)(endBit - startBit) << 4) | flag | (int)(startBit % 8);
+        }
     }
 
     public Node Add(string name, long offset, long length, NodeValue? value = null, string? description = null, string? topic = null) =>

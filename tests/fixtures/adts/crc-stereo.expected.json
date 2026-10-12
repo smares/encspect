@@ -1,0 +1,59 @@
+{
+ "description": "Protected ADTS frames of one channel pair each: the CRC covers the pair's first 192 bits and its second channel's first 128, and every frame's verifies.",
+ "length": 2238,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   373
+  ],
+  [
+   373,
+   373
+  ],
+  [
+   746,
+   373
+  ],
+  [
+   1119,
+   373
+  ],
+  [
+   1492,
+   373
+  ],
+  [
+   1865,
+   373
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[3]/CRC/Check": "verified",
+  "ADTS/Frame/CRC/Check": "verified"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  }
+ }
+}

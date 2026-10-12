@@ -191,22 +191,3 @@ internal readonly record struct FirstElement
         }
     }
 }
-
-// Where an access unit's bytes lie in the file, kept without the bytes themselves: one offset, or
-// its ranges where it is not contiguous.
-internal readonly struct UnitBytes(long offset, int length, IReadOnlyList<ByteRange>? ranges)
-{
-    public long Offset => offset;
-
-    public int Length => length;
-
-    public Node Bits(string name, int startBit, int endBit, NodeValue? value, string description) => ranges is null
-        ? Node.FromBits(name, offset, startBit, endBit, value, description: description)
-        : Node.FromBits(name, Mapped(), startBit, endBit, value, description: description);
-
-    public Node Bytes(string name, int start, int end, NodeValue? value, string description) => ranges is null
-        ? new Node(name, offset + start, end - start, value) { Description = description }
-        : Node.FromMapped(name, Mapped(), start, end, value, description: description);
-
-    private MappedBytes Mapped() => new(new byte[length], ranges!);
-}

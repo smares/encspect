@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 6,
    "channel_mode": "5.1",
@@ -225,12 +225,7 @@
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Channel Description": "Left (1)",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chan/Channel Description/Coordinates": "-30, 0, 1"
  },
- "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

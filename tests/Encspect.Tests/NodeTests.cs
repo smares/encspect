@@ -135,6 +135,25 @@ public class NodeTests
     }
 
     [Fact]
+    public void FromBitsKeepsTheBitOrder()
+    {
+        Node msb = Node.FromBits("Field", 100, 11, 13, "x");
+        Node lsb = Node.FromBits("Field", 100, 11, 13, "x", order: BitOrder.LeastSignificantFirst);
+
+        Assert.Equal(BitOrder.MostSignificantFirst, msb.BitOrder);
+        Assert.Equal(BitOrder.LeastSignificantFirst, lsb.BitOrder);
+        Assert.Equal((msb.Offset, msb.Length, msb.BitOffset, msb.BitLength), (lsb.Offset, lsb.Length, lsb.BitOffset, lsb.BitLength));
+
+        // A field of whole bytes has no bit position, so no order either.
+        Assert.Equal(BitOrder.MostSignificantFirst, Node.FromBits("Bytes", 0, 8, 24, order: BitOrder.LeastSignificantFirst).BitOrder);
+
+        // Over mapped bytes, bits a gap splits keep the order too.
+        var bytes = new MappedBytes(new byte[4], [new ByteRange(10, 2), new ByteRange(20, 2)]);
+        Node split = Node.FromBits("Split", bytes, 12, 20, order: BitOrder.LeastSignificantFirst);
+        Assert.Equal((BitOrder.LeastSignificantFirst, 4, 8), (split.BitOrder, split.BitOffset!.Value, split.BitLength!.Value));
+    }
+
+    [Fact]
     public void FromBitsLeavesWholeBytesWithoutBitPositions()
     {
         Node node = Node.FromBits("CRC", 10, 16, 32);

@@ -182,7 +182,8 @@ public static class ReportTextWriter
     }
 
     // A field of whole bytes shows "[0x1A, 4 bytes]"; a bit field its first byte, the bit within it
-    // counted from the most significant bit, and its width: "[0x1+3, 2 bits]". Bytes that are not
+    // counted from the most significant bit, and its width: "[0x1+3, 2 bits]", or counted from the
+    // least significant bit where its bits run that way (Vorbis): "[0x1+3, 2 bits, LSB first]". Bytes that are not
     // contiguous add their ranges: "[0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes]".
     private static void WriteLocation(Node node, TextWriter writer)
     {
@@ -195,6 +196,10 @@ public static class ReportTextWriter
             writer.Write(", ");
             writer.Write(bitLength.ToString(CultureInfo.InvariantCulture));
             writer.Write(bitLength == 1 ? " bit" : " bits");
+            if (node.BitOrder == BitOrder.LeastSignificantFirst)
+            {
+                writer.Write(", LSB first");
+            }
         }
         else
         {

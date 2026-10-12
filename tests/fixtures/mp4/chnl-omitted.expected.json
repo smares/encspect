@@ -121,7 +121,7 @@
  ],
  "streams": [
   {
-   "codec": "AAC LC (no SBR signaled explicitly)",
+   "codec": "AAC LC",
    "sample_rate": 48000,
    "channels": 6,
    "channel_mode": "5.1",
@@ -224,10 +224,6 @@
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/chnl/Omitted Channels": "0x0000000000000020"
  },
  "findings": [
-  [
-   "aac.implicit-signaling-not-checked",
-   "signaled implicitly"
-  ],
   [
    "mp4.channel-layout-differs",
    "states 5.0 (front center, front left, front right, back left, back right)"

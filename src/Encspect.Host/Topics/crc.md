@@ -11,8 +11,8 @@ references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2
 
 **In practice.** Most encoders write no CRC by default; LAME writes one with -p. The two bytes cost a little bitrate.
 
-**In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it means knowing where each element ends; where that takes the spectral data, which is not read yet, the analyzer says the CRC is not verified.
+**In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it means knowing where each element ends, which takes decoding its spectral data; the analyzer reads every element and verifies it, and says it is not verified only where an element cannot be read.
 
 **What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs in a file serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension carries its own, and every [Ogg page](ogg-pages) a CRC-32 over the whole page.
 
-**In Musepack.** SV8 protects its stream header with a CRC-32, the one of PNG, over the header packet's other bytes; libmpcdec refuses a stream whose header fails it ([SV8 packets](musepack-sv8-packets)).
+**In Musepack** SV8's stream header carries a CRC-32 ([SV8 packets](musepack-sv8-packets)).
