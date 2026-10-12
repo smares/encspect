@@ -37,13 +37,11 @@ public static class ReportTextWriter
 
     // Written piece by piece rather than as one interpolated line per node, because a report can
     // hold hundreds of thousands of nodes.
+    // depth: levels below the root. Recursion stops at Node.MaxDepth, where a line says that
+    // deeper children are left out.
     private static void WriteNode(Node node, TextWriter writer, bool showOffsets, ReportFilter filter, int depth)
     {
-        for (int indent = (depth + 1) * 2; indent > 0; indent -= Spaces.Length)
-        {
-            writer.Write(Spaces.AsSpan(0, Math.Min(indent, Spaces.Length)));
-        }
-
+        Indent(writer, depth);
         writer.Write(node.Name);
         if (node.Value is not null)
         {
@@ -58,6 +56,17 @@ public static class ReportTextWriter
 
         writer.WriteLine();
 
+        if (depth >= Node.MaxDepth)
+        {
+            if (node.HasChildren && node.Children.Any(c => filter.Includes(c, node)))
+            {
+                Indent(writer, depth + 1);
+                writer.WriteLine($"(children nested deeper than {Node.MaxDepth} levels are not shown)");
+            }
+
+            return;
+        }
+
         foreach (Node child in node.Children)
         {
             if (filter.Includes(child, node))
@@ -67,10 +76,30 @@ public static class ReportTextWriter
         }
     }
 
+    private static void Indent(TextWriter writer, int depth)
+    {
+        for (int indent = (depth + 1) * 2; indent > 0; indent -= Spaces.Length)
+        {
+            writer.Write(Spaces.AsSpan(0, Math.Min(indent, Spaces.Length)));
+        }
+    }
+
+    // A field of whole bytes shows "[0x1A, 4 bytes]"; a bit field its first byte, the bit within it
+    // counted from the most significant bit, and its width: "[0x1+3, 2 bits]".
     private static void WriteLocation(Node node, TextWriter writer)
     {
         writer.Write(" [0x");
         writer.Write(node.Offset.ToString("X", CultureInfo.InvariantCulture));
+        if (node.BitOffset is { } bitOffset && node.BitLength is { } bitLength)
+        {
+            writer.Write("+");
+            writer.Write(bitOffset.ToString(CultureInfo.InvariantCulture));
+            writer.Write(", ");
+            writer.Write(bitLength.ToString(CultureInfo.InvariantCulture));
+            writer.Write(bitLength == 1 ? " bit]" : " bits]");
+            return;
+        }
+
         writer.Write(", ");
         writer.Write(node.Length.ToString(CultureInfo.InvariantCulture));
         writer.Write(" bytes]");

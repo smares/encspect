@@ -18,8 +18,9 @@ public sealed partial class MpegAudioParser : IFormatParser
 
     public string Name => "MPEG Audio";
 
-    public int Sniff(ByteReader reader)
+    public int Sniff(SniffContext context)
     {
+        ByteReader reader = context.Reader;
         var blocks = new BlockReader(reader);
         // Zero bytes before the audio are common padding and cheap to skip.
         long limit = Math.Min(reader.End, ZeroRunEnd(blocks, reader.Start, reader.End) + SniffLimit);
@@ -31,7 +32,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         var blocks = new BlockReader(context.Reader);
         var findings = new FindingCollector();
         var runs = new List<MainDataRun>();
-        var stream = new StreamState(blocks, findings, new BuildContext(runs), new BitReservoir(runs), [], [], []);
+        var stream = new StreamState(blocks, findings, new BuildContext(runs), new BitReservoir(runs), [], [], [], context.CancellationToken);
         long position = context.Reader.Start;
 
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
@@ -73,6 +74,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         while (position < end)
         {
+            state.CheckCancellation(frames);
             long at = position;
             if (stream is { } current && at + 4 <= end && blocks.TryReadUInt32(at, out uint raw) && new MpegHeader(raw) is { IsValid: true } header)
             {
@@ -349,20 +351,21 @@ public sealed partial class MpegAudioParser : IFormatParser
         long position = frame.Offset;
         var children = new List<Node>();
 
+        // ISO/IEC 11172-3 2.4.1.3, with the syncword cut to 11 bits for MPEG 2.5's two version bits.
         Node fields = new("Header", position, 4);
         children.Add(fields);
-        fields.Add("Version", position + 1, 1, header.VersionName);
-        fields.Add("Layer", position + 1, 1, header.LayerName);
-        fields.Add("IsProtected", position + 1, 1, Bool(header.IsProtected));
-        fields.Add("Bitrate", position + 2, 1, header.BitrateName);
-        fields.Add("Sample Rate", position + 2, 1, $"{header.SampleRate} Hz");
-        fields.Add("HasPadding", position + 2, 1, Bool(header.Padding == 1));
-        fields.Add("IsPrivate", position + 2, 1, Bool(header.IsPrivate));
-        fields.Add("Channel Mode", position + 3, 1, header.ChannelMode);
-        fields.Add("Mode Extension", position + 3, 1, header.ModeExtensionName);
-        fields.Add("IsCopyrighted", position + 3, 1, Bool(header.IsCopyrighted));
-        fields.Add("IsOriginal", position + 3, 1, Bool(header.IsOriginal));
-        fields.Add("Emphasis", position + 3, 1, header.Emphasis);
+        fields.Add(Node.FromBits("Version", position, 11, 13, header.VersionName));
+        fields.Add(Node.FromBits("Layer", position, 13, 15, header.LayerName));
+        fields.Add(Node.FromBits("IsProtected", position, 15, 16, Bool(header.IsProtected)));
+        fields.Add(Node.FromBits("Bitrate", position, 16, 20, header.BitrateName));
+        fields.Add(Node.FromBits("Sample Rate", position, 20, 22, $"{header.SampleRate} Hz"));
+        fields.Add(Node.FromBits("HasPadding", position, 22, 23, Bool(header.Padding == 1)));
+        fields.Add(Node.FromBits("IsPrivate", position, 23, 24, Bool(header.IsPrivate)));
+        fields.Add(Node.FromBits("Channel Mode", position, 24, 26, header.ChannelMode));
+        fields.Add(Node.FromBits("Mode Extension", position, 26, 28, header.ModeExtensionName));
+        fields.Add(Node.FromBits("IsCopyrighted", position, 28, 29, Bool(header.IsCopyrighted)));
+        fields.Add(Node.FromBits("IsOriginal", position, 29, 30, Bool(header.IsOriginal)));
+        fields.Add(Node.FromBits("Emphasis", position, 30, 32, header.Emphasis));
 
         long dataStart = position + 4;
         if (frame.Crc >= 0)
@@ -614,7 +617,11 @@ public sealed partial class MpegAudioParser : IFormatParser
     // extension, not as one.
     private static void DecideMultichannel(StreamState state)
     {
-        var read = state.Candidates.Select(e => (Frame: e, Mc: ReadMultichannel(e.Layer2!, new MpegHeader(e.Header)))).ToList();
+        var read = state.Candidates.Select((e, i) =>
+        {
+            state.CheckCancellation(i);
+            return (Frame: e, Mc: ReadMultichannel(e.Layer2!, new MpegHeader(e.Header)));
+        }).ToList();
         int verified = read.Count(r => r.Mc.IsCrcValid);
         if (verified < 2 || verified * 2 < read.Count(r => r.Mc.Fits))
         {
@@ -971,7 +978,18 @@ public sealed partial class MpegAudioParser : IFormatParser
     // What a file's frames share: the bytes, the findings, and the bit reservoir with the main-data
     // runs it has recorded, which frames on both sides of a tag can own.
     private sealed record StreamState(BlockReader Blocks, FindingCollector Findings, BuildContext Build, BitReservoir Reservoir,
-        List<Entry> Candidates, List<RegionState> Regions, List<(Entry Frame, VbrHeader Tag)> LameTags);
+        List<Entry> Candidates, List<RegionState> Regions, List<(Entry Frame, VbrHeader Tag)> LameTags, CancellationToken Cancellation)
+    {
+        // Reads check cancellation already; passes over the recorded frames only compute, so they
+        // check it every few thousand frames.
+        public void CheckCancellation(int frame)
+        {
+            if (frame % 4096 == 0)
+            {
+                Cancellation.ThrowIfCancellationRequested();
+            }
+        }
+    }
 
     // A region's frames and gaps, and the encoder they point to and their statistics, known once
     // every frame is read.

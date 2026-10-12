@@ -291,7 +291,7 @@ internal sealed class Layer3SideInfo
 
     // A node covering the bytes that hold bits [startBit, endBit) of the side information.
     public static Node Span(string name, long offset, int startBit, int endBit, string? value = null) =>
-        new(name, offset + (startBit / 8), ((endBit - 1) / 8) - (startBit / 8) + 1, value);
+        Node.FromBits(name, offset, startBit, endBit, value);
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 

@@ -58,4 +58,107 @@ public class NodeTests
     {
         Assert.Throws<ArgumentException>(() => new Node(string.Empty, 0, 0));
     }
+
+    [Fact]
+    public void FailingBuilderYieldsOneErrorChild()
+    {
+        var node = new Node("Packets", 4, 10, null, () => throw new IndexOutOfRangeException("bug"));
+
+        Node error = Assert.Single(node.Children);
+
+        Assert.Equal(("Error", 4L, 10L), (error.Name, error.Offset, error.Length));
+        Assert.Equal("The children could not be built: IndexOutOfRangeException: bug", error.Value);
+    }
+
+    [Fact]
+    public void HasChildrenDoesNotBuildThem()
+    {
+        int builds = 0;
+        var lazy = new Node("Frame", 0, 10, null, () =>
+        {
+            builds++;
+            return [];
+        });
+
+        Assert.True(lazy.HasChildren);
+        Assert.Equal(0, builds);
+        IReadOnlyList<Node> children = lazy.Children;
+        Assert.False(lazy.HasChildren);
+        Assert.Empty(children);
+
+        var plain = new Node("File", 0, 10);
+        Assert.False(plain.HasChildren);
+        plain.Add("A", 0, 1);
+        Assert.True(plain.HasChildren);
+    }
+
+    // Threads that read a lazily built node at the same time all get the same children.
+    [Fact]
+    public void ChildrenBuiltOnDemandAreTheSameForEveryThread()
+    {
+        for (int round = 0; round < 50; round++)
+        {
+            var node = new Node("Frame", 0, 10, null, () =>
+            {
+                Thread.SpinWait(1000);
+                return [new Node("Header", 0, 4)];
+            });
+            using var start = new Barrier(8);
+
+            IReadOnlyList<Node>[] seen = Enumerable.Range(0, 8)
+                .Select(_ => Task.Run(() =>
+                {
+                    start.SignalAndWait();
+                    return node.Children;
+                }))
+                .ToArray()
+                .Select(t => t.Result)
+                .ToArray();
+
+            Assert.All(seen, children => Assert.Same(seen[0], children));
+        }
+    }
+
+    [Theory]
+    [InlineData(11, 13, 1L, 1L, 3, 2)]
+    [InlineData(0, 9, 0L, 2L, 0, 9)]
+    [InlineData(7, 17, 0L, 3L, 7, 10)]
+    [InlineData(30, 32, 3L, 1L, 6, 2)]
+    public void FromBitsCoversTheBytesTheBitsTouch(int start, int end, long offset, long length, int bitOffset, int bitLength)
+    {
+        Node node = Node.FromBits("Field", 100, start, end, "x");
+
+        Assert.Equal((100 + offset, length), (node.Offset, node.Length));
+        Assert.Equal(bitOffset, node.BitOffset);
+        Assert.Equal(bitLength, node.BitLength);
+        Assert.Equal("x", node.Value);
+    }
+
+    [Fact]
+    public void FromBitsLeavesWholeBytesWithoutBitPositions()
+    {
+        Node node = Node.FromBits("CRC", 10, 16, 32);
+
+        Assert.Equal((12L, 2L), (node.Offset, node.Length));
+        Assert.Null(node.BitOffset);
+        Assert.Null(node.BitLength);
+    }
+
+    [Fact]
+    public void EmptyBitFieldPointsAtItsByte()
+    {
+        Node inside = Node.FromBits("SCFSI", 10, 13, 13);
+        Node between = Node.FromBits("SCFSI", 10, 16, 16);
+
+        Assert.Equal((11L, 1L, 5, 0), (inside.Offset, inside.Length, inside.BitOffset!.Value, inside.BitLength!.Value));
+        Assert.Equal((12L, 0L), (between.Offset, between.Length));
+        Assert.Null(between.BitOffset);
+    }
+
+    [Fact]
+    public void FromBitsRejectsBackwardRanges()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Node.FromBits("A", 0, 8, 7));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Node.FromBits("A", 0, -1, 7));
+    }
 }

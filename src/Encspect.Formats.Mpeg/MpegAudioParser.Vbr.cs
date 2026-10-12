@@ -380,7 +380,7 @@ public sealed partial class MpegAudioParser
             return Encoder(name, "Medium", [.. context.AncillaryEvidence]);
         }
 
-        return context.Signature is { } signature ? Encoder(SignatureName(signature), "Low", context.Ancillary!) : TraitEncoder(context.Region);
+        return context.Signature is { } signature ? Encoder(SignatureName(signature), "Low", context.Ancillary!) : TraitEncoder(context.State, context.Region);
     }
 
     // What a header's tag alone names, or null: a LAME tag but ffmpeg's "Lavf", a VBRI header, or
@@ -520,8 +520,10 @@ public sealed partial class MpegAudioParser
     {
         List<MainDataRun> runs = state.Build.Runs;
         var ancillary = new AncillaryStream();
+        int count = 0;
         foreach (Entry frame in entries.Where(e => e.SideInfo is not null))
         {
+            state.CheckCancellation(count++);
             long dataStart = frame.Offset + 4 + (frame.Crc >= 0 ? 2 : 0) + frame.SideInfo!.Length;
             long cursor = dataStart;
             int low = 0;

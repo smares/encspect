@@ -35,8 +35,9 @@ public sealed class Lyrics3TagParser : ITagParser
 
     public string? MustPrecede => "ID3v1";
 
-    public TagProbe? ProbeBefore(ByteReader reader, long end)
+    public TagProbe? ProbeBefore(TagProbeContext context, long end)
     {
+        ByteReader reader = context.Reader;
         long marker = end - MarkerSize;
         if (reader.MatchesAt(marker, EndV2))
         {

@@ -19,7 +19,7 @@ public sealed partial class MpegAudioParser
         FrameList all = AllFrames(state);
         foreach (RegionState region in state.Regions)
         {
-            region.Statistics = Statistics(region.Entries, all);
+            region.Statistics = Statistics(state, region.Entries, all);
         }
 
         foreach (Entry frame in all.Frames.Where(e => e.VbrFrame is not null))
@@ -28,7 +28,7 @@ public sealed partial class MpegAudioParser
         }
     }
 
-    private static Node? Statistics(List<Entry> entries, FrameList all)
+    private static Node? Statistics(StreamState state, List<Entry> entries, FrameList all)
     {
         List<Entry> audio = entries.Where(IsAudio).ToList();
         if (audio.Count == 0)
@@ -68,8 +68,10 @@ public sealed partial class MpegAudioParser
         // their mean reservoir fill.
         var seconds = new SortedDictionary<long, (long Bits, long Ticks, long Fill, int Count)>();
         long time = 0;
+        int count = 0;
         foreach (Entry frame in audio)
         {
+            state.CheckCancellation(count++);
             seconds.TryGetValue(time / Clock, out var second);
             seconds[time / Clock] = (second.Bits + (frame.Length * 8), second.Ticks + Ticks(frame), second.Fill + frame.ReservoirFill, second.Count + 1);
             time += Ticks(frame);

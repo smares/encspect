@@ -274,7 +274,7 @@ internal sealed class Layer2AudioData
 
     // A node covering the bytes that hold bits [startBit, endBit) of the frame.
     public static Node Span(string name, long frameOffset, int startBit, int endBit, string? value = null) =>
-        new(name, frameOffset + (startBit / 8), Math.Max(((endBit - 1) / 8) - (startBit / 8) + 1, 0), value);
+        Node.FromBits(name, frameOffset, startBit, endBit, value);
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 

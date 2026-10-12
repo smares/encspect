@@ -28,17 +28,17 @@ public sealed class Analyzer
     // Anything that is not a regular file gets a report with a file.not-regular finding without
     // being read, since a FIFO blocks and a device can be read forever. A file that cannot be
     // opened or read throws IOException or UnauthorizedAccessException.
-    public Report AnalyzeFile(string path)
+    public Report AnalyzeFile(string path, AnalysisOptions? options = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
         using FileStream? stream = FileType.Open(path, out string? notRegular);
-        return stream is null ? FileReports.NotRegular(path, notRegular!) : Analyze(path, stream);
+        return stream is null ? FileReports.NotRegular(path, notRegular!) : Analyze(path, stream, options);
     }
 
     // The format parser that would analyze the file, or null: the same tag scan and sniffing as
     // Analyze, without parsing the data, so a batch can skip files of other formats cheaply.
-    public string? DetectFormat(string path)
+    public string? DetectFormat(string path, AnalysisOptions? options = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -48,24 +48,30 @@ public sealed class Analyzer
             return null;
         }
 
-        var reader = new ByteReader(stream);
+        var reader = new ByteReader(stream, (options ?? AnalysisOptions.Default).CancellationToken);
         if (reader.Length == 0)
         {
             return null;
         }
 
         var pending = new List<PendingFinding>();
-        List<Claim> leading = FindLeadingTags(reader, []);
+        var failures = new List<Failure>();
+        List<Claim> leading = FindLeadingTags(reader, [], failures);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
-        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
-        return dataEnd > dataStart ? FindParser(reader.Slice(dataStart, dataEnd - dataStart))?.Name : null;
+        return dataEnd > dataStart ? FindParser(new SniffContext(reader.Slice(dataStart, dataEnd - dataStart), Path.GetExtension(path)), failures)?.Name : null;
     }
 
-    public Report Analyze(string source, Stream stream)
+    // Parsers are trusted to report damage as findings, but a parser bug must not end a batch: an
+    // exception from any parser becomes a parse.failed error. Only cancellation, and running out of
+    // memory, escape.
+    public Report Analyze(string source, Stream stream, AnalysisOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(stream);
+        options ??= AnalysisOptions.Default;
+        options.CancellationToken.ThrowIfCancellationRequested();
 
         if (!stream.CanRead)
         {
@@ -78,37 +84,44 @@ public sealed class Analyzer
             return FileReports.Create(source, FileReports.NotSeekableCode, "The stream cannot seek, so it was not analyzed.");
         }
 
-        var reader = new ByteReader(stream);
+        var reader = new ByteReader(stream, options.CancellationToken);
         var root = new Node("File", 0, reader.Length);
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();
+        var failures = new List<Failure>();
 
         if (reader.Length == 0)
         {
             findings.Add(new Finding(Severity.Warning, "file.empty", "The file is empty.", root));
+            options.BytesRead?.Report(0);
             return new Report(source, root, findings);
         }
 
         var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
-        List<Claim> leading = FindLeadingTags(reader, leadingRejections);
+        List<Claim> leading = FindLeadingTags(reader, leadingRejections, failures);
         long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
-        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending);
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, pending, failures);
         long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
         List<Finding> layout = CheckTrailingLayout(trailing);
-        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings);
+        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, findings, failures);
         pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
 
         var detectionNodes = new HashSet<Node>();
+        var shown = new Dictionary<Node, Node>(ReferenceEqualityComparer.Instance);
         foreach (Claim claim in leading.Concat(embedded).Concat(trailing))
         {
-            AddClaim(root, claim, findings, detectionNodes);
+            AddClaim(root, claim, findings, detectionNodes, shown);
         }
 
         long embeddedBytes = embedded.Sum(c => c.Tag.Length);
         if (dataEnd - dataStart > embeddedBytes)
         {
             List<EncoderClaim> claims = leading.Concat(embedded).Concat(trailing).OrderBy(c => c.Tag.Offset).SelectMany(c => c.Probe.EncoderClaims).ToList();
-            ParseData(reader.Slice(dataStart, dataEnd - dataStart), root, embedded.Select(c => c.Tag).ToList(), claims, findings);
+
+            // Only the format parser's reads count as progress: tags are probed at both ends of the
+            // file first, which would make the furthest offset read jump to the end.
+            ByteReader window = new ByteReader(stream, options.CancellationToken, options.BytesRead).Slice(dataStart, dataEnd - dataStart);
+            ParseData(new SniffContext(window, Path.GetExtension(source)), root, embedded.Select(c => shown[c.Tag]).ToList(), claims, findings, failures);
         }
         else
         {
@@ -124,12 +137,23 @@ public sealed class Analyzer
             findings.Add(new Finding(finding.Severity, finding.Code, finding.Message(node, root), node));
         }
 
-        // In file order, so the list reads like the tree; stable for findings on the same bytes.
-        List<Finding> ordered = findings.OrderBy(f => f.Node?.Offset ?? 0).ToList();
+        findings.AddRange(failures.Select(f => new Finding(
+            Severity.Error,
+            "parse.failed",
+            $"The {f.Parser} parser failed {f.Activity}: {f.Error.GetType().Name}: {f.Error.Message}",
+            root)));
+
+        // Findings on a tag point at the node the report shows for it. In file order, so the list
+        // reads like the tree; stable for findings on the same bytes.
+        List<Finding> ordered = findings
+            .Select(f => f.Node is { } node && shown.TryGetValue(node, out Node? copy) ? f with { Node = copy } : f)
+            .OrderBy(f => f.Node?.Offset ?? 0)
+            .ToList();
+        options.BytesRead?.Report(reader.Length);
         return new Report(source, root, ordered);
     }
 
-    private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections)
+    private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections, List<Failure> failures)
     {
         var claims = new List<Claim>();
         long position = 0;
@@ -139,7 +163,7 @@ public sealed class Analyzer
             Claim? accepted = null;
             foreach (ITagParser parser in _tagParsers)
             {
-                TagProbe? probe = Probe(parser, position, reader, leading: true);
+                TagProbe? probe = Probe(parser, position, reader, leading: true, failures);
                 if (probe is null)
                 {
                     continue;
@@ -199,7 +223,7 @@ public sealed class Analyzer
     // longer one's structure: a "TAG" in an Enhanced TAG field or in Lyrics3 lyrics, or "LYRICSEND"
     // at the end of an ID3v1 comment. The containing tag accounts for those bytes and the contained
     // one cannot account for the rest, so the longer tag wins before the parser order is asked.
-    private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, List<PendingFinding> pending)
+    private List<Claim> FindTrailingTags(ByteReader reader, long dataStart, List<Claim> leading, List<PendingFinding> pending, List<Failure> failures)
     {
         var claims = new List<Claim>();
         long anchor = reader.Length;
@@ -212,7 +236,7 @@ public sealed class Analyzer
             for (int order = 0; order < _tagParsers.Count; order++)
             {
                 ITagParser parser = _tagParsers[order];
-                TagProbe? probe = Probe(parser, anchor, reader, leading: false);
+                TagProbe? probe = Probe(parser, anchor, reader, leading: false, failures);
                 if (probe is null || IsLeadingTagAgain(parser, probe, leading))
                 {
                     continue;
@@ -222,7 +246,7 @@ public sealed class Analyzer
                 // probed again within the bytes they leave, it may find a tag there. That tag
                 // replaces the overlapping candidate unless its evidence is weaker.
                 if (probe.IsAccepted && probe.Tag!.Offset < dataStart && anchor > dataStart
-                    && Probe(parser, anchor, reader.Slice(dataStart, reader.Length - dataStart), leading: false) is { IsAccepted: true } confined
+                    && Probe(parser, anchor, reader.Slice(dataStart, reader.Length - dataStart), leading: false, failures) is { IsAccepted: true } confined
                     && Effective(confined) >= Effective(probe))
                 {
                     probe = confined;
@@ -304,7 +328,8 @@ public sealed class Analyzer
     // next such tag found at an anchor starts at or after that point, the pointer is satisfied;
     // otherwise the unclaimed data from there on is searched, at most 1 MiB of it. Tags found
     // this way are followed in turn, and each search starts after the previous tag, so it ends.
-    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, List<Finding> findings)
+    private static List<Claim> FollowNextTagOffsets(ByteReader reader, long dataStart, long dataEnd, List<Claim> leading, List<Claim> trailing, List<Finding> findings,
+        List<Failure> failures)
     {
         var embedded = new List<Claim>();
         var queue = new Queue<Claim>(leading.Concat(trailing));
@@ -350,10 +375,15 @@ public sealed class Analyzer
             {
                 try
                 {
-                    found = claim.Parser.FindFrom(reader, from, limit);
+                    found = claim.Parser.FindFrom(new TagProbeContext(reader), from, limit);
                 }
                 catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
                 {
+                    found = null;
+                }
+                catch (Exception ex) when (IsParserBug(ex))
+                {
+                    failures.Add(new Failure(claim.Parser.Name, $"searching for a tag from 0x{from:X}", ex));
                     found = null;
                 }
             }
@@ -423,16 +453,22 @@ public sealed class Analyzer
     private static bool IsLeadingTagAgain(ITagParser parser, TagProbe probe, List<Claim> leading) =>
         probe.Tag is { } tag && leading.Any(c => c.Parser == parser && c.Tag.Offset == tag.Offset && c.Tag.Length == tag.Length);
 
-    private static TagProbe? Probe(ITagParser parser, long anchor, ByteReader reader, bool leading)
+    private static TagProbe? Probe(ITagParser parser, long anchor, ByteReader reader, bool leading, List<Failure> failures)
     {
         try
         {
-            TagProbe? probe = leading ? parser.ProbeAt(reader, anchor) : parser.ProbeBefore(reader, anchor);
+            var context = new TagProbeContext(reader);
+            TagProbe? probe = leading ? parser.ProbeAt(context, anchor) : parser.ProbeBefore(context, anchor);
 
             // Every claim must touch its anchor, or the anchor walks would not make progress.
             if (probe?.Tag is { } tag && (leading ? tag.Offset != anchor : tag.End != anchor))
             {
                 return TagProbe.Reject(probe.SignatureOffset, $"the parser returned a tag at 0x{tag.Offset:X} that is not anchored at 0x{anchor:X}");
+            }
+
+            if (probe?.Tag is { } outside && (outside.Offset < reader.Start || outside.End > reader.End))
+            {
+                return TagProbe.Reject(probe.SignatureOffset, $"the parser returned a tag at 0x{outside.Offset:X} that does not fit the file");
             }
 
             return probe;
@@ -445,7 +481,16 @@ public sealed class Analyzer
         {
             return TagProbe.Reject(anchor, ex.Message);
         }
+        catch (Exception ex) when (IsParserBug(ex))
+        {
+            failures.Add(new Failure(parser.Name, $"probing for a tag at 0x{anchor:X}", ex));
+            return TagProbe.Reject(anchor, $"the parser failed with {ex.GetType().Name}");
+        }
     }
+
+    // Anything a parser throws but cancellation, and running out of memory, which nothing can
+    // recover from.
+    private static bool IsParserBug(Exception ex) => ex is not (OperationCanceledException or OutOfMemoryException);
 
     private static PendingFinding Rejected(ITagParser parser, TagProbe probe, ByteReader reader)
     {
@@ -478,7 +523,9 @@ public sealed class Analyzer
 
     private static string Describe(long offset, ByteReader reader) => $"0x{offset:X} (EOF-{reader.Length - offset})";
 
-    private static void AddClaim(Node root, Claim claim, List<Finding> findings, HashSet<Node> detectionNodes)
+    // The parser's node is never changed, so its children may be built on demand: the report shows
+    // a node with the same name, value and bytes whose children are the parser's and Detection.
+    private static void AddClaim(Node root, Claim claim, List<Finding> findings, HashSet<Node> detectionNodes, Dictionary<Node, Node> shown)
     {
         Node tag = claim.Tag;
         TagProbe probe = claim.Probe;
@@ -489,16 +536,18 @@ public sealed class Analyzer
             detection.Add("Evidence", evidence.Offset, evidence.Length, evidence.Description);
         }
 
-        tag.Add(detection);
+        var copy = new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, detection]);
+        shown[tag] = copy;
         detectionNodes.Add(detection);
-        root.Add(tag);
+        root.Add(copy);
         findings.AddRange(probe.Findings);
         findings.AddRange(claim.LayoutFindings);
     }
 
-    private void ParseData(ByteReader window, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings)
+    private void ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims, List<Finding> findings, List<Failure> failures)
     {
-        IFormatParser? parser = FindParser(window);
+        ByteReader window = sniff.Reader;
+        IFormatParser? parser = FindParser(sniff, failures);
         if (parser is null)
         {
             Node? first = null;
@@ -534,12 +583,17 @@ public sealed class Analyzer
         {
             context.AddFinding(Severity.Error, "parse.invalid", ex.Message, root);
         }
+        catch (Exception ex) when (IsParserBug(ex))
+        {
+            failures.Add(new Failure(parser.Name, "parsing the data", ex));
+        }
 
         findings.AddRange(context.Findings);
     }
 
-    private IFormatParser? FindParser(ByteReader reader)
+    private IFormatParser? FindParser(SniffContext context, List<Failure> failures)
     {
+        ByteReader reader = context.Reader;
         IFormatParser? best = null;
         int bestConfidence = 0;
 
@@ -550,10 +604,15 @@ public sealed class Analyzer
             int confidence;
             try
             {
-                confidence = parser.Sniff(reader);
+                confidence = parser.Sniff(context);
             }
-            catch (EndOfStreamException)
+            catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
             {
+                confidence = 0;
+            }
+            catch (Exception ex) when (IsParserBug(ex))
+            {
+                failures.Add(new Failure(parser.Name, "sniffing the data", ex));
                 confidence = 0;
             }
 
@@ -717,4 +776,6 @@ public sealed class Analyzer
     }
 
     private sealed record PendingFinding(Severity Severity, string Code, long Offset, Func<Node, Node, string> Message);
+
+    private sealed record Failure(string Parser, string Activity, Exception Error);
 }

@@ -15,6 +15,10 @@ public static class ReportJsonWriter
     // Quotes, backslashes and control characters are still escaped; the output is never embedded in HTML.
     private static readonly JavaScriptEncoder Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
 
+    // A node takes two levels (its object and its children array) below the report array, the
+    // report and the root; the writer stops at Node.MaxDepth, so this limit is never reached.
+    private const int MaxJsonDepth = (2 * Node.MaxDepth) + 8;
+
     // Reports are written as they are enumerated, so a lazy sequence is analyzed and written one
     // file at a time.
     public static void Write(IEnumerable<Report> reports, Stream output) => Write(reports, output, ReportFilter.All);
@@ -25,7 +29,7 @@ public static class ReportJsonWriter
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(filter);
 
-        using var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Indented = true, Encoder = Encoder });
+        using var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Indented = true, Encoder = Encoder, MaxDepth = MaxJsonDepth });
 
         writer.WriteStartArray();
         foreach (Report report in reports)
@@ -47,7 +51,7 @@ public static class ReportJsonWriter
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(filter);
 
-        using var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Encoder = Encoder });
+        using var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Encoder = Encoder, MaxDepth = MaxJsonDepth });
 
         foreach (Report report in reports)
         {
@@ -66,7 +70,7 @@ public static class ReportJsonWriter
         writer.WriteString("source", report.Source);
 
         writer.WritePropertyName("root");
-        WriteNode(writer, report.Root, filter);
+        WriteNode(writer, report.Root, filter, 0);
 
         writer.WriteStartArray("findings");
         foreach (Finding finding in report.Findings)
@@ -88,7 +92,9 @@ public static class ReportJsonWriter
         writer.WriteEndObject();
     }
 
-    private static void WriteNode(Utf8JsonWriter writer, Node node, ReportFilter filter)
+    // depth: levels below the root. Children nested deeper than Node.MaxDepth are left out, and
+    // hasOmittedChildren says so.
+    private static void WriteNode(Utf8JsonWriter writer, Node node, ReportFilter filter, int depth)
     {
         writer.WriteStartObject();
         writer.WriteString("name", node.Name);
@@ -99,17 +105,36 @@ public static class ReportJsonWriter
 
         writer.WriteNumber("offset", node.Offset);
         writer.WriteNumber("length", node.Length);
-
-        IReadOnlyList<Node> children = filter.Hidden == ReportSections.None ? node.Children : node.Children.Where(c => filter.Includes(c, node)).ToList();
-        if (children.Count > 0)
+        if (node.BitOffset is { } bitOffset)
         {
-            writer.WriteStartArray("children");
-            foreach (Node child in children)
-            {
-                WriteNode(writer, child, filter);
-            }
+            writer.WriteNumber("bitOffset", bitOffset);
+        }
 
-            writer.WriteEndArray();
+        if (node.BitLength is { } bitLength)
+        {
+            writer.WriteNumber("bitLength", bitLength);
+        }
+
+        if (depth >= Node.MaxDepth)
+        {
+            if (node.HasChildren && node.Children.Any(c => filter.Includes(c, node)))
+            {
+                writer.WriteBoolean("hasOmittedChildren", true);
+            }
+        }
+        else
+        {
+            IReadOnlyList<Node> children = filter.Hidden == ReportSections.None ? node.Children : node.Children.Where(c => filter.Includes(c, node)).ToList();
+            if (children.Count > 0)
+            {
+                writer.WriteStartArray("children");
+                foreach (Node child in children)
+                {
+                    WriteNode(writer, child, filter, depth + 1);
+                }
+
+                writer.WriteEndArray();
+            }
         }
 
         writer.WriteEndObject();

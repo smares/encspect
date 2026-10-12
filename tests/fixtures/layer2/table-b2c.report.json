@@ -98,73 +98,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 1,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 1,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 1,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 2,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 2,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 2,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 2,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 3,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 3,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 3,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 3,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 3,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -187,17 +211,23 @@
                   "value": "Table B.2c",
                   "offset": 6,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 6,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "32767 levels",
                           "offset": 6,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -205,12 +235,16 @@
                       "name": "Subband 1",
                       "offset": 6,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 6,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -218,12 +252,16 @@
                       "name": "Subband 2",
                       "offset": 7,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 7,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -231,12 +269,16 @@
                       "name": "Subband 3",
                       "offset": 7,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 7,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -244,12 +286,16 @@
                       "name": "Subband 4",
                       "offset": 7,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 7,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -257,12 +303,16 @@
                       "name": "Subband 5",
                       "offset": 8,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 8,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -270,12 +320,16 @@
                       "name": "Subband 6",
                       "offset": 8,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 8,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -283,12 +337,16 @@
                       "name": "Subband 7",
                       "offset": 8,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 8,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -298,17 +356,23 @@
                   "name": "SCFSI",
                   "offset": 9,
                   "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 9,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 9,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -316,12 +380,16 @@
                       "name": "Subband 3",
                       "offset": 9,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1",
                           "offset": 9,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -329,12 +397,16 @@
                       "name": "Subband 6",
                       "offset": 9,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 9,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -344,17 +416,23 @@
                   "name": "Scalefactors",
                   "offset": 10,
                   "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 36,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 10,
                       "length": 3,
+                      "bitOffset": 0,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0, 17, 34",
                           "offset": 10,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 0,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -362,12 +440,16 @@
                       "name": "Subband 3",
                       "offset": 12,
                       "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "15, 32",
                           "offset": 12,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 2,
+                          "bitLength": 12
                         }
                       ]
                     },
@@ -375,12 +457,16 @@
                       "name": "Subband 6",
                       "offset": 13,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "30",
                           "offset": 13,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6
                         }
                       ]
                     }
@@ -390,7 +476,9 @@
                   "name": "Samples",
                   "value": "660 bits",
                   "offset": 14,
-                  "length": 83
+                  "length": 83,
+                  "bitOffset": 4,
+                  "bitLength": 660
                 },
                 {
                   "name": "Ancillary Data",
@@ -415,73 +503,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 145,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 145,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 145,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 146,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 146,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 146,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 146,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 147,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 147,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 147,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 147,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 147,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -504,17 +616,23 @@
                   "value": "Table B.2c",
                   "offset": 150,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 150,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 150,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -522,12 +640,16 @@
                       "name": "Subband 1",
                       "offset": 150,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 150,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -535,12 +657,16 @@
                       "name": "Subband 2",
                       "offset": 151,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 151,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -548,12 +674,16 @@
                       "name": "Subband 3",
                       "offset": 151,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 151,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -561,12 +691,16 @@
                       "name": "Subband 4",
                       "offset": 151,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 151,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -574,12 +708,16 @@
                       "name": "Subband 5",
                       "offset": 152,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 152,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -587,12 +725,16 @@
                       "name": "Subband 6",
                       "offset": 152,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 152,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -600,12 +742,16 @@
                       "name": "Subband 7",
                       "offset": 152,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "63 levels",
                           "offset": 152,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -615,17 +761,23 @@
                   "name": "SCFSI",
                   "offset": 153,
                   "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6,
                   "children": [
                     {
                       "name": "Subband 2",
                       "offset": 153,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3",
                           "offset": 153,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -633,12 +785,16 @@
                       "name": "Subband 5",
                       "offset": 153,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 153,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -646,12 +802,16 @@
                       "name": "Subband 7",
                       "offset": 153,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 153,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -661,17 +821,23 @@
                   "name": "Scalefactors",
                   "offset": 154,
                   "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 36,
                   "children": [
                     {
                       "name": "Subband 2",
                       "offset": 154,
                       "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "21, 38",
                           "offset": 154,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 0,
+                          "bitLength": 12
                         }
                       ]
                     },
@@ -679,12 +845,16 @@
                       "name": "Subband 5",
                       "offset": 155,
                       "length": 3,
+                      "bitOffset": 4,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "36, 53, 7",
                           "offset": 155,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -692,12 +862,16 @@
                       "name": "Subband 7",
                       "offset": 157,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "46",
                           "offset": 157,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6
                         }
                       ]
                     }
@@ -707,7 +881,9 @@
                   "name": "Samples",
                   "value": "336 bits",
                   "offset": 158,
-                  "length": 43
+                  "length": 43,
+                  "bitOffset": 4,
+                  "bitLength": 336
                 },
                 {
                   "name": "Ancillary Data",
@@ -732,73 +908,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 289,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 289,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 289,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 290,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 290,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 290,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 290,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 291,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 291,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 291,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 291,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 291,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -821,17 +1021,23 @@
                   "value": "Table B.2c",
                   "offset": 294,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 294,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 294,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -839,12 +1045,16 @@
                       "name": "Subband 1",
                       "offset": 294,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 294,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -852,12 +1062,16 @@
                       "name": "Subband 2",
                       "offset": 295,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 295,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -865,12 +1079,16 @@
                       "name": "Subband 3",
                       "offset": 295,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 295,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -878,12 +1096,16 @@
                       "name": "Subband 4",
                       "offset": 295,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 295,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -891,12 +1113,16 @@
                       "name": "Subband 5",
                       "offset": 296,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 296,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -904,12 +1130,16 @@
                       "name": "Subband 6",
                       "offset": 296,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "31 levels",
                           "offset": 296,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -917,12 +1147,16 @@
                       "name": "Subband 7",
                       "offset": 296,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 296,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -932,17 +1166,23 @@
                   "name": "SCFSI",
                   "offset": 297,
                   "length": 2,
+                  "bitOffset": 2,
+                  "bitLength": 8,
                   "children": [
                     {
                       "name": "Subband 1",
                       "offset": 297,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1",
                           "offset": 297,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -950,12 +1190,16 @@
                       "name": "Subband 4",
                       "offset": 297,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 297,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -963,12 +1207,16 @@
                       "name": "Subband 6",
                       "offset": 297,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 297,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -976,12 +1224,16 @@
                       "name": "Subband 7",
                       "offset": 298,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3",
                           "offset": 298,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -991,17 +1243,23 @@
                   "name": "Scalefactors",
                   "offset": 298,
                   "length": 7,
+                  "bitOffset": 2,
+                  "bitLength": 48,
                   "children": [
                     {
                       "name": "Subband 1",
                       "offset": 298,
                       "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "27, 44",
                           "offset": 298,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 2,
+                          "bitLength": 12
                         }
                       ]
                     },
@@ -1009,12 +1267,16 @@
                       "name": "Subband 4",
                       "offset": 299,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "42",
                           "offset": 299,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6
                         }
                       ]
                     },
@@ -1022,12 +1284,16 @@
                       "name": "Subband 6",
                       "offset": 300,
                       "length": 3,
+                      "bitOffset": 4,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "52, 6, 23",
                           "offset": 300,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -1035,12 +1301,16 @@
                       "name": "Subband 7",
                       "offset": 302,
                       "length": 3,
+                      "bitOffset": 6,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "57, 11",
                           "offset": 302,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 12
                         }
                       ]
                     }
@@ -1050,7 +1320,9 @@
                   "name": "Samples",
                   "value": "360 bits",
                   "offset": 304,
-                  "length": 46
+                  "length": 46,
+                  "bitOffset": 2,
+                  "bitLength": 360
                 },
                 {
                   "name": "Ancillary Data",
@@ -1075,73 +1347,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 433,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 433,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 433,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 434,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 434,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 434,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 434,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 435,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 435,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 435,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 435,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 435,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1164,17 +1460,23 @@
                   "value": "Table B.2c",
                   "offset": 438,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 438,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 438,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1182,12 +1484,16 @@
                       "name": "Subband 1",
                       "offset": 438,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 438,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1195,12 +1501,16 @@
                       "name": "Subband 2",
                       "offset": 439,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 439,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1208,12 +1518,16 @@
                       "name": "Subband 3",
                       "offset": 439,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 439,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1221,12 +1535,16 @@
                       "name": "Subband 4",
                       "offset": 439,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 439,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1234,12 +1552,16 @@
                       "name": "Subband 5",
                       "offset": 440,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "127 levels",
                           "offset": 440,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1247,12 +1569,16 @@
                       "name": "Subband 6",
                       "offset": 440,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 440,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1260,12 +1586,16 @@
                       "name": "Subband 7",
                       "offset": 440,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 440,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -1275,17 +1605,23 @@
                   "name": "SCFSI",
                   "offset": 441,
                   "length": 2,
+                  "bitOffset": 2,
+                  "bitLength": 8,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 441,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3",
                           "offset": 441,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1293,12 +1629,16 @@
                       "name": "Subband 3",
                       "offset": 441,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 441,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1306,12 +1646,16 @@
                       "name": "Subband 5",
                       "offset": 441,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 441,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1319,12 +1663,16 @@
                       "name": "Subband 6",
                       "offset": 442,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1",
                           "offset": 442,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -1334,17 +1682,23 @@
                   "name": "Scalefactors",
                   "offset": 442,
                   "length": 7,
+                  "bitOffset": 2,
+                  "bitLength": 48,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 442,
                       "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "33, 50",
                           "offset": 442,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 2,
+                          "bitLength": 12
                         }
                       ]
                     },
@@ -1352,12 +1706,16 @@
                       "name": "Subband 3",
                       "offset": 443,
                       "length": 3,
+                      "bitOffset": 6,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "48, 2, 19",
                           "offset": 443,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -1365,12 +1723,16 @@
                       "name": "Subband 5",
                       "offset": 446,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "58",
                           "offset": 446,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6
                         }
                       ]
                     },
@@ -1378,12 +1740,16 @@
                       "name": "Subband 6",
                       "offset": 446,
                       "length": 3,
+                      "bitOffset": 6,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0, 17",
                           "offset": 446,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 12
                         }
                       ]
                     }
@@ -1393,7 +1759,9 @@
                   "name": "Samples",
                   "value": "432 bits",
                   "offset": 448,
-                  "length": 55
+                  "length": 55,
+                  "bitOffset": 2,
+                  "bitLength": 432
                 },
                 {
                   "name": "Ancillary Data",
@@ -1418,73 +1786,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 577,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 577,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 577,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 578,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 578,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 578,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 578,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 579,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 579,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 579,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 579,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 579,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1507,17 +1899,23 @@
                   "value": "Table B.2c",
                   "offset": 582,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 582,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 582,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1525,12 +1923,16 @@
                       "name": "Subband 1",
                       "offset": 582,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 582,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1538,12 +1940,16 @@
                       "name": "Subband 2",
                       "offset": 583,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 583,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1551,12 +1957,16 @@
                       "name": "Subband 3",
                       "offset": 583,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 583,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1564,12 +1974,16 @@
                       "name": "Subband 4",
                       "offset": 583,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "63 levels",
                           "offset": 583,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1577,12 +1991,16 @@
                       "name": "Subband 5",
                       "offset": 584,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 584,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1590,12 +2008,16 @@
                       "name": "Subband 6",
                       "offset": 584,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 584,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1603,12 +2025,16 @@
                       "name": "Subband 7",
                       "offset": 584,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 584,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -1618,17 +2044,23 @@
                   "name": "SCFSI",
                   "offset": 585,
                   "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6,
                   "children": [
                     {
                       "name": "Subband 2",
                       "offset": 585,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 585,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1636,12 +2068,16 @@
                       "name": "Subband 4",
                       "offset": 585,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 585,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1649,12 +2085,16 @@
                       "name": "Subband 5",
                       "offset": 585,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3",
                           "offset": 585,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -1664,17 +2104,23 @@
                   "name": "Scalefactors",
                   "offset": 586,
                   "length": 5,
+                  "bitOffset": 0,
+                  "bitLength": 36,
                   "children": [
                     {
                       "name": "Subband 2",
                       "offset": 586,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "54",
                           "offset": 586,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6
                         }
                       ]
                     },
@@ -1682,12 +2128,16 @@
                       "name": "Subband 4",
                       "offset": 586,
                       "length": 3,
+                      "bitOffset": 6,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1, 18, 35",
                           "offset": 586,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -1695,12 +2145,16 @@
                       "name": "Subband 5",
                       "offset": 589,
                       "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "6, 23",
                           "offset": 589,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 0,
+                          "bitLength": 12
                         }
                       ]
                     }
@@ -1710,7 +2164,9 @@
                   "name": "Samples",
                   "value": "336 bits",
                   "offset": 590,
-                  "length": 43
+                  "length": 43,
+                  "bitOffset": 4,
+                  "bitLength": 336
                 },
                 {
                   "name": "Ancillary Data",
@@ -1735,73 +2191,97 @@
                       "name": "Version",
                       "value": "MPEG-1",
                       "offset": 721,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
                     },
                     {
                       "name": "Layer",
                       "value": "II",
                       "offset": 721,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsProtected",
                       "value": "true",
                       "offset": 721,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Bitrate",
                       "value": "48 kbps",
                       "offset": 722,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
                     },
                     {
                       "name": "Sample Rate",
                       "value": "48000 Hz",
                       "offset": 722,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
                     },
                     {
                       "name": "HasPadding",
                       "value": "false",
                       "offset": 722,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsPrivate",
                       "value": "false",
                       "offset": 722,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
                     },
                     {
                       "name": "Channel Mode",
                       "value": "Mono",
                       "offset": 723,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
                     },
                     {
                       "name": "Mode Extension",
                       "value": "Not used",
                       "offset": 723,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
                     },
                     {
                       "name": "IsCopyrighted",
                       "value": "false",
                       "offset": 723,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
                     },
                     {
                       "name": "IsOriginal",
                       "value": "false",
                       "offset": 723,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
                     },
                     {
                       "name": "Emphasis",
                       "value": "None",
                       "offset": 723,
-                      "length": 1
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
                     }
                   ]
                 },
@@ -1824,17 +2304,23 @@
                   "value": "Table B.2c",
                   "offset": 726,
                   "length": 4,
+                  "bitOffset": 0,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "Subband 0",
                       "offset": 726,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 726,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1842,12 +2328,16 @@
                       "name": "Subband 1",
                       "offset": 726,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 726,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
                         }
                       ]
                     },
@@ -1855,12 +2345,16 @@
                       "name": "Subband 2",
                       "offset": 727,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 727,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1868,12 +2362,16 @@
                       "name": "Subband 3",
                       "offset": 727,
                       "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "31 levels",
                           "offset": 727,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1881,12 +2379,16 @@
                       "name": "Subband 4",
                       "offset": 727,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 727,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1894,12 +2396,16 @@
                       "name": "Subband 5",
                       "offset": 728,
                       "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 728,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1907,12 +2413,16 @@
                       "name": "Subband 6",
                       "offset": 728,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "None",
                           "offset": 728,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
                         }
                       ]
                     },
@@ -1920,12 +2430,16 @@
                       "name": "Subband 7",
                       "offset": 728,
                       "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "3 levels",
                           "offset": 728,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
                         }
                       ]
                     }
@@ -1935,17 +2449,23 @@
                   "name": "SCFSI",
                   "offset": 729,
                   "length": 2,
+                  "bitOffset": 2,
+                  "bitLength": 8,
                   "children": [
                     {
                       "name": "Subband 1",
                       "offset": 729,
                       "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "0",
                           "offset": 729,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1953,12 +2473,16 @@
                       "name": "Subband 3",
                       "offset": 729,
                       "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 729,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1966,12 +2490,16 @@
                       "name": "Subband 4",
                       "offset": 729,
                       "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "1",
                           "offset": 729,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
                         }
                       ]
                     },
@@ -1979,12 +2507,16 @@
                       "name": "Subband 7",
                       "offset": 730,
                       "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "2",
                           "offset": 730,
-                          "length": 1
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
                         }
                       ]
                     }
@@ -1994,17 +2526,23 @@
                   "name": "Scalefactors",
                   "offset": 730,
                   "length": 6,
+                  "bitOffset": 2,
+                  "bitLength": 42,
                   "children": [
                     {
                       "name": "Subband 1",
                       "offset": 730,
                       "length": 3,
+                      "bitOffset": 2,
+                      "bitLength": 18,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "60, 14, 31",
                           "offset": 730,
-                          "length": 3
+                          "length": 3,
+                          "bitOffset": 2,
+                          "bitLength": 18
                         }
                       ]
                     },
@@ -2012,12 +2550,16 @@
                       "name": "Subband 3",
                       "offset": 732,
                       "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "7",
                           "offset": 732,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 4,
+                          "bitLength": 6
                         }
                       ]
                     },
@@ -2025,12 +2567,16 @@
                       "name": "Subband 4",
                       "offset": 733,
                       "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 12,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "12, 29",
                           "offset": 733,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 2,
+                          "bitLength": 12
                         }
                       ]
                     },
@@ -2038,12 +2584,16 @@
                       "name": "Subband 7",
                       "offset": 734,
                       "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6,
                       "children": [
                         {
                           "name": "Channel 0",
                           "value": "27",
                           "offset": 734,
-                          "length": 2
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6
                         }
                       ]
                     }
@@ -2053,7 +2603,9 @@
                   "name": "Samples",
                   "value": "360 bits",
                   "offset": 735,
-                  "length": 46
+                  "length": 46,
+                  "bitOffset": 4,
+                  "bitLength": 360
                 },
                 {
                   "name": "Ancillary Data",
