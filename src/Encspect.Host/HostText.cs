@@ -7,6 +7,8 @@ internal static class HostText
     public const string Detection = "How sure the analyzer is that these bytes are a real tag, from where they sit and how well their structure checks out.";
     public const string Evidence = "One check that supports the detection, at the bytes it looked at.";
     public const string UnrecognizedData = "Bytes that no tag claims and no format parser recognized.";
+
+    public const string DataAfterContainer = "Bytes after the end a container format declares for itself, between or after tags a SEEK frame led to; neither a tag nor the format claims them.";
 }
 
 // The background articles the host's nodes point to.
