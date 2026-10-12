@@ -220,9 +220,9 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | --- | --- |
 | 1 (v1) | MP1/2/3 and tags: all tags, side info, Xing, LAME, VBRI, reference tests |
 | Gate 1 (passed) | Pipeline green everywhere, review findings fixed, abstractions settled |
-| 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV7 and SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core |
+| 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV7 and SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core; WavPack, whose hybrid mode is lossy (a lossy .wv file and an optional .wvc correction file), with its lossless mode in the same parser |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
-| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, WavPack, Monkey's Audio, TTA |
+| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
 | 4 | TAK and OptimFROG at header level only |
 | Later, order not fixed | MP3 scalefactor and Huffman analysis; decoders for waveform and spectrogram, format by format |
