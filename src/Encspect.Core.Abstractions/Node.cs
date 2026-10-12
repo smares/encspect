@@ -18,7 +18,7 @@ public sealed class Node
     // hundreds of thousands of nodes, so the bit position takes no more than an int.
     private int _bits = -1;
 
-    public Node(string name, long offset, long length, string? value = null)
+    public Node(string name, long offset, long length, NodeValue? value = null)
         : this(name, offset, length, value, null)
     {
         _children = [];
@@ -28,7 +28,7 @@ public sealed class Node
     // are built when they are first read and held only weakly, so they are built again once
     // collected and a report never keeps all of them in memory. Such a node takes no added
     // children.
-    public Node(string name, long offset, long length, string? value, Func<IReadOnlyList<Node>>? build)
+    public Node(string name, long offset, long length, NodeValue? value, Func<IReadOnlyList<Node>>? build)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentOutOfRangeException.ThrowIfNegative(offset);
@@ -54,7 +54,9 @@ public sealed class Node
 
     public int? BitLength => _bits < 0 ? null : _bits >> 3;
 
-    public string? Value { get; set; }
+    public NodeValue? Value { get; set; }
+
+    public NodeKind Kind { get; init; }
 
     public IReadOnlyList<Node> Children
     {
@@ -103,14 +105,14 @@ public sealed class Node
     // A node for bits [startBit, endBit) counted from the most significant bit of the byte at
     // offset. It covers every byte those bits touch, and carries the bit position unless the bits
     // are whole bytes; an empty field inside a byte covers that byte.
-    public static Node FromBits(string name, long offset, long startBit, long endBit, string? value = null)
+    public static Node FromBits(string name, long offset, long startBit, long endBit, NodeValue? value = null, NodeKind kind = NodeKind.Detail)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(startBit);
         ArgumentOutOfRangeException.ThrowIfLessThan(endBit, startBit);
 
         long first = offset + (startBit / 8);
         long length = endBit == startBit ? (startBit % 8 == 0 ? 0 : 1) : ((endBit - 1) / 8) - (startBit / 8) + 1;
-        var node = new Node(name, first, length, value);
+        var node = new Node(name, first, length, value) { Kind = kind };
 
         // A span of more than 256 Mbit is no field; its bytes alone place it.
         bool isWholeBytes = startBit % 8 == 0 && endBit % 8 == 0;
@@ -122,7 +124,7 @@ public sealed class Node
         return node;
     }
 
-    public Node Add(string name, long offset, long length, string? value = null) => Add(new Node(name, offset, length, value));
+    public Node Add(string name, long offset, long length, NodeValue? value = null) => Add(new Node(name, offset, length, value));
 
     public Node Add(Node child)
     {

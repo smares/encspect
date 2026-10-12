@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v23-compressed-frame.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 67,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "57",
+                  "value": 57,
                   "offset": 6,
                   "length": 4
                 }
@@ -82,49 +88,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "6",
+                      "value": 6,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -165,49 +171,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "23",
+                      "value": 23,
                       "offset": 30,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0080",
+                      "value": 128,
                       "offset": 34,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 34,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 34,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 34,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "true",
+                          "value": true,
                           "offset": 34,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 34,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 34,
                           "length": 2
                         }
@@ -215,7 +221,7 @@
                     },
                     {
                       "name": "Decompressed Size",
-                      "value": "11",
+                      "value": 11,
                       "offset": 36,
                       "length": 4
                     }
@@ -223,7 +229,8 @@
                 },
                 {
                   "name": "Compressed Data",
-                  "value": "19 bytes",
+                  "value": 19,
+                  "unit": "bytes",
                   "offset": 40,
                   "length": 19
                 },
@@ -243,7 +250,8 @@
             },
             {
               "name": "Padding",
-              "value": "8 bytes",
+              "value": 8,
+              "unit": "bytes",
               "offset": 59,
               "length": 8
             },
@@ -294,20 +302,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "id3v2.frame-compressed",
         "message": "Frame TSSE is zlib-compressed; its content is shown decompressed, with every field pointing at the compressed data.",
         "offset": 26,
-        "length": 33
+        "length": 33,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 67,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

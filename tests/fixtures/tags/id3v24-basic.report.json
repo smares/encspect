@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v24-basic.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.4.0",
           "offset": 0,
           "length": 305,
@@ -31,31 +37,31 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x40",
+                  "value": 64,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasFooter",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -63,7 +69,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "295",
+                  "value": 295,
                   "offset": 6,
                   "length": 4
                 }
@@ -76,37 +82,37 @@
               "children": [
                 {
                   "name": "Size",
-                  "value": "15",
+                  "value": 15,
                   "offset": 10,
                   "length": 4
                 },
                 {
                   "name": "Flag Bytes",
-                  "value": "1",
+                  "value": 1,
                   "offset": 14,
                   "length": 1
                 },
                 {
                   "name": "Flags",
-                  "value": "0x70",
+                  "value": 112,
                   "offset": 15,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUpdate",
-                      "value": "true",
+                      "value": true,
                       "offset": 15,
                       "length": 1
                     },
                     {
                       "name": "HasCrc",
-                      "value": "true",
+                      "value": true,
                       "offset": 15,
                       "length": 1
                     },
                     {
                       "name": "HasRestrictions",
-                      "value": "true",
+                      "value": true,
                       "offset": 15,
                       "length": 1
                     }
@@ -114,19 +120,20 @@
                 },
                 {
                   "name": "Update",
-                  "value": "0 bytes",
+                  "value": 0,
+                  "unit": "bytes",
                   "offset": 16,
                   "length": 1
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA554F800",
+                  "value": 2773809152,
                   "offset": 17,
                   "length": 6,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA554F800",
+                      "value": 2773809152,
                       "offset": 17,
                       "length": 6
                     }
@@ -134,7 +141,7 @@
                 },
                 {
                   "name": "Restrictions",
-                  "value": "0x55",
+                  "value": 85,
                   "offset": 23,
                   "length": 2,
                   "children": [
@@ -191,61 +198,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "18",
+                      "value": 18,
                       "offset": 29,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 33,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 33,
                           "length": 2
                         }
@@ -286,61 +293,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "22",
+                      "value": 22,
                       "offset": 57,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 61,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 2
                         }
@@ -387,61 +394,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "29",
+                      "value": 29,
                       "offset": 89,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 93,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 93,
                           "length": 2
                         }
@@ -482,61 +489,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "11",
+                      "value": 11,
                       "offset": 128,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 132,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 132,
                           "length": 2
                         }
@@ -577,61 +584,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "21",
+                      "value": 21,
                       "offset": 149,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 153,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 153,
                           "length": 2
                         }
@@ -678,61 +685,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "34",
+                      "value": 34,
                       "offset": 180,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0001",
+                      "value": 1,
                       "offset": 184,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 184,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "true",
+                          "value": true,
                           "offset": 184,
                           "length": 2
                         }
@@ -740,7 +747,7 @@
                     },
                     {
                       "name": "Data Length",
-                      "value": "30",
+                      "value": 30,
                       "offset": 186,
                       "length": 4
                     }
@@ -785,61 +792,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "35",
+                      "value": 35,
                       "offset": 224,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0003",
+                      "value": 3,
                       "offset": 228,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "true",
+                          "value": true,
                           "offset": 228,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "true",
+                          "value": true,
                           "offset": 228,
                           "length": 2
                         }
@@ -847,7 +854,7 @@
                     },
                     {
                       "name": "Data Length",
-                      "value": "29",
+                      "value": 29,
                       "offset": 230,
                       "length": 4
                     }
@@ -879,7 +886,8 @@
                 },
                 {
                   "name": "Picture Data",
-                  "value": "11 bytes",
+                  "value": 11,
+                  "unit": "bytes",
                   "offset": 252,
                   "length": 13
                 }
@@ -904,61 +912,61 @@
                     },
                     {
                       "name": "Size",
-                      "value": "10",
+                      "value": 10,
                       "offset": 269,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x1000",
+                      "value": 4096,
                       "offset": 273,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "true",
+                          "value": true,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "IsUnsynchronized",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         },
                         {
                           "name": "HasDataLengthIndicator",
-                          "value": "false",
+                          "value": false,
                           "offset": 273,
                           "length": 2
                         }
@@ -982,7 +990,8 @@
             },
             {
               "name": "Padding",
-              "value": "20 bytes",
+              "value": 20,
+              "unit": "bytes",
               "offset": 285,
               "length": 20
             },
@@ -1039,13 +1048,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 305,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

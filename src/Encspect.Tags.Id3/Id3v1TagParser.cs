@@ -31,7 +31,7 @@ public sealed class Id3v1TagParser : ITagParser
         // ID3v1.1: a zero byte at comment offset 28 followed by a non-zero track number.
         bool isV11 = data[125] == 0 && data[126] != 0;
 
-        var tag = new Node(Name, start, TagSize, isV11 ? "1.1" : "1.0");
+        var tag = new Node(Name, start, TagSize, isV11 ? "1.1" : "1.0") { Kind = NodeKind.Tag };
         var nonText = new List<string>();
 
         tag.Add("Signature", start, 3, "TAG");
@@ -39,7 +39,7 @@ public sealed class Id3v1TagParser : ITagParser
         AddText(tag, "Artist", data, start, 33, 30, nonText);
         AddText(tag, "Album", data, start, 63, 30, nonText);
         Node year = AddText(tag, "Year", data, start, 93, 4, nonText);
-        if (year.Value!.Length > 0 && !year.Value.All(char.IsAsciiDigit))
+        if (year.Value!.ToString() is { Length: > 0 } yearText && !yearText.All(char.IsAsciiDigit))
         {
             findings.Add(new Finding(Severity.Warning, "id3v1.year-not-numeric", $"The ID3v1 year \"{year.Value}\" is not a number.", year));
         }
@@ -47,7 +47,7 @@ public sealed class Id3v1TagParser : ITagParser
         if (isV11)
         {
             AddText(tag, "Comment", data, start, 97, 28, nonText);
-            tag.Add("Track", start + 126, 1, data[126].ToString(System.Globalization.CultureInfo.InvariantCulture));
+            tag.Add("Track", start + 126, 1, NodeValue.Integer(data[126]));
         }
         else
         {

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-size-too-large.mp3",
     "root": {
       "name": "File",
@@ -13,20 +18,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 149
+        "length": 149,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "tag.rejected",
         "message": "APE candidate at 0x75 (EOF-32) rejected: the tag size 100000 exceeds the 149 bytes up to the end of the footer.",
         "offset": 0,
-        "length": 149
+        "length": 149,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

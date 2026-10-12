@@ -120,6 +120,17 @@ internal static class Program
             previousEnd = region.End;
         }
 
+        // A finding's node must be a node of the tree, which the host found a path to.
+        if (report.Findings.FirstOrDefault(f => f.Node is not null && f.Path is null) is { } lost)
+        {
+            return $"the node of {lost.Code} ({lost.Node!.Name} at {lost.Node.Offset}, {lost.Node.Length} bytes) is not in the tree.";
+        }
+
+        if (report.Streams.Any(s => s.NodePaths.Any(p => p is null)))
+        {
+            return "a stream's node is not in the tree.";
+        }
+
         return OutsideParent(report.Root) ?? (report.Findings.Any(f => f.Node is null) ? "a finding has no node." : null);
     }
 
@@ -127,7 +138,7 @@ internal static class Program
     {
         foreach (Node child in parent.Children)
         {
-            if (child is { Name: "Error", Value: { } error } && error.StartsWith("The children could not be built", StringComparison.Ordinal))
+            if (child is { Name: "Error", Value: { } value } && value.ToString() is var error && error.StartsWith("The children could not be built", StringComparison.Ordinal))
             {
                 return $"{error} (under {parent.Name} at {parent.Offset})";
             }

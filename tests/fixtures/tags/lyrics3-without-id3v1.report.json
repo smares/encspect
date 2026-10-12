@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3-without-id3v1.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 68,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "3",
+                  "value": 3,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,19 +55,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "false",
+                  "value": false,
                   "offset": 532,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 533,
                   "length": 1
                 }
@@ -81,7 +87,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "23",
+                  "value": 23,
                   "offset": 537,
                   "length": 5
                 },
@@ -109,7 +115,7 @@
             },
             {
               "name": "Size",
-              "value": "53",
+              "value": 53,
               "offset": 565,
               "length": 6
             },
@@ -149,20 +155,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.lyrics3-without-id3v1",
         "message": "The Lyrics3 tag at 0x200 is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 512,
-        "length": 68
+        "length": 68,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

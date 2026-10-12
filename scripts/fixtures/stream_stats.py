@@ -1,4 +1,5 @@
-"""The statistics the analyzer reports for each MPEG Audio region, computed from a fixture's frames.
+"""The statistics the analyzer reports for each MPEG Audio region and each stream, computed from a
+fixture's frames.
 
 This is the second implementation the analyzer's statistics are checked against; the cross-check
 confirms both with mp3guessenc, mpg123 and ffmpeg. Its definitions:
@@ -7,10 +8,12 @@ confirms both with mp3guessenc, mpg123 and ffmpeg. Its definitions:
   not a truncated last frame. Time runs on a clock of 1/14,112,000 s (ffmpeg's time base for MP3,
   which every MPEG sample rate divides), so frames of different sample rates add up exactly.
 - Rounding is half to even, as printf rounds mp3guessenc's figures, on exact fractions.
-- "Bitrate Over Time" holds, for each second of audio, the bitrate of the frames that start in it
-  (their bits over their duration) in kbps; "Reservoir Fill Over Time" the mean reservoir fill of
-  the Layer III frames that start in it, in bytes, as each frame's side information reports it.
-  Both are comma-separated, for regions of Layer III frames only in the case of the reservoir.
+- A stream is a run of frames of one version, layer, sample rate and free format or not, in file
+  order across gaps and tags; the next frame of another kind starts the next stream. Its "bitrate
+  over time" holds, for each second of audio, the bitrate of the frames that start in it (their
+  bits over their duration) in kbps; its "reservoir fill over time" the mean reservoir fill of the
+  Layer III frames that start in it, in bytes, as each frame's side information reports it. Both
+  are comma-separated, for streams of Layer III frames only in the case of the reservoir.
 - "Gapless": with a LAME tag, the samples of the frames the tag covers minus its encoder delay and
   padding (LAME and ffmpeg's convention; decoders that trim by them output exactly that many).
 - "VBR Header": the frame and byte counts a header claims, and the ones counted from its frame to
@@ -60,6 +63,11 @@ class FrameInfo:
     @property
     def stream(self):
         return self.version, self.layer, self.rate
+
+    @property
+    def stream_key(self):
+        """What the analyzer's MpegHeader.IsSameStream compares."""
+        return self.version, self.layer, self.rate, self.bitrate is None
 
     @property
     def is_audio(self):
@@ -133,24 +141,8 @@ def region_fields(frames, all_frames):
         name = "free" if bitrate is None else f"{bitrate} kbps"
         fields[f"Statistics/Bitrate Distribution/{name}"] = f"{frames_text(counts[bitrate])} ({tenths // 10}.{tenths % 10}%)"
 
-    per_second = {}
-    time = 0
-    for f in audio:
-        second = time // CLOCK
-        entry = per_second.setdefault(second, [0, 0, 0, 0])
-        entry[0] += f.length * 8
-        entry[1] += f.ticks
-        if f.fill is not None:
-            entry[2] += f.fill
-            entry[3] += 1
-        time += f.ticks
-    seconds = range(max(per_second) + 1)
-    fields["Statistics/Bitrate Over Time"] = ",".join(
-        str(rounded(Fraction(per_second[s][0] * CLOCK, per_second[s][1] * 1000))) if s in per_second else "0" for s in seconds)
     if all(f.layer == "III" for f in audio):
         fields["Statistics/Maximum Reservoir Fill"] = f"{max(f.fill for f in audio)} bytes"
-        fields["Statistics/Reservoir Fill Over Time"] = ",".join(
-            str(rounded(Fraction(per_second[s][2], per_second[s][3]))) if s in per_second else "0" for s in seconds)
 
     counts = lames = 0
     for header_frame in (f for f in frames if f.header is not None):
@@ -172,6 +164,50 @@ def region_fields(frames, all_frames):
                 fields["Statistics/Gapless" + (f"[{lames}]" if lames else "")] = scope
         counts += has_counts
         lames += has_lame
+    return fields
+
+
+def streams(all_frames):
+    """The streams of a file, each with its figures over its complete audio frames."""
+    runs = []
+    for f in all_frames:
+        if not runs or runs[-1][-1].stream_key != f.stream_key:
+            runs.append([])
+        runs[-1].append(f)
+    return [stream_fields(run) for run in runs]
+
+
+def stream_fields(frames):
+    first = frames[0]
+    audio = [f for f in frames if f.is_audio]
+    ticks = sum(f.ticks for f in audio)
+    fields = {
+        "codec": f"{first.version} Layer {first.layer}",
+        "sample_rate": first.rate,
+        "samples": sum(f.samples for f in audio),
+        "duration": duration_text(ticks),
+    }
+    if not audio:
+        return fields
+    fields["average_bitrate"] = kbps_tenths_text(sum(f.length * 8 for f in audio), ticks)
+    fields["is_vbr"] = len({f.bitrate for f in audio}) > 1
+    per_second = {}
+    time = 0
+    for f in audio:
+        second = time // CLOCK
+        entry = per_second.setdefault(second, [0, 0, 0, 0])
+        entry[0] += f.length * 8
+        entry[1] += f.ticks
+        if f.fill is not None:
+            entry[2] += f.fill
+            entry[3] += 1
+        time += f.ticks
+    seconds = range(max(per_second) + 1)
+    fields["bitrate_over_time"] = ",".join(
+        str(rounded(Fraction(per_second[s][0] * CLOCK, per_second[s][1] * 1000))) if s in per_second else "0" for s in seconds)
+    if all(f.layer == "III" for f in audio):
+        fields["reservoir_fill_over_time"] = ",".join(
+            str(rounded(Fraction(per_second[s][2], per_second[s][3]))) if s in per_second else "0" for s in seconds)
     return fields
 
 

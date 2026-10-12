@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-header-says-no-footer.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 512,
           "length": 83,
@@ -30,49 +36,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 520,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "51",
+                  "value": 51,
                   "offset": 524,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 528,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xE0000000",
+                  "value": 3758096384,
                   "offset": 532,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "false",
+                      "value": false,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 532,
                       "length": 4
                     }
@@ -87,7 +93,8 @@
             },
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 544,
               "length": 19,
               "children": [
@@ -99,19 +106,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "5",
+                      "value": 5,
                       "offset": 544,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 548,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 548,
                           "length": 4
                         },
@@ -152,49 +159,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 571,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "51",
+                  "value": 51,
                   "offset": 575,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 579,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 583,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 583,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 583,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 583,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 583,
                       "length": 4
                     }
@@ -231,20 +238,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.header-mismatch",
         "message": "The header disagrees with the footer: the contains-no-footer flag is set.",
         "offset": 512,
-        "length": 83
+        "length": 83,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

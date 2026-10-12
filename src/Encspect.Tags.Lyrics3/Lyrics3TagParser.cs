@@ -81,7 +81,7 @@ public sealed class Lyrics3TagParser : ITagParser
         long lyricsStart = start + Begin.Length;
         long lyricsLength = marker - lyricsStart;
         ReadOnlySpan<byte> lyricsBytes = span[(index + Begin.Length)..];
-        var tag = new Node(Name, start, end - start, "1.00");
+        var tag = new Node(Name, start, end - start, "1.00") { Kind = NodeKind.Tag };
         tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
         string lyrics = Encoding.Latin1.GetString(lyricsBytes);
         Node lyricsNode = tag.Add("Lyrics", lyricsStart, lyricsLength, lyrics);
@@ -169,7 +169,7 @@ public sealed class Lyrics3TagParser : ITagParser
         }
 
         byte[] data = reader.ReadBytesAt(start, (int)size);
-        var tag = new Node(Name, start, end - start, "2.00");
+        var tag = new Node(Name, start, end - start, "2.00") { Kind = NodeKind.Tag };
         var findings = new List<Finding>();
         tag.Add("Begin", start, Begin.Length, "LYRICSBEGIN");
 
@@ -220,7 +220,7 @@ public sealed class Lyrics3TagParser : ITagParser
 
             if (problem is not null)
             {
-                Node unparsed = tag.Add("Unparsed", start + pos, data.Length - pos, $"{data.Length - pos} bytes");
+                Node unparsed = tag.Add("Unparsed", start + pos, data.Length - pos, NodeValue.Integer(data.Length - pos, "bytes"));
                 findings.Add(new Finding(Severity.Warning, "lyrics3.fields-invalid", $"{problem} The rest of the fields is not parsed.", unparsed));
                 confidence = Confidence.Low;
                 break;
@@ -230,7 +230,7 @@ public sealed class Lyrics3TagParser : ITagParser
             string value = Encoding.Latin1.GetString(data, pos + 8, fieldSize);
             Node field = tag.Add(id, fieldStart, 8 + fieldSize, value);
             field.Add("ID", fieldStart, 3, id);
-            field.Add("Size", fieldStart + 3, 5, fieldSize.ToString(CultureInfo.InvariantCulture));
+            field.Add("Size", fieldStart + 3, 5, NodeValue.Integer(fieldSize));
             Node dataNode = field.Add("Data", fieldStart + 8, fieldSize, value);
 
             // Lyrics3 v2.00: field data consists of characters 01 to 254.
@@ -258,7 +258,7 @@ public sealed class Lyrics3TagParser : ITagParser
                 string[] indicators = ["HasLyrics", "HasTimestamps", "IsRandomSelectionInhibited"];
                 for (int i = 0; i < Math.Min(fieldSize, indicators.Length); i++)
                 {
-                    field.Add(indicators[i], fieldStart + 8 + i, 1, Bool(value, i));
+                    field.Add(indicators[i], fieldStart + 8 + i, 1, NodeValue.Boolean(IsSet(value, i)));
                 }
 
                 // The 1998 Lyrics3 v2.00 text defines 2 characters, id3.org's later one 3.
@@ -293,18 +293,18 @@ public sealed class Lyrics3TagParser : ITagParser
 
         if (indications is ({ } flags, { } indNode))
         {
-            if ((Bool(flags, 0) == "true") != hasLyricsField)
+            if (IsSet(flags, 0) != hasLyricsField)
             {
                 findings.Add(new Finding(Severity.Warning, "lyrics3.ind-mismatch", $"IND says the tag {(hasLyricsField ? "has no" : "has a")} LYR field, but it {(hasLyricsField ? "has one" : "has none")}.", indNode));
             }
 
-            if ((Bool(flags, 1) == "true") != hasTimestamps)
+            if (IsSet(flags, 1) != hasTimestamps)
             {
                 findings.Add(new Finding(Severity.Warning, "lyrics3.ind-mismatch", $"IND says the lyrics {(hasTimestamps ? "have no" : "have")} timestamps, but they {(hasTimestamps ? "have some" : "have none")}.", indNode));
             }
         }
 
-        tag.Add("Size", sizeStart, SizeFieldLength, size.ToString(CultureInfo.InvariantCulture));
+        tag.Add("Size", sizeStart, SizeFieldLength, NodeValue.Integer(size));
         tag.Add("End", marker, MarkerSize, "LYRICS200");
 
         if (confidence == Confidence.High)
@@ -401,6 +401,5 @@ public sealed class Lyrics3TagParser : ITagParser
         }
     }
 
-    private static string Bool(string indications, int index) =>
-        index < indications.Length && indications[index] == '1' ? "true" : "false";
+    private static bool IsSet(string indications, int index) => index < indications.Length && indications[index] == '1';
 }

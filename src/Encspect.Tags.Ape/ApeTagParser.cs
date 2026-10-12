@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Buffers.Binary;
-using System.Globalization;
 using System.Text;
 using System.Text.Unicode;
 using Encspect.Core;
@@ -218,13 +217,13 @@ public sealed class ApeTagParser : ITagParser
 
         public TagProbe Build(long tagStart, long tagEnd, long itemsStart, long itemsEnd)
         {
-            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0");
+            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0") { Kind = NodeKind.Tag };
             if (Header is { } header)
             {
                 AddBlock(tag, "Header", header.Offset, header.Block);
             }
 
-            Node items = tag.Add("Items", itemsStart, itemsEnd - itemsStart, $"{anchor.ItemCount} items");
+            Node items = tag.Add("Items", itemsStart, itemsEnd - itemsStart, NodeValue.Integer(anchor.ItemCount, "items"));
             string? itemProblem = ParseItems(items, itemsStart, itemsEnd, out long parsedEnd);
             if (itemProblem is null)
             {
@@ -232,7 +231,7 @@ public sealed class ApeTagParser : ITagParser
             }
             else
             {
-                Node unparsed = tag.Add("Unparsed", parsedEnd, itemsEnd - parsedEnd, $"{itemsEnd - parsedEnd} bytes");
+                Node unparsed = tag.Add("Unparsed", parsedEnd, itemsEnd - parsedEnd, NodeValue.Integer(itemsEnd - parsedEnd, "bytes"));
                 Problem(unparsed, "ape.items-invalid", $"{itemProblem} The remaining {itemsEnd - parsedEnd} bytes are not parsed.", Confidence.Low);
             }
 
@@ -242,7 +241,7 @@ public sealed class ApeTagParser : ITagParser
             }
             else if (MissingFooter is { } footerStart)
             {
-                Node missing = tag.Add("Unparsed", footerStart, BlockSize, $"{BlockSize} bytes");
+                Node missing = tag.Add("Unparsed", footerStart, BlockSize, NodeValue.Integer(BlockSize, "bytes"));
                 Problem(missing, "ape.footer-missing", $"The header announces a footer, but there is no \"APETAGEX\" footer at 0x{footerStart:X}.", Confidence.Medium);
             }
 
@@ -306,12 +305,12 @@ public sealed class ApeTagParser : ITagParser
 
                 long itemEnd = valueStart + valueSize;
                 Node item = items.Add(key, pos, itemEnd - pos);
-                item.Add("Size", pos, 4, valueSize.ToString(CultureInfo.InvariantCulture));
+                item.Add("Size", pos, 4, NodeValue.Integer(valueSize));
 
                 // APEv1 defines no item flags: every value is text.
                 int type = IsV1 ? 0 : (int)((flags >> 1) & 0x03);
-                Node flagsNode = item.Add("Flags", pos + 4, 4, $"0x{flags:X8}");
-                flagsNode.Add("IsReadOnly", pos + 4, 4, !IsV1 && (flags & 1) != 0 ? "true" : "false");
+                Node flagsNode = item.Add("Flags", pos + 4, 4, NodeValue.Hex(flags, 8));
+                flagsNode.Add("IsReadOnly", pos + 4, 4, NodeValue.Boolean(!IsV1 && (flags & 1) != 0));
                 flagsNode.Add("Item Type", pos + 4, 4, ItemTypes[type]);
                 item.Add("Key", pos + 8, keyLength, key);
 
@@ -359,11 +358,11 @@ public sealed class ApeTagParser : ITagParser
         }
 
         // APEv2 text and external values are UTF-8; text may hold several values separated by $00.
-        private string AddValue(Node item, string key, long start, uint size, int type)
+        private NodeValue AddValue(Node item, string key, long start, uint size, int type)
         {
             if (type is 1 or 3)
             {
-                string bytes = $"{size} bytes";
+                NodeValue bytes = NodeValue.Integer(size, "bytes");
                 item.Add("Value", start, size, bytes);
                 return bytes;
             }
@@ -433,17 +432,17 @@ public sealed class ApeTagParser : ITagParser
         {
             Node node = tag.Add(name, offset, BlockSize);
             node.Add("Preamble", offset, 8, "APETAGEX");
-            node.Add("Version", offset + 8, 4, block.Version.ToString(CultureInfo.InvariantCulture));
-            node.Add("Tag Size", offset + 12, 4, block.Size.ToString(CultureInfo.InvariantCulture));
-            node.Add("Item Count", offset + 16, 4, block.ItemCount.ToString(CultureInfo.InvariantCulture));
+            node.Add("Version", offset + 8, 4, NodeValue.Integer(block.Version));
+            node.Add("Tag Size", offset + 12, 4, NodeValue.Integer(block.Size));
+            node.Add("Item Count", offset + 16, 4, NodeValue.Integer(block.ItemCount));
 
-            Node flags = node.Add("Flags", offset + 20, 4, $"0x{block.Flags:X8}");
+            Node flags = node.Add("Flags", offset + 20, 4, NodeValue.Hex(block.Flags, 8));
             if (block.Version == 2000)
             {
-                flags.Add("HasHeader", offset + 20, 4, block.HasHeader ? "true" : "false");
-                flags.Add("HasFooter", offset + 20, 4, block.HasFooter ? "true" : "false");
-                flags.Add("IsHeader", offset + 20, 4, block.IsHeader ? "true" : "false");
-                flags.Add("IsReadOnly", offset + 20, 4, (block.Flags & 1) != 0 ? "true" : "false");
+                flags.Add("HasHeader", offset + 20, 4, NodeValue.Boolean(block.HasHeader));
+                flags.Add("HasFooter", offset + 20, 4, NodeValue.Boolean(block.HasFooter));
+                flags.Add("IsHeader", offset + 20, 4, NodeValue.Boolean(block.IsHeader));
+                flags.Add("IsReadOnly", offset + 20, 4, NodeValue.Boolean((block.Flags & 1) != 0));
                 if ((block.Flags & UndefinedTagFlags) != 0)
                 {
                     Problem(flags, "ape.flags-unknown", $"The {name.ToLowerInvariant()} sets undefined flag bits 0x{block.Flags & UndefinedTagFlags:X8}.", Confidence.Medium);

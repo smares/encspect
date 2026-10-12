@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v23-utf16-second-string-without-bom.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 80,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "70",
+                  "value": 70,
                   "offset": 6,
                   "length": 4
                 }
@@ -82,49 +88,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "4",
+                      "value": 4,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -165,49 +171,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "38",
+                      "value": 38,
                       "offset": 28,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 32,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 32,
                           "length": 2
                         }
@@ -243,7 +249,8 @@
             },
             {
               "name": "Padding",
-              "value": "8 bytes",
+              "value": 8,
+              "unit": "bytes",
               "offset": 72,
               "length": 8
             },
@@ -288,20 +295,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "id3v2.utf16-without-bom",
         "message": "Frame COMM has a UTF-16 string without a byte order mark after one with it; the earlier byte order is assumed.",
         "offset": 24,
-        "length": 48
+        "length": 48,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 80,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

@@ -1,11 +1,22 @@
+using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Encspect.Core;
 
 namespace Encspect.Host;
 
+// Schema version 1: per report schemaVersion, tool, source, root, streams and findings. A node has
+// name, kind (unless Detail), value as a JSON string, number or boolean, unit, offset, length,
+// bitOffset and bitLength, and children; a finding has severity, code, message, offset, length,
+// path and count.
 public static class ReportJsonWriter
 {
+    // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
+    public const int SchemaVersion = 1;
+
+    public static string ToolVersion { get; } =
+        typeof(ReportJsonWriter).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
+
     // Utf8JsonWriter buffers everything until it is flushed, which for a report with a node per
     // frame header field means the whole document in memory. Flushing once this much is pending
     // keeps memory flat however large the report gets.
@@ -67,10 +78,23 @@ public static class ReportJsonWriter
     private static void WriteReport(Utf8JsonWriter writer, Report report, ReportFilter filter)
     {
         writer.WriteStartObject();
+        writer.WriteNumber("schemaVersion", SchemaVersion);
+        writer.WriteStartObject("tool");
+        writer.WriteString("name", "encspect");
+        writer.WriteString("version", ToolVersion);
+        writer.WriteEndObject();
         writer.WriteString("source", report.Source);
 
         writer.WritePropertyName("root");
         WriteNode(writer, report.Root, filter, 0);
+
+        writer.WriteStartArray("streams");
+        foreach (StreamInfo stream in report.Streams)
+        {
+            WriteStream(writer, stream);
+        }
+
+        writer.WriteEndArray();
 
         writer.WriteStartArray("findings");
         foreach (Finding finding in report.Findings)
@@ -85,11 +109,139 @@ public static class ReportJsonWriter
                 writer.WriteNumber("length", finding.Node.Length);
             }
 
+            if (finding.Path is { } path)
+            {
+                WritePath(writer, "path", path);
+            }
+
+            writer.WriteNumber("count", finding.Count);
             writer.WriteEndObject();
         }
 
         writer.WriteEndArray();
         writer.WriteEndObject();
+    }
+
+    private static void WriteStream(Utf8JsonWriter writer, StreamInfo stream)
+    {
+        writer.WriteStartObject();
+        writer.WriteStartArray("nodes");
+        foreach (IReadOnlyList<int>? path in stream.NodePaths)
+        {
+            if (path is null)
+            {
+                writer.WriteNullValue();
+            }
+            else
+            {
+                WritePath(writer, null, path);
+            }
+        }
+
+        writer.WriteEndArray();
+        writer.WriteString("codec", stream.Codec);
+        writer.WriteNumber("sampleRate", stream.SampleRate);
+        writer.WriteNumber("channels", stream.Channels);
+        if (stream.ChannelMode is not null)
+        {
+            writer.WriteString("channelMode", stream.ChannelMode);
+        }
+
+        if (stream.BitsPerSample is { } bitsPerSample)
+        {
+            writer.WriteNumber("bitsPerSample", bitsPerSample);
+        }
+
+        writer.WriteNumber("samples", stream.Samples);
+        writer.WriteNumber("duration", stream.Duration);
+        if (stream.AverageBitrate is { } bitrate)
+        {
+            writer.WriteNumber("averageBitrate", bitrate);
+        }
+
+        writer.WriteBoolean("isVbr", stream.IsVbr);
+        if (stream.Encoder is not null)
+        {
+            writer.WriteString("encoder", stream.Encoder);
+        }
+
+        if (stream.EncoderConfidence is { } confidence)
+        {
+            writer.WriteString("encoderConfidence", confidence.ToString());
+        }
+
+        writer.WriteStartArray("series");
+        foreach (Series series in stream.Series)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("name", series.Name);
+            writer.WriteString("unit", series.Unit);
+            writer.WriteString("axis", series.Axis == SeriesAxis.FrameOffset ? "frameOffset" : "seconds");
+            WriteNumbers(writer, "x", series.X.Span);
+            WriteNumbers(writer, "values", series.Values.Span);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static void WriteNumbers(Utf8JsonWriter writer, string name, ReadOnlySpan<double> values)
+    {
+        writer.WriteStartArray(name);
+        foreach (double value in values)
+        {
+            writer.WriteNumberValue(value);
+            if (writer.BytesPending > FlushThreshold)
+            {
+                writer.Flush();
+            }
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WritePath(Utf8JsonWriter writer, string? name, IReadOnlyList<int> path)
+    {
+        if (name is null)
+        {
+            writer.WriteStartArray();
+        }
+        else
+        {
+            writer.WriteStartArray(name);
+        }
+
+        foreach (int index in path)
+        {
+            writer.WriteNumberValue(index);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteValue(Utf8JsonWriter writer, NodeValue value)
+    {
+        switch (value.Kind)
+        {
+            case NodeValueKind.Integer or NodeValueKind.Hex:
+                writer.WriteNumber("value", value.AsInteger()!.Value);
+                break;
+            case NodeValueKind.Decimal:
+                writer.WriteNumber("value", value.AsDouble()!.Value);
+                break;
+            case NodeValueKind.Boolean:
+                writer.WriteBoolean("value", value.AsBoolean()!.Value);
+                break;
+            default:
+                writer.WriteString("value", value.AsText());
+                break;
+        }
+
+        if (value.Unit is not null)
+        {
+            writer.WriteString("unit", value.Unit);
+        }
     }
 
     // depth: levels below the root. Children nested deeper than Node.MaxDepth are left out, and
@@ -98,9 +250,14 @@ public static class ReportJsonWriter
     {
         writer.WriteStartObject();
         writer.WriteString("name", node.Name);
-        if (node.Value is not null)
+        if (node.Kind != NodeKind.Detail)
         {
-            writer.WriteString("value", node.Value);
+            writer.WriteString("kind", node.Kind.ToString());
+        }
+
+        if (node.Value is { } value)
+        {
+            WriteValue(writer, value);
         }
 
         writer.WriteNumber("offset", node.Offset);
@@ -117,14 +274,14 @@ public static class ReportJsonWriter
 
         if (depth >= Node.MaxDepth)
         {
-            if (node.HasChildren && node.Children.Any(c => filter.Includes(c, node)))
+            if (node.HasChildren && node.Children.Any(filter.Includes))
             {
                 writer.WriteBoolean("hasOmittedChildren", true);
             }
         }
         else
         {
-            IReadOnlyList<Node> children = filter.Hidden == ReportSections.None ? node.Children : node.Children.Where(c => filter.Includes(c, node)).ToList();
+            IReadOnlyList<Node> children = filter.Hidden == ReportSections.None ? node.Children : node.Children.Where(filter.Includes).ToList();
             if (children.Count > 0)
             {
                 writer.WriteStartArray("children");

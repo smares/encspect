@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v23-frame-flags-unknown.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 36,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "26",
+                  "value": 26,
                   "offset": 6,
                   "length": 4
                 }
@@ -82,49 +88,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "8",
+                      "value": 8,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x1010",
+                      "value": 4112,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -148,7 +154,8 @@
             },
             {
               "name": "Padding",
-              "value": "8 bytes",
+              "value": 8,
+              "unit": "bytes",
               "offset": 28,
               "length": 8
             },
@@ -193,20 +200,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "id3v2.frame-flags-unknown",
         "message": "Frame TIT2 sets undefined flag bits 0x1010.",
         "offset": 10,
-        "length": 18
+        "length": 18,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 36,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

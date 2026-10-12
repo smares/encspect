@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-field-too-long.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 345,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "3",
+                  "value": 3,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,19 +55,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "false",
+                  "value": false,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "false",
+                  "value": false,
                   "offset": 532,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 533,
                   "length": 1
                 }
@@ -81,7 +87,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "300",
+                  "value": 300,
                   "offset": 537,
                   "length": 5
                 },
@@ -95,7 +101,7 @@
             },
             {
               "name": "Size",
-              "value": "330",
+              "value": 330,
               "offset": 842,
               "length": 6
             },
@@ -135,6 +141,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 857,
           "length": 128,
@@ -177,7 +184,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 983,
               "length": 1
             },
@@ -211,20 +218,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.field-too-long",
         "message": "Field AUT holds 300 characters; Lyrics3 v2.00 allows at most 250.",
         "offset": 534,
-        "length": 308
+        "length": 308,
+        "path": [
+          1,
+          2
+        ],
+        "count": 1
       }
     ]
   }

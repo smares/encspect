@@ -54,8 +54,8 @@ public sealed partial class MpegAudioParser
         if (name is not null)
         {
             Node node = new("Enhancement", start, length, name);
-            node.Add("Ancillary Data", start, length, $"{Number(scan.Bytes)} bytes");
-            node.Add("Data Rate", start, length, TenthsText(RoundHalfEven((Int128)scan.Bytes * 8 * Clock * 10, (Int128)ticks * 1000)) + " kbps");
+            node.Add("Ancillary Data", start, length, Bytes(scan.Bytes));
+            node.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)scan.Bytes * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"));
             region.Enhancement = node;
             string message = name == "mp3PRO"
                 ? $"The stream is mp3PRO: {Number(scan.Bytes)} bytes of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at {header.SampleRate} Hz, without the high frequencies."
@@ -66,11 +66,11 @@ public sealed partial class MpegAudioParser
         if (scan.Ofl is { } ofl)
         {
             int rate = ofl.IsMp3Pro ? header.SampleRate * 2 : header.SampleRate;
-            Node node = new("Original File Length", ofl.Offset, ofl.Length, $"{Number(ofl.Samples)} samples");
-            node.Add("Delay", ofl.Offset, ofl.Length, $"{Number(ofl.Delay)} samples");
-            node.Add("Original Length", ofl.Offset, ofl.Length, $"{Number(ofl.Samples)} samples");
-            node.Add("Sample Rate", ofl.Offset, ofl.Length, $"{Number(rate)} Hz");
-            node.Add("Duration", ofl.Offset, ofl.Length, DurationText(ofl.Samples * (Clock / rate)));
+            Node node = new("Original File Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples"));
+            node.Add("Delay", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Delay, "samples"));
+            node.Add("Original Length", ofl.Offset, ofl.Length, NodeValue.Integer(ofl.Samples, "samples"));
+            node.Add("Sample Rate", ofl.Offset, ofl.Length, NodeValue.Integer(rate, "Hz"));
+            node.Add("Duration", ofl.Offset, ofl.Length, Duration(ofl.Samples * (Clock / rate)));
             region.Ofl = node;
             long samples = audio.Sum(e => (long)new MpegHeader(e.Header).Samples) * (rate / header.SampleRate);
             if (ofl.Delay + ofl.Samples > samples)

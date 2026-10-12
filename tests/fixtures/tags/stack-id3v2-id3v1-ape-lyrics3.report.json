@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "stack-id3v2-id3v1-ape-lyrics3.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 46,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "36",
+                  "value": 36,
                   "offset": 6,
                   "length": 4
                 }
@@ -82,49 +88,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "10",
+                      "value": 10,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -148,7 +154,8 @@
             },
             {
               "name": "Padding",
-              "value": "16 bytes",
+              "value": 16,
+              "unit": "bytes",
               "offset": 30,
               "length": 16
             },
@@ -199,6 +206,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 558,
           "length": 128,
@@ -241,7 +249,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 684,
               "length": 1
             },
@@ -275,6 +283,7 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 686,
           "length": 112,
@@ -292,49 +301,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 694,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "80",
+                  "value": 80,
                   "offset": 698,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 702,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xA0000000",
+                  "value": 2684354560,
                   "offset": 706,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 706,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 706,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 706,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 706,
                       "length": 4
                     }
@@ -349,7 +358,8 @@
             },
             {
               "name": "Items",
-              "value": "2 items",
+              "value": 2,
+              "unit": "items",
               "offset": 718,
               "length": 48,
               "children": [
@@ -361,19 +371,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "9",
+                      "value": 9,
                       "offset": 718,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 722,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 722,
                           "length": 4
                         },
@@ -407,19 +417,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "10",
+                      "value": 10,
                       "offset": 741,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 745,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 745,
                           "length": 4
                         },
@@ -460,49 +470,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 774,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "80",
+                  "value": 80,
                   "offset": 778,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 782,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 786,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 786,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 786,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 786,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 786,
                       "length": 4
                     }
@@ -545,6 +555,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 798,
           "length": 68,
@@ -569,7 +580,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "3",
+                  "value": 3,
                   "offset": 812,
                   "length": 5
                 },
@@ -581,19 +592,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 817,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "false",
+                  "value": false,
                   "offset": 818,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 819,
                   "length": 1
                 }
@@ -613,7 +624,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "23",
+                  "value": 23,
                   "offset": 823,
                   "length": 5
                 },
@@ -641,7 +652,7 @@
             },
             {
               "name": "Size",
-              "value": "53",
+              "value": 53,
               "offset": 851,
               "length": 6
             },
@@ -681,27 +692,40 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 46,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x22E is followed by the APE tag at 0x2AE; readers expect ID3v1 in the last 128 bytes.",
         "offset": 558,
-        "length": 128
+        "length": 128,
+        "path": [
+          2
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.lyrics3-without-id3v1",
         "message": "The Lyrics3 tag at 0x31E is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 798,
-        "length": 68
+        "length": 68,
+        "path": [
+          4
+        ],
+        "count": 1
       }
     ]
   }

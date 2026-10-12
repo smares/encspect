@@ -83,11 +83,12 @@ def ffprobe_frames(path):
     return len(json.loads(result.stdout).get("frames", []))
 
 
-def walk(node, name):
-    if node["name"] == name:
+def walk(node, kind):
+    """The nodes of a kind (report schema 1: "Tag", "Stream", "Frame", "SideInfo", "Statistics")."""
+    if node.get("kind") == kind:
         yield node
     for child in node.get("children", []):
-        yield from walk(child, name)
+        yield from walk(child, kind)
 
 
 def child(node, name):
@@ -99,10 +100,12 @@ def analyzer_problems(analyzer, path, stream):
     report = json.loads(subprocess.run([analyzer, "--ndjson", str(path)], capture_output=True, text=True, check=True).stdout)
     frames = list(walk(report["root"], "Frame"))
     problems = []
+    if report.get("schemaVersion") != 1:
+        problems.append(f"the analyzer writes report schema {report.get('schemaVersion')}, this script reads 1")
     if len(frames) != stream["frames"]:
         problems.append(f"the analyzer finds {len(frames)} frames, the manifest lists {stream['frames']}")
     header = {c["name"]: c.get("value") for c in child(frames[0], "Header")["children"]} if frames else {}
-    expected = {"Version": stream["version"], "Layer": stream["layer"], "Sample Rate": f"{stream['sample_rate']} Hz"}
+    expected = {"Version": stream["version"], "Layer": stream["layer"], "Sample Rate": stream["sample_rate"]}
     if {k: header.get(k) for k in expected} != expected:
         problems.append(f"the first frame is {header}, the manifest says {expected}")
     serious = sorted(f["code"] for f in report["findings"] if f["severity"] != "Info")
@@ -129,10 +132,10 @@ def analyzer_problems(analyzer, path, stream):
     first = verified[0]
     fields = {c["name"]: c.get("value") for c in child(first, "Header")["children"]}
     status = [s for n in verified for s in [child(n, "Composite Status")] if s]
-    flags = lambda name: any(child(s, name)["value"] == "true" for s in status)
+    flags = lambda name: any(child(s, name)["value"] is True for s in status)
     actual = {
         "configuration": first["value"], "center": fields["Center"], "surround": fields["Surround"],
-        "lfe": fields["HasLfe"] == "true", "extension_bitstream": fields["HasExtensionBitstream"] == "true",
+        "lfe": fields["HasLfe"] is True, "extension_bitstream": fields["HasExtensionBitstream"] is True,
         "dematrix_procedure": int(fields["Dematrix Procedure"]), "multilingual_channels": int(fields["Multilingual Channels"]),
         "prediction": flags("HasPrediction"), "dynamic_crosstalk": flags("HasDynamicCrosstalk"),
     }

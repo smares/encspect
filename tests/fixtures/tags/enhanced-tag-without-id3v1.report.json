@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "enhanced-tag-without-id3v1.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Enhanced TAG",
+          "kind": "Tag",
           "offset": 300,
           "length": 227,
           "children": [
@@ -88,20 +94,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 300
+        "length": 300,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.enhanced-tag-without-id3v1",
         "message": "The Enhanced TAG at 0x12C is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 300,
-        "length": 227
+        "length": 227,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

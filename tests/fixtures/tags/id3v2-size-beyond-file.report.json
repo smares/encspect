@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v2-size-beyond-file.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.3.0",
           "offset": 0,
           "length": 26,
@@ -31,25 +37,25 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -57,7 +63,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "5000000",
+                  "value": 5000000,
                   "offset": 6,
                   "length": 4
                 }
@@ -82,49 +88,49 @@
                     },
                     {
                       "name": "Size",
-                      "value": "6",
+                      "value": 6,
                       "offset": 14,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x0000",
+                      "value": 0,
                       "offset": 18,
                       "length": 2,
                       "children": [
                         {
                           "name": "IsDiscardedOnTagAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsDiscardedOnFileAlter",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsCompressed",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "IsEncrypted",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         },
                         {
                           "name": "HasGroupId",
-                          "value": "false",
+                          "value": false,
                           "offset": 18,
                           "length": 2
                         }
@@ -181,6 +187,7 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 538,
           "length": 112,
@@ -198,49 +205,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 546,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "80",
+                  "value": 80,
                   "offset": 550,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 554,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xA0000000",
+                  "value": 2684354560,
                   "offset": 558,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 558,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 558,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 558,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 558,
                       "length": 4
                     }
@@ -255,7 +262,8 @@
             },
             {
               "name": "Items",
-              "value": "2 items",
+              "value": 2,
+              "unit": "items",
               "offset": 570,
               "length": 48,
               "children": [
@@ -267,19 +275,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "9",
+                      "value": 9,
                       "offset": 570,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 574,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 574,
                           "length": 4
                         },
@@ -313,19 +321,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "10",
+                      "value": 10,
                       "offset": 593,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 597,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 597,
                           "length": 4
                         },
@@ -366,49 +374,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 626,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "80",
+                  "value": 80,
                   "offset": 630,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 634,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 638,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 638,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 638,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 638,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 638,
                       "length": 4
                     }
@@ -451,6 +459,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 650,
           "length": 128,
@@ -493,7 +502,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 776,
               "length": 1
             },
@@ -527,27 +536,40 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Error",
         "code": "id3v2.truncated",
         "message": "The ID3v2 header declares 5000000 bytes after the header, but the file ends 768 bytes into the tag.",
         "offset": 0,
-        "length": 26
+        "length": 26,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "id3v2.ends-before-size",
         "message": "The frames of the ID3v2 tag stop at 0x1A, where its declared size cannot end; the tag is taken to end there.",
         "offset": 0,
-        "length": 26
+        "length": 26,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 26,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

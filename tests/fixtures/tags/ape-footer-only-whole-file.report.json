@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-footer-only-whole-file.mp3",
     "root": {
       "name": "File",
@@ -8,13 +13,15 @@
       "children": [
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 0,
           "length": 32,
           "children": [
             {
               "name": "Items",
-              "value": "0 items",
+              "value": 0,
+              "unit": "items",
               "offset": 0,
               "length": 0
             },
@@ -31,49 +38,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 8,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "32",
+                  "value": 32,
                   "offset": 12,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "0",
+                  "value": 0,
                   "offset": 16,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00000000",
+                  "value": 0,
                   "offset": 20,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     }
@@ -110,13 +117,16 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "layout.tags-only",
         "message": "The file holds only tags; no bytes are left for audio data.",
         "offset": 0,
-        "length": 32
+        "length": 32,
+        "path": [],
+        "count": 1
       }
     ]
   }

@@ -19,7 +19,7 @@ public sealed partial class MpegAudioParser
         FrameList all = AllFrames(state);
         foreach (RegionState region in state.Regions)
         {
-            region.Statistics = Statistics(state, region.Entries, all);
+            region.Statistics = Statistics(state, region, all);
         }
 
         foreach (Entry frame in all.Frames.Where(e => e.VbrFrame is not null))
@@ -28,8 +28,9 @@ public sealed partial class MpegAudioParser
         }
     }
 
-    private static Node? Statistics(StreamState state, List<Entry> entries, FrameList all)
+    private static Node? Statistics(StreamState state, RegionState region, FrameList all)
     {
+        List<Entry> entries = region.Entries;
         List<Entry> audio = entries.Where(IsAudio).ToList();
         if (audio.Count == 0)
         {
@@ -40,48 +41,35 @@ public sealed partial class MpegAudioParser
         long length = audio[^1].End - start;
         long ticks = audio.Sum(Ticks);
         long bits = audio.Sum(e => e.Length * 8);
-        Node node = new("Statistics", start, length, $"{FramesText(audio.Count)}, {DurationText(ticks)}");
-        Add("Frames", Number(audio.Count));
-        Add("Samples", Number(audio.Sum(e => (long)new MpegHeader(e.Header).Samples)));
-        Add("Duration", DurationText(ticks));
+        Node node = new("Statistics", start, length, $"{FramesText(audio.Count)}, {DurationText(ticks)}") { Kind = NodeKind.Statistics };
+        Add("Frames", NodeValue.Integer(audio.Count));
+        Add("Samples", NodeValue.Integer(audio.Sum(e => (long)new MpegHeader(e.Header).Samples)));
+        Add("Duration", Duration(ticks));
 
         int?[] bitrates = audio.Select(BitrateOf).ToArray();
-        Add("IsVbr", bitrates.Distinct().Count() > 1 ? "true" : "false");
-        Add("Average Bitrate", TenthsText(RoundHalfEven((Int128)bits * Clock * 10, (Int128)ticks * 1000)) + " kbps");
+        Add("IsVbr", NodeValue.Boolean(bitrates.Distinct().Count() > 1));
+        Add("Average Bitrate", NodeValue.Decimal(RoundHalfEven((Int128)bits * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"));
         int[] fixedRates = bitrates.OfType<int>().Distinct().Order().ToArray();
         if (fixedRates.Length > 0)
         {
-            Add("Minimum Bitrate", $"{Number(fixedRates[0])} kbps");
-            Add("Maximum Bitrate", $"{Number(fixedRates[^1])} kbps");
+            Add("Minimum Bitrate", NodeValue.Integer(fixedRates[0], "kbps"));
+            Add("Maximum Bitrate", NodeValue.Integer(fixedRates[^1], "kbps"));
         }
 
         var counts = bitrates.GroupBy(b => b).OrderBy(g => g.Key is null).ThenBy(g => g.Key).ToList();
-        Node distribution = Add("Bitrate Distribution", counts.Count == 1 ? "1 bitrate" : $"{Number(counts.Count)} bitrates");
+        region.Distribution = Add("Bitrate Distribution", NodeValue.Integer(counts.Count, "bitrates", "bitrate"));
         foreach (var group in counts)
         {
             long tenths = RoundHalfEven(group.Count() * 1000L, audio.Count);
-            distribution.Add(group.Key is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
+            region.Distribution.Add(group.Key is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
                 $"{FramesText(group.Count())} ({TenthsText(tenths)}%)");
         }
 
-        // Per second of audio, the frames that start in it: their bits over their duration, and
-        // their mean reservoir fill.
-        var seconds = new SortedDictionary<long, (long Bits, long Ticks, long Fill, int Count)>();
-        long time = 0;
-        int count = 0;
-        foreach (Entry frame in audio)
-        {
-            state.CheckCancellation(count++);
-            seconds.TryGetValue(time / Clock, out var second);
-            seconds[time / Clock] = (second.Bits + (frame.Length * 8), second.Ticks + Ticks(frame), second.Fill + frame.ReservoirFill, second.Count + 1);
-            time += Ticks(frame);
-        }
-
-        Add("Bitrate Over Time", string.Join(',', seconds.Values.Select(s => Number(RoundHalfEven((Int128)s.Bits * Clock, (Int128)s.Ticks * 1000)))));
+        // The bitrate and reservoir fill over time are series of the stream (AddStreams), which
+        // the text tree shows after these nodes.
         if (audio.All(e => e.SideInfo is not null))
         {
-            Add("Maximum Reservoir Fill", $"{Number(audio.Max(e => e.ReservoirFill))} bytes");
-            Add("Reservoir Fill Over Time", string.Join(',', seconds.Values.Select(s => Number(RoundHalfEven(s.Fill, s.Count)))));
+            region.MaximumFill = Add("Maximum Reservoir Fill", NodeValue.Integer(audio.Max(e => e.ReservoirFill), "bytes"));
         }
 
         // Each header's figures cover the frames it describes; where those are not all of the
@@ -95,7 +83,7 @@ public sealed partial class MpegAudioParser
 
         return node;
 
-        Node Add(string name, string value) => node.Add(name, start, length, value);
+        Node Add(string name, NodeValue value) => node.Add(name, start, length, value);
 
         void AddHeaderComparison(Entry frame, FrameList frames)
         {
@@ -108,26 +96,26 @@ public sealed partial class MpegAudioParser
             Node? counts = header.FrameCount is null && header.ByteCount is null ? null : node.Add(new Node("VBR Header", from, span, scope));
             if (header.FrameCount is { } claimedFrames)
             {
-                counts!.Add("Claimed Frames", from, span, Number(claimedFrames));
-                counts.Add("Counted Frames", from, span, Number(covered.Count));
+                counts!.Add("Claimed Frames", from, span, NodeValue.Integer(claimedFrames));
+                counts.Add("Counted Frames", from, span, NodeValue.Integer(covered.Count));
             }
 
             if (header.ByteCount is { } claimedBytes)
             {
-                counts!.Add("Claimed Bytes", from, span, Number(claimedBytes));
-                counts.Add("Counted Bytes", from, span, Number(frame.Length + covered.Sum(e => e.Length)));
+                counts!.Add("Claimed Bytes", from, span, NodeValue.Integer(claimedBytes));
+                counts.Add("Counted Bytes", from, span, NodeValue.Integer(frame.Length + covered.Sum(e => e.Length)));
             }
 
             if (header.HasLameTag)
             {
                 Node gapless = node.Add(new Node("Gapless", from, span, scope));
-                gapless.Add("Encoder Delay", from, span, $"{Number(header.EncoderDelay)} samples");
-                gapless.Add("Encoder Padding", from, span, $"{Number(header.EncoderPadding)} samples");
+                gapless.Add("Encoder Delay", from, span, NodeValue.Integer(header.EncoderDelay, "samples"));
+                gapless.Add("Encoder Padding", from, span, NodeValue.Integer(header.EncoderPadding, "samples"));
                 long count = covered.Sum(e => (long)new MpegHeader(e.Header).Samples) - header.EncoderDelay - header.EncoderPadding;
                 if (count >= 0)
                 {
-                    gapless.Add("Sample Count", from, span, Number(count));
-                    gapless.Add("Duration", from, span, DurationText(count * (Clock / new MpegHeader(frame.Header).SampleRate)));
+                    gapless.Add("Sample Count", from, span, NodeValue.Integer(count));
+                    gapless.Add("Duration", from, span, Duration(count * (Clock / new MpegHeader(frame.Header).SampleRate)));
                 }
             }
         }
@@ -245,11 +233,10 @@ public sealed partial class MpegAudioParser
         return (long)quotient;
     }
 
-    private static string DurationText(long ticks)
-    {
-        long ms = RoundHalfEven((Int128)ticks * 1000, Clock);
-        return $"{Number(ms / 1000)}.{(ms % 1000).ToString("D3", CultureInfo.InvariantCulture)} s";
-    }
+    private static string DurationText(long ticks) => Duration(ticks).ToString();
+
+    // In seconds, rounded half to even to the millisecond.
+    private static NodeValue Duration(long ticks) => NodeValue.Decimal(RoundHalfEven((Int128)ticks * 1000, Clock) / 1000.0, 3, "s");
 
     private static string TenthsText(long tenths) => $"{Number(tenths / 10)}.{Number(tenths % 10)}";
 

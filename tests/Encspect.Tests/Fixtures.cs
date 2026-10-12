@@ -67,11 +67,13 @@ internal static class Fixtures
         return Analyzer.CreateDefault().Analyze(name + ".mp3", stream);
     }
 
+    // The tool version names the build, so golden reports hold a placeholder instead.
     public static string ToJson(Report report)
     {
         using var stream = new MemoryStream();
         ReportJsonWriter.Write([report], stream);
-        return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
+        return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n")
+            .Replace($"\"version\": \"{ReportJsonWriter.ToolVersion}\"", "\"version\": \"(build)\"", StringComparison.Ordinal) + "\n";
     }
 
     public static JsonElement LoadManifest(string name)

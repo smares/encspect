@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "free-format-period-4.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,18 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 4000
+        "length": 4000,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

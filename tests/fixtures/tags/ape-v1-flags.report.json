@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-v1-flags.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,15 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 512,
           "length": 53,
           "children": [
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 512,
               "length": 21,
               "children": [
@@ -31,19 +38,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "7",
+                      "value": 7,
                       "offset": 512,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000003",
+                      "value": 3,
                       "offset": 516,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 516,
                           "length": 4
                         },
@@ -84,25 +91,25 @@
                 },
                 {
                   "name": "Version",
-                  "value": "1000",
+                  "value": 1000,
                   "offset": 541,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "53",
+                  "value": 53,
                   "offset": 545,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 549,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 553,
                   "length": 4
                 },
@@ -137,27 +144,45 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.v1-flags",
         "message": "Item \"Title\" sets flags 0x00000003; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread the item.",
         "offset": 516,
-        "length": 4
+        "length": 4,
+        "path": [
+          1,
+          0,
+          0,
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.v1-flags",
         "message": "The APEv1 footer sets flags 0x80000000; APEv1 writers must leave them zero, and readers ignore them.",
         "offset": 553,
-        "length": 4
+        "length": 4,
+        "path": [
+          1,
+          1,
+          4
+        ],
+        "count": 1
       }
     ]
   }

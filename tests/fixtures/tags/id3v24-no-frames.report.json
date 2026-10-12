@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "id3v24-no-frames.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "ID3v2",
+          "kind": "Tag",
           "value": "2.4.0",
           "offset": 0,
           "length": 74,
@@ -31,31 +37,31 @@
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00",
+                  "value": 0,
                   "offset": 5,
                   "length": 1,
                   "children": [
                     {
                       "name": "IsUnsynchronized",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasExtendedHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "IsExperimental",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     },
                     {
                       "name": "HasFooter",
-                      "value": "false",
+                      "value": false,
                       "offset": 5,
                       "length": 1
                     }
@@ -63,7 +69,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "64",
+                  "value": 64,
                   "offset": 6,
                   "length": 4
                 }
@@ -71,7 +77,8 @@
             },
             {
               "name": "Padding",
-              "value": "64 bytes",
+              "value": 64,
+              "unit": "bytes",
               "offset": 10,
               "length": 64
             },
@@ -122,20 +129,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Warning",
         "code": "id3v2.no-frames",
         "message": "The tag holds no frame; ID3v2 requires at least one.",
         "offset": 0,
-        "length": 74
+        "length": 74,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 74,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

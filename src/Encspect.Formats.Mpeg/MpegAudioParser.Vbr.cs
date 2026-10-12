@@ -217,7 +217,7 @@ public sealed partial class MpegAudioParser
                 return found;
             }
 
-            string name = found?.Value ?? TagEncoder(named[0])!.Value.Name;
+            string name = found?.Value?.ToString() ?? TagEncoder(named[0])!.Value.Name;
             var same = named.Where(h => TagEncoder(h)!.Value.Name == name || FamiliesOf(name).Overlaps(FamiliesOf(TagEncoder(h)!.Value.Name))).ToList();
             if (same.Count == 0)
             {
@@ -269,13 +269,13 @@ public sealed partial class MpegAudioParser
     // The encoder node with more evidence, spanning it too, and its confidence at most cap.
     private static Node WithEvidence(Node encoder, Node evidence, string? cap)
     {
-        string confidence = encoder.Children.First(c => c.Name == "Confidence").Value!;
+        string confidence = encoder.Children.First(c => c.Name == "Confidence").Value!.ToString();
         if (cap == "Medium" && confidence == "High")
         {
             confidence = "Medium";
         }
 
-        return Encoder(encoder.Value!, confidence, [.. encoder.Children.Where(c => c.Name == "Evidence"), evidence]);
+        return Encoder(encoder.Value!.ToString(), confidence, [.. encoder.Children.Where(c => c.Name == "Evidence"), evidence]);
     }
 
     // The encoder named by the header in the region's first frame, with the stream's evidence.
@@ -340,7 +340,7 @@ public sealed partial class MpegAudioParser
             {
                 behind = WithEvidence(behind, support, null);
                 Node confidence = behind.Children.First(c => c.Name == "Confidence");
-                if (encoded && confidence.Value == "Low" && (behind.Value == "Shine" || behind.Value!.StartsWith("LAME", StringComparison.Ordinal)))
+                if (encoded && confidence.Value == "Low" && (behind.Value == "Shine" || behind.Value!.ToString().StartsWith("LAME", StringComparison.Ordinal)))
                 {
                     confidence.Value = "Medium";
                 }
@@ -483,7 +483,7 @@ public sealed partial class MpegAudioParser
 
         public List<Node> AncillaryEvidence { get; } = [];
 
-        public string? Enhancement => Region.Enhancement?.Value;
+        public string? Enhancement => Region.Enhancement?.Value?.ToString();
     }
 
     // A version string in ancillary data; IsCut when it runs to the end of the data, where LAME may

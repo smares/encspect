@@ -168,7 +168,7 @@ public class TagLibCrossCheckTests
 
     private static void CompareId3v2(List<string> differences, TagLib.Id3v2.Tag tag, Node node)
     {
-        int major = node.Value![2] - '0';
+        int major = node.Value!.ToString()[2] - '0';
         var seen = new Dictionary<string, int>(StringComparer.Ordinal);
 
         foreach (Frame frame in tag.GetFrames())
@@ -303,11 +303,11 @@ public class TagLibCrossCheckTests
             current = current?.Children.FirstOrDefault(c => c.Name == segment);
         }
 
-        return current?.Value ?? "<missing>";
+        return current?.Value?.ToString() ?? "<missing>";
     }
 
     private static IEnumerable<string> Values(Node node, string name) =>
-        node.Children.Where(c => c.Name == name).Select(c => c.Value ?? string.Empty);
+        node.Children.Where(c => c.Name == name).Select(c => c.Value?.ToString() ?? string.Empty);
 
     private static string Join(IEnumerable<string> values) => string.Join(" | ", values);
 

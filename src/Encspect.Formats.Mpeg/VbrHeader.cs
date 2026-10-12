@@ -440,7 +440,7 @@ internal sealed class VbrHeader
         var nodes = new List<Node>();
         if (Offset > dataStart)
         {
-            nodes.Add(new Node("Side Info", frameOffset + dataStart, Offset - dataStart));
+            nodes.Add(new Node("Side Info", frameOffset + dataStart, Offset - dataStart) { Kind = NodeKind.SideInfo });
         }
 
         nodes.Add(IsVbri ? VbriNode(frameOffset) : XingNode(frameOffset));
@@ -457,7 +457,7 @@ internal sealed class VbrHeader
 
         if (_frame.Length > End)
         {
-            nodes.Add(new Node("Unused", frameOffset + End, _frame.Length - End, $"{_frame.Length - End} bytes"));
+            nodes.Add(new Node("Unused", frameOffset + End, _frame.Length - End, NodeValue.Integer(_frame.Length - End, "bytes")));
         }
 
         return nodes;
@@ -473,40 +473,40 @@ internal sealed class VbrHeader
         }
 
         int position = Offset + 4;
-        Node flagsNode = node.Add(Field("Flags", position, 4, $"0x{flags:X8}"));
-        flagsNode.Add(Field("HasFrameCount", position, 4, Bool((flags & 1) != 0)));
-        flagsNode.Add(Field("HasByteCount", position, 4, Bool((flags & 2) != 0)));
-        flagsNode.Add(Field("HasToc", position, 4, Bool((flags & 4) != 0)));
-        flagsNode.Add(Field("HasQuality", position, 4, Bool((flags & 8) != 0)));
+        Node flagsNode = node.Add(Field("Flags", position, 4, NodeValue.Hex(flags, 8)));
+        flagsNode.Add(Field("HasFrameCount", position, 4, NodeValue.Boolean((flags & 1) != 0)));
+        flagsNode.Add(Field("HasByteCount", position, 4, NodeValue.Boolean((flags & 2) != 0)));
+        flagsNode.Add(Field("HasToc", position, 4, NodeValue.Boolean((flags & 4) != 0)));
+        flagsNode.Add(Field("HasQuality", position, 4, NodeValue.Boolean((flags & 8) != 0)));
         position += 4;
         if (FrameCount is { } frames)
         {
-            node.Add(Field("Frame Count", position, 4, Number(frames)));
+            node.Add(Field("Frame Count", position, 4, NodeValue.Integer(frames)));
         }
 
         position += (flags & 1) != 0 ? 4 : 0;
         if (ByteCount is { } bytes)
         {
-            node.Add(Field("Byte Count", position, 4, Number(bytes)));
+            node.Add(Field("Byte Count", position, 4, NodeValue.Integer(bytes)));
         }
 
         if (TocOffset >= 0)
         {
-            Node toc = node.Add(Field("TOC", TocOffset, TocLength, $"{TocLength} entries"));
+            Node toc = node.Add(Field("TOC", TocOffset, TocLength, NodeValue.Integer(TocLength, "entries")));
             for (int i = 0; i < TocLength; i++)
             {
-                toc.Add(Field($"Entry {i}", TocOffset + i, 1, Number(_frame[TocOffset + i])));
+                toc.Add(Field($"Entry {i}", TocOffset + i, 1, NodeValue.Integer(_frame[TocOffset + i])));
             }
         }
 
         if (Quality is { } quality)
         {
-            node.Add(Field("Quality", xingEnd - 4, 4, HasGogoSignature ? "\"GOGO\", which Gogo writes instead of a quality" : Number(quality)));
+            node.Add(Field("Quality", xingEnd - 4, 4, HasGogoSignature ? "\"GOGO\", which Gogo writes instead of a quality" : NodeValue.Integer(quality)));
         }
 
         return node;
 
-        Node Field(string name, int offset, int length, string? value) => new(name, frameOffset + offset, length, value);
+        Node Field(string name, int offset, int length, NodeValue? value) => new(name, frameOffset + offset, length, value);
     }
 
     private Node LameNode(long frameOffset, int? musicCrc)
@@ -516,22 +516,22 @@ internal sealed class VbrHeader
         Node node = Field("LAME Tag", 0, LameTagSize, LameEncoder);
         node.Add(Field("Encoder", 0, 9, LameEncoder));
         int method = b[p + 9] & 15;
-        node.Add(Field("Revision", 9, 1, Number(b[p + 9] >> 4)));
+        node.Add(Field("Revision", 9, 1, NodeValue.Integer(b[p + 9] >> 4)));
         node.Add(Field("VBR Method", 9, 1, method < VbrMethods.Length ? VbrMethods[method] : $"Reserved ({Number(method)})"));
-        node.Add(Field("Lowpass", 10, 1, b[p + 10] == 0 ? "Unknown" : $"{Number(b[p + 10] * 100)} Hz"));
+        node.Add(Field("Lowpass", 10, 1, b[p + 10] == 0 ? "Unknown" : NodeValue.Integer(b[p + 10] * 100, "Hz")));
         uint peak = UInt32At(p + 11);
         // LAME 3.94 and later store the peak as a fixed-point fraction of full scale, 1.0 = 2^23.
-        node.Add(Field("Peak", 11, 4, peak == 0 ? "Unknown" : (peak / (double)(1 << 23)).ToString("F6", CultureInfo.InvariantCulture)));
+        node.Add(Field("Peak", 11, 4, peak == 0 ? "Unknown" : NodeValue.Decimal(peak / (double)(1 << 23), 6)));
         AddGain("Radio Replay Gain", 15);
         AddGain("Audiophile Replay Gain", 17);
 
         byte flags = b[p + 19];
         Node encodingFlags = node.Add(Field("Encoding Flags", 19, 1, null));
-        encodingFlags.Add(Field("UsesNsPsytune", 19, 1, Bool((flags & 0x10) != 0)));
-        encodingFlags.Add(Field("UsesNsSafeJoint", 19, 1, Bool((flags & 0x20) != 0)));
-        encodingFlags.Add(Field("IsNoGapContinued", 19, 1, Bool((flags & 0x40) != 0)));
-        encodingFlags.Add(Field("IsNoGapContinuation", 19, 1, Bool((flags & 0x80) != 0)));
-        node.Add(Field("ATH Type", 19, 1, Number(flags & 15)));
+        encodingFlags.Add(Field("UsesNsPsytune", 19, 1, NodeValue.Boolean((flags & 0x10) != 0)));
+        encodingFlags.Add(Field("UsesNsSafeJoint", 19, 1, NodeValue.Boolean((flags & 0x20) != 0)));
+        encodingFlags.Add(Field("IsNoGapContinued", 19, 1, NodeValue.Boolean((flags & 0x40) != 0)));
+        encodingFlags.Add(Field("IsNoGapContinuation", 19, 1, NodeValue.Boolean((flags & 0x80) != 0)));
+        node.Add(Field("ATH Type", 19, 1, NodeValue.Integer(flags & 15)));
 
         // ABR stores its target, CBR its bitrate, VBR its minimum (VbrTag.c, PutLameVBR).
         string bitrateName = method is 2 or 9 ? "Average Bitrate" : method is >= 3 and <= 6 ? "Minimum Bitrate" : "Bitrate";
@@ -540,23 +540,28 @@ internal sealed class VbrHeader
         {
             0 => "Unknown",
             255 => "255 kbps or more",
-            _ => $"{Number(bitrate)} kbps",
+            _ => NodeValue.Integer(bitrate, "kbps"),
         }));
 
-        node.Add(Field("Encoder Delay", 21, 2, $"{Number((b[p + 21] << 4) | (b[p + 22] >> 4))} samples"));
-        node.Add(Field("Encoder Padding", 22, 2, $"{Number(((b[p + 22] & 15) << 8) | b[p + 23])} samples"));
+        node.Add(Field("Encoder Delay", 21, 2, NodeValue.Integer((b[p + 21] << 4) | (b[p + 22] >> 4), "samples")));
+        node.Add(Field("Encoder Padding", 22, 2, NodeValue.Integer(((b[p + 22] & 15) << 8) | b[p + 23], "samples")));
 
         byte misc = b[p + 24];
-        node.Add(Field("Noise Shaping", 24, 1, Number(misc & 3)));
+        node.Add(Field("Noise Shaping", 24, 1, NodeValue.Integer(misc & 3)));
         node.Add(Field("Stereo Mode", 24, 1, StereoModes[(misc >> 2) & 7]));
-        node.Add(Field("HasUnwiseSettings", 24, 1, Bool((misc & 0x20) != 0)));
-        node.Add(Field("Source Sample Rate", 24, 1, SourceRates[misc >> 6]));
+        node.Add(Field("HasUnwiseSettings", 24, 1, NodeValue.Boolean((misc & 0x20) != 0)));
+        node.Add(Field("Source Sample Rate", 24, 1, (misc >> 6) switch
+        {
+            1 => NodeValue.Decimal(44.1, 1, "kHz"),
+            2 => NodeValue.Integer(48, "kHz"),
+            int rate => SourceRates[rate],
+        }));
 
         // A sign bit and seven bits of 1.5 dB steps (Mp3 Info Tag, MP3 Gain: [10000001] = -1 = -1.5 dB).
         int steps = b[p + 25] & 0x7F;
         int tenths = steps * 15;
         bool negative = (b[p + 25] & 0x80) != 0 && steps != 0;
-        node.Add(Field("MP3 Gain", 25, 1, $"{(negative ? "-" : "+")}{Number(tenths / 10)}.{Number(tenths % 10)} dB"));
+        node.Add(Field("MP3 Gain", 25, 1, NodeValue.Decimal((negative ? -tenths : tenths) / 10.0, 1, "dB", showsSign: true)));
 
         int presetSurround = UInt16At(p + 26);
         int surround = (presetSurround >> 11) & 7;
@@ -568,15 +573,15 @@ internal sealed class VbrHeader
                 $"{oldPreset}; LAME 3.90 to 3.92 leave the preset out, but the VBR method, Xing quality, noise shaping, stereo mode, ATH type and lowpass this tag holds are the ones it sets"));
         }
 
-        node.Add(Field("Music Length", 28, 4, MusicLength == 0 ? "Not set" : $"{Number(MusicLength)} bytes"));
-        Node musicCrcNode = node.Add(Field("Music CRC", 32, 2, $"0x{StoredMusicCrc:X4}"));
+        node.Add(Field("Music Length", 28, 4, MusicLength == 0 ? "Not set" : NodeValue.Integer(MusicLength, "bytes")));
+        Node musicCrcNode = node.Add(Field("Music CRC", 32, 2, NodeValue.Hex(StoredMusicCrc, 4)));
         if (musicCrc is { } computed)
         {
-            musicCrcNode.Add(Field("Computed", 32, 2, $"0x{computed:X4}"));
+            musicCrcNode.Add(Field("Computed", 32, 2, NodeValue.Hex(computed, 4)));
         }
 
-        Node tagCrc = node.Add(Field("Tag CRC", 34, 2, $"0x{StoredTagCrc:X4}"));
-        tagCrc.Add(Field("Computed", 34, 2, $"0x{ComputedTagCrc:X4}"));
+        Node tagCrc = node.Add(Field("Tag CRC", 34, 2, NodeValue.Hex(StoredTagCrc, 4)));
+        tagCrc.Add(Field("Computed", 34, 2, NodeValue.Hex(ComputedTagCrc, 4)));
         return node;
 
         // A ReplayGain field: 3 bits name, 3 bits originator, a sign bit and 9 bits of tenths of a dB.
@@ -590,8 +595,8 @@ internal sealed class VbrHeader
             }
 
             int adjustment = value & 0x1FF;
-            string sign = (value & 0x200) != 0 && adjustment != 0 ? "-" : "+";
-            Node gain = node.Add(Field(name, offset, 2, $"{sign}{Number(adjustment / 10)}.{Number(adjustment % 10)} dB"));
+            bool negative = (value & 0x200) != 0 && adjustment != 0;
+            Node gain = node.Add(Field(name, offset, 2, NodeValue.Decimal((negative ? -adjustment : adjustment) / 10.0, 1, "dB", showsSign: true)));
             int gainName = value >> 13;
             int originator = (value >> 10) & 7;
             gain.Add(Field("Name", offset, 2, gainName < GainNames.Length ? GainNames[gainName] : $"Reserved ({Number(gainName)})"));
@@ -602,7 +607,7 @@ internal sealed class VbrHeader
             }
         }
 
-        Node Field(string name, int offset, int length, string? value) => new(name, frameOffset + p + offset, length, value);
+        Node Field(string name, int offset, int length, NodeValue? value) => new(name, frameOffset + p + offset, length, value);
     }
 
     // The preset whose settings LAME 3.90 to 3.92 wrote, where the tag holds no preset (3.93 added
@@ -636,10 +641,10 @@ internal sealed class VbrHeader
         };
     }
 
-    private static string PresetName(int value) => value switch
+    private static NodeValue PresetName(int value) => value switch
     {
         0 => "None",
-        >= 8 and <= 320 => $"{Number(value)} kbps",
+        >= 8 and <= 320 => NodeValue.Integer(value, "kbps"),
         >= 410 and <= 500 when value % 10 == 0 => $"V{Number((500 - value) / 10)}",
         _ => NamedPresets.TryGetValue(value, out string? name) ? name : $"Unknown ({Number(value)})",
     };
@@ -655,17 +660,17 @@ internal sealed class VbrHeader
         int p = Offset + 4;
         int entrySize = UInt16At(p + 18);
         int scale = UInt16At(p + 16);
-        node.Add(Field("Version", 0, 2, Number(UInt16At(p))));
-        node.Add(Field("Delay", 2, 2, Number(UInt16At(p + 2))));
-        node.Add(Field("Quality", 4, 2, Number(UInt16At(p + 4))));
-        node.Add(Field("Byte Count", 6, 4, Number(ByteCount!.Value)));
-        node.Add(Field("Frame Count", 10, 4, Number(FrameCount.Value)));
-        node.Add(Field("TOC Entries", 14, 2, Number(UInt16At(p + 14))));
-        node.Add(Field("TOC Scale", 16, 2, Number(scale)));
-        node.Add(Field("TOC Entry Size", 18, 2, $"{Number(entrySize)} bytes"));
-        node.Add(Field("Frames Per TOC Entry", 20, 2, Number(UInt16At(p + 20))));
+        node.Add(Field("Version", 0, 2, NodeValue.Integer(UInt16At(p))));
+        node.Add(Field("Delay", 2, 2, NodeValue.Integer(UInt16At(p + 2))));
+        node.Add(Field("Quality", 4, 2, NodeValue.Integer(UInt16At(p + 4))));
+        node.Add(Field("Byte Count", 6, 4, NodeValue.Integer(ByteCount!.Value)));
+        node.Add(Field("Frame Count", 10, 4, NodeValue.Integer(FrameCount.Value)));
+        node.Add(Field("TOC Entries", 14, 2, NodeValue.Integer(UInt16At(p + 14))));
+        node.Add(Field("TOC Scale", 16, 2, NodeValue.Integer(scale)));
+        node.Add(Field("TOC Entry Size", 18, 2, NodeValue.Integer(entrySize, "bytes")));
+        node.Add(Field("Frames Per TOC Entry", 20, 2, NodeValue.Integer(UInt16At(p + 20))));
         int count = entrySize is >= 1 and <= 4 ? TocLength / entrySize : 0;
-        Node toc = node.Add(new Node("TOC", frameOffset + TocOffset, TocLength, $"{Number(count)} entries"));
+        Node toc = node.Add(new Node("TOC", frameOffset + TocOffset, TocLength, NodeValue.Integer(count, "entries")));
         for (int i = 0; i < count; i++)
         {
             int at = TocOffset + (i * entrySize);
@@ -675,15 +680,13 @@ internal sealed class VbrHeader
                 value = (value << 8) | _frame[at + j];
             }
 
-            toc.Add(new Node($"Entry {i}", frameOffset + at, entrySize, $"{Number(value * scale)} bytes"));
+            toc.Add(new Node($"Entry {i}", frameOffset + at, entrySize, NodeValue.Integer(value * scale, "bytes")));
         }
 
         return node;
 
-        Node Field(string name, int offset, int length, string value) => new(name, frameOffset + p + offset, length, value);
+        Node Field(string name, int offset, int length, NodeValue value) => new(name, frameOffset + p + offset, length, value);
     }
-
-    private static string Bool(bool value) => value ? "true" : "false";
 
     private static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
 }

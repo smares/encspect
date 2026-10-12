@@ -1,4 +1,3 @@
-using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Formats.Mpeg;
@@ -117,23 +116,22 @@ internal sealed class Layer1AudioData
     public IEnumerable<Node> ToNodes(long frameOffset, long frameLength)
     {
         int end = (int)Math.Min(End, frameLength * 8);
-        Node allocation = Layer2AudioData.Span("Bit Allocation", frameOffset, AllocationStart, ScalefactorStart);
-        Node scalefactors = Layer2AudioData.Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart);
+        Node allocation = Layer2AudioData.Span("Bit Allocation", frameOffset, AllocationStart, ScalefactorStart, kind: NodeKind.SideInfo);
+        Node scalefactors = Layer2AudioData.Span("Scalefactors", frameOffset, ScalefactorStart, SampleStart, kind: NodeKind.SideInfo);
         for (int sb = 0; sb < Subbands; sb++)
         {
             int coded = sb < Bound ? Channels : 1;
             Node subband = allocation.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, AllocationBit[0, sb], AllocationBit[coded - 1, sb] + 4));
             for (int ch = 0; ch < coded; ch++)
             {
-                string name = coded < Channels ? "Channels 0 and 1" : $"Channel {ch}";
                 int value = Allocation[ch, sb];
-                string text = value switch
+                NodeValue text = value switch
                 {
                     0 => "None",
                     ForbiddenAllocation => "Forbidden",
-                    _ => $"{Number(value + 1)} bits per sample",
+                    _ => NodeValue.Integer(value + 1, "bits per sample"),
                 };
-                subband.Add(Layer2AudioData.Span(name, frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + 4, text));
+                subband.Add(AllocationNode(frameOffset, ch, sb, text));
             }
 
             int[] allocated = Enumerable.Range(0, Channels).Where(ch => Allocation[ch, sb] != 0).ToArray();
@@ -145,7 +143,7 @@ internal sealed class Layer1AudioData
             Node scalefactor = scalefactors.Add(Layer2AudioData.Span($"Subband {sb}", frameOffset, ScalefactorBit[allocated[0], sb], ScalefactorBit[allocated[^1], sb] + 6));
             foreach (int ch in allocated)
             {
-                scalefactor.Add(Layer2AudioData.Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + 6, Number(Scalefactor[ch, sb])));
+                scalefactor.Add(ScalefactorNode(frameOffset, ch, sb, NodeValue.Integer(Scalefactor[ch, sb])));
             }
         }
 
@@ -157,9 +155,15 @@ internal sealed class Layer1AudioData
 
         if (end > SampleStart)
         {
-            yield return Layer2AudioData.Span("Samples", frameOffset, SampleStart, end, $"{end - SampleStart} bits");
+            yield return Layer2AudioData.Span("Samples", frameOffset, SampleStart, end, NodeValue.Integer(end - SampleStart, "bits"));
         }
     }
 
-    private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+    // The node of one channel's allocation in a subband; above the intensity stereo bound one
+    // allocation serves both channels.
+    public Node AllocationNode(long frameOffset, int ch, int sb, NodeValue? value = null) =>
+        Layer2AudioData.Span(sb >= Bound && Channels > 1 ? "Channels 0 and 1" : $"Channel {ch}", frameOffset, AllocationBit[ch, sb], AllocationBit[ch, sb] + 4, value);
+
+    public Node ScalefactorNode(long frameOffset, int ch, int sb, NodeValue? value = null) =>
+        Layer2AudioData.Span($"Channel {ch}", frameOffset, ScalefactorBit[ch, sb], ScalefactorBit[ch, sb] + 6, value);
 }

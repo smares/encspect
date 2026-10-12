@@ -66,6 +66,7 @@ public class MpegFixtureTests
     private static void CheckHandBuilt(JsonElement manifest, Report report)
     {
         Assert.Equal(manifest.GetProperty("length").GetInt64(), report.Root.Length);
+        CheckStreams(manifest.GetProperty("streams"), report);
 
         string expectedRegions = string.Join(", ", manifest.GetProperty("regions").EnumerateArray()
             .Select(r => $"{r.GetProperty("name").GetString()}@{r.GetProperty("offset").GetInt64()}+{r.GetProperty("length").GetInt64()}"));
@@ -106,7 +107,7 @@ public class MpegFixtureTests
         {
             foreach (JsonProperty field in expectedFrames[i].GetProperty("fields").EnumerateObject())
             {
-                string? actual = Fixtures.Resolve(frames[i], field.Name).FirstOrDefault()?.Value;
+                string? actual = Fixtures.Resolve(frames[i], field.Name).FirstOrDefault()?.Value?.ToString();
                 Assert.True(field.Value.GetString() == actual, $"Frame {i} at {frames[i].Offset}, field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
             }
 
@@ -220,7 +221,7 @@ public class MpegFixtureTests
         {
             foreach ((string path, string value) in expected)
             {
-                string? actual = Fixtures.Resolve(frame, path).FirstOrDefault()?.Value;
+                string? actual = Fixtures.Resolve(frame, path).FirstOrDefault()?.Value?.ToString();
                 Assert.True(value == actual, $"Frame at {frame.Offset}, field {path}: \"{actual}\", expected \"{value}\"");
             }
         }
@@ -264,7 +265,7 @@ public class MpegFixtureTests
         {
             foreach (JsonProperty field in vbrFields.EnumerateObject())
             {
-                string? actual = Fixtures.Resolve(frames[0], field.Name).FirstOrDefault()?.Value;
+                string? actual = Fixtures.Resolve(frames[0], field.Name).FirstOrDefault()?.Value?.ToString();
                 Assert.True(field.Value.GetString() == actual, $"VBR header field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
             }
         }
@@ -404,7 +405,7 @@ public class MpegFixtureTests
                 int cls = channel.GetProperty("class").GetInt32();
                 int levels = cls switch { 0 => 0, 17 => 3, 18 => 5, 19 => 9, _ => (1 << cls) - 1 };
                 Node coded = allocation.Children[sb].Children.Count == 1 ? allocation.Children[sb].Children[0] : allocation.Children[sb].Children[ch];
-                Assert.True(coded.Value == (levels == 0 ? "None" : $"{levels} levels"), $"Frame at {frame.Offset}, subband {sb}, channel {ch}: {coded.Value}, minimp3 {levels} levels");
+                Assert.True(coded.Value?.ToString() == (levels == 0 ? "None" : $"{levels} levels"), $"Frame at {frame.Offset}, subband {sb}, channel {ch}: {coded.Value}, minimp3 {levels} levels");
                 if (levels != 0)
                 {
                     int scfsi = channel.GetProperty("scfsi").GetInt32();
@@ -454,7 +455,7 @@ public class MpegFixtureTests
     private static bool HasAllMainData(Node frame)
     {
         Node? main = frame.Children.FirstOrDefault(c => c.Name == "Main Data");
-        string[] parts = (main?.Value ?? string.Empty).Split(' ');
+        string[] parts = (main?.Value?.ToString() ?? string.Empty).Split(' ');
         if (main is null || !int.TryParse(parts[0], CultureInfo.InvariantCulture, out int total))
         {
             return false;
@@ -507,7 +508,7 @@ public class MpegFixtureTests
                 }
             }
 
-            scfsi |= Fixtures.Resolve(frame, "Side Info/SCFSI").SelectMany(s => s.Children).Any(c => c.Value != "0000");
+            scfsi |= Fixtures.Resolve(frame, "Side Info/SCFSI").SelectMany(s => s.Children).Any(c => c.Value?.ToString() != "0000");
             if (previousFree is { } free)
             {
                 ancillary.Add(free - mainDataBegin);
@@ -547,13 +548,52 @@ public class MpegFixtureTests
         Assert.Equal(wanted, actual);
     }
 
-    private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
+    private static string? Value(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value?.ToString();
+
+    // The streams stream_stats.py computes: figures over each stream's complete audio frames,
+    // across the regions an embedded tag splits it into, and its series per second.
+    private static void CheckStreams(JsonElement expected, Report report)
+    {
+        JsonElement[] streams = expected.EnumerateArray().ToArray();
+        Assert.Equal(streams.Length, report.Streams.Count);
+        for (int i = 0; i < streams.Length; i++)
+        {
+            JsonElement wanted = streams[i];
+            StreamInfo stream = report.Streams[i];
+            Assert.Equal(wanted.GetProperty("codec").GetString(), stream.Codec);
+            Assert.Equal(wanted.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
+            Assert.Equal(wanted.GetProperty("samples").GetInt64(), stream.Samples);
+            Assert.Equal(wanted.GetProperty("duration").GetString(), NodeValue.Decimal(Math.Round(stream.Duration, 3, MidpointRounding.ToEven), 3, "s").ToString());
+            Assert.Equal(
+                wanted.TryGetProperty("average_bitrate", out JsonElement bitrate) ? bitrate.GetString() : null,
+                stream.AverageBitrate is { } kbps ? NodeValue.Decimal(Math.Round(kbps, 1, MidpointRounding.ToEven), 1, "kbps").ToString() : null);
+            if (wanted.TryGetProperty("is_vbr", out JsonElement isVbr))
+            {
+                Assert.Equal(isVbr.GetBoolean(), stream.IsVbr);
+            }
+
+            Assert.Equal(Text(wanted, "bitrate_over_time"), Series(stream, "Bitrate Over Time"));
+            Assert.Equal(Text(wanted, "reservoir_fill_over_time"), Series(stream, "Reservoir Fill Over Time"));
+
+            // The per-frame series hold one value per complete audio frame, at its offset.
+            Series? perFrame = stream.Series.FirstOrDefault(s => s.Name == "Bitrate");
+            Assert.Equal(wanted.TryGetProperty("bitrate_over_time", out _), perFrame is not null);
+            Assert.True(perFrame is null || perFrame.Axis == SeriesAxis.FrameOffset);
+        }
+
+        static string? Text(JsonElement element, string name) => element.TryGetProperty(name, out JsonElement value) ? value.GetString() : null;
+
+        static string? Series(StreamInfo stream, string name) =>
+            stream.Series.FirstOrDefault(s => s.Name == name) is { } series
+                ? string.Join(',', series.Values.ToArray().Select(v => v.ToString(CultureInfo.InvariantCulture)))
+                : null;
+    }
 
     private static void CheckFields(Node node, JsonElement fields)
     {
         foreach (JsonProperty field in fields.EnumerateObject())
         {
-            string? actual = Fixtures.Resolve(node, field.Name).FirstOrDefault()?.Value;
+            string? actual = Fixtures.Resolve(node, field.Name).FirstOrDefault()?.Value?.ToString();
             Assert.True(field.Value.GetString() == actual, $"{node.Name} at {node.Offset}, field {field.Name}: \"{actual}\", expected \"{field.Value.GetString()}\"");
         }
     }
@@ -606,7 +646,7 @@ public class MpegFixtureTests
             }
         }
 
-        static string? Field(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value;
+        static string? Field(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value?.ToString();
 
         static long SamplesOf(Node frame) => (Field(frame, "Header/Layer"), Field(frame, "Header/Version")) switch
         {

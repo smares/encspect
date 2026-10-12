@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-items-overrun.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,15 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 400,
           "length": 66,
           "children": [
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 400,
               "length": 34,
               "children": [
@@ -31,19 +38,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "3",
+                      "value": 3,
                       "offset": 400,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 404,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 404,
                           "length": 4
                         },
@@ -73,7 +80,8 @@
             },
             {
               "name": "Unparsed",
-              "value": "17 bytes",
+              "value": 17,
+              "unit": "bytes",
               "offset": 417,
               "length": 17
             },
@@ -90,49 +98,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 442,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "66",
+                  "value": 66,
                   "offset": 446,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 450,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00000000",
+                  "value": 0,
                   "offset": 454,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 454,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 454,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 454,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 454,
                       "length": 4
                     }
@@ -163,20 +171,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 400
+        "length": 400,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.items-invalid",
         "message": "The footer lists 1 item(s), which end at 0x1A1, 17 bytes before the end of the items. The remaining 17 bytes are not parsed.",
         "offset": 417,
-        "length": 17
+        "length": 17,
+        "path": [
+          1,
+          1
+        ],
+        "count": 1
       }
     ]
   }

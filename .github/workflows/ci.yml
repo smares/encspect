@@ -48,6 +48,7 @@ jobs:
           printf 'not audio' > "$RUNNER_TEMP/sample.bin"
           dotnet run --no-build --configuration Release --project src/Encspect.Cli -- --json "$RUNNER_TEMP/sample.bin" | tee "$RUNNER_TEMP/out.json"
           grep -q 'format.unrecognized' "$RUNNER_TEMP/out.json"
+          grep -q '"schemaVersion": 1' "$RUNNER_TEMP/out.json"
           dotnet run --no-build --configuration Release --project src/Encspect.Cli -- --ndjson "$RUNNER_TEMP/sample.bin" "$RUNNER_TEMP/sample.bin" | tee "$RUNNER_TEMP/out.ndjson"
           test "$(grep -c 'format.unrecognized' "$RUNNER_TEMP/out.ndjson")" = 2
           test "$(wc -l < "$RUNNER_TEMP/out.ndjson")" -eq 2

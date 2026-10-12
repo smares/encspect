@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-text-not-utf8.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 512,
           "length": 105,
@@ -30,49 +36,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 520,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "73",
+                  "value": 73,
                   "offset": 524,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 528,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xA0000000",
+                  "value": 2684354560,
                   "offset": 532,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 532,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 532,
                       "length": 4
                     }
@@ -87,7 +93,8 @@
             },
             {
               "name": "Items",
-              "value": "2 items",
+              "value": 2,
+              "unit": "items",
               "offset": 544,
               "length": 41,
               "children": [
@@ -99,19 +106,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "5",
+                      "value": 5,
                       "offset": 544,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 548,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 548,
                           "length": 4
                         },
@@ -145,19 +152,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "7",
+                      "value": 7,
                       "offset": 563,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 567,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 567,
                           "length": 4
                         },
@@ -198,49 +205,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 593,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "73",
+                  "value": 73,
                   "offset": 597,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 601,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x80000000",
+                  "value": 2147483648,
                   "offset": 605,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 605,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "true",
+                      "value": true,
                       "offset": 605,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "false",
+                      "value": false,
                       "offset": 605,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 605,
                       "length": 4
                     }
@@ -283,20 +290,31 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.text-not-utf8",
         "message": "Item \"Artist\" holds text that is not valid UTF-8, which APEv2 requires; the invalid bytes are shown as U+FFFD.",
         "offset": 563,
-        "length": 22
+        "length": 22,
+        "path": [
+          1,
+          1,
+          1
+        ],
+        "count": 1
       }
     ]
   }

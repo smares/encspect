@@ -22,9 +22,7 @@
     "Statistics/Bitrate Distribution/48 kbps": "1 frame (16.7%)",
     "Statistics/Bitrate Distribution/56 kbps": "1 frame (16.7%)",
     "Statistics/Bitrate Distribution/64 kbps": "1 frame (16.7%)",
-    "Statistics/Bitrate Over Time": "45",
     "Statistics/Maximum Reservoir Fill": "179 bytes",
-    "Statistics/Reservoir Fill Over Time": "127",
     "Statistics/VBR Header/Claimed Frames": "6",
     "Statistics/VBR Header/Counted Frames": "6",
     "Statistics/VBR Header/Claimed Bytes": "1008",
@@ -172,6 +170,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2 Layer III",
+   "sample_rate": 24000,
+   "samples": 3456,
+   "duration": "0.144 s",
+   "average_bitrate": "45.3 kbps",
+   "is_vbr": true,
+   "bitrate_over_time": "45",
+   "reservoir_fill_over_time": "127"
+  }
+ ],
  "findings": [],
  "detected_encoder": {
   "name": "LAME 3.100",

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "mpeg1-layer1-forbidden-allocation.mp1",
     "root": {
       "name": "File",
@@ -9,61 +14,69 @@
       "children": [
         {
           "name": "MPEG Audio",
-          "value": "6 frames",
+          "kind": "Stream",
+          "value": 6,
+          "unit": "frames",
           "offset": 0,
           "length": 816,
           "children": [
             {
               "name": "Statistics",
+              "kind": "Statistics",
               "value": "6 frames, 0.052 s",
               "offset": 0,
               "length": 816,
               "children": [
                 {
                   "name": "Frames",
-                  "value": "6",
+                  "value": 6,
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Samples",
-                  "value": "2304",
+                  "value": 2304,
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Duration",
-                  "value": "0.052 s",
+                  "value": 0.052,
+                  "unit": "s",
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "IsVbr",
-                  "value": "false",
+                  "value": false,
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": "125.0 kbps",
+                  "value": 125,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": "128 kbps",
+                  "value": 128,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": "128 kbps",
+                  "value": 128,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 816
                 },
                 {
                   "name": "Bitrate Distribution",
-                  "value": "1 bitrate",
+                  "value": 1,
+                  "unit": "bitrates",
                   "offset": 0,
                   "length": 816,
                   "children": [
@@ -74,17 +87,12 @@
                       "length": 816
                     }
                   ]
-                },
-                {
-                  "name": "Bitrate Over Time",
-                  "value": "125",
-                  "offset": 0,
-                  "length": 816
                 }
               ]
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 0,
               "length": 136,
@@ -112,7 +120,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 1,
                       "length": 1,
                       "bitOffset": 7,
@@ -120,7 +128,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 0,
@@ -128,7 +137,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 4,
@@ -136,7 +146,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 6,
@@ -144,7 +154,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 2,
                       "length": 1,
                       "bitOffset": 7,
@@ -168,7 +178,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 3,
                       "length": 1,
                       "bitOffset": 4,
@@ -176,7 +186,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 3,
                       "length": 1,
                       "bitOffset": 5,
@@ -194,13 +204,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 4,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 4,
                       "length": 2
                     }
@@ -208,6 +218,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 6,
                   "length": 16,
                   "children": [
@@ -759,6 +770,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 22,
                   "length": 1,
                   "bitOffset": 0,
@@ -773,7 +785,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 22,
                           "length": 1,
                           "bitOffset": 0,
@@ -785,7 +797,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 22,
                   "length": 25,
                   "bitOffset": 6,
@@ -793,7 +806,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 47,
                   "length": 89
                 }
@@ -801,6 +815,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 136,
               "length": 136,
@@ -828,7 +843,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 137,
                       "length": 1,
                       "bitOffset": 7,
@@ -836,7 +851,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 138,
                       "length": 1,
                       "bitOffset": 0,
@@ -844,7 +860,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 138,
                       "length": 1,
                       "bitOffset": 4,
@@ -852,7 +869,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 138,
                       "length": 1,
                       "bitOffset": 6,
@@ -860,7 +877,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 138,
                       "length": 1,
                       "bitOffset": 7,
@@ -884,7 +901,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 139,
                       "length": 1,
                       "bitOffset": 4,
@@ -892,7 +909,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 139,
                       "length": 1,
                       "bitOffset": 5,
@@ -910,13 +927,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 140,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 140,
                       "length": 2
                     }
@@ -924,6 +941,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 142,
                   "length": 16,
                   "children": [
@@ -1475,6 +1493,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 158,
                   "length": 1,
                   "bitOffset": 0,
@@ -1489,7 +1508,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 158,
                           "length": 1,
                           "bitOffset": 0,
@@ -1501,7 +1520,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 158,
                   "length": 25,
                   "bitOffset": 6,
@@ -1509,7 +1529,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 183,
                   "length": 89
                 }
@@ -1517,6 +1538,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 272,
               "length": 136,
@@ -1544,7 +1566,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 273,
                       "length": 1,
                       "bitOffset": 7,
@@ -1552,7 +1574,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 274,
                       "length": 1,
                       "bitOffset": 0,
@@ -1560,7 +1583,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 274,
                       "length": 1,
                       "bitOffset": 4,
@@ -1568,7 +1592,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 274,
                       "length": 1,
                       "bitOffset": 6,
@@ -1576,7 +1600,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 274,
                       "length": 1,
                       "bitOffset": 7,
@@ -1600,7 +1624,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 275,
                       "length": 1,
                       "bitOffset": 4,
@@ -1608,7 +1632,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 275,
                       "length": 1,
                       "bitOffset": 5,
@@ -1626,13 +1650,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 276,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 276,
                       "length": 2
                     }
@@ -1640,6 +1664,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 278,
                   "length": 16,
                   "children": [
@@ -2191,6 +2216,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 294,
                   "length": 1,
                   "bitOffset": 0,
@@ -2205,7 +2231,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 294,
                           "length": 1,
                           "bitOffset": 0,
@@ -2217,7 +2243,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 294,
                   "length": 25,
                   "bitOffset": 6,
@@ -2225,7 +2252,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 319,
                   "length": 89
                 }
@@ -2233,6 +2261,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 408,
               "length": 136,
@@ -2260,7 +2289,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 409,
                       "length": 1,
                       "bitOffset": 7,
@@ -2268,7 +2297,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 410,
                       "length": 1,
                       "bitOffset": 0,
@@ -2276,7 +2306,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 410,
                       "length": 1,
                       "bitOffset": 4,
@@ -2284,7 +2315,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 410,
                       "length": 1,
                       "bitOffset": 6,
@@ -2292,7 +2323,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 410,
                       "length": 1,
                       "bitOffset": 7,
@@ -2316,7 +2347,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 411,
                       "length": 1,
                       "bitOffset": 4,
@@ -2324,7 +2355,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 411,
                       "length": 1,
                       "bitOffset": 5,
@@ -2342,13 +2373,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 412,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 412,
                       "length": 2
                     }
@@ -2356,6 +2387,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 414,
                   "length": 16,
                   "children": [
@@ -2907,6 +2939,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 430,
                   "length": 1,
                   "bitOffset": 0,
@@ -2921,7 +2954,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 430,
                           "length": 1,
                           "bitOffset": 0,
@@ -2933,7 +2966,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 430,
                   "length": 25,
                   "bitOffset": 6,
@@ -2941,7 +2975,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 455,
                   "length": 89
                 }
@@ -2949,6 +2984,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 544,
               "length": 136,
@@ -2976,7 +3012,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 545,
                       "length": 1,
                       "bitOffset": 7,
@@ -2984,7 +3020,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 546,
                       "length": 1,
                       "bitOffset": 0,
@@ -2992,7 +3029,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 546,
                       "length": 1,
                       "bitOffset": 4,
@@ -3000,7 +3038,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 546,
                       "length": 1,
                       "bitOffset": 6,
@@ -3008,7 +3046,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 546,
                       "length": 1,
                       "bitOffset": 7,
@@ -3032,7 +3070,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 547,
                       "length": 1,
                       "bitOffset": 4,
@@ -3040,7 +3078,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 547,
                       "length": 1,
                       "bitOffset": 5,
@@ -3058,13 +3096,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 548,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 548,
                       "length": 2
                     }
@@ -3072,6 +3110,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 550,
                   "length": 16,
                   "children": [
@@ -3623,6 +3662,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 566,
                   "length": 1,
                   "bitOffset": 0,
@@ -3637,7 +3677,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 566,
                           "length": 1,
                           "bitOffset": 0,
@@ -3649,7 +3689,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 566,
                   "length": 25,
                   "bitOffset": 6,
@@ -3657,7 +3698,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 591,
                   "length": 89
                 }
@@ -3665,6 +3707,7 @@
             },
             {
               "name": "Frame",
+              "kind": "Frame",
               "value": "MPEG-1 Layer I, 128 kbps, 44100 Hz, Mono",
               "offset": 680,
               "length": 136,
@@ -3692,7 +3735,7 @@
                     },
                     {
                       "name": "IsProtected",
-                      "value": "true",
+                      "value": true,
                       "offset": 681,
                       "length": 1,
                       "bitOffset": 7,
@@ -3700,7 +3743,8 @@
                     },
                     {
                       "name": "Bitrate",
-                      "value": "128 kbps",
+                      "value": 128,
+                      "unit": "kbps",
                       "offset": 682,
                       "length": 1,
                       "bitOffset": 0,
@@ -3708,7 +3752,8 @@
                     },
                     {
                       "name": "Sample Rate",
-                      "value": "44100 Hz",
+                      "value": 44100,
+                      "unit": "Hz",
                       "offset": 682,
                       "length": 1,
                       "bitOffset": 4,
@@ -3716,7 +3761,7 @@
                     },
                     {
                       "name": "HasPadding",
-                      "value": "false",
+                      "value": false,
                       "offset": 682,
                       "length": 1,
                       "bitOffset": 6,
@@ -3724,7 +3769,7 @@
                     },
                     {
                       "name": "IsPrivate",
-                      "value": "false",
+                      "value": false,
                       "offset": 682,
                       "length": 1,
                       "bitOffset": 7,
@@ -3748,7 +3793,7 @@
                     },
                     {
                       "name": "IsCopyrighted",
-                      "value": "false",
+                      "value": false,
                       "offset": 683,
                       "length": 1,
                       "bitOffset": 4,
@@ -3756,7 +3801,7 @@
                     },
                     {
                       "name": "IsOriginal",
-                      "value": "false",
+                      "value": false,
                       "offset": 683,
                       "length": 1,
                       "bitOffset": 5,
@@ -3774,13 +3819,13 @@
                 },
                 {
                   "name": "CRC",
-                  "value": "0xA61A",
+                  "value": 42522,
                   "offset": 684,
                   "length": 2,
                   "children": [
                     {
                       "name": "Computed",
-                      "value": "0xA61A",
+                      "value": 42522,
                       "offset": 684,
                       "length": 2
                     }
@@ -3788,6 +3833,7 @@
                 },
                 {
                   "name": "Bit Allocation",
+                  "kind": "SideInfo",
                   "offset": 686,
                   "length": 16,
                   "children": [
@@ -4339,6 +4385,7 @@
                 },
                 {
                   "name": "Scalefactors",
+                  "kind": "SideInfo",
                   "offset": 702,
                   "length": 1,
                   "bitOffset": 0,
@@ -4353,7 +4400,7 @@
                       "children": [
                         {
                           "name": "Channel 0",
-                          "value": "0",
+                          "value": 0,
                           "offset": 702,
                           "length": 1,
                           "bitOffset": 0,
@@ -4365,7 +4412,8 @@
                 },
                 {
                   "name": "Samples",
-                  "value": "192 bits",
+                  "value": 192,
+                  "unit": "bits",
                   "offset": 702,
                   "length": 25,
                   "bitOffset": 6,
@@ -4373,7 +4421,8 @@
                 },
                 {
                   "name": "Ancillary Data",
-                  "value": "89 bytes",
+                  "value": 89,
+                  "unit": "bytes",
                   "offset": 727,
                   "length": 89
                 }
@@ -4383,13 +4432,72 @@
         }
       ]
     },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "MPEG-1 Layer I",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "samples": 2304,
+        "duration": 0.052244897959183675,
+        "averageBitrate": 124.95,
+        "isVbr": false,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0,
+              136,
+              272,
+              408,
+              544,
+              680
+            ],
+            "values": [
+              128,
+              128,
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              125
+            ]
+          }
+        ]
+      }
+    ],
     "findings": [
       {
         "severity": "Warning",
         "code": "mpeg.allocation-forbidden",
         "message": "6 frames use the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at 0x0.",
         "offset": 6,
-        "length": 1
+        "length": 1,
+        "path": [
+          0,
+          1,
+          2,
+          0,
+          0
+        ],
+        "count": 6
       }
     ]
   }

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-leading-size-past-eof.mp3",
     "root": {
       "name": "File",
@@ -13,20 +18,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 703
+        "length": 703,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "tag.rejected",
         "message": "APE candidate at 0x0 (EOF-703) rejected: the header declares 1000000 bytes after the header, but the file ends 671 bytes into them, so the size points outside the file.",
         "offset": 0,
-        "length": 703
+        "length": 703,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

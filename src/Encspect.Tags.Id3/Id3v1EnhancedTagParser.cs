@@ -27,7 +27,7 @@ public sealed class Id3v1EnhancedTagParser : ITagParser
         }
 
         byte[] data = reader.ReadBytesAt(start, TagSize);
-        var tag = new Node(Name, start, TagSize);
+        var tag = new Node(Name, start, TagSize) { Kind = NodeKind.Tag };
         var nonText = new List<string>();
 
         tag.Add("Signature", start, 4, "TAG+");

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-v1-zero-byte.mp3",
     "root": {
       "name": "File",
@@ -13,13 +18,15 @@
         },
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 512,
           "length": 53,
           "children": [
             {
               "name": "Items",
-              "value": "1 items",
+              "value": 1,
+              "unit": "items",
               "offset": 512,
               "length": 21,
               "children": [
@@ -31,19 +38,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "7",
+                      "value": 7,
                       "offset": 512,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 516,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 516,
                           "length": 4
                         },
@@ -84,25 +91,25 @@
                 },
                 {
                   "name": "Version",
-                  "value": "1000",
+                  "value": 1000,
                   "offset": 541,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "53",
+                  "value": 53,
                   "offset": 545,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "1",
+                  "value": 1,
                   "offset": 549,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0x00000000",
+                  "value": 0,
                   "offset": 553,
                   "length": 4
                 },
@@ -137,20 +144,32 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "ape.v1-zero-byte",
         "message": "The APEv1 value of item \"Title\" contains a $00 byte; APEv1 has no value lists, so it is kept as one value.",
         "offset": 526,
-        "length": 7
+        "length": 7,
+        "path": [
+          1,
+          0,
+          0,
+          3
+        ],
+        "count": 1
       }
     ]
   }

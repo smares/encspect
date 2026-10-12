@@ -55,6 +55,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         }
 
         AddStatistics(stream);
+        AddStreams(stream, context);
 
         findings.Flush(context);
     }
@@ -66,11 +67,16 @@ public sealed partial class MpegAudioParser : IFormatParser
         BuildContext build = state.Build;
         var regionState = new RegionState(entries);
         state.Regions.Add(regionState);
-        Node region = root.Add(new Node("MPEG Audio", start, end - start, null, () => BuildRegion(regionState, build)));
+        Node region = root.Add(new Node("MPEG Audio", start, end - start, null, () => BuildRegion(regionState, build)) { Kind = NodeKind.Stream });
+        regionState.Node = region;
         int frames = 0;
         long position = start;
         MpegHeader? stream = null;
         int freeLength = 0;
+
+        // A stream change found where sync returns after a gap is reported on the frame there,
+        // once its length is known.
+        (MpegHeader From, MpegHeader To, int FreeLength)? resynced = null;
 
         while (position < end)
         {
@@ -85,20 +91,35 @@ public sealed partial class MpegAudioParser : IFormatParser
                     // inside the frame cuts it short, where it was cut or its header is damaged.
                     long frameEnd = at + header.FrameLength(freeLength);
                     long frameLimit = end;
+                    int? previous = null;
                     if (frameEnd < end && !StartsFrame(blocks, frameEnd, header, end))
                     {
                         if (header.IsFreeFormat && FindStreamStart(blocks, at, at + 1, end, out int changed) == at && changed != freeLength)
                         {
-                            int previous = freeLength;
+                            previous = freeLength;
                             freeLength = changed;
-                            findings.Add(Severity.Warning, "mpeg.free-format-length-changed", new Node("Frame", at, header.FrameLength(changed), header.Summary), count =>
-                                $"The free-format frame length changes {Times(count)}, first from {previous} to {changed} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
                         }
                         // A frame cannot end inside its own header or CRC.
                         else if (FindStreamStart(blocks, at + 4 + (header.IsProtected ? 2 : 0), frameEnd, end, out _) is var cut and >= 0)
                         {
                             frameLimit = cut;
                         }
+                    }
+
+                    // The node AddFrame's entry will have, so findings keep the order they are found in.
+                    var node = new Node("Frame", at, Math.Min(header.FrameLength(freeLength), frameLimit - at), header.Summary) { Kind = NodeKind.Frame };
+                    if (resynced is { } change)
+                    {
+                        StreamChanged(change.From, change.To, node);
+                        FreeFormat(change.To, change.FreeLength);
+                        resynced = null;
+                    }
+
+                    if (previous is { } from)
+                    {
+                        int to = freeLength;
+                        findings.Add(Severity.Warning, "mpeg.free-format-length-changed", node, count =>
+                            $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
 
                     Entry frame = AddFrame(state, entries, at, frameLimit, header, freeLength, frameLimit < end);
@@ -142,17 +163,16 @@ public sealed partial class MpegAudioParser : IFormatParser
             position = next;
             blocks.TryReadUInt32(position, out uint first);
             var found = new MpegHeader(first);
-            if (stream is { } before && !found.IsSameStream(before))
-            {
-                StreamChanged(before, found, new Node("Frame", next, found.FrameLength(foundFreeLength), found.Summary));
-            }
-
+            resynced = stream is { } before && !found.IsSameStream(before) ? (before, found, foundFreeLength) : null;
             stream = found;
             freeLength = foundFreeLength;
-            FreeFormat(found, foundFreeLength);
+            if (resynced is null)
+            {
+                FreeFormat(found, foundFreeLength);
+            }
         }
 
-        region.Value = Frames(frames);
+        region.Value = NodeValue.Integer(frames, "frames", "frame");
 
         void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
             findings.Add(Severity.Warning, "mpeg.stream-changed", node, count =>
@@ -269,7 +289,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         if (header.EmphasisBits == 2)
         {
-            findings.Add(Severity.Warning, "mpeg.emphasis-reserved", new Node("Emphasis", position + 3, 1, header.Emphasis), count =>
+            findings.Add(Severity.Warning, "mpeg.emphasis-reserved", HeaderField(position, "Emphasis"), count =>
                 $"{Frames(count, "uses", "use")} the reserved emphasis value, the first at 0x{position:X}.");
         }
 
@@ -289,10 +309,9 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         if (stored >= 0)
         {
-            var crc = new Node("CRC", position + 4, 2, $"0x{stored:X4}");
             if (computed >= 0 && computed != stored)
             {
-                findings.Add(Severity.Warning, "mpeg.crc-mismatch", crc, count =>
+                findings.Add(Severity.Warning, "mpeg.crc-mismatch", CrcNode(position, stored), count =>
                     $"{Frames(count, "fails", "fail")} the CRC check, the first at 0x{position:X}.");
             }
         }
@@ -337,13 +356,41 @@ public sealed partial class MpegAudioParser : IFormatParser
         return nodes;
     }
 
-    private static Node GapNode(Entry gap) => new("Gap", gap.Offset, gap.Length, $"{gap.Length} bytes");
+    private static Node GapNode(Entry gap) => new("Gap", gap.Offset, gap.Length, Bytes(gap.Length));
 
     private static Node FrameNode(Entry frame, BuildContext build) =>
-        new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary, () => BuildFrame(frame, build));
+        new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary, () => BuildFrame(frame, build)) { Kind = NodeKind.Frame };
 
-    // Findings only need to say where the frame is.
-    private static Node FindingNode(Entry frame) => new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary);
+    // The frame's node for a finding: the same as the one in the tree, without the build function
+    // that would keep the frame's record alive.
+    private static Node FindingNode(Entry frame) =>
+        new("Frame", frame.Offset, frame.Length, new MpegHeader(frame.Header).Summary) { Kind = NodeKind.Frame };
+
+    // ISO/IEC 11172-3 2.4.1.3, with the syncword cut to 11 bits for MPEG 2.5's two version bits.
+    private static Node HeaderField(long position, string name, NodeValue? value = null)
+    {
+        (int start, int end) = name switch
+        {
+            "Version" => (11, 13),
+            "Layer" => (13, 15),
+            "IsProtected" => (15, 16),
+            "Bitrate" => (16, 20),
+            "Sample Rate" => (20, 22),
+            "HasPadding" => (22, 23),
+            "IsPrivate" => (23, 24),
+            "Channel Mode" => (24, 26),
+            "Mode Extension" => (26, 28),
+            "IsCopyrighted" => (28, 29),
+            "IsOriginal" => (29, 30),
+            "Emphasis" => (30, 32),
+            _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not a header field."),
+        };
+        return Node.FromBits(name, position, start, end, value);
+    }
+
+    private static Node CrcNode(long position, int crc) => new("CRC", position + 4, 2, NodeValue.Hex(crc, 4));
+
+    private static NodeValue Bytes(long count) => NodeValue.Integer(count, "bytes");
 
     private static List<Node> BuildFrame(Entry frame, BuildContext build)
     {
@@ -351,30 +398,29 @@ public sealed partial class MpegAudioParser : IFormatParser
         long position = frame.Offset;
         var children = new List<Node>();
 
-        // ISO/IEC 11172-3 2.4.1.3, with the syncword cut to 11 bits for MPEG 2.5's two version bits.
         Node fields = new("Header", position, 4);
         children.Add(fields);
-        fields.Add(Node.FromBits("Version", position, 11, 13, header.VersionName));
-        fields.Add(Node.FromBits("Layer", position, 13, 15, header.LayerName));
-        fields.Add(Node.FromBits("IsProtected", position, 15, 16, Bool(header.IsProtected)));
-        fields.Add(Node.FromBits("Bitrate", position, 16, 20, header.BitrateName));
-        fields.Add(Node.FromBits("Sample Rate", position, 20, 22, $"{header.SampleRate} Hz"));
-        fields.Add(Node.FromBits("HasPadding", position, 22, 23, Bool(header.Padding == 1)));
-        fields.Add(Node.FromBits("IsPrivate", position, 23, 24, Bool(header.IsPrivate)));
-        fields.Add(Node.FromBits("Channel Mode", position, 24, 26, header.ChannelMode));
-        fields.Add(Node.FromBits("Mode Extension", position, 26, 28, header.ModeExtensionName));
-        fields.Add(Node.FromBits("IsCopyrighted", position, 28, 29, Bool(header.IsCopyrighted)));
-        fields.Add(Node.FromBits("IsOriginal", position, 29, 30, Bool(header.IsOriginal)));
-        fields.Add(Node.FromBits("Emphasis", position, 30, 32, header.Emphasis));
+        fields.Add(HeaderField(position, "Version", header.VersionName));
+        fields.Add(HeaderField(position, "Layer", header.LayerName));
+        fields.Add(HeaderField(position, "IsProtected", NodeValue.Boolean(header.IsProtected)));
+        fields.Add(HeaderField(position, "Bitrate", header.IsFreeFormat ? "free" : NodeValue.Integer(header.Bitrate, "kbps")));
+        fields.Add(HeaderField(position, "Sample Rate", NodeValue.Integer(header.SampleRate, "Hz")));
+        fields.Add(HeaderField(position, "HasPadding", NodeValue.Boolean(header.Padding == 1)));
+        fields.Add(HeaderField(position, "IsPrivate", NodeValue.Boolean(header.IsPrivate)));
+        fields.Add(HeaderField(position, "Channel Mode", header.ChannelMode));
+        fields.Add(HeaderField(position, "Mode Extension", header.ModeExtensionName));
+        fields.Add(HeaderField(position, "IsCopyrighted", NodeValue.Boolean(header.IsCopyrighted)));
+        fields.Add(HeaderField(position, "IsOriginal", NodeValue.Boolean(header.IsOriginal)));
+        fields.Add(HeaderField(position, "Emphasis", header.Emphasis));
 
         long dataStart = position + 4;
         if (frame.Crc >= 0)
         {
-            Node crc = new("CRC", position + 4, 2, $"0x{frame.Crc:X4}");
+            Node crc = CrcNode(position, frame.Crc);
             children.Add(crc);
             if (frame.ComputedCrc >= 0)
             {
-                crc.Add("Computed", position + 4, 2, $"0x{frame.ComputedCrc:X4}");
+                crc.Add("Computed", position + 4, 2, NodeValue.Hex(frame.ComputedCrc, 4));
             }
 
             dataStart += 2;
@@ -408,12 +454,12 @@ public sealed partial class MpegAudioParser : IFormatParser
             long ancillary = frame.Offset + ((audio.End + 7) / 8);
             if (frame.End > ancillary)
             {
-                children.Add(new Node("Ancillary Data", ancillary, frame.End - ancillary, $"{frame.End - ancillary} bytes"));
+                children.Add(new Node("Ancillary Data", ancillary, frame.End - ancillary, Bytes(frame.End - ancillary)));
             }
         }
         else if (frame.End > dataStart)
         {
-            children.Add(new Node("Data", dataStart, frame.End - dataStart, $"{frame.End - dataStart} bytes"));
+            children.Add(new Node("Data", dataStart, frame.End - dataStart, Bytes(frame.End - dataStart)));
         }
 
         return children;
@@ -438,7 +484,7 @@ public sealed partial class MpegAudioParser : IFormatParser
             long to = Math.Min(runs[i].End, end);
             if (from > cursor)
             {
-                yield return new Node(rest, cursor, from - cursor, $"{from - cursor} bytes");
+                yield return new Node(rest, cursor, from - cursor, Bytes(from - cursor));
             }
 
             yield return new Node("Bit Reservoir", from, to - from, $"{to - from} bytes of the main data of the frame at 0x{runs[i].Owner:X}");
@@ -447,7 +493,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
         if (end > cursor)
         {
-            yield return new Node(rest, cursor, end - cursor, $"{end - cursor} bytes");
+            yield return new Node(rest, cursor, end - cursor, Bytes(end - cursor));
         }
     }
 
@@ -455,7 +501,7 @@ public sealed partial class MpegAudioParser : IFormatParser
     // main data of later frames in the bit reservoir, and ancillary data no frame uses.
     private static void AddMainData(List<Node> children, Entry frame, long dataStart, List<MainDataRun> runs)
     {
-        string own = $"{frame.MainDataLength} bytes" + (frame.Earlier > 0 ? $", {frame.Earlier} of them in earlier frames" : string.Empty);
+        NodeValue own = frame.Earlier > 0 ? $"{frame.MainDataLength} bytes, {frame.Earlier} of them in earlier frames" : Bytes(frame.MainDataLength);
         int first = children.Count;
         bool hasOwn = false;
         long cursor = dataStart;
@@ -494,7 +540,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         {
             if (to > from)
             {
-                children.Add(new Node("Ancillary Data", from, to - from, $"{to - from} bytes"));
+                children.Add(new Node("Ancillary Data", from, to - from, Bytes(to - from)));
             }
         }
     }
@@ -507,16 +553,14 @@ public sealed partial class MpegAudioParser : IFormatParser
         bool hasScalefactors = audio.SampleStart <= bytes.Length * 8;
         foreach ((int ch, int sb) in audio.Coded().Where(c => hasScalefactors && audio.Allocation[c.Channel, c.Subband] == Layer1AudioData.ForbiddenAllocation).Take(1))
         {
-            int bit = audio.AllocationBit[ch, sb];
-            findings.Add(Severity.Warning, "mpeg.allocation-forbidden", Layer2AudioData.Span("Bit Allocation", position, bit, bit + 4), count =>
+            findings.Add(Severity.Warning, "mpeg.allocation-forbidden", audio.AllocationNode(position, ch, sb), count =>
                 $"{Frames(count, "uses", "use")} the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at 0x{position:X}.");
         }
 
         foreach ((int ch, int sb) in Enumerable.Range(0, audio.Channels).SelectMany(ch => Enumerable.Range(0, Layer1AudioData.Subbands).Select(sb => (ch, sb)))
             .Where(c => hasScalefactors && audio.Scalefactor[c.ch, c.sb] == 63).Take(1))
         {
-            int bit = audio.ScalefactorBit[ch, sb];
-            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", Layer2AudioData.Span("Scalefactors", position, bit, bit + 6), count =>
+            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", audio.ScalefactorNode(position, ch, sb), count =>
                 $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x{position:X}.");
         }
 
@@ -558,7 +602,7 @@ public sealed partial class MpegAudioParser : IFormatParser
             int bit = audio.ScalefactorBit[ch, sb] + (6 * Array.IndexOf(audio.Scalefactors[ch, sb], 63));
             undefined = Layer2AudioData.Span("Scalefactors", position, bit, bit + 6);
             // TwoLAME writes it, and ffmpeg, mpg123 and libmad decode it.
-            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", undefined, count =>
+            findings.Add(Severity.Warning, "mpeg.scalefactor-undefined", audio.ScalefactorNode(position, ch, sb), count =>
                 $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x{position:X}.");
         }
 
@@ -681,7 +725,7 @@ public sealed partial class MpegAudioParser : IFormatParser
             long start = record.McOffset + ((mc.End + 7) / 8);
             if (end > start)
             {
-                children.Add(new Node("Ancillary Data", start, end - start, $"{end - start} bytes"));
+                children.Add(new Node("Ancillary Data", start, end - start, Bytes(end - start)));
             }
 
             return;
@@ -690,7 +734,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         long ancillary = frame.Offset + ((audio.End + 7) / 8);
         if (end > ancillary)
         {
-            children.Add(new Node("Ancillary Data", ancillary, end - ancillary, $"{end - ancillary} bytes"));
+            children.Add(new Node("Ancillary Data", ancillary, end - ancillary, Bytes(end - ancillary)));
         }
     }
 
@@ -730,13 +774,13 @@ public sealed partial class MpegAudioParser : IFormatParser
 
             if (g.IsSwitched && g.BlockType.Value == 0)
             {
-                yield return ("mpeg.block-type-reserved", Field("Block Type", g.BlockType), count =>
+                yield return ("mpeg.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
                     $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at 0x{position:X}.");
             }
 
             foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
             {
-                yield return ("mpeg.huffman-table-undefined", Field("Table Select", table), count =>
+                yield return ("mpeg.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
                     $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at 0x{position:X}.");
             }
 
@@ -750,7 +794,7 @@ public sealed partial class MpegAudioParser : IFormatParser
             // libmad rejects these frames; ffmpeg and mpg123 decode them.
             if (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0)
             {
-                yield return ("mpeg.scfsi-with-short-blocks", Field("SCFSI", info.Scfsi[ch]), count =>
+                yield return ("mpeg.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
                     $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at 0x{position:X}.");
             }
         }
@@ -760,7 +804,7 @@ public sealed partial class MpegAudioParser : IFormatParser
         {
             if (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed)
             {
-                yield return ("mpeg.stereo-block-types-differ", Field("Block Type", row[1].WindowSwitching), count =>
+                yield return ("mpeg.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
                     $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x{position:X}.");
             }
         }
@@ -951,8 +995,6 @@ public sealed partial class MpegAudioParser : IFormatParser
         return true;
     }
 
-    private static string Bool(bool value) => value ? "true" : "false";
-
     // A frame or, with a zero header (never a valid one), a gap: all a region keeps per frame
     // until its nodes are asked for. Crc and ComputedCrc are -1 when absent.
     // SideInfo holds a Layer III frame's raw side information; MainDataLength and Earlier, how
@@ -1007,6 +1049,13 @@ public sealed partial class MpegAudioParser : IFormatParser
         public AncillaryScan? Ancillary { get; set; }
 
         public Node? Statistics { get; set; }
+
+        // The statistics figures the stream's series are shown after.
+        public Node? Distribution { get; set; }
+
+        public Node? MaximumFill { get; set; }
+
+        public Node? Node { get; set; }
     }
 
     // What building frame nodes needs beyond each frame's record: the Layer III main-data runs, and
@@ -1054,7 +1103,7 @@ public sealed partial class MpegAudioParser : IFormatParser
 
             foreach ((string code, var entry) in _aggregated)
             {
-                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node ?? context.Root);
+                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node ?? context.Root, entry.Count);
             }
         }
     }

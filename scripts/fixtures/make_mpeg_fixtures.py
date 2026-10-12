@@ -11,6 +11,9 @@ headers, CRCs and the layout of frames, gaps and tags are fully under control. E
   is a sequence of node names separated by "/", relative to the frame node.
 - "gaps": bytes inside an "MPEG Audio" region that are not frames (junk, lost sync, trailing
   data).
+- "streams": the streams in file order, each with its figures and per-second series
+  (stream_stats.py); a stream continues across gaps and tags and ends where the version, layer,
+  sample rate or free format changes.
 - "findings": the findings the analyzer must produce, as a code plus a string the message has to
   contain. Findings of one kind are reported once per stream, not once per frame.
 - "crosscheck": whether crosscheck_mpeg_fixtures.py must find exactly these frames with ffprobe
@@ -386,8 +389,9 @@ class Fixture:
         return self
 
     def statistics(self):
-        """Adds each MPEG Audio region's statistics (stream_stats.py) and the findings about VBR
-        header counts; the reservoir model must agree with any fill the fixture states itself."""
+        """Adds each MPEG Audio region's statistics and each stream's figures (stream_stats.py) and
+        the findings about VBR header counts; the reservoir model must agree with any fill the
+        fixture states itself."""
         fills = stream_stats.reservoir_fills(self.layout)
         infos = []
         for entry, layout, fill in zip(self.frames, self.layout, fills):
@@ -406,6 +410,7 @@ class Fixture:
             fields = stream_stats.region_fields(inside, infos)
             if fields:
                 region["statistics"] = fields
+        self.streams = stream_stats.streams(infos)
         for info in infos:
             if info.header is not None:
                 for code, contains in stream_stats.header_findings(info, infos):
@@ -421,6 +426,7 @@ class Fixture:
             "regions": self.regions,
             "frames": self.frames,
             "gaps": self.gaps,
+            "streams": self.streams,
             "findings": self.findings,
             **({"detected_encoder": self.encoder} if self.encoder else {}),
         }

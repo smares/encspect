@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using Encspect.Core;
@@ -171,7 +170,7 @@ public sealed class Id3v2TagParser : ITagParser
 
         long declaredEnd = start + HeaderSize + size + (hasFooter ? HeaderSize : 0);
         long end = Math.Min(declaredEnd, reader.End);
-        var tag = new Node(Name, start, end - start, $"2.{major}.{revision}");
+        var tag = new Node(Name, start, end - start, $"2.{major}.{revision}") { Kind = NodeKind.Tag };
         bool truncated = declaredEnd > reader.End;
         var state = new ParseState(tag, major) { IsTruncated = truncated };
 
@@ -213,7 +212,7 @@ public sealed class Id3v2TagParser : ITagParser
         {
             // ID3v2.2 section 3.1: no compression scheme was ever defined, so the body is opaque.
             long length = bodyEnd - bodyStart;
-            tag.Add("Compressed Data", bodyStart, length, $"{length} bytes");
+            tag.Add("Compressed Data", bodyStart, length, NodeValue.Integer(length, "bytes"));
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.compressed-tag", "The ID3v2.2 tag is marked as compressed, which no specification defines; its content is not parsed.", tag));
         }
         else
@@ -272,7 +271,7 @@ public sealed class Id3v2TagParser : ITagParser
         if ((unparsed?.Offset ?? (truncated ? state.PaddingEnd : null)) is { } stop)
         {
             state.Findings.RemoveAll(f => unparsed is not null && f.Node == unparsed);
-            var cut = new Node(tag.Name, tag.Offset, stop - tag.Offset, tag.Value);
+            var cut = new Node(tag.Name, tag.Offset, stop - tag.Offset, tag.Value) { Kind = NodeKind.Tag };
             foreach (Node child in tag.Children.Where(c => c != unparsed))
             {
                 cut.Add(child);
@@ -294,8 +293,8 @@ public sealed class Id3v2TagParser : ITagParser
     // TSSE (TSS in ID3v2.2): "the used audio encoder and its settings when the file was encoded"
     // (ID3v2.3 section 4.2.1), as the software that wrote the tag fills it in.
     private static List<EncoderClaim> EncoderClaims(ParseState state) =>
-        state.Frames.Where(f => f.Name is "TSSE" or "TSS" && !string.IsNullOrWhiteSpace(f.Value))
-            .Select(f => new EncoderClaim(f.Value!, f, $"ID3v2 {f.Name} frame"))
+        state.Frames.Where(f => f.Name is "TSSE" or "TSS" && !string.IsNullOrWhiteSpace(f.Value?.AsText()))
+            .Select(f => new EncoderClaim(f.Value!.ToString(), f, $"ID3v2 {f.Name} frame"))
             .ToList();
 
     private static void VerifyCrc(ByteReader reader, ParseState state, bool unsync, long bodyEnd, long? declaredPadding, bool truncated)
@@ -351,7 +350,7 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         uint computed = Crc32.Finish(crc);
-        string text = state.Major == 3 ? $"0x{computed:X8}" : $"0x{computed:X}";
+        NodeValue text = NodeValue.Hex(computed, state.Major == 3 ? 8 : 0);
         stored.Node.Add("Computed", stored.Node.Offset, stored.Node.Length, text);
         string covered = $"0x{start:X} to 0x{end:X}";
         if (stored.Value == computed)
@@ -377,7 +376,7 @@ public sealed class Id3v2TagParser : ITagParser
         node.Add("Identifier", offset, 3, identifier);
         node.Add("Version", offset + 3, 2, $"2.{major}.{header[4]}");
 
-        Node flagsNode = node.Add("Flags", offset + 5, 1, $"0x{flags:X2}");
+        Node flagsNode = node.Add("Flags", offset + 5, 1, NodeValue.Hex(flags, 2));
         flagsNode.Add("IsUnsynchronized", offset + 5, 1, Bool(flags & 0x80));
         if (major == 2)
         {
@@ -393,7 +392,7 @@ public sealed class Id3v2TagParser : ITagParser
             }
         }
 
-        node.Add("Size", offset + 6, 4, Syncsafe(header, 6).ToString(CultureInfo.InvariantCulture));
+        node.Add("Size", offset + 6, 4, NodeValue.Integer(Syncsafe(header, 6)));
     }
 
     // ID3v2.3 section 3.2: size (excluding itself, 6 or 10), flags, padding size, optional CRC.
@@ -417,7 +416,7 @@ public sealed class Id3v2TagParser : ITagParser
 
         DecodedBytes data = body.Read((int)size);
         Node ext = state.Tag.Add("Extended Header", start, body.FilePosition - start);
-        ext.Add("Size", sizeBytes.OffsetOf(0), sizeBytes.FileLength(0, 4), size.ToString(CultureInfo.InvariantCulture));
+        ext.Add("Size", sizeBytes.OffsetOf(0), sizeBytes.FileLength(0, 4), NodeValue.Integer(size));
         if (data.Length < size)
         {
             AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header is cut off by the end of the tag.");
@@ -425,11 +424,11 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         int flags = BinaryPrimitives.ReadUInt16BigEndian(data.Data);
-        Node flagsNode = ext.Add("Flags", data.OffsetOf(0), data.FileLength(0, 2), $"0x{flags:X4}");
+        Node flagsNode = ext.Add("Flags", data.OffsetOf(0), data.FileLength(0, 2), NodeValue.Hex(flags, 4));
         flagsNode.Add("HasCrc", data.OffsetOf(0), data.FileLength(0, 2), Bool(flags & 0x8000));
 
         uint padding = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(2));
-        ext.Add("Padding Size", data.OffsetOf(2), data.FileLength(2, 6), padding.ToString(CultureInfo.InvariantCulture));
+        ext.Add("Padding Size", data.OffsetOf(2), data.FileLength(2, 6), NodeValue.Integer(padding));
 
         // "%x0000000 00000000": the CRC flag is the only one defined.
         if ((flags & 0x7FFF) != 0)
@@ -440,7 +439,7 @@ public sealed class Id3v2TagParser : ITagParser
         if ((flags & 0x8000) == 0 && size == 10)
         {
             // "If this flag is set four bytes of CRC-32 data is appended", so 10 bytes need it.
-            ext.Add("Data", data.OffsetOf(6), data.FileLength(6, 10), "4 bytes");
+            ext.Add("Data", data.OffsetOf(6), data.FileLength(6, 10), NodeValue.Integer(4, "bytes"));
             AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header is 10 bytes, the size with a CRC, but its CRC flag is clear; its last 4 bytes are unexplained.");
         }
         else if ((flags & 0x8000) != 0)
@@ -452,7 +451,7 @@ public sealed class Id3v2TagParser : ITagParser
             else
             {
                 uint crc = BinaryPrimitives.ReadUInt32BigEndian(data.Data.AsSpan(6));
-                Node crcNode = ext.Add("CRC", data.OffsetOf(6), data.FileLength(6, 10), $"0x{crc:X8}");
+                Node crcNode = ext.Add("CRC", data.OffsetOf(6), data.FileLength(6, 10), NodeValue.Hex(crc, 8));
                 state.StoredCrc = (crc, crcNode);
             }
         }
@@ -482,7 +481,7 @@ public sealed class Id3v2TagParser : ITagParser
         DecodedBytes data = body.Read((int)Math.Min(size - 4, MaxDecodedFrameBytes));
         body.Skip(size - 4 - data.Length);
         Node ext = state.Tag.Add("Extended Header", start, body.FilePosition - start);
-        ext.Add("Size", sizeBytes.OffsetOf(0), 4, size.ToString(CultureInfo.InvariantCulture));
+        ext.Add("Size", sizeBytes.OffsetOf(0), 4, NodeValue.Integer(size));
         if (data.Length < 2)
         {
             AddExtendedHeaderProblem(state, start, body.FilePosition, "The extended header is cut off by the end of the tag.");
@@ -490,9 +489,9 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         int flagBytes = data.Data[0];
-        ext.Add("Flag Bytes", data.OffsetOf(0), 1, flagBytes.ToString(CultureInfo.InvariantCulture));
+        ext.Add("Flag Bytes", data.OffsetOf(0), 1, NodeValue.Integer(flagBytes));
         int flags = data.Data[1];
-        Node flagsNode = ext.Add("Flags", data.OffsetOf(1), 1, $"0x{flags:X2}");
+        Node flagsNode = ext.Add("Flags", data.OffsetOf(1), 1, NodeValue.Hex(flags, 2));
         flagsNode.Add("IsUpdate", data.OffsetOf(1), 1, Bool(flags & 0x40));
         flagsNode.Add("HasCrc", data.OffsetOf(1), 1, Bool(flags & 0x20));
         flagsNode.Add("HasRestrictions", data.OffsetOf(1), 1, Bool(flags & 0x10));
@@ -553,18 +552,12 @@ public sealed class Id3v2TagParser : ITagParser
         return null;
     }
 
-    private static string FormatExtendedValue(string name, ReadOnlySpan<byte> value)
+    private static NodeValue FormatExtendedValue(string name, ReadOnlySpan<byte> value) => name switch
     {
-        switch (name)
-        {
-            case "CRC" when value.Length == 5:
-                return $"0x{Syncsafe35(value):X}";
-            case "Restrictions" when value.Length == 1:
-                return $"0x{value[0]:X2}";
-            default:
-                return $"{value.Length} bytes";
-        }
-    }
+        "CRC" when value.Length == 5 => NodeValue.Hex((long)Syncsafe35(value), 0),
+        "Restrictions" when value.Length == 1 => NodeValue.Hex(value[0], 2),
+        _ => NodeValue.Integer(value.Length, "bytes"),
+    };
 
     // ID3v2.4 section 3.2, restrictions byte %ppqrrstt.
     private static void AddRestrictions(Node node, byte value)
@@ -717,8 +710,8 @@ public sealed class Id3v2TagParser : ITagParser
 
             // "If a text frame consists of more than one string, the sum of the strungs is
             // restricted as stated."
-            int text = frame.Children.Where(c => c.Name == "Text").Sum(c => Characters(c.Value));
-            int longest = frame.Children.Where(c => c.Name == "Description").Select(c => Characters(c.Value)).Append(text).Max();
+            int text = frame.Children.Where(c => c.Name == "Text").Sum(c => Characters(c.Value?.ToString()));
+            int longest = frame.Children.Where(c => c.Name == "Description").Select(c => Characters(c.Value?.ToString())).Append(text).Max();
             if (longest > maxCharacters)
             {
                 Violation($"strings to {maxCharacters} characters, but frame {frame.Name} at 0x{frame.Offset:X} holds one of {longest}", frame);
@@ -755,7 +748,7 @@ public sealed class Id3v2TagParser : ITagParser
         }
     }
 
-    private static string? Child(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value;
+    private static string? Child(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value?.ToString();
 
     private static int Characters(string? text) => text?.EnumerateRunes().Count() ?? 0;
 
@@ -775,7 +768,7 @@ public sealed class Id3v2TagParser : ITagParser
         string id = frame.Name;
         if (id is "APIC" or "PIC")
         {
-            string? type = frame.Children.FirstOrDefault(c => c.Name == "Picture Type")?.Value;
+            string? type = frame.Children.FirstOrDefault(c => c.Name == "Picture Type")?.Value?.ToString();
             return type is not null && (type.StartsWith("1 ", StringComparison.Ordinal) || type.StartsWith("2 ", StringComparison.Ordinal))
                 ? $"{id} picture type {type}"
                 : string.Empty;
@@ -893,7 +886,7 @@ public sealed class Id3v2TagParser : ITagParser
         long headerEnd = raw.OffsetOf(Math.Min(extrasLength, raw.Length));
         Node headerNode = frame.Add("Header", frameStart, headerEnd - frameStart);
         headerNode.Add("ID", header.OffsetOf(0), header.FileLength(0, idLength), id);
-        headerNode.Add("Size", header.OffsetOf(idLength), header.FileLength(idLength, idLength + sizeLength), frameSize.ToString(CultureInfo.InvariantCulture));
+        headerNode.Add("Size", header.OffsetOf(idLength), header.FileLength(idLength, idLength + sizeLength), NodeValue.Integer(frameSize));
 
         if (plainSize)
         {
@@ -946,16 +939,16 @@ public sealed class Id3v2TagParser : ITagParser
                 return;
             }
 
-            string value;
+            NodeValue value;
             if (length == 4)
             {
                 long number = major == 4 ? Syncsafe(raw.Data, pos) : BinaryPrimitives.ReadUInt32BigEndian(raw.Data.AsSpan(pos));
                 dataLength = number;
-                value = number.ToString(CultureInfo.InvariantCulture);
+                value = NodeValue.Integer(number);
             }
             else
             {
-                value = raw.Data[pos].ToString(CultureInfo.InvariantCulture);
+                value = NodeValue.Integer(raw.Data[pos]);
             }
 
             headerNode.Add(name, raw.OffsetOf(pos), raw.FileLength(pos, pos + length), value);
@@ -996,7 +989,7 @@ public sealed class Id3v2TagParser : ITagParser
         if (extras.IsEncrypted)
         {
             long offset = raw.OffsetOf(pos);
-            frame.Add("Encrypted Data", offset, frameEnd - offset, $"{frameEnd - offset} bytes");
+            frame.Add("Encrypted Data", offset, frameEnd - offset, NodeValue.Integer(frameEnd - offset, "bytes"));
             findings.Add(new Finding(Severity.Info, "id3v2.frame-encrypted", $"Frame {id} is encrypted; its content is not decoded.", frame));
             return;
         }
@@ -1004,7 +997,7 @@ public sealed class Id3v2TagParser : ITagParser
         if (extras.IsCompressed)
         {
             long offset = raw.OffsetOf(pos);
-            frame.Add("Compressed Data", offset, frameEnd - offset, $"{frameEnd - offset} bytes");
+            frame.Add("Compressed Data", offset, frameEnd - offset, NodeValue.Integer(frameEnd - offset, "bytes"));
             DecodedBytes? inflated = Decompress(state, frame, content, raw.Length < readTotal, dataLength, offset, frameEnd);
             if (inflated is null)
             {
@@ -1136,13 +1129,13 @@ public sealed class Id3v2TagParser : ITagParser
     {
         if (content.Length != 4)
         {
-            frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), $"{content.Length} bytes");
+            frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), NodeValue.Integer(content.Length, "bytes"));
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {content.Length} bytes instead of 4.", frame));
             return;
         }
 
         uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Data);
-        frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), offset.ToString(CultureInfo.InvariantCulture));
+        frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), NodeValue.Integer(offset));
         frame.Value = $"next tag at least {offset} bytes after this one";
 
         if (state.SeekOffset is not null)
@@ -1158,7 +1151,7 @@ public sealed class Id3v2TagParser : ITagParser
     {
         long offset = header.OffsetOf(8);
         long length = header.FileLength(8, 10);
-        Node node = headerNode.Add("Flags", offset, length, $"0x{flags:X4}");
+        Node node = headerNode.Add("Flags", offset, length, NodeValue.Hex(flags, 4));
 
         (string Name, int Bit)[] names = major == 3
             ? [("IsDiscardedOnTagAlter", 0x8000), ("IsDiscardedOnFileAlter", 0x4000), ("IsReadOnly", 0x2000), ("IsCompressed", 0x0080), ("IsEncrypted", 0x0040), ("HasGroupId", 0x0020)]
@@ -1202,7 +1195,7 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         long length = (state.PaddingEnd ?? body.End) - start;
-        Node padding = state.Tag.Add("Padding", start, length, $"{length} bytes");
+        Node padding = state.Tag.Add("Padding", start, length, NodeValue.Integer(length, "bytes"));
         if (nonZero is not null)
         {
             state.Findings.Add(new Finding(Severity.Warning, "id3v2.padding-not-zero", "Padding of the ID3v2 tag contains non-zero bytes.", padding));
@@ -1228,7 +1221,7 @@ public sealed class Id3v2TagParser : ITagParser
 
     private static void AddUnparsed(ParseState state, long start, long end, string code, string message)
     {
-        Node node = state.Tag.Add("Unparsed", start, end - start, $"{end - start} bytes");
+        Node node = state.Tag.Add("Unparsed", start, end - start, NodeValue.Integer(end - start, "bytes"));
         state.Findings.Add(new Finding(Severity.Warning, code, message, node));
         state.Unparsed ??= node;
     }
@@ -1270,7 +1263,7 @@ public sealed class Id3v2TagParser : ITagParser
     private static long Syncsafe(byte[] data, int offset) =>
         ((long)(data[offset] & 0x7F) << 21) | ((long)(data[offset + 1] & 0x7F) << 14) | ((long)(data[offset + 2] & 0x7F) << 7) | (long)(data[offset + 3] & 0x7F);
 
-    private static string Bool(int value) => value != 0 ? "true" : "false";
+    private static NodeValue Bool(int value) => NodeValue.Boolean(value != 0);
 
     private static string Escape(string text)
     {

@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-bad-size.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 551,
           "length": 128,
@@ -55,7 +61,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 677,
               "length": 1
             },
@@ -89,20 +95,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 551
+        "length": 551,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "tag.rejected",
         "message": "Lyrics3 candidate at 0x21E (EOF-137) rejected: the size field 7 does not point at LYRICSBEGIN.",
         "offset": 0,
-        "length": 551
+        "length": 551,
+        "path": [
+          0
+        ],
+        "count": 1
       }
     ]
   }

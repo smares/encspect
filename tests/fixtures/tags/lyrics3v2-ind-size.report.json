@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v2-ind-size.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 51,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "4",
+                  "value": 4,
                   "offset": 526,
                   "length": 5
                 },
@@ -49,19 +55,19 @@
                 },
                 {
                   "name": "HasLyrics",
-                  "value": "true",
+                  "value": true,
                   "offset": 531,
                   "length": 1
                 },
                 {
                   "name": "HasTimestamps",
-                  "value": "false",
+                  "value": false,
                   "offset": 532,
                   "length": 1
                 },
                 {
                   "name": "IsRandomSelectionInhibited",
-                  "value": "false",
+                  "value": false,
                   "offset": 533,
                   "length": 1
                 }
@@ -81,7 +87,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "5",
+                  "value": 5,
                   "offset": 538,
                   "length": 5
                 },
@@ -103,7 +109,7 @@
             },
             {
               "name": "Size",
-              "value": "36",
+              "value": 36,
               "offset": 548,
               "length": 6
             },
@@ -143,6 +149,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 563,
           "length": 128,
@@ -185,7 +192,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 689,
               "length": 1
             },
@@ -219,20 +226,30 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "lyrics3.ind-size",
         "message": "The IND field holds 4 characters; Lyrics3 v2.00 defines 2, and a later revision 3.",
         "offset": 523,
-        "length": 12
+        "length": 12,
+        "path": [
+          1,
+          1
+        ],
+        "count": 1
       }
     ]
   }

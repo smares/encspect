@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "ape-leading-header-only.mp3",
     "root": {
       "name": "File",
@@ -8,6 +13,7 @@
       "children": [
         {
           "name": "APE",
+          "kind": "Tag",
           "value": "2.0",
           "offset": 0,
           "length": 76,
@@ -25,49 +31,49 @@
                 },
                 {
                   "name": "Version",
-                  "value": "2000",
+                  "value": 2000,
                   "offset": 8,
                   "length": 4
                 },
                 {
                   "name": "Tag Size",
-                  "value": "44",
+                  "value": 44,
                   "offset": 12,
                   "length": 4
                 },
                 {
                   "name": "Item Count",
-                  "value": "2",
+                  "value": 2,
                   "offset": 16,
                   "length": 4
                 },
                 {
                   "name": "Flags",
-                  "value": "0xE0000000",
+                  "value": 3758096384,
                   "offset": 20,
                   "length": 4,
                   "children": [
                     {
                       "name": "HasHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "HasFooter",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsHeader",
-                      "value": "true",
+                      "value": true,
                       "offset": 20,
                       "length": 4
                     },
                     {
                       "name": "IsReadOnly",
-                      "value": "false",
+                      "value": false,
                       "offset": 20,
                       "length": 4
                     }
@@ -82,7 +88,8 @@
             },
             {
               "name": "Items",
-              "value": "2 items",
+              "value": 2,
+              "unit": "items",
               "offset": 32,
               "length": 44,
               "children": [
@@ -94,19 +101,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "11",
+                      "value": 11,
                       "offset": 32,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 36,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 36,
                           "length": 4
                         },
@@ -140,19 +147,19 @@
                   "children": [
                     {
                       "name": "Size",
-                      "value": "5",
+                      "value": 5,
                       "offset": 57,
                       "length": 4
                     },
                     {
                       "name": "Flags",
-                      "value": "0x00000000",
+                      "value": 0,
                       "offset": 61,
                       "length": 4,
                       "children": [
                         {
                           "name": "IsReadOnly",
-                          "value": "false",
+                          "value": false,
                           "offset": 61,
                           "length": 4
                         },
@@ -209,27 +216,42 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "ape.at-start",
         "message": "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".",
         "offset": 0,
-        "length": 76
+        "length": 76,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "ape.items-unsorted",
         "message": "Item \"Album\" is smaller than the item before it; the APEv2 specification recommends sorting items ascending by size.",
         "offset": 57,
-        "length": 19
+        "length": 19,
+        "path": [
+          0,
+          1,
+          1
+        ],
+        "count": 1
       },
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 76,
-        "length": 512
+        "length": 512,
+        "path": [
+          1
+        ],
+        "count": 1
       }
     ]
   }

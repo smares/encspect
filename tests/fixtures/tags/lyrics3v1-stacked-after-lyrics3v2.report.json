@@ -1,5 +1,10 @@
 [
   {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
     "source": "lyrics3v1-stacked-after-lyrics3v2.mp3",
     "root": {
       "name": "File",
@@ -13,6 +18,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "2.00",
           "offset": 512,
           "length": 44,
@@ -37,7 +43,7 @@
                 },
                 {
                   "name": "Size",
-                  "value": "10",
+                  "value": 10,
                   "offset": 526,
                   "length": 5
                 },
@@ -59,7 +65,7 @@
             },
             {
               "name": "Size",
-              "value": "29",
+              "value": 29,
               "offset": 541,
               "length": 6
             },
@@ -99,6 +105,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.0",
           "offset": 556,
           "length": 128,
@@ -169,6 +176,7 @@
         },
         {
           "name": "Lyrics3",
+          "kind": "Tag",
           "value": "1.00",
           "offset": 684,
           "length": 30,
@@ -215,6 +223,7 @@
         },
         {
           "name": "ID3v1",
+          "kind": "Tag",
           "value": "1.1",
           "offset": 714,
           "length": 128,
@@ -257,7 +266,7 @@
             },
             {
               "name": "Track",
-              "value": "7",
+              "value": 7,
               "offset": 840,
               "length": 1
             },
@@ -291,20 +300,29 @@
         }
       ]
     },
+    "streams": [],
     "findings": [
       {
         "severity": "Info",
         "code": "format.unrecognized",
         "message": "No format parser recognized this file.",
         "offset": 0,
-        "length": 512
+        "length": 512,
+        "path": [
+          0
+        ],
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
         "message": "The ID3v1 tag at 0x22C is followed by the Lyrics3 tag at 0x2AC; readers expect ID3v1 in the last 128 bytes.",
         "offset": 556,
-        "length": 128
+        "length": 128,
+        "path": [
+          2
+        ],
+        "count": 1
       }
     ]
   }

@@ -18,9 +18,7 @@
     "Statistics/Maximum Bitrate": "96 kbps",
     "Statistics/Bitrate Distribution": "1 bitrate",
     "Statistics/Bitrate Distribution/96 kbps": "8 frames (100.0%)",
-    "Statistics/Bitrate Over Time": "96",
     "Statistics/Maximum Reservoir Fill": "411 bytes",
-    "Statistics/Reservoir Fill Over Time": "411",
     "Statistics/VBR Header/Claimed Frames": "8",
     "Statistics/VBR Header/Counted Frames": "8",
     "Statistics/VBR Header/Claimed Bytes": "3888",
@@ -194,6 +192,18 @@
   }
  ],
  "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 32000,
+   "samples": 9216,
+   "duration": "0.288 s",
+   "average_bitrate": "96.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "96",
+   "reservoir_fill_over_time": "411"
+  }
+ ],
  "findings": [
   {
    "code": "mpeg.music-crc-mismatch",

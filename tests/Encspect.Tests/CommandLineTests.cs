@@ -65,7 +65,7 @@ public class CommandLineTests
         Assert.Equal(CommandLine.Success, code);
         Assert.Equal(3, lines.Length);
         Assert.StartsWith("Path,Format,Streams,Codec,Duration (s)", lines[0]);
-        Assert.EndsWith(",MPEG Audio,1,MPEG-1 Layer III,0.549,128.0,44100,Joint stereo,LAME 3.100,High,\"ID3v2, ID3v1\",0,0,0", lines[1]);
+        Assert.EndsWith(",MPEG Audio,1,MPEG-1 Layer III,0.549,24192,128.0,44100,Joint stereo,LAME 3.100,High,\"ID3v2, ID3v1\",0,0,0", lines[1]);
         Assert.EndsWith(",0,3,0", lines[2]);
     }
 
@@ -327,7 +327,7 @@ public class CommandLineTests
                 Assert.Equal(CommandLine.UnreadableFile, code);
                 Assert.Equal(3, lines.Length);
                 Assert.StartsWith(folder["a.mp3"] + ",MPEG Audio,", lines[1]);
-                Assert.Equal(fifo + ",,0,,,,,,,,,1,0,0", lines[2]);
+                Assert.Equal(fifo + ",,0,,,,,,,,,,1,0,0", lines[2]);
                 Assert.Equal($"{fifo}: This is a named pipe, socket or terminal, not a regular file, so it was not read.{Environment.NewLine}", errors);
             }
 
@@ -367,7 +367,7 @@ public class CommandLineTests
 
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(CommandLine.UnreadableFile, code);
-        Assert.Equal("/dev/zero,,0,,,,,,,,,1,0,0", lines[1]);
+        Assert.Equal("/dev/zero,,0,,,,,,,,,,1,0,0", lines[1]);
         Assert.Contains(",MPEG Audio,", lines[2]);
         Assert.StartsWith("/dev/zero: This is a device or kernel file that reports a size of 0 but yields data, not a regular file", errors);
     }
@@ -396,7 +396,7 @@ public class CommandLineTests
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Equal(3, lines.Length);
-        Assert.Equal(folder["locked"] + ",,0,,,,,,,,,1,0,0", lines[1]);
+        Assert.Equal(folder["locked"] + ",,0,,,,,,,,,,1,0,0", lines[1]);
         Assert.StartsWith(folder["ok/a.mp3"] + ",MPEG Audio,", lines[2]);
         Assert.StartsWith(folder["locked"] + ": ", errors);
     }
@@ -445,8 +445,8 @@ public class CommandLineTests
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Equal(4, lines.Length);
         Assert.Contains(",MPEG Audio,", lines[1]);
-        Assert.EndsWith(",,0,,,,,,,,,1,0,0", lines[2]);
-        Assert.EndsWith(",,0,,,,,,,,,1,0,0", lines[3]);
+        Assert.EndsWith(",,0,,,,,,,,,,1,0,0", lines[2]);
+        Assert.EndsWith(",,0,,,,,,,,,,1,0,0", lines[3]);
         Assert.Equal(2, errors.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
@@ -497,12 +497,12 @@ public class ReportSummaryTests
         Assert.Equal("MPEG Audio", summary.Format);
         Assert.Equal(1, summary.Streams);
         Assert.Equal("MPEG-1 Layer III", summary.Codec);
-        Assert.Equal("0.549", summary.Duration);
-        Assert.Equal("128.0", summary.AverageBitrate);
-        Assert.Equal("44100", summary.SampleRate);
+        Assert.Equal(0.549, summary.Duration!.Value, 3);
+        Assert.Equal(128.0, summary.AverageBitrate!.Value, 1);
+        Assert.Equal(44100, summary.SampleRate);
         Assert.Equal("Joint stereo", summary.ChannelMode);
         Assert.Equal("LAME 3.100", summary.Encoder);
-        Assert.Equal("High", summary.EncoderConfidence);
+        Assert.Equal(Confidence.High, summary.EncoderConfidence);
         Assert.Equal(["ID3v2", "ID3v1"], summary.Tags);
     }
 
@@ -543,11 +543,26 @@ public class ReportSummaryTests
     [Fact]
     public void FilterKeepsEverythingByDefault()
     {
-        var frame = new Node("Frame", 0, 4);
+        var frame = new Node("Frame", 0, 4) { Kind = NodeKind.Frame };
 
-        Assert.True(ReportFilter.All.Includes(frame, null));
-        Assert.False(new ReportFilter(ReportSections.Frames).Includes(frame, null));
-        Assert.False(new ReportFilter(ReportSections.SideInfo).Includes(new Node("Side Info", 4, 32), frame));
-        Assert.True(new ReportFilter(ReportSections.SideInfo).Includes(new Node("Side Info", 4, 32), new Node("Other", 0, 4)));
+        Assert.True(ReportFilter.All.Includes(frame));
+        Assert.False(new ReportFilter(ReportSections.Frames).Includes(frame));
+        Assert.False(new ReportFilter(ReportSections.SideInfo).Includes(new Node("Side Info", 4, 32) { Kind = NodeKind.SideInfo }));
+        Assert.True(new ReportFilter(ReportSections.Frames).Includes(new Node("Side Info", 4, 32) { Kind = NodeKind.SideInfo }));
+    }
+
+    // Sections are found by kind, never by name: an APE item named "Frame" or "Statistics" is tag
+    // content, and a node named "Frame" that is not a frame stays.
+    [Fact]
+    public void FilterMatchesKindsNotNames()
+    {
+        var filter = new ReportFilter(ReportSections.Frames | ReportSections.Statistics | ReportSections.SideInfo);
+
+        Assert.True(filter.Includes(new Node("Frame", 0, 4)));
+        Assert.True(filter.Includes(new Node("Statistics", 0, 4)));
+        Assert.True(filter.Includes(new Node("Side Info", 0, 4)));
+        Assert.False(filter.Includes(new Node("Anything", 0, 4) { Kind = NodeKind.Statistics }));
+        Assert.True(new ReportFilter(ReportSections.Tags).Includes(new Node("ID3v2", 0, 4) { Kind = NodeKind.Stream }));
+        Assert.False(new ReportFilter(ReportSections.Tags).Includes(new Node("Monkey", 0, 4) { Kind = NodeKind.Tag }));
     }
 }

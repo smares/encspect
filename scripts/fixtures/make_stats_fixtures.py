@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Writes the stream statistics fixtures in tests/fixtures/stats.
 
-Every hand-built manifest lists each MPEG Audio region's statistics (see stream_stats.py for the
-definitions); these fixtures are the ones built for them: several seconds of VBR audio for the
+Every hand-built manifest lists each MPEG Audio region's statistics and each stream's figures (see
+stream_stats.py for the definitions); these fixtures are the ones built for them: several seconds of VBR audio for the
 per-second series, VBR headers whose counts disagree with the stream or count their own frame,
 gapless values longer than the stream, a sample rate change, free format, and a stream that an
 embedded tag splits into two regions. Their frames have zero side information, which every
