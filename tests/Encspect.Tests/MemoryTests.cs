@@ -182,22 +182,26 @@ public class MemoryTests(ITestOutputHelper output)
 
     // The heap the report keeps, and the most the analysis held live at once: while it runs, a
     // sampler thread forces a blocking full collection every few milliseconds and reads the heap
-    // that survived it. Reading the collector's last figures instead measures nothing where no
-    // collection happens during a short analysis. The forced collections slow the analysis down,
-    // so the files stay small.
+    // that survived it from the collector's record of that collection. Reading the heap's size
+    // afterwards also counts what the analysis allocated since, which on a busy machine, where the
+    // sampler waits to run again, tripled the peak (macOS on x64, 125 bytes per Opus packet where
+    // linux-x64 measures 41). Reading the collector's last figures without forcing a collection
+    // measures nothing where none happens during a short analysis. The forced collections slow the
+    // analysis down, so the files stay small.
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         long before = Live();
-        long peak = before;
+        long liveBefore = LastFullCollection();
+        long peak = liveBefore;
         bool done = false;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
             {
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: false);
-                Volatile.Write(ref peak, Math.Max(Volatile.Read(ref peak), GC.GetTotalMemory(forceFullCollection: false)));
+                Volatile.Write(ref peak, Math.Max(Volatile.Read(ref peak), LastFullCollection()));
                 Thread.Sleep(SampleInterval);
             }
         });
@@ -207,7 +211,15 @@ public class MemoryTests(ITestOutputHelper output)
         sampler.Join();
         long kept = Live() - before;
         GC.KeepAlive(data);
-        return (report, kept, Volatile.Read(ref peak) - before);
+        return (report, kept, Volatile.Read(ref peak) - liveBefore);
+    }
+
+    // The heap that survived the last blocking full collection, as it stood when that collection
+    // ended.
+    private static long LastFullCollection()
+    {
+        GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
+        return info.HeapSizeBytes - info.FragmentedBytes;
     }
 
     // The live heap after a full, compacting collection that also compacts the large object heap,
