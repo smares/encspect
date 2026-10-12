@@ -1,0 +1,152 @@
+using Encspect.Core;
+
+namespace Encspect.Formats.Aac;
+
+// Reads a stream's raw data blocks in order, for MP4 access units and ADTS frames alike: counts
+// their coding, keeps what their nodes are rebuilt from (UnitStore), and reports what they break,
+// once per kind with a count. A block whose reading stops is read again with nodes, which places
+// the finding at the node it stopped in.
+internal sealed class BlockLog
+{
+    // Longer access units cannot be valid: the 6144 bits per channel of the decoder's input buffer
+    // that ISO/IEC 14496-3 allows, for the 48 channels a program can have, stay below it. Only this
+    // much of a longer one is read.
+    public const int MaxBlockBytes = 1 << 16;
+
+    private readonly BlockReader _reader;
+    private readonly FindingCollector findings;
+    private readonly StreamSetup setup;
+
+    public BlockLog(StreamSetup setup, FindingCollector findings)
+    {
+        this.setup = setup;
+        this.findings = findings;
+        _reader = new BlockReader(setup, Tally);
+    }
+
+    public StreamSetup Setup => setup;
+
+    public CodingTally Tally { get; } = new();
+
+    public UnitStore Store { get; } = new();
+
+    public int Count { get; private set; }
+
+    // The elements of the block read last, for its CRC.
+    public IReadOnlyList<ElementSpan> LastElements => _reader.Elements;
+
+    // Reads the block at bits [start, limit) of data, which where places; unitNode makes the node of
+    // its access unit or frame for findings that have no node of their own. Returns where the store
+    // keeps it and what reading it came to.
+    public (long Position, BlockResult Result) Read(ReadOnlySpan<byte> data, int start, int limit, UnitBytes where, Func<Node> unitNode, bool report = true)
+    {
+        limit = Math.Min(limit, start + (MaxBlockBytes * 8));
+        BlockReader reader = _reader;
+        BlockResult result = reader.Read(data, start, limit, Count, where);
+        long position;
+        if (result.Ok)
+        {
+            position = Store.AddSkeleton(data, start, result.End, reader.Cuts);
+        }
+        else if (!report)
+        {
+            position = Store.AddWhole(data, start, limit);
+        }
+        else
+        {
+            position = Store.AddWhole(data, start, limit);
+            new BlockReader(setup, null).Nodes(data, start, limit, where, out BlockError? located);
+            BlockError error = located ?? result.Error!;
+            Node node = error.Node ?? unitNode();
+            string element = error.Element ?? "access unit";
+            long offset = node.Offset;
+            string message = error.Message;
+            findings.Add(Severity.Warning, error.Code, node, count => count == 1
+                ? $"The {element} at 0x{offset:X} {message}; the rest of its raw data block is not read."
+                : $"{count} raw data blocks are not read to their end; in the first, the {element} at 0x{offset:X} {message}.");
+        }
+
+        foreach (SoftFinding soft in report ? reader.SoftFindings : [])
+        {
+            Node node = soft.Node ?? unitNode();
+            long offset = node.Offset;
+            string what = soft.Message;
+            findings.Add(SeverityOf(soft.Code), soft.Code, node, count => count == 1
+                ? $"The raw data block at 0x{offset:X} holds {what}."
+                : $"{count} raw data blocks hold {what}; the first at 0x{offset:X}.");
+        }
+
+        Count++;
+        return (position, result);
+    }
+
+    private static Severity SeverityOf(string code) => code switch
+    {
+        "aac.sbr-before-header" => Severity.Info,
+        _ => Severity.Warning,
+    };
+
+    // The nodes of the block the store keeps at position, read again; where places them.
+    public static List<Node> Nodes(UnitStore store, StreamSetup setup, long position, UnitBytes where) =>
+        new BlockReader(setup, null).Nodes(store.Read(position), where);
+
+    // The access unit's or frame's figures for its node's summary: its elements, by the packed IDs
+    // of BlockResult.Elements.
+    public static string ElementList(int packed)
+    {
+        int count = (packed >> 24) & 0xF;
+        if (count == 0)
+        {
+            return "END";
+        }
+
+        var names = new List<string>(Math.Min(count, 8));
+        for (int i = 0; i < Math.Min(count, 8); i++)
+        {
+            names.Add(AacTables.ElementName((packed >> (3 * i)) & 7));
+        }
+
+        return string.Join(", ", names) + (count > 8 ? ", ..." : string.Empty);
+    }
+
+    // The ID of the block's first element, or -1 where it holds none but END.
+    public static int FirstElement(int packed) => ((packed >> 24) & 0xF) == 0 ? 7 : packed & 7;
+
+    // The findings of what the stream's blocks hold as a whole: SBR and PS that the configuration
+    // does not signal, or signals absent. node is the configuration's node, or the stream's; where
+    // names the configuration ("The AudioSpecificConfig", "ADTS").
+    public void ReportSignaling(AacConfig config, Node node, string where)
+    {
+        CodingTally tally = Tally;
+        if (tally.SbrBlocks == 0)
+        {
+            return;
+        }
+
+        string first = tally.FirstSbrBlock > 0
+            ? $" The first is in raw data block {tally.FirstSbrBlock + 1}, not the first, so ffmpeg's decoder, which takes implicit SBR only where it starts with the stream, plays the core alone."
+            : string.Empty;
+        string units = $"{tally.SbrBlocks} of {tally.Blocks} raw data blocks";
+        if (config.Sbr == false)
+        {
+            findings.AddNow(Severity.Warning, "aac.sbr-signaled-absent",
+                $"{where} signals SBR absent, but {units} hold SBR data; ffmpeg's decoder ignores it, other decoders may apply it.", node);
+            return;
+        }
+
+        if (config.IsSbrImplicit)
+        {
+            string codec = config.HasPs ? "HE-AAC v2" : "HE-AAC";
+            string ps = config.HasPs ? $", and {tally.PsBlocks} carry the parametric stereo extension" : string.Empty;
+            findings.AddNow(Severity.Info, "aac.implicit-sbr",
+                $"{(where == "ADTS" ? "ADTS cannot signal SBR or PS explicitly" : $"{where} signals no SBR")}, but {units} hold SBR data{ps}: the stream is {codec}, signaled only implicitly, with an output rate of {config.OutputSampleRate} Hz. "
+                + $"Decoders without SBR play the AAC LC core at {config.CoreSampleRate} Hz.{first}", node);
+        }
+        else if (config.IsPsImplicit)
+        {
+            findings.AddNow(Severity.Info, "aac.implicit-ps",
+                $"{where} signals SBR but nothing about PS, and {tally.PsBlocks} of {tally.Blocks} raw data blocks carry the parametric stereo extension: the stream is HE-AAC v2, "
+                + "with PS signaled only implicitly. Decoders without PS play the mono downmix.", node);
+        }
+    }
+}

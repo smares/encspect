@@ -177,7 +177,8 @@ public sealed class RawAacParser : IFormatParser
             state.Findings.Add(Severity.Warning, "aac.reserved-profile", node, count => $"The MPEG-2 ADTS profile 3 is reserved, first at 0x{position:X} ({FindingCollector.Times(count)}).");
         }
 
-        FrameDetails details = Analyze(bytes, header, length < header.FrameLength);
+        BlockLog log = state.LogFor(index, header);
+        FrameDetails details = Analyze(bytes, position, header, length < header.FrameLength || cut, log, () => node, state.Findings);
         if (details.CrcState == CrcState.Mismatch)
         {
             state.Findings.Add(Severity.Warning, "aac.crc-mismatch", node, count =>
@@ -186,7 +187,7 @@ public sealed class RawAacParser : IFormatParser
         else if (details.CrcState == CrcState.NotVerified)
         {
             state.Findings.Add(Severity.Info, "aac.crc-not-verified", node, count =>
-                $"The CRC of {(count == 1 ? "1 ADTS frame" : $"{count} ADTS frames")}, first at 0x{position:X}, covers a channel element whose end is not known without its spectral data, which is not parsed yet, so it is not verified.");
+                $"The CRC of {(count == 1 ? "1 ADTS frame" : $"{count} ADTS frames")}, first at 0x{position:X}, covers elements of a raw data block that could not be read to its end, so it is not verified.");
         }
 
         if (details.HasBadPositions)
@@ -195,12 +196,12 @@ public sealed class RawAacParser : IFormatParser
                 $"The raw data block positions of {(count == 1 ? "1 ADTS frame" : $"{count} ADTS frames")}, first at 0x{position:X}, do not lie in increasing order inside the frame.");
         }
 
-        if (details.Blocks[0].Text is { } text)
+        if (state.Signature is null && log.Tally.FirstText is { } text)
         {
-            state.Signature ??= (text, index, position);
+            state.Signature = (text, index, position);
         }
 
-        if (details.Blocks.Length > 1 || details.Blocks[0].Element.Id is 4 or 6 || details.Positions.Length > 0)
+        if (details.Blocks.Length > 1 || details.Positions.Length > 0)
         {
             state.Details[index] = details;
         }
@@ -210,36 +211,36 @@ public sealed class RawAacParser : IFormatParser
             region.PceChannels ??= channels;
         }
 
+        Block first = details.Blocks[0];
         state.Frames.Add(new Frame(position, length, header.Raw)
         {
             Crc = details.Crc,
             CrcState = details.CrcState,
-            Element = (sbyte)details.Blocks[0].Element.Id,
-            Tag = (byte)Math.Max(0, details.Blocks[0].Element.Tag),
+            Elements = first.Elements,
+            Skeleton = first.Skeleton,
             IsTruncated = truncated,
         });
     }
 
-    // The raw data blocks of a frame, their first elements and the CRC verdict (1.A.2.2.2 and
-    // 1.A.3.2.2): with one raw data block, the CRC after the header covers the header and, in the
-    // block, the first 192 bits of each single channel, LFE or coupling element and of a channel
-    // pair's first channel, the first 128 of its second channel, and the whole of each program
-    // config and data stream element, after their IDs, filled up with zero bits where an element is
-    // shorter. With more blocks, it covers the header and the block positions, and each block ends
-    // in its own CRC over its elements. Where an element's end cannot be known without its spectral
-    // data, a CRC that matches with the element taken as at least 192 bits long is verified, and one
-    // that does not stays unverified rather than failing.
-    private static FrameDetails Analyze(ReadOnlySpan<byte> frame, AdtsHeader header, bool truncated)
+    // The raw data blocks of a frame, each read element by element (BlockReader), and the CRC verdict
+    // (1.A.2.2.2 and 1.A.3.2.2): with one raw data block, the CRC after the header covers the header
+    // and the regions of the block's elements that Crc16.AddElements gives; with more blocks it
+    // covers the header and the block positions, and each block ends in its own CRC over its
+    // elements. A block that cannot be read to its end leaves its CRC unverified. Blocks of an
+    // unprotected frame lie one after another; a damaged or cut frame's blocks are read without
+    // reporting what breaks in them, which the frame's own finding covers.
+    private static FrameDetails Analyze(ReadOnlySpan<byte> frame, long offset, AdtsHeader header, bool damaged, BlockLog log, Func<Node> frameNode, FindingCollector findings)
     {
         int headerLength = header.HeaderLength;
         int blocks = header.RawDataBlocks;
         if (frame.Length < headerLength)
         {
-            return new FrameDetails([new Block(headerLength, -1, FirstElement.Empty, null, -1, CrcState.None)], [], -1, CrcState.None, false, null);
+            return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null);
         }
 
         int[] positions = [];
-        if (header.IsProtected && blocks > 1)
+        bool separate = header.IsProtected && blocks > 1;
+        if (separate)
         {
             positions = new int[blocks - 1];
             for (int i = 0; i < positions.Length; i++)
@@ -251,10 +252,10 @@ public sealed class RawAacParser : IFormatParser
         int crc = header.IsProtected ? (frame[headerLength - 2] << 8) | frame[headerLength - 1] : -1;
         var starts = new List<int> { headerLength };
         bool badPositions = false;
-        foreach (int offset in positions)
+        foreach (int position in positions)
         {
-            int start = headerLength + offset;
-            if (truncated && start > frame.Length)
+            int start = headerLength + position;
+            if (damaged && start > frame.Length)
             {
                 break;
             }
@@ -268,52 +269,100 @@ public sealed class RawAacParser : IFormatParser
             starts.Add(start);
         }
 
-        var result = new Block[header.IsProtected && blocks > 1 && !badPositions ? starts.Count : 1];
+        var result = new List<Block>(blocks);
         CrcState overall = CrcState.None;
-        for (int i = 0; i < result.Length; i++)
+        int next = headerLength;
+        bool readable = true;
+        for (int i = 0; i < blocks && readable; i++)
         {
-            int start = starts[i];
-            int end = i + 1 < starts.Count ? starts[i + 1] : frame.Length;
+            int start;
+            int end;
+            if (separate)
+            {
+                if (badPositions && i > 0 || i >= starts.Count)
+                {
+                    break;
+                }
+
+                start = starts[i];
+                end = i + 1 < starts.Count ? starts[i + 1] : frame.Length;
+            }
+            else
+            {
+                start = next;
+                end = frame.Length;
+                if (start >= end && i > 0)
+                {
+                    break;
+                }
+            }
+
             int blockCrc = -1;
-            if (header.IsProtected && blocks > 1 && !truncated && end - start >= 2)
+            if (separate && !damaged && end - start >= 2)
             {
                 blockCrc = (frame[end - 2] << 8) | frame[end - 1];
                 end -= 2;
             }
 
             ReadOnlySpan<byte> data = frame[start..end];
-            FirstElement element = FirstElement.Read(data, 0);
+            var where = new UnitBytes(offset + start, end - start, null);
+            (long skeleton, BlockResult read) = log.Read(data, 0, data.Length * 8, where, frameNode, report: !damaged);
+            readable = read.Ok;
+            if (read.Ok && (separate || blocks == 1) && read.End < data.Length * 8 && !damaged)
+            {
+                Node trailing = TrailingNode(where, read.End, data.Length);
+                long at = trailing.Offset;
+                findings.Add(Severity.Warning, "aac.block-trailing-bytes", trailing, count => count == 1
+                    ? $"The raw data block at 0x{offset + start:X} holds bytes after its END element, from 0x{at:X}."
+                    : $"{count} raw data blocks hold bytes after their END element, first at 0x{at:X}.");
+            }
+
             CrcState state = CrcState.None;
             if (blockCrc >= 0)
             {
                 var block = new Crc16();
-                state = Check(data, ref block, blockCrc);
+                state = Verdict(read, data, ref block, blockCrc, log);
             }
 
-            result[i] = new Block(start, blocks > 1 && (header.IsProtected || i > 0) ? end - start : -1, element, element.Text(data), blockCrc, state);
+            result.Add(new Block(start, separate || blocks > 1 ? (read.Ok && !separate ? read.End / 8 : end - start) : -1, read.Elements, skeleton, blockCrc, state));
+            next = start + (read.End / 8);
         }
 
-        if (header.IsProtected && !truncated)
+        if (result.Count == 0)
+        {
+            result.Add(new Block(headerLength, 0, -1, -1, -1, CrcState.None));
+        }
+
+        if (header.IsProtected && !damaged)
         {
             var crc16 = new Crc16();
             crc16.Add(frame, 0, (headerLength - 2) * 8);
-            if (blocks > 1)
+            if (separate)
             {
                 overall = crc16.Value == crc ? CrcState.Verified : CrcState.Mismatch;
+                foreach (Block block in result)
+                {
+                    overall = Worst(overall, block.CrcState);
+                }
+
+                if (result.Count < blocks)
+                {
+                    overall = Worst(overall, CrcState.NotVerified);
+                }
+            }
+            else if (!readable || result[0].Skeleton < 0)
+            {
+                overall = CrcState.NotVerified;
             }
             else
             {
-                overall = Check(frame[headerLength..], ref crc16, crc);
-            }
-
-            foreach (Block block in result.Skip(1).Concat(blocks > 1 ? [result[0]] : []))
-            {
-                overall = Worst(overall, block.CrcState);
+                crc16.AddElements(frame[headerLength..], log.LastElements);
+                overall = crc16.Value == crc ? CrcState.Verified : CrcState.Mismatch;
             }
         }
 
         int? channels = null;
-        if (result[0].Element.Id == 5 && header.ChannelConfiguration == 0)
+        if (BlockLog.FirstElement(result[0].Elements) == 5 && header.ChannelConfiguration == 0)
         {
             try
             {
@@ -327,70 +376,24 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
-        return new FrameDetails(result, positions, crc, overall, badPositions, channels);
+        return new FrameDetails([.. result], positions, crc, overall, badPositions, channels);
+    }
+
+    private static CrcState Verdict(BlockResult read, ReadOnlySpan<byte> block, ref Crc16 crc, int expected, BlockLog log)
+    {
+        if (!read.Ok)
+        {
+            return CrcState.NotVerified;
+        }
+
+        crc.AddElements(block, log.LastElements);
+        return crc.Value == expected ? CrcState.Verified : CrcState.Mismatch;
     }
 
     private static CrcState Worst(CrcState a, CrcState b) => (CrcState)Math.Max((int)a, (int)b);
 
-    // Adds the protected regions of a raw data block to crc and compares it with expected.
-    private static CrcState Check(ReadOnlySpan<byte> block, ref Crc16 crc, int expected)
-    {
-        int bit = 0;
-        int length = block.Length * 8;
-        while (bit + 3 <= length)
-        {
-            int id = (int)FirstElement.Bits(block, bit, 3);
-            switch (id)
-            {
-                case 7:
-                    return crc.Value == expected ? CrcState.Verified : CrcState.Mismatch;
-                case 4 or 6:
-                    FirstElement element = FirstElement.Read(block, bit);
-                    if (element.EndBit < 0)
-                    {
-                        return CrcState.NotVerified;
-                    }
-
-                    if (id == 4)
-                    {
-                        crc.Add(block, bit + 3, element.EndBit - bit - 3);
-                    }
-
-                    bit = element.EndBit;
-                    break;
-                case 0 or 2 or 3:
-                    // Taken as at least 192 bits long, and as the last protected element.
-                    if (bit + 3 + 192 > length)
-                    {
-                        return CrcState.NotVerified;
-                    }
-
-                    crc.Add(block, bit + 3, 192);
-                    return crc.Value == expected ? CrcState.Verified : CrcState.NotVerified;
-                case 5:
-                    // The comment's byte alignment counts from the start of the raw data block.
-                    var fields = new BitFields(new MappedBytes(block.ToArray(), 0));
-                    try
-                    {
-                        fields.Skip(bit + 3);
-                        ProgramConfigElement.Read(fields, new Node("PCE", 0, 1), 0, (_, _, _, _) => { });
-                    }
-                    catch (EndOfStreamException)
-                    {
-                        return CrcState.NotVerified;
-                    }
-
-                    crc.Add(block, bit + 3, fields.Position - bit - 3);
-                    bit = fields.Position;
-                    break;
-                default:
-                    // Where a channel pair's second channel starts needs its first channel's spectral data.
-                    return CrcState.NotVerified;
-            }
-        }
-
-        return CrcState.NotVerified;
-    }
+    private static Node TrailingNode(UnitBytes where, int blockEnd, int length) =>
+        where.Bits("Trailing Bytes", blockEnd, length * 8, NodeValue.Integer(length - (blockEnd / 8), "bytes"), Explain.TrailingUnitBytes);
 
     // The offset of the first header in [from, limit) that a chain of consistent frames follows, or
     // -1.
@@ -513,7 +516,9 @@ public sealed class RawAacParser : IFormatParser
             nodes.Add(crc);
         }
 
-        Block[] blocks = details?.Blocks ?? [new Block(headerLength, -1, FirstElement.Empty with { Id = frame.Element, Tag = frame.Tag }, null, -1, CrcState.None)];
+        Block[] blocks = details?.Blocks ?? [new Block(headerLength, -1, frame.Elements, frame.Skeleton, -1, CrcState.None)];
+        BlockLog log = state.LogAt(index);
+        long position = blocks[0].Skeleton;
         foreach (Block block in blocks)
         {
             long start = offset + block.Start;
@@ -524,13 +529,23 @@ public sealed class RawAacParser : IFormatParser
 
             long length = block.Length >= 0 ? block.Length : frame.Offset + frame.Length - start;
             var unit = new UnitBytes(start, (int)length, null);
-            Node node = new("Raw Data Block", start, length, block.Element.Summary) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
-            foreach (Node child in block.Element.Nodes(unit, 0, block.Text))
+            Node node = new("Raw Data Block", start, length, BlockLog.ElementList(block.Elements)) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
+            if (position >= 0)
             {
-                if (child.End <= node.End)
+                UnitStore.Entry entry = log.Store.Read(position);
+                List<Node> elements = BlockLog.Nodes(log.Store, log.Setup, position, unit);
+                foreach (Node child in elements)
                 {
                     node.Add(child);
                 }
+
+                long last = elements.Count > 0 ? elements.Max(n => n.End) : start;
+                if (!entry.IsWhole && last < start + length)
+                {
+                    node.Add(TrailingNode(unit, (int)(last - start) * 8, (int)length));
+                }
+
+                position = entry.Next;
             }
 
             nodes.Add(node);
@@ -549,7 +564,7 @@ public sealed class RawAacParser : IFormatParser
     {
         CrcState.Verified => "verified",
         CrcState.Mismatch => "mismatch",
-        CrcState.NotVerified => "not verified: a channel element's end needs its spectral data",
+        CrcState.NotVerified => "not verified: the raw data block could not be read to its end",
         _ => "not checked: the frame is cut short",
     };
 
@@ -603,6 +618,8 @@ public sealed class RawAacParser : IFormatParser
         List<Region> regions = state.Regions.Where(r => r.First < end && (r.End ?? state.Frames.Count) > start).ToList();
         Region first = regions[0];
         AacConfig config = header.Config with { Channels = header.ChannelConfiguration == 0 ? first.PceChannels : AacTables.Channels(header.ChannelConfiguration) };
+        BlockLog found = state.LogAt(start);
+        config = config with { SbrFound = found.Tally.SbrBlocks > 0, PsFound = found.Tally.PsBlocks > 0 };
         var figures = new StreamFigures(config.OutputSampleRate);
         int vbr = 0;
         int frames = 0;
@@ -632,12 +649,7 @@ public sealed class RawAacParser : IFormatParser
                 $"{vbr} of {frames} ADTS frames signal a variable bitrate (buffer fullness 0x7FF), the others a buffer fullness.", FirstFrame());
         }
 
-        if (config.ImplicitPossible)
-        {
-            state.Findings.AddNow(Severity.Info, "aac.implicit-signaling-not-checked",
-                "ADTS cannot signal SBR or PS explicitly. They can be signaled implicitly, in the fill elements of the access units, which are not checked yet; the stream may be HE-AAC or HE-AAC v2.",
-                FirstFrame());
-        }
+        found.ReportSignaling(config, FirstFrame(), "ADTS");
 
         // The encoder and statistics go into the stream's first region, which holds its first frame,
         // and cover it.
@@ -658,6 +670,7 @@ public sealed class RawAacParser : IFormatParser
         }
 
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Frame", "Frames", out Node bitrate);
+        CodingStatistics.Add(statistics, found.Tally, found.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         first.Leading.Add(statistics);
 
         string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
@@ -686,11 +699,13 @@ public sealed class RawAacParser : IFormatParser
         Mismatch,
     }
 
-    private sealed record Block(int Start, int Length, FirstElement Element, string? Text, int Crc, CrcState CrcState);
+    // A raw data block of a frame: where it starts in the frame and its length (-1: to the frame's
+    // end), its packed element IDs, where the store keeps it, and its own CRC and verdict.
+    private sealed record Block(int Start, int Length, int Elements, long Skeleton, int Crc, CrcState CrcState);
 
     private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, int? Channels);
 
-    // A frame or, with a zero header (never a valid one), a gap, in about 32 bytes.
+    // A frame or, with a zero header (never a valid one), a gap, in about 40 bytes.
     [StructLayout(LayoutKind.Auto)]
     private readonly struct Frame(long offset, int length, ulong header)
     {
@@ -706,9 +721,11 @@ public sealed class RawAacParser : IFormatParser
 
         public CrcState CrcState { get; init; }
 
-        public sbyte Element { get; init; }
+        // The packed element IDs of the first raw data block (BlockResult.Elements).
+        public int Elements { get; init; }
 
-        public byte Tag { get; init; }
+        // Where the store keeps the first raw data block, the others following it, or -1.
+        public long Skeleton { get; init; } = -1;
 
         public bool IsTruncated { get; init; }
 
@@ -743,5 +760,25 @@ public sealed class RawAacParser : IFormatParser
         public FindingCollector Findings { get; } = new();
 
         public (string Text, int Index, long Offset)? Signature { get; set; }
+
+        // The raw data blocks of each run of frames with the same fixed header, by the run's first
+        // frame, in order.
+        public List<(int First, AdtsHeader Header, BlockLog Log)> Logs { get; } = [];
+
+        public BlockLog LogFor(int index, AdtsHeader header)
+        {
+            if (Logs.Count == 0 || !Logs[^1].Header.IsSameStream(header))
+            {
+                Logs.Add((index, header, new BlockLog(new StreamSetup(header.Config), Findings)));
+            }
+
+            return Logs[^1].Log;
+        }
+
+        public BlockLog LogAt(int index)
+        {
+            int at = Logs.FindLastIndex(l => l.First <= index);
+            return Logs[Math.Max(at, 0)].Log;
+        }
     }
 }

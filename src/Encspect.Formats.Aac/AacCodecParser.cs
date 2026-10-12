@@ -6,14 +6,17 @@ namespace Encspect.Formats.Aac;
 // AAC handed over by a container (ICodecParser "aac"): the AudioSpecificConfig that the container
 // stores apart (CodecContext.Configuration, MP4's DecoderSpecificInfo) and one access unit per
 // packet, each a raw_data_block (ISO/IEC 14496-3 4.4.2.1) of 1,024 or 960 samples at the core's
-// rate. Of each access unit the length and the first syntax element are read; the elements after
-// it follow the Huffman-coded spectral data of the channel elements, which is not parsed yet, so
-// implicit SBR and PS signaling, which hides in fill elements after them, is not checked. A payload
-// handed over in one piece (ParseStream) is read as a raw AAC file: ADTS or ADIF.
+// rate. For AAC Main, LC, SSR and LTP every access unit is read element by element (BlockReader),
+// which counts the stream's coding and finds SBR and PS that only the fill elements signal; of the
+// other GA types the first element is read. A payload handed over in one piece (ParseStream) is
+// read as a raw AAC file: ADTS or ADIF.
 public sealed class AacCodecParser : ICodecParser
 {
-    private const sbyte Usac = -2;
-    private const sbyte ErrorResilient = -3;
+    private const byte IsSplit = 1;
+    private const byte IsUsac = 2;
+    private const byte IsErrorResilient = 4;
+    private const byte IsRead = 8;
+    private const byte IsFirstOnly = 16;
 
     public string Id => "aac";
 
@@ -43,7 +46,7 @@ public sealed class AacCodecParser : ICodecParser
                 "The container hands over AAC without an AudioSpecificConfig, so the object type, sample rate and channels are unknown.", parent);
         }
 
-        var log = new UnitLog(config);
+        var log = new UnitLog(config, findings);
         int index = 0;
         foreach (MappedBytes packet in context.Packets!)
         {
@@ -54,6 +57,16 @@ public sealed class AacCodecParser : ICodecParser
 
             log.Add(packet);
             index++;
+        }
+
+        if (config is not null && log.Blocks is { } blocks)
+        {
+            config = config with { SbrFound = blocks.Tally.SbrBlocks > 0, PsFound = blocks.Tally.PsBlocks > 0 };
+            blocks.ReportSignaling(config, configNode ?? parent, "The AudioSpecificConfig");
+            if (configNode is not null)
+            {
+                configNode.Value = config.Codec;
+            }
         }
 
         Report(context, parent, config, configNode, log, findings);
@@ -84,8 +97,8 @@ public sealed class AacCodecParser : ICodecParser
         {
             findings.AddNow(Severity.Info, "aac.implicit-signaling-not-checked",
                 config.Sbr is null
-                    ? "No SBR is signaled in the AudioSpecificConfig. SBR and PS can also be signaled implicitly, in the fill elements of the access units, which are not checked yet; the stream may be HE-AAC or HE-AAC v2."
-                    : "No PS is signaled in the AudioSpecificConfig. PS can also be signaled implicitly, in the fill elements of the access units, which are not checked yet; the stream may be HE-AAC v2.",
+                    ? "No SBR is signaled in the AudioSpecificConfig. SBR and PS can also be signaled implicitly, in the fill elements of the access units, which are not read for this object type; the stream may be HE-AAC or HE-AAC v2."
+                    : "No PS is signaled in the AudioSpecificConfig. PS can also be signaled implicitly, in the fill elements of the access units, which are not read for this object type; the stream may be HE-AAC v2.",
                 configNode ?? parent);
         }
 
@@ -100,9 +113,10 @@ public sealed class AacCodecParser : ICodecParser
             findings.AddNow(Severity.Warning, "aac.empty-access-units", $"{log.Empty} access units hold no bytes.", parent);
         }
 
-        Node? signatureNode = log.Signature is { } signature ? UnitNode(log, signature.Index, config) : null;
+        (string Text, int Index)? signature = log.Blocks is { Tally.FirstText: { } text } blocks ? (text, blocks.Tally.FirstTextBlock) : log.Signature;
+        Node? signatureNode = signature is { } found ? UnitNode(log, found.Index, withChildren: false) : null;
         Node? encoder = AacEncoder.Detect(
-            log.Signature is { } found ? new AacEncoder.Signature(found.Text, signatureNode!, found.Index) : null,
+            signature is { } named ? new AacEncoder.Signature(named.Text, signatureNode!, named.Index) : null,
             context.EncoderClaims,
             (name, value, description) => Cover(name, value, description, topic: name == "Encoder" ? Topics.EncoderDetection : null),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
@@ -126,19 +140,24 @@ public sealed class AacCodecParser : ICodecParser
             }
         }
 
+        if (log.Blocks is { } read)
+        {
+            CodingStatistics.Add(statistics, read.Tally, read.Setup, (name, value, description, topic) => Cover(name, value, description, topic: topic));
+        }
+
         if (config is { IsUsac: true })
         {
             statistics.Add(Cover("Independent Access Units", NodeValue.Integer(log.Independent, "access units", "access unit"), Explain.IndependentUnits, topic: Topics.Usac));
         }
 
         leading.Add(statistics);
-        var children = new BlockedChildren(leading, log.Units.Count, i => UnitNode(log, i, config));
+        var children = new BlockedChildren(leading, log.Units.Count, i => UnitNode(log, i, withChildren: true));
         Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, NodeValue.Integer(log.Units.Count, "access units", "access unit"), () => children)
         {
             Kind = NodeKind.Stream,
             Ranges = parent.Ranges,
             Description = Explain.Stream,
-            Topic = config switch { { IsUsac: true } => Topics.Usac, { Sbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
+            Topic = config switch { { IsUsac: true } => Topics.Usac, { HasSbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
         });
 
         if (config is null)
@@ -164,51 +183,99 @@ public sealed class AacCodecParser : ICodecParser
         });
     }
 
-    private static Node UnitNode(UnitLog log, int index, AacConfig? config)
+    private static Node UnitNode(UnitLog log, int index, bool withChildren)
     {
         Unit unit = log.Units[index];
-        IReadOnlyList<ByteRange>? ranges = unit.IsSplit ? log.Splits[index] : null;
-        string summary = unit.Element switch
+        IReadOnlyList<ByteRange>? ranges = (unit.Flags & IsSplit) != 0 ? log.Splits[index] : null;
+        string summary;
+        if ((unit.Flags & IsRead) != 0)
         {
-            >= 0 => $"{unit.Length} bytes, {AacTables.ElementName(unit.Element)}",
-            Usac => $"{unit.Length} bytes, {(unit.Tag != 0 ? "independent" : "dependent")}",
-            _ => $"{unit.Length} bytes",
-        };
-        return new Node("Access Unit", unit.Offset, unit.Length, summary, () => UnitChildren(log, index, unit, ranges))
+            summary = $"{unit.Length} bytes, {BlockLog.ElementList(unit.Elements)}";
+        }
+        else if ((unit.Flags & IsUsac) != 0)
+        {
+            summary = $"{unit.Length} bytes, {(unit.Tag != 0 ? "independent" : "dependent")}";
+        }
+        else if ((unit.Flags & IsFirstOnly) != 0 && unit.Elements >= 0)
+        {
+            summary = $"{unit.Length} bytes, {AacTables.ElementName(unit.Elements)}";
+        }
+        else
+        {
+            summary = $"{unit.Length} bytes";
+        }
+
+        bool usac = (unit.Flags & IsUsac) != 0;
+        return new Node("Access Unit", unit.Offset, unit.Length, summary, withChildren ? () => UnitChildren(log, index, unit, ranges) : null)
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
-            Description = unit.Element == Usac ? Explain.UsacAccessUnit : Explain.AccessUnit,
-            Topic = unit.Element == Usac ? Topics.Usac : Topics.RawDataBlocks,
+            Description = usac ? Explain.UsacAccessUnit : Explain.AccessUnit,
+            Topic = usac ? Topics.Usac : Topics.RawDataBlocks,
         };
     }
 
     private static List<Node> UnitChildren(UnitLog log, int index, Unit unit, IReadOnlyList<ByteRange>? ranges)
     {
         var bytes = new UnitBytes(unit.Offset, unit.Length, ranges);
-        if (unit.Element == Usac)
+        if ((unit.Flags & IsUsac) != 0)
         {
             return unit.Length > 0 ? [bytes.Bits("IsIndependent", 0, 1, NodeValue.Boolean(unit.Tag != 0), Explain.IsIndependent)] : [];
         }
 
-        if (unit.Element < 0)
+        if ((unit.Flags & IsRead) != 0)
+        {
+            List<Node> nodes = BlockLog.Nodes(log.Blocks!.Store, log.Blocks.Setup, unit.Skeleton, bytes);
+            long end = nodes.Count > 0 ? nodes.Max(n => n.End) - unit.Offset : 0;
+            if (unit.Length > BlockLog.MaxBlockBytes && end < unit.Length)
+            {
+                nodes.Add(bytes.Bits("Unread Bytes", BlockLog.MaxBlockBytes * 8, unit.Length * 8, NodeValue.Integer(unit.Length - BlockLog.MaxBlockBytes, "bytes"), Explain.UnreadUnitBytes));
+            }
+            else if (unit.BlockEnd >= 0 && unit.BlockEnd < unit.Length * 8)
+            {
+                nodes.Add(TrailingNode(bytes, unit.BlockEnd, unit.Length));
+            }
+
+            return nodes;
+        }
+
+        if ((unit.Flags & IsFirstOnly) == 0 || unit.Elements < 0)
         {
             return [];
         }
 
         FirstElement element = log.Payloads.TryGetValue(index, out FirstElement stored)
             ? stored
-            : FirstElement.Empty with { Id = unit.Element, Tag = unit.Tag };
+            : FirstElement.Empty with { Id = unit.Elements, Tag = unit.Tag };
         log.Texts.TryGetValue(index, out string? text);
         return [.. element.Nodes(bytes, 0, text)];
     }
 
-    // What the access units of a stream come to while they are read, so nothing is kept per unit
-    // but a 16-byte record: fill and data stream elements, texts and split units, which are rare,
-    // are kept on the side.
-    private sealed class UnitLog(AacConfig? config)
+    private static Node TrailingNode(UnitBytes bytes, int blockEnd, int length) =>
+        bytes.Bits("Trailing Bytes", blockEnd, length * 8, NodeValue.Integer(length - (blockEnd / 8), "bytes"), Explain.TrailingUnitBytes);
+
+    // What the access units of a stream come to while they are read: a 32-byte record each, the
+    // coding statistics and what their nodes are rebuilt from (BlockLog); split units, and for the
+    // types whose first element alone is read their fill and data stream elements and texts, which
+    // are rare, are kept on the side.
+    private sealed class UnitLog
     {
+        private readonly AacConfig? _config;
+        private readonly FindingCollector _findings;
+
+        public UnitLog(AacConfig? config, FindingCollector findings)
+        {
+            _config = config;
+            _findings = findings;
+            if (config is not null && StreamSetup.CanRead(config))
+            {
+                Blocks = new BlockLog(new StreamSetup(config), findings);
+            }
+        }
+
         public ChunkedList<Unit> Units { get; } = new();
+
+        public BlockLog? Blocks { get; }
 
         public Dictionary<int, IReadOnlyList<ByteRange>> Splits { get; } = [];
 
@@ -231,10 +298,11 @@ public sealed class AacCodecParser : ICodecParser
         {
             int index = Units.Count;
             IReadOnlyList<ByteRange> ranges = packet.FileRanges();
-            bool split = ranges.Count > 1;
-            if (split)
+            byte flags = 0;
+            if (ranges.Count > 1)
             {
                 Splits[index] = ranges;
+                flags |= IsSplit;
             }
 
             if (packet.Length == 0)
@@ -242,25 +310,52 @@ public sealed class AacCodecParser : ICodecParser
                 Empty++;
             }
 
-            sbyte element = FirstElement.None;
+            int elements = -1;
             byte tag = 0;
-            if (config is { IsUsac: true })
+            long skeleton = -1;
+            int blockEnd = -1;
+            if (_config is { IsUsac: true })
             {
-                element = Usac;
+                flags |= IsUsac;
                 if (packet.Length > 0)
                 {
                     tag = (byte)(packet.Span[0] >> 7);
                     Independent += tag;
                 }
             }
-            else if (config is not null && AacTables.IsErrorResilient(config.ObjectType))
+            else if (_config is not null && AacTables.IsErrorResilient(_config.ObjectType))
             {
-                element = ErrorResilient;
+                flags |= IsErrorResilient;
             }
-            else if (config is { HasRawDataBlocks: true })
+            else if (Blocks is not null)
             {
+                flags |= IsRead;
+                var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
+                (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
+                elements = result.Elements;
+                int first = BlockLog.FirstElement(elements);
+                ElementCounts[(elements >> 24) == 0 && !result.Ok ? 8 : first]++;
+                HasElements = true;
+                if (result.Ok)
+                {
+                    blockEnd = result.End;
+                    if (result.End < packet.Length * 8)
+                    {
+                        Node unit = UnitNodeAt(packet, ranges);
+                        Node trailing = TrailingNode(where, result.End, packet.Length);
+                        long offset = unit.Offset;
+                        int count = packet.Length - (result.End / 8);
+                        _findings.Add(Severity.Warning, "aac.unit-trailing-bytes", trailing, n => n == 1
+                            ? $"The access unit at 0x{offset:X} holds {count} bytes after the END element of its raw data block."
+                            : $"{n} access units hold bytes after the END element of their raw data block, first the one at 0x{offset:X}.");
+                    }
+                }
+            }
+            else if (_config is { HasRawDataBlocks: true })
+            {
+                flags |= IsFirstOnly;
                 FirstElement first = FirstElement.Read(packet.Span, 0);
-                element = (sbyte)first.Id;
+                elements = first.Id;
                 tag = (byte)Math.Max(0, first.Tag);
                 ElementCounts[first.Id >= 0 ? first.Id : 8]++;
                 HasElements = true;
@@ -276,23 +371,32 @@ public sealed class AacCodecParser : ICodecParser
                 }
             }
 
-            Units.Add(new Unit(packet.FileStart, packet.Length, element, tag, split));
+            Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, blockEnd, flags, tag));
         }
+
+        private static Node UnitNodeAt(MappedBytes packet, IReadOnlyList<ByteRange> ranges) =>
+            new("Access Unit", packet.FileStart, ranges.Count > 1 ? ranges[^1].End - ranges[0].Offset : packet.Length) { Kind = NodeKind.Frame, Ranges = ranges.Count > 1 ? ranges : null };
     }
 
     [StructLayout(LayoutKind.Auto)]
-    private readonly struct Unit(long offset, int length, sbyte element, byte tag, bool isSplit)
+    private readonly struct Unit(long offset, int length, int elements, long skeleton, int blockEnd, byte flags, byte tag)
     {
         public long Offset => offset;
 
         public int Length => length;
 
-        // The first element's ID, FirstElement.None, Usac or ErrorResilient.
-        public sbyte Element => element;
+        // The packed element IDs of a read unit (BlockResult.Elements), or the first element's ID.
+        public int Elements => elements;
+
+        // Where the store keeps the unit's block, or -1.
+        public long Skeleton => skeleton;
+
+        // The bit after the block's END and alignment, where it was read to its end, or -1.
+        public int BlockEnd => blockEnd;
+
+        public byte Flags => flags;
 
         // The first element's instance tag or count, or usacIndependencyFlag.
         public byte Tag => tag;
-
-        public bool IsSplit => isSplit;
     }
 }

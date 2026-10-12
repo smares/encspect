@@ -1,9 +1,9 @@
 namespace Encspect.Formats.Aac;
 
 // What a stream's configuration says, from an AudioSpecificConfig (ISO/IEC 14496-3 1.6.2.1) or an
-// ADTS header: the core coding, and SBR and PS where they are signaled explicitly. Implicit
-// signaling, an SBR or PS extension found only in the fill elements of the access units, needs the
-// spectral data of every channel element parsed and is not checked yet.
+// ADTS header: the core coding, and SBR and PS where they are signaled explicitly; and, once its
+// raw data blocks are read, whether they hold SBR data and the PS extension, which implicit
+// signaling leaves to them.
 internal sealed record AacConfig
 {
     // The object type of the core coding: the one after SBR (5) or PS (29) in hierarchical
@@ -40,22 +40,42 @@ internal sealed record AacConfig
 
     public int? UsacSbrRatio { get; init; }
 
+    // Whether the access units hold SBR data, and SBR data with the parametric stereo extension;
+    // null where they were not read.
+    public bool? SbrFound { get; init; }
+
+    public bool? PsFound { get; init; }
+
+    // SBR as decoders apply it: signaled, or found where the configuration says nothing about it.
+    public bool HasSbr => Sbr == true || (Sbr is null && SbrFound == true);
+
+    // PS likewise, where SBR is present.
+    public bool HasPs => Ps == true || (HasSbr && Ps is null && PsFound == true);
+
+    // SBR found that the configuration does not signal, and PS likewise.
+    public bool IsSbrImplicit => Sbr is null && SbrFound == true;
+
+    public bool IsPsImplicit => HasSbr && Ps is null && PsFound == true;
+
     public bool IsUsac => ObjectType == 42;
 
     // Whether each access unit is a raw_data_block whose first element ID can be read.
     public bool HasRawDataBlocks => AacTables.HasRawDataBlock(ObjectType);
 
-    public int OutputSampleRate => UsacSampleRate ?? (Sbr == true ? ExtensionSampleRate ?? CoreSampleRate * 2 : CoreSampleRate);
+    // With implicit SBR, a decoder doubles a core rate of up to 24 kHz and runs SBR at the core's rate
+    // above it, as faad2 reads the specification; ffmpeg doubles any.
+    public int OutputSampleRate => UsacSampleRate ?? (Sbr == true ? ExtensionSampleRate ?? CoreSampleRate * 2
+        : IsSbrImplicit && CoreSampleRate <= 24000 ? CoreSampleRate * 2 : CoreSampleRate);
 
     public int OutputFrameLength => UsacOutputFrameLength
         ?? (CoreSampleRate > 0 ? (int)((long)CoreFrameLength * OutputSampleRate / CoreSampleRate) : CoreFrameLength);
 
-    public int? OutputChannels => Ps == true ? 2 : Channels;
+    public int? OutputChannels => HasPs ? 2 : Channels;
 
-    // Whether implicit signaling could still add SBR or PS: SBR to a GA core that signals nothing
-    // about it, PS to an SBR stream of one channel.
+    // Whether implicit signaling could still add SBR or PS that the access units were not read for:
+    // SBR to a GA core that signals nothing about it, PS to an SBR stream of one channel.
     public bool ImplicitPossible =>
-        HasRawDataBlocks && (Sbr is null || (Sbr == true && Ps is null && Channels == 1));
+        HasRawDataBlocks && SbrFound is null && (Sbr is null || (Sbr == true && Ps is null && Channels == 1));
 
     public string Codec
     {
@@ -67,21 +87,21 @@ internal sealed record AacConfig
             }
 
             string core = AacTables.ObjectTypeName(ObjectType);
-            if (Sbr == true)
+            if (HasSbr)
             {
                 if (ObjectType != 2)
                 {
-                    return Ps == true ? $"{core} with SBR and PS" : $"{core} with SBR";
+                    return HasPs ? $"{core} with SBR and PS" : $"{core} with SBR";
                 }
 
-                return Ps == true ? "HE-AAC v2" : Ps is null && Channels == 1 ? "HE-AAC (no PS signaled explicitly)" : "HE-AAC";
+                return HasPs ? "HE-AAC v2" : Ps is null && Channels == 1 && PsFound is null ? "HE-AAC (no PS signaled explicitly)" : "HE-AAC";
             }
 
-            return Sbr is null && HasRawDataBlocks ? $"{core} (no SBR signaled explicitly)" : core;
+            return Sbr is null && HasRawDataBlocks && SbrFound is null ? $"{core} (no SBR signaled explicitly)" : core;
         }
     }
 
-    public string? ChannelMode => Ps == true ? "Parametric stereo"
+    public string? ChannelMode => HasPs ? "Parametric stereo"
         : ChannelConfiguration == 0 ? (Channels is { } count ? $"{count} channels" : null)
         : AacTables.ChannelMode(ChannelConfiguration);
 }

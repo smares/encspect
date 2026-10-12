@@ -13,12 +13,20 @@ internal static class Topics
     public const string Crc = "crc";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
+    public const string Windows = "aac-windows-and-blocks";
+    public const string Codebooks = "aac-section-data-and-codebooks";
+    public const string Tns = "tns";
+    public const string Pns = "pns";
+    public const string PulseData = "aac-pulse-data";
+    public const string DynamicRange = "aac-dynamic-range-control";
+    public const string MidSide = "mid-side-stereo";
+    public const string Intensity = "intensity-stereo";
 }
 
 // What each AAC node is, in the words the report shows next to it. Constants only: access unit and
 // frame nodes are built by the hundred thousand, so a description picks one of these and never
 // allocates.
-internal static class Explain
+internal static partial class Explain
 {
     public const string AudioSpecificConfig = "The AudioSpecificConfig: the object type, sample rate and channel configuration a decoder needs before the first access unit, which the container stores apart from the audio (ISO/IEC 14496-3 1.6.2.1).";
     public const string ObjectType = "The audio object type, the set of coding tools the stream uses: 2 is AAC LC, 5 SBR, 29 PS, 42 USAC. 31 escapes to six more bits for types from 32 on (ISO/IEC 14496-3 1.6.2.1, 1.5.1.1).";
