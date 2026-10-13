@@ -114,7 +114,7 @@ internal static class Reader
         else
         {
             s.Findings.Add(Severity.Warning, "wavpack.data-skipped", () => Nodes.Skipped(s, index), count =>
-                $"{to - start} bytes at 0x{start:X} hold no block header{(count > 1 ? $", and {count - 1} more such stretches do" : string.Empty)}; blocks are found again after them.");
+                $"{Bytes(to - start)} at 0x{start:X} {(to - start == 1 ? "holds" : "hold")} no block header{(count > 1 ? $", and {count - 1} more such stretches do" : string.Empty)}; blocks are found again after them.");
         }
     }
 
@@ -142,7 +142,7 @@ internal static class Reader
 
         Declare(s, entry, header);
         HeaderChecks(s, entry, offset, header, status, block.Length);
-        BlockStatus found = Walk(s, entry, offset, header, block, detail, status, out int count);
+        BlockStatus found = Walk(s, entry, offset, header, block, detail, status, out int count, out int wrapper);
         status |= found;
         if (header.HasAudio)
         {
@@ -199,7 +199,7 @@ internal static class Reader
 
         if (header.HasAudio)
         {
-            TrackSet(s, entry, header, offset, block.Length);
+            TrackSet(s, entry, header, offset, block.Length - wrapper);
         }
     }
 
@@ -240,9 +240,10 @@ internal static class Reader
 
     // The sub-blocks of the block, checked as libwavpack does (WavpackVerifySingleBlock,
     // read_metadata_buff, process_metadata). Returns what the block holds.
-    private static BlockStatus Walk(State s, int entry, long offset, in BlockHeader header, Span<byte> block, Detail? detail, BlockStatus status, out int count)
+    private static BlockStatus Walk(State s, int entry, long offset, in BlockHeader header, Span<byte> block, Detail? detail, BlockStatus status, out int count, out int wrapper)
     {
         var found = new BlockFacts();
+        wrapper = 0;
         BlockStatus result = BlockStatus.None;
         int position = BlockHeader.Length;
         var stored = detail is null ? null : new List<byte>();
@@ -283,6 +284,11 @@ internal static class Reader
                 int keep = SubBlockIds.IsBitstream(function) ? Math.Min(data.Length, function is SubBlockIds.WvxBitstream or SubBlockIds.DsdBlock ? 8 : 0)
                     : Math.Min(data.Length, State.MaxStoredPerSubBlock);
                 keep = Math.Min(keep, State.MaxStoredPerBlock - stored!.Count);
+                if (function == SubBlockIds.DecorrTerms && detail.TermsIndex < 0)
+                {
+                    detail.TermsIndex = detail.SubBlocks.Count;
+                }
+
                 detail.SubBlocks.Add(new SubBlock(id, offset + position, headerLength, size, dataLength, stored.Count, keep, isClipped));
                 stored.AddRange(data[..keep].ToArray());
             }
@@ -320,12 +326,22 @@ internal static class Reader
                         $"The sub-block at 0x{atOffset:X} states {sizeField} bytes, but {available} are left in the block{(count2 > 1 ? $" ({count2} blocks)" : string.Empty)}.");
                 }
 
+                if (IsWrapper(function))
+                {
+                    wrapper += headerLength + available;
+                }
+
                 position += headerLength + available;
                 count++;
                 break;
             }
 
             SubBlockChecks(s, entry, offset, header, index, function, id, data, found, ref result, block, position, headerLength);
+            if (IsWrapper(function))
+            {
+                wrapper += headerLength + size;
+            }
+
             position += headerLength + size;
             count++;
         }
@@ -351,12 +367,15 @@ internal static class Reader
 
             long trailingAt = offset + position;
             s.Findings.Add(Severity.Warning, "wavpack.block-trailing-byte", () => Nodes.Block(s, entry), _ =>
-                $"{left} byte at 0x{trailingAt:X} after the last sub-block of the block at 0x{offset:X} holds no sub-block; libwavpack refuses a block that does not end with one.");
+                $"{Bytes(left)} at 0x{trailingAt:X} after the last sub-block of the block at 0x{offset:X} {(left == 1 ? "holds" : "hold")} no sub-block; libwavpack refuses a block that does not end with one.");
         }
 
         result |= Checks(s, entry, offset, header, block, detail, found, status);
         return result | found.Status;
     }
+
+    private static bool IsWrapper(int function) =>
+        function is SubBlockIds.RiffHeader or SubBlockIds.RiffTrailer or SubBlockIds.AltHeader or SubBlockIds.AltTrailer;
 
     private sealed class BlockFacts
     {
@@ -386,11 +405,13 @@ internal static class Reader
 
         public int DsdPower { get; set; } = -1;
 
+        public int DsdAt { get; set; } = -1;
+
         public Located<ChannelInfoValue>? ChannelInfo { get; set; }
 
         public int ProfileAt { get; set; } = -1;
 
-        public double? Target { get; set; }
+        public HybridTargetValue? Target { get; set; }
     }
 
     private static void SubBlockChecks(State s, int entry, long offset, in BlockHeader header, int index, int function, int id, ReadOnlySpan<byte> data,
@@ -403,7 +424,7 @@ internal static class Reader
         {
             int length = dataLength;
             s.Findings.Add(Severity.Warning, "wavpack.subblock-size", () => Nodes.SubBlock(s, entry, index), count =>
-                $"The {what} sub-block at 0x{at:X} holds {length} bytes, but libwavpack takes {expected}{(count > 1 ? $" ({count} sub-blocks)" : string.Empty)}.");
+                $"The {what} sub-block at 0x{at:X} holds {Bytes(length)}, but libwavpack takes {expected}{(count > 1 ? $" ({count} sub-blocks)" : string.Empty)}.");
         }
 
         switch (function)
@@ -512,12 +533,13 @@ internal static class Reader
 
                 break;
             case SubBlockIds.ChannelInfo:
-                found.ChannelInfo = Decode.ChannelInfo(data) is { } info ? new Located<ChannelInfoValue>(info, entry, index) : null;
-                if (found.ChannelInfo is null)
+                ChannelInfoValue? channelInfo = Decode.ChannelInfo(data);
+                found.ChannelInfo = channelInfo is { Channels: > 0 } info ? new Located<ChannelInfoValue>(info, entry, index) : null;
+                if (channelInfo is null)
                 {
                     int length = data.Length;
                     s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s, entry, index), count =>
-                        $"The channel info at 0x{at:X} ({length} bytes) is one libwavpack refuses: it needs 1 to 7 bytes, at least one channel, no more channels than twice the streams and no more speakers in the mask than channels{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                        $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
                 }
 
                 break;
@@ -531,7 +553,8 @@ internal static class Reader
                 break;
             case SubBlockIds.DsdBlock:
                 found.Status |= BlockStatus.HasDsd;
-                DsdChecks(s, entry, index, at, data, found);
+                found.DsdAt = found.DsdAt < 0 ? index : found.DsdAt;
+                DsdChecks(s, entry, index, at, header, data, found);
                 break;
             case SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum:
                 if (data.Length != 16)
@@ -547,8 +570,16 @@ internal static class Reader
             case SubBlockIds.SampleRate:
                 if (Decode.SampleRate(data) is { } rate)
                 {
-                    found.SampleRate = rate;
-                    s.SampleRateField ??= new Located<int>(rate, entry, index);
+                    if (rate == 0)
+                    {
+                        s.Findings.Add(Severity.Warning, "wavpack.sample-rate-zero", () => Nodes.SubBlock(s, entry, index), count =>
+                            $"The sample rate sub-block at 0x{at:X} gives 0 Hz, which libwavpack ignores in favor of the rate in the flags{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                    }
+                    else
+                    {
+                        found.SampleRate = rate;
+                        s.SampleRateField ??= new Located<int>(rate, entry, index);
+                    }
                 }
                 else
                 {
@@ -608,7 +639,7 @@ internal static class Reader
         return length == need || length == need + (2 * channels);
     }
 
-    private static void DsdChecks(State s, int entry, int index, long at, ReadOnlySpan<byte> data, BlockFacts found)
+    private static void DsdChecks(State s, int entry, int index, long at, in BlockHeader header, ReadOnlySpan<byte> data, BlockFacts found)
     {
         string? problem = null;
         if (data.Length < 2)
@@ -626,9 +657,18 @@ internal static class Reader
             {
                 problem = $"its mode is {data[1]}, not 0, 1 or 3";
             }
+            else if (data[1] == 0 && data.Length - 2 != (long)header.Samples * (header.IsMonoData ? 1 : 2))
+            {
+                long expected = (long)header.Samples * (header.IsMonoData ? 1 : 2);
+                problem = $"its stored mode holds {Bytes(data.Length - 2)} of audio, but the block counts {header.Samples} samples of {(header.IsMonoData ? "1 channel" : "2 channels")}, which take exactly {Bytes(expected)}";
+            }
             else if (data[1] == 1 && (data.Length < 3 || data[2] > 5))
             {
                 problem = "its history bits are missing or past 5";
+            }
+            else if (data[1] == 1 && data.Length == 3)
+            {
+                problem = "its data ends right after the history bits";
             }
         }
 
@@ -648,7 +688,7 @@ internal static class Reader
             long at = offset + position;
             int length = data.Length;
             s.Findings.Add(Severity.Warning, "wavpack.subblock-size", () => Nodes.SubBlock(s, entry, index), count =>
-                $"The block checksum at 0x{at:X} holds {length} bytes, but libwavpack takes 2 or 4 and refuses the block{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                $"The block checksum at 0x{at:X} holds {Bytes(length)}, but libwavpack takes 2 or 4 and refuses the block{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
             return;
         }
 
@@ -746,7 +786,7 @@ internal static class Reader
 
             if (s.HybridTarget is null && found.Target is { } target && found.ProfileAt >= 0)
             {
-                s.HybridTarget = new Located<double>(target, entry, found.ProfileAt);
+                s.HybridTarget = new Located<HybridTargetValue>(target, entry, found.ProfileAt);
             }
 
             if (s.FirstAudio == entry)
@@ -764,10 +804,18 @@ internal static class Reader
                     s.SampleRate = 44100;
                     s.SampleRateMissing = true;
                     s.Findings.Add(Severity.Info, "wavpack.sample-rate-missing", () => Nodes.HeaderField(s, entry, "Flags"), _ =>
-                        $"The first audio block at 0x{offset:X} gives no sample rate in its flags (index 15) and holds no sample rate sub-block; libwavpack then takes 44100 Hz.");
+                        $"The first audio block at 0x{offset:X} gives no sample rate in its flags (index 15) and holds no sample rate sub-block with a rate above 0; libwavpack then takes 44100 Hz.");
                 }
 
                 s.DsdPower = found.DsdPower;
+                if (header.IsDsd && found.DsdPower is >= 0 and <= 31 && found.DsdAt >= 0 && ((long)s.SampleRate << found.DsdPower) > MaxNativeRate / 8)
+                {
+                    long stored = s.SampleRate;
+                    int power = found.DsdPower;
+                    int dsdAt = found.DsdAt;
+                    s.Findings.Add(Severity.Warning, "wavpack.sample-rate-implausible", () => Nodes.SubBlock(s, entry, dsdAt), _ =>
+                        $"The first audio block at 0x{offset:X} gives a DSD bit rate of {stored} Hz times 2^{power} times 8, more than the {MaxNativeRate} Hz a sample rate can hold; the report takes it as {MaxNativeRate} Hz.");
+                }
             }
         }
 
@@ -817,6 +865,8 @@ internal static class Reader
 
     // Blocks of one set (a stereo, a mono or several of them, from an initial to a final block)
     // share their first sample and length; the sets follow one another without gap.
+    // length is the bytes of the block that hold audio data: those less the wrapper sub-blocks (the
+    // header and trailer of the source file) a block may carry.
     private static void TrackSet(State s, int entry, in BlockHeader header, long offset, long length)
     {
         long index = header.BlockIndex;
@@ -825,12 +875,15 @@ internal static class Reader
             CloseSet(s);
             if (!header.IsInitial)
             {
+                bool followsCap = s.Sets > 0 && s.SetCapped;
+                bool isFirst = s.Sets == 0;
                 s.Findings.Add(Severity.Warning, "wavpack.block-set-broken", () => Nodes.HeaderField(s, entry, "Flags"), count =>
-                    $"The block at 0x{offset:X} {(s.Sets == 0 ? "starts the audio" : "follows a final block")} without the initial block flag{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.");
+                    $"The block at 0x{offset:X} {(isFirst ? "starts the audio" : followsCap ? "follows a set that libwavpack ends at its stream limit" : "follows a final block")} without the initial block flag{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.");
             }
 
             s.SetOpen = true;
             s.SetSawFinal = false;
+            s.SetCapped = false;
             s.SetOffset = offset;
             s.SetIndex = index;
             s.SetSamples = header.Samples;
@@ -883,7 +936,17 @@ internal static class Reader
             s.SetSawFinal = true;
             CloseSet(s);
         }
+        else if (s.SetBlocks >= MaxStreams(s))
+        {
+            // libwavpack ends a set at its stream limit whether or not a final block follows.
+            s.SetCapped = true;
+            CloseSet(s);
+        }
     }
+
+    // How many blocks libwavpack reads into one set: the streams the long form of the channel info
+    // states (up to 4,096, NEW_MAX_STREAMS), else 8 (OLD_MAX_STREAMS).
+    private static int MaxStreams(State s) => s.ChannelInfo?.Value.Streams ?? Decode.OldMaxStreams;
 
     // What of the flags must stay the same across sets: bytes per sample, float, DSD, rate and shift.
     private const uint FormatMask = BlockHeader.BytesStoredMask | BlockHeader.FloatFlag | BlockHeader.DsdFlag | (0xFu << BlockHeader.SampleRateLsb) | (0x1Fu << BlockHeader.ShiftLsb);
@@ -900,8 +963,10 @@ internal static class Reader
         if (!s.SetSawFinal)
         {
             long offset = s.SetOffset;
+            int blocks = s.SetBlocks;
+            bool isCapped = s.SetCapped;
             s.Findings.Add(Severity.Warning, "wavpack.block-set-broken", () => Nodes.Block(s, first), count =>
-                $"The set of blocks that begins at 0x{offset:X} ends without a final block{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.");
+                $"The set of blocks that begins at 0x{offset:X} {(isCapped ? $"holds {blocks} blocks without a final block, as many as libwavpack reads into one set (its stream limit), and is taken to end there" : "ends without a final block")}{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.");
         }
 
         long samples = s.SetSamples;
@@ -931,9 +996,23 @@ internal static class Reader
         s.Figures?.Add(s.SetOffset, s.SetBits, samples * s.FiguresScale, s.SetBlocks <= State.MaxSetBlocks);
     }
 
-    // The rate of the samples as the figures count them: for DSD, the bits a second.
-    public static long NativeRate(State s) =>
-        (s.FormatFlags & BlockHeader.DsdFlag) != 0 && s.DsdPower is >= 0 and <= 31 ? (long)s.SampleRate * (1L << s.DsdPower) * 8 : s.SampleRate;
+    // The most a rate is taken as: what the 31 bits of a sample rate hold.
+    public const long MaxNativeRate = int.MaxValue;
+
+    // The rate of the samples as the figures count them: for DSD, the bits a second, held to
+    // MaxNativeRate so the product cannot overflow.
+    public static long NativeRate(State s)
+    {
+        if ((s.FormatFlags & BlockHeader.DsdFlag) == 0 || s.DsdPower is < 0 or > 31)
+        {
+            return s.SampleRate;
+        }
+
+        long multiplied = (long)s.SampleRate << s.DsdPower;
+        return multiplied > MaxNativeRate / 8 ? MaxNativeRate : multiplied * 8;
+    }
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
+
+    private static string Bytes(long count) => count == 1 ? "1 byte" : Number(count) + " bytes";
 }

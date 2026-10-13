@@ -1,0 +1,298 @@
+{
+ "length": 45448,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 190,
+   "index": 0,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "3d7ba7a9",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     35,
+     92
+    ],
+    [
+     132,
+     101,
+     4
+    ],
+    [
+     138,
+     42,
+     2
+    ],
+    [
+     142,
+     78,
+     40
+    ],
+    [
+     184,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 190,
+   "length": 6558,
+   "index": 8192,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "55866539",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     222,
+     42,
+     2
+    ],
+    [
+     226,
+     142,
+     6512
+    ],
+    [
+     6742,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 6748,
+   "length": 6410,
+   "index": 16384,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "04da595b",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6780,
+     42,
+     2
+    ],
+    [
+     6784,
+     206,
+     6364
+    ],
+    [
+     13152,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13158,
+   "length": 6482,
+   "index": 24576,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "fadc0f63",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13190,
+     42,
+     2
+    ],
+    [
+     13194,
+     206,
+     6436
+    ],
+    [
+     19634,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 19640,
+   "length": 6452,
+   "index": 32768,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "84ad07c3",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     19672,
+     42,
+     2
+    ],
+    [
+     19676,
+     142,
+     6406
+    ],
+    [
+     26086,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 26092,
+   "length": 6488,
+   "index": 40960,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "479dade0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     26124,
+     42,
+     2
+    ],
+    [
+     26128,
+     142,
+     6442
+    ],
+    [
+     32574,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 32580,
+   "length": 6734,
+   "index": 49152,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "6f961c23",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32612,
+     42,
+     2
+    ],
+    [
+     32616,
+     142,
+     6688
+    ],
+    [
+     39308,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 39314,
+   "length": 6134,
+   "index": 57344,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "eba031c0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     39346,
+     42,
+     2
+    ],
+    [
+     39350,
+     142,
+     6088
+    ],
+    [
+     45442,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 2822400,
+   "channels": 2,
+   "samples": 524288,
+   "duration": 0.18575963718820862,
+   "bits_per_sample": 1,
+   "average_bitrate": 1953.2337890625,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 8,
+   "declared": 65536
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 45448
+  }
+ ],
+ "description": "The first DSD block in the stored mode with 37 bytes of audio, not the bytes it counts.",
+ "findings": [
+  {
+   "code": "wavpack.dsd-invalid",
+   "contains": "its stored mode holds 37 bytes"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

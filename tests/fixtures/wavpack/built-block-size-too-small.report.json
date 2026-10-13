@@ -32,7 +32,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "The blocks hold a new config block, which WavPack 5.0 added; libwavpack reports encoder version 5 for a file with one",
+                  "value": "The blocks hold a new config block, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one",
                   "offset": 0,
                   "length": 47650
                 }
@@ -119,7 +119,7 @@
                   "length": 47650
                 },
                 {
-                  "name": "HasCorrectionFile",
+                  "name": "IsCorrectionFileCreated",
                   "value": false,
                   "offset": 0,
                   "length": 47650
@@ -195,7 +195,7 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 699.72,
+                  "value": 699.0438,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 47650
@@ -222,7 +222,7 @@
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 430.336,
+                  "value": 428.864,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 47650
@@ -1059,13 +1059,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 976,
                               "offset": 94,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 1008,
                               "offset": 95,
                               "length": 1
@@ -1078,13 +1078,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 984,
                               "offset": 96,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 976,
                               "offset": 97,
                               "length": 1
@@ -1097,13 +1097,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 887,
                               "offset": 98,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 822,
                               "offset": 99,
                               "length": 1
@@ -1116,13 +1116,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 718,
                               "offset": 100,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 516,
                               "offset": 101,
                               "length": 1
@@ -1135,13 +1135,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 508,
                               "offset": 102,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 540,
                               "offset": 103,
                               "length": 1
@@ -1215,7 +1215,16 @@
                       "value": 8,
                       "unit": "bytes",
                       "offset": 106,
-                      "length": 8
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 106,
+                          "length": 8
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1285,7 +1294,7 @@
                       "length": 12,
                       "children": [
                         {
-                          "name": "Left Medians",
+                          "name": "Side Medians",
                           "offset": 116,
                           "length": 6,
                           "children": [
@@ -1310,7 +1319,7 @@
                           ]
                         },
                         {
-                          "name": "Right Medians",
+                          "name": "Mid Medians",
                           "offset": 122,
                           "length": 6,
                           "children": [
@@ -2269,13 +2278,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 927,
                               "offset": 13540,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 959,
                               "offset": 13541,
                               "length": 1
@@ -2288,13 +2297,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 581,
                               "offset": 13542,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 564,
                               "offset": 13543,
                               "length": 1
@@ -2307,13 +2316,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 508,
                               "offset": 13544,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 500,
                               "offset": 13545,
                               "length": 1
@@ -2326,13 +2335,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": -136,
                               "offset": 13546,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": -168,
                               "offset": 13547,
                               "length": 1
@@ -2345,13 +2354,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 500,
                               "offset": 13548,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 508,
                               "offset": 13549,
                               "length": 1
@@ -2425,7 +2434,16 @@
                       "value": 8,
                       "unit": "bytes",
                       "offset": 13552,
-                      "length": 8
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 13552,
+                          "length": 8
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2495,7 +2513,7 @@
                       "length": 12,
                       "children": [
                         {
-                          "name": "Left Medians",
+                          "name": "Side Medians",
                           "offset": 13562,
                           "length": 6,
                           "children": [
@@ -2520,7 +2538,7 @@
                           ]
                         },
                         {
-                          "name": "Right Medians",
+                          "name": "Mid Medians",
                           "offset": 13568,
                           "length": 6,
                           "children": [
@@ -3313,13 +3331,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 73,
                               "offset": 24634,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 97,
                               "offset": 24635,
                               "length": 1
@@ -3332,13 +3350,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": -40,
                               "offset": 24636,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": -24,
                               "offset": 24637,
                               "length": 1
@@ -3351,13 +3369,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 306,
                               "offset": 24638,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 258,
                               "offset": 24639,
                               "length": 1
@@ -3370,13 +3388,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 16,
                               "offset": 24640,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 56,
                               "offset": 24641,
                               "length": 1
@@ -3389,13 +3407,13 @@
                           "length": 2,
                           "children": [
                             {
-                              "name": "Left Weight",
+                              "name": "Side Weight",
                               "value": 242,
                               "offset": 24642,
                               "length": 1
                             },
                             {
-                              "name": "Right Weight",
+                              "name": "Mid Weight",
                               "value": 153,
                               "offset": 24643,
                               "length": 1
@@ -3469,7 +3487,16 @@
                       "value": 8,
                       "unit": "bytes",
                       "offset": 24646,
-                      "length": 8
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 24646,
+                          "length": 8
+                        }
+                      ]
                     }
                   ]
                 },
@@ -3539,7 +3566,7 @@
                       "length": 12,
                       "children": [
                         {
-                          "name": "Left Medians",
+                          "name": "Side Medians",
                           "offset": 24656,
                           "length": 6,
                           "children": [
@@ -3564,7 +3591,7 @@
                           ]
                         },
                         {
-                          "name": "Right Medians",
+                          "name": "Mid Medians",
                           "offset": 24662,
                           "length": 6,
                           "children": [
@@ -3840,7 +3867,7 @@
         "bitsPerSample": 16,
         "samples": 24000,
         "duration": 0.54421768707483,
-        "averageBitrate": 699.72,
+        "averageBitrate": 699.0438,
         "isVbr": true,
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
@@ -3855,7 +3882,7 @@
               24592
             ],
             "values": [
-              430.336,
+              428.864,
               603.354894404193,
               1253.83205918619
             ]
@@ -3868,7 +3895,7 @@
               0
             ],
             "values": [
-              700
+              699
             ]
           }
         ]

@@ -59,9 +59,9 @@ Every cross-check script also compares each fixture's golden report with MediaIn
 
 ### WavPack
 
-- The 57 encoder-written fixtures come from wavpack 5.6.0 (Ubuntu 24.04's package) over deterministic signals from `wavpack_signal.py` (WAV, float, AIFF, CAF and DSF): lossless at 8 to 32 bits and float, 1 to 8 channels, the speed modes, hybrid with and without correction files, DSD, custom rates, wrappers, an MD5 and an APEv2 tag. The 39 hand-built ones (`built-*`) change those files to produce each finding.
+- The 60 encoder-written fixtures come from wavpack 5.6.0 (Ubuntu 24.04's package) and, for one, FFmpeg 6.1.1's native encoder and wv muxer with its APEv2 `encoder` item, over deterministic signals from `wavpack_signal.py` (WAV, float, AIFF, CAF and DSF): lossless at 8 to 32 bits and float, 1 to 8 channels, the speed modes, hybrid with and without correction files, DSD, custom rates, wrappers, an MD5 and an APEv2 tag. The 49 hand-built ones (`built-*`) change those files to produce each finding.
 - `wavpack_model.py` computes the expected blocks and stream figures independently of the parser.
-- `wavpack_blocks.c` is built with libwavpack's own sources (`wavpack_tool.py`, pinned by SHA-256) and prints what `read_next_header` and `WavpackVerifySingleBlock` say of every block; blocks the library refuses are listed per fixture in the script.
+- `wavpack_blocks.c` is built with libwavpack's own sources (`wavpack_tool.py`, pinned by SHA-256) and prints what `read_next_header` and `WavpackVerifySingleBlock` say of every block. Its block list is compared with the manifest of every fixture, damaged ones included; the four fixtures on which the analyzer departs from libwavpack's reader on purpose (`READER_DEPARTURES`) are listed with their evidence, and the run fails if libwavpack agrees with the manifest on one of them. Fixtures that libwavpack refuses to open are skipped for its figures, and each skip prints its reason.
 - ffprobe differences (a channel mask of the wrong size, a missing channel mask, a header not at byte 0) and MediaInfo's readings are listed with their evidence in `crosscheck_wavpack_fixtures.py`.
 
 ### Derived Musepack SV6 fixtures

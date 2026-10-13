@@ -13,6 +13,8 @@ repository and extracts the files the WMA and ASF work is written from:
 - libavcodec/vlc.c: how a VLC is built from code lengths (ff_vlc_init_from_lengths).
 - libavformat/wvdec.c, wv.c and wv.h and libavcodec/wavpack.c: the WavPack demuxer and decoder, which the WavPack cross-check explains
   ffprobe's readings with.
+- libavcodec/wavpackenc.c, libavformat/wvenc.c and apetag.c: the WavPack encoder and muxer that write the FFmpeg fixture (stream version
+  0x410, no new config block and no block checksums, and an APEv2 tag with an "encoder" item).
 
 The release is the one Ubuntu 24.04's ffmpeg 6.1.1 is built from, which the cross-checks run.
 """
@@ -34,6 +36,7 @@ FILES = [
     "libavcodec/wma_freqs.c", "libavcodec/wmaprodec.c", "libavcodec/wmalosslessdec.c", "libavcodec/wmavoice.c",
     "libavcodec/wmaenc.c", "libavcodec/wmaprodata.h", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
     "libavformat/wv.h", "libavformat/wv.c", "libavformat/wvdec.c", "libavcodec/wavpack.c",
+    "libavcodec/wavpackenc.c", "libavformat/wvenc.c", "libavformat/apetag.c",
 ]
 
 

@@ -134,7 +134,7 @@ public class WavPackTests
         Report alone = Analyze(correction, "correction.wvc");
         Assert.Equal("WavPack correction data", alone.Streams.Single().Codec);
         Assert.Equal("true", Statistic(alone, "IsCorrectionFile"));
-        Assert.Equal("true", Statistic(alone, "HasCorrectionFile"));
+        Assert.Equal("true", Statistic(alone, "IsCorrectionFileCreated"));
         Assert.Equal("false", Statistic(alone, "IsLossless"));
         Assert.Equal(["wavpack.correction-file"], alone.Findings.Select(f => f.Code));
 
@@ -142,9 +142,9 @@ public class WavPackTests
         Assert.Equal("WavPack hybrid", hybrid.Streams.Single().Codec);
         Assert.Equal("true", Statistic(hybrid, "IsHybrid"));
         Assert.Equal("false", Statistic(hybrid, "IsLossless"));
-        Assert.Equal("true", Statistic(hybrid, "HasCorrectionFile"));
-        Assert.Equal("false", Statistic(Analyze(Fixture("external-hybrid-lossy-b4.wv")), "HasCorrectionFile"));
-        Assert.Equal("false", Statistic(Analyze(Fixture("external-lossless-16-stereo.wv")), "HasCorrectionFile"));
+        Assert.Equal("true", Statistic(hybrid, "IsCorrectionFileCreated"));
+        Assert.Equal("false", Statistic(Analyze(Fixture("external-hybrid-lossy-b4.wv")), "IsCorrectionFileCreated"));
+        Assert.Equal("false", Statistic(Analyze(Fixture("external-lossless-16-stereo.wv")), "IsCorrectionFileCreated"));
     }
 
     // The target bitrate a hybrid file asks for follows from its bitrate accumulator: the -b of the
@@ -379,6 +379,227 @@ public class WavPackTests
         byte[] data = Fixture("external-hybrid-51-b3-correction.wv");
         string expected = Fixtures.ToJson(Analyze(data));
         Parallel.For(0, 16, _ => Assert.Equal(expected, Fixtures.ToJson(Analyze(data))));
+    }
+
+    private static IEnumerable<Node> Descendants(Node node) => node.Children.SelectMany(c => new[] { c }.Concat(Descendants(c)));
+
+    private static Node FirstBlock(Report report) => Stream(report).Children.First(c => c.Name == "Block");
+
+    // The encoder codes the first channel of a stereo block as left, or as side with joint stereo, and
+    // the second as right or mid (pack.c), and the weights, medians and hybrid profile follow that
+    // order. The noise shaping is applied before the mid/side conversion, so it stays left and right.
+    [Theory]
+    [InlineData("external-joint-stereo-on.wv", "Side", "Mid")]
+    [InlineData("external-joint-stereo-off.wv", "Left", "Right")]
+    [InlineData("external-hybrid-lossy-b4.wv", "Side", "Mid")]
+    [InlineData("external-hybrid-b4-left-right.wv", "Left", "Right")]
+    public void TheChannelsOfAStereoBlockAreNamedByHowTheyAreCoded(string name, string first, string second)
+    {
+        string[] names = [.. Descendants(FirstBlock(AnalyzeFixture(name))).Select(n => n.Name)];
+        Assert.Contains($"{first} Weight", names);
+        Assert.Contains($"{second} Weight", names);
+        Assert.Contains($"{first} Medians", names);
+        Assert.Contains($"{second} Medians", names);
+        foreach (string other in first == "Side" ? (string[])["Left", "Right"] : ["Side", "Mid"])
+        {
+            Assert.DoesNotContain($"{other} Weight", names);
+            Assert.DoesNotContain($"{other} Medians", names);
+        }
+
+        if (name.Contains("hybrid", StringComparison.Ordinal))
+        {
+            Assert.Contains($"{first} Bitrate Accumulator", names);
+            Assert.Contains($"{second} Slow Level", names);
+        }
+    }
+
+    [Fact]
+    public void NoiseShapingStaysLeftAndRightWithJointStereoAndMonoBlocksHaveNoSecondChannel()
+    {
+        // Sub-blocks of 12 bytes (an error, an accumulator and a delta of each channel), of 2 (a weight of each) and of 6 for mono.
+        List<byte[]> stereo = WavPackBuilder.Blocks("external-hybrid-lossy-b4.wv");
+        stereo[0] = WavPackBuilder.Join(stereo[0], WavPackBuilder.Parts(stereo[0]).Prepend(WavPackBuilder.Sub(0x07, new byte[12])));
+        string[] joint = [.. Descendants(FirstBlock(Analyze(WavPackBuilder.Concat(stereo)))).Select(n => n.Name)];
+        Assert.Contains("Left Error", joint);
+        Assert.Contains("Right Shaping Delta", joint);
+        Assert.DoesNotContain("Side Error", joint);
+
+        stereo[0] = WavPackBuilder.Replace(stereo[0], 0x07, WavPackBuilder.Sub(0x07, [0x10, 0x20]));
+        string[] weights = [.. Descendants(FirstBlock(Analyze(WavPackBuilder.Concat(stereo)))).Select(n => n.Name)];
+        Assert.Contains("Left Weight", weights);
+        Assert.Contains("Right Weight", weights);
+
+        List<byte[]> mono = WavPackBuilder.Blocks("external-hybrid-mono-b3.wv");
+        mono[0] = WavPackBuilder.Join(mono[0], WavPackBuilder.Parts(mono[0]).Prepend(WavPackBuilder.Sub(0x07, [0x10, 0x20])));
+        string[] unused = [.. Descendants(FirstBlock(Analyze(WavPackBuilder.Concat(mono)))).Select(n => n.Name)];
+        Assert.Contains("Weight", unused);
+        Assert.Contains("Unused Weight", unused);
+        Assert.DoesNotContain("Right Weight", unused);
+
+        mono[0] = WavPackBuilder.Replace(mono[0], 0x07, WavPackBuilder.Sub(0x07, new byte[6]));
+        string[] longForm = [.. Descendants(FirstBlock(Analyze(WavPackBuilder.Concat(mono)))).Select(n => n.Name)];
+        Assert.Contains("Error", longForm);
+        Assert.Contains("Shaping Delta", longForm);
+        Assert.DoesNotContain(longForm, n => n is "Left Error" or "Right Error" or "Left Shaping Delta" or "Right Shaping Delta");
+    }
+
+    // The samples of the decorrelation passes are listed pass by pass, which needs the terms
+    // sub-block of the same block.
+    [Fact]
+    public void TheDecorrelationSamplesListTheirPasses()
+    {
+        Node samples = Descendants(FirstBlock(AnalyzeFixture("external-mode-high.wv"))).First(n => n.Name == "Decorrelation Samples");
+        Node data = samples.Children.Single(c => c.Name == "Data");
+        Assert.Equal("Pass 1", data.Children.First().Name);
+        Assert.All(data.Children, pass => Assert.StartsWith("Pass ", pass.Name, StringComparison.Ordinal));
+    }
+
+    // A hybrid target below 568/256 bits per sample is stored as an accumulator of 0 (write_words.c
+    // word_set_bitrate), so only a limit is known.
+    [Theory]
+    [InlineData("external-hybrid-b2.wv")]
+    [InlineData("external-hybrid-b22.wv")]
+    public void AHybridTargetBelowTheLowestTheEncoderStoresIsALimit(string name)
+    {
+        Report report = AnalyzeFixture(name);
+        Assert.Equal("2.22 bits/sample or less", Statistic(report, "Hybrid Target Bitrate"));
+        Assert.Equal("195.7 kbps or less", Statistic(report, "Hybrid Target Rate"));
+        Node profile = Descendants(FirstBlock(report)).First(n => n.Name == "Hybrid Profile");
+        Assert.Equal("2.22 bits/sample or less", profile.Children.Single(c => c.Name == "Data").Children.Single(c => c.Name == "Target Bitrate").Value?.ToString());
+        Assert.Equal("3.00 bits/sample", Statistic(AnalyzeFixture("external-hybrid-mono-b3.wv"), "Hybrid Target Bitrate"));
+    }
+
+    [Fact]
+    public void AChannelInfoOfNoChannelsAndNoMaskIsNoChannelInfo()
+    {
+        Report report = AnalyzeFixture("built-channel-info-no-count.wv");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wavpack.channel-info-invalid");
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(2, stream.Channels);
+        Assert.Equal(["front left", "front right"], stream.ChannelLayout!.Select(ChannelLayouts.Name));
+
+        // With speakers in the mask the count of 0 is refused.
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");
+        blocks[0] = WavPackBuilder.Join(blocks[0], WavPackBuilder.Parts(blocks[0]).Prepend(WavPackBuilder.Sub(0x0D, [0, 3])));
+        Assert.Contains(Analyze(WavPackBuilder.Concat(blocks)).Findings, f => f.Code == "wavpack.channel-info-invalid");
+    }
+
+    [Fact]
+    public void ASampleRateOfZeroIsIgnoredAsLibwavpackDoes()
+    {
+        Report flags = AnalyzeFixture("built-sample-rate-zero.wv");
+        Assert.Equal(44100, flags.Streams.Single().SampleRate);
+        Assert.NotEqual(0.0, flags.Streams.Single().Duration);
+        Assert.NotNull(flags.Streams.Single().AverageBitrate);
+        Assert.DoesNotContain(flags.Findings, f => f.Code == "wavpack.sample-rate-missing");
+
+        Report custom = AnalyzeFixture("built-sample-rate-zero-custom.wv");
+        Assert.Equal(44100, custom.Streams.Single().SampleRate);
+        Assert.Contains(custom.Findings, f => f.Code == "wavpack.sample-rate-missing");
+        Assert.Contains(custom.Findings, f => f.Code == "wavpack.sample-rate-zero");
+    }
+
+    [Fact]
+    public void ADsdRateThatOverflowsIsHeldAndReported()
+    {
+        Report report = AnalyzeFixture("built-dsd-rate-overflow.wv");
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(int.MaxValue, stream.SampleRate);
+        Assert.True(stream.Duration > 0);
+        Assert.True(stream.AverageBitrate > 0);
+        Assert.Equal("2147483647 Hz", Statistic(report, "Sample Rate"));
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.sample-rate-implausible");
+        Assert.NotNull(finding.Path);
+        Assert.DoesNotContain(AnalyzeFixture("external-dsd-64.wv").Findings, f => f.Code == "wavpack.sample-rate-implausible");
+    }
+
+    // libwavpack reads at most 8 streams into a set without the long channel info, so a file of blocks
+    // that never end a set has the channels of one set, not of the file.
+    [Fact]
+    public void ASetWithoutAFinalBlockEndsAtTheStreamLimit()
+    {
+        Report report = AnalyzeFixture("built-set-without-final-limit.wv");
+        Assert.Equal(16, report.Streams.Single().Channels);
+        Assert.Equal("3 sets", Statistic(report, "Block Sets"));
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.block-set-broken" && f.Message.Contains("stream limit", StringComparison.Ordinal));
+
+        // Mono blocks with no initial or final flag, as an encoder that never ends a set writes them.
+        byte[] mono = WavPackBuilder.Blocks("external-lossless-16-mono.wv")[0];
+        byte[] open = WavPackBuilder.SetFlags(mono, 0, 0x1800);
+        Report many = Analyze(WavPackBuilder.Concat(Enumerable.Repeat(open, 300)));
+        Assert.True(many.Streams.Single().Channels <= 8, $"{many.Streams.Single().Channels} channels");
+        Assert.Contains(many.Findings, f => f.Code == "wavpack.block-set-broken");
+        Assert.DoesNotContain(many.Findings, f => f.Code == "parse.failed");
+    }
+
+    [Fact]
+    public void TheDsdModesAreCheckedAsLibwavpackChecksThem()
+    {
+        Assert.DoesNotContain(AnalyzeFixture("built-dsd-stored-mode.wv").Findings, f => f.Code == "wavpack.dsd-invalid");
+        Assert.Contains(AnalyzeFixture("built-dsd-stored-size.wv").Findings, f => f.Code == "wavpack.dsd-invalid" && f.Message.Contains("stored mode", StringComparison.Ordinal));
+        Assert.Contains(AnalyzeFixture("built-dsd-fast-history-only.wv").Findings, f => f.Code == "wavpack.dsd-invalid" && f.Message.Contains("history bits", StringComparison.Ordinal));
+    }
+
+    // The audio's bitrate leaves out the wrapper the first block holds: the bits are the blocks' less
+    // the RIFF header sub-block.
+    [Fact]
+    public void TheAverageBitrateLeavesOutTheWrapper()
+    {
+        byte[] file = Fixture("external-lossless-16-stereo.wv");
+        Report report = Analyze(file);
+        long wrapper = Descendants(Stream(report)).Where(n => n.Name is "RIFF Header" or "RIFF Trailer").Sum(n => n.Length);
+        Assert.True(wrapper > 0);
+        long audio = Stream(report).Children.Where(c => c.Name == "Block").Sum(c => c.Length) - wrapper;
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(audio * 8 * 44100.0 / 24000 / 1000, stream.AverageBitrate!.Value, 6);
+
+        // The same blocks without the wrapper, and with it in a block of its own that counts no sample, give the same bitrate.
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");
+        byte[] riff = WavPackBuilder.Parts(blocks[0]).Single(p => WavPackBuilder.Function(p) == 0x21);
+        blocks[0] = WavPackBuilder.Replace(blocks[0], 0x21, null);
+        Report stripped = Analyze(WavPackBuilder.Concat(blocks));
+        Assert.Equal(stream.AverageBitrate!.Value, stripped.Streams.Single().AverageBitrate!.Value, 9);
+
+        byte[] metadata = [.. blocks[0][..WavPackBuilder.HeaderLength]];
+        BinaryPrimitives.WriteUInt32LittleEndian(metadata.AsSpan(20), 0);
+        metadata = WavPackBuilder.Join(metadata, [riff, WavPackBuilder.Sub(0x2F, new byte[4])]);
+        Report separate = Analyze([.. metadata, .. WavPackBuilder.Concat(blocks)]);
+        Assert.Equal(stream.AverageBitrate!.Value, separate.Streams.Single().AverageBitrate!.Value, 9);
+        Assert.Equal(1, Stream(separate).Children.Count(c => c.Name == "Metadata Block"));
+    }
+
+    // Libwavpack 5.0 and later write a new config block and block checksums; a WavPack 4 stream
+    // without them also comes from other encoders, FFmpeg's among them.
+    [Fact]
+    public void AWavPackFourStreamNamesNoEncoder()
+    {
+        Report ffmpeg = AnalyzeFixture("external-ffmpeg-apev2-tag.wv");
+        StreamInfo stream = ffmpeg.Streams.Single();
+        Assert.Equal("WavPack 4 stream, no WavPack 5 features", stream.Encoder);
+        Assert.Equal(Confidence.Low, stream.EncoderConfidence);
+        Node encoder = Stream(ffmpeg).Children.Single(c => c.Name == "Encoder");
+        Assert.Equal("Low", encoder.Children.Single(c => c.Name == "Confidence").Value?.ToString());
+        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("another encoder, such as FFmpeg, may have written it", StringComparison.Ordinal));
+        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("Lavf", StringComparison.Ordinal));
+        Assert.DoesNotContain(ffmpeg.Findings, f => f.Code == "wavpack.encoder-claim-differs");
+
+        StreamInfo five = AnalyzeFixture("external-lossless-16-stereo.wv").Streams.Single();
+        Assert.Equal("WavPack 5.0 or later", five.Encoder);
+        Assert.Equal(Confidence.Medium, five.EncoderConfidence);
+    }
+
+    // The APE tag's Encoder item, spelled in any case, reaches the parser as a claim.
+    [Fact]
+    public void AnApeEncoderItemIsAnEncoderClaim()
+    {
+        Report differs = AnalyzeFixture("built-ape-encoder-claim.wv");
+        Finding finding = Assert.Single(differs.Findings, f => f.Code == "wavpack.encoder-claim-differs");
+        Assert.Contains("APE Encoder item names \"LAME 3.100\"", finding.Message, StringComparison.Ordinal);
+
+        Report agrees = AnalyzeFixture("built-ape-encoder-wavpack.wv");
+        Assert.DoesNotContain(agrees.Findings, f => f.Code == "wavpack.encoder-claim-differs");
+        Node encoder = Stream(agrees).Children.Single(c => c.Name == "Encoder");
+        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("WavPack 5.6.0", StringComparison.Ordinal));
     }
 
     private static byte[] Syncsafe(int value) => [(byte)((value >> 21) & 0x7F), (byte)((value >> 14) & 0x7F), (byte)((value >> 7) & 0x7F), (byte)(value & 0x7F)];

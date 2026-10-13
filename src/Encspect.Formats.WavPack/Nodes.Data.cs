@@ -20,19 +20,19 @@ internal static partial class Nodes
                 Terms(kept, isMono, at, data);
                 break;
             case SubBlockIds.DecorrWeights:
-                Weights(kept, isMono, at, data);
+                Weights(kept, h, at, data);
                 break;
             case SubBlockIds.DecorrSamples:
                 SamplesOfPasses(detail, kept, h, at, data);
                 break;
             case SubBlockIds.EntropyVars:
-                Entropy(kept, isMono, at, data);
+                Entropy(kept, h, at, data);
                 break;
             case SubBlockIds.HybridProfile:
                 Profile(kept, h, at, data);
                 break;
             case SubBlockIds.ShapingWeights:
-                Shaping(kept, isMono, at, data);
+                Shaping(kept, h, at, data);
                 break;
             case SubBlockIds.FloatInfo when kept.Length == 4:
                 FloatInfo(kept, at, data);
@@ -105,16 +105,25 @@ internal static partial class Nodes
         }
     }
 
-    private static void Weights(ReadOnlySpan<byte> kept, bool isMono, long at, Node data)
+    // What the two channels of a stereo block are called where the encoder codes them: the first as
+    // left and the second as right, or with joint stereo as side and mid (pack.c, "left -= right"
+    // and "right += left >> 1"). The noise shaping is applied before that conversion, so its values
+    // stay left and right.
+    private static (string First, string Second) PairNames(BlockHeader h) =>
+        (h.Flags & BlockHeader.JointStereoFlag) != 0 ? ("Side", "Mid") : ("Left", "Right");
+
+    private static void Weights(ReadOnlySpan<byte> kept, BlockHeader h, long at, Node data)
     {
+        bool isMono = h.IsMonoData;
+        (string first, string second) = PairNames(h);
         int step = isMono ? 1 : 2;
         for (int i = 0; i + step <= kept.Length && i / step < MaxListedItems; i += step)
         {
             var pass = new Node($"Pass {(i / step) + 1}", at + i, step) { Description = Explain.PassWeights, Topic = Topics.Decorrelation };
-            pass.Add(Field(at + i, 1, isMono ? "Weight" : "Left Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[i])), Explain.Weight, Topics.Decorrelation));
+            pass.Add(Field(at + i, 1, isMono ? "Weight" : $"{first} Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[i])), Explain.Weight, Topics.Decorrelation));
             if (!isMono)
             {
-                pass.Add(Field(at + i + 1, 1, "Right Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[i + 1])), Explain.Weight, Topics.Decorrelation));
+                pass.Add(Field(at + i + 1, 1, $"{second} Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[i + 1])), Explain.Weight, Topics.Decorrelation));
             }
 
             data.Add(pass);
@@ -140,12 +149,14 @@ internal static partial class Nodes
         }
     }
 
-    private static void Entropy(ReadOnlySpan<byte> kept, bool isMono, long at, Node data)
+    private static void Entropy(ReadOnlySpan<byte> kept, BlockHeader h, long at, Node data)
     {
+        bool isMono = h.IsMonoData;
+        (string first, string second) = PairNames(h);
         int channels = isMono ? 1 : 2;
         for (int c = 0; c < channels && kept.Length >= (c + 1) * 6; c++)
         {
-            var channel = new Node(isMono ? "Medians" : c == 0 ? "Left Medians" : "Right Medians", at + (c * 6), 6) { Description = Explain.Medians, Topic = Topics.Decorrelation };
+            var channel = new Node(isMono ? "Medians" : $"{(c == 0 ? first : second)} Medians", at + (c * 6), 6) { Description = Explain.Medians, Topic = Topics.Decorrelation };
             for (int m = 0; m < 3; m++)
             {
                 channel.Add(Field(at + (c * 6) + (m * 2), 2, $"Median {m + 1}", NodeValue.Integer(ReadUInt16(kept, (c * 6) + (m * 2))), Explain.Median, Topics.Decorrelation));
@@ -158,37 +169,41 @@ internal static partial class Nodes
     private static void Profile(ReadOnlySpan<byte> kept, BlockHeader h, long at, Node data)
     {
         int channels = h.IsMonoData ? 1 : 2;
+        (string first, string second) = PairNames(h);
         int position = 0;
         if ((h.Flags & BlockHeader.HybridBitrateFlag) != 0)
         {
             for (int c = 0; c < channels && position + 2 <= kept.Length; c++, position += 2)
             {
-                data.Add(Field(at + position, 2, channels == 1 ? "Slow Level" : c == 0 ? "Left Slow Level" : "Right Slow Level", NodeValue.Integer(ReadUInt16(kept, position)), Explain.SlowLevel, Topics.Hybrid));
+                data.Add(Field(at + position, 2, channels == 1 ? "Slow Level" : $"{(c == 0 ? first : second)} Slow Level", NodeValue.Integer(ReadUInt16(kept, position)), Explain.SlowLevel, Topics.Hybrid));
             }
         }
 
         for (int c = 0; c < channels && position + 2 <= kept.Length; c++, position += 2)
         {
-            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Accumulator" : c == 0 ? "Left Bitrate Accumulator" : "Right Bitrate Accumulator", NodeValue.Integer(ReadUInt16(kept, position)), Explain.BitrateAccumulator, Topics.Hybrid));
+            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Accumulator" : $"{(c == 0 ? first : second)} Bitrate Accumulator", NodeValue.Integer(ReadUInt16(kept, position)), Explain.BitrateAccumulator, Topics.Hybrid));
         }
 
         for (int c = 0; c < channels && position + 2 <= kept.Length; c++, position += 2)
         {
-            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Delta" : c == 0 ? "Left Bitrate Delta" : "Right Bitrate Delta", NodeValue.Integer((short)ReadUInt16(kept, position)), Explain.BitrateDelta, Topics.Hybrid));
+            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Delta" : $"{(c == 0 ? first : second)} Bitrate Delta", NodeValue.Integer((short)ReadUInt16(kept, position)), Explain.BitrateDelta, Topics.Hybrid));
         }
 
         if (Decode.HybridTarget(h, kept) is { } target)
         {
-            data.Add(Field(at, kept.Length, "Target Bitrate", NodeValue.Decimal(target, 2, "bits/sample"), Explain.TargetBitrate, Topics.Hybrid));
+            data.Add(Field(at, kept.Length, "Target Bitrate", Summary.TargetValue(target.Bits, 2, "bits/sample", target.IsAtMost), target.IsAtMost ? Explain.TargetBitrateAtMost : Explain.TargetBitrate, Topics.Hybrid));
         }
     }
 
-    private static void Shaping(ReadOnlySpan<byte> kept, bool isMono, long at, Node data)
+    private static void Shaping(ReadOnlySpan<byte> kept, BlockHeader h, long at, Node data)
     {
+        bool isMono = h.IsMonoData;
         if (kept.Length == 2)
         {
             data.Add(Field(at, 1, isMono ? "Weight" : "Left Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[0])), Explain.ShapingWeight, Topics.Hybrid));
-            data.Add(Field(at + 1, 1, "Right Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[1])), Explain.ShapingWeight, Topics.Hybrid));
+            data.Add(isMono
+                ? Field(at + 1, 1, "Unused Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[1])), Explain.ShapingWeightUnused, Topics.Hybrid)
+                : Field(at + 1, 1, "Right Weight", NodeValue.Integer(Decode.Weight((sbyte)kept[1])), Explain.ShapingWeight, Topics.Hybrid));
             return;
         }
 

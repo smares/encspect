@@ -37,7 +37,7 @@ internal static class Explain
     public const string BlockHeader = "The 32-byte header every block starts with, in the main file and in the correction file (format document, section 2.0).";
     public const string Signature = "The characters \"wvpk\" (format document, section 2.0, ckID).";
     public const string BlockSize = "The size of the whole block in bytes. The field stores it less 8, the size of the signature and itself; libwavpack takes an even size from 24 up to under 1 MiB (format document, section 2.0, ckSize; read_next_header).";
-    public const string StreamVersion = "The stream version: 0x402 to 0x410 are valid for decoding; WavPack 4.40 to 5.x write 0x410, or 0x407 for files readable by decoders before 4.3 (format document, section 2.0; wavpack.h MIN_STREAM_VERS and MAX_STREAM_VERS).";
+    public const string StreamVersion = "The stream version: libwavpack 5.6.0 decodes 0x402 to 0x410. It writes 0x407, which its source calls compatible with all decoders back to 4.0, when asked for a compatible stream, and otherwise 0x410, which adds the mono optimization: a stereo block whose channels are identical is coded as mono (format document, section 2.0; wavpack.h MIN_STREAM_VERS and MAX_STREAM_VERS; wavpack_local.h CUR_STREAM_VERS; pack_utils.c; pack.c).";
     public const string TotalSamples = "The number of samples (frames of all channels) in the whole file, 40 bits in two fields; valid only in the first block, whose index is 0 (format document, section 2.0, total_samples).";
     public const string TotalSamplesUnknown = "The low 32 bits are all ones, which means the length is unknown, as when an encoder cannot seek back to fill it in; libwavpack then finds the length from the last block (format document, section 2.0).";
     public const string BlockIndex = "The index of the block's first sample counted from the start of the file, 40 bits in two fields; 0 in the first block (format document, section 2.0, block_index).";
@@ -79,13 +79,13 @@ internal static class Explain
     public const string SubBlockPad = "The byte that pads data of an odd length to an even one.";
 
     private const string Dummy = "Bytes that pad a block; a decoder ignores them (ID_DUMMY, format document, section 3.0).";
-    private const string EncoderInfo = "ID 0x01 is named ID_ENCODER_INFO in wavpack.h, but no encoder writes it and libwavpack 5.6.0 refuses a block that holds it.";
+    private const string EncoderInfo = "ID 0x01 is named ID_ENCODER_INFO in wavpack.h, but libwavpack 5.6.0 neither writes nor reads it, and refuses a block that holds it as one with an unknown sub-block that is not optional (open_utils.c process_metadata).";
     private const string DecorrTerms = "The decorrelation passes the block uses, one byte each: the term in the low five bits (less 5) and the delta in the high three. The passes are the encoder's order, and a decoder runs them in reverse (ID_DECORR_TERMS; decorr_utils.c read_decorr_terms).";
-    private const string DecorrWeights = "The initial weight of each pass for each channel, rounded to a signed byte; passes after the last non-zero weight are left out (ID_DECORR_WEIGHTS; pack.c write_decorr_weights).";
+    private const string DecorrWeights = "The initial weight of each pass for each channel, rounded to a signed byte; passes after the last non-zero weight are left out (ID_DECORR_WEIGHTS; pack.c write_decorr_weights). A stereo block stores the first channel's weight and then the second's: left and right, or side and mid with joint stereo.";
     private const string DecorrSamples = "The history samples the first passes start from, as signed 16-bit logarithms; the encoder sends them for the first pass only (ID_DECORR_SAMPLES; pack.c write_decorr_samples).";
-    private const string EntropyVars = "The medians the entropy coder starts from, three for each channel, as 16-bit logarithms (ID_ENTROPY_VARS; write_words.c write_entropy_vars).";
-    private const string HybridProfile = "The hybrid mode's starting state: the slow level of each channel, the bitrate accumulator that sets the target bitrate and, if it changes, its delta (ID_HYBRID_PROFILE; write_words.c write_hybrid_profile).";
-    private const string ShapingWeights = "What a decoder needs to rebuild the lossless audio of a hybrid file from its correction file: the noise shaping weights, or the error and accumulator of each channel (ID_SHAPING_WEIGHTS; decorr_utils.c read_shaping_info).";
+    private const string EntropyVars = "The medians the entropy coder starts from, three for each channel, as 16-bit logarithms (ID_ENTROPY_VARS; write_words.c write_entropy_vars). A stereo block stores the first channel's and then the second's: left and right, or side and mid with joint stereo (pack.c).";
+    private const string HybridProfile = "The hybrid mode's starting state: the slow level of each channel, the bitrate accumulator that sets the target bitrate and, if it changes, its delta (ID_HYBRID_PROFILE; write_words.c write_hybrid_profile). A stereo block stores the first channel's values before the second's: left and right, or side and mid with joint stereo.";
+    private const string ShapingWeights = "What a decoder needs to rebuild the lossless audio of a hybrid file from its correction file: the noise shaping weights, or the error and accumulator of each channel (ID_SHAPING_WEIGHTS; decorr_utils.c read_shaping_info). A stereo block stores left and then right, also with joint stereo, since the noise is shaped before the channels are converted to side and mid (pack.c).";
     private const string FloatInfo = "How the 32-bit floating point samples are coded: which parts of them a decoder must restore, and the exponents (ID_FLOAT_INFO; open_utils.c read_float_info).";
     private const string Int32Info = "How integers of more than 24 bits, or integers that need a shift after decoding, are coded: how many bits are sent, and how many are zeros, ones or copies (ID_INT32_INFO; open_utils.c read_int32_info).";
     private const string WvBitstream = "The compressed audio of the main file: the residuals of the decorrelation passes, entropy coded (ID_WV_BITSTREAM; format document, section 3.0).";
@@ -144,7 +144,7 @@ internal static class Explain
     public const string TermPositive = "The pass predicts each sample from the sample this many places before it in the same channel (terms 1 to 8, decorr_utils.c).";
     public const string TermSeventeen = "Term 17: the pass predicts a sample as twice the one before it less the one before that (a linear extrapolation, unpack.c).";
     public const string TermEighteen = "Term 18: the pass predicts a sample as three times the one before it less the one before that, halved (unpack.c).";
-    public const string TermNegative = "A negative term predicts a channel from the other channel (-1 and -2) or from both of them (-3), as stereo data allows (decorr_utils.c read_decorr_terms).";
+    public const string TermNegative = "A negative term predicts each channel from the other one, as stereo data allows: -1 and -2 use the other channel's previous sample for one channel and its current sample for the other, -3 the other channel's previous sample for both (unpack.c; decorr_utils.c read_decorr_terms).";
     public const string TermInvalid = "A term libwavpack refuses: it must be 1 to 8, 17 or 18, or -1 to -3 in stereo (decorr_utils.c read_decorr_terms).";
 
     public static string TermOf(int term) => term switch
@@ -163,8 +163,10 @@ internal static class Explain
     public const string SlowLevel = "The slow-moving level of the residuals, a logarithm, from which hybrid mode sets how coarse its quantization is (entropy_utils.c read_hybrid_profile).";
     public const string BitrateAccumulator = "The accumulator that holds the target bitrate: its high 16 bits are stored. The target is the stored value plus 568, in 1/256 bits per sample, for a mono block or a stereo block with balanced noise (write_words.c word_set_bitrate).";
     public const string BitrateDelta = "How much the accumulator changes with each sample, a signed logarithm; the encoder writes none (write_words.c).";
+    public const string TargetBitrateAtMost = "The bitrate the hybrid encoder aimed at, as a limit: it stores a bitrate accumulator of 0 for any target below 568/256 bits per sample (about 2.22), so a smaller target cannot be told from that one (write_words.c word_set_bitrate).";
     public const string TargetBitrate = "The bitrate the hybrid encoder aimed at, in bits per sample and channel, worked out from the bitrate accumulator as write_words.c sets it from the encoder's setting.";
     public const string ShapingWeight = "A noise shaping weight, restored from the byte as libwavpack restores decorrelation weights.";
+    public const string ShapingWeightUnused = "The second weight of a two-byte sub-block, which libwavpack reads for a second channel; a block of one channel has none (decorr_utils.c read_shaping_info).";
     public const string ShapingError = "The error of the hybrid quantization at the start of the block, as a signed logarithm (decorr_utils.c read_shaping_info).";
     public const string ShapingAccumulator = "The accumulator of the noise shaping weight at the start of the block, as a signed logarithm (decorr_utils.c read_shaping_info).";
     public const string ShapingDelta = "How the noise shaping weight changes with each sample, as a signed logarithm (decorr_utils.c read_shaping_info).";
@@ -273,7 +275,7 @@ internal static class Explain
     public const string StatBitsDsd = "DSD samples are 1 bit each.";
     public const string StatIsLossless = "Whether decoding gives back the source exactly: the file is not hybrid and holds every bit its coding needs.";
     public const string StatIsHybrid = "Whether the audio is coded in hybrid mode, in which the main file is lossy.";
-    public const string StatHasCorrectionFile = "Whether a correction file goes with the stream: this file is one, or its config block says the encoder wrote one. The analyzer does not look for the file.";
+    public const string StatIsCorrectionFileCreated = "Whether a correction file was created with the stream: this file is that correction file, or the config block says the encoder wrote one next to it. The analyzer does not look for the file.";
     public const string StatIsCorrectionFile = "Whether this file is a correction file: its audio blocks hold correction data and no audio bitstream.";
     public const string StatIsFloat = "Whether the samples are 32-bit floating point numbers.";
     public const string StatIsDsd = "Whether the audio is DSD.";
@@ -288,7 +290,7 @@ internal static class Explain
     public const string StatMd5 = "The MD5 digest of the source audio that the first MD5 sub-block stores. The analyzer does not decode the audio, so it does not check it.";
     public const string StatSourceFormat = "The format of the file the audio was encoded from, from the new config block (an empty one stands for WAVE).";
     public const string StatSourceExtension = "The extension of the file to decode to, from the extension sub-block.";
-    public const string AverageBitrate = "The bits of the audio blocks over the time their samples last.";
+    public const string AverageBitrate = "The bits of the audio blocks, less the wrapper sub-blocks (the source file's header and trailer) they hold, over the time their samples last.";
     public const string MinimumBitrate = "The bitrate of the set with the lowest bitrate.";
     public const string MaximumBitrate = "The bitrate of the set with the highest bitrate.";
     public const string Smallest = "The smallest set of blocks.";
@@ -300,6 +302,7 @@ internal static class Explain
     public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the sets that start in that second over the time their samples last.";
 
     public const string Encoder = "The encoder that wrote the stream, as far as the blocks tell it, with the evidence and the confidence in it.";
-    public const string Confidence = "How sure the analyzer is: medium, since the blocks name only WavPack's major version.";
+    public const string ConfidenceMedium = "How sure the analyzer is: medium, since a new config block and block checksums point to libwavpack 5.0 or later but name no release.";
+    public const string ConfidenceLow = "How sure the analyzer is: low, since a WavPack 4 stream names no encoder, and encoders other than libwavpack write such streams.";
     public const string Evidence = "Something in the file that points to the encoder.";
 }

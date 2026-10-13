@@ -104,7 +104,7 @@ int main(int argc, char **argv)
             WavpackLittleEndianToNative(block, WavpackHeaderFormat);
             verified = WavpackVerifySingleBlock(block, 1);
         }
-        printf("block %ld %u %x %lld %u %x %08x %d %d\n", start, header.ckSize + 8, header.version, (long long) GET_BLOCK_INDEX(header),
+        printf("block %ld %u %x %lld %u %08x %08x %d %d\n", start, header.ckSize + 8, header.version, (long long) GET_BLOCK_INDEX(header),
                header.block_samples, header.flags, header.crc, verified, got == wanted);
         free(block);
         if (got != wanted) break;

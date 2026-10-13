@@ -172,6 +172,7 @@ public sealed class ApeTagParser : ITagParser
     {
         private readonly List<(Node? Node, string Code, string Message)> _problems = [];
         private readonly List<Finding> _findings = [];
+        private readonly List<EncoderClaim> _claims = [];
         private Confidence _confidence = Confidence.High;
 
         public List<Evidence> Evidence { get; } = [];
@@ -258,7 +259,7 @@ public sealed class ApeTagParser : ITagParser
                 _findings.Add(new Finding(Severity.Warning, code, message, node ?? tag));
             }
 
-            return TagProbe.Accept(tag, anchorOffset, _confidence, Evidence, _findings);
+            return TagProbe.Accept(tag, anchorOffset, _confidence, Evidence, _findings, null, _claims);
         }
 
         // Returns why the items do not end exactly at end, or null; parsedEnd is where the last
@@ -315,6 +316,13 @@ public sealed class ApeTagParser : ITagParser
                 item.Add("Key", pos + 8, keyLength, key, Explain.Key);
 
                 item.Value = IsV1 ? AddV1Value(item, valueStart, valueSize) : AddValue(item, key, valueStart, valueSize, type);
+
+                // Keys are compared without regard to case, so the item of a writer that spells it
+                // "encoder" (FFmpeg's) names the encoder as "Encoder" does.
+                if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && item.Value?.AsText() is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
+                {
+                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item"));
+                }
 
                 if (IsV1 && flags != 0)
                 {

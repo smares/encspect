@@ -104,7 +104,7 @@ internal sealed class State(Source source, CancellationToken cancellation)
 
     public Located<string>? Extension { get; set; }
 
-    public Located<double>? HybridTarget { get; set; }
+    public Located<HybridTargetValue>? HybridTarget { get; set; }
 
     // The block that says how many samples the file holds (index 0 and a count other than unknown).
     public long? DeclaredTotal { get; set; }
@@ -137,6 +137,8 @@ internal sealed class State(Source source, CancellationToken cancellation)
     public int SetFirstEntry { get; set; }
 
     public bool SetSawFinal { get; set; }
+
+    public bool SetCapped { get; set; }
 
     public uint SetFormat { get; set; }
 

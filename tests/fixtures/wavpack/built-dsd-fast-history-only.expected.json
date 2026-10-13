@@ -1,0 +1,298 @@
+{
+ "length": 45412,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 154,
+   "index": 0,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "3d7ba7a9",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     35,
+     92
+    ],
+    [
+     132,
+     101,
+     4
+    ],
+    [
+     138,
+     42,
+     2
+    ],
+    [
+     142,
+     78,
+     4
+    ],
+    [
+     148,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 154,
+   "length": 6558,
+   "index": 8192,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "55866539",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     186,
+     42,
+     2
+    ],
+    [
+     190,
+     142,
+     6512
+    ],
+    [
+     6706,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 6712,
+   "length": 6410,
+   "index": 16384,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "04da595b",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6744,
+     42,
+     2
+    ],
+    [
+     6748,
+     206,
+     6364
+    ],
+    [
+     13116,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13122,
+   "length": 6482,
+   "index": 24576,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "fadc0f63",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13154,
+     42,
+     2
+    ],
+    [
+     13158,
+     206,
+     6436
+    ],
+    [
+     19598,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 19604,
+   "length": 6452,
+   "index": 32768,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "84ad07c3",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     19636,
+     42,
+     2
+    ],
+    [
+     19640,
+     142,
+     6406
+    ],
+    [
+     26050,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 26056,
+   "length": 6488,
+   "index": 40960,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "479dade0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     26088,
+     42,
+     2
+    ],
+    [
+     26092,
+     142,
+     6442
+    ],
+    [
+     32538,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 32544,
+   "length": 6734,
+   "index": 49152,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "6f961c23",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32576,
+     42,
+     2
+    ],
+    [
+     32580,
+     142,
+     6688
+    ],
+    [
+     39272,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 39278,
+   "length": 6134,
+   "index": 57344,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "eba031c0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     39310,
+     42,
+     2
+    ],
+    [
+     39314,
+     142,
+     6088
+    ],
+    [
+     45406,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 2822400,
+   "channels": 2,
+   "samples": 524288,
+   "duration": 0.18575963718820862,
+   "bits_per_sample": 1,
+   "average_bitrate": 1951.6833984375,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 8,
+   "declared": 65536
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 45412
+  }
+ ],
+ "description": "The first DSD block in the fast mode with data that ends right after the history bits.",
+ "findings": [
+  {
+   "code": "wavpack.dsd-invalid",
+   "contains": "ends right after the history bits"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

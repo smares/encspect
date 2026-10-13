@@ -6,8 +6,10 @@ make_wavpack_fixtures.py):
 
 - wavpack_blocks (wavpack_tool.py: libwavpack 5.6.0 built from the pinned source): every block
   read_next_header finds, with its offset, size, version, first sample, samples, flags and CRC and
-  whether WavpackVerifySingleBlock accepts it, against the manifest; and the figures the library
-  derives from the file against the analyzer's golden report: the version, channels, channel mask,
+  whether WavpackVerifySingleBlock accepts it, against the manifest, for every fixture, damaged ones
+  too; only the four that READER_DEPARTURES lists differ on purpose, each with its evidence, and the
+  run fails if one of them agrees after all. The figures the library derives from a file that
+  opens, against the analyzer's golden report: the version, channels, channel mask,
   sample rate, bits, samples, mode flags (hybrid, lossless, float, fast, high, very high, extra level),
   the MD5 digest, the source format and extension, and the wrapper's size.
 - wvunpack -ss (wavpack 5.6.0 of Ubuntu 24.04), on the main file alone: channels, source, duration,
@@ -47,6 +49,19 @@ DIRECTORY = ROOT / "tests" / "fixtures" / "wavpack"
 SKIPS = []
 INITIAL, FINAL, MONO = 0x800, 0x1000, 4
 
+# Fixtures whose blocks the analyzer takes differently from libwavpack's reader on purpose, with the evidence
+# (Reader.Extent, BlockHeader.IsPlausible): libwavpack takes the size a header states, and a header of a
+# version it does not decode is no header to it. The run fails if libwavpack lists the same blocks as the manifest.
+READER_DEPARTURES = {
+    "built-block-size-too-large": "the first block states 100 bytes more than it has; libwavpack's reader takes the stated size (13598 bytes), the analyzer ends the "
+                                  "block where the next block's header begins (13498, wavpack.block-size-mismatch)",
+    "built-block-trailing-byte": "the first block has a byte after its last sub-block and states one byte more than the 13499 it has; libwavpack takes the stated size "
+                                 "(13500 bytes), the analyzer ends the block where the next header begins (13499, wavpack.block-size-mismatch)",
+    "built-truncated-last-block": "the last block is cut 1000 bytes before its end; libwavpack lists it with the size it states (23058 bytes) though it cannot read them, "
+                                  "the analyzer with the bytes that are there (22058, wavpack.block-truncated)",
+    "built-version-unsupported": "the blocks have stream version 0x411; read_next_header refuses a header of a version above 0x410 (MAX_STREAM_VERS), so libwavpack finds "
+                                 "no block, while the analyzer relaxes the minor version and reports it (wavpack.version-unsupported)",
+}
 # Fixtures libwavpack's decoder must refuse, with the evidence.
 REJECTED = {
     "built-bad-checksum": "a block whose checksum fails is counted as a CRC error",
@@ -58,12 +73,22 @@ REJECTED = {
     "built-audio-without-bitstream": "a block without a bitstream cannot be unpacked",
     "built-unknown-subblocks": "a sub-block that is not optional and not known is refused",
 }
+# Fixtures libwavpack opens but whose figures it gives differently from the analyzer's on purpose, with the evidence.
+FIGURES_DIFFER = {
+    "built-dsd-rate-overflow": "WavpackGetNativeSampleRate multiplies the sample rate and the DSD multiplier in 32 bits (common_utils.c), so 2,147,483,647 Hz times 2^31 wraps; "
+                               "the analyzer holds the bit rate to 2,147,483,647 Hz and reports wavpack.sample-rate-implausible",
+}
 # What ffprobe cannot read, and why (FFmpeg 6.1.1, libavformat/wvdec.c, pinned by ffmpeg_sources.py).
 FFPROBE_REFUSES = {
     "external-lossless-3ch-unassigned": "wv_read_block_header refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
     "external-from-caf": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
     "built-garbage-prefix": "wv_probe looks for the header at the first byte of the file",
     "built-sample-rate-missing": "wv_read_block_header cannot take a rate from the header's index 15 without a sample rate sub-block: \"Cannot determine custom sampling rate\"",
+}
+# What ffprobe reads with a sample rate of 0: wvdec.c leaves the custom rate unset when its sub-block gives 0 ("Custom sample rate missing"),
+# where libwavpack falls back to 44100 (open_utils.c 229-234).
+FFPROBE_NO_RATE = {
+    "built-sample-rate-zero-custom": "the sample rate sub-block of 0 Hz leaves the index 15 with no rate, so ffprobe's stream has a rate of 0",
 }
 # What ffprobe reads differently: wvdec.c builds the channel layout from the channel mask (av_channel_layout_from_mask),
 # so channels without a speaker in it are not counted, and libavcodec/wavpack.c refuses to decode a mask that names fewer
@@ -132,22 +157,33 @@ def statistic(report, name):
 
 
 def check_libwavpack(name, manifest, path, report, tool, problems):
+    """The blocks libwavpack's reader finds against the manifest, for every fixture, and the figures of those it opens."""
     facts, blocks = libwavpack(tool, path)
     expected = [[str(b["offset"]), str(b["length"]), b["version"], str(b["index"]), str(b["samples"]), b["flags"], b["crc"], "1" if b["verifies"] else "0"]
                 for b in manifest["blocks"]]
     found = [[b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]] for b in blocks]
-    if found != expected:
-        first = next((i for i, (a, b) in enumerate(zip(found, expected)) if a != b), min(len(found), len(expected)))
+    first = next((i for i, (a, b) in enumerate(zip(found, expected)) if a != b), min(len(found), len(expected)))
+    if name in READER_DEPARTURES:
+        if found == expected:
+            problems.append("libwavpack lists the same blocks as the manifest, which READER_DEPARTURES says it does not; remove the entry")
+        else:
+            skip(name, "libwavpack's block list", READER_DEPARTURES[name])
+    elif found != expected:
         problems.append(f"libwavpack reads {len(found)} blocks and the manifest has {len(expected)}; they differ at {first}: {found[first:first + 1]} and {expected[first:first + 1]}")
     if not manifest["stream_infos"] or not report["streams"]:
+        skip(name, "libwavpack's figures", "the analyzer finds no audio stream to compare them with")
         return facts
     info = manifest["stream_infos"][0]
     stream = report["streams"][0]
     is_dsd = statistic(report, "IsDsd")
     if "open_error" in facts:
         if name in REJECTED or not manifest["crosscheck"]["valid"] or info["correction"]:
+            skip(name, "libwavpack's figures", f"libwavpack refuses to open the file ({facts['open_error'].removeprefix('open error: ')}), so it gives none")
             return facts
         problems.append(facts["open_error"])
+        return facts
+    if not manifest["crosscheck"]["valid"]:
+        skip(name, "libwavpack's figures", FIGURES_DIFFER.get(name, manifest.get("description", "the fixture is damaged on purpose") + ": the figures libwavpack derives from it are its own"))
         return facts
     mask = int(facts["channel_mask"], 16)
     layout = [n for bit, n in enumerate(SPEAKER_NAMES) if mask >> bit & 1]
@@ -157,7 +193,7 @@ def check_libwavpack(name, manifest, path, report, tool, problems):
              ("layout", layout, stream["channelLayout"]),
              ("hybrid", facts["hybrid"] == "1", statistic(report, "IsHybrid")), ("lossless", facts["lossless"] == "1", statistic(report, "IsLossless")),
              ("float", facts["float"] == "1", statistic(report, "IsFloatingPoint")),
-             ("encoder version", "WavPack 5.0 or later" if facts["version"] == "5" else "WavPack 4", stream["encoder"])]
+             ("encoder version", "WavPack 5.0 or later" if facts["version"] == "5" else "WavPack 4 stream, no WavPack 5 features", stream["encoder"])]
     if manifest["crosscheck"]["valid"]:
         pairs.append(("samples", int(facts["samples"]) * (8 if is_dsd else 1), stream["samples"]))
     if statistic(report, "Compression Mode") is not None:
@@ -282,6 +318,11 @@ def ffprobe(path):
 
 def check_ffprobe(name, manifest, path, report, problems):
     code, data = ffprobe(path)
+    if name in FFPROBE_NO_RATE:
+        if code != 0 or not data.get("streams") or data["streams"][0].get("sample_rate") != "0":
+            problems.append(f"ffprobe is expected to read a sample rate of 0 ({FFPROBE_NO_RATE[name]})")
+        skip(name, "ffprobe", FFPROBE_NO_RATE[name])
+        return
     if name in FFPROBE_REFUSES:
         if code == 0 and data.get("streams"):
             problems.append(f"ffprobe reads the file, which the list says it refuses ({FFPROBE_REFUSES[name]})")
@@ -405,10 +446,9 @@ def main():
         problems = []
         is_wvc = path.suffix == ".wvc"
         with tempfile.TemporaryDirectory() as work:
-            if valid:
-                check_libwavpack(name, manifest, path, report, tool, problems)
-            else:
-                skip(name, "libwavpack's blocks and figures, ffprobe and MediaInfo", manifest.get("description", "the fixture is damaged on purpose") + ": the tools read it in ways of their own")
+            check_libwavpack(name, manifest, path, report, tool, problems)
+            if not valid:
+                skip(name, "ffprobe and MediaInfo", manifest.get("description", "the fixture is damaged on purpose") + ": the tools read it in ways of their own")
             if is_wvc:
                 skip(name, "wvunpack and ffprobe", "a correction file cannot be unpacked or demuxed alone")
             else:

@@ -10,6 +10,9 @@ internal static partial class Summary
     [GeneratedRegex(@"wavpack|libwavpack", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex WavPackWords();
 
+    [GeneratedRegex(@"lavf|lavc|ffmpeg|libavcodec", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex FfmpegWords();
+
     public static void Finish(State s, ParseContext context)
     {
         long start = s.Source.Start;
@@ -113,18 +116,26 @@ internal static partial class Summary
         }
     }
 
-    // The encoder as far as the blocks tell it: libwavpack reports encoder version 5 for a file with a
-    // new config block or a block checksum, which WavPack 5.0 added, and 4 for the others.
+    // Whether the blocks hold what libwavpack 5.0 added, a new config block or a block checksum, which
+    // makes it report encoder version 5.
+    private static bool HasVersionFiveFeatures(State s) =>
+        s.HasNewConfig || s.ChecksumValid + s.ChecksumInvalid > 0 || (s.Entries[FirstBlock(s)].Header.Flags & BlockHeader.HasChecksumFlag) != 0;
+
+    // The encoder as far as the blocks tell it. libwavpack 5.0 and later write a new config block (even
+    // an empty one, "to signal a 5.0 file", pack.c) and block checksums, which is evidence of that
+    // library with medium confidence. Without them the blocks only show a WavPack 4 stream, which
+    // libwavpack reports as encoder version 4 but which other encoders write as well: FFmpeg's (6.1.1,
+    // libavcodec/wavpackenc.c) writes stream version 0x410 and neither, so that is low confidence.
     private static Node Encoder(State s, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, string?, Node> cover)
     {
         Entry first = s.Entries[FirstBlock(s)];
-        bool isFive = s.HasNewConfig || s.ChecksumValid + s.ChecksumInvalid > 0 || (first.Header.Flags & BlockHeader.HasChecksumFlag) != 0;
-        string name = isFive ? "WavPack 5.0 or later" : "WavPack 4";
+        bool isFive = HasVersionFiveFeatures(s);
+        string name = isFive ? "WavPack 5.0 or later" : "WavPack 4 stream, no WavPack 5 features";
         string evidence = isFive
-            ? $"The blocks hold {(s.HasNewConfig ? "a new config block" : "a block checksum")}, which WavPack 5.0 added; libwavpack reports encoder version 5 for a file with one"
-            : $"The blocks have stream version 0x{first.Header.Version:X3} and neither a new config block nor a block checksum, which WavPack 5.0 added; libwavpack reports encoder version 4 for such a file";
+            ? $"The blocks hold {(s.HasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
+            : $"The blocks have stream version 0x{first.Header.Version:X3} and neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a file, and another encoder, such as FFmpeg, may have written it";
         Node encoder = cover("Encoder", name, Explain.Encoder, Topics.EncoderDetection);
-        encoder.Add(cover("Confidence", "Medium", Explain.Confidence, null));
+        encoder.Add(cover("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow, null));
         encoder.Add(cover("Evidence", evidence, Explain.Evidence, null));
         foreach (EncoderClaim claim in claims)
         {
@@ -139,6 +150,10 @@ internal static partial class Summary
             {
                 encoder.Add(cover("Evidence", line, Explain.Evidence, null));
             }
+            else if (!isFive && FfmpegWords().IsMatch(text))
+            {
+                encoder.Add(cover("Evidence", line + "; FFmpeg's WavPack encoder writes stream version 0x410 and neither a new config block nor a block checksum", Explain.Evidence, null));
+            }
             else
             {
                 s.Findings.Add(Severity.Info, "wavpack.encoder-claim-differs", claim.Source, _ =>
@@ -148,6 +163,10 @@ internal static partial class Summary
 
         return encoder;
     }
+
+    // A target the encoder floored to its lowest is only a limit, which is text rather than a number.
+    internal static NodeValue TargetValue(double value, int decimals, string unit, bool isAtMost) =>
+        isAtMost ? NodeValue.Text(NodeValue.Decimal(value, decimals, unit) + " or less") : NodeValue.Decimal(value, decimals, unit);
 
     private static int FirstBlock(State s)
     {
@@ -182,7 +201,7 @@ internal static partial class Summary
         bool isCorrection = IsCorrection(s);
         BlockHeader first = s.FirstAudioHeader;
         bool isHybrid = first.IsHybrid || s.HybridBlocks > 0;
-        bool createsCorrection = s.Config is { } config && (config.Value.Flags & Decode.ConfigCreateWvc) != 0;
+        bool isCorrectionCreated = s.Config is { } config && (config.Value.Flags & Decode.ConfigCreateWvc) != 0;
         long nativeRate = Reader.NativeRate(s);
         long samples = s.CountedSamples * s.FiguresScale;
         double duration = nativeRate > 0 ? samples / (double)nativeRate : 0;
@@ -215,7 +234,7 @@ internal static partial class Summary
         statistics.Add(Cover3("Bits Per Sample", NodeValue.Integer(bits, "bits", "bit"), isDsd ? Explain.StatBitsDsd : Explain.StatBits));
         statistics.Add(cover("IsLossless", NodeValue.Boolean(isLossless), Explain.StatIsLossless, Topics.Hybrid));
         statistics.Add(cover("IsHybrid", NodeValue.Boolean(isHybrid), Explain.StatIsHybrid, Topics.Hybrid));
-        statistics.Add(cover("HasCorrectionFile", NodeValue.Boolean(isCorrection || createsCorrection), Explain.StatHasCorrectionFile, Topics.Hybrid));
+        statistics.Add(cover("IsCorrectionFileCreated", NodeValue.Boolean(isCorrection || isCorrectionCreated), Explain.StatIsCorrectionFileCreated, Topics.Hybrid));
         statistics.Add(cover("IsCorrectionFile", NodeValue.Boolean(isCorrection), Explain.StatIsCorrectionFile, Topics.Hybrid));
         statistics.Add(cover("IsFloatingPoint", NodeValue.Boolean(first.IsFloat), Explain.StatIsFloat, Topics.FloatAndLargeIntegers));
         statistics.Add(cover("IsDsd", NodeValue.Boolean(isDsd), Explain.StatIsDsd, Topics.Dsd));
@@ -236,10 +255,10 @@ internal static partial class Summary
 
         if (s.HybridTarget is { } target)
         {
-            statistics.Add(cover("Hybrid Target Bitrate", NodeValue.Decimal(target.Value, 2, "bits/sample"), Explain.StatTargetBits, Topics.Hybrid));
+            statistics.Add(cover("Hybrid Target Bitrate", TargetValue(target.Value.Bits, 2, "bits/sample", target.Value.IsAtMost), Explain.StatTargetBits, Topics.Hybrid));
             if (!isDsd && channels > 0)
             {
-                statistics.Add(cover("Hybrid Target Rate", NodeValue.Decimal(target.Value * nativeRate * channels / 1000, 1, "kbps"), Explain.StatTargetRate, Topics.Hybrid));
+                statistics.Add(cover("Hybrid Target Rate", TargetValue(target.Value.Bits * nativeRate * channels / 1000, 1, "kbps", target.Value.IsAtMost), Explain.StatTargetRate, Topics.Hybrid));
             }
         }
 
@@ -303,7 +322,7 @@ internal static partial class Summary
             AverageBitrate = s.Figures?.AverageBitrate,
             IsVbr = s.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
             Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Confidence.Medium,
+            EncoderConfidence = HasVersionFiveFeatures(s) ? Confidence.Medium : Confidence.Low,
             Series = s.Figures?.Series(anchor, s.Cancellation) ?? [],
         };
     }

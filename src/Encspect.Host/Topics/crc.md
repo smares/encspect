@@ -9,10 +9,10 @@ references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2; ATSC A/52:2018 7
 
 **What it does not cover.** The CRC does not protect the audio data itself, such as Layer III's main data, which may lie in earlier frames. A matching CRC says the frame's control data is intact, not that every bit is.
 
-**In practice.** Most encoders write no CRC; LAME writes one with -p.
+**In practice.** Most encoders write no CRC by default; LAME writes one with -p.
 
 **In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it means knowing where each element ends, which takes decoding its spectral data; the analyzer reads every element and verifies it, and says it is not verified only where an element cannot be read.
 
 **In AC-3.** An [AC-3 frame](ac3-frames-and-bsi) has crc1 over its first 5/8 and crc2 over all of it; E-AC-3, one.
 
-**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension its own, every [Ogg page](ogg-pages) a CRC-32 over the page, Musepack SV8's stream header a CRC-32 ([SV8 packets](musepack-sv8-packets)), and each WavPack block a checksum over its bytes ([sub-blocks](wavpack-sub-blocks)).
+**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension its own, every [Ogg page](ogg-pages) a CRC-32 over the page, Musepack SV8's stream header a CRC-32 ([SV8 packets](musepack-sv8-packets)), and each WavPack block a checksum ([sub-blocks](wavpack-sub-blocks)).

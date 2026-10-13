@@ -6,13 +6,15 @@ namespace Encspect.Formats.WavPack;
 // The sub-blocks whose contents the analyzer decodes, as libwavpack 5.6.0 reads them (open_utils.c,
 // decorr_utils.c, entropy_utils.c, unpack_dsd.c). The functions return null or false where
 // libwavpack refuses the sub-block; the reports tell why.
+internal readonly record struct HybridTargetValue(double Bits, bool IsAtMost);
+
 internal static class Decode
 {
     public const int MaxTerms = 16;
     public const int MaxTerm = 8;
 
     // libwavpack's default number of streams when a channel info sub-block gives none (OLD_MAX_STREAMS).
-    private const int OldMaxStreams = 8;
+    public const int OldMaxStreams = 8;
 
     // The decorrelation passes of ID_DECORR_TERMS: a byte per pass, the term in its low five bits
     // less 5 and the delta in the high three. Valid terms are 1 to 8, 17, 18 and, for stereo, -1 to -3
@@ -75,6 +77,8 @@ internal static class Decode
         return used == length ? covered : -1;
     }
 
+    // ID_CHANNEL_INFO (read_channel_info). A count of 0 with an empty mask is accepted, and leaves the
+    // channels to the block's flags; the caller treats a value without channels as no channel info.
     public static ChannelInfoValue? ChannelInfo(ReadOnlySpan<byte> data)
     {
         if (data.Length is 0 or > 7)
@@ -109,7 +113,7 @@ internal static class Decode
             }
         }
 
-        if (channels == 0 || channels > streams * 2 || System.Numerics.BitOperations.PopCount(mask) > channels)
+        if (channels > streams * 2 || System.Numerics.BitOperations.PopCount(mask) > channels)
         {
             return null;
         }
@@ -252,7 +256,8 @@ internal static class Decode
     // stores the target less 568/256 as the bitrate accumulator, per channel; with the noise
     // balanced between channels (or mono) the first channel's holds it (write_words.c
     // word_set_bitrate). A false stereo block's accumulator holds twice the target less 512/256.
-    public static double? HybridTarget(BlockHeader header, ReadOnlySpan<byte> profile)
+    // The encoder stores 0 for any target below that, so an accumulator of 0 gives only a limit.
+    public static HybridTargetValue? HybridTarget(BlockHeader header, ReadOnlySpan<byte> profile)
     {
         if ((header.Flags & BlockHeader.HybridBitrateFlag) == 0 || !(header.IsMonoData || (header.Flags & BlockHeader.HybridBalanceFlag) != 0))
         {
@@ -268,7 +273,7 @@ internal static class Decode
 
         int accumulator = BinaryPrimitives.ReadUInt16LittleEndian(profile[offset..]);
         double bits = header.IsFalseStereo ? (accumulator + 568 + 512) / 2.0 : accumulator + 568;
-        return bits / 256;
+        return new HybridTargetValue(bits / 256, accumulator == 0);
     }
 
     public static string DsdMode(int mode) => mode switch

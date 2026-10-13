@@ -162,11 +162,17 @@ def sample_rate(entry, data):
     block = data[entry["offset"]:entry["offset"] + entry["length"]]
     for i, p, hl, size, length, clipped in entry["sub_blocks"]:
         if i & 0x3F == 0x27 and length in (3, 4) and not clipped:
-            return int.from_bytes(block[p + hl:p + hl + 3], "little") | (block[p + hl + 3] & 0x7F) << 24 if length == 4 else int.from_bytes(block[p + hl:p + hl + 3], "little")
+            rate = int.from_bytes(block[p + hl:p + hl + 3], "little") | ((block[p + hl + 3] & 0x7F) << 24 if length == 4 else 0)
+            # libwavpack falls back to the flags' index when config.sample_rate is 0 (open_utils.c 229-234).
+            if rate:
+                return rate
     return SAMPLE_RATES[index] if index < 15 else 44100
 
 
 def channel_info(entry, data):
+    """(channels, mask, streams) of the first channel info libwavpack takes with channels, or None. A count
+    of 0 with an empty mask is accepted by read_channel_info and leaves the channels to the flags
+    (open_utils.c 189-192), so it is no channel info; with a mask it is refused."""
     block = data[entry["offset"]:entry["offset"] + entry["length"]]
     for i, p, hl, size, length, clipped in entry["sub_blocks"]:
         if i & 0x3F == 0x0D and not clipped and 0 < length <= 7:
@@ -179,10 +185,17 @@ def channel_info(entry, data):
             else:
                 channels, streams = d[0], 8
                 mask = int.from_bytes(d[1:], "little")
-            if channels == 0 or channels > streams * 2 or bin(mask).count("1") > channels:
+            if channels > streams * 2 or bin(mask).count("1") > channels:
                 return None
-            return channels, mask
+            if channels:
+                return channels, mask, streams
     return None
+
+
+def wrapper_bytes(entry):
+    """The bytes of the wrapper sub-blocks (RIFF and alternate header and trailer) in the block, which the
+    average bitrate leaves out."""
+    return sum(hl + (size if not clipped else length) for i, p, hl, size, length, clipped in entry["sub_blocks"] if i & 0x3F in (0x21, 0x22, 0x23, 0x24))
 
 
 def dsd_power(entry, data):
@@ -215,8 +228,9 @@ def lossy(entries, data):
     return False
 
 
-def sets(entries):
-    """The blocks with audio grouped into sets: from an initial block (or the first) to a final one."""
+def sets(entries, max_streams=8):
+    """The blocks with audio grouped into sets: from an initial block (or the first) to a final one, or to
+    the stream limit of libwavpack (max_streams: 8, or the streams of a long channel info)."""
     result, current = [], None
     for e in entries:
         if e["kind"] != "block" or not e["header"]["samples"]:
@@ -226,7 +240,7 @@ def sets(entries):
             current = {"entries": [], "closed": False}
             result.append(current)
         current["entries"].append(e)
-        if f & FINAL:
+        if f & FINAL or len(current["entries"]) >= max_streams:
             current = None
     return result
 
@@ -241,8 +255,14 @@ def stream_info(data, entries):
     is_dsd = bool(h["flags"] & DSD)
     rate = sample_rate(first, data)
     power = dsd_power(first, data) if is_dsd else None
-    native = rate * (1 << power) * 8 if is_dsd and power is not None else rate
-    grouped = sets(entries)
+    # The rate of DSD is held to what 31 bits hold (Reader.MaxNativeRate).
+    native = min(rate * (1 << power) * 8, 2**31 - 1) if is_dsd and power is not None and power <= 31 else rate
+    max_streams = 8
+    for e in entries:
+        if e["kind"] == "block" and has(e, 0x0D) and (found := channel_info(e, data)):
+            max_streams = found[2]
+            break
+    grouped = sets(entries, max_streams)
     counted = sum(g["entries"][0]["header"]["samples"] for g in grouped)
     samples = counted * (8 if is_dsd else 1)
     channels = None
@@ -254,7 +274,7 @@ def stream_info(data, entries):
     count = info[0] if info else set_channels
     mask = info[1] if info else {1: 4, 2: 3}.get(count, 0)
     bits = 1 if is_dsd else 32 if h["flags"] & 0x80 else (h["flags"] & 3) * 8 + 8 - (h["flags"] >> 13 & 31)
-    set_bits = sum(e["length"] * 8 for g in grouped for e in g["entries"])
+    set_bits = sum((e["length"] - wrapper_bytes(e)) * 8 for g in grouped for e in g["entries"])
     seconds = samples / native if native else 0
     hybrid = bool(h["flags"] & HYBRID) or any(e["header"]["flags"] & HYBRID for e in audio)
     correction = not any(has(e, 0x0A) or has(e, 0x0E) for e in audio) and any(has(e, 0x0B) or has(e, 0x0C) for e in audio)

@@ -109,7 +109,7 @@ internal readonly struct BlockHeader
 
     public int SampleRateIndex => (int)((Flags >> SampleRateLsb) & 0xF);
 
-    // The rate the flags give, or 0 for index 15 (a rate in a Sample Rate sub-block) and the unused 15.
+    // The rate the flags give, or 0 for index 15, which stands for a rate in a Sample Rate sub-block.
     public int SampleRate => SampleRateIndex < SampleRates.Length ? SampleRates[SampleRateIndex] : 0;
 
     // True where the bytes are a header libwavpack's read_next_header takes (open_utils.c): the

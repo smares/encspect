@@ -32,7 +32,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "The blocks hold a new config block, which WavPack 5.0 added; libwavpack reports encoder version 5 for a file with one",
+                  "value": "The blocks hold a new config block, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one",
                   "offset": 0,
                   "length": 51332
                 }
@@ -119,7 +119,7 @@
                   "length": 51332
                 },
                 {
-                  "name": "HasCorrectionFile",
+                  "name": "IsCorrectionFileCreated",
                   "value": false,
                   "offset": 0,
                   "length": 51332
@@ -182,7 +182,7 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 1642.624,
+                  "value": 1640.384,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 51332
@@ -195,28 +195,28 @@
                 },
                 {
                   "name": "Smallest Block Set",
-                  "value": 51332,
+                  "value": 51262,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 51332
                 },
                 {
                   "name": "Largest Block Set",
-                  "value": 51332,
+                  "value": 51262,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 51332
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 1642.624,
+                  "value": 1640.384,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 51332
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 1642.624,
+                  "value": 1640.384,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 51332
@@ -1186,7 +1186,16 @@
                       "value": 4,
                       "unit": "bytes",
                       "offset": 126,
-                      "length": 4
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 2,
+                          "unit": "values",
+                          "offset": 126,
+                          "length": 4
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1777,7 +1786,7 @@
         "bitsPerSample": 24,
         "samples": 24000,
         "duration": 0.25,
-        "averageBitrate": 1642.624,
+        "averageBitrate": 1640.384,
         "isVbr": false,
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
@@ -1790,7 +1799,7 @@
               0
             ],
             "values": [
-              1642.624
+              1640.384
             ]
           },
           {
@@ -1801,7 +1810,7 @@
               0
             ],
             "values": [
-              1643
+              1640
             ]
           }
         ]

@@ -125,6 +125,37 @@ def id3v2():
     return b"ID3\x03\0\0" + bytes([size >> 21 & 0x7F, size >> 14 & 0x7F, size >> 7 & 0x7F, size & 0x7F]) + frame
 
 
+def ape_tag(*items):
+    """An APEv2 tag with a header and a footer, its text items (key, value) sorted ascending by size."""
+    body = b"".join(struct.pack("<II", len(value), 0) + key.encode() + b"\0" + value.encode() for key, value in sorted(items, key=lambda kv: len(kv[0]) + len(kv[1])))
+    size = len(body) + 32
+    block = lambda flags: b"APETAGEX" + struct.pack("<IIII", 2000, size, len(items), flags) + bytes(8)
+    return block(0xA0000000) + body + block(0x80000000)
+
+
+def dsd_with(block, data):
+    """The first block of a DSD file with its DSD sub-block replaced by one of this data after the rate
+    power byte (which keeps its value)."""
+    parts, ids = subs(block)
+    at = where(ids, 0x0E)
+    raw = parts[at]
+    power = raw[4 if raw[0] & 0x80 else 2]
+    parts[at] = sub(0x0E, bytes([power]) + data)
+    return join(block, parts)
+
+
+def dsd_rate_overflow(block):
+    """A DSD block of rate index 15, a sample rate sub-block of 2,147,483,647 Hz and a rate power of 31."""
+    block = patch(block, flags=flags(block) | (0xF << 23))
+    parts, ids = subs(block)
+    at = where(ids, 0x0E)
+    raw = parts[at]
+    hl = 4 if raw[0] & 0x80 else 2
+    parts[at] = raw[:hl] + bytes([31]) + raw[hl + 1:]
+    parts.insert(at, sub(0x27, b"\xff\xff\xff\x7f"))
+    return join(block, parts)
+
+
 # name: (description, builder, findings, valid). A builder takes no arguments and returns the file's bytes.
 # valid: whether wvunpack and ffprobe read the file as they would an undamaged one (None: not applicable).
 def A():
@@ -224,12 +255,34 @@ def build():
         parts, ids = subs(surround[0])
         parts[where(ids, 0x0D)] = sub(0x0D, bytes([count, mask]))
         b[f"channel-info-{label}"] = (text, aa([join(surround[0], parts), *surround[1:]]), [finding], False)
+    b["dsd-rate-overflow"] = ("A DSD file of 2,147,483,647 Hz with a rate power of 31, whose bit rate overflows 32 bits.", aa([dsd_rate_overflow(x) for x in dsd]),
+                              [("wavpack.sample-rate-implausible", "more than the 2147483647 Hz")], False)
+    samples = struct.unpack_from("<I", dsd[0], 20)[0]
+    channels = 1 if flags(dsd[0]) & (m.MONO | m.FALSE_STEREO) else 2
+    b["dsd-stored-mode"] = ("The first DSD block in the stored mode with exactly the bytes it counts.", aa([dsd_with(dsd[0], b"\0" + bytes(samples * channels)), *dsd[1:]]),
+                            [], False)
+    b["dsd-stored-size"] = ("The first DSD block in the stored mode with 37 bytes of audio, not the bytes it counts.", aa([dsd_with(dsd[0], b"\0" + bytes(37)), *dsd[1:]]),
+                            [("wavpack.dsd-invalid", "its stored mode holds 37 bytes")], False)
+    b["dsd-fast-history-only"] = ("The first DSD block in the fast mode with data that ends right after the history bits.", aa([dsd_with(dsd[0], b"\x01\x03"), *dsd[1:]]),
+                                  [("wavpack.dsd-invalid", "ends right after the history bits")], False)
     digest = bytes(range(16))
     meta = join(patch(a[0], samples=0, index=0, flags=0x34BC1E59), [sub(0x26, digest), sub(0x2F, bytes(4))])
     b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 blocks counts a sample")], None)
     rate = blocks(base("rate-12345"))
     b["sample-rate-missing"] = ("The sample rate sub-block left out of a file of 12,345 Hz.", aa([without(rate[0], 0x27)]),
                                 [("wavpack.sample-rate-missing", "44100 Hz")], True)
+    stereo_parts, stereo_ids = subs(a[0])
+    stereo_parts.insert(0, sub(0x0D, b"\0"))
+    b["channel-info-no-count"] = ("A channel info of one byte, a count of 0 and no mask, in the first block: libwavpack takes the channels from the flags.",
+                                  aa([join(a[0], stereo_parts), a[1], a[2]]), [], True)
+    zero_rate = join(a[0], [sub(0x27, bytes(3))] + subs(a[0])[0])
+    b["sample-rate-zero"] = ("A sample rate sub-block of 0 Hz in a file whose flags give 44100 Hz: libwavpack ignores it.", aa([zero_rate, a[1], a[2]]),
+                             [("wavpack.sample-rate-zero", "gives 0 Hz")], True)
+    parts, ids = subs(rate[0])
+    parts[where(ids, 0x27)] = sub(0x27, bytes(3))
+    b["sample-rate-zero-custom"] = ("The sample rate sub-block of a file of 12,345 Hz set to 0, so the flags' index 15 leaves libwavpack the 44100 Hz it takes then.",
+                                    aa([join(rate[0], parts)]),
+                                    [("wavpack.sample-rate-zero", "gives 0 Hz"), ("wavpack.sample-rate-missing", "44100 Hz")], True)
     pair = blocks(base("lossless-4ch-two-unassigned"))
     parts, ids = subs(pair[0])
     parts.insert(where(ids, 0x0D) + 1, sub(0x2B, b"\xFF\xFF"))
@@ -248,6 +301,14 @@ def build():
     last = bytes(tail[len(aa(a[:2])):])
     b["tag-inside-block"] = ("Bytes that look like an ID3v1 tag 128 bytes before the end, inside the last block's audio.", aa(a[:2]) + join(last, subs(last)[0]),
                               [("tag.near-miss", "ID3v1 signature")], False)
+    b["ape-encoder-claim"] = ("An APEv2 tag after the blocks whose \"encoder\" item names LAME, spelled in lower case.", aa(a) + ape_tag(("encoder", "LAME 3.100")),
+                              [("wavpack.encoder-claim-differs", "APE Encoder item")], True)
+    b["ape-encoder-wavpack"] = ("An APEv2 tag after the blocks whose Encoder item names WavPack.", aa(a) + ape_tag(("Encoder", "WavPack 5.6.0")), [], True)
+    small = blocks(base("lossless-16-stereo-small-blocks"))
+    b["set-without-final-limit"] = ("24 stereo blocks of which only the first is initial and none is final, each 8 of them with one first sample: libwavpack ends a set at its 8 streams.",
+                                    aa([patch(x, flags=(flags(x) & ~0x1800) | (0x800 if i == 0 else 0), index=i // 8 * 8000) for i, x in enumerate(small)]),
+                                    [("wavpack.block-set-broken", "holds 8 blocks without a final block"), ("wavpack.block-index-gap", "samples are missing"),
+                                     ("wavpack.total-samples-mismatch", "hold 3000")], False)
     b["leading-id3v2"] = ("An ID3v2 tag before the blocks.", id3v2() + aa(a), [], True)
     return b
 
@@ -256,6 +317,9 @@ def regions(data, name):
     """The top-level nodes."""
     if name in ("built-id3v1",):
         return [("WavPack", 0, len(data) - 128), ("ID3v1", len(data) - 128, 128)]
+    if name in ("built-ape-encoder-claim", "built-ape-encoder-wavpack"):
+        tag = data.rindex(b"APETAGEX", 0, len(data) - 32)
+        return [("WavPack", 0, tag), ("APE", tag, len(data) - tag)]
     if name == "built-ape-and-id3v1":
         tag = data.rindex(b"APETAGEX", 0, len(data) - 160)
         return [("WavPack", 0, tag), ("APE", tag, len(data) - 128 - tag), ("ID3v1", len(data) - 128, 128)]

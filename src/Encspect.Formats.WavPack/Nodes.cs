@@ -157,14 +157,11 @@ internal static partial class Nodes
         SubBlock sb = detail.SubBlocks[index];
         int function = sb.Function;
         string name = SubBlockIds.Name(function);
-        bool hasData = sb.DataLength > 0;
-        var node = new Node(name, sb.Offset, sb.Length, NodeValue.Integer(sb.DataLength, "bytes", "byte"), () => SubBlockChildren(s, e, detail, index))
+        return new Node(name, sb.Offset, sb.Length, NodeValue.Integer(sb.DataLength, "bytes", "byte"), () => SubBlockChildren(s, e, detail, index))
         {
             Description = Explain.SubBlock(function),
             Topic = TopicOf(function),
         };
-        _ = hasData;
-        return node;
     }
 
     private static string TopicOf(int function) => function switch
