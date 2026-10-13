@@ -226,7 +226,7 @@ jobs:
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
 
   mp4-crosscheck:
-    name: MP4 and AAC fixtures agree with ffprobe, MP4Box and faad
+    name: MP4 and AAC fixtures agree with ffprobe, MP4Box and faad, and other encoders' xHE-AAC samples with the manifest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -239,6 +239,31 @@ jobs:
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
+
+      # Fraunhofer's, the ISO conformance streams' and one more exhale file, which the exhale layout
+      # rule is checked against; fetched, checked against their SHA-256 and cached rather than committed.
+      - name: Cache the xHE-AAC samples
+        uses: actions/cache@v4
+        with:
+          path: .cache/usac
+          key: usac-samples-${{ hashFiles('tests/conformance/usac-samples.json') }}
+
+      - name: Check the xHE-AAC manifest against the samples
+        run: python3 scripts/fixtures/check_usac_samples.py .cache/usac
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      - name: Check the analyzer against the xHE-AAC manifest
+        run: python3 scripts/fixtures/check_usac_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/usac
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe and speexdec

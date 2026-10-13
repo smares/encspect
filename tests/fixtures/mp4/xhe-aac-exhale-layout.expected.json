@@ -1,0 +1,279 @@
+{
+ "description": "xHE-AAC whose UsacConfig has the layout exhale writes: an audio pre-roll element first, then a channel pair element, no fill element, and loudness info as its only configuration extension. It names exhale as the encoder with medium confidence.",
+ "length": 2074,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   24
+  ],
+  [
+   "moov",
+   24,
+   707
+  ],
+  [
+   "moov/mvhd",
+   32,
+   108
+  ],
+  [
+   "moov/trak",
+   140,
+   591
+  ],
+  [
+   "moov/trak/tkhd",
+   148,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   240,
+   491
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   248,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   280,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   325,
+   406
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   333,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   349,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   357,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   373,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   385,
+   346
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   393,
+   118
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   409,
+   102
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   445,
+   66
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   511,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   535,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   563,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   703,
+   28
+  ],
+  [
+   "mdat",
+   731,
+   1343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "xHE-AAC (USAC)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "encoder": [
+    "exhale",
+    "Medium"
+   ]
+  }
+ ],
+ "units": [
+  [
+   739,
+   21
+  ],
+  [
+   760,
+   34
+  ],
+  [
+   794,
+   47
+  ],
+  [
+   841,
+   60
+  ],
+  [
+   901,
+   23
+  ],
+  [
+   924,
+   36
+  ],
+  [
+   960,
+   49
+  ],
+  [
+   1009,
+   62
+  ],
+  [
+   1071,
+   25
+  ],
+  [
+   1096,
+   38
+  ],
+  [
+   1134,
+   51
+  ],
+  [
+   1185,
+   64
+  ],
+  [
+   1249,
+   27
+  ],
+  [
+   1276,
+   40
+  ],
+  [
+   1316,
+   53
+  ],
+  [
+   1369,
+   66
+  ],
+  [
+   1435,
+   29
+  ],
+  [
+   1464,
+   42
+  ],
+  [
+   1506,
+   55
+  ],
+  [
+   1561,
+   68
+  ],
+  [
+   1629,
+   31
+  ],
+  [
+   1660,
+   44
+  ],
+  [
+   1704,
+   57
+  ],
+  [
+   1761,
+   70
+  ],
+  [
+   1831,
+   33
+  ],
+  [
+   1864,
+   46
+  ],
+  [
+   1910,
+   59
+  ],
+  [
+   1969,
+   22
+  ],
+  [
+   1991,
+   35
+  ],
+  [
+   2026,
+   48
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig": "2 elements",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[0]/Extension Element Type": "3 (audio pre-roll)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]": "CPE",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacConfigExtension/Extension Type": "2 (loudness info)"
+ },
+ "findings": [
+  [
+   "aac.usac-frames-not-analyzed",
+   "usacIndependencyFlag"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "mp4box_samples": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
+   "faad": "faad2 2.11 does not read USAC configurations (it fails to open the file)."
+  }
+ }
+}
