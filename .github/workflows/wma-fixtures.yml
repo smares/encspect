@@ -1,0 +1,52 @@
+name: WMA fixtures from Microsoft's encoders
+
+# Encodes the project's test signals with the Windows Media Format SDK's writer (wmvcore.dll) and
+# uploads the files with their source PCM and a record of the encoder and its settings. Run by hand
+# (Actions, "WMA fixtures from Microsoft's encoders", Run workflow) or by pushing the branch
+# fixtures/wma. Nothing is released and no build is uploaded: only the fixture files, for seven
+# days. scripts/fixtures/import_windows_wma_fixtures.py takes them into tests/fixtures/asf.
+#
+# The output is not reproducible byte for byte: the writer stamps a new file ID and the time of
+# the encode into the File Properties object. The fixtures are therefore committed once and checked
+# by their content, never regenerated.
+on:
+  workflow_dispatch:
+  push:
+    branches: [fixtures/wma]
+
+permissions:
+  contents: read
+
+jobs:
+  encode:
+    name: encode on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Encode with the Windows Media Format SDK
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/make_windows_wma_fixtures.ps1 -Out wma-out
+
+      - name: Install ffmpeg to look at the files
+        shell: powershell
+        continue-on-error: true
+        run: choco install ffmpeg --no-progress -y
+
+      # The lines for the manifests: the codec's format and settings, then what ffprobe sees.
+      - name: Print the encoder output
+        shell: bash
+        continue-on-error: true
+        run: |
+          cat wma-out/environment.json
+          cat wma-out/encodes.json
+          python scripts/fixtures/windows/verify_windows_wma.py wma-out
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wma-fixtures-windows-2025
+          path: wma-out
+          retention-days: 7
+          if-no-files-found: error
