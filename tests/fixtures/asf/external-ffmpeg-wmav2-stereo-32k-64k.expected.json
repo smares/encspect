@@ -1,0 +1,43 @@
+{
+ "description": "ffmpeg's wmav2 encoder: 2 seconds of the test signal, 2 channels, 32000 Hz, 64 kbit/s.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "tones.wav",
+  "-c:a",
+  "wmav2",
+  "-b:a",
+  "64000",
+  "-fflags",
+  "+bitexact",
+  "-flags:a",
+  "+bitexact",
+  "external-ffmpeg-wmav2-stereo-32k-64k.wma"
+ ],
+ "input": {
+  "channels": 2,
+  "rate": 32000,
+  "bits": 16,
+  "seconds": 2,
+  "kind": "tones",
+  "generator": "scripts/fixtures/wma_signals.py"
+ },
+ "sha256": "9771b0849a86552a6e65a3ec7cc6d9fbb9eed9f7fb1f5be60499bc9f42076815",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmav2",
+  "channels": 2,
+  "rate": 32000,
+  "block_align": null,
+  "bit_rate": 64000,
+  "extradata_size": 10,
+  "packets": 32,
+  "packet_sizes": [
+   512
+  ],
+  "decoded_samples": 63488,
+  "file_bytes": 19644
+ }
+}

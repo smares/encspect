@@ -1,0 +1,138 @@
+{
+ "description": "A header without a Stream Properties Object.",
+ "format": "ASF",
+ "length": 520,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   214
+  ],
+  [
+   "Data Object",
+   214,
+   306
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Padding Object",
+   134,
+   34
+  ],
+  [
+   "Header Extension Object",
+   168,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [],
+ "packets": [
+  [
+   264,
+   256,
+   3
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   60,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   60,
+   0,
+   [
+    [
+     295,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   60,
+   25,
+   [
+    [
+     372,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   60,
+   50,
+   [
+    [
+     449,
+     60
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 520,
+  "packets": 1,
+  "play_duration": 0,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.no-streams",
+   "contains": "no Stream Properties"
+  },
+  {
+   "code": "asf.payload-unknown-stream",
+   "contains": "stream 1"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "there is no stream."
+ }
+}

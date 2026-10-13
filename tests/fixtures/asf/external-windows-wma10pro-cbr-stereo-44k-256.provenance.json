@@ -1,0 +1,58 @@
+{
+ "description": "Encoded by Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma) as Windows Media Audio (WMA9, Media Foundation), CBR, \"Media Foundation WMA9 at 384000 bps\". The file is stereo at 256 kbit/s, as its header states; the request was 2 channels at 384 kbit/s.",
+ "encoder": {
+  "tool": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+  "path": "media-foundation",
+  "codec": "Windows Media Audio (WMA9, Media Foundation)",
+  "format_index": null,
+  "achieved_bitrate": 291283,
+  "format_description": "Media Foundation WMA9 at 384000 bps",
+  "format_tag": "0x0162",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedBitrate": 384000
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 16,
+  "format_bitrate": 256032,
+  "config_bitrate": null,
+  "buffer_window_ms": null,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 3,
+  "frames": 132300,
+  "type": "plain PCM WAV",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma10pro-cbr-stereo-44k-384",
+ "actual": {
+  "format_tag": 354,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 32004,
+  "bits": 16
+ },
+ "bytes": 109231,
+ "sha256": "1e38a8ac886549059467d8ab13f63179c8d40ef1f0cace1f12840d949fba349e",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

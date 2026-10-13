@@ -1,0 +1,58 @@
+{
+ "description": "Encoded by Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma) as Windows Media Audio (WMA8, Media Foundation), CBR, \"Media Foundation WMA8 at 64000 bps\". The file is stereo at 64 kbit/s, as its header states; the request was 2 channels at 64 kbit/s.",
+ "encoder": {
+  "tool": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+  "path": "media-foundation",
+  "codec": "Windows Media Audio (WMA8, Media Foundation)",
+  "format_index": null,
+  "achieved_bitrate": 76557,
+  "format_description": "Media Foundation WMA8 at 64000 bps",
+  "format_tag": "0x0161",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedBitrate": 64000
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 16,
+  "format_bitrate": 64024,
+  "config_bitrate": null,
+  "buffer_window_ms": null,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 3,
+  "frames": 132300,
+  "type": "plain PCM WAV",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma92-cbr-stereo-44k-64",
+ "actual": {
+  "format_tag": 353,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 8003,
+  "bits": 16
+ },
+ "bytes": 28709,
+ "sha256": "9a3c373c774398f6cf6ab3b2c0fd28c246f539e78f36c011662c746debe11405",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

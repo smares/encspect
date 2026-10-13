@@ -1,0 +1,149 @@
+{
+ "description": "Windows Media Audio whose error correction spreads the audio over two packets, which scrambles its media objects; the analyzer does not descramble them.",
+ "format": "ASF",
+ "length": 856,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   294
+  ],
+  [
+   "Data Object",
+   294,
+   562
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   114
+  ],
+  [
+   "Header Extension Object",
+   248,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 743,
+   "bits": 16,
+   "codec_data": "00000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   344,
+   512,
+   3
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     375,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     492,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     609,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 856,
+  "packets": 1,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.audio-spread",
+   "contains": "2 packets"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "ffmpeg descrambles the media objects and decodes them as Windows Media Audio, which these are not."
+ }
+}

@@ -25,6 +25,23 @@ public class ComplexityTests
         Assert.Equal(60_000, report.Root.Children.Count(c => c.Name == "ID3v2"));
     }
 
+    // Packets of 40 bytes that each start a media object of 16 MiB and never finish it: the buffer of an object
+    // grows with its fragments, where it was allocated at the size it stated (299 s for 200,000 of them).
+    [Fact]
+    public void ManyTinyPacketsEachStartingALargeMediaObject()
+    {
+        const int packets = 200_000;
+        (byte[] properties, _) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
+        var list = new List<byte[]>(packets);
+        for (int i = 0; i < packets; i++)
+        {
+            list.Add(AsfBuilder.Packet(AsfBuilder.SmallPacket, 1, i & 0xFF, 0, 1 << 24, (uint)i));
+        }
+
+        Report report = Timed(AsfBuilder.Assemble(properties, AsfBuilder.SmallPacket, list));
+        Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
+    }
+
     // Every "ID3" in the window a SEEK frame points to is a candidate; these declare a tag larger
     // than the file whose body starts with padding.
     [Fact]

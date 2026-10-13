@@ -1,7 +1,7 @@
 ---
 id: mid-side-stereo
 title: Mid/side stereo
-related: joint-stereo, intensity-stereo, channel-modes, square-polar-coupling, opus-modes, musepack-subband-coding
+related: joint-stereo, intensity-stereo, channel-modes, square-polar-coupling, opus-modes, musepack-subband-coding, wma-frames-and-blocks
 references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3; ISO/IEC 14496-3 4.6.8.1; RFC 6716, sections 4.2 and 4.3
 ---
 
@@ -13,4 +13,4 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **What you see.** Mode Extension shows "Mid/side stereo" or "Mid/side and intensity stereo" in frames that use it. A file of joint stereo frames that never use mid/side stereo codes left and right in every frame.
 
-**In AAC.** A channel pair with a common window chooses per scalefactor band: ms_mask_present 1 sends an ms_used flag for each band, 2 codes every band as mid/side. Each channel pair shows its mask and Mid/Side Bands, and the statistics the share of mid/side bands. [Musepack](musepack-subband-coding) flags each coded subband, the CELT layer of Opus each frame ([Opus modes](opus-modes)). Vorbis uses [square polar coupling](square-polar-coupling).
+**In AAC.** A channel pair with a common window chooses per scalefactor band: ms_mask_present 1 sends an ms_used flag for each band, 2 codes every band as mid/side. Each channel pair shows its mask and Mid/Side Bands. [Musepack](musepack-subband-coding) flags each coded subband, the CELT layer of Opus each frame ([Opus modes](opus-modes)). Vorbis uses [square polar coupling](square-polar-coupling), Windows Media Audio a flag per [block](wma-frames-and-blocks).

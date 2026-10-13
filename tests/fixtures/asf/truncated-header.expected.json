@@ -1,0 +1,67 @@
+{
+ "description": "A file cut in the middle of the header.",
+ "format": "ASF",
+ "length": 130,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   130
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   100
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [],
+ "packets": [],
+ "payloads": [],
+ "media_objects": [],
+ "file": {},
+ "findings": [
+  {
+   "code": "asf.object-truncated",
+   "contains": "ends"
+  },
+  {
+   "code": "asf.object-truncated",
+   "contains": "too few"
+  },
+  {
+   "code": "asf.header-object-count",
+   "contains": "counts"
+  },
+  {
+   "code": "asf.missing-data",
+   "contains": "no Data Object"
+  },
+  {
+   "code": "asf.no-streams",
+   "contains": "no Stream Properties"
+  },
+  {
+   "code": "asf.missing-header-extension",
+   "contains": "no Header Extension"
+  },
+  {
+   "code": "asf.missing-file-properties",
+   "contains": "no File Properties"
+  },
+  {
+   "code": "asf.object-size",
+   "contains": "at least 104"
+  },
+  {
+   "code": "asf.object-overruns",
+   "contains": "4 more"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the header is cut."
+ }
+}

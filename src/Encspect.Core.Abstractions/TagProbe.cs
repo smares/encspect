@@ -11,8 +11,14 @@ public enum Confidence
 public sealed record Evidence(string Description, long Offset, long Length);
 
 // What a tag says about the software that encoded the audio (an ID3v2 TSSE frame), and the node
-// that holds it. Format parsers weigh it against what the audio itself shows.
-public sealed record EncoderClaim(string Text, Node Source, string Description);
+// that holds it. Format parsers weigh it against what the audio itself shows. A claim is low
+// confidence, since whatever software wrote the tag fills it in; a container that recognizes the
+// writer from the way it lays out its own structure (not from a name it was given) says so with a
+// higher one.
+public sealed record EncoderClaim(string Text, Node Source, string Description)
+{
+    public Confidence Confidence { get; init; } = Confidence.Low;
+}
 
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature
 // that was found but failed structural validation.

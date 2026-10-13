@@ -1,0 +1,161 @@
+{
+ "description": "A header object that states more bytes than the header has left.",
+ "format": "ASF",
+ "length": 616,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   310
+  ],
+  [
+   "Data Object",
+   310,
+   306
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Padding Object",
+   230,
+   80
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   360,
+   256,
+   3
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   60,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   60,
+   0,
+   [
+    [
+     391,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   60,
+   25,
+   [
+    [
+     468,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   60,
+   50,
+   [
+    [
+     545,
+     60
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 616,
+  "packets": 1,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.object-overruns",
+   "contains": "5000"
+  },
+  {
+   "code": "asf.missing-header-extension",
+   "contains": "no Header Extension"
+  },
+  {
+   "code": "asf.header-object-count",
+   "contains": "counts 4"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "ffmpeg rejects the object."
+ }
+}
