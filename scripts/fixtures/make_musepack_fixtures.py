@@ -8,8 +8,16 @@ a cut audio packet, keys the specification does not reserve or does not allow, a
 disagrees with the audio packets, data after the stream end, a stream end of the wrong size, no
 ReplayGain packet; an SV7 header with fields libmpcdec refuses, a cut stream, a damaged frame length,
 data after the frames, a header cut short; and both versions with ID3v2 before and APE and ID3v1
-after, and with "TAG" inside the audio where an ID3v1 tag would sit. Streams of versions 4, 5 and 6
-are written from their header layout (libmpcdec 1.2.6), with frames of zero bits. Each has a
+after, and with "TAG" inside the audio where an ID3v1 tag would sit; an SV5 stream whose frame is
+too short for its subband resolutions. Further ones cover each finding the others do not: SV8
+stream headers with 3 channels, 32 bands, a sample count of 0, a CRC of 0 or none at all, audio
+before the header, audio packets past the sample count, packets after the audio, a cut or unknown
+ReplayGain packet, a packet size that cannot be followed, seek tables with too many or too few
+entries, 4,100 unknown packets before the header, with or without two of an invalid key after them; SV7 streams without the gapless frame but with an
+APEv2 tag after them, whose last frame's samples differ or are invalid, without frames, of another
+version, with an invalid resolution, whose ID3v2 tag names another encoder, broken by a tag a SEEK
+frame finds; and an SV5 stream followed by such a tag. Streams of version 6, of which no encoder was found, are
+written from their header layout (libmpcdec 1.2.6), with frames of zero bits. Each has a
 manifest worked out by musepack_model.py plus the findings the analyzer must report.
 
 Standard library only and deterministic, so CI reruns it and fails when the committed files differ.
@@ -176,6 +184,15 @@ def sv7_truncated():
     return data[:len(data) * 3 // 5]
 
 
+def write_bits(words, bit, count, value):
+    """Writes value into count bits at bit of 32-bit words read from their most significant bit."""
+    for i in range(count):
+        position = bit + i
+        mask = 1 << (31 - (position & 31))
+        word = position >> 5
+        words[word] = (words[word] | mask) if (value >> (count - 1 - i)) & 1 else (words[word] & ~mask)
+
+
 def sv7_damaged_length():
     """The fourth frame's length 64 bits shorter, so the frames after it are read from the wrong bits."""
     data = bytearray(external("mppenc-standard"))
@@ -183,13 +200,25 @@ def sv7_damaged_length():
     frame = m.sv7(bytes(data))["frames"][3]
     bit = frame["bit"]
     words = list(struct.unpack(f"<{len(data) // 4}I", data))
-    value = frame["length"] - 64
-    for i in range(20):
-        position = bit + i
-        mask = 1 << (31 - (position & 31))
-        word = position >> 5
-        words[word] = (words[word] | mask) if (value >> (19 - i)) & 1 else (words[word] & ~mask)
+    write_bits(words, bit, 20, frame["length"] - 64)
     assert w.read(bit, 20) == frame["length"]
+    return struct.pack(f"<{len(words)}I", *words)
+
+
+def sv5_band_overrun():
+    """The fourth frame's length cut to 100 bits and the fifth's lengthened by as much, so the units
+    still end where the encoder ends them, but the fourth frame's subband resolutions run past its
+    length."""
+    data = external("mppsv5-vbr")
+    w = m.Words(data)
+    words = list(struct.unpack(f"<{len(data) // 4}I", data))
+    bit = 64
+    for _ in range(3):
+        bit += 20 + w.read(bit, 20)
+    fourth = w.read(bit, 20)
+    fifth = w.read(bit + 20 + fourth, 20)
+    write_bits(words, bit, 20, 100)
+    write_bits(words, bit + 120, 20, fifth + fourth - 100)
     return struct.pack(f"<{len(words)}I", *words)
 
 
@@ -221,17 +250,219 @@ def sv7_tag_inside():
 
 
 def old(version, bitrate=0, frames=(40, 75, 13)):
-    """A stream of version 4, 5 or 6 (libmpcdec 1.2.6 streaminfo_read_header_sv6): the header word,
-    the frame count, then frames of a 20-bit length and that many zero bits, and in version 6 the 11
-    bits after the last; written into 32-bit little-endian words from their most significant bit."""
+    """A stream of version 6 (libmpcdec 1.2.6 streaminfo_read_header_sv6): the header word, the frame
+    count, then frames of a 20-bit length and that many zero bits, and the 11 bits after the last;
+    written into 32-bit little-endian words from their most significant bit."""
     bits = format(bitrate, "09b") + "0" + "1" + format(version, "010b") + format(27, "05b") + format(1, "06b")
-    bits += format(len(frames), "016b" if version == 4 else "032b")
+    bits += format(len(frames), "032b")
     for length in frames:
         bits += format(length, "020b") + "0" * length
-    if version == 6:
-        bits += format(500, "011b")
+    bits += format(500, "011b")
     bits += "0" * (-len(bits) % 32)
     return b"".join(struct.pack("<I", int(bits[i:i + 32], 2)) for i in range(0, len(bits), 32))
+
+
+def set_bits(data, bit, count, value):
+    words = list(struct.unpack(f"<{len(data) // 4}I", data))
+    write_bits(words, bit, count, value)
+    return struct.pack(f"<{len(words)}I", *words)
+
+
+def counted_end(data):
+    """The byte after the word that holds the last of the frames the SV7 header counts."""
+    s = m.sv7(data)
+    last = s["frames"][s["header"]["frames"] - 1]
+    return ((last["bit"] + 20 + last["length"] + 11 + 31) // 32) * 4
+
+
+def sv7_gapless_frame_missing_ape():
+    """The frame mppenc writes after the counted ones cut off and an APEv2 tag with a large binary
+    item after them: read as a length, the tag's first word points inside the file."""
+    data = external("mppenc-extra-frame")
+    cover = tags.ape_item("Cover Art (Front)", b"cover.jpg\x00" + bytes(i % 251 for i in range(45000)), tags.APE_BINARY)
+    return data[:counted_end(data)] + tags.ape_tag([cover])
+
+
+def sv7_last_frame_samples_differ():
+    """The header's last frame samples 500; the 11 bits after the last frame still give 927."""
+    return set_bits(external("mppenc-extra-frame"), 161, 11, 500)
+
+
+def sv7_last_frame_samples_invalid():
+    return set_bits(external("mppenc-standard"), 161, 11, 1500)
+
+
+def sv7_no_frames():
+    return set_bits(external("mppenc-standard"), 32, 32, 0)
+
+
+def sv7_version_unknown():
+    data = bytearray(external("mppenc-standard"))
+    data[3] = (data[3] & 0xF0) | 6
+    return bytes(data)
+
+
+def sv7_resolution_invalid():
+    """The first frame's resolutions rewritten: 15 in subband 0, then 2 more in each of the next two,
+    up to 19, past libmpcdec's 17."""
+    data = external("mppenc-standard")
+    bit = 220
+    for count, value in ((4, 15), (4, 15), (1, 0), (6, 0b010110), (6, 0b010110), (1, 0), (6, 0b010110), (6, 0b010110)):
+        data = set_bits(data, bit, count, value)
+        bit += count
+    return data
+
+
+def sv7_encoder_claim():
+    tag = tags.id3v2(3, [tags.frame23("TSSE", tags.text_frame_data(0, ["LAME 3.100"]))])
+    return tag + external("mppenc-standard")
+
+
+def seek_tag(target, title):
+    """An ID3v2.4 tag whose SEEK frame points target bytes past its end (ID3v2.4.0 frames 4.29)."""
+    return tags.id3v2(4, [tags.frame24("TIT2", tags.text_frame_data(3, [title])), tags.frame24("SEEK", struct.pack(">I", target))])
+
+
+def inner_tag(title):
+    return tags.id3v2(4, [tags.frame24("TIT2", tags.text_frame_data(3, [title]))])
+
+
+def sv7_data_after_tag():
+    """A SEEK frame in a leading ID3v2.4 tag points to another ID3v2.4 tag in the middle of the stream."""
+    data = external("mppenc-standard")
+    middle = len(data) // 2 // 4 * 4
+    return seek_tag(middle, "Leading") + data[:middle] + inner_tag("Inside") + data[middle:]
+
+
+def sv5_seek_tag():
+    """A SEEK frame in a leading ID3v2.4 tag points to an ID3v2.4 tag right after an SV5 stream."""
+    data = external("mppsv5-vbr")
+    return seek_tag(len(data), "Leading") + data + inner_tag("After")
+
+
+def replace(data, key, new, nth=0):
+    offset, length, _, _, _ = find(data, key, nth)
+    return data[:offset] + new + data[offset + length:]
+
+
+def sh_payload(version=8, samples=None, silence=0, rate=None, bands=None, channels=None, ms=None, power=None, base=None, extra=b""):
+    """A stream header payload with its CRC, from base's fields where none is given."""
+    offset, length, _, _, header = find(base, "SH")
+    p = base[offset + header:offset + length]
+    base_samples, at = m.size(p, 5)
+    _, at = m.size(p, at)
+    first, second = p[at], p[at + 1]
+    body = bytes([version]) + encode_size(base_samples if samples is None else samples) + encode_size(silence)
+    body += bytes([((first >> 5 if rate is None else rate) << 5) | ((first & 0x1F) if bands is None else bands - 1),
+                   (((second >> 4) if channels is None else channels - 1) << 4) | ((second & 0x08) if ms is None else ms << 3)
+                   | ((second & 0x07) if power is None else power)]) + extra
+    return struct.pack(">I", zlib.crc32(body)) + body
+
+
+def plain():
+    return external("mpcenc-no-ei-no-st")
+
+
+def sv8_header_changed(**fields):
+    return lambda: replace(plain(), "SH", packet(b"SH", sh_payload(base=plain(), **fields)))
+
+
+def forge_crc_zero(body):
+    """Four bytes that, appended to body, make its CRC-32 0: CRC-32 is affine in them over GF(2)."""
+    base = zlib.crc32(body + bytes(4))
+    columns = [zlib.crc32(body + (1 << i).to_bytes(4, "little")) ^ base for i in range(32)]
+    rows, pivots = list(columns), []
+    solution_basis = [1 << i for i in range(32)]
+    target, picked = base, 0
+    for bit in range(31, -1, -1):
+        index = next((i for i in range(len(rows)) if i not in pivots and rows[i] >> bit & 1), None)
+        if index is None:
+            continue
+        pivots.append(index)
+        for j in range(len(rows)):
+            if j != index and rows[j] >> bit & 1:
+                rows[j] ^= rows[index]
+                solution_basis[j] ^= solution_basis[index]
+        if target >> bit & 1:
+            target ^= rows[index]
+            picked ^= solution_basis[index]
+    assert target == 0
+    extra = picked.to_bytes(4, "little")
+    assert zlib.crc32(body + extra) == 0
+    return extra
+
+
+def sv8_header_crc_zero():
+    """A stream header whose bytes give a CRC of 0, through four bytes after its fields."""
+    body = sh_payload(base=plain())[4:]
+    return replace(plain(), "SH", packet(b"SH", bytes(4) + body + forge_crc_zero(body)))
+
+
+def sv8_header_missing():
+    return replace(plain(), "SH", b"")
+
+
+def first_audio(data):
+    return find(data, "AP")[0]
+
+
+def sv8_audio_before_header():
+    data = plain()
+    offset, length, _, _, _ = find(data, "AP")
+    sh = find(data, "SH")[0]
+    return insert(data, sh, data[offset:offset + length])
+
+
+def sv8_audio_packets_extra():
+    data = plain()
+    offset, length, _, _, _ = find(data, "AP")
+    return before_end(data, data[offset:offset + length])
+
+
+def sv8_after_audio():
+    """A ReplayGain packet and a second stream header after the audio packets."""
+    data = plain()
+    rg_offset, rg_length, _, _, _ = find(data, "RG")
+    sh_offset, sh_length, _, _, _ = find(data, "SH")
+    return before_end(data, data[rg_offset:rg_offset + rg_length] + data[sh_offset:sh_offset + sh_length])
+
+
+def sv8_replaygain_truncated():
+    return replace(plain(), "RG", packet(b"RG", b"\x01\x00"))
+
+
+def sv8_replaygain_version():
+    data = plain()
+    offset, length, _, _, header = find(data, "RG")
+    return data[:offset + header] + b"\x02" + data[offset + header + 1:]
+
+
+def sv8_packet_size_invalid():
+    return before_end(plain(), b"XY\x02")
+
+
+def sv8_seek_table(change):
+    """mpcenc's seek table over 15 audio packets with its entry count changed, keeping the count's width."""
+    data = external("mpcenc-packets")
+    offset, length, _, _, header = find(data, "ST")
+    count, after = m.size(data, offset + header)
+    new = encode_size(change(count), after - offset - header)
+    assert len(new) == after - offset - header
+    return data[:offset + header] + new + data[after:]
+
+
+def sv8_invalid_key_in_run():
+    """4,100 empty unknown packets, then two of a key outside A to Z, which join the run of packets
+    the analyzer no longer details; the findings point at the run as it ends (a fuzzer find)."""
+    data = plain()
+    return data[:4] + b"XX\x03" * 4100 + b"ab\x03" * 2 + data[4:]
+
+
+def sv8_many_unknown_first():
+    """4,100 empty unknown packets before the stream header, past the 4,096 packets the analyzer
+    details: the stream header and the packets after it are still read."""
+    data = plain()
+    return data[:4] + b"XX\x03" * 4100 + data[4:]
 
 
 SV8 = "Musepack SV8"
@@ -262,16 +493,60 @@ FIXTURES = {
     "sv7-header-truncated": (sv7_header_truncated, None, [("musepack.header-truncated", "the data holds 20")]),
     "sv7-tags": (sv7_tags, "tags", []),
     "sv7-tag-inside": (sv7_tag_inside, None, [("tag.near-miss", "Musepack")]),
-    "sv4": (lambda: old(4), None, [("musepack.version-not-analyzed", "SV4")]),
-    "sv5": (lambda: old(5), None, [("musepack.version-not-analyzed", "SV5")]),
-    "sv6": (lambda: old(6), None, [("musepack.version-not-analyzed", "SV6")]),
-    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.version-not-analyzed", "SV6"),
-                                                                ("musepack.constant-bitrate", "128 kbps")]),
+    "sv7-gapless-frame-missing-ape": (sv7_gapless_frame_missing_ape, lambda d: (0, counted_end(d), [region(SV7, 0, counted_end(d)), region("APE", counted_end(d), len(d))]), [("musepack.gapless-frame-missing", "ends 256 samples early")]),
+    "sv7-last-frame-samples-differ": (sv7_last_frame_samples_differ, None, [("musepack.last-frame-samples-differ", "give 927 samples, the header 500")]),
+    "sv7-last-frame-samples-invalid": (sv7_last_frame_samples_invalid, None, [("musepack.last-frame-samples-invalid", "1500 samples"), ("musepack.last-frame-samples-differ", "the header 1500")]),
+    "sv7-no-frames": (sv7_no_frames, None, [("musepack.no-frames", "counts no frames"), ("musepack.trailing-data", "26212 bytes")]),
+    "sv7-version-unknown": (sv7_version_unknown, None, [("musepack.version-unknown", "version is 6")]),
+    "sv7-resolution-invalid": (sv7_resolution_invalid, None, [("musepack.resolution-invalid", "1 frame codes")]),
+    "sv7-encoder-claim": (sv7_encoder_claim, lambda d: (tag_end(d), len(d), [region("ID3v2", 0, tag_end(d)), region(SV7, tag_end(d), len(d))]), [("musepack.encoder-claim-differs", "LAME 3.100")]),
+    "sv7-data-after-tag": (sv7_data_after_tag, lambda d: seek_layout(d, SV7), [("musepack.frames-missing", "holds 38 whole ones"), ("musepack.frame-truncated", "cut short"), ("musepack.data-after-tag", "13120 bytes")]),
+    "sv5-seek-tag": (sv5_seek_tag, lambda d: seek_layout(d, "Musepack SV5"), [("musepack.last-frame-unwritten", "29 bits past")]),
+    "sv8-channels-unsupported": (sv8_header_changed(channels=3), None, [("musepack.channels-unsupported", "3 channels")]),
+    "sv8-max-band-32": (sv8_header_changed(bands=32), None, [("musepack.max-band-invalid", "32 used bands")]),
+    "sv8-sample-count-unknown": (sv8_header_changed(samples=0), None, [("musepack.sample-count-unknown", "64 frames")]),
+    "sv8-header-crc-zero": (sv8_header_crc_zero, None, [("musepack.header-crc-zero", "CRC is 0"), ("musepack.padding-not-zero", "SH packet")]),
+    "sv8-header-missing": (sv8_header_missing, None, [("musepack.header-missing", "no stream header"), ("musepack.audio-before-header", "at 0x10")]),
+    "sv8-audio-before-header": (sv8_audio_before_header, None, [("musepack.audio-packets-extra", "holds 2"), ("musepack.audio-before-header", "at 0x4"), ("musepack.packet-after-audio", "RG packet")]),
+    "sv8-audio-packets-extra": (sv8_audio_packets_extra, None, [("musepack.audio-packets-extra", "holds 2")]),
+    "sv8-after-audio": (sv8_after_audio, None, [("musepack.packet-after-audio", "RG packet"), ("musepack.stream-header-repeated", "2 stream header packets")]),
+    "sv8-replaygain-truncated": (sv8_replaygain_truncated, None, [("musepack.packet-fields-truncated", "RG packet")]),
+    "sv8-replaygain-version": (sv8_replaygain_version, None, [("musepack.replaygain-version", "version is 2")]),
+    "sv8-packet-size-invalid": (sv8_packet_size_invalid, None, [("musepack.end-missing", "no stream end"), ("musepack.packet-size-invalid", "smaller than its key")]),
+    "sv8-seek-table-truncated": (lambda: sv8_seek_table(lambda n: n + 1), None, [("musepack.seek-table-truncated", "counts 16 entries")]),
+    "sv8-seek-table-short": (lambda: sv8_seek_table(lambda n: n - 1), None, [("musepack.seek-table-short", "holds 14 entries")]),
+    "sv8-invalid-key-in-run": (sv8_invalid_key_in_run, None, [("musepack.key-unknown", "4100 packets"), ("musepack.key-invalid", "2 packets' keys")]),
+    "sv8-many-unknown-first": (sv8_many_unknown_first, None, [("musepack.key-unknown", "4100 packets")]),
+    "sv5-band-overrun": (sv5_band_overrun, None, [("musepack.band-header-overrun", "1 frame's subband resolutions run past"),
+                                                  ("musepack.last-frame-unwritten", "bits past the end of the data")]),
+    "sv6": (lambda: old(6), None, [("musepack.frames-not-read", "no SV6 encoder")]),
+    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.frames-not-read", "no SV6 encoder")]),
 }
 
 # The damaged frame length makes the frames after it be read from the wrong bits, which still decode
 # as resolutions, until a length runs past the end of the data.
 DAMAGED = [("musepack.frame-truncated", "the stream is cut short"), ("musepack.frames-missing", "counts 58 frames")]
+
+
+def region(name, start, end):
+    return {"name": name, "offset": start, "length": end - start}
+
+
+def tag_end(data):
+    """The end of the ID3v2 tag at the start of data (ID3v2.4.0 structure 3.1)."""
+    return 10 + ((data[6] << 21) | (data[7] << 14) | (data[8] << 7) | data[9])
+
+
+def seek_layout(data, name):
+    """A leading ID3v2.4 tag, the stream up to the tag its SEEK frame points to, that tag, and the
+    bytes after it, which no format reads."""
+    start = tag_end(data)
+    inner = data.index(b"ID3\x04", start)
+    after = inner + tag_end(data[inner:])
+    regions = [region("ID3v2", 0, start), region(name, start, inner), region("ID3v2", inner, after)]
+    if after < len(data):
+        regions.append(region("Data", after, len(data)))
+    return start, inner, regions
 
 
 def name_of(data):
@@ -285,7 +560,9 @@ def name_of(data):
 def main():
     for name, (build, layout, findings) in FIXTURES.items():
         data = build()
-        if layout == "tags":
+        if callable(layout):
+            start, end, regions = layout(data)
+        elif layout == "tags":
             start = len(id3v2_tag())
             end = len(data) - len(trailing_tags())
             ape = len(tags.ape_tag([tags.ape_item("Title", "Musepack fixture")]))

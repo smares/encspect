@@ -5,6 +5,7 @@ internal static class Topics
 {
     public const string SubbandCoding = "musepack-subband-coding";
     public const string Sv7Stream = "musepack-sv7-stream";
+    public const string OldStreams = "musepack-sv4-to-sv6";
     public const string Sv8Packets = "musepack-sv8-packets";
     public const string NoiseSubstitution = "noise-substitution";
     public const string MidSideStereo = "mid-side-stereo";
@@ -26,10 +27,10 @@ internal static class Explain
 {
     public const string Sv7Stream = "A Musepack stream of version 7: a header of 25 bytes, then frames of 1,152 samples per channel, each led by its length in bits, in 32-bit little-endian words (libmpcdec r495 streaminfo.c, mpc_demux.c).";
     public const string Sv8Stream = "A Musepack stream of version 8: the magic number MPCK, then packets of a two-letter key, a size and a payload, ending with a stream end packet (SV8 specification).";
-    public const string OldStream = "A Musepack stream of version 4, 5 or 6, the versions before SV7 (libmpcdec 1.2.6 streaminfo.c). The analyzer reads its header; its frames are not analyzed.";
+    public const string OldStream = "A Musepack stream of version 4, 5 or 6, the versions before SV7: a header of 48 bits (version 4) or 64 bits in 32-bit little-endian words, then frames of 1,152 samples per channel, each block of them led by its length in bits (libmpcdec 1.2.6).";
     public const string Gap = "Bytes after the end of the stream, which no frame or packet of it claims.";
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside the Musepack stream, which the tag breaks; the analyzer does not read them as part of the stream.";
-    public const string AudioData = "The frames of the stream, which the analyzer does not read for this stream version.";
+    public const string AudioData = "The frames of the stream, which the analyzer does not read for this stream or its settings.";
 
     public const string Header = "The SV7 stream header: the frame count, the coding settings, ReplayGain, the gapless length of the last frame and the encoder's version, in seven 32-bit little-endian words read from their most significant bit (libmpcdec r495 streaminfo_read_header_sv7, mppenc 1.16 WriteHeader_SV7).";
     public const string Magic = "The magic number: \"MP+\" for stream version 7, \"MPCK\" for version 8 (libmpcdec r495 mpc_demux_header, SV8 specification, File magic number).";
@@ -63,18 +64,23 @@ internal static class Explain
     public const string FrameData = "The frame's coded data: resolutions, mid/side flags, scalefactors and samples of each subband.";
     public const string UsedBands = "How many subbands, from the lowest, carry data in this frame: the highest subband with a resolution other than 0 in either channel, plus 1.";
     public const string MidSideBands = "The subbands this frame codes as mid and side rather than left and right, counted from 0 (the mid/side flag after each coded subband's resolutions).";
-    public const string NoiseBands = "The subbands this frame fills with noise instead of coded samples (resolution -1), counted from 0.";
-    public const string FinalSamples = "The 11 bits after the last frame the header counts: how many of its samples belong to the audio, as in the header (mppenc 1.16 writes them for older decoders).";
+    public const string NoiseBands = "How many subband channels this frame fills with noise instead of coded samples (resolution -1).";
+    public const string FinalSamples = "The 11 bits after the last frame the header counts: how many of its samples belong to the audio, as in the header; with true gapless, libmpcdec r495 takes these bits rather than the header's (mpc_decoder_decode_frame).";
 
-    public const string Sv4Header = "The header of stream versions 4 to 6, one or two 32-bit little-endian words (libmpcdec 1.2.6 streaminfo_read_header_sv6).";
+    public const string Sv4Header = "The header of stream versions 4 to 6, 48 bits in version 4 and 64 in 5 and 6, in 32-bit little-endian words read from their most significant bit (libmpcdec 1.2.6 streaminfo_read_header_sv6).";
     public const string Sv4Bitrate = "A constant bitrate in kbps, 0 for variable; libmpcdec 1.2.6 refuses streams with a constant bitrate.";
     public const string Sv4IntensityStereo = "Whether the stream uses intensity stereo; libmpcdec 1.2.6 refuses streams that do.";
     public const string Sv4MidSide = "Whether the frames may code subbands as mid and side (libmpcdec 1.2.6).";
     public const string Sv4StreamVersion = "The stream version, 4, 5 or 6, in 10 bits (libmpcdec 1.2.6).";
     public const string Sv4MaxBand = "The highest subband the frames code, counted from 0 (libmpcdec 1.2.6).";
-    public const string Sv4BlockSize = "The block size; libmpcdec 1.2.6 decodes only 1.";
-    public const string Sv4FrameCount = "The number of frames: 16 bits in version 4, 32 in 5 and 6. libmpcdec 1.2.6 drops the last one of versions 4 and 5, which those encoders wrote invalid.";
+    public const string Sv4BlockSize = "How many frames each length leads; libmpcdec 1.2.6 decodes only 1. The SV4 encoder writes what its -frm switch asks, and both the SV4 and the SV5 encoder wrote 16 when asked for intensity stereo at a constant bitrate.";
+    public const string Sv4FrameCount = "The number of frames: 16 bits in version 4, 32 in 5 and 6. In versions 4 and 5, libmpcdec 1.2.6 and mppdec decode all but the last of them.";
+    public const string OldFrame = "One frame of 1,152 samples per channel: a 20-bit length, then that many bits of subband resolutions, mid/side flags, scalefactors and samples (libmpcdec 1.2.6 mpc_decoder_read_bitstream_sv6).";
+    public const string OldLastFrame = "The last frame the header counts, which decoders (libmpcdec 1.2.6, mppdec) do not decode. The SV4 and SV5 encoders write whole 32-bit words only, so it can run up to 31 bits past the end of the data.";
+    public const string OldStatFrames = "The frames decoders decode: those the header counts but the last (libmpcdec 1.2.6, mppdec).";
+    public const string OldStatSamples = "The samples per channel libmpcdec 1.2.6 outputs: the decoded frames' samples less the synthesis filter's 481.";
 
+    public const string UndetailedPackets = "Packets the analyzer no longer details, once it has detailed 4,096, that neither carry audio nor describe the stream, such as packets of unknown keys, kept as one node with their count; decoders skip packets they do not know (SV8 specification, Packet formatting).";
     public const string Sv8Magic = "The magic number \"MPCK\" (SV8 specification, File magic number). The seek table counts its offsets from here.";
     public const string Key = "The packet's key, two letters from A to Z, which says what the packet holds (SV8 specification, Packet formatting).";
     public const string Size = "The packet's length in bytes, key and this field included, in 1 to 9 bytes of 7 bits each, the high bit set on every byte but the last (SV8 specification, Packet formatting).";
@@ -143,7 +149,7 @@ internal static class Explain
     public const string MaximumBitrate = "The bitrate of the largest frame or packet over the time it codes.";
     public const string Smallest = "The smallest frame or audio packet.";
     public const string Largest = "The largest frame or audio packet.";
-    public const string BitrateMode = "Musepack has no bitrate field: each frame is as long as its data, so the bitrate follows the audio (variable).";
+    public const string BitrateMode = "Each frame is as long as its data, so the bitrate follows the audio (variable); only the headers of SV4 to SV6 have a bitrate field, which is set for a constant bitrate.";
     public const string Distribution = "How many frames or packets fall in each bitrate range of 32 kbps.";
     public const string DistributionBin = "The frames or packets whose bitrate falls in this range, and their share.";
     public const string MidSideUse = "The coded subbands of all frames, by how they are coded: mid and side, or left and right; subbands left out or filled with noise in both channels are not counted.";

@@ -54,8 +54,7 @@ def sources():
         yield archive, digest, aotuv_tool.addresses(archive)
     for archive, digest in aotuv_tool.WINDOWS.values():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
-    yield musepack_tool.MPPENC
-    yield musepack_tool.LIBMPC
+    yield from musepack_tool.sources()
 
 
 def main():

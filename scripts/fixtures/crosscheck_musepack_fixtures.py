@@ -14,6 +14,12 @@ make_external_musepack_fixtures.py):
   frame's bits, used subbands, mid/side subbands and noise-filled subband channels as the decoder
   reads them.
 - mpc2sv8: each SV7 fixture converted to SV8 decodes to the manifest's samples.
+- mpcdec_frames126 (musepack_tool.py: the same program over libmpcdec 1.2.6, which mpcdec, ffmpeg and
+  libmpcdec r495 do not reach, as they read only SV7 and SV8): for SV4 and SV5, the header fields
+  and whether libmpcdec accepts the stream, then each frame's bits, used subbands and mid/side
+  subbands and the samples it outputs.
+- mppdec (Rarewares' Win32 build, under Wine where it is installed): the frames it decodes from each
+  SV4 and SV5 fixture, against those it decoded when the fixture was written (in the manifest).
 
 Fixtures that are not "valid" say why the others do not apply; every skipped check prints its
 reason. Disagreements fail the run.
@@ -23,6 +29,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,7 +44,33 @@ SKIPS = []
 # Hand-built fixtures that the tools read as they would a valid file, and what each damaged one
 # should make mpcdec do.
 READABLE = {"sv8-tags", "sv7-tags", "sv8-unknown-key", "sv8-no-replaygain", "sv8-data-after-end", "sv8-end-size", "sv7-trailing-data",
-            "sv8-seek-mismatch"}
+            "sv8-seek-mismatch", "sv8-many-unknown-first", "sv7-encoder-claim",
+            "sv8-replaygain-version"}
+# Hand-built fixtures that mpcdec's decoded samples and libmpcdec's frames confirm, and why the other checks do not apply.
+DECODE_ONLY = {"sv7-gapless-frame-missing-ape": "mpcdec -i gives the header's length, which counts the missing frame, and ffmpeg shows the APE tag's cover as a second stream",
+               "sv7-last-frame-samples-differ": "mpcdec -i gives the header's length, while decoding takes the 11 bits after the last frame"}
+# Hand-built fixtures whose damage the tools meet in their own ways, and why they are not compared.
+DAMAGED = {
+    "sv7-last-frame-samples-invalid": "libmpcdec refuses a last frame of more than 1,152 samples",
+    "sv7-no-frames": "the header counts no frames, so there is nothing to decode",
+    "sv7-version-unknown": "mpcdec and ffmpeg refuse a version other than 7",
+    "sv7-resolution-invalid": "the first frame is damaged on purpose",
+    "sv7-data-after-tag": "a tag inside the stream breaks it, and the tools do not follow the SEEK frame",
+    "sv5-seek-tag": "the SV4 and SV5 tools take no ID3v2 tag before the stream",
+    "sv8-channels-unsupported": "libmpcdec refuses more than 2 channels",
+    "sv8-max-band-32": "libmpcdec refuses 32 bands",
+    "sv8-sample-count-unknown": "libmpcdec decodes no samples where the count is 0",
+    "sv8-header-crc-zero": "ffmpeg refuses a CRC of 0",
+    "sv8-header-missing": "decoders cannot decode without a stream header",
+    "sv8-audio-before-header": "an audio packet before the stream header",
+    "sv8-audio-packets-extra": "decoders stop at the sample count, so they read fewer packets than the file holds",
+    "sv8-after-audio": "packets after the audio that the tools skip or reread",
+    "sv8-replaygain-truncated": "a ReplayGain packet cut short, whose values the tools read differently",
+    "sv8-packet-size-invalid": "a packet size the tools cannot follow",
+    "sv8-seek-table-truncated": "a seek table that counts more entries than it holds",
+    "sv8-seek-table-short": "a seek table with fewer entries than the packets need",
+    "sv8-invalid-key-in-run": "libmpcdec stops decoding at a key outside A to Z",
+}
 REFUSED = {"sv8-bad-crc": "libmpcdec refuses a stream header whose CRC fails", "sv8-rate-reserved": "libmpcdec refuses a reserved sample rate",
            "sv7-header-fields": "libmpcdec refuses a max band of 0", "sv7-header-truncated": "the header is cut short"}
 SHORT = {"sv7-truncated", "sv8-truncated", "sv7-damaged-length"}
@@ -85,7 +118,8 @@ def check_info(name, manifest, path, problems):
     start = data.find(b"MPCK" if manifest["version"] == 8 else b"MP+")
     if manifest["version"] == 7:
         h = m.sv7_header(m.Words(data[start:]))
-        expected["encoder"] = m.libmpcdec_name(h["encoder"]).replace("Alpha", "--Alpha--")
+        # mpcdec prints libmpcdec r495's own spelling of the name for 0.
+        expected["encoder"] = "Buschmann 1.7.0...9, Klemm 0.90...1.05" if h["encoder"] == 0 else m.libmpcdec_name(h["encoder"]).replace("Alpha", "--Alpha--")
         expected["profile"] = f"'{m.PROFILES[h['profile']]}' (q={h['profile'] - 5:.2f})"
         expected["gapless"] = "on" if h["gapless"] else "off"
         expected["mid/side stereo"] = "on" if h["ms"] else "off"
@@ -186,8 +220,47 @@ def check_mpc2sv8(name, manifest, path, problems):
             problems.append(f"mpc2sv8's SV8 decodes to {decoded and decoded[0]} samples, manifest {manifest['stream_infos'][0]['samples']}")
 
 
+def check_old(name, manifest, path, frames126, problems):
+    """libmpcdec 1.2.6's reading of an SV4 or SV5 stream, and mppdec's frame count."""
+    lines = [line.split() for line in run([str(frames126), str(path)]).stdout.decode().split("\n") if line]
+    header = manifest["header"]
+    values = dict(zip(lines[0][2::2], lines[0][3::2]))
+    bitrate, intensity, block = int(header["Bitrate"].split()[0]), header["Intensity Stereo"] == "true", int(header["Block Size"].split()[0])
+    expected_status = 2 if bitrate else 3 if intensity else 4 if block != 1 else 0
+    frames = int(header["Frame Count"].split()[0])
+    expected = {"version": header["Stream Version"], "frames": str(frames - (1 if expected_status == 0 else 0)), "bitrate": str(bitrate),
+                "is": str(int(intensity)), "ms": str(int(header["Mid/Side Stereo"] == "true")), "max_band": header["Max Band"], "block": str(block)}
+    if int(lines[0][1]) != expected_status:
+        problems.append(f"libmpcdec 1.2.6 header status {lines[0][1]}, expected {expected_status}")
+    for key, value in expected.items():
+        if values.get(key) != value:
+            problems.append(f"libmpcdec 1.2.6 {key}: {values.get(key)}, manifest {value}")
+    if expected_status == 0:
+        decoded = [line for line in lines[1:] if line[0] != "samples"]
+        if len(decoded) != len(manifest["frames"]):
+            problems.append(f"libmpcdec 1.2.6 read {len(decoded)} frames, manifest {len(manifest['frames'])}")
+        for i, (want, got) in enumerate(zip(manifest["frames"], decoded)):
+            if [str(want[0] + 20), str(want[1]), want[2], str(want[3])] != got:
+                problems.append(f"frame {i}: libmpcdec 1.2.6 {got}, manifest {want}")
+                break
+        if lines[-1] != ["samples", str(manifest["stream_infos"][0]["samples"])]:
+            problems.append(f"libmpcdec 1.2.6 {' '.join(lines[-1])}, manifest {manifest['stream_infos'][0]['samples']} samples")
+    else:
+        why = {2: "a constant bitrate (ERROR_CODE_CBR)", 3: "intensity stereo (ERROR_CODE_IS)", 4: "a block size other than 1 (ERROR_CODE_BLOCKSIZE)"}
+        skip(name, "libmpcdec 1.2.6's frames", f"libmpcdec 1.2.6 refuses the stream for {why[expected_status]}")
+    recorded = manifest["encoder"].get("mppdec_frames")
+    if recorded != frames - 1:
+        problems.append(f"mppdec decoded {recorded} frames when the fixture was written, the header counts {frames}")
+    if shutil.which("wine") is None:
+        skip(name, "mppdec", "Wine is not installed; the manifest holds the frames mppdec decoded when the fixture was written")
+    elif (decoded_now := musepack_tool.mppdec_frames(path)) != recorded:
+        problems.append(f"mppdec decodes {decoded_now} frames, {recorded} when the fixture was written")
+
+
 def main():
-    frames_tool = musepack_tool.build_frames(os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"]) / "frames")
+    tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
+    frames_tool = musepack_tool.build_frames(tools and tools / "frames")
+    frames126 = musepack_tool.build_frames_126(tools and tools / "frames126")
     failures = 0
     for manifest_path in sorted(DIRECTORY.glob("*.expected.json")):
         name = manifest_path.name[:-len(".expected.json")]
@@ -195,8 +268,12 @@ def main():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         problems = []
         valid = manifest.get("crosscheck", {}).get("valid") or name in READABLE
-        if manifest["version"] not in (7, 8):
-            skip(name, "every tool", f"stream version {manifest['version']}: mpcdec, ffmpeg and libmpcdec r495 read only SV7 and SV8")
+        if manifest["version"] in (4, 5) and valid:
+            check_old(name, manifest, path, frames126, problems)
+            skip(name, "mpcdec, ffprobe, mpcdec_frames and mpc2sv8", "they read only SV7 and SV8")
+        elif manifest["version"] not in (7, 8):
+            skip(name, "every tool", "hand-built SV6: no SV6 encoder was found, so its frames are zero bits that no tool's reading confirms"
+                 if manifest["version"] == 6 else "a frame damaged on purpose, which libmpcdec 1.2.6 reports invalid")
         elif name in REFUSED:
             code, info = mpcdec_info(path)
             if code == 0 and "samplerate" in info:
@@ -205,6 +282,12 @@ def main():
         elif name in SHORT:
             check_decode(name, manifest, path, problems, exact=False)
             skip(name, "mpcdec -i, ffprobe and mpc2sv8", "the stream is cut short or damaged, so the tools stop at different points; mpcdec must not decode more than the header announces")
+        elif name in DECODE_ONLY:
+            check_decode(name, manifest, path, problems)
+            check_frames(name, manifest, path, frames_tool, problems)
+            skip(name, "mpcdec -i, ffprobe and mpc2sv8", DECODE_ONLY[name])
+        elif name in DAMAGED:
+            skip(name, "every tool", DAMAGED[name])
         elif valid:
             check_info(name, manifest, path, problems)
             check_decode(name, manifest, path, problems)

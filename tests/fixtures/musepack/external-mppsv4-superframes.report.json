@@ -5,18 +5,18 @@
       "name": "encspect",
       "version": "(build)"
     },
-    "source": "sv4.mpc",
+    "source": "external-mppsv4-superframes.mpc",
     "root": {
       "name": "File",
       "value": "Musepack",
       "offset": 0,
-      "length": 32,
+      "length": 8112,
       "children": [
         {
           "name": "Musepack SV4",
           "kind": "Stream",
           "offset": 0,
-          "length": 32,
+          "length": 8112,
           "children": [
             {
               "name": "Header",
@@ -64,13 +64,14 @@
                 },
                 {
                   "name": "Max Band",
-                  "value": 27,
+                  "value": 31,
                   "offset": 0,
                   "length": 2
                 },
                 {
                   "name": "Block Size",
-                  "value": 1,
+                  "value": 4,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 1,
                   "bitOffset": 2,
@@ -78,7 +79,7 @@
                 },
                 {
                   "name": "Frame Count",
-                  "value": 3,
+                  "value": 29,
                   "unit": "frames",
                   "offset": 6,
                   "length": 2
@@ -87,10 +88,10 @@
             },
             {
               "name": "Audio Data",
-              "value": 26,
+              "value": 8106,
               "unit": "bytes",
               "offset": 4,
-              "length": 28,
+              "length": 8108,
               "ranges": [
                 {
                   "offset": 4,
@@ -98,7 +99,7 @@
                 },
                 {
                   "offset": 8,
-                  "length": 24
+                  "length": 8104
                 }
               ]
             }
@@ -116,13 +117,14 @@
         "codec": "Musepack SV4",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo, mid/side per subband",
         "channelLayout": [
           "front left",
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 0,
-        "duration": 0,
+        "samples": 31775,
+        "duration": 0.7205215419501134,
         "isVbr": true,
         "series": []
       }
@@ -130,8 +132,8 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "musepack.version-not-analyzed",
-        "message": "The stream is Musepack SV4, which the analyzer reads only as far as its header; its frames are not analyzed.",
+        "code": "musepack.frames-not-read",
+        "message": "The frames of this Musepack SV4 stream are not read: libmpcdec 1.2.6 does not decode streams that lead blocks of frames (4) with one length.",
         "offset": 1,
         "length": 2,
         "path": [

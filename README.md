@@ -14,7 +14,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - MP4, M4A, M4B, 3GP and QuickTime files
 - AAC in MP4, ADTS and ADIF, including HE-AAC, HE-AAC v2 and xHE-AAC
 - Ogg, with Speex, Vorbis and Opus
-- Musepack SV7 and SV8
+- Musepack SV4 to SV8
 - AC-3 and E-AC-3, raw and in MP4
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.

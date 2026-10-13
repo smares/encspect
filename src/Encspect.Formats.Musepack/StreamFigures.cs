@@ -11,10 +11,14 @@ internal sealed class StreamFigures(int sampleRate)
     private const int BinWidth = 32;
 
     private readonly ChunkedList<Point> _points = new();
-    private readonly List<(long Bits, long Samples)> _seconds = [];
+    // Only the seconds a unit starts in, in order: a unit may declare far more samples than its bytes
+    // hold (an SV8 audio packet of 4^7 frames in 3 bytes), so the seconds it spans are not kept.
+    private readonly ChunkedList<(long Second, long Bits, long Samples)> _seconds = new();
     private readonly SortedDictionary<int, int> _bins = [];
 
     public int Count => _points.Count;
+
+    public long Units { get; private set; }
 
     public long Bits { get; private set; }
 
@@ -31,22 +35,29 @@ internal sealed class StreamFigures(int sampleRate)
     // In kbps, over the coded samples; null without them.
     public double? AverageBitrate => CodedSamples > 0 && sampleRate > 0 ? Bits * (double)sampleRate / CodedSamples / 1000 : null;
 
-    public void Add(long offset, long bits, long samples)
+    // inSeries false leaves the unit out of the per-unit series: a frame without data (a damaged
+    // length of 0) would cost a point per 20 bits of input.
+    public void Add(long offset, long bits, long samples, bool inSeries = true)
     {
         double bitrate = samples > 0 && sampleRate > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
-        _points.Add(new Point(offset, bitrate));
+        if (inSeries)
+        {
+            _points.Add(new Point(offset, bitrate));
+        }
+
+        Units++;
         if (sampleRate > 0)
         {
-            int second = (int)Math.Min(int.MaxValue - 1, CodedSamples / sampleRate);
-
-            // A packet may last longer than a second, so seconds that none starts in stay empty.
-            while (_seconds.Count <= second)
+            long second = CodedSamples / sampleRate;
+            if (_seconds.Count > 0 && _seconds[_seconds.Count - 1].Second == second)
             {
-                _seconds.Add(default);
+                (long _, long b, long counted) = _seconds[_seconds.Count - 1];
+                _seconds.SetLast((second, b + bits, counted + samples));
             }
-
-            (long b, long counted) = _seconds[second];
-            _seconds[second] = (b + bits, counted + samples);
+            else
+            {
+                _seconds.Add((second, bits, samples));
+            }
         }
 
         int bin = (int)Math.Min(int.MaxValue / 2, Math.Floor(bitrate / BinWidth));
@@ -59,15 +70,16 @@ internal sealed class StreamFigures(int sampleRate)
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
     }
 
-    // Per unit, its bitrate at its offset; per second of audio, the bits of the units that start in
-    // it over their duration, rounded half to even.
+    // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the
+    // units that start in it over their duration, rounded half to even.
     public List<Series> Series(Node? anchor, CancellationToken cancellation)
     {
-        if (Count == 0)
+        if (Units == 0)
         {
             return [];
         }
 
+        var series = new List<Series>();
         var offsets = new double[Count];
         var bitrates = new double[Count];
         for (int i = 0; i < Count; i++)
@@ -81,11 +93,27 @@ internal sealed class StreamFigures(int sampleRate)
             bitrates[i] = _points[i].Bitrate;
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
+        if (Count > 0)
+        {
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries });
+        }
+
         if (_seconds.Count > 0)
         {
-            double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
-            double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
+            var starts = new double[_seconds.Count];
+            var values = new double[_seconds.Count];
+            for (int i = 0; i < _seconds.Count; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                }
+
+                (long second, long bits, long samples) = _seconds[i];
+                starts[i] = second;
+                values[i] = samples > 0 ? Math.Round(bits * (double)sampleRate / samples / 1000, MidpointRounding.ToEven) : 0;
+            }
+
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
         }
 
@@ -97,7 +125,7 @@ internal sealed class StreamFigures(int sampleRate)
     public void AddTo(Node statistics, Func<string, NodeValue?, string, Node> cover, string unitName, string unitPlural, bool inBytes, out Node bitrate)
     {
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", Explain.AverageBitrate));
-        if (Count == 0)
+        if (Units == 0)
         {
             return;
         }
@@ -110,7 +138,7 @@ internal sealed class StreamFigures(int sampleRate)
         Node distribution = statistics.Add(cover("Bitrate Distribution", null, Explain.Distribution));
         foreach ((int bin, int count) in _bins)
         {
-            distribution.Add(cover($"{bin * BinWidth} to {(bin * BinWidth) + BinWidth - 1} kbps", $"{Counted(count, unitName, unitPlural)} ({Share(count, Count)})", Explain.DistributionBin));
+            distribution.Add(cover($"{bin * BinWidth} to {(bin * BinWidth) + BinWidth - 1} kbps", $"{Counted(count, unitName, unitPlural)} ({Share(count, Units)})", Explain.DistributionBin));
         }
     }
 

@@ -17,7 +17,7 @@ internal sealed class WordStream(ByteReader reader, long start, long end)
 
     public WordLayout Layout { get; } = new(start, end);
 
-    // Whole words only: a partial last word reads as if padded with zero bytes.
+    // Every byte counts; Read pads a partial last word with zero bytes.
     public long BitLength => (end - start) * 8;
 
     // Up to 32 bits from bit position bit.

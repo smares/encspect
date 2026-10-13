@@ -17,5 +17,10 @@ public sealed class SniffContext
     // often misnamed.
     public string? ExtensionHint { get; }
 
+    // Where the first tag found inside the data (through an ID3v2.4 SEEK frame) starts, or null. A
+    // parser reads up to it (ParseContext.EmbeddedTags), so a format that is recognized by where its
+    // data ends sniffs up to it too.
+    public long? FirstEmbeddedTag { get; init; }
+
     public CancellationToken CancellationToken => Reader.CancellationToken;
 }

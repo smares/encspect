@@ -1,0 +1,56 @@
+{
+ "length": 8112,
+ "version": 4,
+ "header": {
+  "Bitrate": "0 kbps",
+  "Intensity Stereo": "false",
+  "Mid/Side Stereo": "true",
+  "Stream Version": "4",
+  "Max Band": "31",
+  "Block Size": "4 frames",
+  "Frame Count": "29 frames"
+ },
+ "frames": [],
+ "stream_infos": [
+  {
+   "codec": "Musepack SV4",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 31775,
+   "average_bitrate": null,
+   "duration": 0.7205215419501134,
+   "encoder": null
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV4",
+   "offset": 0,
+   "length": 8112
+  }
+ ],
+ "encoder": {
+  "tool": "the SV4 encoder (mppsv4.zip, Rarewares) under Wine",
+  "arguments": [
+   "MS",
+   "NS",
+   "-frm",
+   "4",
+   "-br",
+   "var"
+  ],
+  "rate": 44100,
+  "channels": 2,
+  "samples": 33075,
+  "mppdec_frames": 28
+ },
+ "findings": [
+  {
+   "code": "musepack.frames-not-read",
+   "contains": "lead blocks of frames (4)"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

@@ -1,0 +1,294 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv8-header-missing.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 14257,
+      "children": [
+        {
+          "name": "Musepack SV8",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 14257,
+          "children": [
+            {
+              "name": "Magic",
+              "value": "MPCK",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 14257,
+              "children": [
+                {
+                  "name": "Audio Packets",
+                  "value": 1,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Frames",
+                  "value": 64,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Coded Samples",
+                  "value": 73728,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Decoder Delay",
+                  "value": 481,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Samples",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Duration",
+                  "value": 0,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": "none",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Smallest Packet",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Largest Packet",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 0,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 0,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 14257
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 14257,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "1 packet (100.0%)",
+                      "offset": 0,
+                      "length": 14257
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "ReplayGain",
+              "value": "RG",
+              "offset": 4,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "RG",
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 6,
+                  "length": 1
+                },
+                {
+                  "name": "Version",
+                  "value": 1,
+                  "offset": 7,
+                  "length": 1
+                },
+                {
+                  "name": "Title Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Title Peak",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 10,
+                  "length": 2
+                },
+                {
+                  "name": "Album Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 12,
+                  "length": 2
+                },
+                {
+                  "name": "Album Peak",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 14,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Audio Packet",
+              "kind": "Frame",
+              "value": "64 frames, 14238 bytes",
+              "offset": 16,
+              "length": 14238,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "AP",
+                  "offset": 16,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 18,
+                  "length": 2
+                },
+                {
+                  "name": "Audio Frames",
+                  "value": 64,
+                  "unit": "frames",
+                  "offset": 20,
+                  "length": 14234
+                }
+              ]
+            },
+            {
+              "name": "Stream End",
+              "value": "SE",
+              "offset": 14254,
+              "length": 3,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "SE",
+                  "offset": 14254,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 3,
+                  "unit": "bytes",
+                  "offset": 14256,
+                  "length": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Musepack SV8",
+        "sampleRate": 0,
+        "channels": 0,
+        "samples": 0,
+        "duration": 0,
+        "isVbr": true,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              16
+            ],
+            "values": [
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "musepack.header-missing",
+        "message": "The stream has no stream header packet, which the SV8 specification requires; decoders cannot decode it.",
+        "offset": 0,
+        "length": 4,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "musepack.audio-before-header",
+        "message": "An audio packet at 0x10 comes before any stream header packet, which the SV8 specification requires before the first audio packet.",
+        "offset": 16,
+        "length": 14238,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

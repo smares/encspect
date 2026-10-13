@@ -1,0 +1,146 @@
+{
+ "length": 14480,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   14,
+   "SH"
+  ],
+  [
+   18,
+   12,
+   "RG"
+  ],
+  [
+   30,
+   7,
+   "EI"
+  ],
+  [
+   37,
+   8,
+   "SO"
+  ],
+  [
+   45,
+   1587,
+   "AP"
+  ],
+  [
+   1632,
+   820,
+   "AP"
+  ],
+  [
+   2452,
+   620,
+   "AP"
+  ],
+  [
+   3072,
+   825,
+   "AP"
+  ],
+  [
+   3897,
+   823,
+   "AP"
+  ],
+  [
+   4720,
+   580,
+   "AP"
+  ],
+  [
+   5300,
+   795,
+   "AP"
+  ],
+  [
+   6095,
+   869,
+   "AP"
+  ],
+  [
+   6964,
+   628,
+   "AP"
+  ],
+  [
+   7592,
+   2321,
+   "AP"
+  ],
+  [
+   9913,
+   992,
+   "AP"
+  ],
+  [
+   10905,
+   964,
+   "AP"
+  ],
+  [
+   11869,
+   986,
+   "AP"
+  ],
+  [
+   12855,
+   1006,
+   "AP"
+  ],
+  [
+   13861,
+   587,
+   "AP"
+  ],
+  [
+   14448,
+   29,
+   "ST"
+  ],
+  [
+   14477,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {
+  "Sample Count": "66150 samples",
+  "Beginning Silence": "0 samples",
+  "Channels": "2",
+  "Max Used Bands": "18",
+  "Mid/Side Stereo": "true",
+  "Audio Block Frames": "4 frames"
+ },
+ "frames": 58,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 66150,
+   "average_bitrate": 76.05032327586207,
+   "duration": 1.5
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 14480
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.seek-table-short",
+   "contains": "holds 14 entries"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

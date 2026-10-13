@@ -18,6 +18,10 @@ internal static class Sv7Parser
     public const int FrameSamples = 1152;
     public const int SynthesisDelay = 481;
 
+    // A frame needs bits for its subband resolutions, so no encoder writes a length of 0; after this
+    // many in a row the frames are not followed further, since each would cost a record per 20 bits.
+    public const int MaxEmptyRun = 4096;
+
     private static readonly string[] ProfileNames =
     [
         "n.a.", "Unstable/Experimental", "n.a.", "n.a.", "n.a.", "quality 0", "quality 1", "Telephone", "Thumb", "Radio", "Standard", "Extreme",
@@ -37,8 +41,9 @@ internal static class Sv7Parser
     public static string ProfileName(int profile) => profile >= 0 && profile < ProfileNames.Length ? ProfileNames[profile] : "n.a.";
 
     // Where the stream ends by its frames: the end of the word that holds the last bit of the frames
-    // the header counts (and the frame after them that gapless needs), or null where they run past the
-    // end of the data, since a stream cut short says nothing about where its data ends in this file.
+    // the header counts (and the frame after them that gapless needs, where one is there), or null
+    // where they run past the end of the data, since a stream cut short says nothing about where its
+    // data ends in this file.
     public static long? DeclaredEnd(ByteReader reader)
     {
         if (reader.Length < HeaderBytes)
@@ -49,8 +54,8 @@ internal static class Sv7Parser
         var words = new WordStream(reader, reader.Start, reader.End);
         var header = Sv7Header.Read(words);
         long bit = DataBit;
-        long expected = header.ExpectedFrames;
-        for (long i = 0; i < expected; i++)
+        int? final = null;
+        for (long i = 0; i < header.Frames; i++)
         {
             if (i % 4096 == 0)
             {
@@ -62,7 +67,19 @@ internal static class Sv7Parser
                 return null;
             }
 
-            bit += 20 + words.Read(bit, 20) + (i == header.Frames - 1 ? 11 : 0);
+            long dataEnd = bit + 20 + words.Read(bit, 20);
+            bit = dataEnd + (i == header.Frames - 1 ? 11 : 0);
+            if (bit > words.BitLength)
+            {
+                return null;
+            }
+
+            final = i == header.Frames - 1 ? (int)words.Read(dataEnd, 11) : null;
+        }
+
+        if (NeedsExtraFrame(header, final) && ExtraFrameAt(reader, words, header, bit))
+        {
+            bit += 20 + words.Read(bit, 20);
             if (bit > words.BitLength)
             {
                 return null;
@@ -70,6 +87,34 @@ internal static class Sv7Parser
         }
 
         return words.Layout.WordEnd(bit);
+    }
+
+    // The last frame's samples as libmpcdec r495 decodes them (mpc_decoder_decode_frame): with true
+    // gapless from the 11 bits after the last frame, else from the header; 0 means all 1,152.
+    public static int LastFrameSamples(Sv7Header h, int? final)
+    {
+        int last = h.Gapless && final is { } bits ? bits : h.LastSamples;
+        return last == 0 ? FrameSamples : last;
+    }
+
+    // Whether libmpcdec decodes a frame after the counted ones: with true gapless, where the last
+    // frame's samples and the synthesis filter's delay pass the frame.
+    public static bool NeedsExtraFrame(Sv7Header h, int? final) => h.Gapless && h.Frames > 0 && LastFrameSamples(h, final) + SynthesisDelay > FrameSamples;
+
+    // Whether that frame can be at bit: mppenc writes it right after the counted frames, so a tag's
+    // signature at the next word, or bits whose subband resolutions run past their length or out of
+    // range, mean the encoder did not write it.
+    private static bool ExtraFrameAt(ByteReader reader, WordStream words, Sv7Header h, long bit)
+    {
+        long next = words.Layout.WordEnd(bit);
+        if (bit + 20 > words.BitLength || reader.MatchesAt(next, "APETAGEX"u8) || reader.MatchesAt(next, "ID3"u8) || reader.MatchesAt(next, "TAG"u8))
+        {
+            return false;
+        }
+
+        long end = bit + 20 + words.Read(bit, 20);
+        Bands bands = ReadBands(words, bit + 20, Math.Min(end, words.BitLength), Math.Min(h.MaxBand, 31), h.MidSide);
+        return !bands.Overrun && !bands.Invalid;
     }
 
     public static void Parse(ByteReader reader, Node parent, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
@@ -93,10 +138,10 @@ internal static class Sv7Parser
         state.Leading.Add(headerNode);
         HeaderFindings(state, h, headerNode);
 
-        Walk(words, state);
+        Walk(reader, words, state);
 
         long streamEnd = layout.WordEnd(state.EndBit);
-        if (state.Truncated)
+        if (state.Truncated || state.EmptyFrom is not null)
         {
             streamEnd = end;
         }
@@ -121,14 +166,14 @@ internal static class Sv7Parser
         state.Findings.Flush(context);
     }
 
-    private static void Walk(WordStream words, State state)
+    private static void Walk(ByteReader reader, WordStream words, State state)
     {
         Sv7Header h = state.Header;
         long bit = DataBit;
-        long expected = h.ExpectedFrames;
         long length = words.BitLength;
         int maxBand = Math.Min(h.MaxBand, 31);
-        for (long i = 0; i < expected; i++)
+        int empty = 0;
+        for (long i = 0; i <= h.Frames; i++)
         {
             if (i % 4096 == 0)
             {
@@ -136,15 +181,15 @@ internal static class Sv7Parser
             }
 
             bool isFinal = i == h.Frames - 1;
-            bool isExtra = i >= h.Frames;
+            bool isExtra = i == h.Frames;
+            if (isExtra && !(NeedsExtraFrame(h, state.FinalSamples) && ExtraFrameAt(reader, words, h, bit)))
+            {
+                state.ExtraMissing = NeedsExtraFrame(h, state.FinalSamples);
+                break;
+            }
+
             if (bit + 20 > length)
             {
-                if (isExtra && bit + 20 > length)
-                {
-                    state.ExtraMissing = true;
-                    break;
-                }
-
                 if (bit < length)
                 {
                     state.Frames.Add(new Frame(bit, -1, Flags.LengthCut | Flags.Truncated));
@@ -179,6 +224,15 @@ internal static class Sv7Parser
             state.Frames.Add(frame);
             if (state.Truncated)
             {
+                break;
+            }
+
+            empty = frameLength == 0 ? empty + 1 : 0;
+            if (empty == MaxEmptyRun)
+            {
+                state.EmptyFrom = bit - ((MaxEmptyRun - 1) * 20L);
+                state.Count(frame, bands);
+                state.EndBit = frameEnd;
                 break;
             }
 
@@ -467,7 +521,7 @@ internal static class Sv7Parser
             }
 
             complete++;
-            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples);
+            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0);
             if ((frame.Flags & Flags.BadResolution) != 0)
             {
                 bad++;
@@ -512,7 +566,13 @@ internal static class Sv7Parser
         }
 
         Node header = state.Leading[0];
-        if (counted < h.Frames)
+        if (state.EmptyFrom is { } emptyFrom)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.frames-empty",
+                $"{MaxEmptyRun} frames in a row from 0x{state.Layout.WordStart(emptyFrom):X} have a length of 0 bits, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                header.Children.First(c => c.Name == "Frame Count"));
+        }
+        else if (counted < h.Frames)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-missing",
                 $"The header counts {h.Frames} frames, but the data holds {counted} whole ones.", header.Children.First(c => c.Name == "Frame Count"));
@@ -521,28 +581,28 @@ internal static class Sv7Parser
         if (state.ExtraMissing)
         {
             state.Findings.AddNow(Severity.Info, "musepack.gapless-frame-missing",
-                $"The stream ends after the frames the header counts, without the frame libmpcdec decodes after them where the last frame holds more than 671 samples, so its output ends {h.LastFrameSamples - 671} samples early.",
+                $"The stream ends after the frames the header counts, without the frame libmpcdec decodes after them where the last frame holds more than 671 samples, so its output ends {LastFrameSamples(h, state.FinalSamples) - 671} samples early.",
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 
-        if (state.FinalSamples is { } final && final != h.LastSamples)
+        if (h.Gapless && state.FinalSamples is { } final && final != h.LastSamples)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.last-frame-samples-differ",
-                $"The 11 bits after the last frame give {final} samples, the header {h.LastSamples}; libmpcdec takes the bits after the frame.",
+                $"The 11 bits after the last frame give {final} samples, the header {h.LastSamples}; with true gapless, libmpcdec takes the bits after the frame, and so does the analyzer.",
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 
         // libmpcdec r495: true gapless keeps the last frame's samples, otherwise the synthesis
         // filter's delay is cut off the end; the output never runs past the frames decoded.
         long frames = complete;
-        long announced = h.Frames == 0 ? 0 : h.Gapless ? (h.Frames * FrameSamples) - FrameSamples + h.LastFrameSamples : (h.Frames * FrameSamples) - SynthesisDelay;
+        long announced = h.Frames == 0 ? 0 : h.Gapless ? (h.Frames * FrameSamples) - FrameSamples + LastFrameSamples(h, state.FinalSamples) : (h.Frames * FrameSamples) - SynthesisDelay;
         long samples = Math.Max(0, Math.Min(announced, (frames * FrameSamples) - SynthesisDelay));
         double duration = rate > 0 ? samples / (double)rate : 0;
 
         Node Cover(string name, NodeValue? value, string description) =>
             new(name, node.Offset, node.Length, value) { Description = description };
 
-        Node? encoder = MusepackEncoder.Detect(h.Encoder, null, header.Children.First(c => c.Name == "Encoder Version"), claims,
+        Node? encoder = MusepackEncoder.Detect(h, null, header.Children.First(c => c.Name == "Encoder Version"), claims,
             (name, value, description) => name == "Encoder"
                 ? new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.EncoderDetection }
                 : Cover(name, value, description),
@@ -657,6 +717,8 @@ internal static class Sv7Parser
 
         public int? FinalSamples { get; set; }
 
+        public long? EmptyFrom { get; set; }
+
         public long FramesWithMidSide { get; private set; }
 
         public long MidSideBands { get; private set; }
@@ -681,12 +743,6 @@ internal readonly record struct Sv7Header(
     int Version, int PnsNibble, long Frames, bool IntensityStereo, bool MidSide, int MaxBand, int Profile, int Link, int RateIndex, int MaxLevel,
     short TitleGain, int TitlePeak, short AlbumGain, int AlbumPeak, bool Gapless, int LastSamples, bool FastSeek, int Unused, int Encoder)
 {
-    // The last frame's samples, where 0 means all of them (libmpcdec r495).
-    public int LastFrameSamples => LastSamples == 0 ? Sv7Parser.FrameSamples : LastSamples;
-
-    // The frames the header counts, and one more where libmpcdec decodes one after them.
-    public long ExpectedFrames => Frames + (Gapless && Frames > 0 && LastFrameSamples + Sv7Parser.SynthesisDelay > Sv7Parser.FrameSamples ? 1 : 0);
-
     public static Sv7Header Read(WordStream w) => new(
         Version: (int)w.Read(4, 4),
         PnsNibble: (int)w.Read(0, 4),

@@ -1,6 +1,16 @@
 {
  "length": 36,
  "version": 6,
+ "header": {
+  "Bitrate": "0 kbps",
+  "Intensity Stereo": "false",
+  "Mid/Side Stereo": "true",
+  "Stream Version": "6",
+  "Max Band": "27",
+  "Block Size": "1 frame",
+  "Frame Count": "3 frames"
+ },
+ "frames": [],
  "stream_infos": [
   {
    "codec": "Musepack SV6",
@@ -20,8 +30,8 @@
  ],
  "findings": [
   {
-   "code": "musepack.version-not-analyzed",
-   "contains": "SV6"
+   "code": "musepack.frames-not-read",
+   "contains": "no SV6 encoder"
   }
  ],
  "crosscheck": {

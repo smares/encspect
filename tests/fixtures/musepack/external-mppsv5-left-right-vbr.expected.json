@@ -1,0 +1,223 @@
+{
+ "length": 10412,
+ "version": 5,
+ "header": {
+  "Bitrate": "0 kbps",
+  "Intensity Stereo": "false",
+  "Mid/Side Stereo": "false",
+  "Stream Version": "5",
+  "Max Band": "31",
+  "Block Size": "1 frame",
+  "Frame Count": "29 frames"
+ },
+ "frames": [
+  [
+   4317,
+   18,
+   "0",
+   0
+  ],
+  [
+   1478,
+   3,
+   "0",
+   0
+  ],
+  [
+   1523,
+   3,
+   "0",
+   0
+  ],
+  [
+   1551,
+   3,
+   "0",
+   0
+  ],
+  [
+   1641,
+   3,
+   "0",
+   0
+  ],
+  [
+   1732,
+   3,
+   "0",
+   0
+  ],
+  [
+   1532,
+   3,
+   "0",
+   0
+  ],
+  [
+   1512,
+   3,
+   "0",
+   0
+  ],
+  [
+   1319,
+   3,
+   "0",
+   0
+  ],
+  [
+   947,
+   3,
+   "0",
+   0
+  ],
+  [
+   1330,
+   3,
+   "0",
+   0
+  ],
+  [
+   1616,
+   3,
+   "0",
+   0
+  ],
+  [
+   1737,
+   3,
+   "0",
+   0
+  ],
+  [
+   1645,
+   3,
+   "0",
+   0
+  ],
+  [
+   1553,
+   3,
+   "0",
+   0
+  ],
+  [
+   1552,
+   3,
+   "0",
+   0
+  ],
+  [
+   1523,
+   3,
+   "0",
+   0
+  ],
+  [
+   1621,
+   3,
+   "0",
+   0
+  ],
+  [
+   1716,
+   3,
+   "0",
+   0
+  ],
+  [
+   13701,
+   26,
+   "0",
+   0
+  ],
+  [
+   4192,
+   27,
+   "0",
+   0
+  ],
+  [
+   4043,
+   27,
+   "0",
+   0
+  ],
+  [
+   4186,
+   27,
+   "0",
+   0
+  ],
+  [
+   4297,
+   27,
+   "0",
+   0
+  ],
+  [
+   4035,
+   26,
+   "0",
+   0
+  ],
+  [
+   4084,
+   27,
+   "0",
+   0
+  ],
+  [
+   4048,
+   27,
+   "0",
+   0
+  ],
+  [
+   4301,
+   27,
+   "0",
+   0
+  ]
+ ],
+ "stream_infos": [
+  {
+   "codec": "Musepack SV5",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 31775,
+   "average_bitrate": 108.40703125,
+   "duration": 0.7205215419501134,
+   "encoder": null
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV5",
+   "offset": 0,
+   "length": 10412
+  }
+ ],
+ "encoder": {
+  "tool": "the SV5 encoder (mppsv5.zip, Rarewares) under Wine",
+  "arguments": [
+   "-ms",
+   "0",
+   "-br",
+   "var"
+  ],
+  "rate": 44100,
+  "channels": 2,
+  "samples": 33075,
+  "mppdec_frames": 28
+ },
+ "findings": [
+  {
+   "code": "musepack.last-frame-unwritten",
+   "contains": "runs 13 bits past the end of the data"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

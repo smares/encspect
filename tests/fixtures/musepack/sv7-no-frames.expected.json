@@ -1,0 +1,46 @@
+{
+ "length": 26240,
+ "version": 7,
+ "header": {
+  "Frame Count": "0 frames",
+  "Max Band": "28",
+  "Profile": "10",
+  "Sample Rate": "44100 Hz",
+  "True Gapless": "true",
+  "Last Frame Samples": "486 samples",
+  "Mid/Side Stereo": "true",
+  "Encoder Version": "116"
+ },
+ "frames": [],
+ "stream_end": 28,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV7",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 0,
+   "average_bitrate": null,
+   "duration": 0.0
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV7",
+   "offset": 0,
+   "length": 26240
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.no-frames",
+   "contains": "counts no frames"
+  },
+  {
+   "code": "musepack.trailing-data",
+   "contains": "26212 bytes"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -210,6 +210,64 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An SV5 stream keeps the same 24-byte record per frame as SV7, so it is held to the same bounds.
+    [Fact]
+    public void ManyOldMusepackFramesStayCompact()
+    {
+        const int frames = 100_000;
+
+        (Report report, long kept, long peak) = Measure("frames.mp+", Sv5Frames(frames), Sv5Frames(100));
+
+        Assert.Equal("Musepack SV5", report.Streams.Single().Codec);
+        Assert.Equal((frames - 1) * 1152L - 481, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * MusepackKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MusepackPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // An SV8 audio packet of 4^7 frames in 4 bytes declares about 428 s: the per-second figures are
+    // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
+    // second they declare.
+    [Fact]
+    public void LongEmptySv8PacketsStayCompact()
+    {
+        const int packets = 200_000;
+
+        (Report report, long kept, long peak) = Measure("packets.mpc", Sv8EmptyPackets(packets, "AP"u8), Sv8EmptyPackets(100, "AP"u8));
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Packets the analyzer no longer details, once it has detailed 4,096, are kept as one record per
+    // run, so empty packets of an unknown key (3 bytes each) keep about nothing per packet. The
+    // bound is on the growth from 1 to 4 million packets: what the report keeps whatever the count
+    // (the detailed packets, pools the runtime holds on to) differs by platform and would otherwise
+    // dominate.
+    [Fact]
+    public void UnknownSv8PacketsStayCompact()
+    {
+        const int fewer = 1_000_000;
+        const int packets = 4_000_000;
+        byte[] warmUp = Sv8EmptyPackets(5000, "XX"u8);
+
+        (_, long fewerKept, long fewerPeak) = Measure("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
+        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
+        double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
+        double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes peak: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
+        Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The live heap grew by {peakPerPacket:F2} bytes per further packet.");
+        GC.KeepAlive(report);
+    }
+
     // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
     // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
     // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak
@@ -389,6 +447,9 @@ public class MemoryTests(ITestOutputHelper output)
 
     private const long MusepackPeakBound = 120;
 
+    // Bytes per further undetailed SV8 packet of 3 bytes: runs are one record each, so close to 0.
+    private const long UndetailedPacketBound = 1;
+
     // An SV7 stream (libmpcdec r495 streaminfo_read_header_sv7): a header with mid/side, max band 1
     // and no true gapless, then frames of 400 zero bits, which read as subband 0 left out and
     // subband 1 filled with noise, in 32-bit little-endian words from their most significant bit.
@@ -421,5 +482,62 @@ public class MemoryTests(ITestOutputHelper output)
 
         Write(0, 11);
         return words.SelectMany(BitConverter.GetBytes).ToArray()[..(int)(((bit + 31) >> 5) << 2)];
+    }
+
+    // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
+    // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then
+    // packets of the key, audio packets with one byte, others empty, and the stream end.
+    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key)
+    {
+        byte[] body = [8, 0, 0, 0x1F, 0x1F];
+        uint crc = 0xFFFFFFFF;
+        foreach (byte b in body)
+        {
+            crc ^= b;
+            for (int k = 0; k < 8; k++)
+            {
+                crc = (crc & 1) != 0 ? 0xEDB88320 ^ (crc >> 1) : crc >> 1;
+            }
+        }
+
+        crc ^= 0xFFFFFFFF;
+        byte[] sh = [(byte)'S', (byte)'H', 12, (byte)(crc >> 24), (byte)(crc >> 16), (byte)(crc >> 8), (byte)crc, .. body];
+        byte[] rg = [(byte)'R', (byte)'G', 12, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+        var data = new List<byte>("MPCK"u8.ToArray());
+        data.AddRange(sh);
+        data.AddRange(rg);
+        for (int i = 0; i < packets; i++)
+        {
+            data.AddRange(key[0] == 'A' ? [key[0], key[1], 4, 0] : [key[0], key[1], 3]);
+        }
+
+        data.AddRange("SE\x03"u8.ToArray());
+        return [.. data];
+    }
+
+    // An SV5 stream (libmpcdec 1.2.6 streaminfo_read_header_sv6): a header with a variable bitrate,
+    // mid/side, max band 0 and one frame per length, then frames of 32 zero bits, whole words only,
+    // as the SV5 encoder writes them.
+    private static byte[] Sv5Frames(int frames)
+    {
+        long bits = 64 + (frames * 52L);
+        var data = new byte[(int)(bits >> 5) << 2];
+        uint[] words = new uint[data.Length / 4];
+        words[0] = (1u << 21) | (5u << 11) | 1u;
+        words[1] = (uint)frames;
+        for (long i = 0, bit = 64; i < frames; i++, bit += 52)
+        {
+            for (int b = 0; b < 20; b++)
+            {
+                long position = bit + b;
+                if (((32 >> (19 - b)) & 1) != 0 && position >> 5 < words.Length)
+                {
+                    words[position >> 5] |= 1u << (31 - (int)(position & 31));
+                }
+            }
+        }
+
+        Buffer.BlockCopy(words, 0, data, 0, data.Length);
+        return data;
     }
 }

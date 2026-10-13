@@ -61,6 +61,7 @@
                 {
                   "name": "Block Size",
                   "value": 1,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 1,
                   "bitOffset": 2,
@@ -96,6 +97,7 @@
         "codec": "Musepack SV6",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo, mid/side per subband",
         "channelLayout": [
           "front left",
           "front right"
@@ -110,27 +112,14 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "musepack.version-not-analyzed",
-        "message": "The stream is Musepack SV6, which the analyzer reads only as far as its header; its frames are not analyzed.",
+        "code": "musepack.frames-not-read",
+        "message": "The frames of this Musepack SV6 stream are not read: no SV6 encoder was at hand to confirm the syntax of its frames.",
         "offset": 1,
         "length": 2,
         "path": [
           0,
           0,
           3
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "musepack.constant-bitrate",
-        "message": "The header gives a constant bitrate of 128 kbps; libmpcdec 1.2.6 refuses such streams.",
-        "offset": 2,
-        "length": 2,
-        "path": [
-          0,
-          0,
-          0
         ],
         "count": 1
       }
