@@ -38,8 +38,10 @@ MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo) is compared with every fixt
 each logical stream of the first chain link's codec, channels, sample rate (Opus: the input rate),
 the duration of its last granule position, the encoder (Speex: the header's version, Vorbis and
 Opus: the vendor string), Speex's header bitrate and mode, Vorbis's nominal bitrate, mode and floor
-type, Opus's channel layout, and the Vorbis comments' title, artist, album and ENCODER. MediaInfo
-reads no Speex comments (it misses the comment count), so those are skipped with that reason.
+type, Opus's channel layout, and the Vorbis comments' title, artist, album and ENCODER. Its own
+readings are asserted as such: the sample count from the rounded duration, no Speex comments (it
+misses the comment count), no floor type for a single floor or a broken setup header, and no
+channel layout for Opus mapping families other than 0 and 1.
 
 Fixtures that are not "valid" say which of these still apply and why the others do not, and
 valid ones list in "skip" the checks a tool cannot make; every check that is skipped prints its
@@ -466,7 +468,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "header-invalid.spx": dict.fromkeys(["channels", "sample rate", "encoder", "bitrate mode", "duration"], "MediaInfo reads the Speex header's fields only with version ID 1 (File_Speex.cpp, Identification), which this header breaks"),
     "header-short.spx": {"streams": "MediaInfo names the codec from the 8-byte signature of a header cut short (File_Speex.cpp, Identification), where the analyzer reports no stream"},
     "vorbis-ident-invalid.ogg": {"format": "MediaInfo reads the identification header only with Vorbis version 0 (File_Vorbis.cpp, Identification: \"Not supported\"), which this one breaks"},
-    "huge-lacing.spx": {"duration": "MediaInfo takes the granule position of every page (File_Ogg.cpp, Header_Parse), also the -1 that RFC 3533 section 6 sets where no packet ends on the page, so its duration is 2^64 - 1 samples"},
+    "huge-lacing.spx": dict.fromkeys(["duration", "samples from that duration"], "MediaInfo takes the granule position of every page (File_Ogg.cpp, Header_Parse), also the -1 that RFC 3533 section 6 sets where no packet ends on the page, so its duration is 2^64 - 1 samples"),
 }
 
 
@@ -519,8 +521,14 @@ def check_mediainfo(name, path, tally):
             # File_Vorbis.cpp, Identification: CBR where all three bitrates are the same and set.
             tally.compare("bitrate mode", track.get("BitRate_Mode"), "CBR" if rates[1] and rates[0] == rates[1] == rates[2] else "VBR")
             floors = re.match(r"(\d+) floors?, type (\d)", str(mi.value(node, "Setup Header", "Floors")))
-            if floors is None or floors.group(1) == "1":
-                tally.skip("floor type", MEDIAINFO_FLOORS + "; with one floor it reads none")
+            if floors is None:
+                # The analyzer reads no floors from a broken setup header; MediaInfo fills the floor
+                # types only after reading every codebook, and stops at a codebook without its sync
+                # pattern, at an undecodable lookup type or at the end of the packet (File_Vorbis.cpp, Setup).
+                tally.compare("floor type of a broken setup header", track.get("Format_Settings_Floor"), None)
+            elif floors.group(1) == "1":
+                # With one floor, MediaInfo reads none (MEDIAINFO_FLOORS).
+                tally.compare("floor type of a single floor", track.get("Format_Settings_Floor"), None)
             else:
                 tally.compare("floor type", (track.get("Format_Settings_Floor") or "").split(" / ")[0], floors.group(2))
             rate = stream["sampleRate"]
@@ -532,16 +540,21 @@ def check_mediainfo(name, path, tally):
             if family in (0, 1) and stream["channelLayout"]:
                 tally.compare("channel layout", mi.speakers(track.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
             else:
-                tally.skip("channel layout", "MediaInfo names the speakers of mapping families 0 and 1 only (File_Opus.cpp, Identification)")
+                # MediaInfo names the speakers of mapping families 0 and 1 only (File_Opus.cpp, Identification).
+                tally.compare("channel layout of other mapping families", track.get("ChannelLayout"), None)
             rate = 48000
         if granule:
             # File_Ogg.cpp, Streams_Fill: the last granule position over the sample rate, 48 kHz for
-            # Opus, rounded to the millisecond, without Opus's pre-skip or Speex's encoder delay.
-            tally.compare("duration", track.get("Duration"), f"{math.floor(granule * 1000 / rate + 0.5) / 1000:.3f}")
-        tally.skip("samples", "MediaInfo derives the sample count from its duration, rounded to the millisecond (File_Ogg.cpp, Streams_Fill)")
+            # Opus, rounded to the millisecond, without Opus's pre-skip or Speex's encoder delay; the
+            # sample count follows from that duration at its sample rate (File__Analyze_Streams_Finish.cpp,
+            # Streams_Finish_StreamOnly_Audio).
+            milliseconds = math.floor(granule * 1000 / rate + 0.5)
+            tally.compare("duration", track.get("Duration"), f"{milliseconds / 1000:.3f}")
+            output = int(track.get("SamplingRate") or 0)
+            tally.compare("samples from that duration", track.get("SamplingCount"), str(math.floor(milliseconds * output / 1000 + 0.5)) if output else None)
     general = info["General"] if info else {}
     if streams and streams[0][0]["codec"].startswith("Speex"):
-        tally.skip("tags", MEDIAINFO_SPEEX_COMMENTS)
+        tally.compare("Speex comments (" + MEDIAINFO_SPEEX_COMMENTS + ")", tuple(general.get(f) for f in ("Title", "Track", "Performer", "Album")), (None,) * 4)
     else:
         mi.compare_tags(tally, general, report)
         comments = [c for n in mi.walk(report["root"]) if n["name"] == "Vorbis Comment" for c in n.get("children", [])]

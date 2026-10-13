@@ -218,8 +218,12 @@ public class MpegFixtureTests
             expected["Header/Emphasis"] = emphasis.GetString()!;
         }
 
-        // The stream's channel mode is its audio frames', whatever the VBR header frame states.
+        // The stream's channel mode is its audio frames', whatever the VBR header frame states, and
+        // a change of mode is one between audio frames.
         Assert.Equal(encoder.GetProperty("channel_mode").GetString(), report.Streams.Single().ChannelMode);
+        Assert.Equal(
+            audioFrames.Select(f => Fixtures.Resolve(f, "Header/Channel Mode").FirstOrDefault()?.Value?.ToString()).Distinct().Count() > 1,
+            report.Findings.Any(f => f.Code == "mpeg.channel-mode-changed"));
 
         foreach (Node frame in audioFrames)
         {

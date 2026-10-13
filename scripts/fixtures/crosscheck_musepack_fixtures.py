@@ -32,8 +32,10 @@ make_external_musepack_fixtures.py):
 - MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: the format and sample rate; for SV7 the channels and the header's frame count, which it
   gives as 1,152 samples a frame; for SV8 the stream header's sample count; and the APE tag's
-  title, artist and album. It reads neither SV4 to SV6 nor a stream after a leading ID3v2 tag, and
-  takes the SV7 encoder version from the wrong byte; each such skip names its evidence.
+  title, artist and album. Its own readings are asserted as such: no format for SV4 to SV6 (it takes
+  external-mppsv4-superframes for MPEG-2.5 Layer II) or for a stream after a leading ID3v2 tag, the
+  SV7 encoder version formatted from byte 24, no channels or encoder for SV8, and the duration and
+  bitrate it derives; fixtures on which it reads otherwise name their evidence.
 
 Fixtures that are not "valid" say why the others do not apply; every skipped check prints its
 reason. Disagreements fail the run.
@@ -325,53 +327,84 @@ def check_damaged_old(name, manifest, path, frames126, portable, problems):
 MEDIAINFO_OLD = "MediaInfo reads SV7 (\"MP+\") and SV8 (\"MPCK\") only (Audio/File_Mpc.cpp, Audio/File_MpcSv8.cpp); SV4 to SV6 streams have no signature"
 MEDIAINFO_LEADING_TAG = "MediaInfo looks for \"MP+\" and \"MPCK\" at the very start of the file (File_Mpc.cpp and File_MpcSv8.cpp, FileHeader_Begin), so it finds no stream after a leading ID3v2 tag"
 MEDIAINFO_SV7_ENCODER = "MediaInfo reads the SV7 encoder version from byte 24 (File_Mpc.cpp, FileHeader_Parse), where the header keeps it in byte 27, the high byte of its seventh little-endian word (libmpcdec, streaminfo.c)"
+MEDIAINFO_SIGNATURE_TAG = ("MediaInfo takes \"TAG\" 128 bytes before the end for an ID3v1 tag on the signature alone (Tag/File__Tags.cpp, "
+                           "DetectBeginOfEndTags_Test), here inside the Musepack data that by its own size runs to the end of the file, "
+                           "which the analyzer reports as a near miss")
+# An SV4 stream has no signature, and in this one MediaInfo finds a chain of MPEG audio frame headers
+# from 0x1B2F (its trace: "frame - Frame 0" there), which it reports as MPEG audio.
+MEDIAINFO_MISREAD_AS_MPEG = {
+    "external-mppsv4-superframes": {"Format": "MPEG Audio", "Format_Version": "2.5", "Format_Profile": "Layer 2", "SamplingRate": "12000", "FrameCount": "7"},
+}
 MEDIAINFO_READS_OTHERWISE = {
+    "sv7-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
+    "sv8-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
-    "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
+    "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples", "duration and bitrate"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
     "sv8-rate-reserved": {"format": "MediaInfo 24.01 indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
 }
 
 
+def sv7_encoder_text(version):
+    """MediaInfo's name for an SV7 encoder version byte (File_Mpc.cpp, FileHeader_Parse)."""
+    suffix = "" if version % 10 == 0 else " Beta" if version % 2 == 0 else " Alpha"
+    return f"{version / 100:.2f}{suffix}"
+
+
 def check_mediainfo(name, path, tally):
     """MediaInfo must report the format, sample rate and, for SV7, the channels and the header's frame
-    count (as its samples, 1,152 per frame), for SV8 the stream header's sample count, and the APE
-    tag's title, artist and album."""
+    count (as its samples, 1,152 per frame), for SV8 the stream header's sample count, the duration
+    and bitrate it derives from them and the file size, and the APE tag's title, artist and album.
+    Where it reads otherwise by its source, the value it gives is checked."""
     problems = tally.start(name)
     report = mi.golden(path)
+    info = mi.read(path)
+    audio = info["Audio"][0] if info and info["Audio"] else {}
+    if name in MEDIAINFO_MISREAD_AS_MPEG:
+        tally.compare("misreading as MPEG audio", {k: audio.get(k) for k in MEDIAINFO_MISREAD_AS_MPEG[name]}, MEDIAINFO_MISREAD_AS_MPEG[name])
+        return problems
     if not report["streams"]:
-        tally.skip("format", "the analyzer finds no stream")
+        tally.compare("format where the analyzer finds no stream", audio.get("Format"), None)
         return problems
     stream = report["streams"][0]
     if stream["codec"] not in ("Musepack SV7", "Musepack SV8"):
-        tally.skip("format", MEDIAINFO_OLD)
+        tally.compare("format of SV4 to SV6 (" + MEDIAINFO_OLD + ")", audio.get("Format"), None)
         return problems
     if report["root"]["children"][0]["name"] == "ID3v2":
-        tally.skip("format", MEDIAINFO_LEADING_TAG)
+        tally.compare("format after a leading ID3v2 tag (" + MEDIAINFO_LEADING_TAG + ")", audio.get("Format"), None)
         return problems
-    info = mi.read(path)
-    audio = info["Audio"][0] if info and info["Audio"] else {}
     tally.compare("format", audio.get("Format"), stream["codec"])
     if not audio:
         return problems
     node = mi.stream_node(report, stream)
+    data = path.read_bytes()
+    start = node["offset"]
     if stream["codec"] == "Musepack SV8" and mi.child(node, "Stream Header") is None:
-        tally.skip("sample rate", "the stream has no stream header, which holds the sample rate and count")
+        # The stream header holds the sample rate and count.
+        tally.compare("sample rate without a stream header", audio.get("SamplingRate"), None)
         return problems
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
+    rate = stream["sampleRate"]
     if stream["codec"] == "Musepack SV7":
         frames = mi.leading_number(mi.value(node, "Header", "Frame Count"))
         tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
         tally.compare("header frames (samples / 1152)", audio.get("SamplingCount"), str(frames * 1152))
-        tally.skip("encoder", MEDIAINFO_SV7_ENCODER)
+        tally.compare("encoder as MediaInfo misreads it (" + MEDIAINFO_SV7_ENCODER + ")", audio.get("Encoded_Library"), sv7_encoder_text(data[start + 24]))
+        # File_Mpc.cpp, FileHeader_Parse: frames x 1152 over the rate, and the file less 25 bytes over them.
+        tally.compare("duration and bitrate", (audio.get("Duration"), audio.get("BitRate")),
+                      (f"{frames * 1152 * 1000 // rate / 1000:.3f}", str((len(data) - 25) * 8 * rate // frames // 1152) if frames else None))
     else:
-        tally.skip("channels", "MediaInfo reads the SV8 channel count without filling it in (File_MpcSv8.cpp, SH)")
+        # File_MpcSv8.cpp, SH: the channel count and the encoder info packet are read but not filled in.
+        tally.compare("SV8 channels and encoder", (audio.get("Channels"), audio.get("Encoded_Library")), (None, None))
         count = mi.leading_number(mi.value(node, "Stream Header", "Sample Count"))
         if count == 0:
-            tally.skip("samples", "a sample count of 0 means unknown (SV8 specification, Stream Header Packet), which MediaInfo leaves out (File_MpcSv8.cpp, SH)")
+            # A sample count of 0 means unknown (SV8 specification, Stream Header Packet), which
+            # MediaInfo leaves out with the duration and bitrate (File_MpcSv8.cpp, SH: if (SampleCount)).
+            tally.compare("samples, duration and bitrate where the count is unknown", (audio.get("SamplingCount"), audio.get("Duration"), audio.get("BitRate")), (None, None, None))
         else:
             tally.compare("samples", audio.get("SamplingCount"), str(count))
-        tally.skip("encoder", "MediaInfo reads the SV8 encoder info packet without filling in the version (File_MpcSv8.cpp, EI)")
-    tally.skip("duration and bitrate", "MediaInfo derives them from the header's frames or samples and the file size, tags and all (File_Mpc.cpp, File_MpcSv8.cpp)")
+            # File_MpcSv8.cpp, SH: samples over the rate, and the whole file over the samples.
+            tally.compare("duration and bitrate", (audio.get("Duration"), audio.get("BitRate")),
+                          (f"{count * 1000 // rate / 1000:.3f}", str(len(data) * 8 * rate // count)))
     mi.compare_tags(tally, info["General"], report)
     return problems
 

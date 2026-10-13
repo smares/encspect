@@ -33,9 +33,11 @@ Every fixture is also compared with MediaInfo 24.01 (mediainfo_tool.py, check_me
 its golden report: the format, dependent substreams, sample rate, channels and layout, bsid,
 acmod, lfeon, bsmod (ServiceKind), dialnorm and its range, compr, dynrng, dsurmod and the Dolby
 Surround modes, the nominal bitrate and mode, and the frames, samples, duration and stream size
-(in MP4, the sample table's frame count). MediaInfo's own readings are skipped with the evidence:
-among them, it reads the AC-3 mixlevel as 8 bits instead of A/52's 5, so every later field of a
-frame with production information comes out 3 bits late.
+(in MP4, the sample table's frame count). MediaInfo's own readings are asserted as such: it reads
+the AC-3 mixlevel as 8 bits instead of A/52's 5, so every later field of a frame with production
+information comes out 3 bits late, which mediainfo_bsi reproduces; it names the service "CM" where
+bsmod is absent and gives dsurmod 0 where it is not coded. Fixtures on which it reads otherwise
+name their evidence.
 
 The analyzer's agreement with the manifests is checked by the tests (Ac3FixtureTests). Needs ffmpeg,
 liba52-0.7.4-dev, mediainfo and a C compiler. Exits non-zero when anything disagrees.
@@ -44,6 +46,7 @@ liba52-0.7.4-dev, mediainfo and a C compiler. Exits non-zero when anything disag
 """
 
 import json
+import math
 import pathlib
 import re
 import subprocess
@@ -234,7 +237,57 @@ MEDIAINFO_SERVICES = ["CM", "ME", "VI", "HI", "D", "C", "E", "VO"]
 # A/52 5.4.2.14 gives mixlevel 5 bits; MediaInfo reads 8 in an AC-3 frame (File_Ac3.cpp, "mixlevel -
 # Mixing Level", Skip_S1(8, ...)), 5 in E-AC-3, so in a frame with audprodie it reads every later
 # field 3 bits late: time codes, addbsi, Annex D's xbsi2 (dsurexmod, dheadphonmod) and dynrng.
-MIXLEVEL = "MediaInfo reads the AC-3 mixlevel as 8 bits where A/52 5.4.2.14 gives 5 (File_Ac3.cpp, Skip_S1(8, \"mixlevel\")), so it reads the later fields of a frame with production information 3 bits late"
+MIXLEVEL = "MediaInfo reads the AC-3 mixlevel as 8 bits where A/52 5.4.2.14 gives 5 (File_Ac3.cpp, Skip_S1(8, \"mixlevel\")), so it reads the later fields of a frame with production information 3 bits late; compared with that reading (mediainfo_bsi)"
+# File_Ac3.cpp, AC3_Channels and AC3_dynrng.
+MEDIAINFO_CHANNELS = [2, 1, 2, 3, 3, 4, 4, 5]
+MEDIAINFO_DYNRNG = [6.02, 12.04, 18.06, 24.08, -18.06, -12.04, -6.02, 0.00]
+
+
+def mediainfo_bsi(data, offset):
+    """An AC-3 frame's xbsi2 modes and first dynrng as MediaInfo reads them (File_Ac3.cpp, the
+    bsid<=0x09 branch of Core_Frame), its 8-bit mixlevel and all."""
+    bits = "".join(f"{b:08b}" for b in data[offset:offset + 64])
+    position = 40
+    def read(count):
+        nonlocal position
+        position += count
+        return int(bits[position - count:position], 2)
+    bsid, _, acmod = read(5), read(3), read(3)
+    if acmod & 1 and acmod != 1:
+        read(2)
+    if acmod & 4:
+        read(2)
+    if acmod == 2:
+        read(2)
+    read(1 + 5)
+    for _ in range(2 if acmod == 0 else 1):
+        if read(1):
+            read(8)
+        if read(1):
+            read(8)
+        if read(1):
+            read(8 + 2)
+        if acmod == 0 and _ == 0:
+            read(5)
+    read(2)
+    modes = {}
+    if bsid == 6:
+        if read(1):
+            read(2 + 3 + 3 + 3 + 3)
+        if read(1):
+            modes = {"dsurexmod": read(2), "dheadphonmod": read(2)}
+            read(1 + 8 + 1)
+    else:
+        for _ in range(2):
+            if read(1):
+                read(14)
+    if read(1):
+        read(8 * (read(6) + 1))
+    read(2 * MEDIAINFO_CHANNELS[acmod])
+    dynrng = read(8) if read(1) else None
+    if dynrng is not None:
+        modes["dynrng"] = 0.0 if dynrng == 0 else MEDIAINFO_DYNRNG[dynrng >> 5] + 20 * math.log10((0x20 + (dynrng & 0x1F)) / 64)
+    return modes
 
 # MediaInfo takes an E-AC-3 stream's bitrate from the first frame of each substream
 # (File_Ac3.cpp, frmsizplus1_Max, set once) and calls it CBR (Streams_Fill, "CBR" by default);
@@ -246,7 +299,7 @@ DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent fram
 
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 MEDIAINFO_READS_OTHERWISE = {
-    "bsid-10": {"format": "MediaInfo knows the frame size of bsid 0 to 9 and 11 to 16 only (File_Ac3.cpp, FrameSynchPoint_Test), so it never syncs on bsid 10, which A/52 Annex E leaves undefined"},
+    "bsid-10": {"format": "MediaInfo knows the frame size of bsid 0 to 9 and 11 to 16 only (File_Ac3.cpp, FrameSynchPoint_Test), so it never syncs on bsid 10, which A/52 does not define (Annex E 2.3.1.6 has decoders mute bsid 9 and 10, as the analyzer's ac3 finding cites)"},
     "bsid-9": {"duration": "MediaInfo gives bsid 9 frames 16 ms (File_Ac3.cpp, Streams_Finish, \"Unofficial hack for low sample rate\"), which disagrees with its own 6144 samples at 24000 Hz, 0.256 s"},
     "cut-frame": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
     "truncated": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
@@ -301,7 +354,9 @@ def check_mediainfo(path, tally):
     tally.compare("lfeon", extra.get("lfeon"), " / ".join(lfes))
     mode = mi.value(bsi, "Bit Stream Mode")
     if mode is None:
-        tally.skip("service kind", "the first frame carries no bsmod (E-AC-3 without informational metadata), for which MediaInfo reports CM by default")
+        # Without informational metadata an E-AC-3 frame carries no bsmod; MediaInfo then reports
+        # CM (File_Ac3.cpp, bsmod=0).
+        tally.compare("service kind without bsmod", audio.get("ServiceKind"), "CM")
     else:
         tally.compare("service kind", audio.get("ServiceKind"), MEDIAINFO_SERVICES[mi.leading_number(mode)])
     dialnorms = [dialnorm(mi.value(f, "Bit Stream Information", "Dialogue Normalization")) for f in frames if f not in dependent]
@@ -309,25 +364,33 @@ def check_mediainfo(path, tally):
     tally.compare("dialnorm minimum and maximum", (extra.get("dialnorm_Minimum"), extra.get("dialnorm_Maximum")), (str(min(dialnorms)), str(max(dialnorms))))
     compr = mi.value(bsi, "Compression Gain")
     tally.compare("compr", None if extra.get("compr") is None else round(float(extra["compr"]), 1), compr)
-    production = mi.value(bsi, "HasProductionInfo") and field(first, "Bit Stream ID") <= 8
+    # MediaInfo reads frames of bsid 0 to 9 with the AC-3 syntax (File_Ac3.cpp, bsid<=0x09).
+    production = mi.value(bsi, "HasProductionInfo") and field(first, "Bit Stream ID") <= 9
     surround = mi.leading_number(mi.value(bsi, "Dolby Surround Mode"))
     if field(first, "Audio Coding Mode") != 2:
         pass
     elif surround is None:
-        tally.skip("dsurmod", "the first frame carries no dsurmod (E-AC-3 without informational metadata), for which MediaInfo reports 0 (File_Ac3.cpp, dsurmod=0)")
+        # Without informational metadata an E-AC-3 frame carries no dsurmod; MediaInfo then
+        # reports 0 (File_Ac3.cpp, dsurmod=0).
+        tally.compare("dsurmod without informational metadata", extra.get("dsurmod"), " / ".join(["0"] * len(acmods)))
     else:
         tally.compare("dsurmod", extra.get("dsurmod"), " / ".join([str(surround)] * len(acmods)))
     expected_mode = None
     if surround == 2:
         expected_mode = "Dolby Surround"
     if production:
-        tally.skip("dynrng", MIXLEVEL)
-        tally.skip("surround mode", MIXLEVEL)
+        tally.skip("dynrng and surround mode against the frames", MIXLEVEL)
+        read = mediainfo_bsi(path.read_bytes(), first["offset"])
+        tally.compare("dynrng as MediaInfo misreads it", extra.get("dynrng"), None if read.get("dynrng") is None else f"{read['dynrng']:.2f}")
+        misread = {2: "Dolby Surround EX", 3: "Dolby Pro Logic IIz"}.get(read.get("dsurexmod"), expected_mode)
+        misread = "Dolby Headphone" if read.get("dheadphonmod") == 2 else misread
+        tally.compare("surround mode as MediaInfo misreads it", audio.get("Format_Settings_Mode"), misread)
     else:
         block = next((c for c in first.get("children", []) if c.get("kind") == "SideInfo"), None)
         dynrng = mi.value(block, "Dynamic Range Gain") if block is not None and mi.value(block, "HasDynamicRange") else None
         if stream["codec"] == "E-AC-3":
-            tally.skip("dynrng", "MediaInfo does not read E-AC-3 audio blocks (File_Ac3.cpp, \"Not finished, for reference only\")")
+            # MediaInfo does not read E-AC-3 audio blocks (File_Ac3.cpp, "Not finished, for reference only").
+            tally.compare("E-AC-3 dynrng", extra.get("dynrng"), None)
         else:
             tally.compare("dynrng", None if extra.get("dynrng") is None else round(float(extra["dynrng"]), 2), dynrng)
         ex = mi.leading_number(mi.value(bsi, "Extended Information 2", "Dolby Surround EX Mode"))
@@ -337,11 +400,10 @@ def check_mediainfo(path, tally):
         tally.compare("surround mode", audio.get("Format_Settings_Mode"), expected_mode)
     statistics = next(n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics")
     nominal = mi.leading_number(mi.value(statistics, "Nominal Bitrate"))
-    tally.compare("bitrate", audio.get("BitRate"), str(round((nominal or stream["averageBitrate"]) * 1000)))
+    tally.compare("bitrate", audio.get("BitRate"), str(math.floor((nominal or stream["averageBitrate"]) * 1000 + 0.5)))
     tally.compare("bitrate mode", audio.get("BitRate_Mode"), "VBR" if stream["isVbr"] else "CBR")
     contained = path.suffix == ".mp4"
     if contained:
-        tally.skip("frames", "in MP4, MediaInfo's FrameCount, SamplingCount, Duration and StreamSize follow the edit list; the sample table's count is compared as Source_FrameCount")
         tally.compare("frames in the sample table", audio.get("Source_FrameCount", audio.get("FrameCount")), str(mi.value(statistics, "Frames") and mi.leading_number(mi.value(statistics, "Frames"))))
         return tally.problems
     independent = [f for f in frames if f not in dependent]

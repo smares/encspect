@@ -108,6 +108,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         int frames = 0;
         long position = start;
         MpegHeader? stream = null;
+        // The last audio frame's header since sync was found: a VBR header frame's channel mode
+        // describes no audio (ffmpeg writes its Info frame as stereo before joint stereo audio).
+        MpegHeader? audio = null;
         int freeLength = 0;
 
         // A stream change found where sync returns after a gap is reported on the frame there,
@@ -159,10 +162,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     }
 
                     Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < end);
-                    if (header.ChannelModeBits != current.ChannelModeBits)
+                    if (!frame.IsVbrHeader)
                     {
-                        findings.Add(Severity.Info, "mpeg.channel-mode-changed", FindingNode(frame), count =>
-                            $"The channel mode changes {Times(count)}, first from {current.ChannelMode} to {header.ChannelMode} at 0x{at:X}.");
+                        if (audio is { } last && header.ChannelModeBits != last.ChannelModeBits)
+                        {
+                            findings.Add(Severity.Info, "mpeg.channel-mode-changed", FindingNode(frame), count =>
+                                $"The channel mode changes {Times(count)}, first from {last.ChannelMode} to {header.ChannelMode} at 0x{at:X}.");
+                        }
+
+                        audio = header;
                     }
 
                     position = frame.End;
@@ -176,6 +184,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     freeLength = newFreeLength;
                     stream = header;
                     Entry frame = AddFrame(state, regionState, at, end, header, freeLength);
+                    audio = frame.IsVbrHeader ? null : header;
                     StreamChanged(current, header, FindingNode(frame));
                     FreeFormat(header, freeLength);
                     position = frame.End;
@@ -201,6 +210,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             var found = new MpegHeader(first);
             resynced = stream is { } before && !found.IsSameStream(before) ? (before, found, foundFreeLength) : null;
             stream = found;
+            audio = null;
             freeLength = foundFreeLength;
             if (resynced is null)
             {

@@ -114,7 +114,7 @@ public sealed partial class MpegAudioParser
         };
     }
 
-    // The channels of the stream's first frame: one for mono, two independent programs without
+    // The channels of the stream's first audio frame: one for mono, two independent programs without
     // speaker positions for dual channel, left and right for stereo and joint stereo. Where the file
     // carries the MPEG-2 multichannel extension (ISO/IEC 13818-3) and every frame of the stream
     // that carries it states the same configuration, the stream has the configuration's channels in

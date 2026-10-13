@@ -30,7 +30,7 @@ def require():
         output = subprocess.run(["mediainfo", "--Version"], capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError) as error:
         sys.exit(f"MediaInfo is needed: {error}")
-    if f"v{VERSION}" not in output:
+    if not re.search(rf"MediaInfoLib - v{re.escape(VERSION)}\b", output):
         sys.exit(f"MediaInfo {VERSION} is needed, found: {' '.join(output.split())}")
 
 
@@ -170,23 +170,24 @@ def tag_values(report):
 
 def compare_tags(tally, general, report):
     """MediaInfo's Title, Track, Performer and Album must each be what one of the file's tags holds
-    there, and be there whenever a tag holds one. Which tag wins where several do is MediaInfo's
-    choice, so any of them counts. MediaInfo copies the title to the track name where no tag gives
+    there, be there whenever a tag holds one and be absent otherwise. Which tag wins where several do
+    is MediaInfo's choice, so any of them counts. Where MediaInfo finds no format, it reads no tag,
+    so all four must be absent. MediaInfo copies the title to the track name where no tag gives
     one, and the track name to the title (File__Analyze_Streams.cpp, File__Analyze::Tags)."""
     values = tag_values(report)
-    if not values:
-        tally.skip("tags", "no tag holds a title, artist or album")
-        return
-    if not general.get("Format"):
-        # File__Tags_Helper runs inside the parser of each format, so it reads no tag of a file
-        # whose format MediaInfo does not recognize.
-        tally.skip("tags", "MediaInfo reads tags only within a format it recognizes (File__Tags.cpp, File__Tags_Helper), and finds none here")
+    fields = ("Title", "Track", "Performer", "Album")
+    if values and not general.get("Format"):
+        # File__Tags_Helper runs inside the parser of each format, so MediaInfo reads no tag of a
+        # file whose format it does not recognize: it must then show none.
+        for field in fields:
+            tally.compare(f"tag {field.lower()} without a format", text(general.get(field)), None)
         return
     titles = values.get("Title") or values.get("Track") or []
     tracks = values.get("Track") or values.get("Title") or []
-    for field, expected in (("Title", titles), ("Track", tracks), ("Performer", values.get("Performer", [])), ("Album", values.get("Album", []))):
+    for field, expected in zip(fields, (titles, tracks, values.get("Performer", []), values.get("Album", []))):
         actual = text(general.get(field))
-        if actual is None and not expected:
+        if not expected:
+            tally.compare(f"tag {field.lower()}", actual, None)
             continue
         wanted = actual if actual in expected else expected[0] if len(expected) == 1 else f"one of {expected}"
         tally.compare(f"tag {field.lower()}", actual, wanted)
@@ -234,7 +235,7 @@ class Tally:
             else:
                 self.counts[(field, f"skipped: {reason}")] += 1
             return
-        self.counts[(field, "compared")] += 1
+        self.counts[(field, "compared" if expected is not None else "compared, absent on both" if actual is None else "compared, expected absent")] += 1
         if actual != expected:
             self.problems.append(f"MediaInfo's {field} is {actual!r}, expected {expected!r}")
 

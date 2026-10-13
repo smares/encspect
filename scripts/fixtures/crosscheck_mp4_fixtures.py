@@ -39,9 +39,12 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
 - MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: each track's format and AAC profile, ADTS's MPEG version, sample rate, channels and
   layout, SBR and parametric stereo signaling (implicit, explicit or hierarchical), access units
-  and stream size, the track header's and sample table's durations, the encoding tool (©too) and
-  the iTunes metadata's title, artist and album. Its AAC bitrate mode follows frame sizes, not the
-  encoder's declaration, so it is skipped with that reason, as are its other own readings.
+  and stream size, the track header's and sample table's durations (for a fragmented file, the track
+  runs' sample durations), the encoding tool (©too) and the iTunes metadata's title, artist and album.
+  Its own readings are asserted as such: the AAC bitrate mode, which follows frame sizes more than
+  the encoder's declaration (mediainfo_aac_mode), the mono layout "M" of HE-AAC v2, no duration for
+  ADTS, and one frame for ADIF with the duration and stream size from its bitrate. Fixtures on
+  which it reads a field otherwise are listed with the evidence (MEDIAINFO_READS_OTHERWISE).
 
 The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureTests). Exits non-zero
 when anything disagrees. Needs ffmpeg, gpac, faad and mediainfo.
@@ -352,23 +355,24 @@ def check_trace(path, report, problems, skipped=()):
 # MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
 MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
                      "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None)}
-MEDIAINFO_AAC_MODE = ("MediaInfo calls an AAC stream VBR wherever its frame sizes differ by more than 2 % (File_Aac.cpp, Streams_Finish), as AAC's bit "
-                      "reservoir makes them at a constant bitrate too; the analyzer follows the encoder's declaration (ADTS buffer fullness 0x7FF, "
-                      "esds avgBitrate 0 by ISO/IEC 14496-1 7.2.6.6.2)")
-# MediaInfo counts every sample that stsz sizes, and sums their sizes, whether or not a chunk places
-# it in the file (File_Mpeg4_Elements.cpp, stsz); the analyzer leaves out what has no place.
-STSZ = "MediaInfo counts every sample stsz sizes and sums their sizes (File_Mpeg4_Elements.cpp, stsz), whether or not the chunks place them in the file; the analyzer leaves out the samples that have no place, with a finding"
-STTS = "MediaInfo counts the samples stts gives a duration (File_Mpeg4.cpp, Source_FrameCount from stts_FrameCount), where stsz sizes fewer"
+# MediaInfo counts the samples that stts gives a duration (File_Mpeg4.cpp lines 774, 799 and 852
+# fill FrameCount and Source_FrameCount from stts_FrameCount, which File_Mpeg4_Elements.cpp line 8755
+# sums) and takes the stream size from the sizes stsz lists (stsz_StreamSize, File_Mpeg4.cpp lines
+# 801 and 855), whether or not a chunk places the samples in the file; the analyzer leaves out what
+# has no place, with a finding.
+STTS_COUNT = "MediaInfo counts the samples stts gives a duration (File_Mpeg4.cpp lines 774, 799 and 852: FrameCount from stts_FrameCount, summed in File_Mpeg4_Elements.cpp line 8755)"
+UNPLACED_UNITS = STTS_COUNT + ", whether or not the chunks place them in the file; the analyzer leaves out the samples that have no place, with a finding"
+UNPLACED_SIZE = "MediaInfo sums the sizes stsz lists (File_Mpeg4_Elements.cpp, stsz: stsz_StreamSize, filled in File_Mpeg4.cpp lines 801 and 855), whether or not the chunks place the samples in the file; the analyzer leaves out the samples that have no place, with a finding"
 ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it parses without an error; its trace (--Details=1) lists every frame"
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 MEDIAINFO_READS_OTHERWISE = {
-    "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data), where only a single channel element can carry it, so decoders do not apply it"),
-    "mp4/chunk-outside-file": dict.fromkeys(["access units", "stream size"], STSZ),
-    "mp4/chunk-sample-mismatch": dict.fromkeys(["access units", "stream size"], STSZ),
-    "mp4/truncated": dict.fromkeys(["access units", "stream size"], STSZ),
+    "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data); the analyzer, like the decoders, does not apply it there: FFmpeg 6.1 turns PS off for a configuration of more than one channel (aacdec_template.c, decode_ga_specific_config) and skips the extension (aacsbr_template.c, read_sbr_extension), and faad2 2.11 decodes a channel pair's SBR without PS (specrec.c, reconstruct_channel_pair: sbrDecodeCoupleFrame)"),
+    "mp4/chunk-outside-file": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
+    "mp4/chunk-sample-mismatch": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
+    "mp4/truncated": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
     "adts/truncated": {"access units": "MediaInfo counts the complete ADTS frames only, and the last one is cut 5 bytes short"},
-    "mp4/huge-sample-count": {"access units": STSZ, "sample table duration": "MediaInfo takes the duration of the 4294967280 samples stts states (File_Mpeg4.cpp, Source_Duration), which no sample backs"},
-    "mp4/sample-count-mismatch": {"access units": STTS},
+    "mp4/huge-sample-count": {"access units": STTS_COUNT + ": the 4294967280 that stts states, of which stsz sizes 20", "sample table duration": "MediaInfo takes the duration of the 4294967280 samples stts states (File_Mpeg4.cpp, Source_Duration), which no sample backs"},
+    "mp4/sample-count-mismatch": {"access units": STTS_COUNT + ": 21, where stsz sizes 20"},
     "adts/corrupt-syntax": {"access units": ADTS_ERRORS + " (21 frames, 16 counted)"},
     "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
     "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
@@ -404,6 +408,55 @@ def sbr_signaling(report, stream_node, codec):
     return sbr, ps
 
 
+def mediainfo_aac_mode(report, node, track_box):
+    """The bitrate mode MediaInfo gives an AAC stream, which follows frame sizes more than the
+    encoder's declaration that the analyzer reports (ADTS buffer fullness 0x7FF, ADIF's
+    bitstream_type, esds avgBitrate 0 by ISO/IEC 14496-1 7.2.6.6.2):
+
+    - ADIF: bitstream_type (File_Aac_Main.cpp, adif_header).
+    - ADTS: VBR where the largest frame exceeds the smallest by more than 2 %, and none otherwise
+      (File_Aac.cpp, Streams_Finish, which writes CBR only at parse speed 1, the default being 0.5).
+      Streams_Update's reading of the buffer fullness reaches no output, since Open_Buffer_Finalize
+      runs it after Streams_Fill has copied the stream's fields (File__Analyze.cpp).
+    - MP4: from the esds's avgBitrate where it is set and not the "buggy" 0x1000 that also fills
+      bufferSizeDB and maxBitrate: CBR where maxBitrate is 0 or within 0.5 % above it, VBR otherwise
+      (File_Mpeg4_Descriptors.cpp, DecoderConfigDescriptor). Otherwise, in a file without fragments
+      and a track without stss, VBR where the largest sample stsz sizes exceeds the smallest by more
+      than 1 %, CBR otherwise (File_Mpeg4.cpp, Streams_Finish, lines 1379-1396), and none else."""
+    if node["name"] == "ADIF":
+        return "VBR" if str(mi.value(node, "ADIF Header", "Bitstream Type")).startswith("1") else "CBR"
+    statistics = mi.child(node, "Statistics")
+    if node["name"] == "ADTS":
+        return "VBR" if mi.value(statistics, "Largest Frame") > mi.value(statistics, "Smallest Frame") * 1.02 else None
+    if track_box is None:
+        return None
+    config = next((n for n in mi.walk(track_box) if n["name"] == "DecoderConfigDescriptor"), None)
+    average, maximum, buffer = (mi.leading_number(mi.value(config, name)) or 0 for name in ("Average Bitrate", "Maximum Bitrate", "Buffer Size"))
+    if average > 0 and not buffer == average == maximum == 0x1000:
+        return "CBR" if not maximum or average <= maximum <= average * 1.005 else "VBR"
+    if any(n["name"] == "moof" for n in mi.walk(report["root"])) or any(n["name"] == "stss" for n in mi.walk(track_box)):
+        return None
+    return "VBR" if mi.value(statistics, "Smallest Access Unit") * (1.005 + 0.005) < mi.value(statistics, "Largest Access Unit") else "CBR"
+
+
+def fragment_ticks(report, track_box):
+    """The sum of the track's sample durations over its movie fragments: each track run's own
+    durations, or the track fragment header's default, or the track extends box's (ISO/IEC 14496-12
+    8.8.3, 8.8.7, 8.8.8)."""
+    track_id = mi.value(mi.child(track_box, "tkhd"), "Track ID")
+    trex = next((n for n in mi.walk(report["root"]) if n["name"] == "trex" and mi.value(n, "Track ID") == track_id), None)
+    ticks = 0
+    for fragment in (n for n in mi.walk(report["root"]) if n["name"] == "traf"):
+        header = mi.child(fragment, "tfhd")
+        if mi.value(header, "Track ID") != track_id:
+            continue
+        default = mi.value(header, "Default Sample Duration") or mi.value(trex, "Default Sample Duration") or 0
+        for run in (n for n in fragment.get("children", []) if n["name"] == "trun"):
+            durations = [mi.value(sample, "Duration") for sample in run.get("children", []) if sample["name"] == "Sample"]
+            ticks += sum(durations) if durations and None not in durations else mi.value(run, "Sample Count") * default
+    return ticks
+
+
 def milliseconds(seconds):
     """Seconds as MediaInfo writes a duration: rounded to the millisecond (ZenLib's float64_int64s)."""
     return f"{math.floor(seconds * 1000 + 0.5) / 1000:.3f}"
@@ -411,8 +464,8 @@ def milliseconds(seconds):
 
 def check_mediainfo(path, tally):
     """MediaInfo must report each audio track's format and AAC profile, ADTS's MPEG version, sample
-    rate, channels and layout, SBR and PS signaling, access units and stream size, and for MP4 the
-    duration, the encoding tool and the iTunes metadata's title, artist and album."""
+    rate, channels and layout, SBR and PS signaling, bitrate mode, access units and stream size, and
+    for MP4 the duration, the encoding tool and the iTunes metadata's title, artist and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
     report = json.loads((path.parent / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
     info = mi.read(path)
@@ -433,7 +486,8 @@ def check_mediainfo(path, tally):
         # With a chan box, MediaInfo gives the configuration's channels as Channels_Original.
         tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
         if codec == "HE-AAC v2":
-            tally.skip("channel layout", "MediaInfo counts parametric stereo's two channels but keeps the mono core's layout, \"M\" (File_Aac_GeneralAudio.cpp, FillInfosHEAACv2)")
+            # MediaInfo counts parametric stereo's two channels but keeps the mono core's layout (File_Aac_GeneralAudio.cpp, FillInfosHEAACv2).
+            tally.compare("channel layout of HE-AAC v2", track.get("ChannelLayout"), "M")
         elif stream["channelLayout"]:
             # The analyzer gives the configuration's layout, and the container's where the configuration names none.
             reserved = any(f["code"] == "aac.reserved-channel-configuration" for f in report["findings"])
@@ -443,16 +497,26 @@ def check_mediainfo(path, tally):
             sbr, ps = sbr_signaling(report, node, codec)
             tally.compare("SBR signaling", track.get("Format_Settings_SBR"), sbr)
             tally.compare("PS signaling", track.get("Format_Settings_PS"), ps)
-            tally.skip("bitrate mode", MEDIAINFO_AAC_MODE)
+            tracks = [n for n in mi.walk(report["root"]) if n["name"] == "trak"]
+            index = report["streams"].index(stream)
+            tally.compare("bitrate mode", track.get("BitRate_Mode"), mediainfo_aac_mode(report, node, tracks[index] if index < len(tracks) else None))
         if node["name"] == "ADIF":
-            tally.skip("access units", "ADIF holds no frames: MediaInfo counts one, and the whole file as the stream (File_Aac.cpp, Mode_ADIF)")
+            # ADIF holds no frames: MediaInfo counts one, takes the file's duration from its size at
+            # the header's bitrate, rounded to the millisecond, and the stream size from that duration
+            # (File__Analyze_Streams_Finish.cpp, Streams_Finish_StreamOnly and Streams_Finish_Global).
+            bitrate = mi.leading_number(mi.value(node, "ADIF Header", "Bitrate"))
+            duration = math.floor(path.stat().st_size * 8000 / bitrate + 0.5) if bitrate else None
+            tally.compare("frames, duration and stream size of ADIF", (track.get("FrameCount"), track.get("Duration"), track.get("StreamSize")),
+                          ("1", f"{duration / 1000:.3f}", str(math.floor(bitrate * duration / 8000 + 0.5))) if duration else ("1", None, None))
             continue
         statistics = mi.child(node, "Statistics")
         units = mi.value(statistics, "Access Units") or mi.value(statistics, "Frames")
         tally.compare("access units", track.get("Source_FrameCount", track.get("FrameCount")), str(units))
         tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
         if node["name"] == "ADTS":
-            tally.skip("duration", "MediaInfo gives an ADTS stream's duration only from a full parse or its bitrate estimate (File_Aac.cpp, Streams_Finish)")
+            # MediaInfo gives an ADTS stream's duration only at parse speed 1 or from its risky
+            # bitrate estimate, both off by default (File_Aac.cpp, Streams_Update and Streams_Finish).
+            tally.compare("ADTS duration", track.get("Duration"), None)
             continue
         # File_Mpeg4.cpp, Streams_Finish: the duration is the track header's, in the movie's time
         # scale, and where the sample table's differs from it, that one is Source_Duration, rounded
@@ -464,7 +528,10 @@ def check_mediainfo(path, tally):
             continue
         header = mi.leading_number(mi.value(mi.child(tracks[index], "tkhd"), "Duration"))
         if not header:
-            tally.skip("track header duration", "a fragmented file's track header gives no duration; MediaInfo then sums the track runs' sample durations (File_Mpeg4.cpp, IsFragmented)")
+            # A fragmented file's track header gives no duration; MediaInfo then sums the track
+            # runs' sample durations (File_Mpeg4_Elements.cpp, moof_traf_trun).
+            media = next((n for n in mi.walk(tracks[index]) if n["name"] == "mdhd"), None)
+            tally.compare("fragments' duration", track.get("Duration"), milliseconds(fragment_ticks(report, tracks[index]) / mi.leading_number(mi.value(media, "Timescale"))))
         else:
             tally.compare("track header duration", track.get("Duration"), milliseconds(header / movie))
         media = next((n for n in mi.walk(tracks[index]) if n["name"] == "mdhd"), None)

@@ -78,7 +78,10 @@ mp3guessenc must still report what the manifest recorded.
   gives, or the complete frames without one; the LAME tag's encoder string; and the title, artist
   and album of the ID3v2, ID3v1, APE and Lyrics3 tags. Where MediaInfo reads otherwise by its
   source (MEDIAINFO_READS_OTHERWISE, and the rules in check_mediainfo), the difference is checked
-  to be the one named, and the summary prints each skip with its reason.
+  to be the one named: its own readings are asserted (the mode extension's names for Layer I and II,
+  the frames it parses of a variable bitrate without a VBR header, no encoder without a LAME tag,
+  encoder string or TSSE, no tag fields where no tag holds them), and the summary prints each skip
+  with its reason.
 
 Needs ffprobe, madplay, mpg123, mediainfo, php, curl, make and a C and C++ compiler on the PATH; minimp3,
 mp3guessenc and EncSpot are built from third_party. Exits
@@ -1240,16 +1243,20 @@ def check(path, manifest, tools):
     return problems
 
 # MediaInfo (mediainfo_tool.py) reads MPEG audio in File_Mpega.cpp: it syncs where frame headers
-# chain, reads up to 128 frames (Frame_Count_Valid at the default ParseSpeed of 0.5) and reports the
-# format, sample rate, channels, mode, mode extension and emphasis of the last one it read. A Xing,
-# Info or VBRI (version 1) header in one of the first three frames gives the frame count and the
-# stream's bytes (the byte count less the header's frame), a LAME tag the encoder; a LAME tag of a
-# CBR method drops the frame count. Without a frame count, a constant bitrate's frames are the
-# stream's bytes over the frame length without padding, and those bytes are where it last synced, or
-# the file size less the tags (Streams_Finish). Bitrates near a standard one are rounded to it
-# unless the mode is already VBR (File__Analyze_Streams.cpp, Audio_BitRate_Rounding).
+# chain and parses 128 frames (Frame_Count_Valid at the default ParseSpeed of 0.5); where the 128th
+# lies in the file's first half, it jumps to 16 KiB before the end (GoToFromEnd) and parses the
+# frames from there, otherwise it parses on. It reports the format, sample rate, channels, mode,
+# mode extension and emphasis of the last frame it parsed. A Xing, Info or VBRI (version 1) header in
+# one of the first three frames gives the frame count and the stream's bytes (the byte count less
+# the header's frame), a LAME tag the encoder; a LAME tag of revision 0 to 2 with a CBR method drops
+# the frame count (Header_Encoders_Lame). Without a frame count, a constant bitrate's frames are the
+# stream's bytes over the frame length without padding, the bytes coming from the file
+# (Streams_Finish). Bitrates near a standard one are rounded to it unless the mode is already VBR
+# (File__Analyze_Streams.cpp, Audio_BitRate_Rounding), and float32_int32s rounds half up.
 MEDIAINFO_FRAMES = 128
 MEDIAINFO_MODES = {"Joint stereo": "Joint stereo", "Dual channel": "Dual mono"}
+# File_Mpega.cpp, Mpega_Codec_Profile_Extension: Layer III's names, which it gives whatever the layer.
+MEDIAINFO_EXTENSION_NAMES = [None, "Intensity Stereo", "MS Stereo", "Intensity Stereo + MS Stereo"]
 MEDIAINFO_EXTENSIONS = {"Intensity stereo": "Intensity Stereo", "Mid/side stereo": "MS Stereo", "Mid/side and intensity stereo": "Intensity Stereo + MS Stereo"}
 MEDIAINFO_EMPHASIS = {"50/15 µs": "50/15ms", "Reserved": "Reserved", "CCITT J.17": "CCITT"}
 MEDIAINFO_STANDARD_RATES = [(7500, 8500, 8000), (15000, 17000, 16000), (23000, 25000, 24000), (31000, 33000, 32000), (38000, 42000, 40000),
@@ -1257,13 +1264,17 @@ MEDIAINFO_STANDARD_RATES = [(7500, 8500, 8000), (15000, 17000, 16000), (23000, 2
                             (109760, 114240, 112000), (125440, 130560, 128000), (156800, 163200, 160000), (188160, 195840, 192000),
                             (219520, 228480, 224000), (250880, 261120, 256000), (282240, 293760, 288000), (313600, 326400, 320000),
                             (344960, 359040, 352000), (376320, 391680, 384000), (407680, 424320, 416000), (439040, 456960, 448000)]
-MEDIAINFO_FREE_FORMAT = "MediaInfo does not sync on free format, whose bitrate index 0 it takes for a false start (File_Mpega.cpp, Synchronize)"
+# MediaInfo does not sync on free format, whose bitrate index 0 it takes for a false start
+# (File_Mpega.cpp, Synchronize), so it must find no MPEG audio in a free-format file.
 MEDIAINFO_FILE_BYTES = ("without a byte count from a VBR header, MediaInfo takes the stream's bytes from the file size less the tags (File_Mpega.cpp, "
                         "Streams_Finish: VBR_FileSize), so it counts bytes between and around the frames that the analyzer does not take as frames, "
                         "and derives its frame count from them")
-MEDIAINFO_END_TAGS = ("without a byte count from a VBR header, MediaInfo's bytes of the stream are the file size less the tags at the start and "
-                      "twice the tags at the end, checked to the byte (File_Mpega.cpp, Streams_Finish: VBR_FileSize less File_EndTagSize), so "
-                      "they fall short by the end tags' size, and its frame count with them")
+MEDIAINFO_END_TAGS = ("observed, not found in the source: without a byte count from a VBR header, MediaInfo's bytes of the stream come out as "
+                      "the file size less the tags at the start and twice the tags at the end, checked to the byte here, where "
+                      "File_Mpega.cpp, Streams_Finish subtracts File_EndTagSize once; so they fall short by the end tags' size, and its "
+                      "frame count with them. Measured on external-blade-mono's 16,128 bytes of frames: with a 128-byte ID3v1 tag it gives 16,000, "
+                      "with a 79-byte APE tag with a header 16,049, with both 15,921; with a 47-byte APE tag without a header, which "
+                      "Tag/File__Tags.cpp sizes 32 bytes larger, 16,128, and with that and ID3v1 16,049, which this rule does not fit")
 MEDIAINFO_LONE = ("MediaInfo takes a single frame for a stream where it ends exactly at the end of the file (File_Mpega.cpp, Synchronize), "
                   "where the analyzer needs a chain of frames")
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
@@ -1271,9 +1282,10 @@ MEDIAINFO_READS_OTHERWISE = {
     "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
     "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
     "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
-    "mpeg/concatenated-files": {"stream size": "MediaInfo subtracts from the file size every tag it reads, the first file's ID3v1 and the second file's ID3v2 between the streams too, and the ID3v1 at the end twice (File__Tags.cpp, File_EndTagSize): 4487 - 26 - 128 - 27 - 2 x 128 = 4050 bytes"},
-    "mpeg/tagged-stream": {"stream size": "MediaInfo reads the 52-byte APE tag, which has no header, as 84 bytes (its trace: \"ApeTag (84 bytes)\"; File_ApeTag.cpp counts a 32-byte header), and its byte count falls those 84 bytes short of the frames' 3343"},
+    "mpeg/concatenated-files": {"stream size": "observed: MediaInfo's byte count is the file size less every tag it reads, the first file's ID3v1 and the second file's ID3v2 between the streams too, and less the ID3v1 at the end twice: 4487 - 26 - 128 - 27 - 2 x 128 = 4050 bytes (see MEDIAINFO_END_TAGS)"},
+    "mpeg/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
     "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "frames", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
+    "mpeg/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
     "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
     "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
 }
@@ -1327,8 +1339,10 @@ def lame_encoder(frame, data):
     text = data[start:start + 9]
     accepted = (text[:4] == b"LAME" and text[5:6] == b"." and (text[4:5] > b"3" or text[4:6] == b"3." and (text[6:7] == b"9" or b"0" <= text[8:9] <= b"9"))
                 or text[:5] == b"LAMEH" or text[:4] == b"L3.9" and text[4:5] == b"9")
-    # MediaInfo's strings end at a NUL byte.
-    return (text.split(b"\0")[0].decode("latin-1"), data[start + 9] & 0x0F) if accepted else None
+    # MediaInfo's strings end at a NUL byte. It takes the VBR method only from a tag of revision 0
+    # to 2 ((Flags&0xF0)<=0x20); None stands for no method.
+    flags = data[start + 9]
+    return (text.split(b"\0")[0].decode("latin-1"), flags & 0x0F if flags & 0xF0 <= 0x20 else None) if accepted else None
 
 
 def check_mediainfo(path, tally):
@@ -1348,13 +1362,16 @@ def check_mediainfo(path, tally):
         mi.compare_tags(tally, general, report)
         return problems
     if all(h["Bitrate"] == "free" for _, h in frames):
-        tally.skip("format", MEDIAINFO_FREE_FORMAT)
+        tally.compare("format of free format", track and track.get("Format"), None)
         return problems
     tally.compare("format", track and track.get("Format"), "MPEG Audio")
     if track is None:
         return problems
+    data = path.read_bytes()
     fixed = [(n, h) for n, h in frames if h["Bitrate"] != "free"]
-    read = fixed[:MEDIAINFO_FRAMES]
+    read = fixed
+    if len(fixed) > MEDIAINFO_FRAMES and fixed[MEDIAINFO_FRAMES - 1][0]["offset"] < len(data) / 2:
+        read = fixed[:MEDIAINFO_FRAMES] + [(n, h) for n, h in fixed[MEDIAINFO_FRAMES:] if n["offset"] >= len(data) - 16 * 1024]
     complete = [(n, h) for n, h in read if n["length"] == nominal_length(h)] or read
     last = complete[-1][1]
     tally.compare("version and layer", (track.get("Format_Version"), track.get("Format_Profile")),
@@ -1362,18 +1379,24 @@ def check_mediainfo(path, tally):
     tally.compare("sample rate", track.get("SamplingRate"), str(last["Sample Rate"]))
     tally.compare("channels", track.get("Channels"), "1" if last["Channel Mode"] == "Mono" else "2")
     if any(len(s.get("channelLayout") or []) > 2 for s in report["streams"]):
-        tally.skip("multichannel", "MediaInfo does not read the ISO/IEC 13818-3 multichannel extension, so it reports the base frames' channels (File_Mpega.cpp has no mc_header)")
+        # MediaInfo does not read the ISO/IEC 13818-3 multichannel extension (File_Mpega.cpp has
+        # no mc_header), so it gives the base frames' two channels.
+        tally.compare("channels of a multichannel stream", track.get("Channels"), "2")
     tally.compare("mode", track.get("Format_Settings_Mode"), MEDIAINFO_MODES.get(last["Channel Mode"]))
-    if len(report["streams"]) == 1 and "mpeg.channel-mode-changed" not in codes:
+    if len(report["streams"]) == 1:
         # The stream's mode, which a VBR header frame must not decide.
         tally.compare("stream's mode", track.get("Format_Settings_Mode"), MEDIAINFO_MODES.get(report["streams"][0].get("channelMode")))
+    else:
+        tally.skip("stream's mode", "several streams")
     if last["Layer"] == "III":
         tally.compare("mode extension", track.get("Format_Settings_ModeExtension"), MEDIAINFO_EXTENSIONS.get(last.get("Mode Extension")))
     else:
-        tally.skip("mode extension", "MediaInfo names a Layer I or II bound with Layer III's stereo tools (File_Mpega.cpp, Mpega_Codec_Profile_Extension)")
+        # MediaInfo names a Layer I or II bound with Layer III's stereo tools (File_Mpega.cpp,
+        # Mpega_Codec_Profile_Extension), from the bits of the last frame.
+        bits = (data[complete[-1][0]["offset"] + 3] >> 4) & 3
+        tally.compare("Layer I and II mode extension bits", track.get("Format_Settings_ModeExtension"), MEDIAINFO_EXTENSION_NAMES[bits])
     tally.compare("emphasis", track.get("Format_Settings_Emphasis"), MEDIAINFO_EMPHASIS.get(last.get("Emphasis")))
 
-    data = path.read_bytes()
     first = fixed[0][0]
     xing = mi.child(first, "Xing")
     vbri = mi.child(first, "VBRI") if mi.value(first, "VBRI", "Version") == 1 else None
@@ -1406,22 +1429,28 @@ def check_mediainfo(path, tally):
     if claimed and not constant_method:
         frames_count = claimed
         mode = "CBR" if xing and mi.value(first, "Xing") == "Info" else "VBR"
-        bitrate = round(float32(float32(stream_bytes / claimed) * last["Sample Rate"] / (samples_per_frame(last) // 8)))
+        bitrate = math.floor(float32(float32(stream_bytes / claimed) * last["Sample Rate"] / (samples_per_frame(last) // 8)) + 0.5)
     else:
         constant = constant_method or len({h["Bitrate"] for _, h in read}) == 1
         mode = "CBR" if constant else "VBR"
         frames_count = math.floor((stream_bytes or reported_bytes) / unpadded_length(last) + 0.5) if constant else None
-        if stream_bytes is None and frames_count is not None:
-            tally.skip("frames against the frames' bytes", "MediaInfo derives its frame count from its own byte count, as the stream size skip says, so the count is checked against that")
         bitrate = last["Bitrate"] * 1000 if constant else None
     tally.compare("bitrate mode", track.get("BitRate_Mode"), mode)
     if frames_count is None:
-        tally.skip("frames", "without a VBR header MediaInfo counts the frames of a variable bitrate nowhere (File_Mpega.cpp, Streams_Finish)")
-        tally.skip("bitrate", "without a VBR header MediaInfo gives a variable bitrate's average only by its risky estimate, off by default (File_Mpega.cpp, Streams_Fill)")
+        # Without a VBR header, File_Mpega.cpp gives a variable bitrate no frame count, sample count
+        # or average (that only by its risky estimate, off by default: Streams_Fill); the generic
+        # Streams_Finish_StreamOnly_Audio (File__Analyze_Streams_Finish.cpp) then counts the frames
+        # it parsed, which leaves out a frame shorter than its header says ("Partial frame" in
+        # File_Mpega.cpp, Data_Parse).
+        parsed = sum(1 for n, h in read if n["length"] == nominal_length(h))
+        tally.compare("frames parsed of a variable bitrate without a VBR header", track.get("FrameCount"), str(parsed))
+        tally.compare("samples and bitrate of a variable bitrate without a VBR header", (track.get("SamplingCount"), track.get("BitRate")), (None, None))
     else:
         tally.compare("frames", track.get("FrameCount"), str(frames_count))
         if last["Layer"] == "I" and last["Version"] != "MPEG-1":
-            tally.skip("samples", "MediaInfo multiplies the frames of MPEG-2 and 2.5 Layer I by 1152 samples (File_Mpega.cpp, Streams_Finish), where ISO/IEC 13818-3 gives Layer I 384")
+            # MediaInfo multiplies the frames of MPEG-2 and 2.5 Layer I by 1152 samples (File_Mpega.cpp,
+            # Streams_Finish), where ISO/IEC 13818-3 gives Layer I 384.
+            tally.compare("samples of MPEG-2 and 2.5 Layer I", track.get("SamplingCount"), str(frames_count * 1152))
         else:
             tally.compare("samples", track.get("SamplingCount"), str(frames_count * samples_per_frame(last)))
     if bitrate is not None:
@@ -1437,7 +1466,14 @@ def check_mediainfo(path, tally):
     if lame is not None:
         tally.compare("encoder", library, lame[0])
     elif library is None:
-        tally.skip("encoder", "MediaInfo names no encoder without a LAME tag, an encoder string in the first frames or an ID3v2 TSSE (File_Mpega.cpp, Encoded_Library_Guess is commented out)")
+        # MediaInfo guesses no encoder from the coding (File_Mpega.cpp, Encoded_Library_Guess is
+        # commented out), so it names none without a LAME tag, an encoder string or an ID3v2 TSSE.
+        # It ignores ID3v2.2's TSS (File_Id3v2.cpp, Fill_Name: "case Elements::TSS  : break;").
+        texts = [n.get("value") for n in mi.walk(report["root"]) if n["name"] == "TSSE"]
+        if texts or any(m in data for m in (b"LAME", b"GOGO", b"MPGE")):
+            tally.compare("encoder", library, texts[0] if texts else "an encoder string")
+        else:
+            tally.compare("encoder without a LAME tag, encoder string or TSSE", library, None)
     else:
         # Without a LAME tag it takes, MediaInfo keeps 20 bytes after the first "LAME" in the
         # frames, or names Gogo for "GOGO" or "MPGE" (Header_Encoders), or takes an ID3v2 TSSE.

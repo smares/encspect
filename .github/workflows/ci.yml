@@ -171,8 +171,8 @@ jobs:
           test -z "$(git status --porcelain -- tests/fixtures)"
 
   mpeg-crosscheck:
-    name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc, the ISO streams and mp3PRO samples
-    runs-on: ubuntu-latest
+    name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc, MediaInfo, the ISO streams and mp3PRO samples
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -226,8 +226,8 @@ jobs:
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
 
   mp4-crosscheck:
-    name: MP4 and AAC fixtures agree with ffprobe, MP4Box and faad, and other encoders' xHE-AAC samples with the manifest
-    runs-on: ubuntu-latest
+    name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC samples with the manifest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -266,8 +266,8 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ogg-crosscheck:
-    name: Ogg fixtures agree with oggz, ogginfo, ffprobe and speexdec
-    runs-on: ubuntu-latest
+    name: Ogg fixtures agree with oggz, ogginfo, ffprobe, speexdec and MediaInfo
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -280,8 +280,8 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_ogg_fixtures.py
 
   musepack-crosscheck:
-    name: Musepack fixtures agree with mpcdec, ffprobe and libmpcdec
-    runs-on: ubuntu-latest
+    name: Musepack fixtures agree with mpcdec, ffprobe, libmpcdec and MediaInfo
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -302,8 +302,8 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ac3-crosscheck:
-    name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg and liba52
-    runs-on: ubuntu-latest
+    name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg, liba52 and MediaInfo
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 

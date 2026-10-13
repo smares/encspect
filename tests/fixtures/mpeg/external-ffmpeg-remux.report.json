@@ -14399,18 +14399,6 @@
     ],
     "findings": [
       {
-        "severity": "Info",
-        "code": "mpeg.channel-mode-changed",
-        "message": "The channel mode changes once, first from Stereo to Joint stereo at 0x19A.",
-        "offset": 410,
-        "length": 835,
-        "path": [
-          1,
-          3
-        ],
-        "count": 1
-      },
-      {
         "severity": "Warning",
         "code": "mpeg.main-data-begin-exceeds-buffer",
         "message": "1 frame reaches back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x18D7 has a main_data_begin of 485 bytes where at most 209 are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.",
