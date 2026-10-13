@@ -180,7 +180,7 @@ jobs:
       - name: Install ffmpeg, madplay and mpg123
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg madplay mpg123 php-cli
+          sudo apt-get install -y ffmpeg madplay mpg123 php-cli mediainfo
 
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py
@@ -235,7 +235,7 @@ jobs:
       - name: Install ffmpeg, gpac and faad
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg gpac faad
+          sudo apt-get install -y ffmpeg gpac faad mediainfo
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
@@ -274,7 +274,7 @@ jobs:
       - name: Install ffmpeg, oggz-tools, vorbis-tools, speex and opus-tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg oggz-tools vorbis-tools speex opus-tools
+          sudo apt-get install -y ffmpeg oggz-tools vorbis-tools speex opus-tools mediainfo
 
       - name: Cross-check the Ogg fixtures
         run: python3 scripts/fixtures/crosscheck_ogg_fixtures.py
@@ -293,7 +293,7 @@ jobs:
       - name: Install musepack-tools and ffmpeg
         run: |
           sudo apt-get update
-          sudo apt-get install -y musepack-tools ffmpeg
+          sudo apt-get install -y musepack-tools ffmpeg mediainfo
 
       # The Portable Musepack decoder's archive is only in the private repository, read with a read-only token.
       - name: Cross-check the Musepack fixtures
@@ -311,7 +311,7 @@ jobs:
       - name: Install ffmpeg and liba52
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg liba52-0.7.4-dev
+          sudo apt-get install -y ffmpeg liba52-0.7.4-dev mediainfo
 
       - uses: actions/setup-dotnet@v5
         with:

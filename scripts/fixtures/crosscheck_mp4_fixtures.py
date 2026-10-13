@@ -36,12 +36,19 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
+- MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
+  report: each track's format and AAC profile, ADTS's MPEG version, sample rate, channels and
+  layout, SBR and parametric stereo signaling (implicit, explicit or hierarchical), access units
+  and stream size, the track header's and sample table's durations, the encoding tool (©too) and
+  the iTunes metadata's title, artist and album. Its AAC bitrate mode follows frame sizes, not the
+  encoder's declaration, so it is skipped with that reason, as are its other own readings.
 
 The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureTests). Exits non-zero
-when anything disagrees.
+when anything disagrees. Needs ffmpeg, gpac, faad and mediainfo.
 """
 
 import json
+import math
 import pathlib
 import re
 import subprocess
@@ -50,6 +57,7 @@ import tempfile
 
 import channel_layouts
 import faad_trace_tool
+import mediainfo_tool as mi
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 DIRECTORIES = [ROOT / "mp4", ROOT / "adts", ROOT / "aac"]
@@ -341,7 +349,139 @@ def check_trace(path, report, problems, skipped=()):
     return compared - sum(1 for key in skipped if int(key) < compared)
 
 
+# MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
+MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
+                     "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None)}
+MEDIAINFO_AAC_MODE = ("MediaInfo calls an AAC stream VBR wherever its frame sizes differ by more than 2 % (File_Aac.cpp, Streams_Finish), as AAC's bit "
+                      "reservoir makes them at a constant bitrate too; the analyzer follows the encoder's declaration (ADTS buffer fullness 0x7FF, "
+                      "esds avgBitrate 0 by ISO/IEC 14496-1 7.2.6.6.2)")
+# MediaInfo counts every sample that stsz sizes, and sums their sizes, whether or not a chunk places
+# it in the file (File_Mpeg4_Elements.cpp, stsz); the analyzer leaves out what has no place.
+STSZ = "MediaInfo counts every sample stsz sizes and sums their sizes (File_Mpeg4_Elements.cpp, stsz), whether or not the chunks place them in the file; the analyzer leaves out the samples that have no place, with a finding"
+STTS = "MediaInfo counts the samples stts gives a duration (File_Mpeg4.cpp, Source_FrameCount from stts_FrameCount), where stsz sizes fewer"
+ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it parses without an error; its trace (--Details=1) lists every frame"
+# Fixtures on which MediaInfo reads a field differently, with the evidence.
+MEDIAINFO_READS_OTHERWISE = {
+    "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data), where only a single channel element can carry it, so decoders do not apply it"),
+    "mp4/chunk-outside-file": dict.fromkeys(["access units", "stream size"], STSZ),
+    "mp4/chunk-sample-mismatch": dict.fromkeys(["access units", "stream size"], STSZ),
+    "mp4/truncated": dict.fromkeys(["access units", "stream size"], STSZ),
+    "adts/truncated": {"access units": "MediaInfo counts the complete ADTS frames only, and the last one is cut 5 bytes short"},
+    "mp4/huge-sample-count": {"access units": STSZ, "sample table duration": "MediaInfo takes the duration of the 4294967280 samples stts states (File_Mpeg4.cpp, Source_Duration), which no sample backs"},
+    "mp4/sample-count-mismatch": {"access units": STTS},
+    "adts/corrupt-syntax": {"access units": ADTS_ERRORS + " (21 frames, 16 counted)"},
+    "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
+    "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
+    "adts/stream-change": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a second one where the sample rate changes"),
+    "mp4/id32": dict.fromkeys(["tag title", "tag track"], "MediaInfo skips the ID3v2 tag in an ID32 box (File_Mpeg4_Elements.cpp, moov_udta_ID32: Skip_XX \"ID3v2data\")"),
+    "mp4/ilst-all-types": {"tag performer": "MediaInfo writes \"UTF-16 encoding not yet supported\" for an iTunes data atom of type 2 (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data)"},
+    "mp4/trailing-id3v1": dict.fromkeys(["tag title", "tag track"], "MediaInfo's MP4 parser has no tag helper (File_Mpeg4.h: File_Mpeg4 derives from File__Analyze, not File__Tags_Helper), so it reads no ID3v1 tag after the boxes"),
+}
+
+
+def sbr_signaling(report, stream_node, codec):
+    """MediaInfo's Format_Settings_SBR and _PS for the stream: "Implicit" where the access units
+    carry SBR or PS that the configuration does not signal, "NBC" (not backward compatible) for
+    hierarchical signaling, object type 5 or 29 first, "Explicit" for the backward-compatible sync
+    extensions, which can also signal their absence (File_Aac_Main.cpp, AudioSpecificConfig)."""
+    config = next((n for n in mi.walk(report["root"]) if n["name"] == "AudioSpecificConfig" and n.get("children")), None)
+    implicit = any(f["code"] == "aac.implicit-sbr" for f in report["findings"])
+    object_type = mi.leading_number(mi.value(config, "Audio Object Type")) if config else None
+    flags = {n["name"]: n.get("value") for n in mi.walk(config)} if config else {}
+    sbr = ps = None
+    if object_type in (5, 29):
+        sbr = "Yes (NBC)"
+    elif "HasSbr" in flags:
+        sbr = "Yes (Explicit)" if flags["HasSbr"] else "No (Explicit)"
+    elif implicit:
+        sbr = "Yes (Implicit)"
+    if object_type == 29:
+        ps = "Yes (NBC)"
+    elif "HasPs" in flags:
+        ps = "Yes (Explicit)" if flags["HasPs"] else "No (Explicit)"
+    elif codec == "HE-AAC v2":
+        ps = "Yes (Implicit)"
+    return sbr, ps
+
+
+def milliseconds(seconds):
+    """Seconds as MediaInfo writes a duration: rounded to the millisecond (ZenLib's float64_int64s)."""
+    return f"{math.floor(seconds * 1000 + 0.5) / 1000:.3f}"
+
+
+def check_mediainfo(path, tally):
+    """MediaInfo must report each audio track's format and AAC profile, ADTS's MPEG version, sample
+    rate, channels and layout, SBR and PS signaling, access units and stream size, and for MP4 the
+    duration, the encoding tool and the iTunes metadata's title, artist and album."""
+    problems = tally.start(f"{path.parent.name}/{path.stem}")
+    report = json.loads((path.parent / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
+    info = mi.read(path)
+    audio = info["Audio"] if info else []
+    tally.compare("streams", len(audio), len(report["streams"]))
+    for stream, track in zip(report["streams"], audio):
+        node = mi.stream_node(report, stream)
+        codec = stream["codec"]
+        if codec.startswith("MPEG"):
+            version, layer = codec.split()[0][5:], {"I": "1", "II": "2", "III": "3"}[codec.split()[-1]]
+            tally.compare("format", (track.get("Format"), track.get("Format_Version"), track.get("Format_Profile")), ("MPEG Audio", version, f"Layer {layer}"))
+            continue
+        tally.compare("format", (track.get("Format"), track.get("Format_AdditionalFeatures")), MEDIAINFO_FORMATS.get(codec, (codec, None)))
+        frame = next((n for n in mi.walk(node) if n.get("kind") == "Frame"), None)
+        if node["name"] == "ADTS" and frame is not None:
+            tally.compare("MPEG version", track.get("Format_Version"), mi.value(frame, "Version").removeprefix("MPEG-"))
+        tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
+        # With a chan box, MediaInfo gives the configuration's channels as Channels_Original.
+        tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
+        if codec == "HE-AAC v2":
+            tally.skip("channel layout", "MediaInfo counts parametric stereo's two channels but keeps the mono core's layout, \"M\" (File_Aac_GeneralAudio.cpp, FillInfosHEAACv2)")
+        elif stream["channelLayout"]:
+            # The analyzer gives the configuration's layout, and the container's where the configuration names none.
+            reserved = any(f["code"] == "aac.reserved-channel-configuration" for f in report["findings"])
+            layout = track.get("ChannelLayout") if reserved else track.get("ChannelLayout_Original", track.get("ChannelLayout"))
+            tally.compare("channel layout", mi.speakers(layout), mi.normalized(stream["channelLayout"]))
+        if codec.startswith(("AAC", "HE-AAC")):
+            sbr, ps = sbr_signaling(report, node, codec)
+            tally.compare("SBR signaling", track.get("Format_Settings_SBR"), sbr)
+            tally.compare("PS signaling", track.get("Format_Settings_PS"), ps)
+            tally.skip("bitrate mode", MEDIAINFO_AAC_MODE)
+        if node["name"] == "ADIF":
+            tally.skip("access units", "ADIF holds no frames: MediaInfo counts one, and the whole file as the stream (File_Aac.cpp, Mode_ADIF)")
+            continue
+        statistics = mi.child(node, "Statistics")
+        units = mi.value(statistics, "Access Units") or mi.value(statistics, "Frames")
+        tally.compare("access units", track.get("Source_FrameCount", track.get("FrameCount")), str(units))
+        tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
+        if node["name"] == "ADTS":
+            tally.skip("duration", "MediaInfo gives an ADTS stream's duration only from a full parse or its bitrate estimate (File_Aac.cpp, Streams_Finish)")
+            continue
+        # File_Mpeg4.cpp, Streams_Finish: the duration is the track header's, in the movie's time
+        # scale, and where the sample table's differs from it, that one is Source_Duration, rounded
+        # to the millisecond.
+        index = report["streams"].index(stream)
+        tracks = [n for n in mi.walk(report["root"]) if n["name"] == "trak"]
+        movie = mi.leading_number(next((mi.value(n, "Timescale") for n in mi.walk(report["root"]) if n["name"] == "mvhd"), None))
+        if index >= len(tracks) or not movie:
+            continue
+        header = mi.leading_number(mi.value(mi.child(tracks[index], "tkhd"), "Duration"))
+        if not header:
+            tally.skip("track header duration", "a fragmented file's track header gives no duration; MediaInfo then sums the track runs' sample durations (File_Mpeg4.cpp, IsFragmented)")
+        else:
+            tally.compare("track header duration", track.get("Duration"), milliseconds(header / movie))
+        media = next((n for n in mi.walk(tracks[index]) if n["name"] == "mdhd"), None)
+        table = next((n for n in mi.walk(tracks[index]) if n["name"] == "stts"), None)
+        ticks = re.match(r"\d+ samples?, (\d+)", str(mi.value(table) or ""))
+        if "Source_Duration" in track and ticks:
+            tally.compare("sample table duration", track["Source_Duration"], milliseconds(int(ticks.group(1)) / mi.leading_number(mi.value(media, "Timescale"))))
+    general = info["General"] if info else {}
+    tools = [n.get("value") for n in mi.walk(report["root"]) if n["name"] == "Encoding Tool"]
+    tally.compare("encoding tool", general.get("Encoded_Application"), tools[0] if tools else None)
+    mi.compare_tags(tally, general, report)
+    return problems
+
+
 def main():
+    mi.require()
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     failures = 0
     checked = 0
     traced = 0
@@ -399,10 +539,15 @@ def main():
                 messages = decode_messages(path)
                 if messages:
                     problems.append(f"ffmpeg decodes with messages: {messages.splitlines()[0]}")
+            problems += check_mediainfo(path, tally)
             checked += 1
             for problem in problems:
                 print(f"{path.relative_to(ROOT)}: {problem}")
             failures += bool(problems)
+    for problem in tally.unused():
+        print(problem)
+        failures += 1
+    tally.print()
     print(f"{checked} fixtures checked, {traced} raw data blocks against faad2's trace, {failures} disagree.")
     return 1 if failures else 0
 

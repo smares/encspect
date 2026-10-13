@@ -218,6 +218,9 @@ public class MpegFixtureTests
             expected["Header/Emphasis"] = emphasis.GetString()!;
         }
 
+        // The stream's channel mode is its audio frames', whatever the VBR header frame states.
+        Assert.Equal(encoder.GetProperty("channel_mode").GetString(), report.Streams.Single().ChannelMode);
+
         foreach (Node frame in audioFrames)
         {
             foreach ((string path, string value) in expected)

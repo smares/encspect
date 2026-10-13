@@ -71,13 +71,23 @@ mp3guessenc must still report what the manifest recorded.
 - getID3: for LAME 3.90 to 3.92, whose tag has no preset field, getID3 must read the same version
   and name the same preset where it names one (getid3_tool.py).
 
-Needs ffprobe, madplay, mpg123, php, curl, make and a C and C++ compiler on the PATH; minimp3,
+- MediaInfo 24.01 (mediainfo_tool.py), compared with the golden report, on these fixtures and on
+  the tag fixtures (tests/fixtures/tags): the version, layer, sample rate, channels, mode, mode
+  extension and emphasis of the last frame it reads, and the stream's mode; the frame and sample
+  count, bitrate, bitrate mode and stream size that the first frame's Xing, Info or VBRI header
+  gives, or the complete frames without one; the LAME tag's encoder string; and the title, artist
+  and album of the ID3v2, ID3v1, APE and Lyrics3 tags. Where MediaInfo reads otherwise by its
+  source (MEDIAINFO_READS_OTHERWISE, and the rules in check_mediainfo), the difference is checked
+  to be the one named, and the summary prints each skip with its reason.
+
+Needs ffprobe, madplay, mpg123, mediainfo, php, curl, make and a C and C++ compiler on the PATH; minimp3,
 mp3guessenc and EncSpot are built from third_party. Exits
 non-zero when anything disagrees.
 """
 
 import collections
 import json
+import math
 import pathlib
 import re
 import struct
@@ -88,6 +98,7 @@ import encspot_tool
 import getid3_tool
 import guessenc_tool
 import mctoolamed_tool
+import mediainfo_tool as mi
 import minimp3_tool
 import stream_stats
 import vbr_tags
@@ -95,6 +106,7 @@ from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 DIRECTORIES = [ROOT / "mpeg", ROOT / "layer3", ROOT / "layer2", ROOT / "vbr", ROOT / "stats"]
+TAGS = ROOT / "tags"
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
 GUESSENC_BLOCKS = {"Long block": "long", "Switch block": "switch", "Short block": "short", "Mixed block": "mixed"}
@@ -1227,6 +1239,218 @@ def check(path, manifest, tools):
 
     return problems
 
+# MediaInfo (mediainfo_tool.py) reads MPEG audio in File_Mpega.cpp: it syncs where frame headers
+# chain, reads up to 128 frames (Frame_Count_Valid at the default ParseSpeed of 0.5) and reports the
+# format, sample rate, channels, mode, mode extension and emphasis of the last one it read. A Xing,
+# Info or VBRI (version 1) header in one of the first three frames gives the frame count and the
+# stream's bytes (the byte count less the header's frame), a LAME tag the encoder; a LAME tag of a
+# CBR method drops the frame count. Without a frame count, a constant bitrate's frames are the
+# stream's bytes over the frame length without padding, and those bytes are where it last synced, or
+# the file size less the tags (Streams_Finish). Bitrates near a standard one are rounded to it
+# unless the mode is already VBR (File__Analyze_Streams.cpp, Audio_BitRate_Rounding).
+MEDIAINFO_FRAMES = 128
+MEDIAINFO_MODES = {"Joint stereo": "Joint stereo", "Dual channel": "Dual mono"}
+MEDIAINFO_EXTENSIONS = {"Intensity stereo": "Intensity Stereo", "Mid/side stereo": "MS Stereo", "Mid/side and intensity stereo": "Intensity Stereo + MS Stereo"}
+MEDIAINFO_EMPHASIS = {"50/15 µs": "50/15ms", "Reserved": "Reserved", "CCITT J.17": "CCITT"}
+MEDIAINFO_STANDARD_RATES = [(7500, 8500, 8000), (15000, 17000, 16000), (23000, 25000, 24000), (31000, 33000, 32000), (38000, 42000, 40000),
+                            (46000, 50000, 48000), (54000, 58000, 56000), (62720, 65280, 64000), (78400, 81600, 80000), (94080, 97920, 96000),
+                            (109760, 114240, 112000), (125440, 130560, 128000), (156800, 163200, 160000), (188160, 195840, 192000),
+                            (219520, 228480, 224000), (250880, 261120, 256000), (282240, 293760, 288000), (313600, 326400, 320000),
+                            (344960, 359040, 352000), (376320, 391680, 384000), (407680, 424320, 416000), (439040, 456960, 448000)]
+MEDIAINFO_FREE_FORMAT = "MediaInfo does not sync on free format, whose bitrate index 0 it takes for a false start (File_Mpega.cpp, Synchronize)"
+MEDIAINFO_FILE_BYTES = ("without a byte count from a VBR header, MediaInfo takes the stream's bytes from the file size less the tags (File_Mpega.cpp, "
+                        "Streams_Finish: VBR_FileSize), so it counts bytes between and around the frames that the analyzer does not take as frames, "
+                        "and derives its frame count from them")
+MEDIAINFO_END_TAGS = ("without a byte count from a VBR header, MediaInfo's bytes of the stream are the file size less the tags at the start and "
+                      "twice the tags at the end, checked to the byte (File_Mpega.cpp, Streams_Finish: VBR_FileSize less File_EndTagSize), so "
+                      "they fall short by the end tags' size, and its frame count with them")
+MEDIAINFO_LONE = ("MediaInfo takes a single frame for a stream where it ends exactly at the end of the file (File_Mpega.cpp, Synchronize), "
+                  "where the analyzer needs a chain of frames")
+# Fixtures on which MediaInfo reads a field differently, with the evidence.
+MEDIAINFO_READS_OTHERWISE = {
+    "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
+    "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
+    "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
+    "mpeg/concatenated-files": {"stream size": "MediaInfo subtracts from the file size every tag it reads, the first file's ID3v1 and the second file's ID3v2 between the streams too, and the ID3v1 at the end twice (File__Tags.cpp, File_EndTagSize): 4487 - 26 - 128 - 27 - 2 x 128 = 4050 bytes"},
+    "mpeg/tagged-stream": {"stream size": "MediaInfo reads the 52-byte APE tag, which has no header, as 84 bytes (its trace: \"ApeTag (84 bytes)\"; File_ApeTag.cpp counts a 32-byte header), and its byte count falls those 84 bytes short of the frames' 3343"},
+    "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "frames", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
+    "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
+    "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
+}
+
+
+def float32(value):
+    return struct.unpack("f", struct.pack("f", value))[0]
+
+
+def rounded_bitrate(value):
+    """File__Analyze_Streams.cpp, Audio_BitRate_Rounding, for MPEG audio."""
+    return next((standard for low, high, standard in MEDIAINFO_STANDARD_RATES if low <= value <= high), value)
+
+
+def mpeg_frames(report):
+    """The analyzer's frames in file order, each as (node, header fields)."""
+    found = []
+    for node in mi.walk(report["root"]):
+        header = mi.child(node, "Header") if node.get("kind") == "Frame" else None
+        if header is not None and mi.value(header, "Layer"):
+            found.append((node, {c["name"]: c.get("value") for c in header["children"]}))
+    return found
+
+
+def samples_per_frame(header):
+    """ISO/IEC 11172-3 and 13818-3: 384 samples in Layer I, 1152 in Layer II and in MPEG-1 Layer III, 576 in MPEG-2 and 2.5 Layer III."""
+    return 384 if header["Layer"] == "I" else 576 if header["Layer"] == "III" and header["Version"] != "MPEG-1" else 1152
+
+
+def unpadded_length(header):
+    """The frame length without padding, as MediaInfo divides by it (File_Mpega.cpp, Streams_Finish)."""
+    slots = 4 if header["Layer"] == "I" else 1
+    per_second = samples_per_frame(header) // 8 // slots
+    return per_second * header["Bitrate"] * 1000 / header["Sample Rate"] * slots
+
+
+def nominal_length(header):
+    if not isinstance(header["Bitrate"], int) or not header["Sample Rate"]:
+        return None
+    padding = (4 if header["Layer"] == "I" else 1) if header["HasPadding"] else 0
+    return int(unpadded_length(header)) // (4 if header["Layer"] == "I" else 1) * (4 if header["Layer"] == "I" else 1) + padding
+
+
+def lame_encoder(frame, data):
+    """The LAME tag's encoder string and VBR method where MediaInfo takes it as one (File_Mpega.cpp,
+    Header_Encoders_Lame: "LAME" and a version from 3.90 on, "LAMEH" or "L3.99"), else None."""
+    tag = mi.child(frame, "LAME Tag")
+    if tag is None:
+        return None
+    start = tag["offset"]
+    text = data[start:start + 9]
+    accepted = (text[:4] == b"LAME" and text[5:6] == b"." and (text[4:5] > b"3" or text[4:6] == b"3." and (text[6:7] == b"9" or b"0" <= text[8:9] <= b"9"))
+                or text[:5] == b"LAMEH" or text[:4] == b"L3.9" and text[4:5] == b"9")
+    # MediaInfo's strings end at a NUL byte.
+    return (text.split(b"\0")[0].decode("latin-1"), data[start + 9] & 0x0F) if accepted else None
+
+
+def check_mediainfo(path, tally):
+    """MediaInfo must report the version, layer, sample rate, channels, mode, mode extension and
+    emphasis of the last frame it reads, the frames, samples, bitrate, bitrate mode and stream size
+    that a VBR header or the stream's bytes give, the LAME tag's encoder, and the tags' title, artist
+    and album."""
+    problems = tally.start(f"{path.parent.name}/{path.stem}")
+    report = mi.golden(path)
+    info = mi.read(path)
+    general, audio = (info["General"], info["Audio"]) if info else ({}, [])
+    frames = mpeg_frames(report)
+    codes = {f["code"] for f in report["findings"]}
+    track = next((t for t in audio if t.get("Format") == "MPEG Audio"), None)
+    if not frames:
+        tally.compare("format", track and track.get("Format"), None)
+        mi.compare_tags(tally, general, report)
+        return problems
+    if all(h["Bitrate"] == "free" for _, h in frames):
+        tally.skip("format", MEDIAINFO_FREE_FORMAT)
+        return problems
+    tally.compare("format", track and track.get("Format"), "MPEG Audio")
+    if track is None:
+        return problems
+    fixed = [(n, h) for n, h in frames if h["Bitrate"] != "free"]
+    read = fixed[:MEDIAINFO_FRAMES]
+    complete = [(n, h) for n, h in read if n["length"] == nominal_length(h)] or read
+    last = complete[-1][1]
+    tally.compare("version and layer", (track.get("Format_Version"), track.get("Format_Profile")),
+                  (last["Version"].removeprefix("MPEG-"), "Layer " + {"I": "1", "II": "2", "III": "3"}[last["Layer"]]))
+    tally.compare("sample rate", track.get("SamplingRate"), str(last["Sample Rate"]))
+    tally.compare("channels", track.get("Channels"), "1" if last["Channel Mode"] == "Mono" else "2")
+    if any(len(s.get("channelLayout") or []) > 2 for s in report["streams"]):
+        tally.skip("multichannel", "MediaInfo does not read the ISO/IEC 13818-3 multichannel extension, so it reports the base frames' channels (File_Mpega.cpp has no mc_header)")
+    tally.compare("mode", track.get("Format_Settings_Mode"), MEDIAINFO_MODES.get(last["Channel Mode"]))
+    if len(report["streams"]) == 1 and "mpeg.channel-mode-changed" not in codes:
+        # The stream's mode, which a VBR header frame must not decide.
+        tally.compare("stream's mode", track.get("Format_Settings_Mode"), MEDIAINFO_MODES.get(report["streams"][0].get("channelMode")))
+    if last["Layer"] == "III":
+        tally.compare("mode extension", track.get("Format_Settings_ModeExtension"), MEDIAINFO_EXTENSIONS.get(last.get("Mode Extension")))
+    else:
+        tally.skip("mode extension", "MediaInfo names a Layer I or II bound with Layer III's stereo tools (File_Mpega.cpp, Mpega_Codec_Profile_Extension)")
+    tally.compare("emphasis", track.get("Format_Settings_Emphasis"), MEDIAINFO_EMPHASIS.get(last.get("Emphasis")))
+
+    data = path.read_bytes()
+    first = fixed[0][0]
+    xing = mi.child(first, "Xing")
+    vbri = mi.child(first, "VBRI") if mi.value(first, "VBRI", "Version") == 1 else None
+    header = xing or vbri
+    lame = lame_encoder(first, data) if xing else None
+    reported_bytes = None
+    claimed = mi.value(header, "Frame Count") if header else None
+    constant_method = lame is not None and lame[1] in (1, 8)
+    byte_count = mi.value(header, "Byte Count") if header else None
+    if xing and byte_count and byte_count > first["length"]:
+        stream_bytes = byte_count - first["length"]
+    elif vbri and byte_count:
+        stream_bytes = byte_count
+    else:
+        # Without a byte count, the bytes of the complete frames, the header's frame among them
+        # (Streams_Finish); a frame cut short is reported by the analyzer with a finding.
+        stream_bytes = sum(n["length"] for n, h in fixed if n["length"] == nominal_length(h))
+        # MediaInfo takes them from the file instead; where that makes a difference, it must be
+        # one of the two its source explains, checked to the byte.
+        tags = [c for c in report["root"]["children"] if c.get("kind") == "Tag"]
+        end_tags = sum(c["length"] for c in tags if c["offset"] > first["offset"])
+        file_bytes = len(data) - sum(c["length"] for c in tags)
+        reported = int(track.get("StreamSize") or -1)
+        if reported != stream_bytes and reported in (file_bytes, file_bytes - end_tags) and (reported == file_bytes or end_tags):
+            reason = MEDIAINFO_FILE_BYTES if reported == file_bytes else MEDIAINFO_END_TAGS
+            tally.skip("stream size", reason)
+            stream_bytes = None
+            # Its frame count then follows from its own byte count, which is compared below.
+            reported_bytes = reported
+    if claimed and not constant_method:
+        frames_count = claimed
+        mode = "CBR" if xing and mi.value(first, "Xing") == "Info" else "VBR"
+        bitrate = round(float32(float32(stream_bytes / claimed) * last["Sample Rate"] / (samples_per_frame(last) // 8)))
+    else:
+        constant = constant_method or len({h["Bitrate"] for _, h in read}) == 1
+        mode = "CBR" if constant else "VBR"
+        frames_count = math.floor((stream_bytes or reported_bytes) / unpadded_length(last) + 0.5) if constant else None
+        if stream_bytes is None and frames_count is not None:
+            tally.skip("frames against the frames' bytes", "MediaInfo derives its frame count from its own byte count, as the stream size skip says, so the count is checked against that")
+        bitrate = last["Bitrate"] * 1000 if constant else None
+    tally.compare("bitrate mode", track.get("BitRate_Mode"), mode)
+    if frames_count is None:
+        tally.skip("frames", "without a VBR header MediaInfo counts the frames of a variable bitrate nowhere (File_Mpega.cpp, Streams_Finish)")
+        tally.skip("bitrate", "without a VBR header MediaInfo gives a variable bitrate's average only by its risky estimate, off by default (File_Mpega.cpp, Streams_Fill)")
+    else:
+        tally.compare("frames", track.get("FrameCount"), str(frames_count))
+        if last["Layer"] == "I" and last["Version"] != "MPEG-1":
+            tally.skip("samples", "MediaInfo multiplies the frames of MPEG-2 and 2.5 Layer I by 1152 samples (File_Mpega.cpp, Streams_Finish), where ISO/IEC 13818-3 gives Layer I 384")
+        else:
+            tally.compare("samples", track.get("SamplingCount"), str(frames_count * samples_per_frame(last)))
+    if bitrate is not None:
+        # Audio_BitRate_Rounding keeps the exact value where the mode is already VBR, which a
+        # LAME tag's VBR or ABR method sets before the bitrate (Header_Encoders_Lame, Lame_BitRate_Mode).
+        exact = lame is not None and lame[1] in (2, 3, 4, 5, 6, 9)
+        tally.compare("bitrate", track.get("BitRate"), str(bitrate if exact else rounded_bitrate(bitrate)))
+    if stream_bytes is not None:
+        tally.compare("stream size", track.get("StreamSize"), str(stream_bytes))
+
+    # A TSSE frame's encoder goes to the general track only.
+    library = mi.text(track.get("Encoded_Library") or general.get("Encoded_Library"))
+    if lame is not None:
+        tally.compare("encoder", library, lame[0])
+    elif library is None:
+        tally.skip("encoder", "MediaInfo names no encoder without a LAME tag, an encoder string in the first frames or an ID3v2 TSSE (File_Mpega.cpp, Encoded_Library_Guess is commented out)")
+    else:
+        # Without a LAME tag it takes, MediaInfo keeps 20 bytes after the first "LAME" in the
+        # frames, or names Gogo for "GOGO" or "MPGE" (Header_Encoders), or takes an ID3v2 TSSE.
+        encoder = report["streams"][0].get("encoder") or ""
+        texts = [n.get("value") for n in mi.walk(report["root"]) if n["name"] in ("TSSE", "TSS")]
+        family = "LAME" if library.startswith(("LAME", "L3.9")) else "Gogo" if library.startswith("Gogo") else None
+        if family is not None:
+            tally.compare("encoder family", family if encoder.startswith(family) else encoder, family)
+        else:
+            tally.compare("encoder from TSSE", library, library if library in texts else texts)
+    mi.compare_tags(tally, general, report)
+    return problems
+
 
 # How each fixture's coding statistics were compared with mp3guessenc and EncSpot, or why not.
 COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter()}
@@ -1235,16 +1459,29 @@ COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter
 def main():
     failed = 0
     checked = 0
+    mi.require()
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     tools = (minimp3_tool.build(), mctoolamed_tool.build())
     for manifest_path in sorted(p for directory in DIRECTORIES for p in directory.glob("*.expected.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         name = manifest_path.name[: -len(".expected.json")]
         path = next(p for p in manifest_path.parent.glob(name + ".*") if not p.name.endswith(".json"))
-        problems = check(path, manifest, tools)
+        problems = check(path, manifest, tools) + check_mediainfo(path, tally)
         checked += 1
         for problem in problems:
             failed += 1
             print(f"{path.name}: {problem}")
+    # The tag fixtures are MPEG audio files too; MediaInfo reads their tags where it finds the audio.
+    for manifest_path in sorted(TAGS.glob("*.expected.json")):
+        name = manifest_path.name[: -len(".expected.json")]
+        path = next(p for p in manifest_path.parent.glob(name + ".*") if not p.name.endswith(".json"))
+        for problem in check_mediainfo(path, tally):
+            failed += 1
+            print(f"{path.name}: {problem}")
+    for problem in tally.unused():
+        failed += 1
+        print(problem)
+    tally.print()
     for tool, counts in COMPARED.items():
         for how, count in sorted(counts.items(), key=lambda c: (-c[1], c[0])):
             print(f"{tool}: {count} fixtures, {how}", file=sys.stderr)

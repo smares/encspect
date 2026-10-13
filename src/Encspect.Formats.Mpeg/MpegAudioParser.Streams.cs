@@ -43,7 +43,15 @@ public sealed partial class MpegAudioParser
     private static StreamInfo Stream(StreamState state, int start, int end)
     {
         ChunkedList<Entry> frames = state.Build.Frames;
-        var header = new MpegHeader(frames[start].Header);
+        // The channel mode is the audio's: a VBR header frame need not state it (ffmpeg writes its
+        // Info frame as stereo before joint stereo audio).
+        int described = start;
+        while (described < end - 1 && !IsAudio(frames[described]))
+        {
+            described++;
+        }
+
+        var header = new MpegHeader(frames[IsAudio(frames[described]) ? described : start].Header);
         long ticks = 0;
         long bits = 0;
         long samples = 0;

@@ -29,6 +29,12 @@ make_external_musepack_fixtures.py):
   no encoder was found, it confirms that the last counted frame is decoded, but not the 11 bits after
   it or the sample count; those rest on libmpcdec 1.2.6's reading alone.
 
+- MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
+  report: the format and sample rate; for SV7 the channels and the header's frame count, which it
+  gives as 1,152 samples a frame; for SV8 the stream header's sample count; and the APE tag's
+  title, artist and album. It reads neither SV4 to SV6 nor a stream after a leading ID3v2 tag, and
+  takes the SV7 encoder version from the wrong byte; each such skip names its evidence.
+
 Fixtures that are not "valid" say why the others do not apply; every skipped check prints its
 reason. Disagreements fail the run.
 """
@@ -43,6 +49,7 @@ import sys
 import tempfile
 
 import downloads
+import mediainfo_tool as mi
 import musepack_model as m
 import musepack_tool
 
@@ -314,7 +321,64 @@ def check_damaged_old(name, manifest, path, frames126, portable, problems):
             break
 
 
+# What MediaInfo (mediainfo_tool.py) does not read in Musepack files, with the evidence.
+MEDIAINFO_OLD = "MediaInfo reads SV7 (\"MP+\") and SV8 (\"MPCK\") only (Audio/File_Mpc.cpp, Audio/File_MpcSv8.cpp); SV4 to SV6 streams have no signature"
+MEDIAINFO_LEADING_TAG = "MediaInfo looks for \"MP+\" and \"MPCK\" at the very start of the file (File_Mpc.cpp and File_MpcSv8.cpp, FileHeader_Begin), so it finds no stream after a leading ID3v2 tag"
+MEDIAINFO_SV7_ENCODER = "MediaInfo reads the SV7 encoder version from byte 24 (File_Mpc.cpp, FileHeader_Parse), where the header keeps it in byte 27, the high byte of its seventh little-endian word (libmpcdec, streaminfo.c)"
+MEDIAINFO_READS_OTHERWISE = {
+    "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
+    "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
+    "sv8-rate-reserved": {"format": "MediaInfo 24.01 indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
+}
+
+
+def check_mediainfo(name, path, tally):
+    """MediaInfo must report the format, sample rate and, for SV7, the channels and the header's frame
+    count (as its samples, 1,152 per frame), for SV8 the stream header's sample count, and the APE
+    tag's title, artist and album."""
+    problems = tally.start(name)
+    report = mi.golden(path)
+    if not report["streams"]:
+        tally.skip("format", "the analyzer finds no stream")
+        return problems
+    stream = report["streams"][0]
+    if stream["codec"] not in ("Musepack SV7", "Musepack SV8"):
+        tally.skip("format", MEDIAINFO_OLD)
+        return problems
+    if report["root"]["children"][0]["name"] == "ID3v2":
+        tally.skip("format", MEDIAINFO_LEADING_TAG)
+        return problems
+    info = mi.read(path)
+    audio = info["Audio"][0] if info and info["Audio"] else {}
+    tally.compare("format", audio.get("Format"), stream["codec"])
+    if not audio:
+        return problems
+    node = mi.stream_node(report, stream)
+    if stream["codec"] == "Musepack SV8" and mi.child(node, "Stream Header") is None:
+        tally.skip("sample rate", "the stream has no stream header, which holds the sample rate and count")
+        return problems
+    tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
+    if stream["codec"] == "Musepack SV7":
+        frames = mi.leading_number(mi.value(node, "Header", "Frame Count"))
+        tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
+        tally.compare("header frames (samples / 1152)", audio.get("SamplingCount"), str(frames * 1152))
+        tally.skip("encoder", MEDIAINFO_SV7_ENCODER)
+    else:
+        tally.skip("channels", "MediaInfo reads the SV8 channel count without filling it in (File_MpcSv8.cpp, SH)")
+        count = mi.leading_number(mi.value(node, "Stream Header", "Sample Count"))
+        if count == 0:
+            tally.skip("samples", "a sample count of 0 means unknown (SV8 specification, Stream Header Packet), which MediaInfo leaves out (File_MpcSv8.cpp, SH)")
+        else:
+            tally.compare("samples", audio.get("SamplingCount"), str(count))
+        tally.skip("encoder", "MediaInfo reads the SV8 encoder info packet without filling in the version (File_MpcSv8.cpp, EI)")
+    tally.skip("duration and bitrate", "MediaInfo derives them from the header's frames or samples and the file size, tags and all (File_Mpc.cpp, File_MpcSv8.cpp)")
+    mi.compare_tags(tally, info["General"], report)
+    return problems
+
+
 def main():
+    mi.require()
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
     frames_tool = musepack_tool.build_frames(tools and tools / "frames")
     frames126 = musepack_tool.build_frames_126(tools and tools / "frames126")
@@ -359,6 +423,7 @@ def main():
                 check_mpc2sv8(name, manifest, path, problems)
         else:
             skip(name, "every tool", "the damage (a tag signature inside the audio, a key libmpcdec stops at, a sample count past the audio or a missing stream end) makes the tools' readings differ by design")
+        problems += check_mediainfo(name, path, tally)
         if problems:
             failures += 1
             print(f"FAIL {name}: " + "; ".join(problems))
@@ -366,6 +431,10 @@ def main():
             print(f"ok   {name}")
     for line in SKIPS:
         print(line)
+    for problem in tally.unused():
+        print(f"FAIL {problem}")
+        failures += 1
+    tally.print(sys.stdout)
     if failures:
         raise SystemExit(f"{failures} fixtures disagree with the tools")
 
