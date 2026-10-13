@@ -6,7 +6,6 @@ namespace Encspect.Formats.Asf;
 internal static partial class Explain
 {
     public const string File = "The ASF file: a Header Object, a Data Object and optional index objects, each an object of a 128-bit GUID, a 64-bit size and its data (sections 2.1 and 2.2).";
-    public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag found inside the file, which breaks the run of objects; they are not read.";
     public const string TrailingData = "Bytes after the last object that are not an object.";
     public const string UnparsedData = "Bytes the analyzer could not read as objects, because the size of an object is invalid.";
     public const string UnknownObject = "An object that this analyzer does not know; readers ignore objects they do not know (sections 2.2 and 3.1).";

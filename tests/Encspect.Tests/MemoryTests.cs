@@ -220,6 +220,48 @@ public class MemoryTests(ITestOutputHelper output)
     private const long AsfWmaKeptBound = 550;
     private const long AsfWmaPeakBound = 550;
 
+    // Objects that state millions of entries, in files of tens of megabytes: each list becomes nodes only up to a
+    // count, so the heap stays a small fraction of what a node for every entry would take (gigabytes).
+    [Fact]
+    public void AsfObjectsOfMillionsOfEntriesStayBounded()
+    {
+        Bounded("indexes.asf", AsfBuilder.Append("minimal", AsfBuilder.IndexOfBlocks(1_000_000)), 150_000_000, "asf.index-missing", expectFinding: false);
+        Bounded("codecs.asf", AsfBuilder.InHeader("minimal", AsfBuilder.CodecListOf(1_500_000)), 150_000_000, "asf.too-many-entries");
+        Bounded("encryption.asf", AsfBuilder.InHeader("minimal", AsfBuilder.EncryptionRecords(40_000, 40), extension: true), 150_000_000, "asf.too-many-entries");
+        Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
+    }
+
+    private void Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
+    {
+        (Report report, long kept, long peak) = Measure(name, data, data[..Math.Min(data.Length, 4096)]);
+        output.WriteLine($"{name}: {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {data.Length / 1_000_000} MB");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        if (expectFinding)
+        {
+            Assert.Contains(report.Findings, f => f.Code == code);
+        }
+
+        Assert.True(peak < bound, $"{name}: the live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // More packets than are described one by one: the rest are counted, and the heap stays near the cap's.
+    [Fact]
+    public void PacketsPastTheDetailedOnesAreCounted()
+    {
+        byte[] data = AsfBuilder.Build(PcmStreamProperties(), new byte[1], (1 << 20) + 5_000, 1);
+        Bounded("undetailed.asf", data, 300_000_000, "asf.packets-undetailed");
+    }
+
+    // A stream of millions of tiny Windows Media Audio superframes: records are kept up to a count.
+    [Fact]
+    public void ManyTinyWmaSuperframesAreBounded()
+    {
+        (byte[] properties, _) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
+        byte[] data = AsfBuilder.Build(properties, new byte[3], 1_300_000, 1);
+        Bounded("tiny.wma", data, 300_000_000, "wma.records-limit");
+    }
+
     // Professional packets of a Microsoft-encoded file, each with its frames, subframes and channel records.
     [Fact]
     public void ManyProfessionalPacketsStayCompact()

@@ -104,7 +104,7 @@ def check_hand_built(name, manifest, path, problems):
             problems.append(f"ffmpeg decoding: {errors or code}")
 
 
-def check_external_ffmpeg(name, manifest, path, problems):
+def check_external_ffmpeg(name, manifest, path, problems, with_mediainfo=True):
     expected = manifest["ffprobe"]
     code, data = ffprobe_json(path, "-show_streams")
     if code != 0:
@@ -124,7 +124,8 @@ def check_external_ffmpeg(name, manifest, path, problems):
         problems.append(f"ffmpeg decoding: {errors or code}")
     if samples != expected["decoded_samples"]:
         problems.append(f"ffmpeg decodes {samples} samples, the manifest {expected['decoded_samples']}")
-    check_mediainfo(name, path, stream, problems)
+    if with_mediainfo:
+        check_mediainfo(name, path, stream, problems, golden_report(path))
 
 
 def golden_report(path):
@@ -158,8 +159,10 @@ def check_against_report(audio, general, report, problems):
             if mode != parser:
                 problems.append(f"MediaInfo's {kind} bit rate mode is {mode}, the parser's {parser} (IsVBR {is_vbr})")
     codec, description = named(report, "Codec Name"), named(report, "Codec Description")
-    if codec is not None and audio.get("CodecID_Description") != f"{codec} - {description}":
-        problems.append(f"MediaInfo's description of the codec is {audio.get('CodecID_Description')!r}, the Codec List's {codec} - {description}")
+    if codec is not None:
+        wanted = f"{codec} - {description}" if description else codec
+        if audio.get("CodecID_Description") != wanted:
+            problems.append(f"MediaInfo's description of the codec is {audio.get('CodecID_Description')!r}, the Codec List's {wanted!r}")
     profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice"}.get(stream["codec"])
     if audio.get("Format_Profile") != profile:
         problems.append(f"MediaInfo's format profile is {audio.get('Format_Profile')}, the parser's codec {stream['codec']}")
@@ -203,6 +206,8 @@ def check_windows(name, provenance, path, problems):
         problems.append("ffprobe failed")
         return
     stream = data["streams"][0]
+    # The manifest's ffprobe block (packets, packet sizes, decoded samples, bit rate) is re-derived from the file.
+    check_external_ffmpeg(name, json.loads((DIRECTORY / (name + ".expected.json")).read_text(encoding="utf-8")), path, problems, with_mediainfo=False)
     request = provenance["input"]
     actual = provenance["actual"]
     if int(stream["channels"]) != actual["channels"] or int(stream["sample_rate"]) != actual["rate"]:
@@ -224,7 +229,9 @@ def check_windows(name, provenance, path, problems):
                     original = w.readframes(w.getnframes())
             if bits == 24:
                 original = b"".join(b"\0" + original[i:i + 3] for i in range(0, len(original), 3))
-            if pcm[:len(original)] != original:
+            if len(pcm) != len(original):
+                problems.append(f"the decoded length is {len(pcm)} bytes, the input signal's {len(original)}")
+            elif pcm != original:
                 problems.append("the decoded samples differ from the input signal")
     else:
         code, pcm, errors = decode(path)
@@ -242,7 +249,7 @@ def main():
     checked = 0
     for manifest_path in sorted(DIRECTORY.glob("*.expected.json")):
         name = manifest_path.name[:-len(".expected.json")]
-        if wanted and name not in wanted:
+        if wanted and name not in wanted or name.startswith("external-windows-"):
             continue
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         path = next(DIRECTORY.glob(name + ".[aw][sm][fa]"), None)

@@ -111,7 +111,7 @@ public class VlcTests
         return codes;
     }
 
-    private static (uint[] Codes, byte[] Lengths, int[] Symbols) Table(string name)
+    internal static (uint[] Codes, byte[] Lengths, int[] Symbols) Table(string name)
     {
         static int[] Identity(int count) => [.. Enumerable.Range(0, count)];
         static (uint[], byte[], int[]) Derived(byte[] lengths, IEnumerable<int> symbols) => (FromLengths(lengths), lengths, [.. symbols]);

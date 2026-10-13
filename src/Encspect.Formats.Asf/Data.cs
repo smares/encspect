@@ -486,8 +486,7 @@ public sealed partial class AsfParser
                 PacketIssues.ZeroStream => (Severity.Warning, "asf.payload-stream-zero", "holds a payload for stream 0, which is not a stream"),
                 PacketIssues.EmptyPayload => (Severity.Warning, "asf.payload-empty", "holds an empty payload, or a compressed payload whose sub-payloads overrun it (section 5.2.3)"),
                 PacketIssues.CompressedPayload => (Severity.Warning, "asf.compressed-payload", "holds a compressed payload (replicated data length 1) in a packet without the fields it needs (section 5.2.3.2)"),
-                PacketIssues.NoPacketSize => (Severity.Warning, "asf.no-packet-size", "has no packet length field, and the File Properties Object gives no packet size"),
-                _ => (Severity.Info, "asf.packet-issue", "has a problem"),
+                _ => (Severity.Warning, "asf.no-packet-size", "has no packet length field, and the File Properties Object gives no packet size"),
             };
 
             Node? node = FindPacketNode(figures, offset);

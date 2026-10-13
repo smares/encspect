@@ -66,10 +66,6 @@ public sealed partial class AsfParser
         {
             findings.AddNow(Severity.Warning, "asf.missing-data", "The file holds no Data Object, which the specification requires (section 2.2).", file);
         }
-        else if (state.DataNode.Offset < state.HeaderNode.End)
-        {
-            findings.AddNow(Severity.Warning, "asf.object-order", "The Data Object does not follow the Header Object, as the specification requires (section 2.2).", state.DataNode);
-        }
 
         if (state.FilePropertiesNode is not null)
         {
