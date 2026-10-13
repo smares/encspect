@@ -80,6 +80,7 @@ internal static class Explain
     public const string OldStatFrames = "The frames decoders decode: those the header counts but the last (libmpcdec 1.2.6, mppdec).";
     public const string OldStatSamples = "The samples per channel libmpcdec 1.2.6 outputs: the decoded frames' samples less the synthesis filter's 481.";
 
+    public const string UndetailedPackets = "Packets the analyzer no longer details, once it has detailed 4,096, that neither carry audio nor describe the stream, such as packets of unknown keys, kept as one node with their count; decoders skip packets they do not know (SV8 specification, Packet formatting).";
     public const string Sv8Magic = "The magic number \"MPCK\" (SV8 specification, File magic number). The seek table counts its offsets from here.";
     public const string Key = "The packet's key, two letters from A to Z, which says what the packet holds (SV8 specification, Packet formatting).";
     public const string Size = "The packet's length in bytes, key and this field included, in 1 to 9 bytes of 7 bits each, the high bit set on every byte but the last (SV8 specification, Packet formatting).";

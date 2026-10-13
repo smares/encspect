@@ -273,7 +273,22 @@ def manifest(data, start, end, extra=None):
         s = sv8(stream)
         sh = s["sh"]
         result["version"] = 8
-        result["packets"] = [[start + o, l, k] for o, l, k, d, h in s["packets"]]
+        # Once 4,096 packets that are no audio are detailed, runs of packets that neither carry audio
+        # nor describe the stream are one node each, with their count.
+        detailed, listed, runs = 0, [], []
+        for o, l, k, d, h in s["packets"]:
+            if k != "AP" and k not in ("SH", "RG", "EI", "SO", "ST", "SE") and d == l and detailed >= 4096:
+                if runs and runs[-1][0] + runs[-1][1] == start + o and runs[-1][3] == len(listed):
+                    runs[-1][1] += l
+                    runs[-1][2] += 1
+                else:
+                    runs.append([start + o, l, 1, len(listed)])
+                continue
+            detailed += k != "AP"
+            listed.append([start + o, l, k])
+        result["packets"] = listed
+        if runs:
+            result["packet_runs"] = [r[:3] for r in runs]
         coded = s["frames"] * FRAME
         info = {"codec": "Musepack SV8", "sample_rate": s["rate"], "channels": sh["channels"] if sh else 0, "samples": s["samples"],
                 "average_bitrate": s["audio_bytes"] * 8 * s["rate"] / coded / 1000 if coded and s["rate"] else None}

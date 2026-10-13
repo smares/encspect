@@ -70,6 +70,7 @@ internal static class Sv8Parser
 
         long position = start + 4;
         bool ended = false;
+        int empty = 0;
         while (position < end)
         {
             if (state.Packets.Count % 4096 == 0)
@@ -96,9 +97,39 @@ internal static class Sv8Parser
             long length = Math.Min(header.Size, end - position);
             var packet = new Packet(position, length, header.Size, header.Key, (byte)header.HeaderLength);
             int index = state.Packets.Count;
-            state.Packets.Add(packet);
+
+            // Past the packets the analyzer details, a run of packets that neither carry audio nor
+            // describe the stream is kept as one record, so empty packets of 3 bytes cost nothing each.
+            if (header.Key != Key("AP") && !DescribesStream(header.Key) && !packet.IsTruncated && state.Detailed.Count >= MaxDetailedPackets)
+            {
+                if (index > 0 && state.Packets[index - 1] is { IsRun: true } run && run.Offset + run.Length == position)
+                {
+                    index--;
+                    state.Packets.SetLast(run.Joined(packet));
+                }
+                else
+                {
+                    state.Packets.Add(packet.AsRun());
+                }
+            }
+            else
+            {
+                state.Packets.Add(packet);
+            }
+
             Handle(state, cache, index, packet);
             position += length;
+
+            // An audio packet holds frames, so no encoder writes one without a payload; after a run
+            // of them, as after a run of SV7 frames of length 0, the packets are not followed further.
+            empty = header.Key == Key("AP") && packet.Length == packet.HeaderLength ? empty + 1 : 0;
+            if (empty == Sv7Parser.MaxEmptyRun && position < end)
+            {
+                state.Unreadable = (position, "musepack.packets-empty",
+                    $"{Sv7Parser.MaxEmptyRun} audio packets in a row up to 0x{position:X} hold no payload, which no encoder writes: the data is damaged, and the rest of it is not read.");
+                break;
+            }
+
             if (header.Key == Key("SE"))
             {
                 ended = true;
@@ -309,6 +340,11 @@ internal static class Sv8Parser
         }
 
         Packet packet = state.Packets[index];
+        if (packet.IsRun)
+        {
+            return RunNode(packet);
+        }
+
         (string name, string description) = NameOf(packet.Key);
         bool isAudio = packet.Key == Key("AP");
         var node = new Node(name, packet.Offset, packet.Length, isAudio ? AudioSummary(state, index) : KeyText(packet.Key))
@@ -377,6 +413,11 @@ internal static class Sv8Parser
         }
 
         Packet packet = state.Packets[index];
+        if (packet.IsRun)
+        {
+            return RunNode(packet);
+        }
+
         (string name, string description) = NameOf(packet.Key);
         return new Node(name, packet.Offset, packet.Length, packet.Key == Key("AP") ? AudioSummary(state, index) : KeyText(packet.Key),
             () => PacketShellUncached(state, index).Children)
@@ -386,6 +427,14 @@ internal static class Sv8Parser
             Topic = Topics.Sv8Packets,
         };
     }
+
+    private static Node RunNode(Packet run) =>
+        new("Undetailed Packets", run.Offset, run.Length, $"{run.Count} packets, {(run.IsMixed ? "several keys" : $"key {KeyText(run.Key)}")}")
+        {
+            Kind = NodeKind.Detail,
+            Description = Explain.UndetailedPackets,
+            Topic = Topics.Sv8Packets,
+        };
 
     // As PacketShell, for a packet whose node is built when read and must not be kept.
     private static Node PacketShellUncached(State state, int index)
@@ -947,9 +996,25 @@ internal static class Sv8Parser
 
     // A packet in 32 bytes.
     [StructLayout(LayoutKind.Auto)]
-    private readonly struct Packet(long offset, long length, long size, ushort key, byte headerLength)
+    // A packet, or a run of packets that are not detailed (IsRun): then Offset and Length cover the
+    // run, Key is the first packet's, and Count says how many it holds.
+    private readonly struct Packet(long offset, long length, long size, ushort key, byte headerLength, int count = 1, byte flags = 0)
     {
+        private const byte Run = 1;
+        private const byte Mixed = 2;
+
         public long Offset => offset;
+
+        public int Count => count;
+
+        public bool IsRun => (flags & Run) != 0;
+
+        public bool IsMixed => (flags & Mixed) != 0;
+
+        public Packet AsRun() => new(offset, length, length, key, headerLength, 1, Run);
+
+        public Packet Joined(Packet next) =>
+            new(offset, length + next.Length, size + next.Length, key, headerLength, count + 1, (byte)(flags | (next.Key == key ? 0 : Mixed)));
 
         public long Length => length;
 

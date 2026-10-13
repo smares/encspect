@@ -200,7 +200,7 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An SV8 audio packet of 4^7 frames in 3 bytes declares about 428 s: the per-second figures are
+    // An SV8 audio packet of 4^7 frames in 4 bytes declares about 428 s: the per-second figures are
     // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
     // second they declare.
     [Fact]
@@ -208,12 +208,29 @@ public class MemoryTests(ITestOutputHelper output)
     {
         const int packets = 200_000;
 
-        (Report report, long kept, long peak) = Measure("packets.mpc", Sv8EmptyPackets(packets), Sv8EmptyPackets(100));
+        (Report report, long kept, long peak) = Measure("packets.mpc", Sv8EmptyPackets(packets, "AP"u8), Sv8EmptyPackets(100, "AP"u8));
 
         Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Packets the analyzer no longer details, once it has detailed 4,096, are kept as one record per
+    // run, so 3 million empty packets of an unknown key (9 MB) keep about nothing per packet.
+    [Fact]
+    public void UnknownSv8PacketsStayCompact()
+    {
+        const int packets = 3_000_000;
+
+        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), Sv8EmptyPackets(5000, "XX"u8));
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("3000000 packets", StringComparison.Ordinal));
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak, {kept / (double)packets:F2} and {peak / (double)packets:F2} per packet");
+        Assert.True(kept < packets * UndetailedPacketBound, $"The report keeps {kept / (double)packets:F2} bytes per packet.");
+        Assert.True(peak < packets * UndetailedPacketBound, $"The live heap grew by {peak / (double)packets:F2} bytes per packet.");
         GC.KeepAlive(report);
     }
 
@@ -396,6 +413,10 @@ public class MemoryTests(ITestOutputHelper output)
 
     private const long MusepackPeakBound = 120;
 
+    // Bytes per undetailed SV8 packet of 3 bytes: the 4,096 detailed ones are a fixed cost, and runs
+    // are one record each.
+    private const long UndetailedPacketBound = 2;
+
     // An SV7 stream (libmpcdec r495 streaminfo_read_header_sv7): a header with mid/side, max band 1
     // and no true gapless, then frames of 400 zero bits, which read as subband 0 left out and
     // subband 1 filled with noise, in 32-bit little-endian words from their most significant bit.
@@ -431,9 +452,9 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
-    // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then empty
-    // audio packets and the stream end.
-    private static byte[] Sv8EmptyPackets(int packets)
+    // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then
+    // packets of the key, audio packets with one byte, others empty, and the stream end.
+    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key)
     {
         byte[] body = [8, 0, 0, 0x1F, 0x1F];
         uint crc = 0xFFFFFFFF;
@@ -454,7 +475,7 @@ public class MemoryTests(ITestOutputHelper output)
         data.AddRange(rg);
         for (int i = 0; i < packets; i++)
         {
-            data.AddRange("AP\x03"u8.ToArray());
+            data.AddRange(key[0] == 'A' ? [key[0], key[1], 4, 0] : [key[0], key[1], 3]);
         }
 
         data.AddRange("SE\x03"u8.ToArray());

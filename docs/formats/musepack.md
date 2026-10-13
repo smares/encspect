@@ -10,7 +10,8 @@ Musepack SV8, SV7, and SV4 to SV6.
   - the seek table, checked against the audio packets;
   - chapters, with their APEv2 tags;
   - the stream end.
-  - Past 4,096 packets, unknown ones are no longer detailed, but the stream's own packets still are.
+  - Once 4,096 packets are detailed, runs of further packets that are no audio and do not describe the stream (unknown keys, chapters) become one node each, with their count; the stream's own packets are still read.
+  - After 4,096 audio packets in a row without a payload, which no encoder writes, the packets are not followed further.
   - A sample count of 0, which the specification uses for an unknown length, is a finding; libmpcdec then decodes nothing.
   - Packets past the header's sample count add no frames, since decoders stop there.
 - **SV7**, frame by frame: the 20-bit frame lengths are followed through the 32-bit words. For each frame, the parser reads the used subbands, the mid/side subbands and the noise-filled ones.

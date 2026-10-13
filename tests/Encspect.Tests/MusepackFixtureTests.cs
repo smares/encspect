@@ -75,6 +75,9 @@ public class MusepackFixtureTests
                 manifest.GetProperty("packets").EnumerateArray().Select(p => $"{p[2].GetString()}@{p[0].GetInt64()}+{p[1].GetInt64()}"),
                 packets.Select(p => $"{p.Children.Single(k => k.Name == "Key").Value}@{p.Offset}+{p.Length}"));
             Assert.All(packets.Where(p => p.Name == "Audio Packet"), p => Assert.Equal(NodeKind.Frame, p.Kind));
+            Assert.Equal(
+                manifest.TryGetProperty("packet_runs", out JsonElement runs) ? runs.EnumerateArray().Select(r => $"{r[2].GetInt32()}@{r[0].GetInt64()}+{r[1].GetInt64()}") : [],
+                stream.Children.Where(c => c.Name == "Undetailed Packets").Select(c => $"{c.Value?.ToString()?.Split(' ')[0]}@{c.Offset}+{c.Length}"));
         }
 
         CheckStreamInfos(manifest.GetProperty("stream_infos"), report.Streams);
@@ -135,6 +138,19 @@ public class MusepackFixtureTests
         Assert.Contains(report.Findings, f => f.Code == "musepack.frames-empty");
         Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
         Assert.Equal(4096, stream.Children.Count(c => c.Kind == NodeKind.Frame));
+    }
+
+    // SV8 audio packets without a payload, which no encoder writes, stop being followed after a run
+    // of them, as SV7 frames of length 0 do.
+    [Fact]
+    public void RunsOfEmptyAudioPacketsStop()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
+        byte[] data = [.. stream[..^3], .. Enumerable.Repeat("AP\x03"u8.ToArray(), 5000).SelectMany(p => p), .. stream[^3..]];
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("empty.mpc", new MemoryStream(data));
+        Assert.Contains(report.Findings, f => f.Code == "musepack.packets-empty");
+        Node stream8 = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Assert.Equal(4097, stream8.Children.Count(c => c.Kind == NodeKind.Frame));
     }
 
     // The SV7 encoder table against what each encoder at hand wrote (sv7-encoders.json, written by
