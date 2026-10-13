@@ -17,4 +17,4 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands; the statistics count both.
 
-**In Musepack** SV4 to SV6 have an intensity stereo flag, which libmpcdec 1.2.6 refuses.
+**In Musepack**, SV4 to SV6 headers carry an intensity stereo flag, which libmpcdec 1.2.6 refuses.

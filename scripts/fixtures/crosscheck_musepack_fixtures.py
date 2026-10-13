@@ -44,7 +44,32 @@ SKIPS = []
 # Hand-built fixtures that the tools read as they would a valid file, and what each damaged one
 # should make mpcdec do.
 READABLE = {"sv8-tags", "sv7-tags", "sv8-unknown-key", "sv8-no-replaygain", "sv8-data-after-end", "sv8-end-size", "sv7-trailing-data",
-            "sv8-seek-mismatch"}
+            "sv8-seek-mismatch", "sv8-many-unknown-first", "sv7-encoder-claim",
+            "sv8-replaygain-version"}
+# Hand-built fixtures that mpcdec's decoded samples and libmpcdec's frames confirm, and why the other checks do not apply.
+DECODE_ONLY = {"sv7-gapless-frame-missing-ape": "mpcdec -i gives the header's length, which counts the missing frame, and ffmpeg shows the APE tag's cover as a second stream",
+               "sv7-last-frame-samples-differ": "mpcdec -i gives the header's length, while decoding takes the 11 bits after the last frame"}
+# Hand-built fixtures whose damage the tools meet in their own ways, and why they are not compared.
+DAMAGED = {
+    "sv7-last-frame-samples-invalid": "libmpcdec refuses a last frame of more than 1,152 samples",
+    "sv7-no-frames": "the header counts no frames, so there is nothing to decode",
+    "sv7-version-unknown": "mpcdec and ffmpeg refuse a version other than 7",
+    "sv7-resolution-invalid": "the first frame is damaged on purpose",
+    "sv7-data-after-tag": "a tag inside the stream breaks it, and the tools do not follow the SEEK frame",
+    "sv5-seek-tag": "the SV4 and SV5 tools take no ID3v2 tag before the stream",
+    "sv8-channels-unsupported": "libmpcdec refuses more than 2 channels",
+    "sv8-max-band-32": "libmpcdec refuses 32 bands",
+    "sv8-sample-count-unknown": "libmpcdec decodes no samples where the count is 0",
+    "sv8-header-crc-zero": "ffmpeg refuses a CRC of 0",
+    "sv8-header-missing": "decoders cannot decode without a stream header",
+    "sv8-audio-before-header": "an audio packet before the stream header",
+    "sv8-audio-packets-extra": "decoders stop at the sample count, so they read fewer packets than the file holds",
+    "sv8-after-audio": "packets after the audio that the tools skip or reread",
+    "sv8-replaygain-truncated": "a ReplayGain packet cut short, whose values the tools read differently",
+    "sv8-packet-size-invalid": "a packet size the tools cannot follow",
+    "sv8-seek-table-truncated": "a seek table that counts more entries than it holds",
+    "sv8-seek-table-short": "a seek table with fewer entries than the packets need",
+}
 REFUSED = {"sv8-bad-crc": "libmpcdec refuses a stream header whose CRC fails", "sv8-rate-reserved": "libmpcdec refuses a reserved sample rate",
            "sv7-header-fields": "libmpcdec refuses a max band of 0", "sv7-header-truncated": "the header is cut short"}
 SHORT = {"sv7-truncated", "sv8-truncated", "sv7-damaged-length"}
@@ -256,6 +281,12 @@ def main():
         elif name in SHORT:
             check_decode(name, manifest, path, problems, exact=False)
             skip(name, "mpcdec -i, ffprobe and mpc2sv8", "the stream is cut short or damaged, so the tools stop at different points; mpcdec must not decode more than the header announces")
+        elif name in DECODE_ONLY:
+            check_decode(name, manifest, path, problems)
+            check_frames(name, manifest, path, frames_tool, problems)
+            skip(name, "mpcdec -i, ffprobe and mpc2sv8", DECODE_ONLY[name])
+        elif name in DAMAGED:
+            skip(name, "every tool", DAMAGED[name])
         elif valid:
             check_info(name, manifest, path, problems)
             check_decode(name, manifest, path, problems)

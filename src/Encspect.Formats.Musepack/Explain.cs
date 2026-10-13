@@ -64,8 +64,8 @@ internal static class Explain
     public const string FrameData = "The frame's coded data: resolutions, mid/side flags, scalefactors and samples of each subband.";
     public const string UsedBands = "How many subbands, from the lowest, carry data in this frame: the highest subband with a resolution other than 0 in either channel, plus 1.";
     public const string MidSideBands = "The subbands this frame codes as mid and side rather than left and right, counted from 0 (the mid/side flag after each coded subband's resolutions).";
-    public const string NoiseBands = "The subbands this frame fills with noise instead of coded samples (resolution -1), counted from 0.";
-    public const string FinalSamples = "The 11 bits after the last frame the header counts: how many of its samples belong to the audio, as in the header (mppenc 1.16 writes them for older decoders).";
+    public const string NoiseBands = "How many subband channels this frame fills with noise instead of coded samples (resolution -1).";
+    public const string FinalSamples = "The 11 bits after the last frame the header counts: how many of its samples belong to the audio, as in the header; with true gapless, libmpcdec r495 takes these bits rather than the header's (mpc_decoder_decode_frame).";
 
     public const string Sv4Header = "The header of stream versions 4 to 6, 48 bits in version 4 and 64 in 5 and 6, in 32-bit little-endian words read from their most significant bit (libmpcdec 1.2.6 streaminfo_read_header_sv6).";
     public const string Sv4Bitrate = "A constant bitrate in kbps, 0 for variable; libmpcdec 1.2.6 refuses streams with a constant bitrate.";
@@ -148,7 +148,7 @@ internal static class Explain
     public const string MaximumBitrate = "The bitrate of the largest frame or packet over the time it codes.";
     public const string Smallest = "The smallest frame or audio packet.";
     public const string Largest = "The largest frame or audio packet.";
-    public const string BitrateMode = "Musepack has no bitrate field: each frame is as long as its data, so the bitrate follows the audio (variable).";
+    public const string BitrateMode = "Each frame is as long as its data, so the bitrate follows the audio (variable); only the headers of SV4 to SV6 have a bitrate field, which is set for a constant bitrate.";
     public const string Distribution = "How many frames or packets fall in each bitrate range of 32 kbps.";
     public const string DistributionBin = "The frames or packets whose bitrate falls in this range, and their share.";
     public const string MidSideUse = "The coded subbands of all frames, by how they are coded: mid and side, or left and right; subbands left out or filled with noise in both channels are not counted.";

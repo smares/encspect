@@ -200,6 +200,23 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An SV8 audio packet of 4^7 frames in 3 bytes declares about 428 s: the per-second figures are
+    // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
+    // second they declare.
+    [Fact]
+    public void LongEmptySv8PacketsStayCompact()
+    {
+        const int packets = 200_000;
+
+        (Report report, long kept, long peak) = Measure("packets.mpc", Sv8EmptyPackets(packets), Sv8EmptyPackets(100));
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
     // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
     // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
     // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak
@@ -411,6 +428,37 @@ public class MemoryTests(ITestOutputHelper output)
 
         Write(0, 11);
         return words.SelectMany(BitConverter.GetBytes).ToArray()[..(int)(((bit + 31) >> 5) << 2)];
+    }
+
+    // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
+    // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then empty
+    // audio packets and the stream end.
+    private static byte[] Sv8EmptyPackets(int packets)
+    {
+        byte[] body = [8, 0, 0, 0x1F, 0x1F];
+        uint crc = 0xFFFFFFFF;
+        foreach (byte b in body)
+        {
+            crc ^= b;
+            for (int k = 0; k < 8; k++)
+            {
+                crc = (crc & 1) != 0 ? 0xEDB88320 ^ (crc >> 1) : crc >> 1;
+            }
+        }
+
+        crc ^= 0xFFFFFFFF;
+        byte[] sh = [(byte)'S', (byte)'H', 12, (byte)(crc >> 24), (byte)(crc >> 16), (byte)(crc >> 8), (byte)crc, .. body];
+        byte[] rg = [(byte)'R', (byte)'G', 12, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+        var data = new List<byte>("MPCK"u8.ToArray());
+        data.AddRange(sh);
+        data.AddRange(rg);
+        for (int i = 0; i < packets; i++)
+        {
+            data.AddRange("AP\x03"u8.ToArray());
+        }
+
+        data.AddRange("SE\x03"u8.ToArray());
+        return [.. data];
     }
 
     // An SV5 stream (libmpcdec 1.2.6 streaminfo_read_header_sv6): a header with a variable bitrate,

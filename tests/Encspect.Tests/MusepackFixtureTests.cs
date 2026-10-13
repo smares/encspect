@@ -40,7 +40,7 @@ public class MusepackFixtureTests
         Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
         if (manifest.TryGetProperty("header", out JsonElement header))
         {
-            Node fields = stream.Children.FirstOrDefault(c => c.Name == "Header") ?? stream.Children.Single(c => c.Name == "Stream Header");
+            Node fields = stream.Children.FirstOrDefault(c => c.Name == "Header") ?? stream.Children.First(c => c.Name == "Stream Header");
             foreach (JsonProperty field in header.EnumerateObject())
             {
                 Assert.True(field.Value.GetString() == fields.Children.Single(c => c.Name == field.Name).Value?.ToString(),
@@ -49,7 +49,7 @@ public class MusepackFixtureTests
         }
 
         int version = manifest.GetProperty("version").GetInt32();
-        if (version is 4 or 5 or 7 && stream.Children.Any(c => c.Kind == NodeKind.Frame))
+        if (version is 4 or 5 or 7 && manifest.TryGetProperty("frames", out JsonElement listed) && listed.GetArrayLength() > 0)
         {
             List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame && c.Value?.ToString() is not "cut short" and not "not decoded").ToList();
             JsonElement[] expected = manifest.GetProperty("frames").EnumerateArray().ToArray();
@@ -120,6 +120,23 @@ public class MusepackFixtureTests
         }
     }
 
+    // Frames of length 0, which no encoder writes, stop being followed after a run of them, so 30 MB
+    // of zero bytes do not become 12 million frame records.
+    [Fact]
+    public void RunsOfEmptyFramesStop()
+    {
+        byte[] data = new byte[1 << 20];
+        "MP+"u8.CopyTo(data);
+        data[3] = 0x07;
+        WriteBits(data, 32, 32, -1);
+        WriteBits(data, 66, 6, 31);
+        WriteBits(data, 192, 8, 116);
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("empty.mpc", new MemoryStream(data));
+        Assert.Contains(report.Findings, f => f.Code == "musepack.frames-empty");
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Assert.Equal(4096, stream.Children.Count(c => c.Kind == NodeKind.Frame));
+    }
+
     // The SV7 encoder table against what each encoder at hand wrote (sv7-encoders.json, written by
     // make_external_musepack_fixtures.py): the fields the table reads, written into an SV7 stream,
     // name that encoder with high confidence.
@@ -139,6 +156,17 @@ public class MusepackFixtureTests
             StreamInfo info = Encspect.Host.Analyzer.CreateDefault().Analyze("encoder.mpc", new MemoryStream(data)).Streams.Single();
             Assert.True(row.GetProperty("detected").GetString() == info.Encoder, $"{row.GetProperty("build").GetString()}: {info.Encoder}");
             Assert.Equal("High", info.EncoderConfidence?.ToString());
+
+            // ReplayGain tools fill Max Level too, so with ReplayGain written it tells Klemm's builds
+            // from Buschmann's no longer.
+            if (row.GetProperty("encoder").GetInt32() == 0 && !row.GetProperty("gapless").GetBoolean())
+            {
+                WriteBits(data, 96, 16, 1234);
+                WriteBits(data, 80, 16, 20000);
+                info = Encspect.Host.Analyzer.CreateDefault().Analyze("encoder.mpc", new MemoryStream(data)).Streams.Single();
+                Assert.Equal("MP+ 1.7.8 to 1.7.9c (Buschmann) or mppenc 0.90f to 1.0 (Klemm)", info.Encoder);
+                Assert.Equal("Medium", info.EncoderConfidence?.ToString());
+            }
         }
     }
 
@@ -166,9 +194,24 @@ public class MusepackFixtureTests
     public void TruncatedCopiesYieldFindings(string name)
     {
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+        bool magic = data.AsSpan().StartsWith("MP"u8);
         for (int length = 1; length < data.Length; length += 97)
         {
             Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("cut.mpc", new MemoryStream(data[..length]));
+
+            // SV7 and SV8 have a magic number, so a cut stream is still one, with a finding that says
+            // it is cut; SV4 to SV6 have none and are recognized only where their frames end where the
+            // encoders end them, so a cut copy is no Musepack stream.
+            if (magic && length >= 4)
+            {
+                Assert.Equal("Musepack", report.Root.Value?.ToString());
+                Assert.Contains(report.Findings, f => f.Code.StartsWith("musepack.", StringComparison.Ordinal) && f.Severity >= Severity.Warning);
+            }
+            else if (!magic && length < data.Length - 4)
+            {
+                Assert.NotEqual("Musepack", report.Root.Value?.ToString());
+            }
+
             Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
             Assert.All(report.Findings, f => Assert.NotNull(f.Path));
             Assert.All(report.Streams, s => Assert.All(s.NodePaths, p => Assert.NotNull(p)));

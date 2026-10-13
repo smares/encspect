@@ -81,18 +81,27 @@ def bands(w, bit, end, max_band, ms):
 
 
 def sv7(data):
-    """The SV7 stream at the start of data: header, whole frames, where it ends, the output samples."""
+    """The SV7 stream at the start of data: header, whole frames, where it ends, the output samples.
+    libmpcdec r495 takes the last frame's samples from the 11 bits after it with true gapless
+    (mpc_decoder_decode_frame) and then decodes one more frame where they and the filter's delay pass
+    a frame; mppenc writes that frame right after, so a tag at the next word, or resolutions that run
+    past the length or out of range, mean it is not there."""
     w = Words(data)
     h = sv7_header(w)
-    last = h["last"] or FRAME
-    expected = h["frames"] + (1 if h["gapless"] and h["frames"] and last + DELAY > FRAME else 0)
     bit, frames, truncated, extra_missing, final = 200, [], False, False, None
-    for i in range(expected):
-        if bit + 20 > w.bits:
-            if i >= h["frames"]:
+    for i in range(h["frames"] + 1):
+        if i == h["frames"]:
+            last = (final if h["gapless"] and final is not None else h["last"]) or FRAME
+            needed = h["gapless"] and h["frames"] and last + DELAY > FRAME
+            if not needed:
+                break
+            word = (bit + 31) // 32 * 4
+            tag = any(data[word:word + len(t)] == t for t in (b"APETAGEX", b"ID3", b"TAG"))
+            if bit + 20 > w.bits or tag or any(bands(w, bit + 20, min(bit + 20 + w.read(bit, 20), w.bits), min(h["max_band"], 31), h["ms"])[3:]):
                 extra_missing = True
-            else:
-                truncated = bit < w.bits
+                break
+        if bit + 20 > w.bits:
+            truncated = bit < w.bits
             break
         length = w.read(bit, 20)
         data_end = bit + 20 + length
@@ -106,6 +115,7 @@ def sv7(data):
             final = w.read(data_end, 11)
         bit = end
     stream_end = len(data) if truncated else ((bit + 31) // 32) * 4
+    last = (final if h["gapless"] and final is not None else h["last"]) or FRAME
     announced = 0 if not h["frames"] else h["frames"] * FRAME - FRAME + last if h["gapless"] else h["frames"] * FRAME - DELAY
     samples = max(0, min(announced, len(frames) * FRAME - DELAY))
     return {"header": h, "frames": frames, "end": stream_end, "truncated": truncated, "extra_missing": extra_missing, "final": final,
@@ -219,16 +229,21 @@ def sv8(data):
             sh = {"crc": crc, "crc_ok": zlib.crc32(p[4:]) == crc, "version": p[4], "samples": samples, "silence": silence, "rate": p[at] >> 5,
                   "bands": (p[at] & 31) + 1, "channels": (p[at + 1] >> 4) + 1, "ms": (p[at + 1] >> 3) & 1, "power": p[at + 1] & 7}
     audio = [(o, l) for o, l, k, d, h in found if k == "AP" and d == l]
-    frames = 0
+    frames, audio_bytes = 0, 0
     if sh:
         per = 4 ** sh["power"]
         expected = (sh["samples"] + DELAY + FRAME - 1) // FRAME if sh["samples"] else None
-        for i in range(len(audio)):
+        for i, (_, length) in enumerate(audio):
             left = expected - i * per if expected is not None and i == len(audio) - 1 else per
-            frames += left if 0 < left <= per else per
+            count = left if 0 < left <= per else per
+            # Decoders stop at the sample count, so the packets after it hold no frames they decode.
+            if expected is not None:
+                count = min(count, max(0, expected - frames))
+            frames += count
+            audio_bytes += length if count else 0
     samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if sh else 0
     return {"packets": found, "stop": stop, "sh": sh, "frames": frames, "samples": samples, "rate": RATES[sh["rate"]] if sh and sh["rate"] < 4 else 0,
-            "audio_bytes": sum(l for _, l in audio)}
+            "audio_bytes": audio_bytes}
 
 
 def ei_name(major, minor, build):

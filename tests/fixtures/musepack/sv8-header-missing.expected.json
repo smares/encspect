@@ -1,0 +1,52 @@
+{
+ "length": 14257,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   12,
+   "RG"
+  ],
+  [
+   16,
+   14238,
+   "AP"
+  ],
+  [
+   14254,
+   3,
+   "SE"
+  ]
+ ],
+ "frames": 0,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 0,
+   "channels": 0,
+   "samples": 0,
+   "average_bitrate": null,
+   "duration": 0
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 14257
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.header-missing",
+   "contains": "no stream header"
+  },
+  {
+   "code": "musepack.audio-before-header",
+   "contains": "at 0x10"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

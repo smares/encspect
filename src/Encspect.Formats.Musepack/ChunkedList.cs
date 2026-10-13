@@ -42,6 +42,12 @@ internal sealed class ChunkedList<T>
         _blocks[block][slot] = item;
         Count++;
     }
+
+    public void SetLast(in T item)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(Count);
+        _blocks[(Count - 1) >> BlockBits][(Count - 1) & (BlockSize - 1)] = item;
+    }
 }
 
 // The children of a node that holds many frames or packets: leading nodes (header,

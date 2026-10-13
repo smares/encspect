@@ -9,7 +9,10 @@ internal sealed class FindingCollector
     private readonly List<string> _order = [];
     private readonly List<Finding> _immediate = [];
 
-    public void Add(Severity severity, string code, Node node, Func<int, string> message)
+    public void Add(Severity severity, string code, Node node, Func<int, string> message) => Add(severity, code, () => node, message);
+
+    // node is built only for the first case, so a finding repeated over many units builds one node.
+    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
     {
         if (_aggregated.TryGetValue(code, out var existing))
         {
@@ -17,7 +20,7 @@ internal sealed class FindingCollector
             return;
         }
 
-        _aggregated[code] = (severity, node, 1, message);
+        _aggregated[code] = (severity, node(), 1, message);
         _order.Add(code);
     }
 

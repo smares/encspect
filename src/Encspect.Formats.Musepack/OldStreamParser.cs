@@ -15,7 +15,9 @@ namespace Encspect.Formats.Musepack;
 //
 // A header alone is too weak to tell such a stream from other data, so the stream is recognized only
 // where its units, followed by their lengths, end where the encoders end them: in versions 4 and 5
-// at the end of the data or less than 32 bits after it, in version 6 in its last word. Frames are read, as libmpcdec 1.2.6
+// at the end of the data or less than 32 bits after it, in version 6 in its last word. A stream of
+// version 4 or 5 whose units end inside its last word is not one these encoders wrote, so it is not
+// taken. Frames are read, as libmpcdec 1.2.6
 // reads them, only where it decodes them and an encode confirms the syntax: versions 4 and 5 with a
 // variable bitrate, no intensity stereo and a block size of 1. No SV6 encoder was found, so SV6 stays at
 // its header.
@@ -177,6 +179,7 @@ internal static class OldStreamParser
         long bit = h.DataBit;
         long length = words.BitLength;
         int maxBand = Math.Min(h.MaxBand, 31);
+        int empty = 0;
         for (long i = 0; i < h.Frames; i++)
         {
             if (i % 4096 == 0)
@@ -228,6 +231,12 @@ internal static class OldStreamParser
 
             state.Count(frame);
             bit = end;
+            empty = frameLength == 0 ? empty + 1 : 0;
+            if (empty == Sv7Parser.MaxEmptyRun)
+            {
+                state.EmptyFrom = bit - (Sv7Parser.MaxEmptyRun * 20L);
+                break;
+            }
         }
     }
 
@@ -415,7 +424,7 @@ internal static class OldStreamParser
             }
 
             decoded++;
-            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples);
+            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples, inSeries: frame.Length > 0);
             if ((frame.Flags & FrameFlags.Overrun) != 0)
             {
                 overruns++;
@@ -433,7 +442,13 @@ internal static class OldStreamParser
         }
 
         Node header = state.Leading[0];
-        if (state.Truncated)
+        if (state.EmptyFrom is { } emptyFrom)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.frames-empty",
+                $"{Sv7Parser.MaxEmptyRun} frames in a row from 0x{w.WordStart(emptyFrom):X} have a length of 0 bits, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                header.Children.First(c => c.Name == "Frame Count"));
+        }
+        else if (state.Truncated)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-missing",
                 $"The header counts {h.Frames} frames, but the data holds {decoded} whole ones before the last: the stream is cut short.", header.Children.First(c => c.Name == "Frame Count"));
@@ -539,6 +554,8 @@ internal static class OldStreamParser
         public bool Truncated { get; set; }
 
         public long LastRunsPast { get; set; }
+
+        public long? EmptyFrom { get; set; }
 
         public long FramesWithMidSide { get; private set; }
 

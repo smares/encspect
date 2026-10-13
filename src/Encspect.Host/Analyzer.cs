@@ -148,7 +148,8 @@ public sealed class Analyzer
             // file first, which would make the furthest offset read jump to the end.
             ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, formatEnd - dataStart);
             List<Node> inWindow = embedded.Where(c => c.Tag.Offset < formatEnd).Select(c => shown[c.Tag]).ToList();
-            streams = ParseData(new SniffContext(window, Path.GetExtension(source)), root, inWindow, claims, findings, failures);
+            var sniff = new SniffContext(window, Path.GetExtension(source)) { FirstEmbeddedTag = inWindow.Count > 0 ? inWindow.Min(t => t.Offset) : null };
+            streams = ParseData(sniff, root, inWindow, claims, findings, failures);
             AddDataBetweenTags(root, embedded.Where(c => c.Tag.Offset >= formatEnd), dataEnd, findings);
         }
         else

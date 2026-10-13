@@ -205,7 +205,7 @@ internal static class Sv8Parser
             state.AudioPackets.Add(index);
             if (state.Header is null)
             {
-                state.Findings.Add(Severity.Warning, "musepack.audio-before-header", PacketShell(state, index),
+                state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
                     _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
             }
 
@@ -226,16 +226,17 @@ internal static class Sv8Parser
 
         if (!IsValidKey(packet.Key))
         {
-            state.Findings.Add(Severity.Warning, "musepack.key-invalid", PacketShell(state, index), count =>
+            state.Findings.Add(Severity.Warning, "musepack.key-invalid", () => PacketShell(state, index), count =>
                 $"{(count == 1 ? "A packet's key" : $"{count} packets' keys")}, first {KeyText(packet.Key)} at 0x{packet.Offset:X}, hold characters outside A to Z, which the SV8 specification does not allow; libmpcdec stops decoding at such a key.");
         }
         else if (!IsReserved(packet.Key))
         {
-            state.Findings.Add(Severity.Info, "musepack.key-unknown", PacketShell(state, index), count =>
+            state.Findings.Add(Severity.Info, "musepack.key-unknown", () => PacketShell(state, index), count =>
                 $"{(count == 1 ? "A packet has a key" : $"{count} packets have keys")} the SV8 specification does not reserve, first {KeyText(packet.Key)} at 0x{packet.Offset:X}; libmpcdec and ffmpeg skip packets they do not know.");
         }
 
-        if (state.Detailed.Count >= MaxDetailedPackets)
+        // Past the cap, packets are not detailed, but those that describe the stream still are read.
+        if (state.Detailed.Count >= MaxDetailedPackets && !DescribesStream(packet.Key))
         {
             return;
         }
@@ -295,6 +296,8 @@ internal static class Sv8Parser
         state.Detailed[index] = node;
     }
 
+    private static bool DescribesStream(ushort key) => KeyText(key) is "SH" or "RG" or "EI" or "SO" or "ST" or "SE";
+
     private static bool IsReserved(ushort key) => KeyText(key) is "SH" or "RG" or "EI" or "SO" or "AP" or "ST" or "CT" or "SE";
 
     // The packet's node with its key and size, before its fields are added.
@@ -332,7 +335,7 @@ internal static class Sv8Parser
             });
         }
 
-        if (!isAudio && state.Detailed.Count < MaxDetailedPackets)
+        if (!isAudio && (state.Detailed.Count < MaxDetailedPackets || DescribesStream(packet.Key)))
         {
             state.Detailed[index] = node;
         }
@@ -484,6 +487,7 @@ internal static class Sv8Parser
 
         header.Samples = samples;
         header.Silence = silence;
+        state.SampleCountField = WithoutChildren(f.Node.Children.First(c => c.Name == "Sample Count"));
         int first = f.Data[position];
         int second = f.Data[position + 1];
         header.RateIndex = first >> 5;
@@ -494,7 +498,7 @@ internal static class Sv8Parser
         long at = f.Offset + position;
         Node rate = f.Node.Add(Node.FromBits("Sample Rate", at, 0, 3,
             header.RateIndex < 4 ? NodeValue.Integer(Sv7Parser.SampleRates[header.RateIndex], "Hz") : $"reserved ({header.RateIndex})", NodeKind.Detail, Explain.SampleRateIndex));
-        f.Node.Add(Node.FromBits("Max Used Bands", at, 3, 8, NodeValue.Integer(header.MaxBands), NodeKind.Detail, Explain.MaxUsedBands, Topics.SubbandCoding));
+        Node bands = f.Node.Add(Node.FromBits("Max Used Bands", at, 3, 8, NodeValue.Integer(header.MaxBands), NodeKind.Detail, Explain.MaxUsedBands, Topics.SubbandCoding));
         Node channels = f.Node.Add(Node.FromBits("Channels", at + 1, 0, 4, NodeValue.Integer(header.Channels), NodeKind.Detail, Explain.ChannelCount));
         f.Node.Add(Node.FromBits("Mid/Side Stereo", at + 1, 4, 5, NodeValue.Boolean(header.MidSide), NodeKind.Detail, Explain.Sv8MidSide, Topics.MidSideStereo));
         f.Node.Add(Node.FromBits("Audio Block Frames", at + 1, 5, 8, NodeValue.Integer(header.FramesPerPacket, "frames", "frame"), NodeKind.Detail, Explain.AudioBlockFrames));
@@ -503,6 +507,13 @@ internal static class Sv8Parser
         {
             state.Findings.AddNow(Severity.Warning, "musepack.sample-rate-reserved",
                 $"The stream header's sample rate index is {header.RateIndex}, which the SV8 specification does not define; libmpcdec refuses the stream.", rate);
+        }
+
+        // libmpcdec r495 check_streaminfo: max_band >= 32 fails, and SV8 stores the bands less 1.
+        if (header.MaxBands == 32)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.max-band-invalid",
+                "The stream header gives 32 used bands, which the SV8 specification allows but libmpcdec refuses.", bands);
         }
 
         if (header.Channels > 2)
@@ -854,13 +865,30 @@ internal static class Sv8Parser
                 continue;
             }
 
+            // Decoders stop at the stream header's sample count, so packets past it add no frames.
             long count = state.FramesIn(state.AudioPackets[i]);
+            if (header is { Samples: > 0 })
+            {
+                count = Math.Min(count, Math.Max(0, header.ExpectedFrames - frames));
+                if (count == 0)
+                {
+                    continue;
+                }
+            }
+
             frames += count;
             figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples);
         }
 
         // libmpcdec r495 outputs the header's samples less the beginning silence, and no more than
         // the frames decoded give after the synthesis filter's delay and that silence.
+        if (header is { Samples: 0 } && frames > 0 && state.SampleCountField is { } sampleCount)
+        {
+            state.Findings.AddNow(Severity.Info, "musepack.sample-count-unknown",
+                $"The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then decodes no samples, though the audio packets hold {frames} frames.",
+                sampleCount);
+        }
+
         long silence = header?.Silence ?? 0;
         long samples = header is null ? 0 : Math.Max(0, Math.Min(header.Samples, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
         double duration = rate > 0 ? samples / (double)rate : 0;
@@ -879,7 +907,7 @@ internal static class Sv8Parser
         }
 
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-        statistics.Add(Cover("Audio Packets", NodeValue.Integer(figures.Count, "packets", "packet"), Explain.StatPackets));
+        statistics.Add(Cover("Audio Packets", NodeValue.Integer(figures.Units, "packets", "packet"), Explain.StatPackets));
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
         statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
         statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay + silence, "samples", "sample"), Explain.DecoderDelay));
@@ -1023,6 +1051,8 @@ internal static class Sv8Parser
         public FindingCollector Findings { get; } = new();
 
         public StreamHeaderInfo? Header { get; set; }
+
+        public Node? SampleCountField { get; set; }
 
         public bool HasReplayGain { get; set; }
 

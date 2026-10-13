@@ -28,7 +28,8 @@ public sealed class MusepackParser : IFormatParser
             return 100;
         }
 
-        return OldStreamParser.Sniff(reader);
+        // The parser reads up to the first tag inside the data, so the frames must end there.
+        return OldStreamParser.Sniff(context.FirstEmbeddedTag is { } tag && tag > reader.Start && tag < reader.End ? reader.Slice(reader.Start, tag - reader.Start) : reader);
     }
 
     public long? DeclaredEnd(SniffContext context)

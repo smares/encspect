@@ -1,0 +1,5072 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv7-data-after-tag.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 26309,
+      "children": [
+        {
+          "name": "ID3v2",
+          "kind": "Tag",
+          "value": "2.4.0",
+          "offset": 0,
+          "length": 42,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": 0,
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": 32,
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Leading",
+              "offset": 10,
+              "length": 18,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 8,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Leading",
+                  "offset": 21,
+                  "length": 7
+                }
+              ]
+            },
+            {
+              "name": "SEEK",
+              "value": "next tag at least 13120 bytes after this one",
+              "offset": 28,
+              "length": 14,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "SEEK",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 4,
+                      "offset": 32,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 36,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": false,
+                          "offset": 36,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Minimum Offset",
+                  "value": 13120,
+                  "offset": 38,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 42,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"ID3\" with version 2.4.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 32 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 10,
+                  "length": 32
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Musepack SV7",
+          "kind": "Stream",
+          "offset": 42,
+          "length": 13120,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 42,
+              "length": 28,
+              "ranges": [
+                {
+                  "offset": 42,
+                  "length": 24
+                },
+                {
+                  "offset": 69,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Magic",
+                  "value": "MP+",
+                  "offset": 42,
+                  "length": 3
+                },
+                {
+                  "name": "Stream Version",
+                  "value": 7,
+                  "offset": 45,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 4
+                },
+                {
+                  "name": "PNS",
+                  "value": 0,
+                  "offset": 45,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 4
+                },
+                {
+                  "name": "Frame Count",
+                  "value": 58,
+                  "unit": "frames",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Intensity Stereo",
+                  "value": false,
+                  "offset": 53,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Mid/Side Stereo",
+                  "value": true,
+                  "offset": 53,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Max Band",
+                  "value": 28,
+                  "offset": 53,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6
+                },
+                {
+                  "name": "Profile",
+                  "value": 10,
+                  "offset": 52,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 4,
+                  "children": [
+                    {
+                      "name": "Name",
+                      "value": "Standard",
+                      "offset": 52,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Quality",
+                      "value": 5,
+                      "offset": 52,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Link",
+                  "value": 0,
+                  "offset": 52,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 52,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Max Level",
+                  "value": 0,
+                  "offset": 50,
+                  "length": 2
+                },
+                {
+                  "name": "Title Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 56,
+                  "length": 2
+                },
+                {
+                  "name": "Title Peak",
+                  "value": 0,
+                  "offset": 54,
+                  "length": 2
+                },
+                {
+                  "name": "Album Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 60,
+                  "length": 2
+                },
+                {
+                  "name": "Album Peak",
+                  "value": 0,
+                  "offset": 58,
+                  "length": 2
+                },
+                {
+                  "name": "True Gapless",
+                  "value": true,
+                  "offset": 65,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Last Frame Samples",
+                  "value": 486,
+                  "unit": "samples",
+                  "offset": 64,
+                  "length": 2
+                },
+                {
+                  "name": "Fast Seeking",
+                  "value": true,
+                  "offset": 64,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Unused",
+                  "value": 0,
+                  "offset": 62,
+                  "length": 3
+                },
+                {
+                  "name": "Encoder Version",
+                  "value": 116,
+                  "offset": 69,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "Name",
+                      "value": "Beta 1.16",
+                      "offset": 69,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Encoder",
+              "value": "mppenc 1.16",
+              "offset": 42,
+              "length": 13120,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "High",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The SV7 header's encoder version at 0x45 is 116, as encodes with mppenc 1.16 (built from source) write it",
+                  "offset": 42,
+                  "length": 13120
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 42,
+              "length": 13120,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 38,
+                  "unit": "frames",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Coded Samples",
+                  "value": 43776,
+                  "unit": "samples",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Decoder Delay",
+                  "value": 481,
+                  "unit": "samples",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Samples",
+                  "value": 43295,
+                  "unit": "samples",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.9817460317460317,
+                  "unit": "s",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 96.11817434210526,
+                  "unit": "kbps",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 1450,
+                  "unit": "bits",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 13913,
+                  "unit": "bits",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 55.5078125,
+                  "unit": "kbps",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 532.60703125,
+                  "unit": "kbps",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 42,
+                  "length": 13120,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "3 frames (7.9%)",
+                      "offset": 42,
+                      "length": 13120
+                    },
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "31 frames (81.6%)",
+                      "offset": 42,
+                      "length": 13120
+                    },
+                    {
+                      "name": "96 to 127 kbps",
+                      "value": "3 frames (7.9%)",
+                      "offset": 42,
+                      "length": 13120
+                    },
+                    {
+                      "name": "512 to 543 kbps",
+                      "value": "1 frame (2.6%)",
+                      "offset": 42,
+                      "length": 13120
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames With Mid/Side",
+                  "value": "38 frames (100.0%)",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Subband Stereo Coding",
+                  "value": 233,
+                  "unit": "subbands",
+                  "offset": 42,
+                  "length": 13120,
+                  "children": [
+                    {
+                      "name": "Mid/Side",
+                      "value": "68 subbands (29.2%)",
+                      "offset": 42,
+                      "length": 13120
+                    },
+                    {
+                      "name": "Left/Right",
+                      "value": "165 subbands (70.8%)",
+                      "offset": 42,
+                      "length": 13120
+                    }
+                  ]
+                },
+                {
+                  "name": "Noise-Substituted Channels",
+                  "value": 0,
+                  "unit": "subband channels",
+                  "offset": 42,
+                  "length": 13120
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "13893 bits, 25 subbands, 22 mid/side",
+              "offset": 66,
+              "length": 1744,
+              "ranges": [
+                {
+                  "offset": 66,
+                  "length": 3
+                },
+                {
+                  "offset": 70,
+                  "length": 1736
+                },
+                {
+                  "offset": 1809,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 13893,
+                  "unit": "bits",
+                  "offset": 66,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 66,
+                  "length": 1744,
+                  "ranges": [
+                    {
+                      "offset": 66,
+                      "length": 1
+                    },
+                    {
+                      "offset": 70,
+                      "length": 1736
+                    },
+                    {
+                      "offset": 1809,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 25,
+                      "offset": 66,
+                      "length": 1744,
+                      "ranges": [
+                        {
+                          "offset": 66,
+                          "length": 1
+                        },
+                        {
+                          "offset": 70,
+                          "length": 1736
+                        },
+                        {
+                          "offset": 1809,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 3 to 23",
+                      "offset": 66,
+                      "length": 1744,
+                      "ranges": [
+                        {
+                          "offset": 66,
+                          "length": 1
+                        },
+                        {
+                          "offset": 70,
+                          "length": 1736
+                        },
+                        {
+                          "offset": 1809,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 66,
+                      "length": 1744,
+                      "ranges": [
+                        {
+                          "offset": 66,
+                          "length": 1
+                        },
+                        {
+                          "offset": 70,
+                          "length": 1736
+                        },
+                        {
+                          "offset": 1809,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2379 bits, 5 subbands, 1 mid/side",
+              "offset": 1806,
+              "length": 300,
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2379,
+                  "unit": "bits",
+                  "offset": 1807,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1806,
+                  "length": 300,
+                  "ranges": [
+                    {
+                      "offset": 1806,
+                      "length": 2
+                    },
+                    {
+                      "offset": 1810,
+                      "length": 296
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 1806,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 1806,
+                          "length": 2
+                        },
+                        {
+                          "offset": 1810,
+                          "length": 296
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 1806,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 1806,
+                          "length": 2
+                        },
+                        {
+                          "offset": 1810,
+                          "length": 296
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 1806,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 1806,
+                          "length": 2
+                        },
+                        {
+                          "offset": 1810,
+                          "length": 296
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2493 bits, 6 subbands, 1 mid/side",
+              "offset": 2106,
+              "length": 316,
+              "ranges": [
+                {
+                  "offset": 2106,
+                  "length": 312
+                },
+                {
+                  "offset": 2419,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2493,
+                  "unit": "bits",
+                  "offset": 2107,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2106,
+                  "length": 316,
+                  "ranges": [
+                    {
+                      "offset": 2106,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2110,
+                      "length": 308
+                    },
+                    {
+                      "offset": 2419,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 2106,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 2106,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2110,
+                          "length": 308
+                        },
+                        {
+                          "offset": 2419,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 2106,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 2106,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2110,
+                          "length": 308
+                        },
+                        {
+                          "offset": 2419,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 2106,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 2106,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2110,
+                          "length": 308
+                        },
+                        {
+                          "offset": 2419,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2427 bits, 7 subbands, 1 mid/side",
+              "offset": 2418,
+              "length": 308,
+              "ranges": [
+                {
+                  "offset": 2418,
+                  "length": 2
+                },
+                {
+                  "offset": 2422,
+                  "length": 304
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2427,
+                  "unit": "bits",
+                  "offset": 2418,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 2418,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2425,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2422,
+                  "length": 304,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 2422,
+                      "length": 304
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 2422,
+                      "length": 304
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 2422,
+                      "length": 304
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2472 bits, 6 subbands, 1 mid/side",
+              "offset": 2726,
+              "length": 312,
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2472,
+                  "unit": "bits",
+                  "offset": 2727,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2726,
+                  "length": 312,
+                  "ranges": [
+                    {
+                      "offset": 2726,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2730,
+                      "length": 308
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 2726,
+                      "length": 312,
+                      "ranges": [
+                        {
+                          "offset": 2726,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2730,
+                          "length": 308
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 2726,
+                      "length": 312,
+                      "ranges": [
+                        {
+                          "offset": 2726,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2730,
+                          "length": 308
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 2726,
+                      "length": 312,
+                      "ranges": [
+                        {
+                          "offset": 2726,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2730,
+                          "length": 308
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2503 bits, 7 subbands, 1 mid/side",
+              "offset": 3034,
+              "length": 320,
+              "ranges": [
+                {
+                  "offset": 3034,
+                  "length": 1
+                },
+                {
+                  "offset": 3038,
+                  "length": 312
+                },
+                {
+                  "offset": 3351,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2503,
+                  "unit": "bits",
+                  "offset": 3034,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3034,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3040,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3038,
+                  "length": 316,
+                  "ranges": [
+                    {
+                      "offset": 3038,
+                      "length": 2
+                    },
+                    {
+                      "offset": 3042,
+                      "length": 308
+                    },
+                    {
+                      "offset": 3351,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 3038,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 3038,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3042,
+                          "length": 308
+                        },
+                        {
+                          "offset": 3351,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 3038,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 3038,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3042,
+                          "length": 308
+                        },
+                        {
+                          "offset": 3351,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 3038,
+                      "length": 316,
+                      "ranges": [
+                        {
+                          "offset": 3038,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3042,
+                          "length": 308
+                        },
+                        {
+                          "offset": 3351,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2413 bits, 7 subbands, 1 mid/side",
+              "offset": 3350,
+              "length": 308,
+              "ranges": [
+                {
+                  "offset": 3350,
+                  "length": 2
+                },
+                {
+                  "offset": 3354,
+                  "length": 300
+                },
+                {
+                  "offset": 3655,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2413,
+                  "unit": "bits",
+                  "offset": 3350,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3350,
+                      "length": 2
+                    },
+                    {
+                      "offset": 3356,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3354,
+                  "length": 304,
+                  "ranges": [
+                    {
+                      "offset": 3354,
+                      "length": 3
+                    },
+                    {
+                      "offset": 3358,
+                      "length": 296
+                    },
+                    {
+                      "offset": 3655,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 3354,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 3354,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3358,
+                          "length": 296
+                        },
+                        {
+                          "offset": 3655,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 3354,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 3354,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3358,
+                          "length": 296
+                        },
+                        {
+                          "offset": 3655,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 3354,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 3354,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3358,
+                          "length": 296
+                        },
+                        {
+                          "offset": 3655,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2323 bits, 7 subbands, 2 mid/side",
+              "offset": 3654,
+              "length": 296,
+              "ranges": [
+                {
+                  "offset": 3654,
+                  "length": 1
+                },
+                {
+                  "offset": 3658,
+                  "length": 292
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2323,
+                  "unit": "bits",
+                  "offset": 3654,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3654,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3660,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3658,
+                  "length": 292,
+                  "ranges": [
+                    {
+                      "offset": 3658,
+                      "length": 3
+                    },
+                    {
+                      "offset": 3662,
+                      "length": 288
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 3658,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 3658,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3662,
+                          "length": 288
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 6",
+                      "offset": 3658,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 3658,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3662,
+                          "length": 288
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 3658,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 3658,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3662,
+                          "length": 288
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2020 bits, 7 subbands, 1 mid/side",
+              "offset": 3946,
+              "length": 260,
+              "ranges": [
+                {
+                  "offset": 3946,
+                  "length": 1
+                },
+                {
+                  "offset": 3950,
+                  "length": 252
+                },
+                {
+                  "offset": 4203,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2020,
+                  "unit": "bits",
+                  "offset": 3946,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3946,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3951,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3950,
+                  "length": 256,
+                  "ranges": [
+                    {
+                      "offset": 3950,
+                      "length": 2
+                    },
+                    {
+                      "offset": 3954,
+                      "length": 248
+                    },
+                    {
+                      "offset": 4203,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 3950,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 3950,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3954,
+                          "length": 248
+                        },
+                        {
+                          "offset": 4203,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 3950,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 3950,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3954,
+                          "length": 248
+                        },
+                        {
+                          "offset": 4203,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 3950,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 3950,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3954,
+                          "length": 248
+                        },
+                        {
+                          "offset": 4203,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1627 bits, 6 subbands, 1 mid/side",
+              "offset": 4202,
+              "length": 212,
+              "ranges": [
+                {
+                  "offset": 4202,
+                  "length": 2
+                },
+                {
+                  "offset": 4206,
+                  "length": 204
+                },
+                {
+                  "offset": 4413,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1627,
+                  "unit": "bits",
+                  "offset": 4202,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 4202,
+                      "length": 2
+                    },
+                    {
+                      "offset": 4208,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 4206,
+                  "length": 208,
+                  "ranges": [
+                    {
+                      "offset": 4206,
+                      "length": 3
+                    },
+                    {
+                      "offset": 4210,
+                      "length": 200
+                    },
+                    {
+                      "offset": 4413,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 4206,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 4206,
+                          "length": 3
+                        },
+                        {
+                          "offset": 4210,
+                          "length": 200
+                        },
+                        {
+                          "offset": 4413,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 4206,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 4206,
+                          "length": 3
+                        },
+                        {
+                          "offset": 4210,
+                          "length": 200
+                        },
+                        {
+                          "offset": 4413,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 4206,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 4206,
+                          "length": 3
+                        },
+                        {
+                          "offset": 4210,
+                          "length": 200
+                        },
+                        {
+                          "offset": 4413,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1903 bits, 6 subbands, 3 mid/side",
+              "offset": 4410,
+              "length": 244,
+              "ranges": [
+                {
+                  "offset": 4410,
+                  "length": 240
+                },
+                {
+                  "offset": 4652,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1903,
+                  "unit": "bits",
+                  "offset": 4410,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 4410,
+                  "length": 244,
+                  "ranges": [
+                    {
+                      "offset": 4410,
+                      "length": 1
+                    },
+                    {
+                      "offset": 4414,
+                      "length": 236
+                    },
+                    {
+                      "offset": 4652,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 4410,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 4410,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4414,
+                          "length": 236
+                        },
+                        {
+                          "offset": 4652,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 4, 5",
+                      "offset": 4410,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 4410,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4414,
+                          "length": 236
+                        },
+                        {
+                          "offset": 4652,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 4410,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 4410,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4414,
+                          "length": 236
+                        },
+                        {
+                          "offset": 4652,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2189 bits, 5 subbands, 1 mid/side",
+              "offset": 4650,
+              "length": 280,
+              "ranges": [
+                {
+                  "offset": 4650,
+                  "length": 3
+                },
+                {
+                  "offset": 4654,
+                  "length": 272
+                },
+                {
+                  "offset": 4928,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2189,
+                  "unit": "bits",
+                  "offset": 4650,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 4650,
+                  "length": 280,
+                  "ranges": [
+                    {
+                      "offset": 4650,
+                      "length": 1
+                    },
+                    {
+                      "offset": 4654,
+                      "length": 272
+                    },
+                    {
+                      "offset": 4928,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 4650,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 4650,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4654,
+                          "length": 272
+                        },
+                        {
+                          "offset": 4928,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 4650,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 4650,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4654,
+                          "length": 272
+                        },
+                        {
+                          "offset": 4928,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 4650,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 4650,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4654,
+                          "length": 272
+                        },
+                        {
+                          "offset": 4928,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2393 bits, 7 subbands, 1 mid/side",
+              "offset": 4926,
+              "length": 304,
+              "ranges": [
+                {
+                  "offset": 4926,
+                  "length": 3
+                },
+                {
+                  "offset": 4930,
+                  "length": 296
+                },
+                {
+                  "offset": 5227,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2393,
+                  "unit": "bits",
+                  "offset": 4926,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 4926,
+                  "length": 304,
+                  "ranges": [
+                    {
+                      "offset": 4926,
+                      "length": 1
+                    },
+                    {
+                      "offset": 4930,
+                      "length": 296
+                    },
+                    {
+                      "offset": 5227,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 4926,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 4926,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4930,
+                          "length": 296
+                        },
+                        {
+                          "offset": 5227,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 4926,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 4926,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4930,
+                          "length": 296
+                        },
+                        {
+                          "offset": 5227,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 4926,
+                      "length": 304,
+                      "ranges": [
+                        {
+                          "offset": 4926,
+                          "length": 1
+                        },
+                        {
+                          "offset": 4930,
+                          "length": 296
+                        },
+                        {
+                          "offset": 5227,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2521 bits, 7 subbands, 1 mid/side",
+              "offset": 5226,
+              "length": 324,
+              "ranges": [
+                {
+                  "offset": 5226,
+                  "length": 2
+                },
+                {
+                  "offset": 5230,
+                  "length": 316
+                },
+                {
+                  "offset": 5549,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2521,
+                  "unit": "bits",
+                  "offset": 5226,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 5226,
+                      "length": 2
+                    },
+                    {
+                      "offset": 5232,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 5230,
+                  "length": 320,
+                  "ranges": [
+                    {
+                      "offset": 5230,
+                      "length": 3
+                    },
+                    {
+                      "offset": 5234,
+                      "length": 312
+                    },
+                    {
+                      "offset": 5549,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 5230,
+                      "length": 320,
+                      "ranges": [
+                        {
+                          "offset": 5230,
+                          "length": 3
+                        },
+                        {
+                          "offset": 5234,
+                          "length": 312
+                        },
+                        {
+                          "offset": 5549,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 5230,
+                      "length": 320,
+                      "ranges": [
+                        {
+                          "offset": 5230,
+                          "length": 3
+                        },
+                        {
+                          "offset": 5234,
+                          "length": 312
+                        },
+                        {
+                          "offset": 5549,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 5230,
+                      "length": 320,
+                      "ranges": [
+                        {
+                          "offset": 5230,
+                          "length": 3
+                        },
+                        {
+                          "offset": 5234,
+                          "length": 312
+                        },
+                        {
+                          "offset": 5549,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2327 bits, 5 subbands, 1 mid/side",
+              "offset": 5546,
+              "length": 296,
+              "ranges": [
+                {
+                  "offset": 5546,
+                  "length": 292
+                },
+                {
+                  "offset": 5840,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2327,
+                  "unit": "bits",
+                  "offset": 5547,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 5546,
+                  "length": 296,
+                  "ranges": [
+                    {
+                      "offset": 5546,
+                      "length": 1
+                    },
+                    {
+                      "offset": 5550,
+                      "length": 288
+                    },
+                    {
+                      "offset": 5840,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 5546,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 5546,
+                          "length": 1
+                        },
+                        {
+                          "offset": 5550,
+                          "length": 288
+                        },
+                        {
+                          "offset": 5840,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 5546,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 5546,
+                          "length": 1
+                        },
+                        {
+                          "offset": 5550,
+                          "length": 288
+                        },
+                        {
+                          "offset": 5840,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 5546,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 5546,
+                          "length": 1
+                        },
+                        {
+                          "offset": 5550,
+                          "length": 288
+                        },
+                        {
+                          "offset": 5840,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2452 bits, 6 subbands, 1 mid/side",
+              "offset": 5838,
+              "length": 312,
+              "ranges": [
+                {
+                  "offset": 5838,
+                  "length": 3
+                },
+                {
+                  "offset": 5842,
+                  "length": 304
+                },
+                {
+                  "offset": 6147,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2452,
+                  "unit": "bits",
+                  "offset": 5838,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 5838,
+                      "length": 3
+                    },
+                    {
+                      "offset": 5845,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 5842,
+                  "length": 308,
+                  "ranges": [
+                    {
+                      "offset": 5842,
+                      "length": 304
+                    },
+                    {
+                      "offset": 6147,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 5842,
+                      "length": 308,
+                      "ranges": [
+                        {
+                          "offset": 5842,
+                          "length": 304
+                        },
+                        {
+                          "offset": 6147,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 5842,
+                      "length": 308,
+                      "ranges": [
+                        {
+                          "offset": 5842,
+                          "length": 304
+                        },
+                        {
+                          "offset": 6147,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 5842,
+                      "length": 308,
+                      "ranges": [
+                        {
+                          "offset": 5842,
+                          "length": 304
+                        },
+                        {
+                          "offset": 6147,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2366 bits, 5 subbands, 1 mid/side",
+              "offset": 6146,
+              "length": 304,
+              "ranges": [
+                {
+                  "offset": 6146,
+                  "length": 2
+                },
+                {
+                  "offset": 6150,
+                  "length": 296
+                },
+                {
+                  "offset": 6448,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2366,
+                  "unit": "bits",
+                  "offset": 6146,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 6146,
+                      "length": 2
+                    },
+                    {
+                      "offset": 6152,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 6150,
+                  "length": 300,
+                  "ranges": [
+                    {
+                      "offset": 6150,
+                      "length": 3
+                    },
+                    {
+                      "offset": 6154,
+                      "length": 292
+                    },
+                    {
+                      "offset": 6448,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 6150,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6150,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6154,
+                          "length": 292
+                        },
+                        {
+                          "offset": 6448,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 6150,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6150,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6154,
+                          "length": 292
+                        },
+                        {
+                          "offset": 6448,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 6150,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6150,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6154,
+                          "length": 292
+                        },
+                        {
+                          "offset": 6448,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2364 bits, 5 subbands, 1 mid/side",
+              "offset": 6446,
+              "length": 300,
+              "ranges": [
+                {
+                  "offset": 6446,
+                  "length": 3
+                },
+                {
+                  "offset": 6450,
+                  "length": 296
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2364,
+                  "unit": "bits",
+                  "offset": 6446,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 6446,
+                  "length": 300,
+                  "ranges": [
+                    {
+                      "offset": 6446,
+                      "length": 1
+                    },
+                    {
+                      "offset": 6450,
+                      "length": 296
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 6446,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6446,
+                          "length": 1
+                        },
+                        {
+                          "offset": 6450,
+                          "length": 296
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 6446,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6446,
+                          "length": 1
+                        },
+                        {
+                          "offset": 6450,
+                          "length": 296
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 6446,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 6446,
+                          "length": 1
+                        },
+                        {
+                          "offset": 6450,
+                          "length": 296
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2215 bits, 5 subbands, 1 mid/side",
+              "offset": 6742,
+              "length": 284,
+              "ranges": [
+                {
+                  "offset": 6742,
+                  "length": 1
+                },
+                {
+                  "offset": 6746,
+                  "length": 276
+                },
+                {
+                  "offset": 7023,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2215,
+                  "unit": "bits",
+                  "offset": 6742,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 6742,
+                      "length": 1
+                    },
+                    {
+                      "offset": 6748,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 6746,
+                  "length": 280,
+                  "ranges": [
+                    {
+                      "offset": 6746,
+                      "length": 3
+                    },
+                    {
+                      "offset": 6750,
+                      "length": 272
+                    },
+                    {
+                      "offset": 7023,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 6746,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 6746,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6750,
+                          "length": 272
+                        },
+                        {
+                          "offset": 7023,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 6746,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 6746,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6750,
+                          "length": 272
+                        },
+                        {
+                          "offset": 7023,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 6746,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 6746,
+                          "length": 3
+                        },
+                        {
+                          "offset": 6750,
+                          "length": 272
+                        },
+                        {
+                          "offset": 7023,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2384 bits, 7 subbands, 3 mid/side",
+              "offset": 7022,
+              "length": 304,
+              "ranges": [
+                {
+                  "offset": 7022,
+                  "length": 2
+                },
+                {
+                  "offset": 7026,
+                  "length": 296
+                },
+                {
+                  "offset": 7323,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2384,
+                  "unit": "bits",
+                  "offset": 7022,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7022,
+                      "length": 2
+                    },
+                    {
+                      "offset": 7029,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7026,
+                  "length": 300,
+                  "ranges": [
+                    {
+                      "offset": 7026,
+                      "length": 3
+                    },
+                    {
+                      "offset": 7030,
+                      "length": 292
+                    },
+                    {
+                      "offset": 7323,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 7,
+                      "offset": 7026,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 7026,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7030,
+                          "length": 292
+                        },
+                        {
+                          "offset": 7323,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 5, 6",
+                      "offset": 7026,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 7026,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7030,
+                          "length": 292
+                        },
+                        {
+                          "offset": 7323,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 7026,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 7026,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7030,
+                          "length": 292
+                        },
+                        {
+                          "offset": 7323,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1971 bits, 5 subbands, 1 mid/side",
+              "offset": 7322,
+              "length": 252,
+              "ranges": [
+                {
+                  "offset": 7322,
+                  "length": 1
+                },
+                {
+                  "offset": 7326,
+                  "length": 248
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1971,
+                  "unit": "bits",
+                  "offset": 7322,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7322,
+                      "length": 1
+                    },
+                    {
+                      "offset": 7328,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7326,
+                  "length": 248,
+                  "ranges": [
+                    {
+                      "offset": 7326,
+                      "length": 3
+                    },
+                    {
+                      "offset": 7330,
+                      "length": 244
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 7326,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7326,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7330,
+                          "length": 244
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 7326,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7326,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7330,
+                          "length": 244
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 7326,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7326,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7330,
+                          "length": 244
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1951 bits, 5 subbands, 1 mid/side",
+              "offset": 7570,
+              "length": 252,
+              "ranges": [
+                {
+                  "offset": 7570,
+                  "length": 1
+                },
+                {
+                  "offset": 7574,
+                  "length": 244
+                },
+                {
+                  "offset": 7819,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1951,
+                  "unit": "bits",
+                  "offset": 7570,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7570,
+                      "length": 1
+                    },
+                    {
+                      "offset": 7575,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7574,
+                  "length": 248,
+                  "ranges": [
+                    {
+                      "offset": 7574,
+                      "length": 2
+                    },
+                    {
+                      "offset": 7578,
+                      "length": 240
+                    },
+                    {
+                      "offset": 7819,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 7574,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7574,
+                          "length": 2
+                        },
+                        {
+                          "offset": 7578,
+                          "length": 240
+                        },
+                        {
+                          "offset": 7819,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 7574,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7574,
+                          "length": 2
+                        },
+                        {
+                          "offset": 7578,
+                          "length": 240
+                        },
+                        {
+                          "offset": 7819,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 7574,
+                      "length": 248,
+                      "ranges": [
+                        {
+                          "offset": 7574,
+                          "length": 2
+                        },
+                        {
+                          "offset": 7578,
+                          "length": 240
+                        },
+                        {
+                          "offset": 7819,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1430 bits, 5 subbands, 2 mid/side",
+              "offset": 7818,
+              "length": 184,
+              "ranges": [
+                {
+                  "offset": 7818,
+                  "length": 2
+                },
+                {
+                  "offset": 7822,
+                  "length": 180
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1430,
+                  "unit": "bits",
+                  "offset": 7818,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7818,
+                      "length": 2
+                    },
+                    {
+                      "offset": 7825,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7822,
+                  "length": 180,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 7822,
+                      "length": 180
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 4",
+                      "offset": 7822,
+                      "length": 180
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 7822,
+                      "length": 180
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1853 bits, 5 subbands, 1 mid/side",
+              "offset": 7998,
+              "length": 240,
+              "ranges": [
+                {
+                  "offset": 7998,
+                  "length": 1
+                },
+                {
+                  "offset": 8002,
+                  "length": 232
+                },
+                {
+                  "offset": 8236,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1853,
+                  "unit": "bits",
+                  "offset": 7998,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7998,
+                      "length": 1
+                    },
+                    {
+                      "offset": 8004,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8002,
+                  "length": 236,
+                  "ranges": [
+                    {
+                      "offset": 8002,
+                      "length": 2
+                    },
+                    {
+                      "offset": 8006,
+                      "length": 228
+                    },
+                    {
+                      "offset": 8236,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 8002,
+                      "length": 236,
+                      "ranges": [
+                        {
+                          "offset": 8002,
+                          "length": 2
+                        },
+                        {
+                          "offset": 8006,
+                          "length": 228
+                        },
+                        {
+                          "offset": 8236,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 8002,
+                      "length": 236,
+                      "ranges": [
+                        {
+                          "offset": 8002,
+                          "length": 2
+                        },
+                        {
+                          "offset": 8006,
+                          "length": 228
+                        },
+                        {
+                          "offset": 8236,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 8002,
+                      "length": 236,
+                      "ranges": [
+                        {
+                          "offset": 8002,
+                          "length": 2
+                        },
+                        {
+                          "offset": 8006,
+                          "length": 228
+                        },
+                        {
+                          "offset": 8236,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2137 bits, 5 subbands, 2 mid/side",
+              "offset": 8234,
+              "length": 272,
+              "ranges": [
+                {
+                  "offset": 8234,
+                  "length": 3
+                },
+                {
+                  "offset": 8238,
+                  "length": 268
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2137,
+                  "unit": "bits",
+                  "offset": 8234,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 8234,
+                      "length": 3
+                    },
+                    {
+                      "offset": 8241,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8238,
+                  "length": 268,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 8238,
+                      "length": 268
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 4",
+                      "offset": 8238,
+                      "length": 268
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 8238,
+                      "length": 268
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2124 bits, 5 subbands, 1 mid/side",
+              "offset": 8502,
+              "length": 272,
+              "ranges": [
+                {
+                  "offset": 8502,
+                  "length": 1
+                },
+                {
+                  "offset": 8506,
+                  "length": 268
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2124,
+                  "unit": "bits",
+                  "offset": 8502,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 8502,
+                      "length": 1
+                    },
+                    {
+                      "offset": 8508,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8506,
+                  "length": 268,
+                  "ranges": [
+                    {
+                      "offset": 8506,
+                      "length": 3
+                    },
+                    {
+                      "offset": 8510,
+                      "length": 264
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 8506,
+                      "length": 268,
+                      "ranges": [
+                        {
+                          "offset": 8506,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8510,
+                          "length": 264
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 8506,
+                      "length": 268,
+                      "ranges": [
+                        {
+                          "offset": 8506,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8510,
+                          "length": 264
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 8506,
+                      "length": 268,
+                      "ranges": [
+                        {
+                          "offset": 8506,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8510,
+                          "length": 264
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2253 bits, 5 subbands, 1 mid/side",
+              "offset": 8770,
+              "length": 288,
+              "ranges": [
+                {
+                  "offset": 8770,
+                  "length": 1
+                },
+                {
+                  "offset": 8774,
+                  "length": 284
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2253,
+                  "unit": "bits",
+                  "offset": 8770,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 8770,
+                      "length": 1
+                    },
+                    {
+                      "offset": 8776,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8774,
+                  "length": 284,
+                  "ranges": [
+                    {
+                      "offset": 8774,
+                      "length": 3
+                    },
+                    {
+                      "offset": 8778,
+                      "length": 280
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 8774,
+                      "length": 284,
+                      "ranges": [
+                        {
+                          "offset": 8774,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8778,
+                          "length": 280
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 8774,
+                      "length": 284,
+                      "ranges": [
+                        {
+                          "offset": 8774,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8778,
+                          "length": 280
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 8774,
+                      "length": 284,
+                      "ranges": [
+                        {
+                          "offset": 8774,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8778,
+                          "length": 280
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2336 bits, 5 subbands, 1 mid/side",
+              "offset": 9054,
+              "length": 300,
+              "ranges": [
+                {
+                  "offset": 9054,
+                  "length": 1
+                },
+                {
+                  "offset": 9058,
+                  "length": 292
+                },
+                {
+                  "offset": 9352,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2336,
+                  "unit": "bits",
+                  "offset": 9054,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 9054,
+                      "length": 1
+                    },
+                    {
+                      "offset": 9060,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 9058,
+                  "length": 296,
+                  "ranges": [
+                    {
+                      "offset": 9058,
+                      "length": 3
+                    },
+                    {
+                      "offset": 9062,
+                      "length": 288
+                    },
+                    {
+                      "offset": 9352,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 9058,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9058,
+                          "length": 3
+                        },
+                        {
+                          "offset": 9062,
+                          "length": 288
+                        },
+                        {
+                          "offset": 9352,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 9058,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9058,
+                          "length": 3
+                        },
+                        {
+                          "offset": 9062,
+                          "length": 288
+                        },
+                        {
+                          "offset": 9352,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 9058,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9058,
+                          "length": 3
+                        },
+                        {
+                          "offset": 9062,
+                          "length": 288
+                        },
+                        {
+                          "offset": 9352,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2363 bits, 5 subbands, 1 mid/side",
+              "offset": 9350,
+              "length": 300,
+              "ranges": [
+                {
+                  "offset": 9350,
+                  "length": 3
+                },
+                {
+                  "offset": 9354,
+                  "length": 296
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2363,
+                  "unit": "bits",
+                  "offset": 9350,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 9350,
+                      "length": 3
+                    },
+                    {
+                      "offset": 9357,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 9354,
+                  "length": 296,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 9354,
+                      "length": 296
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 9354,
+                      "length": 296
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 9354,
+                      "length": 296
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2355 bits, 5 subbands, 1 mid/side",
+              "offset": 9646,
+              "length": 304,
+              "ranges": [
+                {
+                  "offset": 9646,
+                  "length": 1
+                },
+                {
+                  "offset": 9650,
+                  "length": 296
+                },
+                {
+                  "offset": 9949,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2355,
+                  "unit": "bits",
+                  "offset": 9646,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 9646,
+                      "length": 1
+                    },
+                    {
+                      "offset": 9651,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 9650,
+                  "length": 300,
+                  "ranges": [
+                    {
+                      "offset": 9650,
+                      "length": 2
+                    },
+                    {
+                      "offset": 9654,
+                      "length": 292
+                    },
+                    {
+                      "offset": 9949,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 9650,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 9650,
+                          "length": 2
+                        },
+                        {
+                          "offset": 9654,
+                          "length": 292
+                        },
+                        {
+                          "offset": 9949,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 9650,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 9650,
+                          "length": 2
+                        },
+                        {
+                          "offset": 9654,
+                          "length": 292
+                        },
+                        {
+                          "offset": 9949,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 9650,
+                      "length": 300,
+                      "ranges": [
+                        {
+                          "offset": 9650,
+                          "length": 2
+                        },
+                        {
+                          "offset": 9654,
+                          "length": 292
+                        },
+                        {
+                          "offset": 9949,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2327 bits, 5 subbands, 1 mid/side",
+              "offset": 9946,
+              "length": 296,
+              "ranges": [
+                {
+                  "offset": 9946,
+                  "length": 292
+                },
+                {
+                  "offset": 10240,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2327,
+                  "unit": "bits",
+                  "offset": 9946,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 9946,
+                  "length": 296,
+                  "ranges": [
+                    {
+                      "offset": 9946,
+                      "length": 1
+                    },
+                    {
+                      "offset": 9950,
+                      "length": 288
+                    },
+                    {
+                      "offset": 10240,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 9946,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9946,
+                          "length": 1
+                        },
+                        {
+                          "offset": 9950,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10240,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 9946,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9946,
+                          "length": 1
+                        },
+                        {
+                          "offset": 9950,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10240,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 9946,
+                      "length": 296,
+                      "ranges": [
+                        {
+                          "offset": 9946,
+                          "length": 1
+                        },
+                        {
+                          "offset": 9950,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10240,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2323 bits, 5 subbands, 2 mid/side",
+              "offset": 10238,
+              "length": 296,
+              "ranges": [
+                {
+                  "offset": 10238,
+                  "length": 2
+                },
+                {
+                  "offset": 10242,
+                  "length": 288
+                },
+                {
+                  "offset": 10531,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2323,
+                  "unit": "bits",
+                  "offset": 10238,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 10238,
+                      "length": 2
+                    },
+                    {
+                      "offset": 10245,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 10242,
+                  "length": 292,
+                  "ranges": [
+                    {
+                      "offset": 10242,
+                      "length": 288
+                    },
+                    {
+                      "offset": 10531,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 10242,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 10242,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10531,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 4",
+                      "offset": 10242,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 10242,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10531,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 10242,
+                      "length": 292,
+                      "ranges": [
+                        {
+                          "offset": 10242,
+                          "length": 288
+                        },
+                        {
+                          "offset": 10531,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2205 bits, 5 subbands, 2 mid/side",
+              "offset": 10530,
+              "length": 284,
+              "ranges": [
+                {
+                  "offset": 10530,
+                  "length": 2
+                },
+                {
+                  "offset": 10534,
+                  "length": 276
+                },
+                {
+                  "offset": 10813,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2205,
+                  "unit": "bits",
+                  "offset": 10530,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 10530,
+                      "length": 2
+                    },
+                    {
+                      "offset": 10536,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 10534,
+                  "length": 280,
+                  "ranges": [
+                    {
+                      "offset": 10534,
+                      "length": 3
+                    },
+                    {
+                      "offset": 10538,
+                      "length": 272
+                    },
+                    {
+                      "offset": 10813,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 10534,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 10534,
+                          "length": 3
+                        },
+                        {
+                          "offset": 10538,
+                          "length": 272
+                        },
+                        {
+                          "offset": 10813,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 4",
+                      "offset": 10534,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 10534,
+                          "length": 3
+                        },
+                        {
+                          "offset": 10538,
+                          "length": 272
+                        },
+                        {
+                          "offset": 10813,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 10534,
+                      "length": 280,
+                      "ranges": [
+                        {
+                          "offset": 10534,
+                          "length": 3
+                        },
+                        {
+                          "offset": 10538,
+                          "length": 272
+                        },
+                        {
+                          "offset": 10813,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2008 bits, 5 subbands, 1 mid/side",
+              "offset": 10810,
+              "length": 256,
+              "ranges": [
+                {
+                  "offset": 10810,
+                  "length": 3
+                },
+                {
+                  "offset": 10814,
+                  "length": 248
+                },
+                {
+                  "offset": 11063,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2008,
+                  "unit": "bits",
+                  "offset": 10810,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 10810,
+                  "length": 256,
+                  "ranges": [
+                    {
+                      "offset": 10810,
+                      "length": 1
+                    },
+                    {
+                      "offset": 10814,
+                      "length": 248
+                    },
+                    {
+                      "offset": 11063,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 10810,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 10810,
+                          "length": 1
+                        },
+                        {
+                          "offset": 10814,
+                          "length": 248
+                        },
+                        {
+                          "offset": 11063,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 10810,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 10810,
+                          "length": 1
+                        },
+                        {
+                          "offset": 10814,
+                          "length": 248
+                        },
+                        {
+                          "offset": 11063,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 10810,
+                      "length": 256,
+                      "ranges": [
+                        {
+                          "offset": 10810,
+                          "length": 1
+                        },
+                        {
+                          "offset": 10814,
+                          "length": 248
+                        },
+                        {
+                          "offset": 11063,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1811 bits, 6 subbands, 1 mid/side",
+              "offset": 11062,
+              "length": 232,
+              "ranges": [
+                {
+                  "offset": 11062,
+                  "length": 2
+                },
+                {
+                  "offset": 11066,
+                  "length": 228
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1811,
+                  "unit": "bits",
+                  "offset": 11062,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 11062,
+                      "length": 2
+                    },
+                    {
+                      "offset": 11069,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 11066,
+                  "length": 228,
+                  "ranges": [
+                    {
+                      "offset": 11066,
+                      "length": 3
+                    },
+                    {
+                      "offset": 11070,
+                      "length": 224
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 11066,
+                      "length": 228,
+                      "ranges": [
+                        {
+                          "offset": 11066,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11070,
+                          "length": 224
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 11066,
+                      "length": 228,
+                      "ranges": [
+                        {
+                          "offset": 11066,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11070,
+                          "length": 224
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 11066,
+                      "length": 228,
+                      "ranges": [
+                        {
+                          "offset": 11066,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11070,
+                          "length": 224
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1556 bits, 5 subbands, 1 mid/side",
+              "offset": 11290,
+              "length": 204,
+              "ranges": [
+                {
+                  "offset": 11290,
+                  "length": 1
+                },
+                {
+                  "offset": 11294,
+                  "length": 196
+                },
+                {
+                  "offset": 11493,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1556,
+                  "unit": "bits",
+                  "offset": 11290,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 11290,
+                      "length": 1
+                    },
+                    {
+                      "offset": 11296,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 11294,
+                  "length": 200,
+                  "ranges": [
+                    {
+                      "offset": 11294,
+                      "length": 3
+                    },
+                    {
+                      "offset": 11298,
+                      "length": 192
+                    },
+                    {
+                      "offset": 11493,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 11294,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 11294,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11298,
+                          "length": 192
+                        },
+                        {
+                          "offset": 11493,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 11294,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 11294,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11298,
+                          "length": 192
+                        },
+                        {
+                          "offset": 11493,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 11294,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 11294,
+                          "length": 3
+                        },
+                        {
+                          "offset": 11298,
+                          "length": 192
+                        },
+                        {
+                          "offset": 11493,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1916 bits, 5 subbands, 1 mid/side",
+              "offset": 11490,
+              "length": 244,
+              "ranges": [
+                {
+                  "offset": 11490,
+                  "length": 240
+                },
+                {
+                  "offset": 11731,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1916,
+                  "unit": "bits",
+                  "offset": 11491,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 11490,
+                  "length": 244,
+                  "ranges": [
+                    {
+                      "offset": 11490,
+                      "length": 2
+                    },
+                    {
+                      "offset": 11494,
+                      "length": 236
+                    },
+                    {
+                      "offset": 11731,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 5,
+                      "offset": 11490,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 11490,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11494,
+                          "length": 236
+                        },
+                        {
+                          "offset": 11731,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 11490,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 11490,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11494,
+                          "length": 236
+                        },
+                        {
+                          "offset": 11731,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 11490,
+                      "length": 244,
+                      "ranges": [
+                        {
+                          "offset": 11490,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11494,
+                          "length": 236
+                        },
+                        {
+                          "offset": 11731,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "2069 bits, 6 subbands, 1 mid/side",
+              "offset": 11730,
+              "length": 264,
+              "ranges": [
+                {
+                  "offset": 11730,
+                  "length": 2
+                },
+                {
+                  "offset": 11734,
+                  "length": 260
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 2069,
+                  "unit": "bits",
+                  "offset": 11730,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 11730,
+                      "length": 2
+                    },
+                    {
+                      "offset": 11737,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 11734,
+                  "length": 260,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 6,
+                      "offset": 11734,
+                      "length": 260
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0",
+                      "offset": 11734,
+                      "length": 260
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 11734,
+                      "length": 260
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "24735 bits, 29 subbands, 18 mid/side",
+              "offset": 11990,
+              "length": 1172,
+              "ranges": [
+                {
+                  "offset": 11990,
+                  "length": 1
+                },
+                {
+                  "offset": 11994,
+                  "length": 1168
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 24735,
+                  "unit": "bits",
+                  "offset": 11990,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 11990,
+                      "length": 1
+                    },
+                    {
+                      "offset": 11996,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 11994,
+                  "length": 1168,
+                  "ranges": [
+                    {
+                      "offset": 11994,
+                      "length": 2
+                    },
+                    {
+                      "offset": 11998,
+                      "length": 1164
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 29,
+                      "offset": 11994,
+                      "length": 1168,
+                      "ranges": [
+                        {
+                          "offset": 11994,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11998,
+                          "length": 1164
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "0, 3, 7, 9, 13 to 16, 19 to 28",
+                      "offset": 11994,
+                      "length": 1168,
+                      "ranges": [
+                        {
+                          "offset": 11994,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11998,
+                          "length": 1164
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Noise-Substituted Channels",
+                      "value": 0,
+                      "offset": 11994,
+                      "length": 1168,
+                      "ranges": [
+                        {
+                          "offset": 11994,
+                          "length": 2
+                        },
+                        {
+                          "offset": 11998,
+                          "length": 1164
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v2",
+          "kind": "Tag",
+          "value": "2.4.0",
+          "offset": 13162,
+          "length": 27,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 13162,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 13162,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.4.0",
+                  "offset": 13165,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": 0,
+                  "offset": 13167,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": false,
+                      "offset": 13167,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": false,
+                      "offset": 13167,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": false,
+                      "offset": 13167,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": false,
+                      "offset": 13167,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": 17,
+                  "offset": 13168,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Inside",
+              "offset": 13172,
+              "length": 17,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 13172,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 13172,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 7,
+                      "offset": 13176,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 13180,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsUnsynchronized",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasDataLengthIndicator",
+                          "value": false,
+                          "offset": 13180,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "UTF-8",
+                  "offset": 13182,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Inside",
+                  "offset": 13183,
+                  "length": 6
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 13162,
+              "length": 27,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"ID3\" with version 2.4.0",
+                  "offset": 13162,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 17 bytes",
+                  "offset": 13168,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 13167,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 13172,
+                  "length": 17
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data",
+          "value": 13120,
+          "unit": "bytes",
+          "offset": 13189,
+          "length": 13120
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            1
+          ]
+        ],
+        "codec": "Musepack SV7",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo, mid/side per subband",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 43295,
+        "duration": 0.9817460317460317,
+        "averageBitrate": 96.11817434210526,
+        "isVbr": true,
+        "encoder": "mppenc 1.16",
+        "encoderConfidence": "High",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              66,
+              1806,
+              2106,
+              2418,
+              2726,
+              3034,
+              3350,
+              3654,
+              3946,
+              4202,
+              4410,
+              4650,
+              4926,
+              5226,
+              5546,
+              5838,
+              6146,
+              6446,
+              6742,
+              7022,
+              7322,
+              7570,
+              7818,
+              7998,
+              8234,
+              8502,
+              8770,
+              9054,
+              9350,
+              9646,
+              9946,
+              10238,
+              10530,
+              10810,
+              11062,
+              11290,
+              11490,
+              11730
+            ],
+            "values": [
+              532.60703125,
+              91.83671875,
+              96.20078125,
+              93.67421875,
+              95.396875,
+              96.58359375,
+              93.13828125,
+              89.69296875,
+              78.09375,
+              63.04921875,
+              73.61484375,
+              84.56328125,
+              92.37265625,
+              97.27265625,
+              89.84609375,
+              94.63125,
+              91.3390625,
+              91.2625,
+              85.55859375,
+              92.028125,
+              76.21796875,
+              75.45234375,
+              55.5078125,
+              71.70078125,
+              82.57265625,
+              82.075,
+              87.01328125,
+              90.190625,
+              91.22421875,
+              90.91796875,
+              89.84609375,
+              89.69296875,
+              85.17578125,
+              77.634375,
+              70.09296875,
+              60.33125,
+              74.1125,
+              79.96953125
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              96
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "musepack.frames-missing",
+        "message": "The header counts 58 frames, but the data holds 38 whole ones.",
+        "offset": 46,
+        "length": 4,
+        "path": [
+          1,
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "musepack.frame-truncated",
+        "message": "The frame at 0x2ED6 has 9348 bits of 24755 bits: the stream is cut short.",
+        "offset": 11990,
+        "length": 1172,
+        "path": [
+          1,
+          41
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "musepack.data-after-tag",
+        "message": "13120 bytes at 0x3385 follow an ID3v2 tag inside the Musepack stream, which breaks it; they are not read.",
+        "offset": 13189,
+        "length": 13120,
+        "path": [
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
