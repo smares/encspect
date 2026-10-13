@@ -9,7 +9,9 @@
 ## ID3v2
 
 - ID3v2.2, 2.3 and 2.4, zlib-compressed frames included.
-- Found at the start of the file or directly after another tag. ID3v2.4 tags are also found through their footer, and an ID3v2.4 SEEK frame leads to the next tag.
+- Found at the start of the file or directly after another tag.
+- An ID3v2.4 tag with the footer flag set is also found from its end: its footer ("3DI" and the header's version, flags and size, section 3.4) is looked for at the end of the file and just before another trailing tag. A tag appended without a footer cannot be found from the end and stays data.
+- An ID3v2.4 SEEK frame gives the minimum offset of the next tag; the host searches from there.
 - Full confidence needs everything to check out, among other things:
   - known flags;
   - an extended header laid out as its version defines it;
