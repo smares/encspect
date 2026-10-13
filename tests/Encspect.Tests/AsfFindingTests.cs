@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using Encspect.Core;
+using Encspect.Formats.Asf;
 using Encspect.Host;
 
 namespace Encspect.Tests;
@@ -36,6 +37,7 @@ public class AsfFindingTests
         ["asf.codec-list-reserved"] = () => Patch("header-objects", d => Array.Clear(d, At(d, CodecList) + 24, 16)),
         ["asf.command-type-index"] = () => Patch("header-objects", d => Set16(d, Text(d, "http://example.invalid/") - 4, 9)),
         ["asf.compressed-payload"] = () => CompressedWithoutOffset(),
+        ["asf.data-after-tag"] = () => TagInsideTheFile(),
         ["asf.data-reserved"] = () => Patch("minimal", d => Set16(d, At(d, Data) + 48, 0)),
         ["asf.data-unused"] = () => TrailingInData(),
         ["asf.descriptor-count"] = () => Patch("metadata", d => Set16(d, At(d, ExtendedContent) + 24, 200)),
@@ -100,6 +102,14 @@ public class AsfFindingTests
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.Equal(data.Length, report.Root.Length);
         TestFiles.CheckInsideParents(report.Root);
+
+        // Top-level nodes own their bytes, as the fuzzer checks.
+        long previousEnd = 0;
+        foreach (ByteRange range in report.Root.Children.SelectMany(TestFiles.RangesOf).OrderBy(r => r.Offset))
+        {
+            Assert.True(range.Offset >= previousEnd, $"A top-level node at {range.Offset} overlaps the one before, which ends at {previousEnd}.");
+            previousEnd = range.End;
+        }
     }
 
     // Packets of 200 bytes that state a packet length of 150: the file fixes the size of every packet at 200 (section
@@ -108,13 +118,36 @@ public class AsfFindingTests
     [Fact]
     public void ShorterPacketLengthFieldDoesNotMoveThePacketWalk()
     {
+        Report report = Analyzer.CreateDefault().Analyze("stepping.asf", new MemoryStream(PacketsStating(150)));
+        Assert.Contains(report.Findings, f => f.Code == "asf.packet-length");
+        Node list = FindNode(report.Root, "Data Packets")!;
+        Assert.Equal(6, list.Children.Count);
+        Assert.All(list.Children, packet => Assert.Single(packet.Children, c => c.Name == "Payload"));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "asf.packet-truncated" or "asf.payload-overrun" or "asf.data-unused");
+    }
+
+    // A packet length field above the packet size is read within the packet: the payload is there, and the excess is an overrun.
+    [Fact]
+    public void LongerPacketLengthFieldIsReadWithinThePacket()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("long.asf", new MemoryStream(PacketsStating(250)));
+        Assert.Contains(report.Findings, f => f.Code == "asf.packet-length");
+        Assert.Contains(report.Findings, f => f.Code == "asf.payload-overrun");
+        Node list = FindNode(report.Root, "Data Packets")!;
+        Assert.Equal(6, list.Children.Count);
+        Assert.All(list.Children, packet => Assert.Single(packet.Children, c => c.Name == "Payload"));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    private static byte[] PacketsStating(int length)
+    {
         var packets = new List<byte[]>();
         for (int i = 0; i < 6; i++)
         {
             byte[] p = new byte[200];
             p[0] = 0x40;
             p[1] = 0x5D;
-            BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(2), 150);
+            BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(2), (ushort)length);
             BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(4), (uint)(i * 10));
             p[10] = 0x81;
             p[11] = (byte)(i + 1);
@@ -125,13 +158,7 @@ public class AsfFindingTests
             packets.Add(p);
         }
 
-        byte[] data = AsfBuilder.Assemble(WmaStream(), 200, packets);
-        Report report = Analyzer.CreateDefault().Analyze("stepping.asf", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "asf.packet-length");
-        Node list = FindNode(report.Root, "Data Packets")!;
-        Assert.Equal(6, list.Children.Count);
-        Assert.All(list.Children, packet => Assert.Single(packet.Children, c => c.Name == "Payload"));
-        Assert.DoesNotContain(report.Findings, f => f.Code is "asf.packet-truncated" or "asf.payload-overrun" or "asf.data-unused");
+        return AsfBuilder.Assemble(WmaStream(), 200, packets);
     }
 
     // FFmpeg turns descrambling off where the chunk size is 0 (asfdec_f.c) and decodes the media objects as they are, so
@@ -143,6 +170,33 @@ public class AsfFindingTests
         Assert.Contains(Analyzer.CreateDefault().Analyze("a.asf", new MemoryStream(scrambled)).Findings, f => f.Code == "asf.audio-spread");
         byte[] data = Patch("spread-audio", d => Set16(d, At(d, StreamProperties) + 78 + Get32(d, At(d, StreamProperties) + 64) + 3, 0));
         Assert.DoesNotContain(Analyzer.CreateDefault().Analyze("b.asf", new MemoryStream(data)).Findings, f => f.Code == "asf.audio-spread");
+    }
+
+    // One record with more encrypted object records than become nodes: the record is shown as far as it is read, the
+    // rest of the object is Extra Data, and the finding names the count.
+    [Fact]
+    public void LongEncryptionRecordIsShownAsFarAsItIsRead()
+    {
+        byte[] data = AsfBuilder.InHeader("minimal", AsfBuilder.EncryptionRecords(1, 5000), extension: true);
+        Report report = Analyzer.CreateDefault().Analyze("ace.asf", new MemoryStream(data));
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.too-many-entries");
+        Assert.Contains("5000 encrypted object records in record 1 of 1", finding.Message, StringComparison.Ordinal);
+        Node encryption = FindNode(report.Root, "Advanced Content Encryption Object")!;
+        Assert.Single(encryption.Children, c => c.Name == "Content Encryption Record");
+        Node extra = Assert.Single(encryption.Children, c => c.Name == "Extra Data");
+        Assert.Equal(encryption.Children.Single(c => c.Name == "Content Encryption Record").End, extra.Offset);
+        Assert.Equal(encryption.End, extra.End);
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // Every packet issue the parser can flag has a finding written for it.
+    [Fact]
+    public void EveryPacketIssueHasAFinding()
+    {
+        foreach (PacketIssues issue in Enum.GetValues<PacketIssues>().Where(i => i != PacketIssues.None))
+        {
+            Assert.NotNull(AsfParser.Describe(issue));
+        }
     }
 
     // A broadcast file (Data Object of size 0) runs to the end of the file, so a TAG at its end is not an ID3v1 tag
@@ -237,6 +291,20 @@ public class AsfFindingTests
             Set32(result, 24, (uint)Get32(result, 24) + 1);
             return result;
         });
+    }
+
+    // An ID3v2.4 tag in front whose SEEK frame points into the packets, where another tag lies, in a file whose Header
+    // Object states a size of 26 bytes: it declares no end of its own, so the host passes the tag and the objects stop
+    // at it.
+    private static byte[] TagInsideTheFile()
+    {
+        byte[] asf = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", "minimal.asf"));
+        int header = (int)BinaryPrimitives.ReadUInt64LittleEndian(asf.AsSpan(16));
+        BinaryPrimitives.WriteUInt64LittleEndian(asf.AsSpan(16), 26);
+        int at = header + 24 + 10;
+        byte[] seek = [(byte)'I', (byte)'D', (byte)'3', 4, 0, 0, 0, 0, 0, 14, (byte)'S', (byte)'E', (byte)'E', (byte)'K', 0, 0, 0, 4, 0, 0, 0, 0, (byte)(at >> 8), (byte)at];
+        byte[] inner = [(byte)'I', (byte)'D', (byte)'3', 4, 0, 0, 0, 0, 0, 14, (byte)'T', (byte)'I', (byte)'T', (byte)'2', 0, 0, 0, 4, 0, 0, 3, (byte)'a', (byte)'b', (byte)'c'];
+        return [.. seek, .. asf[..at], .. inner, .. asf[at..]];
     }
 
     private static byte[] UnknownObject() => [.. Guid.Parse("12345678-1234-1234-1234-123456789ABC").ToByteArray(), 24, 0, 0, 0, 0, 0, 0, 0];

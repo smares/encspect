@@ -154,6 +154,8 @@ public sealed partial class AsfParser
             long unalignedOffsets = 0;
             long outsideOffsets = 0;
             long oversizedBlocks = 0;
+            Node? oversizedNode = null;
+            bool oversizedHere = false;
             long unshownStart = -1;
             long unshownBlocks = 0;
             void Tally(uint[] offsets, List<ulong> positions)
@@ -274,7 +276,8 @@ public sealed partial class AsfParser
                 long entrySize = (timecode ? 4 : 0) + (4L * offsetsPerEntry);
                 long entriesAt = bf.Position;
                 long fit = entrySize == 0 ? 0 : bf.Remaining / entrySize;
-                if (entries > fit)
+                oversizedHere = entries > fit;
+                if (oversizedHere)
                 {
                     oversizedBlocks++;
                 }
@@ -323,16 +326,21 @@ public sealed partial class AsfParser
                 }
 
                 node.Add(shown);
+                if (oversizedHere)
+                {
+                    oversizedNode ??= shown;
+                }
             }
 
+            Node? further = null;
             if (unshownBlocks > 0)
             {
-                node.Add("Further Index Blocks", unshownStart, f.Position - unshownStart, NodeValue.Integer(unshownBlocks, "blocks", "block"), Explain.FurtherIndexBlocks);
+                further = node.Add("Further Index Blocks", unshownStart, f.Position - unshownStart, NodeValue.Integer(unshownBlocks, "blocks", "block"), Explain.FurtherIndexBlocks);
             }
 
             if (oversizedBlocks > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-size", $"{oversizedBlocks} index blocks of the {name} count more entries than its data leaves room for.", node.Children[^1], (int)Math.Min(oversizedBlocks, int.MaxValue));
+                state.Findings.AddNow(Severity.Warning, "asf.index-size", $"{oversizedBlocks} index blocks of the {name} count more entries than its data leaves room for (the first is the node it points to).", oversizedNode ?? further ?? node, (int)Math.Min(oversizedBlocks, int.MaxValue));
             }
 
             if (outsideOffsets > 0)

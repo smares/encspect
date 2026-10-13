@@ -75,11 +75,29 @@ public sealed partial class AsfParser : IFormatParser
         }
     }
 
-    // A tag an ID3v2.4 SEEK frame points to inside the file lies within the end this parser declares, so the host
-    // leaves it to the objects (their Header Extension Object or their padding) and passes none as an embedded tag.
+    // Tags an ID3v2.4 SEEK frame points to inside the data are already in the report. Such a tag breaks the object
+    // structure, so the objects are read up to the first one, and the bytes between and after the tags are reported
+    // as not read. (The host passes them only where the file declares no end of its own, a Header Object smaller than
+    // 30 bytes; within a declared end the objects own the bytes.)
     public void Parse(ParseContext context)
     {
-        ParseFile(context, context.Reader, _routes);
+        ByteReader window = context.Reader;
+        List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
+        ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
+        ParseFile(context, reader, _routes);
+        long position = reader.End;
+        foreach (Node? tag in tags.Append<Node?>(null))
+        {
+            long end = Math.Min(tag?.Offset ?? window.End, window.End);
+            if (end > position)
+            {
+                Node data = context.Root.Add(new Node("Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.AfterEmbeddedTag });
+                context.AddFinding(Severity.Warning, "asf.data-after-tag",
+                    $"{end - position} bytes at 0x{position:X} follow an ID3v2 tag inside the ASF data, which breaks its objects; they are not read.", data);
+            }
+
+            position = Math.Max(position, tag?.End ?? position);
+        }
     }
 
     private static bool StartsWithHeader(ByteReader reader)

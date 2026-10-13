@@ -163,8 +163,8 @@ internal static class PacketParser
     public static int Width(int type) => type switch { 1 => 1, 2 => 2, 3 => 4, _ => 0 };
 
     // Parses the packet at the start of bytes. packetSize is the size every packet has, from the File
-    // Properties Object; bytes holds the packet's bytes, or fewer where the data ends inside it.
-    public static void Parse(ReadOnlySpan<byte> bytes, int packetSize, ParsedPacket packet)
+    // Properties Object (fixedSize: the same for every packet); bytes holds the packet's bytes, or fewer where the data ends inside it.
+    public static void Parse(ReadOnlySpan<byte> bytes, int packetSize, ParsedPacket packet, bool fixedSize = false)
     {
         packet.Clear();
         int position = 0;
@@ -230,6 +230,14 @@ internal static class PacketParser
         else if (packet.PacketLengthField != 0 && packetSize > 0 && packet.PacketLengthField != packetSize)
         {
             packet.Issues |= PacketIssues.PacketLengthMismatch;
+        }
+
+        if (fixedSize && packetSize > 0 && length > packetSize)
+        {
+            // Every packet has the file's packet size (section 8.2.13): a longer length field does not make this one longer,
+            // and what it counts beyond the packet is payload that is not there.
+            packet.Issues |= PacketIssues.PayloadOverrun;
+            length = packetSize;
         }
 
         packet.PacketLength = length;

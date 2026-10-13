@@ -118,6 +118,33 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
     public List<string> ExtendedContentNames { get; } = [];
 
+    // Objects no specification defines, by where they lie: the first of each place gets the finding, with the count
+    // (a file of thousands of them gets one finding, not thousands).
+    private readonly Dictionary<string, (ObjectHeaderInfo First, Node Node, string Place, string Section, int Count)> _unknown = [];
+
+    public void NoteUnknownObject(string key, AsfParser.ObjectHeader header, Node node, string place, string section)
+    {
+        _unknown[key] = _unknown.TryGetValue(key, out var existing)
+            ? existing with { Count = existing.Count + 1 }
+            : (new ObjectHeaderInfo(header.Id, header.Offset), node, place, section, 1);
+    }
+
+    public void FlushUnknownObjects()
+    {
+        foreach ((string key, var entry) in _unknown)
+        {
+            string text = AsfGuids.Text(entry.First.Id);
+            string message = entry.Count == 1
+                ? $"The {(key == "top-level" ? "top-level object" : "object")} {text} at 0x{entry.First.Offset:X} in {entry.Place} is none of the objects the specification defines; readers ignore it ({entry.Section})."
+                : $"{entry.Count} objects in {entry.Place} are none of the objects the specification defines, the first {text} at 0x{entry.First.Offset:X}; readers ignore them ({entry.Section}).";
+            Findings.AddNow(Severity.Info, "asf.unknown-object", message, entry.Node, entry.Count);
+        }
+
+        _unknown.Clear();
+    }
+
+    internal readonly record struct ObjectHeaderInfo(Guid Id, long Offset);
+
     // The IsVBR attribute both Windows writers stamp into the file: what the writer says about its mode.
     public bool? IsVbr { get; set; }
 

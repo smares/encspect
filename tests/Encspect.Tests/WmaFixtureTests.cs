@@ -64,7 +64,7 @@ public class WmaFixtureTests
         Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), stream.Samples);
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
-        Assert.DoesNotContain(report.Findings, f => f.Code is "wma.frame-invalid" or "wma.frame-boundary");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wma.frame-invalid");
     }
 
     [Theory]

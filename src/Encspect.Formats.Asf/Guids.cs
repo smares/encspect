@@ -42,14 +42,15 @@ internal static class AsfGuids
     public static readonly Guid TimecodeIndexParameters = new("F55E496D-9797-4B5D-8C8B-604DFE9BFB24");
     public static readonly Guid AdvancedContentEncryption = new("43058533-6981-49E6-9B74-AD12CB86D58C");
 
-    // The Compatibility Object (section 4.12), which the Windows Media Format SDK's writer puts in every file. The
+    // The Compatibility Object (section 4.12), which the Windows Media Format SDK's writer puts in every file of the project's fixtures. The
     // text of revision 01.20.03 prints the Header Object's GUID for it in section 10.3, a misprint: 26 bytes with
     // profile 2 and mode 1, as section 4.12 sets them, carry this GUID in all the SDK's files, and MediaInfoLib
     // (File_Wm_Elements.cpp, Header_HeaderExtension_Compatibility) names it so.
     public static readonly Guid Compatibility = new("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
 
     // Not in the specification or in FFmpeg: MediaInfoLib (File_Wm_Elements.cpp) calls it Index Placeholder, and the
-    // Windows Media Format SDK's writer puts it in the Header Extension Object of Voice files. Readers ignore it.
+    // Windows Media Format SDK's writer puts it in the Header Extension Object of the constant bitrate files in the project's
+    // fixtures (written on Windows Server 2025, wmvcore 12.0.26100), and in none of its variable bitrate or Lossless files. Readers ignore it.
     public static readonly Guid IndexPlaceholder = new("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
 
     public static readonly Guid Reserved1 = new("ABD3D211-A9BA-11CF-8EE6-00C00C205365");

@@ -35,12 +35,16 @@ public class WmaFindingTests
         ["wma.codec-data-size"] = () => Standard(FFmpeg, 0x0161, s => s.Data = s.Data[..7]),
         ["wma.encoder-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim")]),
         ["wma.format-unsupported"] = () => Standard(FFmpeg, 0x0161, s => s.Format = s.Format with { BlockAlign = 0 }),
+        ["wma.frame-filler"] = () => Standard("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, _ => { }),
+        ["wma.frame-invalid"] = () => Standard(FFmpeg, 0x0161, s => s.Objects[0] = With(s.Objects[0], o => Array.Fill(o, (byte)0xFF, 4, 60))),
+        ["wma.frame-stuffing"] = () => Standard("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, _ => { }),
         ["wma.frame-unfinished"] = () => Unfinished(),
         ["wma.lossless-bit-depth"] = () => Header(new WmaLosslessParser(), Lossless, 0x0163, s => BinaryPrimitives.WriteUInt16LittleEndian(s.Data, 12)),
         ["wma.lossless-not-read"] = () => Header(new WmaLosslessParser(), Lossless, 0x0163, _ => { }),
         ["wma.no-format"] = () => Run(new WmaProParser(), Load(Pro, 0x0162).Objects, (Stream?)null),
         ["wma.no-length-prefix"] = () => Header2(Pro, 0x0162, s => BinaryPrimitives.WriteUInt16LittleEndian(s.Data.AsSpan(14), 0x00A1)),
         ["wma.packet-long"] = () => Header2(Pro, 0x0162, s => s.Objects[0] = [.. s.Objects[0], .. new byte[40]]),
+        ["wma.packet-sequence"] = () => Header2(Pro, 0x0162, s => s.Objects[1] = With(s.Objects[1], o => o[0] = (byte)((o[0] & 0x0F) | 0xE0))),
         ["wma.packet-short"] = () => Header2(Pro, 0x0162, s => s.Objects[0] = s.Objects[0][..40]),
         ["wma.payload-not-analyzed"] = () => PayloadNotAnalyzed(),
         ["wma.reservoir-at-end"] = () => Standard(Reservoir, 0x0161, s => s.Objects.RemoveRange(2, s.Objects.Count - 2)),
@@ -74,24 +78,6 @@ public class WmaFindingTests
         Stream s = Load(fixture, tag);
         s.Data = s.Data[..10];
         Assert.Contains(Run(parser, s.Objects, s), f => f.Code == "wma.codec-data-size");
-    }
-
-    // The frame filling and stuffing the Microsoft encoders leave after a frame that spans superframes.
-    [Fact]
-    public void MicrosoftStreamsLeaveStuffingAndFiller()
-    {
-        var codes = new HashSet<string>();
-        foreach (string fixture in new[] { Reservoir, "asf/external-windows-wma92-cbr-stereo-44k-128.wma", "asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma", "asf/external-windows-wma92-cbr-stereo-44k-192.wma" })
-        {
-            Stream s = Load(fixture, 0x0161);
-            foreach (Finding f in Run(new WmaStandardParser(), s.Objects, s))
-            {
-                codes.Add(f.Code);
-            }
-        }
-
-        Assert.Contains("wma.frame-stuffing", codes);
-        Assert.Contains("wma.frame-filler", codes);
     }
 
     // A superframe with no frame ending in it, between the one where a frame begins and the one where it ends:

@@ -5,6 +5,7 @@ namespace Encspect.Formats.Asf;
 // are its.
 internal static partial class Explain
 {
+    public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag found inside the file, which breaks the run of objects; they are not read.";
     public const string File = "The ASF file: a Header Object, a Data Object and optional index objects, each an object of a 128-bit GUID, a 64-bit size and its data (sections 2.1 and 2.2).";
     public const string TrailingData = "Bytes after the last object that are not an object.";
     public const string UnparsedData = "Bytes the analyzer could not read as objects, because the size of an object is invalid.";
@@ -256,7 +257,7 @@ internal static partial class Explain
     public const string IndexSpecifier = "A stream and the kind of index it has (sections 4.9 to 4.11).";
     public const string IndexSpecifierStream = "The number of the indexed stream (sections 4.9 to 4.11).";
     public const string IndexType = "The kind of index: 1 nearest past data packet, 2 nearest past media object, 3 nearest past cleanpoint, 0xFF frame number offset (sections 4.9 and 4.10).";
-    public const string CompatibilityObject = "The Compatibility Object, reserved for future use (section 4.12); the Windows Media Format SDK writes it into every file, with profile 2 and mode 1.";
+    public const string CompatibilityObject = "The Compatibility Object, reserved for future use (section 4.12); in every file of the project's fixtures, written by the Windows Media Format SDK on Windows Server 2025, it has profile 2 and mode 1.";
     public const string IndexPlaceholder = "An object that the specification and FFmpeg do not define and MediaInfoLib calls Index Placeholder; readers ignore it.";
     public const string IndexPlaceholderData = "The object's data, which is not interpreted.";
     public const string CompatibilityProfile = "Reserved; should be 2 (section 4.12).";

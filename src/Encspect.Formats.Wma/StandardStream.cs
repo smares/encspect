@@ -297,11 +297,6 @@ internal sealed class StandardStream
                     Findings.Add(Severity.Info, zero ? "wma.frame-stuffing" : "wma.frame-filler", () => FrameNode(Frames.Count - 1), count =>
                         $"{(count == 1 ? "A frame that began in the superframe before is" : $"{count} frames that began in the superframe before are")} followed by {(zero ? "zero bits" : "bits that are not zero")} up to the bit offset the superframe states, which a decoder skips; the first has {expected - end} (in the superframe at 0x{offset:X}).");
                 }
-                else
-                {
-                    Findings.Add(Severity.Warning, "wma.frame-boundary", () => FrameNode(Frames.Count - 1), count =>
-                        $"{(count == 1 ? "A frame that began in the superframe before ends" : $"{count} frames that began in the superframe before end")} {end - expected} bits after the bit offset the superframe states, where the next frame starts; the first is in the superframe at 0x{offset:X}.");
-                }
             }
 
             frames--;
@@ -506,7 +501,7 @@ internal sealed class StandardStream
         FrameStatus.ExponentsMissing => "a block codes a channel but reuses exponents it never received",
         FrameStatus.CoefficientCode => "bits that are no code of the coefficient codebook",
         FrameStatus.CoefficientOverflow => "coefficients run past the end of the block",
-        FrameStatus.Overrun => "the frame needs more bits than it has (FFmpeg's reader accepts a frame that ends up to 8 bits past its superframe; this analysis reports any)",
+        FrameStatus.Overrun => "the frame needs more bits than it has (FFmpeg accepts a frame read from a superframe's bit offset that ends up to 7 bits past the superframe, and does not check the other frames; this analysis reports any)",
         _ => "an error",
     };
 }

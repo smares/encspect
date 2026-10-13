@@ -50,8 +50,8 @@ public sealed partial class AsfParser
 
             reader.Position = position;
             reader.Read(buffer.AsSpan(0, count));
-            PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
-            if (packet.PacketLength > count && packet.PacketLength <= MaxPacketSize && packet.PacketLength <= remaining)
+            PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet, state.PacketSizeIsFixed);
+            if (!state.PacketSizeIsFixed && packet.PacketLength > count && packet.PacketLength <= MaxPacketSize && packet.PacketLength <= remaining)
             {
                 count = packet.PacketLength;
                 if (buffer.Length < count)
@@ -61,7 +61,7 @@ public sealed partial class AsfParser
 
                 reader.Position = position;
                 reader.Read(buffer.AsSpan(0, count));
-                PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
+                PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet, state.PacketSizeIsFixed);
             }
 
             int length = StepOf(state, packet, count, remaining);

@@ -118,8 +118,7 @@ public sealed partial class AsfParser
             }
             else
             {
-                state.Findings.AddNow(Severity.Info, "asf.unknown-object",
-                    $"The top-level object {AsfGuids.Text(header.Id)} at 0x{header.Offset:X} is none of the objects the specification defines; readers ignore it (section 2.2).", node);
+                state.NoteUnknownObject("top-level", header, node, "the file", "section 2.2");
             }
         }
     }
@@ -176,10 +175,10 @@ public sealed partial class AsfParser
         }
     }
 
-    private static void TooManyEntries(State state, Node node, Fields f, long count, string what)
+    private static void TooManyEntries(State state, Node node, Fields f, string what, string from)
     {
         state.Findings.AddNow(Severity.Warning, "asf.too-many-entries",
-            $"The {node.Name} counts {count} {what}; the first {MaxListEntries} are read, and the rest of the object, from 0x{f.Position:X}, is not.", node);
+            $"The {node.Name} counts {what}; the first {MaxListEntries} are read, and the rest of the object, {from} 0x{f.Position:X}, is not.", node);
     }
 
     // ---- Header Object (section 3.1) ----
@@ -399,8 +398,7 @@ public sealed partial class AsfParser
         else
         {
             Node node = ParseUnknown(state, parent, header, end);
-            state.Findings.AddNow(Severity.Info, "asf.unknown-object",
-                $"The object {AsfGuids.Text(header.Id)} at 0x{header.Offset:X} in the {parent.Name} is none of the objects the specification defines; readers ignore it (section 3.1).", node);
+            state.NoteUnknownObject(parent.Name, header, node, $"the {parent.Name}", "section 3.1");
         }
     }
 
@@ -774,7 +772,7 @@ public sealed partial class AsfParser
             {
                 if (i == MaxListEntries)
                 {
-                    TooManyEntries(state, node, f, count, "codec entries");
+                    TooManyEntries(state, node, f, $"{count} codec entries", "from");
                     break;
                 }
 
@@ -1118,11 +1116,12 @@ public sealed partial class AsfParser
             ushort count = f.Word("Content Encryption Records Count", Explain.ContentEncryptionRecordsCount);
             node.Value = NodeValue.Integer(count, "records", "record");
             int recordNodes = 0;
-            for (int i = 0; i < count; i++)
+            bool stopped = false;
+            for (int i = 0; i < count && !stopped; i++)
             {
                 if (i == MaxListEntries)
                 {
-                    TooManyEntries(state, node, f, count, "content encryption records");
+                    TooManyEntries(state, node, f, $"{count} content encryption records", "from");
                     break;
                 }
 
@@ -1136,9 +1135,16 @@ public sealed partial class AsfParser
                 {
                     if (++recordNodes > MaxListEntries)
                     {
-                        TooManyEntries(state, node, f, objects, "encrypted object records");
-                        r.Reader.Position = r.Reader.End;
-                        i = count;
+                        // The record so far is shown, and the rest of the object is Extra Data.
+                        TooManyEntries(state, node, f, $"{objects} encrypted object records in record {i + 1} of {count}", "from");
+                        var partial = new Node("Content Encryption Record", at, r.Position - at) { Description = Explain.ContentEncryptionRecord };
+                        foreach (Node child in entry.Children)
+                        {
+                            partial.Add(child);
+                        }
+
+                        node.Add(partial);
+                        stopped = true;
                         break;
                     }
 
@@ -1157,7 +1163,7 @@ public sealed partial class AsfParser
                     entry.Add(shownRecord);
                 }
 
-                if (i >= count)
+                if (stopped)
                 {
                     break;
                 }

@@ -14,7 +14,7 @@ public sealed class WmaProParser : ICodecParser
 {
     // Superframes (packets) are described in records up to this count, so a crafted file of millions of tiny ones
     // stays bounded; the rest are counted but not read.
-    internal const int MaxPackets = 1 << 20;
+    internal const int MaxPackets = 1 << 18;
 
     public const string CodecId = "wma-pro";
 

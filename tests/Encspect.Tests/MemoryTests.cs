@@ -249,7 +249,7 @@ public class MemoryTests(ITestOutputHelper output)
     [Fact]
     public void PacketsPastTheDetailedOnesAreCounted()
     {
-        byte[] data = AsfBuilder.Build(PcmStreamProperties(), new byte[1], (1 << 20) + 5_000, 1);
+        byte[] data = AsfBuilder.Build(PcmStreamProperties(), new byte[1], (1 << 16) + 5_000, 1);
         Bounded("undetailed.asf", data, 300_000_000, "asf.packets-undetailed");
     }
 
@@ -258,7 +258,7 @@ public class MemoryTests(ITestOutputHelper output)
     public void ManyTinyWmaSuperframesAreBounded()
     {
         (byte[] properties, _) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
-        byte[] data = AsfBuilder.Build(properties, new byte[3], 1_300_000, 1);
+        byte[] data = AsfBuilder.Build(properties, new byte[3], 600_000, 1);
         Bounded("tiny.wma", data, 300_000_000, "wma.records-limit");
     }
 

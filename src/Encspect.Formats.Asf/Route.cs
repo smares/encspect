@@ -9,6 +9,7 @@ public sealed partial class AsfParser
     private static void Check(State state)
     {
         FindingCollector findings = state.Findings;
+        state.FlushUnknownObjects();
         Node file = state.File;
         Node anchor = state.HeaderNode ?? file;
 

@@ -118,7 +118,7 @@ public sealed partial class AsfParser
 {
     // Packets are described in records up to this count; a data object of more is still counted
     // and its media objects still go to the codec, but the packets after the limit are one node.
-    internal const int MaxDetailedPackets = 1 << 20;
+    internal const int MaxDetailedPackets = 1 << 16;
 
     // The largest packet read into memory.
     internal const int MaxPacketSize = 1 << 24;
@@ -258,10 +258,10 @@ public sealed partial class AsfParser
 
             reader.Position = position;
             reader.Read(buffer.AsSpan(0, count));
-            PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
+            PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet, state.PacketSizeIsFixed);
 
             // A packet that states more bytes than the size every packet has (variable-size packets).
-            if (packet.PacketLength > count && packet.PacketLength <= MaxPacketSize && packet.PacketLength <= remaining)
+            if (!state.PacketSizeIsFixed && packet.PacketLength > count && packet.PacketLength <= MaxPacketSize && packet.PacketLength <= remaining)
             {
                 count = packet.PacketLength;
                 if (buffer.Length < count)
@@ -271,7 +271,7 @@ public sealed partial class AsfParser
 
                 reader.Position = position;
                 reader.Read(buffer.AsSpan(0, count));
-                PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
+                PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet, state.PacketSizeIsFixed);
             }
 
             int length = StepOf(state, packet, count, remaining);
@@ -467,27 +467,34 @@ public sealed partial class AsfParser
         AddStatistics(state, dataNode, figures, start, end);
     }
 
+    // What a packet issue is called; null for a flag no finding is written for (a test holds every flag to one).
+    internal static (Severity Severity, string Code, string Text)? Describe(PacketIssues issue) => issue switch
+    {
+        PacketIssues.Truncated => (Severity.Warning, "asf.packet-truncated", "ends before its header or a payload does: the file is cut short or the packet is damaged"),
+        PacketIssues.PaddingTooLong => (Severity.Warning, "asf.padding-length", "states more padding than the packet holds after its header"),
+        PacketIssues.PayloadOverrun => (Severity.Warning, "asf.payload-overrun", "holds a payload that extends past the packet's end"),
+        PacketIssues.NoPayloads => (Severity.Warning, "asf.no-payloads", "states that it holds no payloads (section 5.2.3.3)"),
+        PacketIssues.PayloadLengthType => (Severity.Warning, "asf.payload-length-type", "has multiple payloads but a payload length type of 0, which cannot hold their lengths (section 5.2.3.3)"),
+        PacketIssues.StreamNumberType => (Severity.Info, "asf.stream-number-type", "has a stream number length type other than 1; the specification fixes it to a byte (section 5.2.2), and readers read a byte"),
+        PacketIssues.ReplicatedLength => (Severity.Warning, "asf.replicated-length", "holds a payload whose replicated data is 2 to 7 bytes, too few for the media object's size and time (section 5.2.3.1)"),
+        PacketIssues.EccLengthType => (Severity.Warning, "asf.ecc-length-type", "has an error correction length type other than 0, which the specification reserves (section 5.2.1)"),
+        PacketIssues.PacketLengthMismatch => (Severity.Warning, "asf.packet-length", "states a packet length that differs from the packet size in the File Properties Object (section 8.2.13)"),
+        PacketIssues.PaddingMismatch => (Severity.Warning, "asf.padding-mismatch", "states a padding length that differs from the padding its layout leaves (section 8.2.15)"),
+        PacketIssues.ZeroStream => (Severity.Warning, "asf.payload-stream-zero", "holds a payload for stream 0, which is not a stream"),
+        PacketIssues.EmptyPayload => (Severity.Warning, "asf.payload-empty", "holds an empty payload, or a compressed payload whose sub-payloads overrun it (section 5.2.3)"),
+        PacketIssues.CompressedPayload => (Severity.Warning, "asf.compressed-payload", "holds a compressed payload (replicated data length 1) in a packet without the fields it needs (section 5.2.3.2)"),
+        PacketIssues.NoPacketSize => (Severity.Warning, "asf.no-packet-size", "has no packet length field, and the File Properties Object gives no packet size"),
+        _ => null,
+    };
+
     private static void AddDataFindings(State state, Node dataNode, DataFigures figures, long start)
     {
         foreach ((PacketIssues issue, (long count, long offset)) in figures.Issues.OrderBy(i => i.Value.Offset))
         {
-            (Severity severity, string code, string text) = issue switch
+            if (Describe(issue) is not var (severity, code, text))
             {
-                PacketIssues.Truncated => (Severity.Warning, "asf.packet-truncated", "ends before its header or a payload does: the file is cut short or the packet is damaged"),
-                PacketIssues.PaddingTooLong => (Severity.Warning, "asf.padding-length", "states more padding than the packet holds after its header"),
-                PacketIssues.PayloadOverrun => (Severity.Warning, "asf.payload-overrun", "holds a payload that extends past the packet's end"),
-                PacketIssues.NoPayloads => (Severity.Warning, "asf.no-payloads", "states that it holds no payloads (section 5.2.3.3)"),
-                PacketIssues.PayloadLengthType => (Severity.Warning, "asf.payload-length-type", "has multiple payloads but a payload length type of 0, which cannot hold their lengths (section 5.2.3.3)"),
-                PacketIssues.StreamNumberType => (Severity.Info, "asf.stream-number-type", "has a stream number length type other than 1; the specification fixes it to a byte (section 5.2.2), and readers read a byte"),
-                PacketIssues.ReplicatedLength => (Severity.Warning, "asf.replicated-length", "holds a payload whose replicated data is 2 to 7 bytes, too few for the media object's size and time (section 5.2.3.1)"),
-                PacketIssues.EccLengthType => (Severity.Warning, "asf.ecc-length-type", "has an error correction length type other than 0, which the specification reserves (section 5.2.1)"),
-                PacketIssues.PacketLengthMismatch => (Severity.Warning, "asf.packet-length", "states a packet length that differs from the packet size in the File Properties Object (section 8.2.13)"),
-                PacketIssues.PaddingMismatch => (Severity.Warning, "asf.padding-mismatch", "states a padding length that differs from the padding its layout leaves (section 8.2.15)"),
-                PacketIssues.ZeroStream => (Severity.Warning, "asf.payload-stream-zero", "holds a payload for stream 0, which is not a stream"),
-                PacketIssues.EmptyPayload => (Severity.Warning, "asf.payload-empty", "holds an empty payload, or a compressed payload whose sub-payloads overrun it (section 5.2.3)"),
-                PacketIssues.CompressedPayload => (Severity.Warning, "asf.compressed-payload", "holds a compressed payload (replicated data length 1) in a packet without the fields it needs (section 5.2.3.2)"),
-                _ => (Severity.Warning, "asf.no-packet-size", "has no packet length field, and the File Properties Object gives no packet size"),
-            };
+                continue;
+            }
 
             Node? node = FindPacketNode(figures, offset);
             string which = count == 1 ? $"The packet at 0x{offset:X}" : $"{count} packets, the first at 0x{offset:X},";
