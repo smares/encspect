@@ -25,14 +25,33 @@ Every format has three kinds of fixture:
 
 | Format | Fixtures | Scripts | Checked against |
 |---|---|---|---|
-| Tags | `tests/fixtures/tags` | `make_tag_fixtures.py`; `make_external_tag_fixtures.py` (mutagen, ffmpeg) | |
-| MPEG audio | `tests/fixtures/mpeg`, `layer2`, `layer3`, `vbr`, `stats` | `make_mpeg_fixtures.py`, `make_layer2_fixtures.py`, `make_layer3_fixtures.py`, `make_vbr_fixtures.py`, `make_stats_fixtures.py`; `make_external_mpeg_fixtures.py` | ffprobe, madplay, mpg123, minimp3, mctoolamed, mp3guessenc, EncSpot (`crosscheck_mpeg_fixtures.py`) |
-| MP4 and AAC | `tests/fixtures/mp4`, `adts`, `aac` | `make_mp4_fixtures.py`, `aac_block_fixtures.py`; `make_external_aac_fixtures.py` | ffprobe, MP4Box, faad, a tracing faad2 build, ffmpeg decoding (`crosscheck_mp4_fixtures.py`); `check_aac_tables.py` for the Huffman and band tables; TagLib# for iTunes metadata |
-| Ogg, Speex, Vorbis, Opus | `tests/fixtures/ogg` | `make_ogg_fixtures.py`, `make_vorbis_opus_fixtures.py`; `make_external_ogg_fixtures.py`, `make_external_vorbis_opus_fixtures.py` | oggz, ogginfo, vorbiscomment, opusinfo, ffprobe, speexdec, oggdec, opusdec (`crosscheck_ogg_fixtures.py`) |
-| Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine (`crosscheck_musepack_fixtures.py`) |
-| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe, ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control (`crosscheck_ac3_fixtures.py`) |
+| Tags | `tests/fixtures/tags` | `make_tag_fixtures.py`; `make_external_tag_fixtures.py` (mutagen, ffmpeg) | TagLib# (`TagLibCrossCheckTests`); MediaInfo where it finds the audio (`crosscheck_mpeg_fixtures.py`) |
+| MPEG audio | `tests/fixtures/mpeg`, `layer2`, `layer3`, `vbr`, `stats` | `make_mpeg_fixtures.py`, `make_layer2_fixtures.py`, `make_layer3_fixtures.py`, `make_vbr_fixtures.py`, `make_stats_fixtures.py`; `make_external_mpeg_fixtures.py` | ffprobe, madplay, mpg123, minimp3, mctoolamed, mp3guessenc, EncSpot, MediaInfo (`crosscheck_mpeg_fixtures.py`) |
+| MP4 and AAC | `tests/fixtures/mp4`, `adts`, `aac` | `make_mp4_fixtures.py`, `aac_block_fixtures.py`; `make_external_aac_fixtures.py` | ffprobe, MP4Box, faad, a tracing faad2 build, ffmpeg decoding, MediaInfo (`crosscheck_mp4_fixtures.py`); `check_aac_tables.py` for the Huffman and band tables; TagLib# for iTunes metadata |
+| Ogg, Speex, Vorbis, Opus | `tests/fixtures/ogg` | `make_ogg_fixtures.py`, `make_vorbis_opus_fixtures.py`; `make_external_ogg_fixtures.py`, `make_external_vorbis_opus_fixtures.py` | oggz, ogginfo, vorbiscomment, opusinfo, ffprobe, speexdec, oggdec, opusdec, MediaInfo (`crosscheck_ogg_fixtures.py`) |
+| Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine, MediaInfo (`crosscheck_musepack_fixtures.py`) |
+| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe, ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`) |
 
 All scripts are in `scripts/fixtures`.
+
+### MediaInfo
+
+Every cross-check script also compares each fixture's golden report with MediaInfo 24.01 (MediaInfoLib 24.01, Ubuntu 24.04's `mediainfo` package), through `mediainfo_tool.py`. MediaInfo reads container and stream headers without decoding, so it is one more independent reader of the formats' header fields, frame and sample counts, encoder strings and tags.
+
+- **What is compared:** each script's docstring lists the fields. A listed difference that no longer occurs fails the run, and the summary counts each field as compared, compared and absent on both, or skipped with its reason.
+- **MediaInfo's own readings** are asserted as such, each with the evidence, mostly a line of MediaInfoLib's source (github.com/MediaArea/MediaInfoLib, tag v24.01; Ubuntu's only patch touches the build). Among them:
+  - AC-3: `mixlevel` read as 8 bits instead of A/52's 5, so `dynrng`, the time codes and Annex D's `dsurexmod` come out 3 bits late in a frame with production information; the script reproduces that reading and compares with it.
+  - MPEG audio: the names of the Layer I and II mode extension, the frames it parses of a variable bitrate without a VBR header, no encoder without a LAME tag, an encoder string or an ID3v2 TSSE.
+  - Musepack: no format for SV4 to SV6 (one superframe stream taken for MPEG-2.5 Layer II) or after a leading ID3v2 tag, the SV7 encoder version read from byte 24 instead of 27, no channels or encoder for SV8.
+  - Ogg: the sample count from the rounded duration, no Speex comments (the comment count is skipped), no floor type for a single floor (the floor count read one short) or a broken setup header.
+  - MP4 and AAC: the bitrate mode, which follows frame sizes more than the encoder's declaration (ADTS: VBR where the largest frame is more than 2 % above the smallest, else none; MP4: the esds bitrates, else the sample sizes within 1 %), the mono layout of HE-AAC v2, no duration for ADTS, one frame for ADIF.
+- **Fixtures it reads otherwise** are listed per fixture with the evidence, for example:
+  - MPEG audio: observed, not found in the source: without a VBR header's byte count, the stream's bytes come out as the file size less the leading tags and twice the trailing ones. On `external-blade-mono`'s 16,128 bytes of frames, MediaInfo gives 16,000 with a 128-byte ID3v1 tag, 16,049 with a 79-byte APE tag with a header and 15,921 with both; a 47-byte APE tag without a header, which `Tag/File__Tags.cpp` sizes 32 bytes larger, gives 16,128, and with ID3v1 16,049, which the rule does not fit.
+  - MPEG audio: a lone frame that ends the file taken for a stream; "Xing" read in Layer II.
+  - Musepack: a crash (SIGFPE) on a reserved SV8 sample rate code.
+  - MP4 and AAC: a `crc_check` read in unprotected ADTS frames of several raw data blocks; parametric stereo read in a channel pair, which FFmpeg and faad2 do not apply there.
+- **Tags:** of the 145 tag fixtures, MediaInfo reads the title, artist and album of 5 (written by ffmpeg and mutagen). It reads no tag of the 119 whose audio it does not recognize, and the other 21 hold none of these fields; both are asserted empty.
+- **Version:** the assertions and skips describe 24.01, so the scripts stop with a message on another version.
 
 ### Derived Musepack SV6 fixtures
 

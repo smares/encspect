@@ -14248,7 +14248,7 @@
         "codec": "MPEG-1 Layer III",
         "sampleRate": 44100,
         "channels": 2,
-        "channelMode": "Stereo",
+        "channelMode": "Joint stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -14389,18 +14389,6 @@
       }
     ],
     "findings": [
-      {
-        "severity": "Info",
-        "code": "mpeg.channel-mode-changed",
-        "message": "The channel mode changes once, first from Stereo to Joint stereo at 0xFD.",
-        "offset": 253,
-        "length": 835,
-        "path": [
-          1,
-          3
-        ],
-        "count": 1
-      },
       {
         "severity": "Warning",
         "code": "mpeg.main-data-begin-exceeds-buffer",
