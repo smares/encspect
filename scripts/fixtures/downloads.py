@@ -5,8 +5,8 @@ the mp3PRO samples, other encoders' xHE-AAC files, mctoolamed, and the encoders 
 BladeEnc's and Helix's 5.0 sources. Each has its original address and, where
 one works, a fallback: the copy the Internet Archive's Wayback Machine keeps, or another mirror. The
 SHA-256 decides whether a copy is the right file, so any address is safe to try. The files the
-repository may not hold (the ISO streams and the mp3PRO samples) have a last copy in the project's
-private repository, smares/encspect-private, which needs a read-only token in the
+repository may not or does not hold (the ISO streams, the mp3PRO samples and the xHE-AAC samples)
+have a last copy in the project's private repository, smares/encspect-private, which needs a read-only token in the
 ENCSPECT_PRIVATE_TOKEN environment variable; without it, that address is skipped. check_sources.py, which a scheduled workflow
 runs, downloads every file from every address, so a source that disappears is noticed while its
 copies still work.

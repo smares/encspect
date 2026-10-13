@@ -290,15 +290,15 @@ def usac_layout_config(fill_element):
 
 
 def xhe_layouts():
-    """The element layout exhale writes, which names it as the encoder, the same with the fill element other encoders write, which names
-    none, and exhale's layout with a tool atom that names another encoder."""
+    """The element layout exhale writes, which names it as the encoder, the same with the fill element Fraunhofer's demonstration files and
+    libxaac write, which names none, exhale's layout with a tool atom that names another encoder, and MPEG Surround 2-1-2."""
     out = []
     for name, description, fill_element, tool, encoder, findings in [
         ("xhe-aac-exhale-layout", "xHE-AAC whose UsacConfig has the layout exhale writes: an audio pre-roll element first, then a channel pair "
          "element, no fill element, and loudness info as its only configuration extension. It names exhale as the encoder with medium "
          "confidence.", False, None, ("exhale", "Medium"), []),
-        ("xhe-aac-fill-element", "xHE-AAC with exhale's layout but for a fill element after the channel pair element, as Fraunhofer's encoder, "
-         "libxaac and the conformance streams write: no encoder is named.", True, None, None, []),
+        ("xhe-aac-fill-element", "xHE-AAC with exhale's layout but for a fill element after the channel pair element, as Fraunhofer's "
+         "demonstration files and libxaac write: no encoder is named.", True, None, None, []),
         ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names another encoder: the stream's evidence "
          "names exhale, and the claim that differs is an info finding.", False, "hand-built", ("exhale", "Medium"),
          [["aac.encoder-claim-differs", "names \"hand-built\", but the stream points to exhale"]]),
@@ -320,7 +320,46 @@ def xhe_layouts():
                            "skip": {"ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
                                     "faad": "faad2 2.11 does not read USAC configurations (it fails to open the file)."}},
         }))
-    return out
+    return out + [xhe_mps212()]
+
+
+def xhe_mps212():
+    """A channel pair element with MPEG Surround 2-1-2 stereo and residual coding (stereoConfigIndex 2), whose Mps212Config is read, then a
+    fill element: Fraunhofer's encoder writes MPEG Surround 2-1-2 at low rates, exhale never."""
+    bits = Bits()
+    bits.put(31, 5).put(42 - 32, 6).put(rate_index(44100), 4).put(2, 4)
+    bits.put(rate_index(44100), 5).put(3, 3).put(2, 5)  # 2:1 SBR, stereo
+    bits.put(2, 4)  # numElements - 1
+    bits.put(3, 2).put(3, 4).put(0, 4).put(0, 1).put(0, 1)  # ID_USAC_EXT, ID_EXT_ELE_AUDIOPREROLL
+    bits.put(1, 2).put(0, 1).put(1, 1)  # ID_USAC_CPE, tw_mdct, noiseFilling
+    bits.put(0, 1).put(0, 1).put(0, 1).put(15, 4).put(9, 4).put(0, 1).put(0, 1)  # SbrConfig without header extras
+    bits.put(2, 2)  # stereoConfigIndex 2: MPEG Surround 2-1-2 with residual coding
+    # Mps212Config: bsFreqRes 2, bsFixedGainDMX 0, bsTempShapeConfig 2, bsDecorrConfig 0, bsHighRateMode 1, bsPhaseCoding 0,
+    # bsOttBandsPhasePresent 1 with bsOttBandsPhase 7, bsResidualBands 5, bsPseudoLr 1, bsEnvQuantMode 0.
+    bits.put(2, 3).put(0, 3).put(2, 2).put(0, 2).put(1, 1).put(0, 1).put(1, 1).put(7, 5).put(5, 5).put(1, 1).put(0, 1)
+    bits.put(3, 2).put(0, 4).put(0, 4).put(0, 1).put(0, 1)  # ID_USAC_EXT, ID_EXT_ELE_FILL
+    bits.put(0, 1)  # usacConfigExtensionPresent
+    config = bits.align().bytes()
+    samples = [bytes([0x80 if i % 10 == 0 else 0x00]) + bytes((i * 13) % 50 + 20) for i in range(30)]
+    track = Track(1, samples, 44100, 2, aac_entry(config, 44100, 2), durations=[2048] * 30)
+    data, records, offsets = movie([track], ftyp_box=ftyp(b"mp42", 0, (b"mp42", b"isom")))
+    pair = ASC + "/UsacConfig/UsacDecoderConfig/Element[1]"
+    mps = pair + "/Mps212Config"
+    return "xhe-aac-mps212", data, {
+        "description": "xHE-AAC with 2:1 SBR whose channel pair element uses MPEG Surround 2-1-2 with residual coding: its Mps212Config is read and the "
+                       "fill element after it too. No encoder is named.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 2048, vbr=True)],
+        "units": unit_list(offsets[0], samples, 10),
+        "fields": {ASC + "/UsacConfig/UsacDecoderConfig": "3 elements", pair + "/Stereo Config Index": "2",
+                   mps + "/Frequency Resolution": "2 (20 parameter bands)", mps + "/Temporal Shaping Config": "2", mps + "/OTT Bands Phase": "7",
+                   mps + "/Residual Bands": "5", mps + "/HasPseudoLr": "true", mps + "/Envelope Quantization Mode": "0",
+                   ASC + "/UsacConfig/UsacDecoderConfig/Element[2]/Extension Element Type": "0 (fill)", ASC + "/UsacConfig/HasConfigExtension": "false"},
+        "findings": [["aac.usac-frames-not-analyzed", "usacIndependencyFlag"]],
+        "crosscheck": {"ffprobe": False, "mp4box": True, "mp4box_samples": True, "faad": None,
+                       "skip": {"ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
+                                "faad": "faad2 2.11 does not read USAC configurations (it fails to open the file)."}},
+    }
 
 
 def eld():

@@ -1,5 +1,5 @@
 {
- "description": "xHE-AAC (USAC) files by other encoders than the fixtures' exhale, which show how each lays out its UsacConfig: the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite, Fraunhofer's demonstration files, and one exhale file from the FATE suite. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, the elements of its UsacDecoderConfig (EXT with its extension element type: 0 fill, 3 audio pre-roll; CPE+MPS212 for a channel pair element with MPEG Surround 2-1-2 stereo, after which nothing is read), the types of its configuration extensions (2 loudness info, 7 stream ID; null where they are not reached), the encoder and confidence the analyzer must report, and its warnings and errors (\"findings\").",
+ "description": "xHE-AAC (USAC) files by other encoders than the fixtures' exhale, which show how each lays out its UsacConfig: the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite, Fraunhofer's demonstration files, and one exhale file from the FATE suite. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, the elements of its UsacDecoderConfig (EXT with its extension element type: 0 fill, 3 audio pre-roll; CPE+MPS212 for a channel pair element with MPEG Surround 2-1-2 stereo), the types of its configuration extensions (2 loudness info, 7 stream ID), the encoder and confidence the analyzer must report, and its warnings and errors (\"findings\").",
  "samples": [
   {
    "file": "Ext_2_c1_Ln_0x03.mp4",
@@ -172,9 +172,13 @@
    "written_by": "Fraunhofer IIS, a demonstration file from its AAC playback test pages; its tool atom reads \"Fraunhofer IIS MPEG-2/4/D Audio Encoder\"",
    "elements": [
     "EXT3",
-    "CPE+MPS212"
+    "CPE+MPS212",
+    "EXT0"
    ],
-   "config_extensions": null,
+   "config_extensions": [
+    7,
+    2
+   ],
    "analyzer_encoder": [
     "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
     "Low"

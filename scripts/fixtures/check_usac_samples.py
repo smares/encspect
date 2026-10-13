@@ -2,20 +2,21 @@
 """Checks tests/conformance/usac-samples.json against xHE-AAC (USAC) files that other encoders wrote.
 
 The analyzer names exhale from the layout of a UsacConfig (AacEncoder.cs): an audio pre-roll element
-first, then only channel elements and no fill element, and at most a loudness info configuration
-extension. That only means something where other encoders lay it out differently, which their own
-files show: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's test
-suite and one exhale file from that suite. They are downloaded into a cache directory and checked
+first, then only channel elements with exhale's fixed settings and no fill element, and one loudness
+info configuration extension. That only means something where other encoders lay it out differently,
+which their own files show: four of Fraunhofer's demonstration files, eight ISO/IEC 23003-3
+conformance streams in FFmpeg's test suite and one exhale file from that suite. They are downloaded into a cache directory and checked
 against their SHA-256 rather than committed.
 
 The manifest is ours. Per file it records who wrote it, the elements of its UsacDecoderConfig ("SCE",
 "CPE", "LFE", "EXT" with its extension element type, "CPE+MPS212" for a channel pair element with MPEG
-Surround 2-1-2 stereo, after which nothing is read), the types of its configuration extensions, the
-encoder and confidence the analyzer must report, and its warnings and errors ("findings").
+Surround 2-1-2 stereo), the types of its configuration extensions, the encoder and confidence the
+analyzer must report, and its warnings and errors ("findings").
 
 Without --analyzer, the elements and extensions are read with a UsacConfig reader written here from
-ISO/IEC 23003-3 5.2 (Tables 13 to 19), apart from the analyzer, out of the DecoderSpecificInfo that
-MP4Box -diso (GPAC 2.2) lists. With --analyzer, the analyzer's report on every file (encspect
+ISO/IEC 23003-3 5.2, apart from the analyzer, out of the DecoderSpecificInfo that MP4Box -diso
+(GPAC 2.2) lists; Mps212Config() follows ffmpeg's and fdk-aac's reading of it. The reader must end
+within the configuration's last byte. With --analyzer, the analyzer's report on every file (encspect
 --ndjson) must show the same elements and extensions, the encoder and the findings.
 
 Needs curl and MP4Box. Usage:
@@ -104,9 +105,12 @@ def usac_layout(config):
                 extra1, extra2 = bits.read(1), bits.read(1)
                 bits.read(5 if extra1 else 0)
                 bits.read(6 if extra2 else 0)
-                if kind == 1 and bits.read(2):
-                    elements.append("CPE+MPS212")
-                    return elements, None
+                if kind == 1:
+                    stereo_config_index = bits.read(2)
+                    if stereo_config_index:
+                        mps212_config(bits, stereo_config_index)
+                        elements.append("CPE+MPS212")
+                        continue
             elements.append("SCE" if kind == 0 else "CPE")
         elif kind == 2:
             elements.append("LFE")
@@ -116,14 +120,36 @@ def usac_layout(config):
             if bits.read(1):
                 bits.escaped(8, 16, 0)
             bits.read(1)
-            bits.read(8 * length)
+            # UsacExtElementConfig() reads no configuration for a fill or audio pre-roll element.
+            if extension not in (0, 3):
+                bits.read(8 * length)
             elements.append(f"EXT{extension}")
     extensions = []
     if bits.read(1):
         for _ in range(bits.escaped(2, 4, 8) + 1):
             extensions.append(bits.escaped(4, 8, 16))
             bits.read(8 * bits.escaped(4, 8, 16))
+    if not 0 <= len(config) * 8 - bits.position < 8:
+        raise ValueError(f"the UsacConfig ends at bit {bits.position} of the configuration's {len(config) * 8}")
     return elements, extensions
+
+
+def mps212_config(bits, stereo_config_index):
+    """Mps212Config() (ISO/IEC 23003-3 5.2), as ffmpeg's decode_usac_element_pair and fdk-aac's
+    SpatialDecParseMps212Config read it."""
+    bits.read(3)  # bsFreqRes
+    bits.read(3)  # bsFixedGainDMX
+    shaping = bits.read(2)  # bsTempShapeConfig
+    bits.read(2)  # bsDecorrConfig
+    bits.read(1)  # bsHighRateMode
+    bits.read(1)  # bsPhaseCoding
+    if bits.read(1):  # bsOttBandsPhasePresent
+        bits.read(5)
+    if stereo_config_index > 1:
+        bits.read(5)  # bsResidualBands
+        bits.read(1)  # bsPseudoLr
+    if shaping == 2:
+        bits.read(1)  # bsEnvQuantMode
 
 
 def mp4box_config(path):
@@ -163,8 +189,6 @@ def analyzer_layout(report):
         else:
             elements.append(element["value"])
     extensions = child(config, "UsacConfigExtension")
-    if "CPE+MPS212" in elements:
-        return elements, None
     types = [int(str(c["value"]).split()[0]) for c in (extensions or {}).get("children", []) if c["name"] == "Extension Type"]
     return elements, types
 
@@ -200,6 +224,8 @@ def main():
         analyzer, arguments = arguments[1], arguments[2:]
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "usac")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if not manifest["samples"]:
+        raise SystemExit(f"{MANIFEST} lists no samples")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:
