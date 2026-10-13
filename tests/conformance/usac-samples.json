@@ -1,0 +1,205 @@
+{
+ "description": "xHE-AAC (USAC) files by other encoders than the fixtures' exhale, which show how each lays out its UsacConfig: the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite, Fraunhofer's demonstration files, and one exhale file from the FATE suite. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, the elements of its UsacDecoderConfig (EXT with its extension element type: 0 fill, 3 audio pre-roll; CPE+MPS212 for a channel pair element with MPEG Surround 2-1-2 stereo, after which nothing is read), the types of its configuration extensions (2 loudness info, 7 stream ID; null where they are not reached), the encoder and confidence the analyzer must report, and its warnings and errors (\"findings\").",
+ "samples": [
+  {
+   "file": "Ext_2_c1_Ln_0x03.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Ext_2_c1_Ln_0x03.mp4",
+   "sha256": "8a13b86cc7049205382bd85cce8b52451ea0d32a8dd9ecb8d4276c4a7b9bafeb",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [
+    2
+   ],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_1_c1_0x03.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Fd_1_c1_0x03.mp4",
+   "sha256": "ccf48a4a55648bd8dc7e8655ffc0772ad86cb442b087b8e055ff78604153c7ec",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "SCE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_1_c1_0x04.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Fd_1_c1_0x04.mp4",
+   "sha256": "a8aca11ee82c734f630283364f6d65357ec467d0b850e88660b56d804fbc703d",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "SCE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_2_c1_0x03.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Fd_2_c1_0x03.mp4",
+   "sha256": "d9b33c6a13f6c4a54c58811e7a46cea14c89d94660f57a1cefb9760f8ecb95ed",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_2_c1_0x05.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Fd_2_c1_0x05.mp4",
+   "sha256": "89a80fe18bfa917b967714cad99c07b9e67c3b317f90ec9cc36e7cfffcbf009c",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_2_c1_Tns_0x04.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/Fd_2_c1_Tns_0x04.mp4",
+   "sha256": "329edd59c2063fd16f2122a2c9ad1aba028f89c6b24321f0e490c60d84069e0e",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_2_c1_Ms_0x01.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/Fd_2_c1_Ms_0x01.mp4",
+   "sha256": "8a5869362d2c2548d9fe4ed7b1d6e6601f8d6ac1d177a90144991b6938a63ed2",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "Fd_2_c1_Ms_0x04.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/Fd_2_c1_Ms_0x04.mp4",
+   "sha256": "700fd64df4ddc4030711018346023cdd74471f618147133384f24401f7fd9af3",
+   "written_by": "ISO/IEC 23003-3 conformance stream, from FFmpeg's FATE suite, which took it from ISO's reference suite",
+   "elements": [
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [],
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "xhe_target_level.m4a",
+   "url": "https://fate-suite.ffmpeg.org/aac/usac/xhe_target_level.m4a",
+   "sha256": "0acf6919e9a4cf25eed26be5aba5d305a33cf39bc4175658e979b8653404acee",
+   "written_by": "exhale 1.2.2, from FFmpeg's FATE suite: its tool atom names it, its handler name is exhale's \"crh\", and its mdat starts with exhale's version byte",
+   "elements": [
+    "EXT3",
+    "CPE"
+   ],
+   "config_extensions": [
+    2
+   ],
+   "analyzer_encoder": [
+    "exhale 1.2.2",
+    "Medium"
+   ],
+   "findings": [
+    "mp4.duration-mismatch"
+   ]
+  },
+  {
+   "file": "xHEchID.mp4",
+   "url": "https://www2.iis.fraunhofer.de/AAC/xHEchID.mp4",
+   "sha256": "18e0680b341031554a6b9b82ee5241a3ff3500fd27ffa4a0726ef3f16c378869",
+   "written_by": "Fraunhofer IIS, a demonstration file from its AAC playback test pages; its tool atom reads \"Fraunhofer IIS MPEG-2/4/D Audio Encoder\"",
+   "elements": [
+    "EXT3",
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [
+    2
+   ],
+   "analyzer_encoder": [
+    "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
+    "Low"
+   ],
+   "findings": []
+  },
+  {
+   "file": "xHErefLevel.mp4",
+   "url": "https://www2.iis.fraunhofer.de/AAC/xHErefLevel.mp4",
+   "sha256": "9581b60ed35ad9e95b1a68e1f9b6a9994b4f15318d9ea9c8994193a62227c365",
+   "written_by": "Fraunhofer IIS, a demonstration file from its AAC playback test pages; its tool atom reads \"Fraunhofer IIS MPEG-2/4/D Audio Encoder\"",
+   "elements": [
+    "EXT3",
+    "SCE",
+    "EXT0"
+   ],
+   "config_extensions": [
+    2
+   ],
+   "analyzer_encoder": [
+    "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
+    "Low"
+   ],
+   "findings": []
+  },
+  {
+   "file": "Sintel_24kbps_rap5s.mp4",
+   "url": "https://www2.iis.fraunhofer.de/AAC/xHE-AAC_demo_content_for_adaptive_bitrate/Sintel_24kbps_rap5s.mp4",
+   "sha256": "a2542a0cd1520b9c5a1e0dbf83f81b7dadbc9228361b3fd84cb9137f3576485b",
+   "written_by": "Fraunhofer IIS, a demonstration file from its AAC playback test pages; its tool atom reads \"Fraunhofer IIS MPEG-2/4/D Audio Encoder\"",
+   "elements": [
+    "EXT3",
+    "CPE+MPS212"
+   ],
+   "config_extensions": null,
+   "analyzer_encoder": [
+    "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
+    "Low"
+   ],
+   "findings": []
+  },
+  {
+   "file": "Sintel_128kbps_rap5s.mp4",
+   "url": "https://www2.iis.fraunhofer.de/AAC/xHE-AAC_demo_content_for_adaptive_bitrate/Sintel_128kbps_rap5s.mp4",
+   "sha256": "27e01f265b3230b691eba82e1c750817fe2d9f67bdf41b93a399c1a7cfdea1a7",
+   "written_by": "Fraunhofer IIS, a demonstration file from its AAC playback test pages; its tool atom reads \"Fraunhofer IIS MPEG-2/4/D Audio Encoder\"",
+   "elements": [
+    "EXT3",
+    "CPE",
+    "EXT0"
+   ],
+   "config_extensions": [
+    7,
+    2
+   ],
+   "analyzer_encoder": [
+    "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
+    "Low"
+   ],
+   "findings": []
+  }
+ ]
+}

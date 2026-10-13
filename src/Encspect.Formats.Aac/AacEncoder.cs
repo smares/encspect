@@ -13,6 +13,15 @@ namespace Encspect.Formats.Aac;
 // frame; agreeing with the stream's evidence it is listed as more evidence. ffmpeg's muxer writes its own version
 // ("Lavf60.16.100") whatever encoder it used, so that names none. fdkaac writes "fdkaac 1.0.0,
 // libfdk-aac 4.0.1, CBR 48kbps", named as "fdkaac 1.0.0 (libfdk-aac 4.0.1)".
+//
+// exhale writes no text into a USAC stream, but its UsacConfig has a layout of its own
+// (bitStreamWriter.cpp, createAudioConfig, in exhale 1.2.2): an audio pre-roll element first, with
+// an empty configuration, then only channel elements (exhaleLibPch.h, elementTypeConfig), with
+// neither harmonic SBR nor PVC, and as configuration extension at most loudness info. Fraunhofer's
+// encoder (its demonstration files), libxaac's and the ISO/IEC 23003-3 conformance streams all end
+// the element list with a fill element; Fraunhofer's newer files and libxaac's also carry a stream
+// ID extension. The layout names exhale with medium confidence, without a version, which an
+// agreeing claim supplies.
 internal static partial class AacEncoder
 {
     private const int MaxClaimedName = 64;
@@ -50,9 +59,11 @@ internal static partial class AacEncoder
 
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a
     // claim that names another encoder than the stream's evidence.
-    public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs)
+    public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs,
+        UsacLayout? usac = null)
     {
         Node? encoder = null;
+        bool versionless = false;
         if (signature is not null && LavcVersion().IsMatch(signature.Text))
         {
             encoder = cover("Encoder", $"FFmpeg ({signature.Text})", Explain.Encoder);
@@ -66,6 +77,15 @@ internal static partial class AacEncoder
             encoder.Add(cover("Confidence", "High", Explain.Confidence));
             encoder.Add(cover("Evidence",
                 $"A fill element of access unit {signature.Index + 1} at 0x{signature.Unit.Offset:X} holds \"{signature.Text}\", which libfaac writes", Explain.Evidence));
+        }
+        else if (usac is not null && IsExhaleLayout(usac))
+        {
+            encoder = cover("Encoder", "exhale", Explain.Encoder);
+            encoder.Add(cover("Confidence", "Medium", Explain.Confidence));
+            encoder.Add(cover("Evidence",
+                $"The UsacConfig at 0x{usac.Config.Offset:X} has the layout exhale writes: an audio pre-roll element first, then only channel elements and no fill element, and {(usac.ConfigExtensions.Count == 0 ? "no configuration extension" : "loudness info as its only configuration extension")}",
+                Explain.Evidence));
+            versionless = true;
         }
 
         foreach (EncoderClaim claim in claims)
@@ -97,6 +117,11 @@ internal static partial class AacEncoder
             if (claimed.Overlaps(named) || claimed.Contains("FFmpeg"))
             {
                 encoder.Add(cover("Evidence", evidence, Explain.Evidence));
+                if (versionless && claimed.SetEquals(named))
+                {
+                    encoder.Value = ClaimedName(text);
+                    versionless = false;
+                }
             }
             else
             {
@@ -106,6 +131,10 @@ internal static partial class AacEncoder
 
         return encoder;
     }
+
+    private static bool IsExhaleLayout(UsacLayout usac) =>
+        usac.PlainPreRollFirst && !usac.HarmonicSbrOrPvc && usac.Elements.Count > 1
+        && usac.Elements.Skip(1).All(e => e is "SCE" or "CPE" or "LFE") && usac.ConfigExtensions is [] or [2];
 
     private static HashSet<string> FamiliesOf(string text)
     {

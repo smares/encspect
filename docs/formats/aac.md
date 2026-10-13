@@ -24,5 +24,15 @@ The channel configuration, a program config element, or parametric stereo.
 
 ## Encoder detection
 
-- ffmpeg's and FAAC's encoders, from the version they write into a fill element.
+- ffmpeg's and FAAC's encoders, from the version they write into a fill element, with high confidence.
+- exhale, from the layout of its UsacConfig, with medium confidence:
+  - an audio pre-roll extension element first, with an empty configuration;
+  - then only channel elements (SCE, CPE, LFE), without harmonic SBR or PVC, and no fill element;
+  - at most one configuration extension, loudness info.
+- The layout carries no version. A tool atom that names exhale supplies it ("exhale 1.2.2"); one that names another encoder is an info finding.
+- The rule rests on exhale 1.2.2's writer (`bitStreamWriter.cpp`, `createAudioConfig`) and on other encoders' files, none of which has the layout:
+  - Fraunhofer's demonstration files end the element list with a fill element, and the newer ones add a stream ID extension;
+  - libxaac's encoder does both (checked by hand, not in CI);
+  - the ISO/IEC 23003-3 conformance streams have a fill element and no pre-roll element.
+- `check_usac_samples.py` checks the downloaded files in CI (see [development](../development.md)).
 - Other encoders from the metadata, with low confidence.

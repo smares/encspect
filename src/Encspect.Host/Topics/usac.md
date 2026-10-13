@@ -2,7 +2,7 @@
 id: usac
 title: USAC (xHE-AAC)
 related: sbr, aac-object-types, audio-specific-config, parametric-stereo
-references: ISO/IEC 23003-3 5.2, 6.1; exhale (vendored encoder source)
+references: ISO/IEC 23003-3 5.2, 6.1; exhale 1.2.2 source (bitStreamWriter.cpp); Fraunhofer's, libxaac's and the conformance streams' files
 ---
 
 **What it is.** Unified speech and audio coding, ISO/IEC 23003-3, is the MPEG codec behind xHE-AAC, audio object type 42. Earlier codecs suit either music, like AAC, or speech, like the speech codecs of mobile phones; USAC switches between an AAC-like transform coder and linear-prediction tools frame by frame, so one stream can carry speech and music at low bitrates.
@@ -13,4 +13,6 @@ references: ISO/IEC 23003-3 5.2, 6.1; exhale (vendored encoder source)
 
 **Independent frames.** Each access unit starts with a flag that says whether it can be decoded without the frames before it. Where playback starts or a stream switches, an audio pre-roll extension can carry the configuration and the frames before it, so the decoder's output is complete from that frame on.
 
-**What you see.** xHE-AAC (USAC) as the codec, the UsacConfig with its elements, each access unit with its IsIndependent flag, and the count of independent access units. The frames themselves are not read further yet. The fixtures come from exhale, an open-source USAC encoder; ffmpeg 6.1 lists no stream for them.
+**Encoders.** exhale, an open-source encoder, lists an audio pre-roll element first, then only channel elements, and adds at most loudness information; Fraunhofer's encoder, libxaac and the conformance streams end the list with a fill element. That layout names exhale with medium confidence.
+
+**What you see.** xHE-AAC (USAC) as the codec, the UsacConfig with its elements, each access unit with its IsIndependent flag, and the count of independent access units. The frames themselves are not read further yet.

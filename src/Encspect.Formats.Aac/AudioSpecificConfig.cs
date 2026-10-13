@@ -54,6 +54,7 @@ internal static class AudioSpecificConfig
             UsacSampleRate = state.UsacSampleRate,
             UsacOutputFrameLength = state.UsacOutputFrameLength,
             UsacSbrRatio = state.UsacSbrRatio,
+            UsacLayout = state.UsacLayout,
         };
     }
 
@@ -431,6 +432,9 @@ internal static class AudioSpecificConfig
             int decoderStart = f.Position;
             var decoder = new Node("UsacDecoderConfig", 0, 0);
             long elements = f.Escaped(decoder, "Elements", Explain.UsacElements, 4, 8, 16, add: 1);
+            var kinds = new List<string>();
+            bool plainPreRollFirst = false;
+            bool harmonicSbrOrPvc = false;
             for (long i = 0; i < elements; i++)
             {
                 int elementStart = f.Position;
@@ -443,9 +447,9 @@ internal static class AudioSpecificConfig
                     f.Flag(element, "HasNoiseFilling", Explain.NoiseFilling);
                     if (sbrRatio > 0)
                     {
-                        f.Flag(element, "HasHarmonicSbr", Explain.HarmonicSbr, Topics.Sbr);
+                        harmonicSbrOrPvc |= f.Flag(element, "HasHarmonicSbr", Explain.HarmonicSbr, Topics.Sbr);
                         f.Flag(element, "HasInterTes", Explain.InterTes, Topics.Sbr);
-                        f.Flag(element, "HasPvc", Explain.Pvc, Topics.Sbr);
+                        harmonicSbrOrPvc |= f.Flag(element, "HasPvc", Explain.Pvc, Topics.Sbr);
                         f.Read(element, "Default Start Frequency", 4, Explain.DefaultStartFreq, topic: Topics.Sbr);
                         f.Read(element, "Default Stop Frequency", 4, Explain.DefaultStopFreq, topic: Topics.Sbr);
                         bool extra1 = f.Flag(element, "HasDefaultHeaderExtra1", Explain.DefaultHeaderExtra1);
@@ -477,28 +481,38 @@ internal static class AudioSpecificConfig
                     long extensionType = f.Escaped(element, "Extension Element Type", Explain.ExtElementType, 4, 8, 16);
                     element.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 1 => "MPEG Surround", 2 => "SAOC", 3 => "audio pre-roll", 4 => "DRC", _ => "reserved" }})";
                     long length = f.Escaped(element, "Configuration Length", Explain.ExtConfigLength, 4, 8, 16);
-                    if (f.Flag(element, "HasDefaultLength", Explain.HasDefaultLength))
+                    bool hasDefaultLength = f.Flag(element, "HasDefaultLength", Explain.HasDefaultLength);
+                    if (hasDefaultLength)
                     {
                         f.Escaped(element, "Default Length", Explain.DefaultLength, 8, 16, 0, add: 1);
                     }
 
-                    f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
+                    bool fragmented = f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
                     f.Skip(length * 8);
+                    plainPreRollFirst |= i == 0 && extensionType == 3 && length == 0 && !hasDefaultLength && !fragmented;
+                    kinds.Add($"EXT{extensionType}");
                 }
 
                 string name = kind switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" };
+                if (kind != 3)
+                {
+                    kinds.Add(name);
+                }
+
                 decoder.Add(f.Span("Element", elementStart, name, Explain.UsacElement, element));
                 if (stop)
                 {
                     report(Severity.Info, "aac.usac-config-not-analyzed",
                         "The USAC configuration is read up to a channel pair element with MPEG Surround 2-1-2 stereo, whose configuration is not analyzed yet.", node);
                     state.StoppedEarly = true;
+                    usac.Add(f.Span("UsacDecoderConfig", decoderStart, NodeValue.Integer(elements, "elements"), Explain.UsacDecoderConfig, decoder));
                     node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
                     return;
                 }
             }
 
             usac.Add(f.Span("UsacDecoderConfig", decoderStart, NodeValue.Integer(elements, "elements"), Explain.UsacDecoderConfig, decoder));
+            var extensionTypes = new List<long>();
             if (f.Flag(usac, "HasConfigExtension", Explain.HasConfigExtension))
             {
                 int extensionStart = f.Position;
@@ -507,6 +521,7 @@ internal static class AudioSpecificConfig
                 for (long i = 0; i < count; i++)
                 {
                     long extensionType = f.Escaped(extensions, "Extension Type", Explain.ConfigExtensionType, 4, 8, 16);
+                    extensionTypes.Add(extensionType);
                     extensions.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 2 => "loudness info", 7 => "stream ID", _ => "reserved" }})";
                     long length = f.Escaped(extensions, "Extension Length", Explain.ConfigExtensionLength, 4, 8, 16);
                     f.Skip(length * 8);
@@ -515,7 +530,8 @@ internal static class AudioSpecificConfig
                 usac.Add(f.Span("UsacConfigExtension", extensionStart, NodeValue.Integer(count, "extensions"), Explain.UsacConfigExtension, extensions));
             }
 
-            node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
+            Node config = node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
+            state.UsacLayout = new UsacLayout(config, kinds, plainPreRollFirst, harmonicSbrOrPvc, extensionTypes);
         }
         catch (EndOfStreamException)
         {
@@ -555,6 +571,8 @@ internal static class AudioSpecificConfig
         public int? UsacOutputFrameLength { get; set; }
 
         public int? UsacSbrRatio { get; set; }
+
+        public UsacLayout? UsacLayout { get; set; }
 
         public bool IsCut { get; set; }
 

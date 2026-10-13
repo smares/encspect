@@ -2216,7 +2216,13 @@
                           "children": [
                             {
                               "name": "Confidence",
-                              "value": "Low",
+                              "value": "Medium",
+                              "offset": 1008,
+                              "length": 2650
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "The UsacConfig at 0x23D has the layout exhale writes: an audio pre-roll element first, then only channel elements and no fill element, and loudness info as its only configuration extension",
                               "offset": 1008,
                               "length": 2650
                             },
@@ -2911,7 +2917,7 @@
         "averageBitrate": 13.426585477941176,
         "isVbr": false,
         "encoder": "exhale 1.2.2",
-        "encoderConfidence": "Low",
+        "encoderConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",
