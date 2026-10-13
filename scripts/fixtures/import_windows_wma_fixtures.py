@@ -45,6 +45,19 @@ def main():
         encodes = [encodes]
     OUT.mkdir(parents=True, exist_ok=True)
 
+    # Refuse an artifact whose encodes are not what was asked for: a constant bitrate request that
+    # got a variable bitrate format, or two encodes that wrote the same file.
+    seen = {}
+    for entry in encodes:
+        if entry.get("status") != "ok":
+            continue
+        variable = "VBR" in entry["formatDescription"]
+        if variable != (entry["mode"] == "vbr"):
+            raise SystemExit(f"{entry['name']}: a {entry['mode']} request was encoded as \"{entry['formatDescription']}\".")
+        if entry["sha256"] in seen:
+            raise SystemExit(f"{entry['name']} and {seen[entry['sha256']]} are the same file.")
+        seen[entry["sha256"]] = entry["name"]
+
     imported = 0
     for entry in encodes:
         name = entry["name"]

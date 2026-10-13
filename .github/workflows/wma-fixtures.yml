@@ -30,12 +30,14 @@ jobs:
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/make_windows_wma_fixtures.ps1 -Out wma-out
 
       - name: Install ffmpeg to look at the files
+        if: always()
         shell: powershell
         continue-on-error: true
         run: choco install ffmpeg --no-progress -y
 
       # The lines for the manifests: the codec's format and settings, then what ffprobe sees.
       - name: Print the encoder output
+        if: always()
         shell: bash
         continue-on-error: true
         run: |

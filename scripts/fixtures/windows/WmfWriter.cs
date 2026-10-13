@@ -269,23 +269,61 @@ namespace Encspect
         {
             IWMCodecInfo3 info = (IWMCodecInfo3)manager;
             Guid audio = Audio;
-            List<WmaFormat> formats = new List<WmaFormat>();
             int codec = FindCodec(info, codecName);
             if (codec < 0)
             {
                 log.AppendLine("no codec named " + codecName);
-                return formats;
+                return new List<WmaFormat>();
             }
 
+            // Which formats the codec lists depends on the enumeration settings: _VBRENABLED and
+            // _PASSESUSED (one pass: quality-based VBR or one-pass CBR; two passes: the two-pass
+            // modes). The first combination that lists formats of the mode asked for is used, and
+            // every attempt is logged, so a codec that lists no such format shows why.
+            int[] passOptions = vbr ? new int[] { 0, 1 } : new int[] { 1, 2, 0 };
+            List<WmaFormat> last = new List<WmaFormat>();
+            foreach (int passes in passOptions)
+            {
+                string result = TrySet(info, audio, (uint)codec, "_VBRENABLED", TypeBool, vbr ? 1 : 0);
+                if (passes > 0) { result += " " + TrySet(info, audio, (uint)codec, "_PASSESUSED", TypeDword, passes); }
+                List<WmaFormat> listed = Enumerate(info, audio, codec, log);
+                int variable = 0;
+                foreach (WmaFormat f in listed) { if (IsVariable(f)) { variable++; } }
+                log.AppendLine(string.Format("  attempt vbr={0} passes={1}: {2}; {3} formats, {4} with VBR in the name", vbr, passes == 0 ? "unset" : passes.ToString(), result.Trim(), listed.Count, variable));
+                last = listed;
+                if (vbr ? variable > 0 : variable < listed.Count && listed.Count > 0)
+                {
+                    // For constant bitrate only the formats that are not variable are kept.
+                    if (vbr) { return listed; }
+                    List<WmaFormat> constant = new List<WmaFormat>();
+                    foreach (WmaFormat f in listed) { if (!IsVariable(f)) { constant.Add(f); } }
+                    return constant;
+                }
+            }
+            return vbr ? last : new List<WmaFormat>();
+        }
+
+        static bool IsVariable(WmaFormat f)
+        {
+            return f.Description.IndexOf("VBR", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        static string TrySet(IWMCodecInfo3 info, Guid audio, uint codec, string name, uint type, int value)
+        {
             try
             {
-                info.SetCodecEnumerationSetting(ref audio, (uint)codec, "_VBRENABLED", TypeBool, BitConverter.GetBytes(vbr ? 1 : 0), 4);
+                info.SetCodecEnumerationSetting(ref audio, codec, name, type, BitConverter.GetBytes(value), 4);
+                return name + "=" + value + " ok";
             }
             catch (Exception e)
             {
-                log.AppendLine("  _VBRENABLED could not be set: " + Hr(e));
+                return name + "=" + value + " failed " + Hr(e);
             }
+        }
 
+        static List<WmaFormat> Enumerate(IWMCodecInfo3 info, Guid audio, int codec, StringBuilder log)
+        {
+            List<WmaFormat> formats = new List<WmaFormat>();
             uint count;
             info.GetCodecFormatCount(ref audio, (uint)codec, out count);
             for (uint f = 0; f < count; f++)
@@ -340,6 +378,7 @@ namespace Encspect
                 {
                     if (f.Channels != request.Channels || f.Rate != rate) { continue; }
                     if (request.Bits != 0 && f.Bits != request.Bits) { continue; }
+                    if (!request.Vbr && IsVariable(f)) { continue; }
                     if (request.Vbr)
                     {
                         if (!System.Text.RegularExpressions.Regex.IsMatch(f.Description, "Quality " + request.Quality + @"\b")) { continue; }
@@ -396,6 +435,7 @@ namespace Encspect
             EncodeResult result = new EncodeResult();
             StringBuilder log = new StringBuilder();
             result.Log = "";
+            string phase = "listing formats";
             try
             {
                 IWMProfileManager manager;
@@ -435,9 +475,9 @@ namespace Encspect
                 IWMPropertyVault vault = (IWMPropertyVault)config;
                 try
                 {
-                    vault.SetProperty("_VBRENABLED", TypeBool, BitConverter.GetBytes(request.Vbr ? 1 : 0), 4);
                     if (request.Vbr)
                     {
+                        vault.SetProperty("_VBRENABLED", TypeBool, BitConverter.GetBytes(1), 4);
                         vault.SetProperty("_VBRQUALITY", TypeDword, BitConverter.GetBytes((uint)request.Quality), 4);
                     }
                 }
@@ -446,13 +486,16 @@ namespace Encspect
                     log.AppendLine("  vault properties failed: " + Hr(e));
                 }
 
+                phase = "creating the profile";
                 IWMProfile profile;
                 manager.CreateEmptyProfile(Version9, out profile);
                 profile.AddStream(config);
 
+                phase = "creating the writer";
                 IWMWriter writer;
                 WMCreateWriter(IntPtr.Zero, out writer);
                 writer.SetProfile(profile);
+                phase = "setting the output";
                 writer.SetOutputFilename(request.OutputPath);
 
                 byte[] wav = File.ReadAllBytes(request.InputPath);
@@ -461,19 +504,20 @@ namespace Encspect
                 int frameSize = channels * (bits / 8);
                 result.InputBits = bits;
 
+                phase = "setting the input format";
                 IWMInputMediaProps input;
                 writer.GetInputProps(0, out input);
                 string inputType = SetInput(writer, input, channels, rate, bits, log);
                 result.InputType = inputType;
 
-                if (request.Title != null)
+                if (!string.IsNullOrEmpty(request.Title))
                 {
                     try
                     {
                         IWMHeaderInfo header = (IWMHeaderInfo)writer;
                         byte[] title = Encoding.Unicode.GetBytes(request.Title + "\0");
                         header.SetAttribute(0, "Title", 0, title, (ushort)title.Length);
-                        if (request.Author != null)
+                        if (!string.IsNullOrEmpty(request.Author))
                         {
                             byte[] author = Encoding.Unicode.GetBytes(request.Author + "\0");
                             header.SetAttribute(0, "Author", 0, author, (ushort)author.Length);
@@ -485,7 +529,9 @@ namespace Encspect
                     }
                 }
 
+                phase = "BeginWriting";
                 writer.BeginWriting();
+                phase = "WriteSample";
                 int chunk = (rate / 10) * frameSize;
                 long frames = 0;
                 for (int offset = 0; offset < dataLength; offset += chunk)
@@ -501,6 +547,7 @@ namespace Encspect
                     Marshal.ReleaseComObject(sample);
                     frames += size / frameSize;
                 }
+                phase = "EndWriting";
                 writer.EndWriting();
                 result.Frames = frames;
                 result.Bytes = new FileInfo(request.OutputPath).Length;
@@ -508,7 +555,7 @@ namespace Encspect
             }
             catch (Exception e)
             {
-                log.AppendLine("failed: " + Hr(e));
+                log.AppendLine("failed while " + phase + ": " + Hr(e));
             }
 
             result.Log = log.ToString();
