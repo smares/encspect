@@ -80,7 +80,9 @@ public class FolderTests
         }, ui.Post);
         Task goneProbe = FolderRoots.Probe(gone, _ => new VolumeState(false, null), ui.Post);
         Task brokenProbe = FolderRoots.Probe(broken, _ => throw new InvalidOperationException("No such volume."), ui.Post);
-        ui.Until(() => goneProbe.IsCompleted && brokenProbe.IsCompleted);
+        // A probe posts its result just before its task completes, so wait for the results, not the
+        // tasks: the condition can hold after the last run of the queue, before the post runs.
+        ui.Until(() => goneProbe.IsCompleted && brokenProbe.IsCompleted && gone.HasError && broken.HasError);
 
         Assert.False(slowProbe.IsCompleted);
         Assert.Equal("D:", slow.Name);
