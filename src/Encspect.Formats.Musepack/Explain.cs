@@ -23,7 +23,7 @@ internal static class Topics
 // allocates. The sources: the SV8 specification (Musepack's, as mirrored in mutagen-specs,
 // mpc/sv8.rst), libmpcdec and libmpcenc of musepack_src r495, mppenc 1.16, libmpcdec 1.2.6 for
 // stream versions 4 to 6, and ffmpeg 6.1's mpc and mpc8 demuxers. The Portable Musepack decoder
-// (Rarewares' mpc.zip, 2004), the C++ code libmpcdec 1.2.6 was ported from, reads versions 4 to 6 the
+// (mpc.zip, 2004), the C++ code libmpcdec 1.2.6 was ported from, reads versions 4 to 6 the
 // same way, so it is cited as the same reading, not a second one.
 internal static class Explain
 {

@@ -1,4 +1,4 @@
-/* Prints what the Portable Musepack decoder (mpc.zip from Rarewares, (C) 1999-2002
+/* Prints what the Portable Musepack decoder (mpc.zip, (C) 1999-2002
  * Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski) reads from a stream of version 4 to 6,
  * in the same lines as mpcdec_frames.c built with -DLIBMPCDEC_126, so crosscheck_musepack_fixtures.py
  * compares it with libmpcdec 1.2.6, its C port, line for line: the header's verdict (StreamInfo::ReadStreamInfo, which takes

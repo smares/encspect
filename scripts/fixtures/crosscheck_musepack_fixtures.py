@@ -21,7 +21,8 @@ make_external_musepack_fixtures.py):
 - mpcdec_frames_portable and mpcdec_portable (musepack_tool.py: the Portable Musepack decoder, the
   C++ code libmpcdec 1.2.6 was ported to C from, so the same reading in an earlier form, not an
   independent one): the same lines as mpcdec_frames126, line for line, and the samples the archive's
-  own driver decodes. It catches errors in building either, and in the portability patch.
+  own driver decodes. It catches errors in building either, and in the portability patch. Its
+  archive comes from the private repository only, so without ENCSPECT_PRIVATE_TOKEN it is skipped.
 - mppdec (Buschmann's decoder of June 2000, Rarewares' Win32 build, under Wine where it is
   installed), the one separate decoder at hand: the frames it decodes from each SV4 to SV6 fixture,
   against the line or count recorded when the fixture was written (in the manifest). For SV6, of which
@@ -41,6 +42,7 @@ import subprocess
 import sys
 import tempfile
 
+import downloads
 import musepack_model as m
 import musepack_tool
 
@@ -236,8 +238,10 @@ def check_old(name, manifest, path, frames126, portable, problems):
     """libmpcdec 1.2.6's reading of an SV4 to SV6 stream, the same in the Portable Musepack decoder it
     was ported from, and mppdec's frame count."""
     lines = decoder_lines(frames126, path)
-    portable_frames, portable_decoder = portable
-    if (other := decoder_lines(portable_frames, path)) != lines:
+    portable_frames, portable_decoder = portable or (None, None)
+    if portable is None:
+        skip(name, "the Portable Musepack decoder", f"{downloads.TOKEN} is not set, and its archive is only in the private repository")
+    elif (other := decoder_lines(portable_frames, path)) != lines:
         first = next((i for i, (a, b) in enumerate(zip(lines, other)) if a != b), min(len(lines), len(other)))
         problems.append(f"the Portable Musepack decoder reads {other[first:first + 1]} at line {first}, libmpcdec 1.2.6 {lines[first:first + 1]}")
     header = manifest["header"]
@@ -268,8 +272,8 @@ def check_old(name, manifest, path, frames126, portable, problems):
         samples = manifest["stream_infos"][0]["samples"]
         if lines[-1] != ["samples", str(samples)]:
             problems.append(f"libmpcdec 1.2.6 {' '.join(lines[-1])}, manifest {samples} samples")
-        output = run([str(portable_decoder), str(path)]).stdout.decode("latin-1")
-        if f"Total samples decoded: {samples}." not in output:
+        output = portable and run([str(portable_decoder), str(path)]).stdout.decode("latin-1")
+        if portable and f"Total samples decoded: {samples}." not in output:
             problems.append(f"the Portable Musepack decoder's own driver: {' '.join(output.split())[-80:]!r}, manifest {samples} samples")
     else:
         why = {2: "a constant bitrate (ERROR_CODE_CBR)", 3: "intensity stereo (ERROR_CODE_IS)", 4: "a block size other than 1 (ERROR_CODE_BLOCKSIZE)"}
@@ -295,7 +299,7 @@ def check_damaged_old(name, manifest, path, frames126, portable, problems):
     """A frame damaged on purpose: libmpcdec 1.2.6 and the Portable Musepack decoder read the frames
     before it as the manifest has them, then report it invalid."""
     lines = decoder_lines(frames126, path)
-    if decoder_lines(portable[0], path) != lines:
+    if portable is not None and decoder_lines(portable[0], path) != lines:
         problems.append("the Portable Musepack decoder and libmpcdec 1.2.6 read the damaged stream differently")
     overrun = next((i for i, f in enumerate(m.old(path.read_bytes())["frames"]) if f["overrun"]), None)
     if overrun is None:
@@ -314,7 +318,7 @@ def main():
     tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
     frames_tool = musepack_tool.build_frames(tools and tools / "frames")
     frames126 = musepack_tool.build_frames_126(tools and tools / "frames126")
-    portable = musepack_tool.build_portable(tools and tools / "portable")
+    portable = musepack_tool.build_portable(tools and tools / "portable") if downloads.has_token(musepack_tool.PORTABLE[2][0]) else None
     failures = 0
     for manifest_path in sorted(DIRECTORY.glob("*.expected.json")):
         name = manifest_path.name[:-len(".expected.json")]

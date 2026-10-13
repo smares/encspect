@@ -12,8 +12,8 @@
   pinned by SHA-256), the last libmpcdec that decodes stream versions 4 to 6. Its configure step only
   writes config_types.h, which this script writes from the template with <stdint.h> types.
 - mpcdec_frames_portable and mpcdec_portable, the Portable Musepack decoder ((C) 1999-2002
-  Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski, LGPL; mpc.zip from Rarewares, pinned by
-  SHA-256), the C++ code libmpcdec 1.2.6 was ported to C from (its AUTHORS: "Port to pure C"; the
+  Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski, LGPL; mpc.zip, pinned by SHA-256 and
+  fetched only from the private repository, as its source host offered it for one download), the C++ code libmpcdec 1.2.6 was ported to C from (its AUTHORS: "Port to pure C"; the
   two share their functions, names and comments), so the same reading of stream versions 4 to 6 in an
   earlier form, not an independent one; building it catches errors in building libmpcdec 1.2.6 or in
   this patch. The first program is mpcdec_frames_portable.cpp over its library, which prints what
@@ -55,7 +55,7 @@ LIBMPC = ("libmpc_0.1~r495.orig.tar.gz", "5182d7a30eec1b338cafc9c1706d663a6c8dc2
           ["https://deb.debian.org/debian/pool/main/libm/libmpc/libmpc_0.1~r495.orig.tar.gz"])
 LIBMPCDEC_126 = ("libmpcdec-1.2.6.tar.bz2", "4bd54929a80850754f27b568d7891e1e3e1b8d2f208d371f27d1fda09e6f12a8",
                  ["https://files.musepack.net/source/libmpcdec-1.2.6.tar.bz2"])
-PORTABLE = ("mpc.zip", "5490e2fbf9a7f766a6eb85747e601f30c6178f03ddc1cee26f33ab08074a0f48", ["https://www.rarewares.org/john33/mpc.zip"])
+PORTABLE = ("mpc.zip", "5490e2fbf9a7f766a6eb85747e601f30c6178f03ddc1cee26f33ab08074a0f48", [downloads.private("decoders/mpc.zip")])
 PORTABLE_LIBRARY = ["mpc_dec.cpp", "streaminfo.cpp", "huffsv46.cpp", "huffsv7.cpp", "bitstream.cpp", "synth_filter.cpp", "requant.cpp", "idtag.cpp"]
 PORTABLE_HEADERS = ["mpc_dec.h", "mpc_math.h", "requant.h", "stdafx.h", "streaminfo.h"]
 HERE = pathlib.Path(__file__).resolve().parent
