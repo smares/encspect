@@ -244,19 +244,27 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     // Packets the analyzer no longer details, once it has detailed 4,096, are kept as one record per
-    // run, so 3 million empty packets of an unknown key (9 MB) keep about nothing per packet.
+    // run, so empty packets of an unknown key (3 bytes each) keep about nothing per packet. The
+    // bound is on the growth from 1 to 4 million packets: what the report keeps whatever the count
+    // (the detailed packets, pools the runtime holds on to) differs by platform and would otherwise
+    // dominate.
     [Fact]
     public void UnknownSv8PacketsStayCompact()
     {
-        const int packets = 3_000_000;
+        const int fewer = 1_000_000;
+        const int packets = 4_000_000;
+        byte[] warmUp = Sv8EmptyPackets(5000, "XX"u8);
 
-        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), Sv8EmptyPackets(5000, "XX"u8));
+        (_, long fewerKept, long fewerPeak) = Measure("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
+        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
 
         Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
-        Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("3000000 packets", StringComparison.Ordinal));
-        output.WriteLine($"{kept} bytes kept and {peak} bytes peak, {kept / (double)packets:F2} and {peak / (double)packets:F2} per packet");
-        Assert.True(kept < packets * UndetailedPacketBound, $"The report keeps {kept / (double)packets:F2} bytes per packet.");
-        Assert.True(peak < packets * UndetailedPacketBound, $"The live heap grew by {peak / (double)packets:F2} bytes per packet.");
+        Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
+        double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
+        double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes peak: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
+        Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The live heap grew by {peakPerPacket:F2} bytes per further packet.");
         GC.KeepAlive(report);
     }
 
@@ -439,9 +447,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     private const long MusepackPeakBound = 120;
 
-    // Bytes per undetailed SV8 packet of 3 bytes: the 4,096 detailed ones are a fixed cost, and runs
-    // are one record each.
-    private const long UndetailedPacketBound = 2;
+    // Bytes per further undetailed SV8 packet of 3 bytes: runs are one record each, so close to 0.
+    private const long UndetailedPacketBound = 1;
 
     // An SV7 stream (libmpcdec r495 streaminfo_read_header_sv7): a header with mid/side, max band 1
     // and no true gapless, then frames of 400 zero bits, which read as subband 0 left out and
