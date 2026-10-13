@@ -567,7 +567,7 @@ public class CommandLineTests
         Assert.StartsWith(locked + ": ", errors);
     }
 
-    // .NET decodes such names lossily, so the name it lists opens nothing; see the README.
+    // .NET decodes such names lossily, so the name it lists opens nothing; see docs/cli.md.
     [Fact]
     public void NamesThatAreNotUtf8AreReportedAsUnreadable()
     {

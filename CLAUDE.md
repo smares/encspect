@@ -35,6 +35,12 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - Stereo and channel terms are written out in output, messages and docs: mid/side, intensity stereo, left/right, never MS, IS or LR. Spec acronyms such as CRC, VBR, CBR, ABR, TOC, ATH, LFE and SCFSI stay abbreviated.
 - American English everywhere, including comments, docs and prose (-ize, not -ise). Write "ID" capitalized in comments when it means the word.
 
+## Documentation
+
+- `README.md` stays a short overview: what Encspect is, a one-line entry per supported format and tag, status, quick start and links. Details go to `docs/`.
+- A format parser documents itself in `docs/formats/<name>.md` and a tag parser in `docs/tags/<name>.md`, in short sections (what is read, what is reported, channel layout, encoder detection, what is not covered), and adds its line to the index in that folder's `README.md`. Command line and GUI behavior go to `docs/cli.md` and `docs/gui.md`, fixtures and cross-checks to `docs/development.md`.
+- Write documentation as lists and short paragraphs, never as one long block.
+
 ## Verification
 
 - Run the checks the CI workflow runs, locally, before calling a change done. Mirror the pipeline instead of picking a subset. Cloud sessions install the .NET SDK through the SessionStart hook in `.claude/settings.json` (`scripts/install-dotnet.sh`); if the SDK is still missing, a blocked host is the likely cause, so name it. If the SDK is not available, say so and rely on the CI run.
