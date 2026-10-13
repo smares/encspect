@@ -283,15 +283,19 @@ jobs:
 
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
       # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
-      # for SV4 and SV5 from the pinned libmpcdec 1.2.6. Without Wine, mppdec's check reads the frame
-      # counts recorded when the fixtures were written and says so.
+      # for SV4 to SV6 from the pinned libmpcdec 1.2.6 and, with the runner's g++, the pinned Portable
+      # Musepack decoder it was ported from. Without Wine, mppdec's check reads what it printed when
+      # the fixtures were written and says so.
       - name: Install musepack-tools and ffmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y musepack-tools ffmpeg
 
+      # The Portable Musepack decoder's archive is only in the private repository, read with a read-only token.
       - name: Cross-check the Musepack fixtures
         run: python3 scripts/fixtures/crosscheck_musepack_fixtures.py
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg and liba52

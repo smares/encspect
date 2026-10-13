@@ -1,0 +1,114 @@
+{
+ "length": 2064,
+ "version": 6,
+ "header": {
+  "Bitrate": "0 kbps",
+  "Intensity Stereo": "false",
+  "Mid/Side Stereo": "true",
+  "Stream Version": "6",
+  "Max Band": "31",
+  "Block Size": "1 frame",
+  "Frame Count": "12 frames"
+ },
+ "frames": [
+  [
+   2973,
+   18,
+   "3fff9",
+   0
+  ],
+  [
+   1212,
+   3,
+   "1",
+   0
+  ],
+  [
+   1216,
+   3,
+   "1",
+   0
+  ],
+  [
+   1248,
+   3,
+   "1",
+   0
+  ],
+  [
+   1337,
+   3,
+   "1",
+   0
+  ],
+  [
+   1424,
+   3,
+   "1",
+   0
+  ],
+  [
+   1262,
+   3,
+   "1",
+   0
+  ],
+  [
+   1242,
+   3,
+   "1",
+   0
+  ],
+  [
+   1084,
+   3,
+   "1",
+   0
+  ],
+  [
+   782,
+   3,
+   "1",
+   0
+  ],
+  [
+   1081,
+   3,
+   "1",
+   0
+  ],
+  [
+   1304,
+   3,
+   "1",
+   0
+  ]
+ ],
+ "last_frame_samples": 0,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV6",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 13824,
+   "average_bitrate": 52.36875,
+   "duration": 0.313469387755102
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV6",
+   "offset": 0,
+   "length": 2064
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ },
+ "derived": {
+  "from": "external-mppsv5-vbr.mpc",
+  "mppdec": "EOF reached after 12 Frames or 00:00:00.313 hms",
+  "note": "Not an encoder's output: no SV6 encoder was found. The SV5 encoder's stream relabeled as version 6, its frame count lowered and 11 bits written after the new last frame."
+ }
+}

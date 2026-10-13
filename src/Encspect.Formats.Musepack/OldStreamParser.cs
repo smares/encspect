@@ -5,22 +5,31 @@ using Encspect.Core;
 namespace Encspect.Formats.Musepack;
 
 // Stream versions 4 to 6, before SV7 (libmpcdec 1.2.6 streaminfo_read_header_sv6, mpc_decoder.c
-// mpc_decoder_read_bitstream_sv6). Their header has no magic number: the first 32-bit little-endian
-// word holds a bitrate, the intensity and mid/side stereo flags, the stream version, the max band and
-// the block size; the frame count follows, in 16 bits in version 4 and 32 in 5 and 6, and the frames
-// start 48 or 64 bits in. Each unit of block-size frames is a 20-bit length and its data, as the SV4
-// and SV5 encoders (Rarewares' mppsv4 and mppsv5 builds) write them; those encoders write whole words
-// only, so the last counted frame can run up to 31 bits past the end of the data, and decoders
-// (libmpcdec 1.2.6, mppdec) decode the frames before it. Version 6 adds 11 bits after the last frame.
+// mpc_decoder_read_bitstream_sv6; the Portable Musepack decoder, the C++ code libmpcdec 1.2.6 was
+// ported from, has the same functions as StreamInfo::ReadHeaderSV6 and Lese_Bitstrom_SV6, so it is
+// the same reading, not a second one). Their header has no magic number: the first
+// 32-bit little-endian word holds a bitrate, the intensity and mid/side stereo flags, the stream
+// version, the max band and the block size; the frame count follows, in 16 bits in version 4 and 32
+// in 5 and 6, and the frames start 48 or 64 bits in. Each unit of block-size frames is a 20-bit length
+// and its data, as the SV4 and SV5 encoders (Rarewares' mppsv4 and mppsv5 builds) write them; those
+// encoders write whole words only, so the last counted frame can run up to 31 bits past the end of
+// the data, and decoders (libmpcdec 1.2.6, mppdec) decode the frames before it ("last frame was
+// invalid for up to SV5"). In version 6 libmpcdec 1.2.6 decodes every counted frame, the last one too,
+// and then reads 11 bits after it: how many of its samples belong to the audio. mppdec, a separate
+// decoder, also decodes the last counted SV6 frame; nothing at hand confirms the 11 bits.
 //
 // A header alone is too weak to tell such a stream from other data, so the stream is recognized only
 // where its units, followed by their lengths, end where the encoders end them: in versions 4 and 5
-// at the end of the data or less than 32 bits after it, in version 6 in its last word. A stream of
+// at the end of the data or less than 32 bits after it; in version 6 in its last word, or followed by
+// one zero word where it ends on a word boundary. The SV6 rule assumes an SV6 encoder wrote the last
+// frame and the 11 bits whole, since libmpcdec 1.2.6 drops the last frame only "up to SV5"; the zero
+// word is what mppenc 1.16, the SV7 descendant of those encoders, writes in that case
+// (encode_sv7.c FinishBitstream always writes the word it is filling, even an empty one). A stream of
 // version 4 or 5 whose units end inside its last word is not one these encoders wrote, so it is not
-// taken. Frames are read, as libmpcdec 1.2.6
-// reads them, only where it decodes them and an encode confirms the syntax: versions 4 and 5 with a
-// variable bitrate, no intensity stereo and a block size of 1. No SV6 encoder was found, so SV6 stays at
-// its header.
+// taken. Frames are read, as libmpcdec 1.2.6 reads them, where it decodes them: a variable bitrate, no
+// intensity stereo and a block size of 1. Encodes confirm that syntax for versions 4 and 5; no SV6
+// encoder was found, so version 6 rests on libmpcdec 1.2.6's source, on SV5 encodes relabeled as
+// version 6 and on mppdec decoding all their frames.
 internal static class OldStreamParser
 {
     private const int MinimumBytes = 8;
@@ -54,8 +63,11 @@ internal static class OldStreamParser
 
         public long Units => BlockSize > 0 ? (Frames + BlockSize - 1) / BlockSize : 0;
 
-        // Whether libmpcdec 1.2.6 decodes the frames and an encode confirms their syntax.
-        public bool IsReadable => Version is 4 or 5 && Bitrate == 0 && !IntensityStereo && BlockSize == 1;
+        // Whether libmpcdec 1.2.6 decodes the frames.
+        public bool IsReadable => Version is >= 4 and <= 6 && Bitrate == 0 && !IntensityStereo && BlockSize == 1;
+
+        // Version 6 keeps the last counted frame and follows it with 11 bits; 4 and 5 drop it.
+        public bool KeepsLastFrame => Version == 6;
 
         public static OldHeader Read(WordStream w)
         {
@@ -94,12 +106,20 @@ internal static class OldStreamParser
                 return 0;
             }
 
-            bit += 20 + words.Read(bit, 20) + (header.Version == 6 && i == header.Units - 1 ? 11 : 0);
+            bit += 20 + words.Read(bit, 20) + (header.KeepsLastFrame && i == header.Units - 1 ? 11 : 0);
         }
 
-        bool ends = header.Version == 6 ? bit <= words.BitLength && words.Layout.WordEnd(bit) == reader.End : bit >= words.BitLength && bit < words.BitLength + 32;
+        bool ends = header.KeepsLastFrame
+            ? bit <= words.BitLength && (words.Layout.WordEnd(bit) == reader.End || EndsWithZeroWord(words, bit))
+            : bit >= words.BitLength && bit < words.BitLength + 32;
         return !ends ? 0 : header.Units >= 3 ? 95 : 60;
     }
+
+    // Whether the stream ends on a word boundary at bit and one word of zeros follows it, the last of
+    // the data: mppenc 1.16 (encode_sv7.c FinishBitstream) writes the word it is filling at the end even
+    // where it is empty.
+    private static bool EndsWithZeroWord(WordStream words, long bit) =>
+        bit % 32 == 0 && bit + 32 == words.BitLength && words.Read(bit, 32) == 0;
 
     public static void Parse(ByteReader reader, Node parent, AnalysisContext context)
     {
@@ -118,37 +138,33 @@ internal static class OldStreamParser
         }
         else
         {
-            string why;
-            if (h.Version == 6)
+            var reasons = new List<string>();
+            if (h.Bitrate != 0)
             {
-                why = "no SV6 encoder was at hand to confirm the syntax of its frames";
-            }
-            else
-            {
-                var reasons = new List<string>();
-                if (h.Bitrate != 0)
-                {
-                    reasons.Add($"have a constant bitrate ({h.Bitrate} kbps)");
-                }
-
-                if (h.IntensityStereo)
-                {
-                    reasons.Add("use intensity stereo");
-                }
-
-                if (h.BlockSize != 1)
-                {
-                    reasons.Add($"lead blocks of frames ({h.BlockSize}) with one length");
-                }
-
-                why = $"libmpcdec 1.2.6 does not decode streams that {(reasons.Count > 1 ? string.Join(", ", reasons[..^1]) + " or " : string.Empty)}{reasons[^1]}";
+                reasons.Add($"have a constant bitrate ({h.Bitrate} kbps)");
             }
 
+            if (h.IntensityStereo)
+            {
+                reasons.Add("use intensity stereo");
+            }
+
+            if (h.BlockSize != 1)
+            {
+                reasons.Add($"lead blocks of frames ({h.BlockSize}) with one length");
+            }
+
+            string why = $"libmpcdec 1.2.6 does not decode streams that {(reasons.Count > 1 ? string.Join(", ", reasons[..^1]) + " or " : string.Empty)}{reasons[^1]}";
             context.AddFinding(Severity.Info, "musepack.frames-not-read", $"The frames of this Musepack SV{h.Version} stream are not read: {why}.", version);
         }
 
         long dataStart = reader.Start + (h.DataBit / 8);
-        int count = state.Frames.Count;
+        if (state.FinalSamples is not null && EndsWithZeroWord(words, state.Frames[state.Frames.Count - 1].End))
+        {
+            state.PaddingStart = w.WordEnd(state.Frames[state.Frames.Count - 1].End);
+        }
+
+        int count = state.Frames.Count + (state.PaddingStart is null ? 0 : 1);
         if (count == 0)
         {
             IReadOnlyList<ByteRange> data = h.Version == 4 ? [new ByteRange(reader.Start + 4, 2), new ByteRange(reader.Start + 8, reader.Length - 8)] : [new ByteRange(dataStart, reader.End - dataStart)];
@@ -188,6 +204,7 @@ internal static class OldStreamParser
             }
 
             bool isLast = i == h.Frames - 1;
+            bool isFinal = isLast && h.KeepsLastFrame;
             if (bit + 20 > length)
             {
                 if (bit < length)
@@ -201,16 +218,18 @@ internal static class OldStreamParser
 
             int frameLength = (int)words.Read(bit, 20);
             long end = bit + 20 + frameLength;
-            FrameFlags flags = isLast ? FrameFlags.Last : 0;
-            if (end > length)
+            FrameFlags flags = isFinal ? FrameFlags.Final : isLast ? FrameFlags.Last : 0;
+            if (end + (isFinal ? 11 : 0) > length)
             {
-                flags |= isLast ? (FrameFlags)0 : FrameFlags.Truncated;
-                state.Truncated |= !isLast;
-                state.LastRunsPast = isLast ? end - length : 0;
+                bool unwritten = isLast && !isFinal;
+                flags |= unwritten ? 0 : FrameFlags.Truncated;
+                state.Truncated |= !unwritten;
+                state.LastRunsPast = unwritten ? end - length : 0;
             }
 
-            // libmpcdec 1.2.6 decodes the frames before the last, which these encoders may leave unfinished.
-            if (isLast)
+            // In versions 4 and 5, decoders decode the frames before the last, which these encoders
+            // may leave unfinished.
+            if (isLast && !isFinal)
             {
                 state.Frames.Add(new Frame(bit, frameLength, flags | FrameFlags.Last));
                 break;
@@ -229,10 +248,15 @@ internal static class OldStreamParser
                 break;
             }
 
+            if (isFinal)
+            {
+                state.FinalSamples = (int)words.Read(end, 11);
+            }
+
             state.Count(frame);
             bit = end;
             empty = frameLength == 0 ? empty + 1 : 0;
-            if (empty == Sv7Parser.MaxEmptyRun)
+            if (empty == Sv7Parser.MaxEmptyRun && i + 1 < (h.KeepsLastFrame ? h.Frames : h.Frames - 1))
             {
                 state.EmptyFrom = bit - (Sv7Parser.MaxEmptyRun * 20L);
                 break;
@@ -312,11 +336,19 @@ internal static class OldStreamParser
 
     private static Node FrameNode(State state, int index)
     {
+        if (index >= state.Frames.Count)
+        {
+            long start = state.PaddingStart!.Value;
+            return new Node("Padding Word", start, 4, NodeValue.Integer(4, "bytes", "byte")) { Description = Explain.Sv6PaddingWord, Topic = Topics.OldStreams };
+        }
+
         Frame frame = state.Frames[index];
         WordLayout w = state.Layout;
         long limit = (w.End - w.Start) * 8;
         bool isLast = (frame.Flags & FrameFlags.Last) != 0;
-        string description = isLast ? Explain.OldLastFrame : Explain.OldFrame;
+        string description = isLast ? Explain.OldLastFrame
+            : (frame.Flags & FrameFlags.Final) == 0 ? Explain.OldFrame
+            : (frame.Flags & FrameFlags.Truncated) != 0 ? Explain.Sv6LastFrameCut : Explain.Sv6LastFrame;
         if (frame.Length < 0 || isLast)
         {
             return WithoutChildren(w.Field("Frame", frame.Bit, Math.Min(limit, frame.Length < 0 ? frame.Bit + 20 : frame.End), isLast ? "not decoded" : "cut short",
@@ -354,7 +386,7 @@ internal static class OldStreamParser
         WordLayout w = state.Layout;
         long limit = (w.End - w.Start) * 8;
         var nodes = new List<Node> { w.Field("Frame Length", frame.Bit, frame.Bit + 20, NodeValue.Integer(frame.Length, "bits", "bit"), Explain.FrameLength) };
-        long dataEnd = Math.Min(limit, frame.End);
+        long dataEnd = Math.Min(limit, frame.DataEnd);
         Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.SubbandCoding);
         if (data.Length > 0)
         {
@@ -365,7 +397,26 @@ internal static class OldStreamParser
             nodes.Add(data);
         }
 
+        if ((frame.Flags & FrameFlags.Final) != 0 && frame.End <= limit)
+        {
+            nodes.Add(FinalSamplesNode(state, frame));
+        }
+
         return [.. nodes.Where(n => n.Length > 0)];
+    }
+
+    private static Node FinalSamplesNode(State state, Frame frame) =>
+        state.Layout.Field("Last Frame Samples", frame.DataEnd, frame.End, NodeValue.Integer(state.FinalSamples ?? 0, "samples", "sample"), Explain.Sv6FinalSamples,
+            Topics.GaplessPlayback);
+
+    // The samples libmpcdec 1.2.6 outputs for the last frame of version 6
+    // (mpc_decoder_decode_internal): 0 stands for
+    // 1,152, and the synthesis filter's delay is decoded after the given samples, wrapping at a frame.
+    private static int LastFrameOutput(int given)
+    {
+        int samples = given == 0 ? Sv7Parser.FrameSamples : given;
+        int decay = (samples + Sv7Parser.SynthesisDelay) % Sv7Parser.FrameSamples;
+        return samples + Sv7Parser.SynthesisDelay >= Sv7Parser.FrameSamples ? Sv7Parser.FrameSamples + decay : decay;
     }
 
     private static string BandList(uint mask)
@@ -451,7 +502,7 @@ internal static class OldStreamParser
         else if (state.Truncated)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-missing",
-                $"The header counts {h.Frames} frames, but the data holds {decoded} whole ones before the last: the stream is cut short.", header.Children.First(c => c.Name == "Frame Count"));
+                $"The header counts {h.Frames} frames, but the data holds {decoded} whole ones{(h.KeepsLastFrame ? string.Empty : " before the last")}: the stream is cut short.", header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (state.LastRunsPast > 0)
         {
@@ -461,20 +512,33 @@ internal static class OldStreamParser
                 WithoutChildren(w.Field("Frame", last.Bit, Math.Min(limit, last.End), "not decoded", Explain.OldLastFrame, null, NodeKind.Frame)));
         }
 
-        // Decoders decode the frames before the last (libmpcdec 1.2.6, mppdec); libmpcdec drops the
-        // synthesis filter's delay at the start. Version 6, whose frames are not read, gives none.
+        Frame? final = state.FinalSamples is not null ? state.Frames[state.Frames.Count - 1] : null;
+        if (final is { } f && state.FinalSamples > Sv7Parser.FrameSamples)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.last-frame-samples-invalid",
+                $"The 11 bits after the last frame give {state.FinalSamples} samples, more than a frame's 1,152; libmpcdec 1.2.6 still decodes the frame, which adds {LastFrameOutput(state.FinalSamples.Value) - Sv7Parser.SynthesisDelay} samples to its output.",
+                FinalSamplesNode(state, f));
+        }
+
+        // In versions 4 and 5, decoders decode the frames before the last (libmpcdec 1.2.6, mppdec),
+        // and libmpcdec drops the synthesis filter's delay at the start. In version 6 libmpcdec decodes
+        // the last frame too, and the 11 bits after it say how many samples it adds. Version 6 streams
+        // libmpcdec refuses give none. A damaged frame stops libmpcdec earlier; the count assumes the
+        // frames whole.
         long frames = h.IsReadable ? decoded : h.Version is 4 or 5 ? Math.Max(0, h.Frames - 1) : 0;
-        long samples = Math.Max(0, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
+        long samples = state.FinalSamples is { } given && decoded > 0
+            ? ((decoded - 1) * Sv7Parser.FrameSamples) + LastFrameOutput(given) - Sv7Parser.SynthesisDelay
+            : Math.Max(0, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
         double duration = samples / (double)sampleRate;
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
         Node? bitrate = null;
         if (h.IsReadable)
         {
             Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-            statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.OldStatFrames));
+            statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), h.KeepsLastFrame ? Explain.Sv6StatFrames : Explain.OldStatFrames));
             statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
             statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay, "samples", "sample"), Explain.DecoderDelay));
-            statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.OldStatSamples));
+            statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), h.KeepsLastFrame ? Explain.Sv6StatSamples : Explain.OldStatSamples));
             statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             figures.AddTo(statistics, Cover, "Frame", "frames", inBytes: false, out Node average);
             bitrate = average;
@@ -518,6 +582,7 @@ internal static class OldStreamParser
         Truncated = 1,
         Overrun = 2,
         Last = 4,
+        Final = 8,
     }
 
     // A frame in 24 bytes, as an SV7 frame is kept.
@@ -530,7 +595,10 @@ internal static class OldStreamParser
 
         public FrameFlags Flags => flags;
 
-        public long End => bit + 20 + Math.Max(0, length);
+        public long DataEnd => bit + 20 + Math.Max(0, length);
+
+        // The last frame of version 6 is followed by 11 bits of its own.
+        public long End => DataEnd + ((flags & FrameFlags.Final) != 0 ? 11 : 0);
 
         public uint MidSide { get; init; }
 
@@ -555,7 +623,11 @@ internal static class OldStreamParser
 
         public long LastRunsPast { get; set; }
 
+        public int? FinalSamples { get; set; }
+
         public long? EmptyFrom { get; set; }
+
+        public long? PaddingStart { get; set; }
 
         public long FramesWithMidSide { get; private set; }
 
