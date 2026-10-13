@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 using Encspect.Core;
 
@@ -24,11 +25,12 @@ internal sealed class Ac3Analysis
     private int _blocksOfSubstream0;
     private int _frameIndex;
     private long _frameOffset;
+    private int _frameLength;
 
     public Ac3Analysis(AnalysisContext context)
     {
         _context = context;
-        _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue };
+        _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)) };
     }
 
     public ChunkedList<Frame> Frames { get; } = new();
@@ -69,14 +71,28 @@ internal sealed class Ac3Analysis
 
         _syntax.Analyze(_buffer, available, header);
         FrameResult result = _syntax.Result;
-        long store = Store.Add(_bits.Kept);
-        var frame = new Frame(offset, available, header.Raw)
+        // The record's prefix: the length where the frame is shorter than its header says, and
+        // the header where the kept bits do not start with it.
+        ReadOnlySpan<byte> kept = _bits.Kept;
+        bool headerKept = kept.Length >= SyncFrame.Length && kept[..SyncFrame.Length].SequenceEqual(_buffer.AsSpan(0, SyncFrame.Length));
+        Span<byte> prefix = stackalloc byte[2 + SyncFrame.Length];
+        int used = 0;
+        if (shortened)
         {
-            Store = store,
-            KeptBits = (ushort)_bits.KeptBits,
-            Flags = (byte)((int)crc1 | ((int)crc2 << 2) | (shortened ? 16 : 0) | (cut ? 32 : 0)),
-        };
-        Frames.Add(frame);
+            BinaryPrimitives.WriteUInt16BigEndian(prefix, (ushort)available);
+            used = 2;
+        }
+
+        if (!headerKept)
+        {
+            BinaryPrimitives.WriteUInt64BigEndian(prefix[used..], header.Raw);
+            used += SyncFrame.Length;
+        }
+
+        uint store = Store.Add(prefix[..used], kept);
+        int flags = (int)crc1 | ((int)crc2 << 2) | (shortened ? Frame.Shortened : 0) | (cut ? Frame.Cut : 0) | (headerKept ? Frame.HeaderKept : 0);
+        Frames.Add(Frame.Of(offset, store, _bits.KeptBits, flags));
+        _frameLength = available;
 
         Node FrameAt() => new("Frame", offset, available) { Kind = NodeKind.Frame };
         if (truncated)
@@ -135,6 +151,24 @@ internal sealed class Ac3Analysis
 
     private static string Count(int count) => count == 1 ? "1 frame" : $"{count} frames";
 
+    private static string CodeOf(Issue issue) => issue switch
+    {
+        Issue.ReservedValue => "ac3.reserved-value",
+        Issue.DialnormReserved => "ac3.dialnorm-reserved",
+        Issue.LanguageCode => "ac3.language-code",
+        Issue.BlockInconsistent => "ac3.block-inconsistent",
+        Issue.BlockInvalid => "ac3.block-invalid",
+        Issue.Overrun => "ac3.block-overrun",
+        Issue.HeaderOverrun => "ac3.header-overrun",
+        Issue.UndefinedBsid => "ac3.bsid-undefined",
+        Issue.ReducedRate => "ac3.reduced-rate-not-read",
+        Issue.Aht => "ac3.aht-not-read",
+        Issue.EnhancedCoupling => "ac3.enhanced-coupling-not-read",
+        Issue.MixDataOverrun => "ac3.mix-data-overrun",
+        Issue.ChannelMapCount => "ac3.channel-map-count",
+        _ => "ac3.auxiliary-length",
+    };
+
     private void OnIssue(Issue issue, string field, int start, int end, string detail)
     {
         long offset = _frameOffset;
@@ -143,59 +177,59 @@ internal sealed class Ac3Analysis
         switch (issue)
         {
             case Issue.ReservedValue:
-                Findings.Add(Severity.Warning, "ac3.reserved-value", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"{field} holds a value A/52 reserves, first in {at} ({Times(count)}).");
                 break;
             case Issue.DialnormReserved:
-                Findings.Add(Severity.Warning, "ac3.dialnorm-reserved", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"dialnorm is 0, which A/52 5.4.2.8 reserves; decoders read it as -31 dB. First in {at} ({Times(count)}).");
                 break;
             case Issue.LanguageCode:
-                Findings.Add(Severity.Info, "ac3.language-code", Field, count =>
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"langcod is not 0xFF, the value A/52:2018 5.4.2.12 gives the reserved field; earlier editions coded a language there. First in {at} ({Times(count)}).");
                 break;
             case Issue.BlockInconsistent:
-                Findings.Add(Severity.Warning, "ac3.block-inconsistent", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: {detail}. First in {at} ({Times(count)}).");
                 break;
             case Issue.BlockInvalid:
-                Findings.Add(Severity.Warning, "ac3.block-invalid", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"An audio block holds what A/52 does not allow: {detail}. Decoders cannot decode the rest of such a frame, and its remaining audio blocks are not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.Overrun:
-                Findings.Add(Severity.Warning, "ac3.block-overrun", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"An audio block runs past the end of its frame: {detail} (A/52 7.10.2, check 21). First in {at} ({Times(count)}).");
                 break;
             case Issue.HeaderOverrun:
-                Findings.Add(Severity.Warning, "ac3.header-overrun", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"The frame is too short for its own fields: {detail}, so its audio blocks are not read (A/52 7.10.2, check 21). First in {at} ({Times(count)}).");
                 break;
             case Issue.UndefinedBsid:
-                Findings.Add(Severity.Info, "ac3.bsid-undefined", Field, count =>
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and liba52 decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.ReducedRate:
-                Findings.Add(Severity.Info, "ac3.reduced-rate-not-read", Field, count =>
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"The frame is coded at a reduced sample rate (fscod2), for which A/52 does not specify the bit allocation, so its audio blocks are not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.Aht:
-                Findings.Add(Severity.Info, "ac3.aht-not-read", Field, count =>
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"The frame codes channels with the adaptive hybrid transform (A/52 Annex E 3.4), whose mantissas the analyzer does not step over, so its audio blocks are read up to the first of them. First in {at} ({Times(count)}).");
                 break;
             case Issue.EnhancedCoupling:
-                Findings.Add(Severity.Info, "ac3.enhanced-coupling-not-read", Field, count =>
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"The frame uses enhanced coupling (A/52 Annex E 3.5), whose parameters the analyzer does not read, so its audio blocks are read up to there. First in {at} ({Times(count)}).");
                 break;
             case Issue.MixDataOverrun:
-                Findings.Add(Severity.Warning, "ac3.mix-data-overrun", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"The mixing parameters run past the length mixdeflen gives: {detail}; decoders skip that length. First in {at} ({Times(count)}).");
                 break;
             case Issue.ChannelMapCount:
-                Findings.Add(Severity.Warning, "ac3.channel-map-count", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"In a dependent substream {detail} (A/52 Annex E 2.3.1.8 requires them to match). First in {at} ({Times(count)}).");
                 break;
             case Issue.AuxiliaryLength:
-                Findings.Add(Severity.Warning, "ac3.auxiliary-length", Field, count =>
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"{detail} (A/52 5.4.4.2). First in {at} ({Times(count)}).");
                 break;
         }
@@ -207,19 +241,22 @@ internal sealed class Ac3Analysis
     // program of the independent frame before them.
     private Program? Assign(Region region, int index, SyncFrame header, FrameResult result)
     {
+        long frameOffset = _frameOffset;
+        int frameLength = _frameLength;
+        Node FrameAt() => new("Frame", frameOffset, frameLength) { Kind = NodeKind.Frame };
         if (header.IsDependent)
         {
             if (_current is null)
             {
-                Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame },
-                    count => $"{Count(count)} of a dependent substream come before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{Frames[index].Offset:X}.");
+                Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
+                    count => $"{Count(count)} of a dependent substream come before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 
             if (_currentType == 2)
             {
-                Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame },
-                    count => $"{Count(count)} of a dependent substream follow an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{Frames[index].Offset:X}.");
+                Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => FrameAt(),
+                    count => $"{Count(count)} of a dependent substream follow an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
             }
 
             _current.Regions.Add(region);
@@ -236,8 +273,8 @@ internal sealed class Ac3Analysis
         {
             int blocks = header.Blocks;
             int expected = _blocksOfSubstream0;
-            Findings.Add(Severity.Warning, "ac3.substream-blocks-differ", () => new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame },
-                count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{Frames[index].Offset:X}.");
+            Findings.Add(Severity.Warning, "ac3.substream-blocks-differ", () => FrameAt(),
+                count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{frameOffset:X}.");
         }
 
         var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon);
@@ -247,8 +284,8 @@ internal sealed class Ac3Analysis
             {
                 _finished.Add(program);
                 Findings.AddNow(Severity.Info, "ac3.stream-changed",
-                    $"The stream{(header.IsEac3 ? $" of independent substream {id}" : string.Empty)} changes at 0x{Frames[index].Offset:X} from {program.Key.Describe()} to {key.Describe()}.",
-                    new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame });
+                    $"The stream{(header.IsEac3 ? $" of independent substream {id}" : string.Empty)} changes at 0x{frameOffset:X} from {program.Key.Describe()} to {key.Describe()}.",
+                    FrameAt());
             }
 
             program = new Program(key, index);
@@ -274,6 +311,11 @@ internal sealed class Ac3Analysis
             AddStream(program, claims, several);
         }
 
+        // The frames' nodes keep this analysis alive; the programs' per-frame figures are in the
+        // streams' series now.
+        _programs.Clear();
+        _finished.Clear();
+        _current = null;
         Findings.Flush(_context);
     }
 
@@ -329,12 +371,12 @@ internal sealed class Ac3Analysis
         Frame frame = Frames[index];
         if (frame.IsGap)
         {
-            return new Node("Gap", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes")) { Description = Explain.Gap };
+            return new Node("Gap", frame.Offset, frame.Store, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap };
         }
 
-        var header = new SyncFrame(frame.Header);
         ByteStore store = Store;
-        return new Node("Frame", frame.Offset, frame.Length, header.Summary(header.FrameLength), () => FrameChildren(store, frame, header))
+        (SyncFrame header, int length, int prefix) = Prefix(store, frame);
+        return new Node("Frame", frame.Offset, length, header.Summary(header.FrameLength), () => FrameChildren(store, frame, header, length, prefix))
         {
             Kind = NodeKind.Frame,
             Description = header.IsEac3 ? Explain.Eac3Frame : Explain.Ac3Frame,
@@ -342,11 +384,31 @@ internal sealed class Ac3Analysis
         };
     }
 
-    private static List<Node> FrameChildren(ByteStore store, Frame frame, SyncFrame header)
+    // The header and length a record's prefix holds, or the kept bits give, and the prefix's size.
+    private static (SyncFrame Header, int Length, int Prefix) Prefix(ByteStore store, Frame frame)
     {
-        byte[] record = store.Read(frame.Store, (frame.KeptBits + 7) >> 3);
+        int at = 0;
+        int length = 0;
+        if (frame.IsShortened)
+        {
+            length = BinaryPrimitives.ReadUInt16BigEndian(store.Span(frame.Store, 2));
+            at = 2;
+        }
+
+        var header = new SyncFrame(BinaryPrimitives.ReadUInt64BigEndian(store.Span(frame.Store, at + SyncFrame.Length)[at..]));
+        if (!frame.IsHeaderKept)
+        {
+            at += SyncFrame.Length;
+        }
+
+        return (header, frame.IsShortened ? length : header.FrameLength, at);
+    }
+
+    private static List<Node> FrameChildren(ByteStore store, Frame frame, SyncFrame header, int length, int prefix)
+    {
+        byte[] record = store.Span(frame.Store + (uint)prefix, (frame.KeptBits + 7) >> 3).ToArray();
         var syntax = new FrameSyntax(FrameBits.ForNodes());
-        return syntax.Nodes(record, frame.KeptBits, frame.Offset, frame.Length, header, Verdict(frame.Crc1, frame.IsTruncated), Verdict(frame.Crc2, frame.IsTruncated));
+        return syntax.Nodes(record, frame.KeptBits, frame.Offset, length, header, Verdict(frame.Crc1, frame.IsShortened), Verdict(frame.Crc2, frame.IsShortened));
     }
 
     private static string Verdict(CrcState state, bool truncated) => state switch
@@ -363,31 +425,40 @@ internal sealed class Ac3Analysis
         Mismatch,
     }
 
-    // A frame or, with a zero header (never a valid one), a gap.
+    // A frame's record, 16 bytes: its offset, where its kept bits lie in the store, and a word of
+    // the kept bits' count and flags. In the store, a prefix comes before the kept bits: the length
+    // where the frame is shorter than its header says, and the header (the frame's first 8 bytes)
+    // where the kept bits do not start with it. A gap keeps its length where a frame keeps its
+    // store position.
     [StructLayout(LayoutKind.Auto)]
-    internal readonly struct Frame(long offset, int length, ulong header)
+    internal readonly struct Frame(long offset, uint store, uint packed)
     {
+        public const int Shortened = 16;
+        public const int Cut = 32;
+        public const int HeaderKept = 64;
+        private const uint GapFlag = 1u << 31;
+
         public long Offset => offset;
 
-        public int Length => length;
+        public uint Store => store;
 
-        public ulong Header => header;
+        public bool IsGap => (packed & GapFlag) != 0;
 
-        public bool IsGap => header == 0;
+        public int KeptBits => (int)(packed & 0xFFFF);
 
-        public long Store { get; init; }
-
-        public ushort KeptBits { get; init; }
-
-        public byte Flags { get; init; }
+        private int Flags => (int)(packed >> 16) & 0xFF;
 
         public CrcState Crc1 => (CrcState)(Flags & 3);
 
         public CrcState Crc2 => (CrcState)((Flags >> 2) & 3);
 
-        public bool IsTruncated => (Flags & 16) != 0;
+        public bool IsShortened => (Flags & Shortened) != 0;
 
-        public static Frame Gap(long offset, long length) => new(offset, (int)Math.Min(length, int.MaxValue), 0);
+        public bool IsHeaderKept => (Flags & HeaderKept) != 0;
+
+        public static Frame Of(long offset, uint store, int keptBits, int flags) => new(offset, store, (uint)keptBits | ((uint)flags << 16));
+
+        public static Frame Gap(long offset, long length) => new(offset, (uint)Math.Min(length, uint.MaxValue), GapFlag);
     }
 
     internal sealed class Region(int first)

@@ -138,6 +138,12 @@ internal sealed partial class FrameSyntax
     public FrameResult Result => _r;
 
     // Called once per issue with the field it was found in: its name and bits.
+    // Called before an issue's finding is built: true where the analysis has reported that issue
+    // already and only counted this case, so its field name and text are not built again.
+    public Func<Issue, bool>? IssueCounted { get; set; }
+
+    private bool Counted(Issue issue) => !_b.IsBuildingNodes && IssueCounted?.Invoke(issue) == true;
+
     public Action<Issue, string, int, int, string>? IssueFound
     {
         get => _issue;
@@ -226,7 +232,7 @@ internal sealed partial class FrameSyntax
             {
                 _r.Stop = _b.Position + 32 > _b.FrameBitCount && _b.FrameBitCount < _frameWords * 16 ? StopReason.DataEnds : StopReason.Overrun;
                 _r.StopBit = _b.Position;
-                if (_r.Stop == StopReason.Overrun)
+                if (_r.Stop == StopReason.Overrun && !Counted(part == "an audio block" ? Issue.Overrun : Issue.HeaderOverrun))
                 {
                     bool block = part == "an audio block";
                     Report(block ? Issue.Overrun : Issue.HeaderOverrun, LastField(), _lastStart, _lastEnd, block
@@ -314,7 +320,10 @@ internal sealed partial class FrameSyntax
     {
         _r.Stop = reason;
         _r.StopBit = _b.Position;
-        Report(issue, LastField(), _lastStart, _lastEnd, string.Empty);
+        if (!Counted(issue))
+        {
+            Report(issue, LastField(), _lastStart, _lastEnd, string.Empty);
+        }
     }
 
     // syncinfo (5.3.1; Annex E 2.2.1).
@@ -994,7 +1003,7 @@ internal sealed partial class FrameSyntax
 
     private void ReservedIf(bool condition)
     {
-        if (condition)
+        if (condition && !Counted(Issue.ReservedValue))
         {
             Report(Issue.ReservedValue, LastField(), _lastStart, _lastEnd, string.Empty);
         }
@@ -1003,7 +1012,7 @@ internal sealed partial class FrameSyntax
     // An issue at a field; only the analysis reports, so each is reported once per frame read.
     private void Report(Issue issue, string field, int start, int end, string detail)
     {
-        if (!_b.IsBuildingNodes)
+        if (!_b.IsBuildingNodes && !Counted(issue))
         {
             _issue?.Invoke(issue, field, start, end, detail);
         }

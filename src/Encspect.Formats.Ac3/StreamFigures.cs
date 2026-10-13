@@ -2,12 +2,13 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Ac3;
 
-// The figures of a stream's frames or access units as they are read: bytes, samples, the smallest
-// and largest, and per unit its offset and bitrate for the graphs. Every unit lasts samples /
-// sampleRate seconds, AAC's fixed frame length; time is counted in samples, so no rounding adds up.
+// The figures of a stream's frames as they are read: bytes, samples, the smallest and largest, and
+// per frame its offset and bitrate for the graphs. Time is counted in samples, so no rounding adds
+// up. A frame's point packs its offset (44 bits), length (17 bits) and blocks (3 bits) into 8
+// bytes; its bitrate follows from them.
 internal sealed class StreamFigures(int sampleRate)
 {
-    private readonly ChunkedList<Point> _points = new();
+    private readonly ChunkedList<ulong> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
 
     public int SampleRate => sampleRate;
@@ -33,8 +34,13 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void Add(long offset, int length, int samples)
     {
-        double bitrate = samples > 0 && sampleRate > 0 ? length * 8.0 * sampleRate / samples / 1000 : 0;
-        _points.Add(new Point(offset, bitrate));
+        double bitrate = Bitrate(length, samples);
+        if (offset >= 1L << 44 || length >= 1 << 17 || samples % 256 != 0 || samples > 7 * 256)
+        {
+            throw new InvalidDataException("A frame lies beyond 16 TiB or is too long for its point.");
+        }
+
+        _points.Add(((ulong)offset << 20) | ((ulong)(uint)length << 3) | (uint)(samples / 256));
         if (sampleRate > 0)
         {
             // A unit is shorter than a second, so every second has one that starts in it.
@@ -74,8 +80,9 @@ internal sealed class StreamFigures(int sampleRate)
                 cancellation.ThrowIfCancellationRequested();
             }
 
-            offsets[i] = _points[i].Offset;
-            bitrates[i] = _points[i].Bitrate;
+            ulong point = _points[i];
+            offsets[i] = point >> 20;
+            bitrates[i] = Bitrate((int)((point >> 3) & 0x1FFFF), (int)(point & 7) * 256);
         }
 
         var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
@@ -109,5 +116,5 @@ internal sealed class StreamFigures(int sampleRate)
         return statistics;
     }
 
-    private readonly record struct Point(long Offset, double Bitrate);
+    private double Bitrate(int length, int samples) => samples > 0 && sampleRate > 0 ? length * 8.0 * sampleRate / samples / 1000 : 0;
 }

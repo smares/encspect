@@ -956,7 +956,7 @@ internal sealed partial class FrameSyntax
             _t?.Field("Mantissas", start, Math.Max(start, end), NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.AudioBlocks);
             _r.Stop = truncated ? StopReason.DataEnds : StopReason.Overrun;
             _r.StopBit = start;
-            if (!truncated)
+            if (!truncated && !Counted(Issue.Overrun))
             {
                 Report(Issue.Overrun, "Mantissas", start, Math.Max(start, end),
                     $"the bit allocation gives an audio block's mantissas {bits} bits, more than the frame holds after them");
@@ -1067,13 +1067,22 @@ internal sealed partial class FrameSyntax
         }
     }
 
-    private void Inconsistent(string detail) => Report(Issue.BlockInconsistent, LastField(), _lastStart, _lastEnd, detail);
+    private void Inconsistent(string detail)
+    {
+        if (!Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, LastField(), _lastStart, _lastEnd, detail);
+        }
+    }
 
     private void Invalid(string detail)
     {
         _r.Stop = StopReason.Invalid;
         _r.StopBit = _b.Position;
-        Report(Issue.BlockInvalid, LastField(), _lastStart, _lastEnd, detail);
+        if (!Counted(Issue.BlockInvalid))
+        {
+            Report(Issue.BlockInvalid, LastField(), _lastStart, _lastEnd, detail);
+        }
     }
 
     // A field of one channel, named with the channel ("IsBlockSwitched (left)").
