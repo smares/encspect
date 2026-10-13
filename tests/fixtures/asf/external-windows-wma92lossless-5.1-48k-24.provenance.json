@@ -1,0 +1,60 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio 9.2 Lossless, VBR, \"VBR Quality 100, 48 kHz, 5.1 channel 24 bit VBR\".",
+ "encoder": {
+  "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+  "path": "wmf-sdk",
+  "codec": "Windows Media Audio 9.2 Lossless",
+  "format_index": 3,
+  "achieved_bitrate": null,
+  "format_description": "VBR Quality 100, 48 kHz, 5.1 channel 24 bit VBR",
+  "format_tag": "0x0163",
+  "mode": "vbr",
+  "requested": {
+   "requestedChannels": 6,
+   "requestedRates": [
+    48000,
+    44100
+   ],
+   "requestedFormatBits": 24,
+   "requestedQuality": 100
+  },
+  "format_channels": 6,
+  "format_rate": 48000,
+  "format_bits": 24,
+  "format_bitrate": 128016,
+  "config_bitrate": 128016,
+  "buffer_window_ms": 4294967295,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "quiet",
+  "channels": 6,
+  "rate": 48000,
+  "bits": 24,
+  "seconds": 0.5,
+  "frames": 24000,
+  "type": "extensible",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma92lossless-5.1-48k-24",
+ "actual": {
+  "format_tag": 355,
+  "channels": 6,
+  "rate": 48000,
+  "bytes_per_second": 144000,
+  "bits": 24
+ },
+ "bytes": 325465,
+ "sha256": "05e4b4ed793828eeae925b6345fb4a57a978e0eeaadaddbc1d3fa67b068cc0ac",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

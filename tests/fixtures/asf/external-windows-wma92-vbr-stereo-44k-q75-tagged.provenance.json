@@ -1,0 +1,58 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio 9.2, VBR, \"VBR Quality 75, 44 kHz, stereo VBR\".",
+ "encoder": {
+  "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+  "path": "wmf-sdk",
+  "codec": "Windows Media Audio 9.2",
+  "format_index": 2,
+  "achieved_bitrate": null,
+  "format_description": "VBR Quality 75, 44 kHz, stereo VBR",
+  "format_tag": "0x0161",
+  "mode": "vbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedQuality": 75
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 16,
+  "format_bitrate": 128016,
+  "config_bitrate": 128016,
+  "buffer_window_ms": 4294967295,
+  "title": "Encspect test tone",
+  "author": "Encspect"
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 2,
+  "frames": 88200,
+  "type": "plain",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma92-vbr-stereo-44k-q75-tagged",
+ "actual": {
+  "format_tag": 353,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 13093,
+  "bits": 16
+ },
+ "bytes": 32153,
+ "sha256": "d570e91382302867a7a836c5ca23bd892c3a5f181b98fa77aaa22b73eace9ef8",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

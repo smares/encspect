@@ -165,6 +165,23 @@ public class WmaFixtureTests
         Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
     }
 
+    // The same codec at the same constant bitrate, written by the two Windows writers: the headers differ, and the
+    // writer is named from them (the codec data and IsVBR are the same).
+    [Theory]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-128.wma", "asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma")]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", "asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma")]
+    public void ConstantBitrateFilesOfTheTwoWritersAreToldApart(string foundation, string sdk)
+    {
+        StreamInfo viaFoundation = Fixtures.AnalyzeMpeg(foundation).Streams[0];
+        StreamInfo viaSdk = Fixtures.AnalyzeMpeg(sdk).Streams[0];
+        Assert.StartsWith("Media Foundation ", viaFoundation.Encoder, StringComparison.Ordinal);
+        Assert.StartsWith("Windows Media Format SDK ", viaSdk.Encoder, StringComparison.Ordinal);
+        Assert.Equal(Confidence.Medium, viaFoundation.EncoderConfidence);
+        Assert.Equal(Confidence.Medium, viaSdk.EncoderConfidence);
+        Assert.False(viaFoundation.IsVbr);
+        Assert.False(viaSdk.IsVbr);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void ReportMatchesGoldenFile(string name)

@@ -80,7 +80,9 @@ internal static class WmaHeaderOnly
 
         IReadOnlyList<Speaker>? layout = null;
         int channels = format.Channels;
-        if (format.ChannelMask is { } mask && mask != 0 && System.Numerics.BitOperations.PopCount(mask) == channels && (mask >> 18) == 0)
+        // The mask is in the format's extensible header or, as in Professional, at byte 2 of the 18 bytes of codec data.
+        uint? stated = format.ChannelMask ?? (config.Data.Length >= 18 ? System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(config.Data.Span[2..]) : null);
+        if (stated is { } mask && mask != 0 && System.Numerics.BitOperations.PopCount(mask) == channels && (mask >> 18) == 0)
         {
             layout = [.. Enumerable.Range(0, 18).Where(bit => (mask & (1u << bit)) != 0).Select(bit => (Speaker)(bit + 1))];
         }

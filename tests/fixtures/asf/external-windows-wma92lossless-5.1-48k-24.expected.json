@@ -1,0 +1,23 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio 9.2 Lossless, VBR, \"VBR Quality 100, 48 kHz, 5.1 channel 24 bit VBR\".",
+ "format": "ASF",
+ "encoder": "the Windows Media Format SDK writer (wmvcore.dll)",
+ "encoder_path": "wmf-sdk",
+ "mode": "vbr",
+ "sha256": "05e4b4ed793828eeae925b6345fb4a57a978e0eeaadaddbc1d3fa67b068cc0ac",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmalossless",
+  "channels": 6,
+  "rate": 48000,
+  "block_align": null,
+  "bit_rate": 1152000,
+  "extradata_size": 18,
+  "packets": 26,
+  "packet_sizes": [
+   12288
+  ],
+  "decoded_samples": 24000,
+  "file_bytes": 325465
+ }
+}
