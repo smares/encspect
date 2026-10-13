@@ -118,6 +118,12 @@ $plan = @(
     @{ Name = 'wma92-cbr-stereo-44k-128-sdk'; Optional = $true;     Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 128000; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma10pro-cbr-stereo-44k-128-sdk'; Optional = $true;  Codec = $pro; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 128000; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma10pro-cbr-stereo-44k-384-sdk'; Optional = $true;  Codec = $pro; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 384000; Seconds = 3; Signal = 'tones' }
+    # Low rates and low quality make the encoder code noise bands (the high-band gain codes of the
+    # standard decoder); the files are checked for them by the analyzer's tests.
+    @{ Name = 'wma92-cbr-stereo-44k-48-sdk'; Optional = $true;      Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 48000; Seconds = 3; Signal = 'tones' }
+    @{ Name = 'wma92-cbr-stereo-44k-32-sdk'; Optional = $true;      Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 32000; Seconds = 3; Signal = 'tones' }
+    @{ Name = 'wma92-cbr-stereo-22k-20-sdk'; Optional = $true;      Codec = $standard; Vbr = $false; Channels = 2; Rates = @(22050); Bitrate = 20000; Seconds = 3; Signal = 'tones' }
+    @{ Name = 'wma92-vbr-stereo-44k-q10'; Optional = $true;         Codec = $standard; Vbr = $true;  Channels = 2; Rates = @(44100); Quality = 10; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma92-vbr-stereo-44k-q75-tagged'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 75; Seconds = 2; Signal = 'tones'; Title = 'Encspect test tone'; Author = 'Encspect' }
 )
 
