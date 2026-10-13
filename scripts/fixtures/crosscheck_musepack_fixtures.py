@@ -69,6 +69,7 @@ DAMAGED = {
     "sv8-packet-size-invalid": "a packet size the tools cannot follow",
     "sv8-seek-table-truncated": "a seek table that counts more entries than it holds",
     "sv8-seek-table-short": "a seek table with fewer entries than the packets need",
+    "sv8-invalid-key-in-run": "libmpcdec stops decoding at a key outside A to Z",
 }
 REFUSED = {"sv8-bad-crc": "libmpcdec refuses a stream header whose CRC fails", "sv8-rate-reserved": "libmpcdec refuses a reserved sample rate",
            "sv7-header-fields": "libmpcdec refuses a max band of 0", "sv7-header-truncated": "the header is cut short"}

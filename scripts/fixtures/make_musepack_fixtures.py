@@ -13,7 +13,7 @@ too short for its subband resolutions. Further ones cover each finding the other
 stream headers with 3 channels, 32 bands, a sample count of 0, a CRC of 0 or none at all, audio
 before the header, audio packets past the sample count, packets after the audio, a cut or unknown
 ReplayGain packet, a packet size that cannot be followed, seek tables with too many or too few
-entries, 4,100 unknown packets before the header; SV7 streams without the gapless frame but with an
+entries, 4,100 unknown packets before the header, with or without two of an invalid key after them; SV7 streams without the gapless frame but with an
 APEv2 tag after them, whose last frame's samples differ or are invalid, without frames, of another
 version, with an invalid resolution, whose ID3v2 tag names another encoder, broken by a tag a SEEK
 frame finds; and an SV5 stream followed by such a tag. Streams of version 6, of which no encoder was found, are
@@ -451,6 +451,13 @@ def sv8_seek_table(change):
     return data[:offset + header] + new + data[after:]
 
 
+def sv8_invalid_key_in_run():
+    """4,100 empty unknown packets, then two of a key outside A to Z, which join the run of packets
+    the analyzer no longer details; the findings point at the run as it ends (a fuzzer find)."""
+    data = plain()
+    return data[:4] + b"XX\x03" * 4100 + b"ab\x03" * 2 + data[4:]
+
+
 def sv8_many_unknown_first():
     """4,100 empty unknown packets before the stream header, past the 4,096 packets the analyzer
     details: the stream header and the packets after it are still read."""
@@ -508,6 +515,7 @@ FIXTURES = {
     "sv8-packet-size-invalid": (sv8_packet_size_invalid, None, [("musepack.end-missing", "no stream end"), ("musepack.packet-size-invalid", "smaller than its key")]),
     "sv8-seek-table-truncated": (lambda: sv8_seek_table(lambda n: n + 1), None, [("musepack.seek-table-truncated", "counts 16 entries")]),
     "sv8-seek-table-short": (lambda: sv8_seek_table(lambda n: n - 1), None, [("musepack.seek-table-short", "holds 14 entries")]),
+    "sv8-invalid-key-in-run": (sv8_invalid_key_in_run, None, [("musepack.key-unknown", "4100 packets"), ("musepack.key-invalid", "2 packets' keys")]),
     "sv8-many-unknown-first": (sv8_many_unknown_first, None, [("musepack.key-unknown", "4100 packets")]),
     "sv5-band-overrun": (sv5_band_overrun, None, [("musepack.band-header-overrun", "1 frame's subband resolutions run past"),
                                                   ("musepack.last-frame-unwritten", "bits past the end of the data")]),
