@@ -1,8 +1,8 @@
 # ASF and WMA
 
-The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and Windows Media Audio versions 1 and 2.
+The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs: versions 1 and 2 and Professional frame by frame, Lossless at header level, Voice identified.
 
-Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmadec.c`, `wma.c`), both pinned by SHA-256 (see [development](../development.md)).
+Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmadec.c`, `wma.c`, `wmaprodec.c`, `wmalosslessdec.c`, `wmavoice.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs, so FFmpeg's decoders are the reference, and the Microsoft-encoded fixtures confirm the readings.
 
 ## ASF: what is read
 
@@ -41,17 +41,51 @@ Format tags 0x0160 and 0x0161, routed as the codec "wma". Read as FFmpeg's `wmad
 - **Series:** the bitrate per frame, per second, and the bit reservoir fill.
 - **Findings:** a superframe that is shorter or longer than the block alignment, a bad superframe header, a bit offset that points outside the superframe, a reservoir length that does not fit, a frame that does not end where the next one starts, a frame whose coefficients do not decode, a stream whose format cannot be analyzed, and a reservoir that holds bits at the end of the stream.
 
+## WMA Professional
+
+Format tag 0x0162, routed as the codec "wma-pro". Read as FFmpeg's `wmaprodec.c` reads it.
+
+- **Codec data:** the sample size, the channel mask and the decode flags (the frame length adjustment, the most subframes per frame, the length prefix of frames, dynamic range compression), from which the frame length, the subframe sizes and the scale factor bands of each size follow.
+- **Packets:** a media object of the block alignment's size. A header holds a sequence number, two unused bits and the count of bits that finish the frame before; then whole frames, each prefixed with its length, and the start of one that goes on. A gap in the sequence numbers is a finding, as a decoder takes the packet before to be lost.
+- **Frames:** the length prefix, the tile header (how the frame is divided into subframes per channel), an optional postprocessing transform, the dynamic range gain, the trim of the start and end, the subframes and the trailer bit. The frame is read to its end and its length prefix must say where that is; a frame that does not agree is invalid.
+- **Subframes:** the extended header, the channel groups and their transforms (with the bands the transform is on in), which channels send coefficients, the vector coefficient counts, the quantization step and each channel's modifier, the scale factors (new, or differences from the ones before) and the coefficient codes (vector codes with signs, then run-level codes), each at its bits. The audio is not rebuilt: no dequantization, channel transform or inverse transform is made.
+- **Statistics and series:** as for versions 1 and 2, with the subframe sizes, the share of channel groups with a transform, the quantization steps, the samples a decoder outputs (the first frame cuts its whole length, and the frames cut what their trim says) and the bitrate per frame and per second.
+- **Not read:** frames without the length prefix, which need every frame read across packets (a finding says so), and a media object longer than the block alignment, which a decoder reads as further packets.
+
+## WMA Lossless and Voice
+
+- **Lossless (0x0163, "wma-lossless"):** the 18 bytes of codec data (the sample size of 16 or 24 bits, the channel mask, the decode flags) are shown, the packets are counted, and the length is the container's. The frames are not read yet; a finding says so.
+- **Voice (0x000A, "wma-voice"):** identified from the container's figures, with the packets counted; the 46 bytes of codec data and the frames are not read.
+- The length comes from the container (the play duration less the preroll) and the bitrate is the nominal one it states, since the packets reach beyond the duration where the stream starts with a preroll.
+
 ## Channel layout
 
 - WMA versions 1 and 2 carry one or two channels: mono, or stereo (left and right, with mid/side coded per block).
-- The channel mask of a WAVEFORMATEXTENSIBLE is shown in the container's tree; the multichannel layouts it describes belong to WMA Pro and are reported with that parser.
+- Professional and Lossless name the speaker of each channel from the channel mask of the codec data (or of the WAVEFORMATEXTENSIBLE), in the order of the mask's bits, so a mask of 0x3F is 5.1 (front left and right, center, low-frequency, back left and right). The mask of Professional also gives the low-frequency channel, whose subframes keep only the bands below the cutoff.
 
 ## Encoder detection
 
-- The container's own claims (`WM/EncodingSettings`, `WM/ToolName`, `WM/ToolVersion`, `WMFSDKVersion`) name an encoder with low confidence, since a claim alone is low.
-- Traits of the frames come with the Microsoft-encoded fixtures: see the plan.
+The Encoder node of a stream lists its evidence, each at its bytes, and names the strongest.
+
+- **High:** ffmpeg's wmav1 and wmav2 encoders pad every superframe after its frame with 'N' bytes (`wmaenc.c`), with no bit reservoir and no variable block lengths. Two or more padded superframes, all of them 'N', name "FFmpeg (wmav2 encoder)".
+- **Medium, from the container's layout:** the files the project encoded on a Windows runner (wmvcore 12.0.26100) show two layouts that tell the writers apart, and neither is in the specification.
+  - The Windows Media Format SDK's writer states WMFSDKVersion, writes a Codec List Object with a description such as "VBR Quality 75, 44 kHz, stereo 1-pass VBR", an object with GUID 26F18B5D-4584-47EC-9F5F-0E651F0452C9 in the Header Extension Object, and an Index Object.
+  - Media Foundation's ASF sink states MediaFoundationVersion, writes a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object and a Padding Object, and no Codec List Object, WMFSDKVersion or index.
+- **Medium, from the codec data of versions 1 and 2:** Microsoft's encoders write a samples-per-block of 17 frames with the bit reservoir and variable block lengths; ffmpeg's write 0 and neither.
+- **Low:** a claim in the metadata (WMFSDKVersion, MediaFoundationVersion, WM/EncodingSettings, WM/ToolName), which survives a re-encode. ffmpeg's muxer writes its own version whatever encoded the stream, so alone it names none.
+- A claim that names another encoder than the evidence is an info finding.
+- A layout names the writing software, not the encoding stage: the Windows Media Format SDK and Media Foundation both write the file around whatever codec they drive. That is why a writer version alone stays Low and the layout is Medium, never High.
+- What the writer says about its settings is added to that evidence, as its statement and not as something read from the audio: the Codec List Object's name and description ("Windows Media Audio 9.2", "VBR Quality 75, 44 kHz, stereo 1-pass VBR") and the IsVBR attribute. The stream's `isVbr` follows IsVBR. Media Foundation's files carry IsVBR but no Codec List.
+- Not used as evidence: `WMFSDKNeeded` and `DeviceConformanceTemplate`, which the SDK writes with fixed values.
+
+## Observed in Microsoft's files
+
+- A frame that begins in one superframe and ends in the next is often followed by bits up to the bit offset the next superframe states: zero bits, or more coded data. A decoder skips them (`wmadec.c` goes on at the bit offset); they are info findings (`wma.frame-stuffing`, `wma.frame-filler`), and the statistics count them.
+- The Simple Index Object of a file whose index is empty states an interval of 0, which is no finding.
+- Professional's packets of Media Foundation's CBR files end with padding after a frame whose trailer bit says no frame follows.
 
 ## Not yet covered
 
-- WMA Pro (0x0162), WMA Lossless (0x0163) and WMA Voice (0x000A): the container hands their streams on, but no parser reads them yet.
+- The frames of WMA Lossless, and everything inside WMA Voice.
+- Professional frames without the length prefix, and the audio of any codec (no decoder is built).
 - Decrypting protected content, and the contents of script commands and markers beyond their fields.

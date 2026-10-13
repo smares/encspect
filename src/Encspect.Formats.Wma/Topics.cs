@@ -9,6 +9,8 @@ internal static class Topics
     public const string WmaBitReservoir = "wma-bit-reservoir";
     public const string WmaFrames = "wma-frames-and-blocks";
     public const string WmaPro = "wma-pro";
+    public const string WmaLossless = "wma-lossless";
+    public const string WmaVoice = "wma-voice";
     public const string WaveFormat = "waveformatex";
     public const string MidSideStereo = "mid-side-stereo";
     public const string NoiseSubstitution = "noise-substitution";

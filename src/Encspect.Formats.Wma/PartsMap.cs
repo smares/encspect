@@ -47,6 +47,15 @@ internal sealed class PartsMap(Func<int, MappedBytes> superframe)
             }
         }
 
+        if (pieces.Count == 0 && parts.Count > 0)
+        {
+            // Bits past the end of the data, which a damaged frame can run to: an empty place at the end of the last part.
+            FramePart last = parts[^1];
+            MappedBytes map = superframe(last.Superframe);
+            int at = Math.Min(map.Length * 8, last.StartBit + last.BitCount);
+            pieces.Add((map, at, at));
+        }
+
         if (pieces.Count == 0)
         {
             return new Placed(0, 0, null, null, 0, 0);

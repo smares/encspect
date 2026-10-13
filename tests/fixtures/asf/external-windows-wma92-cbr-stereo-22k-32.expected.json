@@ -1,0 +1,23 @@
+{
+ "description": "Encoded by Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma) as Windows Media Audio (WMA8, Media Foundation), CBR, \"Media Foundation WMA8 at 32000 bps\". The file is stereo at 32 kbit/s, as its header states; the request was 2 channels at 32 kbit/s.",
+ "format": "ASF",
+ "encoder": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+ "encoder_path": "media-foundation",
+ "mode": "cbr",
+ "sha256": "3b14083a7725884c240e2f01f189f5c8307c13e1e7a24e13192f6322c2543025",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmav2",
+  "channels": 2,
+  "rate": 22050,
+  "block_align": null,
+  "bit_rate": 32024,
+  "extradata_size": 10,
+  "packets": 10,
+  "packet_sizes": [
+   1487
+  ],
+  "decoded_samples": 66560,
+  "file_bytes": 16851
+ }
+}

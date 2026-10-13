@@ -131,6 +131,7 @@ public sealed partial class AsfParser
             return;
         }
 
+        AddWriterEvidence(state);
         foreach (StreamEntry stream in state.Streams)
         {
             Node anchor = stream.Properties ?? state.DataNode;
@@ -183,6 +184,80 @@ public sealed partial class AsfParser
         }
     }
 
+    // The writer of the file, from the way it lays out the header. The Windows Media Format SDK's writer
+    // and Media Foundation's ASF sink each write a layout of their own, which the files the project
+    // encoded with them show (the 12 and 11 files of tests/fixtures/asf, wmvcore 12.0.26100): neither
+    // is in the specification, so the evidence is medium, not high. A name the file states (WMFSDKVersion)
+    // is a low claim by itself.
+    private static void AddWriterEvidence(State state)
+    {
+        if (state.HeaderNode is not { } header || state.HeaderExtensionNode is not { } extension)
+        {
+            return;
+        }
+
+        bool codecList = state.HeaderGuids.Contains(AsfGuids.CodecList);
+        bool languageList = state.HeaderGuids.Contains(AsfGuids.LanguageList);
+        bool extendedStream = state.HeaderGuids.Contains(AsfGuids.ExtendedStreamProperties);
+        bool metadata = state.HeaderGuids.Contains(AsfGuids.Metadata);
+        bool padding = state.HeaderGuids.Contains(AsfGuids.Padding);
+        bool bitrates = state.HeaderGuids.Contains(AsfGuids.StreamBitrateProperties);
+        bool writerObject = state.HeaderGuids.Contains(AsfGuids.WriterExtension);
+
+        if (state.SdkVersion is { } version && writerObject && codecList)
+        {
+            state.Context.AddEncoderClaim(new EncoderClaim($"Windows Media Format SDK {version}", state.SdkVersionNode ?? extension,
+                $"ASF header: WMFSDKVersion {version}, a Codec List Object and an object with GUID {AsfGuids.Text(AsfGuids.WriterExtension)} in the Header Extension Object, the layout of the Windows Media Format SDK's writer{WriterSettings(state)}")
+            {
+                Confidence = Confidence.Medium,
+            });
+        }
+        else if (state.MediaFoundationVersion is { } foundation && state.SdkVersion is null && !codecList && !writerObject && languageList && extendedStream && metadata && padding && bitrates)
+        {
+            state.Context.AddEncoderClaim(new EncoderClaim($"Media Foundation {foundation}", state.MediaFoundationVersionNode ?? extension,
+                $"ASF header: MediaFoundationVersion {foundation}, a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object, a Padding Object, and no Codec List Object or WMFSDKVersion, the layout of Media Foundation's ASF sink{WriterSettings(state)}")
+            {
+                Confidence = Confidence.Medium,
+            });
+        }
+
+        _ = header;
+    }
+
+    // What the writer says about its settings, in the Codec List Object (its text for people) and the IsVBR
+    // attribute. It is the writer's statement, not something read from the audio.
+    private static string WriterSettings(State state)
+    {
+        var parts = new List<string>();
+        foreach ((string name, string description, int type) in state.Codecs)
+        {
+            if (type == 2 && (name.Length > 0 || description.Length > 0))
+            {
+                parts.Add($"codec list \"{name}\", \"{description}\"");
+                break;
+            }
+        }
+
+        if (state.IsVbr is { } isVbr)
+        {
+            parts.Add($"IsVBR {(isVbr ? "true" : "false")}");
+        }
+
+        return parts.Count == 0 ? string.Empty : $". The writer states {string.Join("; ", parts)}";
+    }
+
+    // The play duration less the preroll (section 3.2), where the file states them.
+    private static double? DurationOf(State state)
+    {
+        if (state.FilePropertiesNode is null || state.IsBroadcast || state.PlayDuration == 0)
+        {
+            return null;
+        }
+
+        double seconds = (state.PlayDuration / 10_000_000.0) - (state.Preroll / 1000.0);
+        return seconds > 0 ? seconds : null;
+    }
+
     private static CodecConfiguration? ConfigurationOf(State state, StreamEntry stream, WaveFormat format)
     {
         Node parent = stream.CodecSpecific ?? stream.TypeSpecific ?? stream.Properties!;
@@ -196,6 +271,8 @@ public sealed partial class AsfParser
         var mapped = new MappedBytes(data, offset);
         return new CodecConfiguration(mapped, parent)
         {
+            Duration = DurationOf(state),
+            IsVbr = state.IsVbr,
             Format = new AudioFormat(format.EffectiveTag, format.Channels, format.SamplesPerSecond, format.AverageBytesPerSecond, format.BlockAlign, format.BitsPerSample)
             {
                 ChannelMask = format.ChannelMask,

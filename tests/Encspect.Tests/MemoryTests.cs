@@ -193,6 +193,90 @@ public class MemoryTests(ITestOutputHelper output)
     private const long TinyKeptBound = 90;
     private const long TinyPeakBound = 180;
 
+    // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
+    // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
+    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated, and over Professional and
+    // PCM payloads: the bounds are about twice what linux-x64 measures and far below what keeping each media
+    // object's bytes or nodes would cost: 273 bytes kept per superframe and a peak of 274 for the WMA stream (the
+    // ASF packet, payload, superframe, frame, block and series records), 574 and 593 per frame for Professional, and
+    // 89 and 86 per packet for PCM payloads.
+    [Fact]
+    public void ManyAsfPacketsStayCompact()
+    {
+        const int packets = 50_000;
+        (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
+        byte[] data = AsfBuilder.Build(properties, mediaObject, packets, 46);
+
+        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
+
+        Assert.Equal("Windows Media Audio 2", Assert.Single(report.Streams).Codec);
+        Assert.Equal(packets - 1L, Assert.Single(report.Streams).Samples / 2048);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * AsfWmaKeptBound, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * AsfWmaPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    private const long AsfWmaKeptBound = 550;
+    private const long AsfWmaPeakBound = 550;
+
+    // Professional packets of a Microsoft-encoded file, each with its frames, subframes and channel records.
+    [Fact]
+    public void ManyProfessionalPacketsStayCompact()
+    {
+        const int packets = 6_000;
+        (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma", 0x0162);
+        byte[] data = AsfBuilder.Build(properties, mediaObject, packets, 300);
+
+        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
+
+        Assert.Equal("Windows Media Audio Professional", Assert.Single(report.Streams).Codec);
+        long frames = Assert.IsType<long>(Assert.Single(report.Streams).Samples / 2048);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame ({frames} frames)");
+        Assert.True(kept < frames * ProKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * ProPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    private const long ProKeptBound = 1150;
+    private const long ProPeakBound = 1200;
+
+    // PCM payloads, which no codec parser takes: the container's own records.
+    [Fact]
+    public void ManyAsfPcmPayloadsStayCompact()
+    {
+        const int packets = 150_000;
+        byte[] properties = PcmStreamProperties();
+        byte[] data = AsfBuilder.Build(properties, new byte[160], packets, 10);
+
+        (Report report, long kept, long peak) = Measure("packets.asf", data, data[..4096]);
+
+        Assert.Contains(report.Findings, f => f.Code == "asf.codec-not-analyzed");
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * AsfPcmKeptBound, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * AsfPcmPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    private const long AsfPcmKeptBound = 180;
+    private const long AsfPcmPeakBound = 180;
+
+    // A Stream Properties Object for mono 16-bit PCM at 8 kHz.
+    private static byte[] PcmStreamProperties()
+    {
+        var stream = new MemoryStream();
+        stream.Write(new Guid("B7DC0791-A9B7-11CF-8EE6-00C00C205365").ToByteArray());
+        stream.Write(new byte[8]);
+        stream.Write(new Guid("F8699E40-5B4D-11CF-A8FD-00805F5C442B").ToByteArray());
+        stream.Write(new Guid("20FB5700-5B55-11CF-A8FD-00805F5C442B").ToByteArray());
+        stream.Write(new byte[8]);
+        stream.Write([18, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]);
+        stream.Write([1, 0, 1, 0, 0x40, 0x1F, 0, 0, 0x80, 0x3E, 0, 0, 2, 0, 16, 0, 0, 0]);
+        byte[] bytes = stream.ToArray();
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt64LittleEndian(bytes.AsSpan(16), (ulong)bytes.Length);
+        return bytes;
+    }
+
     // A Musepack SV7 stream keeps a 24-byte record per frame and its per-frame series and figures,
     // 42 bytes in all on linux-x64, with a peak of 59; the frames' nodes are built in blocks when
     // read. The bounds are about twice that and below what keeping a frame's node would cost.

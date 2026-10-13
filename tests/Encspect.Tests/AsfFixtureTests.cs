@@ -95,6 +95,18 @@ public class AsfFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    [Fact]
+    public void RejectedId3AttributePointsAtANodeOfTheTree()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/metadata.asf"));
+        int at = data.AsSpan().IndexOf("ID3\u0003"u8);
+        Assert.True(at > 0);
+        data[at + 6] = 0xA1;
+        Report report = Analyzer.CreateDefault().Analyze("metadata.asf", new MemoryStream(data));
+        Finding rejected = Assert.Single(report.Findings, f => f.Code == "tag.rejected");
+        Assert.NotNull(rejected.Path);
+    }
+
     private static List<string> Listed(JsonElement manifest, string property) =>
         [.. manifest.GetProperty(property).EnumerateArray().Select(e => $"{(e[0].GetString()!.Contains('-', StringComparison.Ordinal) ? "Unknown Object" : e[0].GetString())}@{e[1].GetInt64()}+{e[2].GetInt64()}")];
 

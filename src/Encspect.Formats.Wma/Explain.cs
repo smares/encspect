@@ -50,7 +50,7 @@ internal static partial class Explain
     public const string StatFrames = "How many frames were read.";
     public const string StatInvalidFrames = "How many frames a decoder would reject.";
     public const string StatFrameLength = "The samples of each channel that a frame holds, from the sample rate (wma_common.c: ff_wma_get_frame_len_bits).";
-    public const string StatSamples = "The samples of each channel in the frames that were read.";
+    public const string StatSamples = "The samples of each channel a decoder outputs: the frames that were read less the first, which only fills the overlap of the transform.";
     public const string StatDuration = "The samples over the sample rate, in seconds.";
     public const string StatBlockAlignment = "The size of a superframe in bytes, from the WAVEFORMATEX.";
     public const string StatAverageBitrate = "The superframes' bytes over the duration of the frames.";
@@ -63,6 +63,8 @@ internal static partial class Explain
     public const string StatStraddlingFrames = "How many frames begin in one superframe and end in a later one.";
     public const string StatLargestReservoir = "The most bytes that a superframe leaves of a frame for the next.";
     public const string StatAverageReservoir = "The bytes a superframe leaves of a frame for the next, on average.";
+    public const string StatFillerFrames = "Frames that began in one superframe and end before the bit offset the next superframe states, with other bits up to it, which a decoder skips.";
+    public const string StatFillerBits = "The bits between the end of such frames and the bit offset, all of them.";
     public const string StatContinuations = "How many superframes lie entirely inside a frame.";
     public const string StatExponentCoding = "How the exponents are coded: with the scale factor codebook or as line spectral pairs.";
     public const string StatVariableBlocks = "Whether frames can be divided into blocks of different lengths.";

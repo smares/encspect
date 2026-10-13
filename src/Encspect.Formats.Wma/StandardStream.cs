@@ -60,6 +60,15 @@ internal sealed class StandardTotals
     public long TailBitsAtEnd { get; set; }
 
     public int MaxFramesInSuperframe { get; set; }
+
+    // Superframes without the bit reservoir that have bytes after their frame, and those whose bytes are all 'N'.
+    public long PaddedSuperframes { get; set; }
+
+    public long NPaddedSuperframes { get; set; }
+
+    public long FillerFrames { get; set; }
+
+    public long FillerBits { get; set; }
 }
 
 // Walks a stream's superframes, decodes the syntax of every frame and keeps the records the nodes are
@@ -109,6 +118,21 @@ internal sealed class StandardStream
 
     // The bits a frame's superframe header takes: the index, the frame count and the bit offset.
     public int HeaderBits => 8 + Parameters.ByteOffsetBits + 3;
+
+    // ffmpeg's wmav1 and wmav2 encoders fill every superframe after its frame with 'N' bytes (wmaenc.c) and use
+    // neither the bit reservoir nor variable block lengths.
+    public WmaEncoder.Trait? FFmpegTrait(int version)
+    {
+        StandardTotals t = Totals;
+        if (Parameters.UsesBitReservoir || Parameters.UsesVariableBlockLength || t.PaddedSuperframes == 0 || t.NPaddedSuperframes != t.PaddedSuperframes)
+        {
+            return null;
+        }
+
+        string name = $"FFmpeg (wmav{version} encoder)";
+        return new WmaEncoder.Trait(name, "FFmpeg", t.PaddedSuperframes >= 2 ? Confidence.High : Confidence.Medium,
+            $"{(t.PaddedSuperframes == 1 ? "The superframe has" : $"All {t.PaddedSuperframes} padded superframes have")} bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{version} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths");
+    }
 
     public void Add(MappedBytes packet)
     {
@@ -162,6 +186,15 @@ internal sealed class StandardStream
         if (!p.UsesBitReservoir)
         {
             ReadSingleFrame(bits, ref record, index);
+            int padding = (bits.Position + 7) >> 3;
+            if (padding < align && record.Flags == 0)
+            {
+                Totals.PaddedSuperframes++;
+                if (!data.AsSpan(padding).ContainsAnyExcept((byte)'N'))
+                {
+                    Totals.NPaddedSuperframes++;
+                }
+            }
         }
         else
         {
@@ -250,8 +283,22 @@ internal sealed class StandardStream
             if (status == FrameStatus.Ok && joined.Position != expected)
             {
                 int end = joined.Position;
-                Findings.Add(Severity.Warning, "wma.frame-boundary", () => FrameNode(Frames.Count - 1), count =>
-                    $"{(count == 1 ? "A frame that began in the superframe before ends" : $"{count} frames that began in the superframe before end")} {Math.Abs(end - expected)} bits {(end < expected ? "before" : "after")} the bit offset the superframe states; the first ends {(end < expected ? "early" : "late")} in the superframe at 0x{offset:X}.");
+                if (end < expected)
+                {
+                    // Bits after the frame, before the next one starts. A decoder skips them (wmadec.c
+                    // decodes the frame and goes on at the bit offset): the Windows Media Audio encoders
+                    // fill the superframe so, with zero bits or with more coded data.
+                    bool zero = joined.IsZero(end, expected);
+                    Totals.FillerFrames++;
+                    Totals.FillerBits += expected - end;
+                    Findings.Add(Severity.Info, zero ? "wma.frame-stuffing" : "wma.frame-filler", () => FrameNode(Frames.Count - 1), count =>
+                        $"{(count == 1 ? "A frame that began in the superframe before is" : $"{count} frames that began in the superframe before are")} followed by {(zero ? "zero bits" : "bits that are not zero")} up to the bit offset the superframe states, which a decoder skips; the first has {expected - end} (in the superframe at 0x{offset:X}).");
+                }
+                else
+                {
+                    Findings.Add(Severity.Warning, "wma.frame-boundary", () => FrameNode(Frames.Count - 1), count =>
+                        $"{(count == 1 ? "A frame that began in the superframe before ends" : $"{count} frames that began in the superframe before end")} {end - expected} bits after the bit offset the superframe states, where the next frame starts; the first is in the superframe at 0x{offset:X}.");
+                }
             }
 
             frames--;

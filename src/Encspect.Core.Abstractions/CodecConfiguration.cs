@@ -29,4 +29,9 @@ public sealed record CodecConfiguration
     // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
     // come with the configuration, whose Data then holds the bytes after the structure.
     public AudioFormat? Format { get; init; }
+
+    // The length of the stream in seconds as the container states it (ASF's play duration less the
+    // preroll), for codec parsers that do not read the data far enough to count samples; null when
+    // it states none.
+    public double? Duration { get; init; }
 }

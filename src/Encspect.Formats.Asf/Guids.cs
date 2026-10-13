@@ -27,6 +27,10 @@ internal static class AsfGuids
     public static readonly Guid ContentEncryption = new("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E");
     public static readonly Guid ExtendedContentEncryption = new("298AE614-2622-4C17-B935-DAE07EE9289C");
     public static readonly Guid DigitalSignature = new("2211B3FC-BD23-11D2-B4B7-00A0C955FC6E");
+    // Not in the specification (revision 01.20.03): a 26-byte object in the Header Extension Object of the
+    // files the Windows Media Format SDK's writer wrote (Windows 11, wmvcore 12.0.26100), which the
+    // project's fixtures show.
+    public static readonly Guid WriterExtension = new("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
     public static readonly Guid Padding = new("1806D474-CADF-4509-A4BA-9AABCB96AAE8");
 
     public static readonly Guid ExtendedStreamProperties = new("14E6A5CB-C672-4332-8399-A96952065B5A");

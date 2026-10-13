@@ -596,6 +596,7 @@ public sealed partial class AsfParser
 
         if ((packet.Issues & (ushort)PacketIssues.Truncated) != 0 && packet.Offset + packet.Length < position + 6)
         {
+            nodes.RemoveAll(n => n.End > packet.Offset + packet.Length);
             return nodes;
         }
 
@@ -698,6 +699,8 @@ public sealed partial class AsfParser
             Add("Padding", packetEnd - position, NodeValue.Integer(packetEnd - position, "bytes", "byte"), Explain.PacketPadding);
         }
 
+        // A packet cut short or damaged has fewer bytes than its fields: only those that fit are shown.
+        nodes.RemoveAll(n => n.End > packetEnd);
         return nodes;
     }
 

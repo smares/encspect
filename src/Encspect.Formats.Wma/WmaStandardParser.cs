@@ -72,8 +72,24 @@ public sealed class WmaStandardParser : ICodecParser
         }
 
         stream.Finish();
-        StandardReport.Finish(context, parent, findings, stream, nodes, name, format, version);
+        StandardReport.Finish(context, parent, findings, stream, nodes, name, format, version, ConfigurationTraits(version, data, parameters));
         findings.Flush(context);
+    }
+
+    // Microsoft's encoders write a samples-per-block of 17 frames, the bit reservoir, variable block lengths and a
+    // block size count in the codec data of version 2 (the 10 Windows Media Audio 9.2 files of the project's
+    // fixtures, 44.1 kHz and 22.05 kHz); ffmpeg's encoder writes 0 and neither tool.
+    private static List<WmaEncoder.Trait> ConfigurationTraits(int version, ReadOnlySpan<byte> data, StandardParameters p)
+    {
+        var traits = new List<WmaEncoder.Trait>();
+        if (version == 2 && data.Length >= 10 && p.UsesBitReservoir && p.UsesVariableBlockLength
+            && BinaryPrimitives.ReadUInt32LittleEndian(data) == 17u * (uint)p.FrameLength)
+        {
+            traits.Add(new WmaEncoder.Trait("Microsoft's Windows Media Audio encoder", "Microsoft", Confidence.Medium,
+                $"The codec data states {17 * p.FrameLength} samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them"));
+        }
+
+        return traits;
     }
 
     // The nodes of the codec-specific data under the container's node for it.

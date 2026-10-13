@@ -107,6 +107,30 @@ def main():
             tools = probe(path)
         manifest_path.write_text(json.dumps(manifest(name, codec, channels, rate, bit_rate, path, command, tools), indent=1) + "\n", encoding="utf-8")
         print(f"{name}: {path.stat().st_size} bytes")
+    # Microsoft's encoder files (import_windows_wma_fixtures.py): the same figures, from the files
+    # and the provenance record the importer wrote next to each.
+    for provenance_path in sorted(OUT.glob("external-windows-*.provenance.json")):
+        name = provenance_path.name[:-len(".provenance.json")]
+        path = OUT / f"{name}.wma"
+        provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+        manifest_path = OUT / f"{name}.expected.json"
+        if manifest_path.exists() and args.manifests_only:
+            tools = json.loads(manifest_path.read_text(encoding="utf-8"))["ffprobe"]
+            tools["file_bytes"] = path.stat().st_size
+        else:
+            tools = probe(path)
+        result = {
+            "description": provenance["description"],
+            "format": "ASF",
+            "encoder": provenance["encoder"]["tool"],
+            "encoder_path": provenance["encoder"]["path"],
+            "mode": provenance["encoder"]["mode"],
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "reproducible": False,
+            "ffprobe": tools,
+        }
+        manifest_path.write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
+        print(f"{name}: {path.stat().st_size} bytes")
     return 0
 
 

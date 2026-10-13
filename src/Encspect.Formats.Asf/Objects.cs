@@ -244,6 +244,7 @@ public sealed partial class AsfParser
 
             long childEnd = Math.Min(header.End, end);
             state.ChildCount++;
+            state.HeaderGuids.Add(header.Id);
             ParseHeaderChild(state, parent, header, childEnd, inExtension, depth);
             if (header.End > end && parent.Children.Count > 0)
             {
@@ -695,6 +696,7 @@ public sealed partial class AsfParser
     private static void ParseHeaderExtension(State state, Node parent, ObjectHeader header, long end, int depth)
     {
         (Node node, Fields f) = Begin(state, parent, header, end, "Header Extension Object", Explain.HeaderExtension);
+        state.HeaderExtensionNode = node;
         state.HeaderExtensionCount++;
         Body(state, node, f, 46, () =>
         {

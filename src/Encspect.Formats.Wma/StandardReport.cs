@@ -6,14 +6,16 @@ namespace Encspect.Formats.Wma;
 // The stream node of a Windows Media Audio version 1 or 2 stream, its statistics, series and StreamInfo.
 internal static class StandardReport
 {
-    public static void Finish(CodecContext context, Node parent, FindingCollector findings, StandardStream stream, StandardNodes nodes, string codec, AudioFormat format, int version)
+    public static void Finish(CodecContext context, Node parent, FindingCollector findings, StandardStream stream, StandardNodes nodes, string codec, AudioFormat format, int version, IReadOnlyList<WmaEncoder.Trait> configurationTraits)
     {
         StandardParameters p = stream.Parameters;
         StandardTotals totals = stream.Totals;
         int superframeCount = stream.Superframes.Count;
         int frameCount = stream.Frames.Count;
         long goodFrames = totals.Frames - totals.FailedFrames;
-        long samples = goodFrames * p.FrameLength;
+        // What a decoder outputs: the first frame only fills the overlap of the transform (FFmpeg's output is one frame
+        // shorter than the frames it decodes).
+        long samples = Math.Max(0, goodFrames - 1) * p.FrameLength;
         double duration = p.SampleRate > 0 ? samples / (double)p.SampleRate : 0;
 
         Node streamNode = parent.Add(new Node(codec, parent.Offset, parent.Length, WmaStandardParser.Count(goodFrames, "frame", "frames"))
@@ -23,6 +25,13 @@ internal static class StandardReport
             Topic = Topics.WmaStandard,
         });
 
+        var traits = new List<WmaEncoder.Trait>(configurationTraits);
+        if (stream.FFmpegTrait(version) is { } trait)
+        {
+            traits.Add(trait);
+        }
+
+        (string? encoder, Confidence? confidence) = WmaEncoder.Apply(context, streamNode, findings, traits);
         Node? statistics = frameCount > 0 ? AddStatistics(streamNode, stream, samples, duration) : null;
         streamNode.Add(new Node("Superframes", parent.Offset, parent.Length, WmaStandardParser.Count(superframeCount, "superframe", "superframes"),
             () => new BlockedChildren([], superframeCount, nodes.SuperframeNode))
@@ -40,7 +49,7 @@ internal static class StandardReport
         if (stream.Totals.TailBitsAtEnd > 0 && goodFrames > 0)
         {
             findings.AddNow(Severity.Info, "wma.reservoir-at-end",
-                $"The last superframe ends with {stream.Totals.TailBitsAtEnd} bits of a frame that the stream never finishes; a decoder drops them.", streamNode.Children.Last());
+                $"The last superframe ends with {stream.Totals.TailBitsAtEnd} bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.", streamNode.Children.Last());
         }
 
         var series = new List<Series>();
@@ -49,8 +58,6 @@ internal static class StandardReport
             series.AddRange(MakeSeries(stream, nodes, statistics));
         }
 
-        string? encoder = null;
-        Confidence? confidence = null;
         double? bitrate = duration > 0 ? totals.UsedBytes * 8.0 / duration / 1000 : null;
         context.AddStream(new StreamInfo
         {
@@ -63,7 +70,7 @@ internal static class StandardReport
             Samples = samples,
             Duration = duration,
             AverageBitrate = bitrate,
-            IsVbr = false,
+            IsVbr = context.Configuration?.IsVbr ?? false,
             Encoder = encoder,
             EncoderConfidence = confidence,
             Series = series,
@@ -121,6 +128,12 @@ internal static class StandardReport
             if (t.Superframes > 0)
             {
                 Add("Average Bit Reservoir", NodeValue.Decimal(t.ReservoirBytes / (double)t.Superframes, 1, "bytes"), Explain.StatAverageReservoir, Topics.WmaBitReservoir);
+            }
+
+            if (t.FillerFrames > 0)
+            {
+                Add("Frames Followed by Filler", NodeValue.Integer(t.FillerFrames), Explain.StatFillerFrames, Topics.WmaBitReservoir);
+                Add("Filler Bits", NodeValue.Integer(t.FillerBits, "bits", "bit"), Explain.StatFillerBits, Topics.WmaBitReservoir);
             }
 
             if (t.ContinuationSuperframes > 0)

@@ -26,6 +26,11 @@ internal static class Program
         "trun"u8.ToArray(), "ilst"u8.ToArray(), "meta"u8.ToArray(), "udta"u8.ToArray(), "----"u8.ToArray(), "data"u8.ToArray(), "ID32"u8.ToArray(),
         [0x2B, 0x7], [0x56, 0xE5], [0x05, 0x80, 0x80, 0x80],
         "OggS\0"u8.ToArray(), "Speex   "u8.ToArray(), [0x01, .. "vorbis"u8], "OpusHead"u8.ToArray(), [0xFF, 0xFF, 0xFF, 0xFF],
+        new Guid("75B22630-668E-11CF-A6D9-00AA0062CE6C").ToByteArray(), new Guid("75B22636-668E-11CF-A6D9-00AA0062CE6C").ToByteArray(),
+        new Guid("8CABDCA1-A947-11CF-8EE4-00C00C205365").ToByteArray(), new Guid("B7DC0791-A9B7-11CF-8EE6-00C00C205365").ToByteArray(),
+        new Guid("5FBF03B5-A92E-11CF-8EE3-00C00C205365").ToByteArray(), new Guid("33000890-E5B1-11CF-89F4-00A0C90349CB").ToByteArray(),
+        new Guid("D6E229D3-35DA-11D1-9034-00A0C90349BE").ToByteArray(), new Guid("14E6A5CB-C672-4332-8399-A96952065B5A").ToByteArray(),
+        [0x62, 0x01, 0x00, 0x00], [0x61, 0x01, 0x00, 0x00], [0xE0, 0x00],
         "MPCK"u8.ToArray(), "MP+\x07"u8.ToArray(), "SH"u8.ToArray(), "AP"u8.ToArray(), "SE\x03"u8.ToArray(), "ST"u8.ToArray(),
     ];
 
@@ -51,7 +56,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

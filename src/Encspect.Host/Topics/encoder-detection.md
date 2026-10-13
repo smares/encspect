@@ -13,11 +13,11 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 - A signature in the [ancillary data](ancillary-data), such as LAME's version text, or an extension only certain encoders write, such as mp3PRO or MP3 Surround.
 - Habits: Shine never uses the bit reservoir or short blocks, Xing's encoder never switches to short blocks, Fraunhofer's encoders never use scfsi, and so on. Only habits that encodes show every time, over at least 20 frames, count, with low confidence, since a new encoder may share them.
 - In AAC, ffmpeg's version text in a [fill element](aac-raw-data-blocks) at the start of an access unit, which gives high confidence.
-- In Vorbis, the [comment](vorbis-comments)'s vendor string: each libvorbis, aoTuV and Lancer release writes its own, which its source or builds confirm.
+- In Vorbis, the [comment](vorbis-comments)'s vendor string, which each libvorbis, aoTuV and Lancer release writes.
 - In Musepack, the encoder's version in the stream ([SV8 packets](musepack-sv8-packets)).
-- In ASF, [metadata](asf-metadata) attributes such as WMFSDKVersion.
+- In ASF, [metadata](asf-metadata) such as WMFSDKVersion, and the header's layout, which tells Microsoft's writers apart (medium). In WMA, ffmpeg's 'N' filler bytes (high).
 - An ID3v2 TSSE frame or an MP4 [©too item](itunes-metadata), which whatever software wrote the tag fills in. Alone, it names an encoder with low confidence; for AC-3, whose frames name none, it is the only evidence.
 
 **Confidence.** High means the encoder signed the file in a way that checks out; medium means specific but weaker evidence; low means only habits or text other software may have written. 
 
-**What you see.** An Encoder node with its Confidence and every piece of Evidence, each pointing at its bytes.
+**What you see.** An Encoder node with its Confidence and each piece of Evidence, at its bytes.

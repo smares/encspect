@@ -12,7 +12,9 @@ For every manifest in tests/fixtures/asf:
   the Lossless fixtures of Microsoft's encoder (external-windows-*), the decoded samples equal the
   input signal bit for bit.
 - MediaInfo (24.01): the format, the codec ID, the channels, the sampling rate and the duration of
-  the WMA files against ffprobe's.
+  the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
+  IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
+  performer, the encoded date (the File Properties' creation date) and the maximum overall bit rate.
 
 Fixtures whose manifest says ffprobe does not apply say why; every skipped check prints its reason.
 Disagreements fail the run (exit status 1).
@@ -59,7 +61,9 @@ def ffprobe_json(path, *args):
 
 def decode(path, fmt="s16le"):
     result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a", "-f", fmt, "-"])
-    return result.returncode, result.stdout, result.stderr.decode("utf-8", "replace").strip()
+    # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
+    errors = "\n".join(l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l).strip()
+    return result.returncode, result.stdout, errors
 
 
 def check_hand_built(name, manifest, path, problems):
@@ -123,11 +127,60 @@ def check_external_ffmpeg(name, manifest, path, problems):
     check_mediainfo(name, path, stream, problems)
 
 
-def check_mediainfo(name, path, stream, problems):
+def golden_report(path):
+    """The report the analyzer wrote for the fixture (checked by the tests), which carries what
+    the parser says about the file: MediaInfo's figures are compared with it."""
+    golden = path.with_suffix(".report.json")
+    return json.loads(golden.read_text(encoding="utf-8"))[0] if golden.exists() else None
+
+
+def nodes_of(node):
+    yield node
+    for child in node.get("children", []):
+        yield from nodes_of(child)
+
+
+def named(report, name, under=None):
+    """The value of the first node called name (below the first node called under)."""
+    start = next((n for n in nodes_of(report["root"]) if n["name"] == under), None) if under else report["root"]
+    return next((n.get("value") for n in nodes_of(start) if n["name"] == name), None) if start else None
+
+
+def check_against_report(audio, general, report, problems):
+    """MediaInfoLib's File_Wm_Elements.cpp (BSD-2-Clause) reads the same header fields; every
+    figure it states is compared with the parser's node for it."""
+    stream = report["streams"][0]
+    is_vbr = named(report, "IsVBR")
+    if is_vbr is not None:
+        parser = "VBR" if stream["isVbr"] else "CBR"
+        for kind, track in (("audio", audio), ("overall", general)):
+            mode = track.get("BitRate_Mode" if kind == "audio" else "OverallBitRate_Mode")
+            if mode != parser:
+                problems.append(f"MediaInfo's {kind} bit rate mode is {mode}, the parser's {parser} (IsVBR {is_vbr})")
+    codec, description = named(report, "Codec Name"), named(report, "Codec Description")
+    if codec is not None and audio.get("CodecID_Description") != f"{codec} - {description}":
+        problems.append(f"MediaInfo's description of the codec is {audio.get('CodecID_Description')!r}, the Codec List's {codec} - {description}")
+    profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice"}.get(stream["codec"])
+    if audio.get("Format_Profile") != profile:
+        problems.append(f"MediaInfo's format profile is {audio.get('Format_Profile')}, the parser's codec {stream['codec']}")
+    title, author = named(report, "Title", "Content Description Object"), named(report, "Author", "Content Description Object")
+    if title and general.get("Title") != title:
+        problems.append(f"MediaInfo's title is {general.get('Title')!r}, the parser's {title!r}")
+    if author and general.get("Performer") != author:
+        problems.append(f"MediaInfo's performer is {general.get('Performer')!r}, the parser's author {author!r}")
+    created = named(report, "Creation Date", "File Properties Object")
+    if isinstance(created, str) and created.startswith("20") and general.get("Encoded_Date") != created.split(".")[0] + " UTC":
+        problems.append(f"MediaInfo's encoded date is {general.get('Encoded_Date')}, the File Properties' creation date {created}")
+    maximum = named(report, "Maximum Bitrate", "File Properties Object")
+    if maximum and general.get("OverallBitRate_Maximum") != str(maximum):
+        problems.append(f"MediaInfo's maximum overall bit rate is {general.get('OverallBitRate_Maximum')}, the File Properties' {maximum} bps")
+
+
+def check_mediainfo(name, path, stream, problems, report=None):
     if not tool("mediainfo"):
         skip(name, "MediaInfo", "mediainfo is not installed")
         return
-    result = run(["mediainfo", "--Output=JSON", str(path)], text=True)
+    result = run(["mediainfo", "-f", "--Output=JSON", str(path)], text=True)
     tracks = json.loads(result.stdout)["media"]["track"]
     general = next(t for t in tracks if t["@type"] == "General")
     audio = next(t for t in tracks if t["@type"] == "Audio")
@@ -135,11 +188,13 @@ def check_mediainfo(name, path, stream, problems):
         problems.append(f"MediaInfo's container is {general.get('Format')}")
     if int(audio["Channels"]) != int(stream["channels"]) or int(audio["SamplingRate"]) != int(stream["sample_rate"]):
         problems.append(f"MediaInfo says {audio['Channels']} channels at {audio['SamplingRate']} Hz, ffprobe {stream['channels']} at {stream['sample_rate']}")
-    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "10"}
+    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "A"}
     if tags.get(stream["codec_name"]) != audio.get("CodecID"):
         problems.append(f"MediaInfo's codec ID is {audio.get('CodecID')}, ffprobe's codec {stream['codec_name']}")
     if abs(float(audio["Duration"]) - float(stream.get("duration", audio["Duration"]))) > 0.01:
         problems.append(f"MediaInfo's duration is {audio['Duration']}, ffprobe's {stream['duration']}")
+    if report is not None:
+        check_against_report(audio, general, report, problems)
 
 
 def check_windows(name, provenance, path, problems):
@@ -149,8 +204,11 @@ def check_windows(name, provenance, path, problems):
         return
     stream = data["streams"][0]
     request = provenance["input"]
-    if int(stream["channels"]) != request["channels"] or int(stream["sample_rate"]) != request["rate"]:
-        problems.append(f"ffprobe says {stream['channels']} channels at {stream['sample_rate']} Hz, the request {request['channels']} at {request['rate']}")
+    actual = provenance["actual"]
+    if int(stream["channels"]) != actual["channels"] or int(stream["sample_rate"]) != actual["rate"]:
+        problems.append(f"ffprobe says {stream['channels']} channels at {stream['sample_rate']} Hz, the provenance {actual['channels']} at {actual['rate']}")
+    if provenance["encoder"]["path"] == "wmf-sdk" and (int(stream["channels"]) != request["channels"] or int(stream["sample_rate"]) != request["rate"]):
+        problems.append(f"ffprobe says {stream['channels']} channels at {stream['sample_rate']} Hz, the request to the SDK was {request['channels']} at {request['rate']}")
     if stream["codec_name"] == "wmalossless":
         bits = request["bits"]
         code, pcm, errors = decode(path, "s16le" if bits == 16 else "s32le")
@@ -160,7 +218,7 @@ def check_windows(name, provenance, path, problems):
             width = 2 if bits == 16 else 4
             with tempfile.TemporaryDirectory() as tmp:
                 wav = pathlib.Path(tmp) / "input.wav"
-                wma_signals.write(wav, request["rate"], request["channels"], bits, request["seconds"], request["kind"])
+                wma_signals.write(wav, request["rate"], request["channels"], bits, request["seconds"], request["signal"])
                 import wave
                 with wave.open(str(wav), "rb") as w:
                     original = w.readframes(w.getnframes())
@@ -172,7 +230,7 @@ def check_windows(name, provenance, path, problems):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")
-    check_mediainfo(name, path, stream, problems)
+    check_mediainfo(name, path, stream, problems, golden_report(path))
 
 
 def main():

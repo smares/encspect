@@ -5923,9 +5923,29 @@
                   "length": 16050,
                   "children": [
                     {
+                      "name": "Encoder",
+                      "value": "FFmpeg (wmav2 encoder)",
+                      "offset": 394,
+                      "length": 16050,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "High",
+                          "offset": 394,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "All 42 padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav2 encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths",
+                          "offset": 394,
+                          "length": 16050
+                        }
+                      ]
+                    },
+                    {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "44 frames, 2.043 s",
+                      "value": "44 frames, 1.997 s",
                       "offset": 394,
                       "length": 16050,
                       "children": [
@@ -5950,14 +5970,14 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 90112,
+                          "value": 88064,
                           "unit": "samples",
                           "offset": 394,
                           "length": 16050
                         },
                         {
                           "name": "Duration",
-                          "value": 2.043356009070295,
+                          "value": 1.9969160997732427,
                           "unit": "s",
                           "offset": 394,
                           "length": 16050
@@ -5971,7 +5991,7 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 47.88984375,
+                          "value": 49.00356104651163,
                           "unit": "kbps",
                           "offset": 394,
                           "length": 16050
@@ -9310,10 +9330,12 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 90112,
-        "duration": 2.043356009070295,
-        "averageBitrate": 47.88984375,
+        "samples": 88064,
+        "duration": 1.9969160997732427,
+        "averageBitrate": 49.00356104651163,
         "isVbr": false,
+        "encoder": "FFmpeg (wmav2 encoder)",
+        "encoderConfidence": "High",
         "series": [
           {
             "name": "Bitrate",

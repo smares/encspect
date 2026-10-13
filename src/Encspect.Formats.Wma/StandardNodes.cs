@@ -172,8 +172,14 @@ internal sealed class StandardNodes
         string value = $"{1 << block.BlockBits} samples{(block.IsMidSide ? ", mid/side" : string.Empty)}{(block.CodedChannels == 0 ? ", not coded" : string.Empty)}{(failed ? ", invalid" : string.Empty)}";
         var node = new Node("Block", offset, length, value) { Ranges = ranges, Description = Explain.Block, Topic = Topics.WmaFrames };
         StandardParameters p = P;
-        Node Field(int start, int end, string name, NodeValue? v, string description, string? topic = null) =>
-            _map.Field(parts, start, end, name, v, description, topic);
+        // A block that failed ends where its reading stopped: only the fields it got to are shown.
+        void AddField(int start, int end, string name, NodeValue? v, string description, string? topic = null)
+        {
+            if (start >= block.Start && start < block.End)
+            {
+                node.Add(_map.Field(parts, start, Math.Min(end, block.End), name, v, description, topic));
+            }
+        }
 
         if (p.UsesVariableBlockLength)
         {
@@ -181,23 +187,23 @@ internal sealed class StandardNodes
             int at = block.Start;
             if ((block.Flags & BlockRecord.SentPreviousAndCurrent) != 0)
             {
-                node.Add(Field(at, at + bits, "Previous Block Size", NodeValue.Integer(1 << block.PreviousBits, "samples"), Explain.PreviousBlockSize, Topics.WmaFrames));
-                node.Add(Field(at + bits, at + (2 * bits), "Block Size", NodeValue.Integer(1 << block.BlockBits, "samples"), Explain.BlockSize, Topics.WmaFrames));
+                AddField(at, at + bits, "Previous Block Size", NodeValue.Integer(1 << block.PreviousBits, "samples"), Explain.PreviousBlockSize, Topics.WmaFrames);
+                AddField(at + bits, at + (2 * bits), "Block Size", NodeValue.Integer(1 << block.BlockBits, "samples"), Explain.BlockSize, Topics.WmaFrames);
                 at += 2 * bits;
             }
 
-            node.Add(Field(at, at + bits, "Next Block Size", NodeValue.Integer(1 << block.NextBits, "samples"), Explain.NextBlockSize, Topics.WmaFrames));
+            AddField(at, at + bits, "Next Block Size", NodeValue.Integer(1 << block.NextBits, "samples"), Explain.NextBlockSize, Topics.WmaFrames);
         }
 
         if ((block.Flags & BlockRecord.HasStereoBit) != 0)
         {
-            node.Add(Field(block.LengthFieldsEnd, block.StereoEnd, "Mid/Side Stereo", NodeValue.Boolean(block.IsMidSide), Explain.MidSideStereo, Topics.MidSideStereo));
+            AddField(block.LengthFieldsEnd, block.StereoEnd, "Mid/Side Stereo", NodeValue.Boolean(block.IsMidSide), Explain.MidSideStereo, Topics.MidSideStereo);
         }
 
         for (int ch = 0; ch < p.Channels; ch++)
         {
             int at = block.StereoEnd + ch;
-            node.Add(Field(at, at + 1, $"Channel {ch + 1} Coded", NodeValue.Boolean(block.IsCoded(ch)), Explain.ChannelCoded, Topics.WmaFrames));
+            AddField(at, at + 1, $"Channel {ch + 1} Coded", NodeValue.Boolean(block.IsCoded(ch)), Explain.ChannelCoded, Topics.WmaFrames);
         }
 
         if ((block.Flags & BlockRecord.HasGain) == 0)
@@ -205,21 +211,21 @@ internal sealed class StandardNodes
             return node;
         }
 
-        node.Add(Field(block.CodedEnd, block.GainEnd, "Total Gain", NodeValue.Integer(block.TotalGain), Explain.TotalGain, Topics.WmaFrames));
+        AddField(block.CodedEnd, block.GainEnd, "Total Gain", NodeValue.Integer(block.TotalGain), Explain.TotalGain, Topics.WmaFrames);
         if (p.UsesNoiseCoding)
         {
             int noise = block.NoiseBands0 + block.NoiseBands1;
             int bands = p.ExponentHighSizes[p.FrameLengthBits - block.BlockBits] * block.CodedChannels;
-            node.Add(Field(block.GainEnd, block.NoiseFlagsEnd, "Noise Substitution", NodeValue.Text($"{noise} of {bands} high bands"), Explain.NoiseSubstitution, Topics.NoiseSubstitution));
+            AddField(block.GainEnd, block.NoiseFlagsEnd, "Noise Substitution", NodeValue.Text($"{noise} of {bands} high bands"), Explain.NoiseSubstitution, Topics.NoiseSubstitution);
             if (block.NoiseGainsEnd > block.NoiseFlagsEnd)
             {
-                node.Add(Field(block.NoiseFlagsEnd, block.NoiseGainsEnd, "Noise Levels", NodeValue.Integer(noise, "bands", "band"), Explain.NoiseLevels, Topics.NoiseSubstitution));
+                AddField(block.NoiseFlagsEnd, block.NoiseGainsEnd, "Noise Levels", NodeValue.Integer(noise, "bands", "band"), Explain.NoiseLevels, Topics.NoiseSubstitution);
             }
         }
 
         if ((block.Flags & BlockRecord.ExponentsFlagRead) != 0)
         {
-            node.Add(Field(block.NoiseGainsEnd, block.ReuseEnd, "Exponents Sent", NodeValue.Boolean((block.Flags & BlockRecord.ExponentsSent) != 0), Explain.ExponentsSent, Topics.WmaFrames));
+            AddField(block.NoiseGainsEnd, block.ReuseEnd, "Exponents Sent", NodeValue.Boolean((block.Flags & BlockRecord.ExponentsSent) != 0), Explain.ExponentsSent, Topics.WmaFrames);
         }
 
         int previous = block.ReuseEnd;
@@ -229,7 +235,7 @@ internal sealed class StandardNodes
             if (block.IsCoded(ch) && end > previous)
             {
                 string text = p.UsesExponentVlc ? "scale factor codes" : "line spectral pairs";
-                node.Add(Field(previous, end, $"Exponents (channel {ch + 1})", text, p.UsesExponentVlc ? Explain.ExponentsVlc : Explain.ExponentsLsp, Topics.WmaFrames));
+                AddField(previous, end, $"Exponents (channel {ch + 1})", text, p.UsesExponentVlc ? Explain.ExponentsVlc : Explain.ExponentsLsp, Topics.WmaFrames);
             }
 
             previous = Math.Max(previous, end);
@@ -242,7 +248,7 @@ internal sealed class StandardNodes
             {
                 int nonZero = ch == 0 ? block.NonZero0 : block.NonZero1;
                 int last = ch == 0 ? block.Last0 : block.Last1;
-                node.Add(Field(previous, end, $"Coefficients (channel {ch + 1})", NodeValue.Text($"{nonZero} non-zero, last at {last}"), Explain.Coefficients, Topics.WmaFrames));
+                AddField(previous, end, $"Coefficients (channel {ch + 1})", NodeValue.Text($"{nonZero} non-zero, last at {last}"), Explain.Coefficients, Topics.WmaFrames);
             }
 
             previous = Math.Max(previous, end);

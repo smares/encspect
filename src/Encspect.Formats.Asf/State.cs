@@ -99,6 +99,25 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
     public int HeaderObjects { get; set; }
 
+    // The GUIDs of the objects of the header and its extension, and what the header says about its
+    // writer, for the writer's layout (AddWriterEvidence).
+    public HashSet<Guid> HeaderGuids { get; } = [];
+
+    public string? SdkVersion { get; set; }
+
+    public Node? SdkVersionNode { get; set; }
+
+    public string? MediaFoundationVersion { get; set; }
+
+    public Node? MediaFoundationVersionNode { get; set; }
+
+    public List<string> ExtendedContentNames { get; } = [];
+
+    // The IsVBR attribute both Windows writers stamp into the file: what the writer says about its mode.
+    public bool? IsVbr { get; set; }
+
+    public Node? HeaderExtensionNode { get; set; }
+
     public int DataObjects { get; set; }
 
     // The File Properties Object (section 3.2).

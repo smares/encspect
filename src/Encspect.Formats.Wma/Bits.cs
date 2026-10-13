@@ -48,5 +48,24 @@ internal sealed class Bits(byte[] data, int length)
 
     public void Skip(int count) => Position += count;
 
+    // Whether the bits from start up to end (not counting) are all zero.
+    public bool IsZero(int start, int end)
+    {
+        for (int i = start; i < end; i += 32)
+        {
+            int count = Math.Min(32, end - i);
+            int saved = Position;
+            Position = i;
+            uint value = Peek(count);
+            Position = saved;
+            if (value != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void Align() => Position = (Position + 7) & ~7;
 }

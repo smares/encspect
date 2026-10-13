@@ -1,0 +1,58 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio 10 Professional, VBR, \"VBR Quality 98, 44 kHz, 2 channel 24 bit VBR\".",
+ "encoder": {
+  "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+  "path": "wmf-sdk",
+  "codec": "Windows Media Audio 10 Professional",
+  "format_index": 0,
+  "achieved_bitrate": null,
+  "format_description": "VBR Quality 98, 44 kHz, 2 channel 24 bit VBR",
+  "format_tag": "0x0162",
+  "mode": "vbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedQuality": 98
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 24,
+  "format_bitrate": 128016,
+  "config_bitrate": 128016,
+  "buffer_window_ms": 4294967295,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 24,
+  "seconds": 3,
+  "frames": 132300,
+  "type": "extensible",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma10pro-vbr-stereo-44k-q98",
+ "actual": {
+  "format_tag": 354,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 48000,
+  "bits": 24
+ },
+ "bytes": 58771,
+ "sha256": "c8181ccc0e975795d0d6857bb87e3759a794948a79f50e5c4815d4256f92e5de",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

@@ -115,7 +115,8 @@ namespace Encspect
         void Flush();
     }
 
-    // Only SetAttribute is called; the three methods before it keep it at its slot.
+    // wmsdkidl.h: SetAttribute(WORD stream, LPCWSTR name, WMT_ATTR_DATATYPE type, const BYTE* value, WORD length),
+    // the length in bytes. The three methods before it keep it at its slot.
     [ComImport, Guid("96406BDA-2B2B-11d3-B36B-00C04F6108FF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IWMHeaderInfo
     {
@@ -123,6 +124,14 @@ namespace Encspect
         void GetAttributeByIndex(ushort index, ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder name, ref ushort nameLength, out int type, byte[] value, ref ushort valueLength);
         void GetAttributeByName(ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, out int type, byte[] value, ref ushort valueLength);
         void SetAttribute(ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, int type, byte[] value, ushort valueLength);
+    }
+
+    [ComImport, Guid("96406BD9-2B2B-11d3-B36B-00C04F6108FF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IWMMetadataEditor
+    {
+        void Open([MarshalAs(UnmanagedType.LPWStr)] string file);
+        void Close();
+        void Flush();
     }
 
     [ComImport, Guid("E1CD3524-03D7-11d2-9EED-006097D2D7CF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -203,6 +212,7 @@ namespace Encspect
         public long Frames;
         public long Bytes;
         public string Log;
+        public bool TagsVerified;
     }
 
     public static class Wmf
@@ -211,6 +221,8 @@ namespace Encspect
         static readonly Guid Pcm = new Guid("00000001-0000-0010-8000-00AA00389B71");
         static readonly Guid WaveFormatEx = new Guid("05589f81-c356-11ce-bf01-00aa0055595a");
         const uint TypeDword = 0, TypeBool = 3;
+        // WMT_ATTR_DATATYPE: DWORD 0, STRING 1, BINARY 2, BOOL 3, QWORD 4, WORD 5, GUID 6.
+        const int TypeString = 1;
         const uint Version9 = 0x00090000;
 
         [DllImport("wmvcore.dll", PreserveSig = false)]
@@ -218,6 +230,59 @@ namespace Encspect
 
         [DllImport("wmvcore.dll", PreserveSig = false)]
         static extern void WMCreateWriter(IntPtr reserved, out IWMWriter writer);
+
+        [DllImport("wmvcore.dll", PreserveSig = false)]
+        static extern void WMCreateEditor(out IWMMetadataEditor editor);
+
+        // Reads one string attribute from the written file, which is what a reader will see.
+        static string ReadString(IWMHeaderInfo header, string name)
+        {
+            ushort stream = 0, length = 0;
+            int type;
+            header.GetAttributeByName(ref stream, name, out type, null, ref length);
+            byte[] value = new byte[length];
+            header.GetAttributeByName(ref stream, name, out type, value, ref length);
+            if (type != TypeString)
+            {
+                throw new InvalidDataException(string.Format("{0} has type {1}, not a string", name, type));
+            }
+            return Encoding.Unicode.GetString(value, 0, length).TrimEnd('\0');
+        }
+
+        static bool VerifyTags(EncodeRequest request, StringBuilder log)
+        {
+            IWMMetadataEditor editor = null;
+            try
+            {
+                WMCreateEditor(out editor);
+                editor.Open(request.OutputPath);
+                IWMHeaderInfo header = (IWMHeaderInfo)editor;
+                bool ok = true;
+                string[][] expected = new[] { new[] { "Title", request.Title }, new[] { "Author", request.Author } };
+                foreach (string[] pair in expected)
+                {
+                    if (string.IsNullOrEmpty(pair[1])) continue;
+                    string actual = ReadString(header, pair[0]);
+                    bool same = actual == pair[1];
+                    log.AppendLine(string.Format("  read back {0}: \"{1}\" {2}", pair[0], actual, same ? "matches" : "DIFFERS from \"" + pair[1] + "\""));
+                    ok &= same;
+                }
+                return ok;
+            }
+            catch (Exception e)
+            {
+                log.AppendLine("  reading the tags back failed: " + Hr(e));
+                return false;
+            }
+            finally
+            {
+                if (editor != null)
+                {
+                    try { editor.Close(); } catch (Exception) { }
+                    Marshal.ReleaseComObject(editor);
+                }
+            }
+        }
 
         static string Hr(Exception e)
         {
@@ -516,11 +581,11 @@ namespace Encspect
                     {
                         IWMHeaderInfo header = (IWMHeaderInfo)writer;
                         byte[] title = Encoding.Unicode.GetBytes(request.Title + "\0");
-                        header.SetAttribute(0, "Title", 0, title, (ushort)title.Length);
+                        header.SetAttribute(0, "Title", TypeString, title, (ushort)title.Length);
                         if (!string.IsNullOrEmpty(request.Author))
                         {
                             byte[] author = Encoding.Unicode.GetBytes(request.Author + "\0");
-                            header.SetAttribute(0, "Author", 0, author, (ushort)author.Length);
+                            header.SetAttribute(0, "Author", TypeString, author, (ushort)author.Length);
                         }
                     }
                     catch (Exception e)
@@ -551,6 +616,10 @@ namespace Encspect
                 writer.EndWriting();
                 result.Frames = frames;
                 result.Bytes = new FileInfo(request.OutputPath).Length;
+                if (!string.IsNullOrEmpty(request.Title))
+                {
+                    result.TagsVerified = VerifyTags(request, log);
+                }
                 log.AppendLine(string.Format("wrote {0} frames to {1}, {2} bytes", frames, Path.GetFileName(request.OutputPath), result.Bytes));
             }
             catch (Exception e)

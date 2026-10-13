@@ -82,7 +82,7 @@ public sealed partial class AsfParser
                 state.Findings.AddNow(Severity.Warning, "asf.index-packet-number", $"{beyond} entries of the Simple Index Object name a packet past the last one ({packets} packets).", countNode, (int)Math.Min(beyond, int.MaxValue));
             }
 
-            if (interval == 0)
+            if (interval == 0 && count > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.index-interval", "The Simple Index Object states an interval of 0.", node.Children.First(c => c.Name == "Index Entry Time Interval"));
             }
@@ -118,7 +118,7 @@ public sealed partial class AsfParser
                 state.Findings.AddNow(Severity.Info, "asf.index-reserved", $"The Timecode Index Object's reserved field is {interval}; the specification sets it to 1.", node.Children[^3]);
             }
 
-            if (!timecode && interval == 0)
+            if (!timecode && interval == 0 && blockCount > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.index-interval", $"The {name} states an interval of 0.", node.Children[^3]);
             }

@@ -7,10 +7,10 @@ public sealed partial class AsfParser
 {
     // The attributes whose text names the program that wrote the file: FFmpeg writes
     // WM/EncodingSettings (its muxer's version), the Windows Media Format SDK's writer
-    // WMFSDKVersion, and Windows Media applications WM/ToolName and WM/ToolVersion.
+    // WMFSDKVersion, Media Foundation's MediaFoundationVersion, and Windows Media applications WM/ToolName and WM/ToolVersion.
     private static readonly HashSet<string> EncoderAttributes = new(StringComparer.Ordinal)
     {
-        "WM/EncodingSettings", "WM/Tool", "WM/ToolName", "WM/ToolVersion", "WMFSDKVersion",
+        "WM/EncodingSettings", "WM/Tool", "WM/ToolName", "WM/ToolVersion", "WMFSDKVersion", "MediaFoundationVersion",
     };
 
     // ---- Content Description Object (section 3.10) ----
@@ -167,8 +167,33 @@ public sealed partial class AsfParser
             state.Findings.AddNow(severity, code, message, node ?? shown);
         }
 
+        if (kind == DescriptorKind.Extended)
+        {
+            state.ExtendedContentNames.Add(name);
+        }
+
+        if (name == "IsVBR" && state.IsVbr is null && (value.AsBoolean() ?? (value.AsInteger() is { } flag ? flag != 0 : null)) is { } isVbr)
+        {
+            state.IsVbr = isVbr;
+        }
+
         if (EncoderAttributes.Contains(name) && type == 0 && value.AsText() is { Length: > 0 } text)
         {
+            if (name == "WMFSDKVersion")
+            {
+                // The Windows Media Format SDK's writer stamps its version into the files it writes.
+                state.SdkVersion = text;
+                state.SdkVersionNode = valueNode;
+                text = $"Windows Media Format SDK {text}";
+            }
+
+            if (name == "MediaFoundationVersion")
+            {
+                state.MediaFoundationVersion = text;
+                state.MediaFoundationVersionNode = valueNode;
+                text = $"Media Foundation {text}";
+            }
+
             state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}"));
         }
 
@@ -294,10 +319,15 @@ public sealed partial class AsfParser
             d.Reader.Position = at;
             if (signature.SequenceEqual("ID3"u8))
             {
-                var holder = new Node("ID3", at, length);
+                var holder = new Node("ID3v2 Tag", at, length) { Description = Explain.EmbeddedId3 };
                 if (state.Context.ParseTag("ID3v2", d.Reader.Slice(at, length), holder) is { } tag)
                 {
                     extra.Add(tag);
+                }
+                else
+                {
+                    // The host's finding about the rejected tag points at the holder, which must be in the tree.
+                    extra.Add(holder);
                 }
             }
         }

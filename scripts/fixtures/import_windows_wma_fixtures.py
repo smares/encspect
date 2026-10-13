@@ -25,12 +25,72 @@ import hashlib
 import json
 import pathlib
 import shutil
+import struct
+import subprocess
 import sys
 
 TOOLS = {"wmf-sdk": "the Windows Media Format SDK writer (wmvcore.dll)", "media-foundation": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)"}
 ROOT = pathlib.Path(__file__).resolve().parent
 OUT = ROOT.parents[1] / "tests" / "fixtures" / "asf"
 LARGE = 600_000
+AUDIO_GUID = bytes.fromhex("409e69f84d5bcf11a8fd00805f5c442b")
+CODECS = {0x0161: "wma92", 0x0162: "wma10pro", 0x0163: "wma92lossless", 0x000A: "wmavoice"}
+
+
+def stream_format(data):
+    """The WAVEFORMATEX of the first audio stream of an ASF file: tag, channels, rate, bytes per second, bits."""
+    at = data.find(AUDIO_GUID)
+    if at < 0 or len(data) < at + 70:
+        raise SystemExit("no audio stream in the file")
+    tag, channels, rate, average, _, bits = struct.unpack_from("<HHIIHH", data, at + 54)
+    return tag, channels, rate, average, bits
+
+
+def describe(entry, actual):
+    tool = TOOLS.get(entry.get("encoderPath", "wmf-sdk"), "Windows")
+    text = f"Encoded by {tool} as {entry['codecName']}, {entry['mode'].upper()}, \"{entry['formatDescription']}\"."
+    if entry.get("encoderPath") == "media-foundation":
+        layout = {1: "mono", 2: "stereo", 6: "5.1"}.get(actual["channels"], f"{actual['channels']} channels")
+        text += f" The file is {layout} at {actual['bytes_per_second'] * 8 // 1000} kbit/s, as its header states; the request was {entry['requestedChannels']} channels at {entry['requestedBitrate'] // 1000} kbit/s."
+    return text
+
+
+def actual_name(entry, data):
+    """What the file is, from its own header: a request can come out as another format (Media
+    Foundation gave stereo for a mono request and capped Professional at 256 kbit/s), and the
+    name must not claim what the file is not."""
+    tag, channels, rate, average, bits = stream_format(data)
+    layout = {1: "mono", 2: "stereo", 6: "5.1"}.get(channels, f"{channels}ch")
+    parts = [CODECS[tag], entry["mode"], layout, f"{round(rate / 1000)}k"]
+    if tag == 0x0163:
+        parts = [CODECS[tag], layout, f"{round(rate / 1000)}k", str(bits)]
+    elif entry["mode"] == "vbr":
+        parts.append(f"q{entry['requestedQuality']}")
+    elif entry.get("encoderPath") == "media-foundation":
+        parts.append(str(round(average * 8 / 1000)))
+    else:
+        parts.append(str(round(entry["formatBitrate"] / 1000)))
+    name = "-".join(parts)
+    if entry.get("title"):
+        name += "-tagged"
+    return name, {"format_tag": tag, "channels": channels, "rate": rate, "bytes_per_second": average, "bits": bits}
+
+
+def tags_match(path, entry):
+    """The file's own title and author, read by ffprobe, against what the run wrote; the run's
+    read-back (tagsVerified) must also say so."""
+    if not entry.get("tagsVerified"):
+        return False
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format_tags", "-of", "json", str(path)],
+        capture_output=True, text=True, check=False)
+    try:
+        tags = {k.lower(): v for k, v in json.loads(probe.stdout).get("format", {}).get("tags", {}).items()}
+    except ValueError:
+        return False
+    if tags.get("title") != entry["title"]:
+        return False
+    return not entry.get("author") or tags.get("artist", tags.get("author")) == entry["author"]
 
 
 def main():
@@ -61,12 +121,19 @@ def main():
 
     imported = 0
     for entry in encodes:
-        name = entry["name"]
+        requested = entry["name"]
+        name = requested
         if entry.get("status") != "ok":
             print(f"{name}: skipped, {entry.get('status')}")
             continue
         source = artifact / entry["file"]
         data = source.read_bytes()
+        if entry.get("title") and not tags_match(source, entry):
+            print(f"{name}: skipped, the tags in the file are not the ones written ({entry.get('title')!r}, {entry.get('author')!r}) or the run did not verify them")
+            continue
+        name, actual = actual_name(entry, data)
+        if name != requested:
+            print(f"{requested}: named {name}, which is what the file is")
         digest = hashlib.sha256(data).hexdigest()
         if digest != entry["sha256"]:
             raise SystemExit(f"{name}: the file's SHA-256 {digest} is not the {entry['sha256']} encodes.json records.")
@@ -79,7 +146,7 @@ def main():
             continue
         shutil.copyfile(source, target)
         provenance = {
-            "description": f"Encoded by {TOOLS.get(entry.get('encoderPath', 'wmf-sdk'), 'Windows')} as {entry['codecName']}, {entry['mode'].upper()}, \"{entry['formatDescription']}\".",
+            "description": describe(entry, actual),
             "encoder": {
                 "tool": TOOLS.get(entry.get("encoderPath", "wmf-sdk"), "Windows"),
                 "path": entry.get("encoderPath", "wmf-sdk"),
@@ -101,8 +168,9 @@ def main():
             },
             "input": {
                 "signal": entry["signal"],
-                "channels": entry["formatChannels"],
-                "rate": entry["formatRate"],
+                # The PCM the encoder was fed: for Media Foundation the request's, which the file need not keep.
+                "channels": entry["requestedChannels"] if entry.get("encoderPath") == "media-foundation" else entry["formatChannels"],
+                "rate": entry["requestedRates"][0] if entry.get("encoderPath") == "media-foundation" else entry["formatRate"],
                 "bits": entry["inputBits"],
                 "seconds": entry["seconds"],
                 "frames": entry["frames"],
@@ -117,6 +185,8 @@ def main():
                 "architecture": environment.get("architecture"),
                 "wmvcore_version": environment.get("wmvcoreVersion"),
             },
+            "requested_name": requested,
+            "actual": actual,
             "bytes": len(data),
             "sha256": digest,
             "reproducible": False,

@@ -162,6 +162,8 @@ internal static partial class Explain
     public const string PictureDescription = "A description of the picture, as UTF-16 text ended by a NUL (WM/Picture).";
     public const string PictureData = "The picture, as a file of its MIME type (WM/Picture).";
 
+    public const string EmbeddedId3 = "The bytes of an ID3v2 tag that the ID3 attribute holds, which the ID3v2 parser did not accept as one.";
+
     public const string ContentBranding = "The Content Branding Object: a banner image and URLs for the file (section 3.13).";
     public const string BannerImageType = "The kind of the banner image: 0 none, 1 bitmap, 2 JPEG, 3 GIF (section 3.13).";
     public const string BannerImageDataSize = "The number of bytes of the banner image (section 3.13).";

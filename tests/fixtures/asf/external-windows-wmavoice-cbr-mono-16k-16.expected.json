@@ -1,0 +1,23 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio Voice 9, CBR, \"16 kbps, 16 kHz, mono\".",
+ "format": "ASF",
+ "encoder": "the Windows Media Format SDK writer (wmvcore.dll)",
+ "encoder_path": "wmf-sdk",
+ "mode": "cbr",
+ "sha256": "d3ebd3d4f90841be3c1efcd27d310c705d2c18dc34126a84dc3979dd0026d91b",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmavoice",
+  "channels": 1,
+  "rate": 16000,
+  "block_align": null,
+  "bit_rate": 16000,
+  "extradata_size": 46,
+  "packets": 14,
+  "packet_sizes": [
+   600
+  ],
+  "decoded_samples": 48000,
+  "file_bytes": 13831
+ }
+}

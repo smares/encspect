@@ -110,7 +110,7 @@ $plan = @(
     @{ Name = 'wma92lossless-stereo-44k-16'; Codec = $lossless; Vbr = $true; Channels = 2; Rates = @(44100); Bits = 16; Quality = 100; Seconds = 2; Signal = 'quiet' }
     @{ Name = 'wma92lossless-stereo-44k-24'; Codec = $lossless; Vbr = $true; Channels = 2; Rates = @(44100); Bits = 24; Quality = 100; Seconds = 2; Signal = 'quiet' }
     @{ Name = 'wma92lossless-mono-44k-16'; Optional = $true;   Codec = $lossless; Vbr = $true; Channels = 1; Rates = @(44100); Bits = 16; Quality = 100; Seconds = 2; Signal = 'quiet' }
-    @{ Name = 'wma92lossless-5.1-48k-24';    Codec = $lossless; Vbr = $true; Channels = 6; Rates = @(48000, 44100); Bits = 24; Quality = 100; Seconds = 2; Signal = 'quiet' }
+    @{ Name = 'wma92lossless-5.1-48k-24';    Codec = $lossless; Vbr = $true; Channels = 6; Rates = @(48000, 44100); Bits = 24; Quality = 100; Seconds = 0.5; Signal = 'quiet' }
     @{ Name = 'wmavoice-cbr-mono-8k-5'; Optional = $true;      Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000, 16000); Bitrate = 5000;  Seconds = 3; Signal = 'tones' }
     @{ Name = 'wmavoice-cbr-mono-16k-20'; Optional = $true;    Codec = $voice; Vbr = $false; Channels = 1; Rates = @(16000, 22050); Bitrate = 20000; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma92-vbr-stereo-44k-q75-tagged'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 75; Seconds = 2; Signal = 'tones'; Title = 'Encspect test tone'; Author = 'Encspect' }
@@ -286,12 +286,14 @@ foreach ($entry in $plan) {
         $record.inputType = $encoded.InputType
         $record.frames = $encoded.Frames
         $record.log = $encoded.Log
+        if ($entry.Title) { $record.tagsVerified = [bool]$encoded.TagsVerified }
         if ($encoded.Bytes -gt 0) {
             $record.status = 'ok'
             $record.file = "wma/$($entry.Name).wma"
             $record.pcm = "pcm/$($entry.Name).wav"
             $record.bytes = $encoded.Bytes
             $record.sha256 = (Get-FileHash -Algorithm SHA256 $wma).Hash.ToLowerInvariant()
+            if ($entry.Title -and -not $encoded.TagsVerified) { $record.status = 'tags differ' }
         }
     }
     catch {

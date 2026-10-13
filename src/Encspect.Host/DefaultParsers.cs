@@ -53,5 +53,5 @@ public static class DefaultParsers
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
     // Speex, Vorbis and Opus in Ogg, AC-3 and E-AC-3 in MP4, Windows Media Audio in ASF.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
-        [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser()];
+        [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser()];
 }
