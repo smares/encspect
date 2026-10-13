@@ -1,0 +1,175 @@
+{
+ "length": 9544,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 4536,
+   "index": 0,
+   "samples": 12000,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "de74b2af",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     67,
+     6
+    ],
+    [
+     100,
+     4,
+     4
+    ],
+    [
+     106,
+     5,
+     6
+    ],
+    [
+     114,
+     6,
+     4
+    ],
+    [
+     120,
+     101,
+     4
+    ],
+    [
+     126,
+     42,
+     0
+    ],
+    [
+     128,
+     138,
+     4400
+    ],
+    [
+     4532,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 4536,
+   "length": 5008,
+   "index": 12000,
+   "samples": 12000,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "0faf9b69",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     4568,
+     66,
+     6
+    ],
+    [
+     4576,
+     67,
+     6
+    ],
+    [
+     4584,
+     4,
+     4
+    ],
+    [
+     4590,
+     5,
+     6
+    ],
+    [
+     4598,
+     6,
+     4
+    ],
+    [
+     4604,
+     42,
+     0
+    ],
+    [
+     4606,
+     138,
+     4930
+    ],
+    [
+     9540,
+     47,
+     2
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack hybrid",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 140.2968,
+   "hybrid": true,
+   "correction": false,
+   "lossless": false,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 9544
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-b3"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 1,
+   "bits": 16,
+   "samples": 24000
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

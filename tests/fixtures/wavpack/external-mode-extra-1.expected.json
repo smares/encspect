@@ -1,0 +1,216 @@
+{
+ "length": 45670,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 12088,
+   "index": 0,
+   "samples": 11025,
+   "flags": "14bc1821",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     37,
+     4
+    ],
+    [
+     134,
+     42,
+     0
+    ],
+    [
+     136,
+     138,
+     11942
+    ],
+    [
+     12082,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 12088,
+   "length": 10532,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1821",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     12120,
+     66,
+     6
+    ],
+    [
+     12128,
+     3,
+     10
+    ],
+    [
+     12140,
+     4,
+     8
+    ],
+    [
+     12150,
+     5,
+     12
+    ],
+    [
+     12164,
+     42,
+     0
+    ],
+    [
+     12166,
+     138,
+     10444
+    ],
+    [
+     22614,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 22620,
+   "length": 23050,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "14bc1821",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     22652,
+     66,
+     6
+    ],
+    [
+     22660,
+     3,
+     10
+    ],
+    [
+     22672,
+     4,
+     8
+    ],
+    [
+     22682,
+     5,
+     12
+    ],
+    [
+     22696,
+     42,
+     0
+    ],
+    [
+     22698,
+     138,
+     22962
+    ],
+    [
+     45664,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 671.349,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 45670
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-x"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

@@ -13,6 +13,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | Opus | [opus.md](opus.md) |
 | Musepack | [musepack.md](musepack.md) |
 | AC-3 and E-AC-3 | [ac3.md](ac3.md) |
+| WavPack (lossless, hybrid and DSD, with correction files) | [wavpack.md](wavpack.md) |
 | ASF and WMA (versions 1 and 2, Professional; Lossless and Voice at header level) | [asf-wma.md](asf-wma.md) |
 
 ## Common to every format

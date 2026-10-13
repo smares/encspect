@@ -1,0 +1,213 @@
+{
+ "length": 47687,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 13498,
+   "index": 0,
+   "samples": 11025,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     101,
+     4
+    ],
+    [
+     134,
+     42,
+     0
+    ],
+    [
+     136,
+     138,
+     13352
+    ],
+    [
+     13492,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13535,
+   "length": 11094,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13567,
+     66,
+     6
+    ],
+    [
+     13575,
+     3,
+     10
+    ],
+    [
+     13587,
+     4,
+     8
+    ],
+    [
+     13597,
+     5,
+     12
+    ],
+    [
+     13611,
+     42,
+     0
+    ],
+    [
+     13613,
+     138,
+     11006
+    ],
+    [
+     24623,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 24629,
+   "length": 23058,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     24661,
+     66,
+     6
+    ],
+    [
+     24669,
+     3,
+     10
+    ],
+    [
+     24681,
+     4,
+     8
+    ],
+    [
+     24691,
+     5,
+     12
+    ],
+    [
+     24705,
+     42,
+     0
+    ],
+    [
+     24707,
+     138,
+     22970
+    ],
+    [
+     47681,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [
+  [
+   13498,
+   37
+  ]
+ ],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 700.455,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 47687
+  }
+ ],
+ "description": "37 bytes that are no block between the first and the second block.",
+ "findings": [
+  {
+   "code": "wavpack.data-skipped",
+   "contains": "37 bytes"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

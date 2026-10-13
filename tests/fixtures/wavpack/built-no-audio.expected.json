@@ -1,0 +1,49 @@
+{
+ "length": 56,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 56,
+   "index": 0,
+   "samples": 0,
+   "flags": "34bc1e59",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     38,
+     16
+    ],
+    [
+     50,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 56
+  }
+ ],
+ "description": "A single block with no samples, which holds an MD5 digest.",
+ "findings": [
+  {
+   "code": "wavpack.no-audio",
+   "contains": "None of the 1 blocks counts a sample"
+  }
+ ],
+ "crosscheck": {
+  "valid": null
+ }
+}

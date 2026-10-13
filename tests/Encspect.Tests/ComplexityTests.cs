@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using Encspect.Core;
 using Encspect.Host;
@@ -97,6 +98,46 @@ public class ComplexityTests
         byte[] frame = [0xFF, 0xFB, 0x00, 0x00, .. new byte[32]];
         Report report = Timed(Repeat(frame, 160_000).ToArray());
         Assert.Equal(NodeValue.Integer(160_000, "frames", "frame"), report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
+    }
+
+    // Block headers every 32 bytes that state a size which ends in no header: each is a candidate the
+    // scan for a block rejects after a look a megabyte on; the time must stay linear in the data
+    // (a megabyte is 2,000 times the headers' distance).
+    [Fact]
+    public void ManyWavPackHeadersThatEndInNoHeader()
+    {
+        byte[] template = new byte[32];
+        "wvpk"u8.CopyTo(template);
+        template[9] = 4;
+        template[8] = 0x10;
+        template[20] = 1;
+        var data = new byte[24 << 20];
+        for (int at = 0; at + 32 <= data.Length; at += 32)
+        {
+            template.CopyTo(data, at);
+
+            // Sizes of 2 more than a multiple of 32, so no end falls on another header, and a little
+            // different for each, so the ends are not all in one cache block.
+            uint size = 1_044_002 + (uint)(at / 32 % 100 * 32);
+            BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(at + 4), size);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = new Encspect.Host.Analyzer([new ForcedWavPack()]).Analyze("flood.wv", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    private sealed class ForcedWavPack : IFormatParser
+    {
+        private readonly Encspect.Formats.WavPack.WavPackParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public int Sniff(SniffContext context) => 100;
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
     private static Report Timed(byte[] data)

@@ -1,0 +1,143 @@
+{
+ "length": 34152,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 11094,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     66,
+     6
+    ],
+    [
+     40,
+     3,
+     10
+    ],
+    [
+     52,
+     4,
+     8
+    ],
+    [
+     62,
+     5,
+     12
+    ],
+    [
+     76,
+     42,
+     0
+    ],
+    [
+     78,
+     138,
+     11006
+    ],
+    [
+     11088,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 11094,
+   "length": 23058,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     11126,
+     66,
+     6
+    ],
+    [
+     11134,
+     3,
+     10
+    ],
+    [
+     11146,
+     4,
+     8
+    ],
+    [
+     11156,
+     5,
+     12
+    ],
+    [
+     11170,
+     42,
+     0
+    ],
+    [
+     11172,
+     138,
+     22970
+    ],
+    [
+     34146,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 12975,
+   "duration": 0.2942176870748299,
+   "bits_per_sample": 16,
+   "average_bitrate": 928.6185433526011,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": null
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 34152
+  }
+ ],
+ "description": "The first block left out, as in a part cut from a longer stream.",
+ "findings": [
+  {
+   "code": "wavpack.first-block-index",
+   "contains": "begins at sample 11025"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

@@ -1,0 +1,441 @@
+#!/usr/bin/env python3
+"""Checks the WavPack fixtures' manifests against independent tools.
+
+For every manifest in tests/fixtures/wavpack (make_external_wavpack_fixtures.py,
+make_wavpack_fixtures.py):
+
+- wavpack_blocks (wavpack_tool.py: libwavpack 5.6.0 built from the pinned source): every block
+  read_next_header finds, with its offset, size, version, first sample, samples, flags and CRC and
+  whether WavpackVerifySingleBlock accepts it, against the manifest; and the figures the library
+  derives from the file against the analyzer's golden report: the version, channels, channel mask,
+  sample rate, bits, samples, mode flags (hybrid, lossless, float, fast, high, very high, extra level),
+  the MD5 digest, the source format and extension, and the wrapper's size.
+- wvunpack -ss (wavpack 5.6.0 of Ubuntu 24.04), on the main file alone: channels, source, duration,
+  modalities, encoder version, digest, source format and the wrapper.
+- wvunpack -v: the file decodes and its block CRCs hold, with its correction file where it has one
+  (lossless then), and with -m its digest equals the one stored. Damaged fixtures are decoded too, and
+  those listed in REJECTED must fail.
+- ffprobe (FFmpeg 6.1, libavformat's wv demuxer): the codec, rate, channels and layout, the bit depth,
+  the length from the first block, and the packets, one for each set of blocks at the first block's
+  offset and the sets' size. What it refuses is listed in FFPROBE_REFUSES.
+- MediaInfo 24.01 (mediainfo_tool.py), against the golden report: the format, the profile (the stream
+  version), the settings (hybrid or lossless), the channels and layout, the sample rate, the bit depth,
+  the duration its first two blocks give, the stream size and the settings it spells from the config
+  block. MediaInfo reads only the first two blocks and does not know DSD or a custom sample rate; the
+  fixtures on which it reads otherwise name their evidence.
+
+Fixtures that are damaged say why the others do not apply; every skipped check prints its reason.
+Disagreements fail the run (exit status 1).
+
+    python3 scripts/fixtures/crosscheck_wavpack_fixtures.py [name ...]
+"""
+
+import json
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+import mediainfo_tool as mi
+import wavpack_tool
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+DIRECTORY = ROOT / "tests" / "fixtures" / "wavpack"
+SKIPS = []
+INITIAL, FINAL, MONO = 0x800, 0x1000, 4
+
+# Fixtures libwavpack's decoder must refuse, with the evidence.
+REJECTED = {
+    "built-bad-checksum": "a block whose checksum fails is counted as a CRC error",
+    "built-checksum-missing": "a block that says it has a checksum and has none fails WavpackVerifySingleBlock",
+    "built-truncated-last-block": "the last block is cut",
+    "built-subblock-overrun": "a sub-block runs past its block",
+    "built-block-size-too-small": "the block's sub-blocks do not end where the block does",
+    "built-decorr-terms-invalid": "libwavpack refuses a decorrelation term of 0",
+    "built-audio-without-bitstream": "a block without a bitstream cannot be unpacked",
+    "built-unknown-subblocks": "a sub-block that is not optional and not known is refused",
+}
+# What ffprobe cannot read, and why (FFmpeg 6.1.1, libavformat/wvdec.c, pinned by ffmpeg_sources.py).
+FFPROBE_REFUSES = {
+    "external-lossless-3ch-unassigned": "wv_read_block_header refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
+    "external-from-caf": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
+    "built-garbage-prefix": "wv_probe looks for the header at the first byte of the file",
+    "built-sample-rate-missing": "wv_read_block_header cannot take a rate from the header's index 15 without a sample rate sub-block: \"Cannot determine custom sampling rate\"",
+}
+# What ffprobe reads differently: wvdec.c builds the channel layout from the channel mask (av_channel_layout_from_mask),
+# so channels without a speaker in it are not counted, and libavcodec/wavpack.c refuses to decode a mask that names fewer
+# speakers than the channel count ("Channel mask does not match the channel count"), which leaves no bits per raw sample.
+FFPROBE_COUNTS_THE_MASK = {"external-lossless-4ch-two-unassigned", "built-channel-identities"}
+# ffprobe's packets end at the first bytes that are no block header (wv_read_block_header: ff_wv_parse_header fails).
+MEDIAINFO_DSD = ("MediaInfo does not know DSD: it takes the sample rate from the header's index (88200 Hz here, the byte rate over 4) and the bit depth from the "
+                 "bytes per sample (8) (File_Wvpk.cpp, Data_Parse and Data_Parse_Fill)")
+MEDIAINFO_ONE_BLOCK = ("MediaInfo accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one")
+MEDIAINFO_CUSTOM_RATE = ("MediaInfo takes the sample rate from the header's index only (SamplingRate<15, File_Wvpk.cpp, Data_Parse_Fill); a sub-block with a custom rate "
+                         "is not read, since it switches on the ID without its optional bit")
+MEDIAINFO_ID3V2 = ("observed: MediaInfo 24.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
+MEDIAINFO_READS_OTHERWISE = {
+    "built-leading-id3v2": {"tag title": MEDIAINFO_ID3V2, "tag track": MEDIAINFO_ID3V2},
+}
+
+
+def skip(name, check, reason):
+    SKIPS.append(f"{name}: {check} skipped: {reason}")
+
+
+def run(arguments, **kw):
+    return subprocess.run(arguments, capture_output=True, text=True, **kw)
+
+
+def find(manifest_path):
+    stem = manifest_path.name[:-len(".expected.json")]
+    return next(p for p in DIRECTORY.glob(stem + ".*") if p.suffix != ".json")
+
+
+def libwavpack(tool, path):
+    """The figures and blocks wavpack_blocks prints."""
+    lines = run([str(tool), str(path)]).stdout.splitlines()
+    facts, blocks = {}, []
+    for line in lines:
+        parts = line.split(" ")
+        if parts[0] == "block":
+            blocks.append(parts[1:])
+        elif parts[0] == "open":
+            facts["open_error"] = line
+        else:
+            facts[parts[0]] = " ".join(parts[1:])
+    return facts, blocks
+
+
+def sets_of(blocks):
+    """(offset, size) of each set of blocks: from an initial to a final block."""
+    result, current = [], None
+    for b in blocks:
+        flags = int(b["flags"], 16)
+        if not b["samples"]:
+            continue
+        if flags & INITIAL or current is None:
+            current = [b["offset"], 0]
+            result.append(current)
+        current[1] += b["length"]
+        if flags & FINAL:
+            current = None
+    return result
+
+
+def statistic(report, name):
+    stream = next(c for c in report["root"]["children"] if c.get("kind") == "Stream")
+    node = next((c for c in stream["children"] if c.get("kind") == "Statistics"), None)
+    return None if node is None else next((c.get("value") for c in node["children"] if c["name"] == name), None)
+
+
+def check_libwavpack(name, manifest, path, report, tool, problems):
+    facts, blocks = libwavpack(tool, path)
+    expected = [[str(b["offset"]), str(b["length"]), b["version"], str(b["index"]), str(b["samples"]), b["flags"], b["crc"], "1" if b["verifies"] else "0"]
+                for b in manifest["blocks"]]
+    found = [[b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]] for b in blocks]
+    if found != expected:
+        first = next((i for i, (a, b) in enumerate(zip(found, expected)) if a != b), min(len(found), len(expected)))
+        problems.append(f"libwavpack reads {len(found)} blocks and the manifest has {len(expected)}; they differ at {first}: {found[first:first + 1]} and {expected[first:first + 1]}")
+    if not manifest["stream_infos"] or not report["streams"]:
+        return facts
+    info = manifest["stream_infos"][0]
+    stream = report["streams"][0]
+    is_dsd = statistic(report, "IsDsd")
+    if "open_error" in facts:
+        if name in REJECTED or not manifest["crosscheck"]["valid"] or info["correction"]:
+            return facts
+        problems.append(facts["open_error"])
+        return facts
+    mask = int(facts["channel_mask"], 16)
+    layout = [n for bit, n in enumerate(SPEAKER_NAMES) if mask >> bit & 1]
+    layout += ["discrete"] * (int(facts["channels"]) - len(layout))
+    pairs = [("channels", int(facts["channels"]), stream["channels"]), ("sample rate", int(facts["sample_rate"]), stream["sampleRate"]),
+             ("bits per sample", int(facts["bits_per_sample"]) // (8 if is_dsd else 1), stream["bitsPerSample"]),
+             ("layout", layout, stream["channelLayout"]),
+             ("hybrid", facts["hybrid"] == "1", statistic(report, "IsHybrid")), ("lossless", facts["lossless"] == "1", statistic(report, "IsLossless")),
+             ("float", facts["float"] == "1", statistic(report, "IsFloatingPoint")),
+             ("encoder version", "WavPack 5.0 or later" if facts["version"] == "5" else "WavPack 4", stream["encoder"])]
+    if manifest["crosscheck"]["valid"]:
+        pairs.append(("samples", int(facts["samples"]) * (8 if is_dsd else 1), stream["samples"]))
+    if statistic(report, "Compression Mode") is not None:
+        mode = "very high" if facts["very_high"] == "1" else "high" if facts["high"] == "1" else "fast" if facts["fast"] == "1" else "normal"
+        pairs.append(("compression mode", mode, statistic(report, "Compression Mode")))
+        pairs.append(("extra level", facts["extra"] if facts["extra"] != "-1" else "none", str(statistic(report, "Extra Processing Level"))))
+    md5 = statistic(report, "MD5 Checksum")
+    pairs.append(("MD5 digest", facts.get("md5"), md5))
+    if statistic(report, "Source Format") is not None:
+        pairs.append(("source format", FORMAT_NAMES[int(facts["file_format"])], statistic(report, "Source Format")))
+    for label, got, want in pairs:
+        if got != want:
+            problems.append(f"libwavpack's {label} is {got!r}, the report's {want!r}")
+    # libwavpack gathers the wrapper sub-blocks of the first block (OPEN_WRAPPER): header and trailer.
+    wrapper = sum(c["value"] for c in walk_blocks(report) if c["name"] in ("RIFF Header", "RIFF Trailer", "Alternate Header", "Alternate Trailer"))
+    if int(facts["wrapper_bytes"]) != wrapper:
+        problems.append(f"libwavpack's wrapper is {facts['wrapper_bytes']} bytes, the report's first block's {wrapper}")
+    return facts
+
+
+SPEAKER_NAMES = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
+                 "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center", "top back right"]
+FORMAT_NAMES = ["WAV", "Wave64", "CAF", "DSDIFF", "DSF", "AIFF"]
+
+
+def walk_blocks(report):
+    stream = next(c for c in report["root"]["children"] if c.get("kind") == "Stream")
+    for block in stream["children"]:
+        if block["name"] in ("Block", "Metadata Block"):
+            yield from block["children"]
+            return
+
+
+def wvunpack_summary(path, work):
+    """wvunpack -ss on a copy of the main file alone."""
+    copy = pathlib.Path(work) / "alone.wv"
+    shutil.copy(path, copy)
+    text = run(["wvunpack", "-ss", str(copy)]).stdout
+    return dict(re.findall(r"^([a-z0-9 ]+?):\s+(.*)$", text, re.M))
+
+
+def check_wvunpack_summary(name, manifest, path, report, work, problems):
+    s = wvunpack_summary(path, work)
+    info = manifest["stream_infos"][0]
+    stream = report["streams"][0]
+    is_dsd = statistic(report, "IsDsd")
+    bits = stream["bitsPerSample"]
+    rate = stream["sampleRate"]
+    source = "1-bit DSD" if is_dsd else f"{bits}-bit floats" if statistic(report, "IsFloatingPoint") else f"{bits}-bit ints"
+    expected = {"channels": f"{info['channels']} ", "source": f"{source} at {rate} Hz", "encoder version": "5" if stream["encoder"].startswith("WavPack 5") else "4"}
+    for key, want in expected.items():
+        if not s.get(key, "").startswith(want):
+            problems.append(f"wvunpack's {key} is {s.get(key)!r}, expected {want!r}")
+    duration = stream["duration"]
+    shown = s.get("duration", "")
+    match = re.fullmatch(r"(\d+):(\d\d):(\d\d)\.(\d\d)", shown)
+    if match is None or abs(int(match[1]) * 3600 + int(match[2]) * 60 + int(match[3]) + int(match[4]) / 100 - duration) > 0.011:
+        problems.append(f"wvunpack's duration is {shown!r}, expected {duration:.3f} s")
+    modes = set(s.get("modalities", "").split(", "))
+    want = set()
+    want.add("hybrid lossy" if statistic(report, "IsHybrid") else "lossless")
+    mode = statistic(report, "Compression Mode")
+    if mode == "high":
+        want.add("high")
+    elif mode == "very high":
+        want.add("very high")
+    elif mode == "fast":
+        want.add("fast")
+    level = statistic(report, "Extra Processing Level")
+    if isinstance(level, int):
+        want.add(f"extra-{level}")
+    if statistic(report, "IsHybrid") and config_flags(report).get("UsesDynamicNoiseShaping"):
+        want.add("dns")
+    if not want <= modes:
+        problems.append(f"wvunpack's modalities are {sorted(modes)}, expected at least {sorted(want)}")
+    if md5 := statistic(report, "MD5 Checksum"):
+        if s.get("original md5") != md5:
+            problems.append(f"wvunpack's digest is {s.get('original md5')!r}, the report's {md5!r}")
+    elif "original md5" in s:
+        problems.append("wvunpack shows a digest the report does not")
+    ext = statistic(report, "Source Extension")
+    if ext is not None and f"with '{ext}' extension" not in s.get("source format", ""):
+        problems.append(f"wvunpack's source format is {s.get('source format')!r}, the report's extension {ext!r}")
+
+
+def check_wvunpack_verify(name, manifest, path, report, work, problems):
+    """wvunpack -v: the file decodes. A hybrid file with a correction file next to it is lossless."""
+    valid = manifest["crosscheck"]["valid"]
+    copy = pathlib.Path(work) / "x.wv"
+    shutil.copy(path, copy)
+    digest = report and statistic(report, "MD5 Checksum")
+    result = run(["wvunpack", "-v", "-m", str(copy)], timeout=60)
+    result.stdout += result.stderr
+    ok = result.returncode == 0
+    if name in REJECTED:
+        if ok:
+            problems.append(f"wvunpack -v verifies the file, which it must refuse: {REJECTED[name]}")
+        return
+    if valid and not ok:
+        problems.append(f"wvunpack -v fails: {(result.stdout + result.stderr).strip().splitlines()[-1]}")
+    if valid and digest:
+        mine = re.findall(r"unpacked md5:\s+([0-9a-f]{32})", result.stdout)
+        if mine != [digest]:
+            problems.append(f"wvunpack's unpacked digest {mine} differs from the stored {digest}")
+
+
+def check_pair(name, path, work, problems):
+    """A main file with its correction file: lossless, with the digest where there is one."""
+    wvc = path.with_name(path.name[:-len(".wv")] + "-wvc.wvc")
+    shutil.copy(path, pathlib.Path(work) / "x.wv")
+    shutil.copy(wvc, pathlib.Path(work) / "x.wvc")
+    result = run(["wvunpack", "-v", str(pathlib.Path(work) / "x.wv")], timeout=60)
+    text = result.stdout + result.stderr
+    if result.returncode != 0 or "(+.wvc)" not in text or "(lossless" not in text:
+        problems.append(f"wvunpack -v does not verify the pair as lossless: {text.strip().splitlines()[-1] if text.strip() else result.stderr}")
+
+
+def ffprobe(path):
+    result = run(["ffprobe", "-v", "error", "-show_streams", "-show_packets", "-of", "json", str(path)])
+    return result.returncode, json.loads(result.stdout or "{}")
+
+
+def check_ffprobe(name, manifest, path, report, problems):
+    code, data = ffprobe(path)
+    if name in FFPROBE_REFUSES:
+        if code == 0 and data.get("streams"):
+            problems.append(f"ffprobe reads the file, which the list says it refuses ({FFPROBE_REFUSES[name]})")
+        skip(name, "ffprobe", FFPROBE_REFUSES[name])
+        return
+    if code != 0 or not data.get("streams"):
+        problems.append(f"ffprobe fails on the file: {code}")
+        return
+    stream = data["streams"][0]
+    info = manifest["stream_infos"][0]
+    is_dsd = statistic(report, "IsDsd")
+    rate = report["streams"][0]["sampleRate"] // (8 if is_dsd else 1)
+    bits = 8 if is_dsd else report["streams"][0]["bitsPerSample"]
+    layout = report["streams"][0].get("channelLayoutName")
+    channels = info["channels"]
+    if name in FFPROBE_COUNTS_THE_MASK:
+        channels = sum(1 for n in info["layout"] if n != "discrete")
+        layout = None
+        bits = int(stream.get("bits_per_raw_sample", 0))
+    checks = [("codec", stream["codec_name"], "wavpack"), ("sample rate", int(stream["sample_rate"]), rate), ("channels", stream["channels"], channels),
+              ("bits per raw sample", int(stream.get("bits_per_raw_sample", 0)), bits)]
+    if layout and stream.get("channel_layout"):
+        checks.append(("channel layout", stream["channel_layout"].split("(")[0], layout))
+    declared = info["declared"]
+    if declared is not None:
+        checks.append(("length", stream["duration_ts"], declared))
+    for label, got, want in checks:
+        if got != want:
+            problems.append(f"ffprobe's {label} is {got!r}, expected {want!r}")
+    # The packets end at the first bytes that are no block header.
+    chain = []
+    for b in manifest["blocks"]:
+        if chain and chain[-1]["offset"] + chain[-1]["length"] != b["offset"]:
+            break
+        chain.append(b)
+    sets = sets_of(chain)
+    packets = [(int(p["pos"]), int(p["size"])) for p in data.get("packets", [])]
+    if packets != [(o, s) for o, s in sets]:
+        problems.append(f"ffprobe's packets are {packets[:4]}..., the sets of blocks {sets[:4]}...")
+
+
+MEDIAINFO_SETTINGS = [("IsFastMode", "-f"), ("IsHighMode", "-h"), ("IsVeryHighMode", "-hh"), ("CreatesCorrectionFile", "-c"), ("OptimizesCorrectionFile", "-cc"),
+                      ("StoresMd5", "-m"), ("UsesDynamicNoiseShaping", "-use-dns")]
+
+
+def config_flags(report):
+    for node in walk_blocks(report):
+        if node["name"] == "Config Block":
+            for data in node["children"]:
+                if data["name"] == "Data":
+                    return {f["name"]: f["value"] for flags in data["children"] if flags["name"] == "Flags" for f in flags["children"]}
+    return {}
+
+
+def check_mediainfo(name, manifest, path, report, tally):
+    problems = tally.start(name)
+    info = mi.read(path, full=True)
+    audio = info["Audio"][0] if info and info["Audio"] else {}
+    stream = report["streams"][0] if report["streams"] else None
+    if stream is None:
+        tally.compare("format where the analyzer finds no stream", audio.get("Format"), None)
+        return problems
+    # MediaInfo takes a block as one only where another header follows it at once (File_Wvpk.cpp, Synchronize).
+    every = manifest["blocks"]
+    chained = [b for i, b in enumerate(every) if i + 1 == len(every) or every[i + 1]["offset"] == b["offset"] + b["length"]]
+    blocks = [b for b in chained if b["samples"]]
+    if len(blocks) < 2:
+        tally.compare("format of a file with one block of audio (" + MEDIAINFO_ONE_BLOCK + ")", audio.get("Format"), None)
+        return problems
+    tally.compare("format", audio.get("Format"), "WavPack")
+    first, second = blocks[0], blocks[1]
+    version = int(first["version"], 16)
+    tally.compare("profile", audio.get("Format_Profile"), f"{version >> 8}.{version & 0xFF:02d}")
+    hybrid = statistic(report, "IsHybrid")
+    tally.compare("settings", audio.get("Format_Settings"), "Hybrid lossy" if hybrid else "Lossless")
+    channels = stream["channels"]
+    if path.suffix == ".wvc":
+        # A correction file has no channel info: MediaInfo takes the mono flag of the second block.
+        channels = 1 if int(second["flags"], 16) & MONO else 2
+    tally.compare("channels", audio.get("Channels"), str(channels))
+    if channels > 2 and stream["channelLayout"] and all(n in mi.SPEAKERS.values() for n in stream["channelLayout"]):
+        tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
+    is_dsd = statistic(report, "IsDsd")
+    if is_dsd:
+        tally.compare("sample rate of DSD (" + MEDIAINFO_DSD + ")", audio.get("SamplingRate"), str(stream["sampleRate"] // 32))
+        tally.compare("bit depth of DSD (" + MEDIAINFO_DSD + ")", audio.get("BitDepth"), "8")
+    else:
+        tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
+        tally.compare("bit depth", audio.get("BitDepth"), str(8 * (1 + (int(first["flags"], 16) & 3))))
+    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the second block with audio.
+    rate = {True: stream["sampleRate"] // 8}.get(bool(is_dsd), stream["sampleRate"])
+    rate = int(audio.get("SamplingRate") or rate) if is_dsd else rate
+    duration = (second["index"] + second["samples"] - first["index"]) * 1000 // rate
+    tally.compare("duration of the first two blocks", audio.get("Duration"), f"{duration / 1000:.3f}")
+    size = path.stat().st_size
+    tally.compare("stream size", audio.get("StreamSize"), str(size - sum(c["length"] for c in report["root"]["children"] if c.get("kind") == "Tag")))
+    flags = config_flags(report)
+    if flags:
+        text = audio.get("Encoded_Library_Settings") or ""
+        want = [token for key, token in MEDIAINFO_SETTINGS if flags.get(key)]
+        tally.compare("settings it spells from the config block", [t for t in want if t in text.split(" ")], want)
+    mi.compare_tags(tally, info["General"], report)
+    return problems
+
+
+def main():
+    mi.require()
+    wavpack_tool_dir = os.environ.get("WAVPACK_TOOLS_DIR")
+    tool = wavpack_tool.build_blocks(pathlib.Path(wavpack_tool_dir) if wavpack_tool_dir else None)
+    names = sys.argv[1:]
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
+    failures = 0
+    for manifest_path in sorted(DIRECTORY.glob("*.expected.json")):
+        name = manifest_path.name[:-len(".expected.json")]
+        if names and name not in names:
+            continue
+        path = find(manifest_path)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        report = mi.golden(path)
+        valid = manifest["crosscheck"]["valid"]
+        problems = []
+        is_wvc = path.suffix == ".wvc"
+        with tempfile.TemporaryDirectory() as work:
+            if valid:
+                check_libwavpack(name, manifest, path, report, tool, problems)
+            else:
+                skip(name, "libwavpack's blocks and figures, ffprobe and MediaInfo", manifest.get("description", "the fixture is damaged on purpose") + ": the tools read it in ways of their own")
+            if is_wvc:
+                skip(name, "wvunpack and ffprobe", "a correction file cannot be unpacked or demuxed alone")
+            else:
+                if valid and manifest["stream_infos"]:
+                    check_wvunpack_summary(name, manifest, path, report, work, problems)
+                check_wvunpack_verify(name, manifest, path, report, work, problems)
+                pair = path.with_name(path.name[:-len(".wv")] + "-wvc.wvc")
+                if valid and pair.exists():
+                    check_pair(name, path, work, problems)
+                if valid and manifest["stream_infos"]:
+                    check_ffprobe(name, manifest, path, report, problems)
+        if valid:
+            problems += check_mediainfo(name, manifest, path, report, tally)
+        if problems:
+            failures += 1
+            print(f"FAIL {name}: " + "; ".join(problems))
+        else:
+            print(f"ok   {name}")
+    for line in SKIPS:
+        print(line)
+    for problem in tally.unused():
+        print(f"FAIL {problem}")
+        failures += 1
+    tally.print(sys.stdout)
+    if failures:
+        raise SystemExit(f"{failures} fixtures disagree with the tools")
+
+
+if __name__ == "__main__":
+    main()

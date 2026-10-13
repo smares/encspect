@@ -31,6 +31,7 @@ Every format has three kinds of fixture:
 | Ogg, Speex, Vorbis, Opus | `tests/fixtures/ogg` | `make_ogg_fixtures.py`, `make_vorbis_opus_fixtures.py`; `make_external_ogg_fixtures.py`, `make_external_vorbis_opus_fixtures.py` | oggz, ogginfo, vorbiscomment, opusinfo, ffprobe, speexdec, oggdec, opusdec, MediaInfo (`crosscheck_ogg_fixtures.py`) |
 | Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine, MediaInfo (`crosscheck_musepack_fixtures.py`) |
 | AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe, ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`) |
+| WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader and checksum verifier (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
 | ASF and WMA | `tests/fixtures/asf` | `make_asf_fixtures.py`; `make_external_asf_fixtures.py`; `import_windows_wma_fixtures.py` (Microsoft's encoder, below) | ffprobe, ffmpeg decoding (bit-exact for Lossless), MediaInfo (`crosscheck_asf_fixtures.py`); `wma_tables.py --check` for the tables generated from FFmpeg's source |
 
 All scripts are in `scripts/fixtures`.
@@ -44,15 +45,24 @@ Every cross-check script also compares each fixture's golden report with MediaIn
   - AC-3: `mixlevel` read as 8 bits instead of A/52's 5, so `dynrng`, the time codes and Annex D's `dsurexmod` come out 3 bits late in a frame with production information; the script reproduces that reading and compares with it.
   - MPEG audio: the names of the Layer I and II mode extension, the frames it parses of a variable bitrate without a VBR header, no encoder without a LAME tag, an encoder string or an ID3v2 TSSE.
   - Musepack: no format for SV4 to SV6 (one superframe stream taken for MPEG-2.5 Layer II) or after a leading ID3v2 tag, the SV7 encoder version read from byte 24 instead of 27, no channels or encoder for SV8.
+  - WavPack: reads only the first two audio blocks, and only a block that "wvpk" follows immediately; the sample rate from the header's index (no custom rate, no DSD rate); no Audio track for a file with one audio block.
   - Ogg: the sample count from the rounded duration, no Speex comments (the comment count is skipped), no floor type for a single floor (the floor count read one short) or a broken setup header.
   - MP4 and AAC: the bitrate mode, which follows frame sizes more than the encoder's declaration (ADTS: VBR where the largest frame is more than 2 % above the smallest, else none; MP4: the esds bitrates, else the sample sizes within 1 %), the mono layout of HE-AAC v2, no duration for ADTS, one frame for ADIF.
 - **Fixtures it reads otherwise** are listed per fixture with the evidence, for example:
   - MPEG audio: observed, not found in the source: without a VBR header's byte count, the stream's bytes come out as the file size less the leading tags and twice the trailing ones. On `external-blade-mono`'s 16,128 bytes of frames, MediaInfo gives 16,000 with a 128-byte ID3v1 tag, 16,049 with a 79-byte APE tag with a header and 15,921 with both; a 47-byte APE tag without a header, which `Tag/File__Tags.cpp` sizes 32 bytes larger, gives 16,128, and with ID3v1 16,049, which the rule does not fit.
   - MPEG audio: a lone frame that ends the file taken for a stream; "Xing" read in Layer II.
+  - WavPack: `built-leading-id3v2`'s title and track, which MediaInfo does not fill for WavPack; DSD, custom sample rates and single-block files are skipped with their reasons.
   - Musepack: a crash (SIGFPE) on a reserved SV8 sample rate code.
   - MP4 and AAC: a `crc_check` read in unprotected ADTS frames of several raw data blocks; parametric stereo read in a channel pair, which FFmpeg and faad2 do not apply there.
 - **Tags:** of the 145 tag fixtures, MediaInfo reads the title, artist and album of 5 (written by ffmpeg and mutagen). It reads no tag of the 119 whose audio it does not recognize, and the other 21 hold none of these fields; both are asserted empty.
 - **Version:** the assertions and skips describe 24.01, so the scripts stop with a message on another version.
+
+### WavPack
+
+- The 57 encoder-written fixtures come from wavpack 5.6.0 (Ubuntu 24.04's package) over deterministic signals from `wavpack_signal.py` (WAV, float, AIFF, CAF and DSF): lossless at 8 to 32 bits and float, 1 to 8 channels, the speed modes, hybrid with and without correction files, DSD, custom rates, wrappers, an MD5 and an APEv2 tag. The 39 hand-built ones (`built-*`) change those files to produce each finding.
+- `wavpack_model.py` computes the expected blocks and stream figures independently of the parser.
+- `wavpack_blocks.c` is built with libwavpack's own sources (`wavpack_tool.py`, pinned by SHA-256) and prints what `read_next_header` and `WavpackVerifySingleBlock` say of every block; blocks the library refuses are listed per fixture in the script.
+- ffprobe differences (a channel mask of the wrong size, a missing channel mask, a header not at byte 0) and MediaInfo's readings are listed with their evidence in `crosscheck_wavpack_fixtures.py`.
 
 ### Derived Musepack SV6 fixtures
 
@@ -96,6 +106,7 @@ These are built or fetched by helper scripts:
 - fdk-aac: `fdk_tool.py`
 - exhale: `exhale_tool.py`
 - aoTuV releases, plus Rarewares' aoTuV and Lancer builds under Wine: `aotuv_tool.py`
+- libwavpack 5.6.0, for the block reader the cross-check builds: `wavpack_tool.py`
 - mppenc 1.16, libmpcdec 1.2.6 and its C++ ancestor, the Portable Musepack decoder (built with one portability patch; its archive is only in the private repository, so it needs the token), plus Rarewares' SV4, SV5 and SV7 encoders and mppdec under Wine: `musepack_tool.py`
 
 ### Models
@@ -106,6 +117,7 @@ The models that compute the expected values are:
 - `mp4_boxes.py` and `aac_model.py` for MP4 and AAC
 - `ogg_model.py` and `vorbis_opus_model.py` for Ogg
 - `musepack_model.py` for Musepack
+- `wavpack_model.py` for WavPack
 - `ac3_model.py` for AC-3
 - `asf_model.py` for ASF
 

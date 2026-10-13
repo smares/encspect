@@ -18,6 +18,51 @@ public partial class FindingCoverageTests
     [GeneratedRegex(", \"((?:asf|wma)\\.[a-z0-9-]+)\"\\);")]
     private static partial Regex BoundedCode();
 
+    [GeneratedRegex("\"(wavpack\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex WavPackCode();
+
+    [GeneratedRegex("\\[\"(wavpack\\.[a-z0-9-]+)\"\\] =")]
+    private static partial Regex WavPackTable();
+
+    [GeneratedRegex("\"code\": \"(wavpack\\.[a-z0-9-]+)\"")]
+    private static partial Regex WavPackManifestCode();
+
+    // Every code the WavPack parser emits is raised by a fixture whose manifest lists it, or by a
+    // crafted file of WavPackFindingTests, which asserts the finding is present.
+    [Fact]
+    public void EveryWavPackCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.WavPack"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => WavPackCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 25, $"Found only {emitted.Count} codes.");
+
+        var asserted = WavPackTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "WavPackFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack"), "*.expected.json"))
+        {
+            foreach (Match m in WavPackManifestCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        // MemoryTests.Bounded asserts the code it is given is present.
+        foreach (string line in File.ReadAllLines(Path.Combine(root, "tests", "Encspect.Tests", "MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
+        {
+            foreach (Match m in WavPackBoundedCode().Matches(line))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
+    }
+
+    [GeneratedRegex(", \"(wavpack\\.[a-z0-9-]+)\"\\);")]
+    private static partial Regex WavPackBoundedCode();
+
     [Fact]
     public void EveryCodeTheParsersEmitIsAsserted()
     {

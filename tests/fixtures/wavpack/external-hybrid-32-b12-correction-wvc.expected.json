@@ -1,0 +1,157 @@
+{
+ "length": 43000,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 21214,
+   "index": 0,
+   "samples": 11025,
+   "flags": "34dc1f5b",
+   "version": "410",
+   "total": 24000,
+   "crc": "c19a7c3a",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     7,
+     12
+    ],
+    [
+     46,
+     139,
+     1858
+    ],
+    [
+     1908,
+     140,
+     19298
+    ],
+    [
+     21210,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 21214,
+   "length": 17842,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "34dc1f5b",
+   "version": "410",
+   "total": 24000,
+   "crc": "eddac7ec",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     21246,
+     7,
+     12
+    ],
+    [
+     21260,
+     139,
+     6426
+    ],
+    [
+     27690,
+     140,
+     11358
+    ],
+    [
+     39052,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 39056,
+   "length": 3944,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "34b41f5b",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     39088,
+     7,
+     8
+    ],
+    [
+     39098,
+     139,
+     3894
+    ],
+    [
+     42996,
+     47,
+     2
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack correction data",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 32,
+   "average_bitrate": 632.1,
+   "hybrid": true,
+   "correction": true,
+   "lossless": false,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 43000
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-b12",
+   "-c"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 32,
+   "samples": 24000
+  },
+  "file": "correction file written next to external-hybrid-32-b12-correction.wv"
+ },
+ "findings": [
+  {
+   "code": "wavpack.correction-file",
+   "contains": "correction data only"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

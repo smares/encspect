@@ -1,0 +1,166 @@
+{
+ "length": 46736,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 13492,
+   "index": 0,
+   "samples": 12000,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "9af5ffe8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     2,
+     16
+    ],
+    [
+     102,
+     3,
+     32
+    ],
+    [
+     136,
+     4,
+     8
+    ],
+    [
+     146,
+     5,
+     12
+    ],
+    [
+     160,
+     101,
+     4
+    ],
+    [
+     166,
+     42,
+     0
+    ],
+    [
+     168,
+     138,
+     13314
+    ],
+    [
+     13486,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13492,
+   "length": 33244,
+   "index": 12000,
+   "samples": 12000,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "6ad4e5d8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13524,
+     2,
+     16
+    ],
+    [
+     13542,
+     3,
+     32
+    ],
+    [
+     13576,
+     4,
+     8
+    ],
+    [
+     13586,
+     5,
+     12
+    ],
+    [
+     13600,
+     42,
+     0
+    ],
+    [
+     13602,
+     138,
+     33124
+    ],
+    [
+     46730,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 687.0192,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 46736
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-hh"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}
