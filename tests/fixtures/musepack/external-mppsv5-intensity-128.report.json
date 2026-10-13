@@ -5,18 +5,18 @@
       "name": "encspect",
       "version": "(build)"
     },
-    "source": "sv5.mpc",
+    "source": "external-mppsv5-intensity-128.mpc",
     "root": {
       "name": "File",
       "value": "Musepack",
       "offset": 0,
-      "length": 32,
+      "length": 12124,
       "children": [
         {
           "name": "Musepack SV5",
           "kind": "Stream",
           "offset": 0,
-          "length": 32,
+          "length": 12124,
           "children": [
             {
               "name": "Header",
@@ -25,14 +25,14 @@
               "children": [
                 {
                   "name": "Bitrate",
-                  "value": 0,
+                  "value": 128,
                   "unit": "kbps",
                   "offset": 2,
                   "length": 2
                 },
                 {
                   "name": "Intensity Stereo",
-                  "value": false,
+                  "value": true,
                   "offset": 2,
                   "length": 1,
                   "bitOffset": 1,
@@ -54,13 +54,14 @@
                 },
                 {
                   "name": "Max Band",
-                  "value": 27,
+                  "value": 26,
                   "offset": 0,
                   "length": 2
                 },
                 {
                   "name": "Block Size",
-                  "value": 1,
+                  "value": 16,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 1,
                   "bitOffset": 2,
@@ -68,7 +69,7 @@
                 },
                 {
                   "name": "Frame Count",
-                  "value": 3,
+                  "value": 29,
                   "unit": "frames",
                   "offset": 4,
                   "length": 4
@@ -77,10 +78,10 @@
             },
             {
               "name": "Audio Data",
-              "value": 24,
+              "value": 12116,
               "unit": "bytes",
               "offset": 8,
-              "length": 24
+              "length": 12116
             }
           ]
         }
@@ -96,22 +97,23 @@
         "codec": "Musepack SV5",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo, intensity stereo",
         "channelLayout": [
           "front left",
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 0,
-        "duration": 0,
-        "isVbr": true,
+        "samples": 31775,
+        "duration": 0.7205215419501134,
+        "isVbr": false,
         "series": []
       }
     ],
     "findings": [
       {
         "severity": "Info",
-        "code": "musepack.version-not-analyzed",
-        "message": "The stream is Musepack SV5, which the analyzer reads only as far as its header; its frames are not analyzed.",
+        "code": "musepack.frames-not-read",
+        "message": "The frames of this Musepack SV5 stream are not read: libmpcdec 1.2.6 does not decode streams that have a constant bitrate (128 kbps), use intensity stereo or lead blocks of frames (16) with one length.",
         "offset": 1,
         "length": 2,
         "path": [

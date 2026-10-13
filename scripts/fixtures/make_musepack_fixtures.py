@@ -8,8 +8,9 @@ a cut audio packet, keys the specification does not reserve or does not allow, a
 disagrees with the audio packets, data after the stream end, a stream end of the wrong size, no
 ReplayGain packet; an SV7 header with fields libmpcdec refuses, a cut stream, a damaged frame length,
 data after the frames, a header cut short; and both versions with ID3v2 before and APE and ID3v1
-after, and with "TAG" inside the audio where an ID3v1 tag would sit. Streams of versions 4, 5 and 6
-are written from their header layout (libmpcdec 1.2.6), with frames of zero bits. Each has a
+after, and with "TAG" inside the audio where an ID3v1 tag would sit; an SV5 stream whose frame is
+too short for its subband resolutions. Streams of version 6, of which no encoder was found, are
+written from their header layout (libmpcdec 1.2.6), with frames of zero bits. Each has a
 manifest worked out by musepack_model.py plus the findings the analyzer must report.
 
 Standard library only and deterministic, so CI reruns it and fails when the committed files differ.
@@ -176,6 +177,15 @@ def sv7_truncated():
     return data[:len(data) * 3 // 5]
 
 
+def write_bits(words, bit, count, value):
+    """Writes value into count bits at bit of 32-bit words read from their most significant bit."""
+    for i in range(count):
+        position = bit + i
+        mask = 1 << (31 - (position & 31))
+        word = position >> 5
+        words[word] = (words[word] | mask) if (value >> (count - 1 - i)) & 1 else (words[word] & ~mask)
+
+
 def sv7_damaged_length():
     """The fourth frame's length 64 bits shorter, so the frames after it are read from the wrong bits."""
     data = bytearray(external("mppenc-standard"))
@@ -183,13 +193,25 @@ def sv7_damaged_length():
     frame = m.sv7(bytes(data))["frames"][3]
     bit = frame["bit"]
     words = list(struct.unpack(f"<{len(data) // 4}I", data))
-    value = frame["length"] - 64
-    for i in range(20):
-        position = bit + i
-        mask = 1 << (31 - (position & 31))
-        word = position >> 5
-        words[word] = (words[word] | mask) if (value >> (19 - i)) & 1 else (words[word] & ~mask)
+    write_bits(words, bit, 20, frame["length"] - 64)
     assert w.read(bit, 20) == frame["length"]
+    return struct.pack(f"<{len(words)}I", *words)
+
+
+def sv5_band_overrun():
+    """The fourth frame's length cut to 100 bits and the fifth's lengthened by as much, so the units
+    still end where the encoder ends them, but the fourth frame's subband resolutions run past its
+    length."""
+    data = external("mppsv5-vbr")
+    w = m.Words(data)
+    words = list(struct.unpack(f"<{len(data) // 4}I", data))
+    bit = 64
+    for _ in range(3):
+        bit += 20 + w.read(bit, 20)
+    fourth = w.read(bit, 20)
+    fifth = w.read(bit + 20 + fourth, 20)
+    write_bits(words, bit, 20, 100)
+    write_bits(words, bit + 120, 20, fifth + fourth - 100)
     return struct.pack(f"<{len(words)}I", *words)
 
 
@@ -221,15 +243,14 @@ def sv7_tag_inside():
 
 
 def old(version, bitrate=0, frames=(40, 75, 13)):
-    """A stream of version 4, 5 or 6 (libmpcdec 1.2.6 streaminfo_read_header_sv6): the header word,
-    the frame count, then frames of a 20-bit length and that many zero bits, and in version 6 the 11
-    bits after the last; written into 32-bit little-endian words from their most significant bit."""
+    """A stream of version 6 (libmpcdec 1.2.6 streaminfo_read_header_sv6): the header word, the frame
+    count, then frames of a 20-bit length and that many zero bits, and the 11 bits after the last;
+    written into 32-bit little-endian words from their most significant bit."""
     bits = format(bitrate, "09b") + "0" + "1" + format(version, "010b") + format(27, "05b") + format(1, "06b")
-    bits += format(len(frames), "016b" if version == 4 else "032b")
+    bits += format(len(frames), "032b")
     for length in frames:
         bits += format(length, "020b") + "0" * length
-    if version == 6:
-        bits += format(500, "011b")
+    bits += format(500, "011b")
     bits += "0" * (-len(bits) % 32)
     return b"".join(struct.pack("<I", int(bits[i:i + 32], 2)) for i in range(0, len(bits), 32))
 
@@ -262,11 +283,10 @@ FIXTURES = {
     "sv7-header-truncated": (sv7_header_truncated, None, [("musepack.header-truncated", "the data holds 20")]),
     "sv7-tags": (sv7_tags, "tags", []),
     "sv7-tag-inside": (sv7_tag_inside, None, [("tag.near-miss", "Musepack")]),
-    "sv4": (lambda: old(4), None, [("musepack.version-not-analyzed", "SV4")]),
-    "sv5": (lambda: old(5), None, [("musepack.version-not-analyzed", "SV5")]),
-    "sv6": (lambda: old(6), None, [("musepack.version-not-analyzed", "SV6")]),
-    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.version-not-analyzed", "SV6"),
-                                                                ("musepack.constant-bitrate", "128 kbps")]),
+    "sv5-band-overrun": (sv5_band_overrun, None, [("musepack.band-header-overrun", "1 frame's subband resolutions run past"),
+                                                  ("musepack.last-frame-unwritten", "bits past the end of the data")]),
+    "sv6": (lambda: old(6), None, [("musepack.frames-not-read", "no SV6 encoder")]),
+    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.frames-not-read", "no SV6 encoder")]),
 }
 
 # The damaged frame length makes the frames after it be read from the wrong bits, which still decode

@@ -11,8 +11,10 @@ public sealed class MusepackParser : IFormatParser
 {
     public string Name => "Musepack";
 
-    // A magic number is certain. A stream of version 4 to 6 has none, so it needs its frames to end
-    // exactly at the end of the data, and ranks below MPEG audio's chain of frames (90).
+    // A magic number is certain. A stream of version 4 to 6 has none, so it needs its units to end
+    // where the encoders end them (OldStreamParser.Sniff). With three units or more, starting at the
+    // first byte, that outranks MPEG audio (90), which also takes one or two frames that end at the
+    // end of the data anywhere in it; with fewer it ranks below.
     public int Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
@@ -26,7 +28,7 @@ public sealed class MusepackParser : IFormatParser
             return 100;
         }
 
-        return OldStreamParser.Sniff(reader) ? 60 : 0;
+        return OldStreamParser.Sniff(reader);
     }
 
     public long? DeclaredEnd(SniffContext context)

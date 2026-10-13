@@ -8,8 +8,8 @@ namespace Encspect.Formats.Musepack;
 // the end of the SV7 header, three in the SV8 encoder info packet. libmpcdec r495
 // (mpc_get_encoder_string) reads them: an SV7 byte, or an SV8 version whose major × 100 + minor is at
 // most 116, is a release, beta or alpha of the SV7 encoders by its last digit; a later SV8 version
-// is stable where its minor version is even. Two versions are confirmed by encodes: mppenc 1.16,
-// built from source, writes 116, and mpcenc of musepack_src r495 writes 1.30.1 (mpcenc/config.h).
+// is stable where its minor version is even. Encodes confirm which SV7 encoders write what (the table
+// below, with high confidence), and that mpcenc of musepack_src r495 writes 1.30.1 (mpcenc/config.h).
 // mpc2sv8 converts SV7 to SV8 and writes the SV7 byte's hundreds as major, the rest as minor and
 // build 0 (mpc2sv8.c), which it did for mppenc 1.16's 116 as 1.16.0. Other versions follow
 // libmpcdec's reading with medium confidence. A tag's claim (EncoderClaim) alone names the
@@ -20,6 +20,47 @@ internal static partial class MusepackEncoder
 
     [GeneratedRegex(@"(?<![a-z])(mpcenc|mppenc|musepack|mpc2sv8|mpcgain)(?![a-z])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MusepackWords();
+
+    // What each SV7 encoder writes into the header, from encodes with mppenc 1.16 built from source and
+    // with every Rarewares Win32 build (scripts/fixtures/musepack_tool.py, which records each build's
+    // fields in tests/fixtures/musepack/sv7-encoders.json). The version byte separates the releases from
+    // 1.06 on; builds that write the same byte differ in other fields or are named together. Before
+    // 1.06 every build writes 0: Klemm's 0.90f to 1.0 without true gapless and with Max Level 0,
+    // Buschmann's 1.7.8 to 1.7.9c without true gapless and with the input's Max Level, and the builds
+    // from 1.01j to 1.04 and the three in Rarewares' 1.05z archives with true gapless. Some builds write
+    // profile 1 ("Unstable/Experimental") whatever profile is asked for, which sets them apart. The
+    // rows are tried in order.
+    private static readonly Sv7Build[] Sv7Builds =
+    [
+        new(116, null, null, null, "mppenc 1.16", "mppenc 1.16 (built from source)"),
+        new(115, null, null, true, "mppenc 1.15f, 1.15i or 1.15r", "mppenc 1.15f, 1.15i and 1.15r"),
+        new(115, null, null, false, "mppenc 1.15t or 1.15u", "mppenc 1.15t and 1.15u"),
+        new(114, null, null, null, "mppenc 1.14", "mppenc 1.14"),
+        new(113, null, null, null, "mppenc 1.13a or 1.13g", "mppenc 1.13a and 1.13g"),
+        new(112, null, null, null, "mppenc 1.12", "mppenc 1.12"),
+        new(111, null, null, true, "mppenc 1.11a", "mppenc 1.11a"),
+        new(111, null, null, false, "mppenc 1.11b", "mppenc 1.11b"),
+        new(110, null, null, null, "mppenc 1.1", "mppenc 1.1"),
+        new(106, null, null, null, "mppenc 1.06", "mppenc 1.06"),
+        new(0, true, null, true, "mppenc 1.05z1, 1.05z2 or 1.06 alpha", "mppenc 1.05z1, 1.05z2 and the 1.06 alpha of Rarewares' 1.05z3 archive"),
+        new(0, true, null, false, "mppenc 1.01j to 1.04", "mppenc 1.01j, 1.02 and 1.04"),
+        new(0, false, true, null, "MP+ 1.7.8 to 1.7.9c (Buschmann)", "MP+ 1.7.8, 1.7.9, 1.7.9a and 1.7.9c"),
+        new(0, false, false, null, "mppenc 0.90f to 1.0 (Klemm)", "mppenc 0.90f, 0.90k, 0.90m, 0.90o, 0.90r and 1.0"),
+    ];
+
+    // A row of the table: the version byte and, where builds share it, whether true gapless is set,
+    // whether Max Level is set and whether the profile is 1; null matches either.
+    private sealed record Sv7Build(int Byte, bool? Gapless, bool? MaxLevel, bool? ExperimentalProfile, string Name, string Confirmed)
+    {
+        public bool Matches(Sv7Header h) =>
+            h.Encoder == Byte && (Gapless is null || h.Gapless == Gapless) && (MaxLevel is null || (h.MaxLevel != 0) == MaxLevel)
+            && (ExperimentalProfile is null || (h.Profile == 1) == ExperimentalProfile);
+
+        public string Traits =>
+            (Gapless is null ? string.Empty : Gapless.Value ? ", true gapless set" : ", true gapless not set")
+            + (MaxLevel is null ? string.Empty : MaxLevel.Value ? ", Max Level set" : ", Max Level 0")
+            + (ExperimentalProfile is null ? string.Empty : ExperimentalProfile.Value ? ", profile 1" : ", a profile other than 1");
+    }
 
     // libmpcdec r495's name for an SV7 version byte, or an SV8 version of at most 1.16.
     public static string LibmpcdecName(int version) => version switch
@@ -41,30 +82,25 @@ internal static partial class MusepackEncoder
         return $"{(minor % 2 == 0 ? "stable" : "unstable")} {major}.{minor}.{build}";
     }
 
-    // The Encoder node, covering the stream, or null where nothing names one. sv7Version is the SV7
-    // byte, sv8Version the encoder info packet's major, minor and build; field is the node that
+    // The Encoder node, covering the stream, or null where nothing names one. sv7 is the SV7 header,
+    // sv8Version the encoder info packet's major, minor and build; field is the node that
     // holds them. differs reports a claim that names another encoder than the stream's evidence.
-    public static Node? Detect(int? sv7Version, (int Major, int Minor, int Build)? sv8Version, Node? field, IReadOnlyList<EncoderClaim> claims,
+    public static Node? Detect(Sv7Header? sv7, (int Major, int Minor, int Build)? sv8Version, Node? field, IReadOnlyList<EncoderClaim> claims,
         Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs)
     {
         Node? encoder = null;
-        if (sv7Version is { } byteValue && field is not null)
+        if (sv7 is { } header && field is not null)
         {
             string at = $"at 0x{field.Offset:X}";
-            if (byteValue == 116)
+            if (Sv7Builds.FirstOrDefault(b => b.Matches(header)) is { } build)
             {
-                encoder = Named(cover, "mppenc 1.16", "High",
-                    $"The SV7 header's encoder version {at} is 116, which mppenc 1.16 writes");
-            }
-            else if (byteValue == 0)
-            {
-                encoder = Named(cover, LibmpcdecName(0), "Low",
-                    $"The SV7 header's encoder version {at} is 0, which libmpcdec names so; no encoder of those versions was at hand to confirm it");
+                encoder = Named(cover, build.Name, "High",
+                    $"The SV7 header's encoder version {at} is {header.Encoder}{build.Traits}, as encodes with {build.Confirmed} write it");
             }
             else
             {
-                encoder = Named(cover, $"Musepack encoder {LibmpcdecName(byteValue)}", "Medium",
-                    $"The SV7 header's encoder version {at} is {byteValue}, which libmpcdec reads as {LibmpcdecName(byteValue)}");
+                encoder = Named(cover, $"Musepack encoder {LibmpcdecName(header.Encoder)}", "Medium",
+                    $"The SV7 header's encoder version {at} is {header.Encoder}, which libmpcdec reads as {LibmpcdecName(header.Encoder)}; no encode confirms a release that writes it");
             }
         }
         else if (sv8Version is { } version && field is not null)

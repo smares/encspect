@@ -184,6 +184,22 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An SV5 stream keeps the same 24-byte record per frame as SV7, so it is held to the same bounds.
+    [Fact]
+    public void ManyOldMusepackFramesStayCompact()
+    {
+        const int frames = 100_000;
+
+        (Report report, long kept, long peak) = Measure("frames.mp+", Sv5Frames(frames), Sv5Frames(100));
+
+        Assert.Equal("Musepack SV5", report.Streams.Single().Codec);
+        Assert.Equal((frames - 1) * 1152L - 481, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * MusepackKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MusepackPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
     // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
     // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak
@@ -395,5 +411,31 @@ public class MemoryTests(ITestOutputHelper output)
 
         Write(0, 11);
         return words.SelectMany(BitConverter.GetBytes).ToArray()[..(int)(((bit + 31) >> 5) << 2)];
+    }
+
+    // An SV5 stream (libmpcdec 1.2.6 streaminfo_read_header_sv6): a header with a variable bitrate,
+    // mid/side, max band 0 and one frame per length, then frames of 32 zero bits, whole words only,
+    // as the SV5 encoder writes them.
+    private static byte[] Sv5Frames(int frames)
+    {
+        long bits = 64 + (frames * 52L);
+        var data = new byte[(int)(bits >> 5) << 2];
+        uint[] words = new uint[data.Length / 4];
+        words[0] = (1u << 21) | (5u << 11) | 1u;
+        words[1] = (uint)frames;
+        for (long i = 0, bit = 64; i < frames; i++, bit += 52)
+        {
+            for (int b = 0; b < 20; b++)
+            {
+                long position = bit + b;
+                if (((32 >> (19 - b)) & 1) != 0 && position >> 5 < words.Length)
+                {
+                    words[position >> 5] |= 1u << (31 - (int)(position & 31));
+                }
+            }
+        }
+
+        Buffer.BlockCopy(words, 0, data, 0, data.Length);
+        return data;
     }
 }

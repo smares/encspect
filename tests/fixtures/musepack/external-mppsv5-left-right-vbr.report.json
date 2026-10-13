@@ -1,0 +1,2803 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-mppsv5-left-right-vbr.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 10412,
+      "children": [
+        {
+          "name": "Musepack SV5",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 10412,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Bitrate",
+                  "value": 0,
+                  "unit": "kbps",
+                  "offset": 2,
+                  "length": 2
+                },
+                {
+                  "name": "Intensity Stereo",
+                  "value": false,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Mid/Side Stereo",
+                  "value": false,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Stream Version",
+                  "value": 5,
+                  "offset": 1,
+                  "length": 2
+                },
+                {
+                  "name": "Max Band",
+                  "value": 31,
+                  "offset": 0,
+                  "length": 2
+                },
+                {
+                  "name": "Block Size",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 6
+                },
+                {
+                  "name": "Frame Count",
+                  "value": 29,
+                  "unit": "frames",
+                  "offset": 4,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 10412,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 28,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Coded Samples",
+                  "value": 32256,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Decoder Delay",
+                  "value": 481,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Samples",
+                  "value": 31775,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.7205215419501134,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 108.40703125,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 967,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 13721,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 37.01796875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 525.25703125,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 10412,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "15 frames (53.6%)",
+                      "offset": 0,
+                      "length": 10412
+                    },
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "3 frames (10.7%)",
+                      "offset": 0,
+                      "length": 10412
+                    },
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "4 frames (14.3%)",
+                      "offset": 0,
+                      "length": 10412
+                    },
+                    {
+                      "name": "160 to 191 kbps",
+                      "value": "5 frames (17.9%)",
+                      "offset": 0,
+                      "length": 10412
+                    },
+                    {
+                      "name": "512 to 543 kbps",
+                      "value": "1 frame (3.6%)",
+                      "offset": 0,
+                      "length": 10412
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames With Mid/Side",
+                  "value": "0 frames (0.0%)",
+                  "offset": 0,
+                  "length": 10412
+                },
+                {
+                  "name": "Subband Stereo Coding",
+                  "value": 313,
+                  "unit": "subbands",
+                  "offset": 0,
+                  "length": 10412,
+                  "children": [
+                    {
+                      "name": "Mid/Side",
+                      "value": "0 subbands (0.0%)",
+                      "offset": 0,
+                      "length": 10412
+                    },
+                    {
+                      "name": "Left/Right",
+                      "value": "313 subbands (100.0%)",
+                      "offset": 0,
+                      "length": 10412
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4317 bits, 18 subbands",
+              "offset": 8,
+              "length": 544,
+              "ranges": [
+                {
+                  "offset": 8,
+                  "length": 540
+                },
+                {
+                  "offset": 549,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4317,
+                  "unit": "bits",
+                  "offset": 9,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8,
+                  "length": 544,
+                  "ranges": [
+                    {
+                      "offset": 8,
+                      "length": 2
+                    },
+                    {
+                      "offset": 12,
+                      "length": 536
+                    },
+                    {
+                      "offset": 549,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 18,
+                      "offset": 8,
+                      "length": 544,
+                      "ranges": [
+                        {
+                          "offset": 8,
+                          "length": 2
+                        },
+                        {
+                          "offset": 12,
+                          "length": 536
+                        },
+                        {
+                          "offset": 549,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 8,
+                      "length": 544,
+                      "ranges": [
+                        {
+                          "offset": 8,
+                          "length": 2
+                        },
+                        {
+                          "offset": 12,
+                          "length": 536
+                        },
+                        {
+                          "offset": 549,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1478 bits, 3 subbands",
+              "offset": 548,
+              "length": 192,
+              "ranges": [
+                {
+                  "offset": 548,
+                  "length": 2
+                },
+                {
+                  "offset": 552,
+                  "length": 184
+                },
+                {
+                  "offset": 738,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1478,
+                  "unit": "bits",
+                  "offset": 548,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 548,
+                      "length": 2
+                    },
+                    {
+                      "offset": 555,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 552,
+                  "length": 188,
+                  "ranges": [
+                    {
+                      "offset": 552,
+                      "length": 184
+                    },
+                    {
+                      "offset": 738,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 552,
+                      "length": 188,
+                      "ranges": [
+                        {
+                          "offset": 552,
+                          "length": 184
+                        },
+                        {
+                          "offset": 738,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 552,
+                      "length": 188,
+                      "ranges": [
+                        {
+                          "offset": 552,
+                          "length": 184
+                        },
+                        {
+                          "offset": 738,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1523 bits, 3 subbands",
+              "offset": 736,
+              "length": 196,
+              "ranges": [
+                {
+                  "offset": 736,
+                  "length": 3
+                },
+                {
+                  "offset": 740,
+                  "length": 188
+                },
+                {
+                  "offset": 929,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1523,
+                  "unit": "bits",
+                  "offset": 736,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 736,
+                  "length": 196,
+                  "ranges": [
+                    {
+                      "offset": 736,
+                      "length": 1
+                    },
+                    {
+                      "offset": 740,
+                      "length": 188
+                    },
+                    {
+                      "offset": 929,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 736,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 736,
+                          "length": 1
+                        },
+                        {
+                          "offset": 740,
+                          "length": 188
+                        },
+                        {
+                          "offset": 929,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 736,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 736,
+                          "length": 1
+                        },
+                        {
+                          "offset": 740,
+                          "length": 188
+                        },
+                        {
+                          "offset": 929,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1551 bits, 3 subbands",
+              "offset": 928,
+              "length": 200,
+              "ranges": [
+                {
+                  "offset": 928,
+                  "length": 2
+                },
+                {
+                  "offset": 932,
+                  "length": 192
+                },
+                {
+                  "offset": 1125,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1551,
+                  "unit": "bits",
+                  "offset": 928,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 928,
+                      "length": 2
+                    },
+                    {
+                      "offset": 935,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 932,
+                  "length": 196,
+                  "ranges": [
+                    {
+                      "offset": 932,
+                      "length": 192
+                    },
+                    {
+                      "offset": 1125,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 932,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 932,
+                          "length": 192
+                        },
+                        {
+                          "offset": 1125,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 932,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 932,
+                          "length": 192
+                        },
+                        {
+                          "offset": 1125,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1641 bits, 3 subbands",
+              "offset": 1124,
+              "length": 212,
+              "ranges": [
+                {
+                  "offset": 1124,
+                  "length": 2
+                },
+                {
+                  "offset": 1128,
+                  "length": 204
+                },
+                {
+                  "offset": 1333,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1641,
+                  "unit": "bits",
+                  "offset": 1124,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 1124,
+                      "length": 2
+                    },
+                    {
+                      "offset": 1130,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1128,
+                  "length": 208,
+                  "ranges": [
+                    {
+                      "offset": 1128,
+                      "length": 3
+                    },
+                    {
+                      "offset": 1132,
+                      "length": 200
+                    },
+                    {
+                      "offset": 1333,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 1128,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 1128,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1132,
+                          "length": 200
+                        },
+                        {
+                          "offset": 1333,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 1128,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 1128,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1132,
+                          "length": 200
+                        },
+                        {
+                          "offset": 1333,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1732 bits, 3 subbands",
+              "offset": 1332,
+              "length": 224,
+              "ranges": [
+                {
+                  "offset": 1332,
+                  "length": 2
+                },
+                {
+                  "offset": 1336,
+                  "length": 216
+                },
+                {
+                  "offset": 1554,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1732,
+                  "unit": "bits",
+                  "offset": 1332,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 1332,
+                      "length": 2
+                    },
+                    {
+                      "offset": 1339,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1336,
+                  "length": 220,
+                  "ranges": [
+                    {
+                      "offset": 1336,
+                      "length": 216
+                    },
+                    {
+                      "offset": 1554,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 1336,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 1336,
+                          "length": 216
+                        },
+                        {
+                          "offset": 1554,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 1336,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 1336,
+                          "length": 216
+                        },
+                        {
+                          "offset": 1554,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1532 bits, 3 subbands",
+              "offset": 1552,
+              "length": 196,
+              "ranges": [
+                {
+                  "offset": 1552,
+                  "length": 3
+                },
+                {
+                  "offset": 1556,
+                  "length": 192
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1532,
+                  "unit": "bits",
+                  "offset": 1552,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1552,
+                  "length": 196,
+                  "ranges": [
+                    {
+                      "offset": 1552,
+                      "length": 1
+                    },
+                    {
+                      "offset": 1556,
+                      "length": 192
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 1552,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 1552,
+                          "length": 1
+                        },
+                        {
+                          "offset": 1556,
+                          "length": 192
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 1552,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 1552,
+                          "length": 1
+                        },
+                        {
+                          "offset": 1556,
+                          "length": 192
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1512 bits, 3 subbands",
+              "offset": 1744,
+              "length": 196,
+              "ranges": [
+                {
+                  "offset": 1744,
+                  "length": 1
+                },
+                {
+                  "offset": 1748,
+                  "length": 188
+                },
+                {
+                  "offset": 1937,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1512,
+                  "unit": "bits",
+                  "offset": 1744,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 1744,
+                      "length": 1
+                    },
+                    {
+                      "offset": 1750,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1748,
+                  "length": 192,
+                  "ranges": [
+                    {
+                      "offset": 1748,
+                      "length": 3
+                    },
+                    {
+                      "offset": 1752,
+                      "length": 184
+                    },
+                    {
+                      "offset": 1937,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 1748,
+                      "length": 192,
+                      "ranges": [
+                        {
+                          "offset": 1748,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1752,
+                          "length": 184
+                        },
+                        {
+                          "offset": 1937,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 1748,
+                      "length": 192,
+                      "ranges": [
+                        {
+                          "offset": 1748,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1752,
+                          "length": 184
+                        },
+                        {
+                          "offset": 1937,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1319 bits, 3 subbands",
+              "offset": 1936,
+              "length": 172,
+              "ranges": [
+                {
+                  "offset": 1936,
+                  "length": 2
+                },
+                {
+                  "offset": 1940,
+                  "length": 164
+                },
+                {
+                  "offset": 2105,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1319,
+                  "unit": "bits",
+                  "offset": 1936,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 1936,
+                      "length": 2
+                    },
+                    {
+                      "offset": 1942,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 1940,
+                  "length": 168,
+                  "ranges": [
+                    {
+                      "offset": 1940,
+                      "length": 3
+                    },
+                    {
+                      "offset": 1944,
+                      "length": 160
+                    },
+                    {
+                      "offset": 2105,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 1940,
+                      "length": 168,
+                      "ranges": [
+                        {
+                          "offset": 1940,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1944,
+                          "length": 160
+                        },
+                        {
+                          "offset": 2105,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 1940,
+                      "length": 168,
+                      "ranges": [
+                        {
+                          "offset": 1940,
+                          "length": 3
+                        },
+                        {
+                          "offset": 1944,
+                          "length": 160
+                        },
+                        {
+                          "offset": 2105,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "947 bits, 3 subbands",
+              "offset": 2104,
+              "length": 124,
+              "ranges": [
+                {
+                  "offset": 2104,
+                  "length": 2
+                },
+                {
+                  "offset": 2108,
+                  "length": 116
+                },
+                {
+                  "offset": 2225,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 947,
+                  "unit": "bits",
+                  "offset": 2104,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 2104,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2111,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2108,
+                  "length": 120,
+                  "ranges": [
+                    {
+                      "offset": 2108,
+                      "length": 116
+                    },
+                    {
+                      "offset": 2225,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 2108,
+                      "length": 120,
+                      "ranges": [
+                        {
+                          "offset": 2108,
+                          "length": 116
+                        },
+                        {
+                          "offset": 2225,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 2108,
+                      "length": 120,
+                      "ranges": [
+                        {
+                          "offset": 2108,
+                          "length": 116
+                        },
+                        {
+                          "offset": 2225,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1330 bits, 3 subbands",
+              "offset": 2224,
+              "length": 172,
+              "ranges": [
+                {
+                  "offset": 2224,
+                  "length": 1
+                },
+                {
+                  "offset": 2228,
+                  "length": 168
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1330,
+                  "unit": "bits",
+                  "offset": 2224,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 2224,
+                      "length": 1
+                    },
+                    {
+                      "offset": 2230,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2228,
+                  "length": 168,
+                  "ranges": [
+                    {
+                      "offset": 2228,
+                      "length": 3
+                    },
+                    {
+                      "offset": 2232,
+                      "length": 164
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 2228,
+                      "length": 168,
+                      "ranges": [
+                        {
+                          "offset": 2228,
+                          "length": 3
+                        },
+                        {
+                          "offset": 2232,
+                          "length": 164
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 2228,
+                      "length": 168,
+                      "ranges": [
+                        {
+                          "offset": 2228,
+                          "length": 3
+                        },
+                        {
+                          "offset": 2232,
+                          "length": 164
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1616 bits, 3 subbands",
+              "offset": 2392,
+              "length": 212,
+              "ranges": [
+                {
+                  "offset": 2392,
+                  "length": 1
+                },
+                {
+                  "offset": 2396,
+                  "length": 204
+                },
+                {
+                  "offset": 2603,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1616,
+                  "unit": "bits",
+                  "offset": 2392,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 2392,
+                      "length": 1
+                    },
+                    {
+                      "offset": 2397,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2396,
+                  "length": 208,
+                  "ranges": [
+                    {
+                      "offset": 2396,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2400,
+                      "length": 200
+                    },
+                    {
+                      "offset": 2603,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 2396,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 2396,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2400,
+                          "length": 200
+                        },
+                        {
+                          "offset": 2603,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 2396,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 2396,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2400,
+                          "length": 200
+                        },
+                        {
+                          "offset": 2603,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1737 bits, 3 subbands",
+              "offset": 2600,
+              "length": 220,
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1737,
+                  "unit": "bits",
+                  "offset": 2601,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2600,
+                  "length": 220,
+                  "ranges": [
+                    {
+                      "offset": 2600,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2604,
+                      "length": 216
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 2600,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 2600,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2604,
+                          "length": 216
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 2600,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 2600,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2604,
+                          "length": 216
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1645 bits, 3 subbands",
+              "offset": 2816,
+              "length": 212,
+              "ranges": [
+                {
+                  "offset": 2816,
+                  "length": 1
+                },
+                {
+                  "offset": 2820,
+                  "length": 208
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1645,
+                  "unit": "bits",
+                  "offset": 2816,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 2816,
+                      "length": 1
+                    },
+                    {
+                      "offset": 2821,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 2820,
+                  "length": 208,
+                  "ranges": [
+                    {
+                      "offset": 2820,
+                      "length": 2
+                    },
+                    {
+                      "offset": 2824,
+                      "length": 204
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 2820,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 2820,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2824,
+                          "length": 204
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 2820,
+                      "length": 208,
+                      "ranges": [
+                        {
+                          "offset": 2820,
+                          "length": 2
+                        },
+                        {
+                          "offset": 2824,
+                          "length": 204
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1553 bits, 3 subbands",
+              "offset": 3028,
+              "length": 200,
+              "ranges": [
+                {
+                  "offset": 3028,
+                  "length": 196
+                },
+                {
+                  "offset": 3227,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1553,
+                  "unit": "bits",
+                  "offset": 3029,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3028,
+                  "length": 200,
+                  "ranges": [
+                    {
+                      "offset": 3028,
+                      "length": 2
+                    },
+                    {
+                      "offset": 3032,
+                      "length": 192
+                    },
+                    {
+                      "offset": 3227,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 3028,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 3028,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3032,
+                          "length": 192
+                        },
+                        {
+                          "offset": 3227,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 3028,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 3028,
+                          "length": 2
+                        },
+                        {
+                          "offset": 3032,
+                          "length": 192
+                        },
+                        {
+                          "offset": 3227,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1552 bits, 3 subbands",
+              "offset": 3224,
+              "length": 200,
+              "ranges": [
+                {
+                  "offset": 3224,
+                  "length": 196
+                },
+                {
+                  "offset": 3422,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1552,
+                  "unit": "bits",
+                  "offset": 3224,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3224,
+                  "length": 200,
+                  "ranges": [
+                    {
+                      "offset": 3224,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3228,
+                      "length": 192
+                    },
+                    {
+                      "offset": 3422,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 3224,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 3224,
+                          "length": 1
+                        },
+                        {
+                          "offset": 3228,
+                          "length": 192
+                        },
+                        {
+                          "offset": 3422,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 3224,
+                      "length": 200,
+                      "ranges": [
+                        {
+                          "offset": 3224,
+                          "length": 1
+                        },
+                        {
+                          "offset": 3228,
+                          "length": 192
+                        },
+                        {
+                          "offset": 3422,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1523 bits, 3 subbands",
+              "offset": 3420,
+              "length": 196,
+              "ranges": [
+                {
+                  "offset": 3420,
+                  "length": 3
+                },
+                {
+                  "offset": 3424,
+                  "length": 188
+                },
+                {
+                  "offset": 3614,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1523,
+                  "unit": "bits",
+                  "offset": 3420,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3420,
+                  "length": 196,
+                  "ranges": [
+                    {
+                      "offset": 3420,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3424,
+                      "length": 188
+                    },
+                    {
+                      "offset": 3614,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 3420,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 3420,
+                          "length": 1
+                        },
+                        {
+                          "offset": 3424,
+                          "length": 188
+                        },
+                        {
+                          "offset": 3614,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 3420,
+                      "length": 196,
+                      "ranges": [
+                        {
+                          "offset": 3420,
+                          "length": 1
+                        },
+                        {
+                          "offset": 3424,
+                          "length": 188
+                        },
+                        {
+                          "offset": 3614,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1621 bits, 3 subbands",
+              "offset": 3612,
+              "length": 208,
+              "ranges": [
+                {
+                  "offset": 3612,
+                  "length": 2
+                },
+                {
+                  "offset": 3616,
+                  "length": 204
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1621,
+                  "unit": "bits",
+                  "offset": 3612,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3612,
+                      "length": 2
+                    },
+                    {
+                      "offset": 3619,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3616,
+                  "length": 204,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 3616,
+                      "length": 204
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 3616,
+                      "length": 204
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "1716 bits, 3 subbands",
+              "offset": 3816,
+              "length": 224,
+              "ranges": [
+                {
+                  "offset": 3816,
+                  "length": 1
+                },
+                {
+                  "offset": 3820,
+                  "length": 216
+                },
+                {
+                  "offset": 4039,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 1716,
+                  "unit": "bits",
+                  "offset": 3816,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 3816,
+                      "length": 1
+                    },
+                    {
+                      "offset": 3822,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 3820,
+                  "length": 220,
+                  "ranges": [
+                    {
+                      "offset": 3820,
+                      "length": 3
+                    },
+                    {
+                      "offset": 3824,
+                      "length": 212
+                    },
+                    {
+                      "offset": 4039,
+                      "length": 1
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 3,
+                      "offset": 3820,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 3820,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3824,
+                          "length": 212
+                        },
+                        {
+                          "offset": 4039,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 3820,
+                      "length": 220,
+                      "ranges": [
+                        {
+                          "offset": 3820,
+                          "length": 3
+                        },
+                        {
+                          "offset": 3824,
+                          "length": 212
+                        },
+                        {
+                          "offset": 4039,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "13701 bits, 26 subbands",
+              "offset": 4036,
+              "length": 1716,
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 13701,
+                  "unit": "bits",
+                  "offset": 4037,
+                  "length": 3
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 4036,
+                  "length": 1716,
+                  "ranges": [
+                    {
+                      "offset": 4036,
+                      "length": 2
+                    },
+                    {
+                      "offset": 4040,
+                      "length": 1712
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 26,
+                      "offset": 4036,
+                      "length": 1716,
+                      "ranges": [
+                        {
+                          "offset": 4036,
+                          "length": 2
+                        },
+                        {
+                          "offset": 4040,
+                          "length": 1712
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 4036,
+                      "length": 1716,
+                      "ranges": [
+                        {
+                          "offset": 4036,
+                          "length": 2
+                        },
+                        {
+                          "offset": 4040,
+                          "length": 1712
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4192 bits, 27 subbands",
+              "offset": 5748,
+              "length": 532,
+              "ranges": [
+                {
+                  "offset": 5748,
+                  "length": 1
+                },
+                {
+                  "offset": 5752,
+                  "length": 524
+                },
+                {
+                  "offset": 6278,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4192,
+                  "unit": "bits",
+                  "offset": 5748,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 5748,
+                      "length": 1
+                    },
+                    {
+                      "offset": 5754,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 5752,
+                  "length": 528,
+                  "ranges": [
+                    {
+                      "offset": 5752,
+                      "length": 3
+                    },
+                    {
+                      "offset": 5756,
+                      "length": 520
+                    },
+                    {
+                      "offset": 6278,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 5752,
+                      "length": 528,
+                      "ranges": [
+                        {
+                          "offset": 5752,
+                          "length": 3
+                        },
+                        {
+                          "offset": 5756,
+                          "length": 520
+                        },
+                        {
+                          "offset": 6278,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 5752,
+                      "length": 528,
+                      "ranges": [
+                        {
+                          "offset": 5752,
+                          "length": 3
+                        },
+                        {
+                          "offset": 5756,
+                          "length": 520
+                        },
+                        {
+                          "offset": 6278,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4043 bits, 27 subbands",
+              "offset": 6276,
+              "length": 512,
+              "ranges": [
+                {
+                  "offset": 6276,
+                  "length": 3
+                },
+                {
+                  "offset": 6280,
+                  "length": 504
+                },
+                {
+                  "offset": 6786,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4043,
+                  "unit": "bits",
+                  "offset": 6276,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 6276,
+                      "length": 3
+                    },
+                    {
+                      "offset": 6283,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 6280,
+                  "length": 508,
+                  "ranges": [
+                    {
+                      "offset": 6280,
+                      "length": 504
+                    },
+                    {
+                      "offset": 6786,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 6280,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 6280,
+                          "length": 504
+                        },
+                        {
+                          "offset": 6786,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 6280,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 6280,
+                          "length": 504
+                        },
+                        {
+                          "offset": 6786,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4186 bits, 27 subbands",
+              "offset": 6784,
+              "length": 528,
+              "ranges": [
+                {
+                  "offset": 6784,
+                  "length": 3
+                },
+                {
+                  "offset": 6788,
+                  "length": 524
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4186,
+                  "unit": "bits",
+                  "offset": 6784,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 6784,
+                      "length": 3
+                    },
+                    {
+                      "offset": 6791,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 6788,
+                  "length": 524,
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 6788,
+                      "length": 524
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 6788,
+                      "length": 524
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4297 bits, 27 subbands",
+              "offset": 7308,
+              "length": 544,
+              "ranges": [
+                {
+                  "offset": 7308,
+                  "length": 1
+                },
+                {
+                  "offset": 7312,
+                  "length": 536
+                },
+                {
+                  "offset": 7849,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4297,
+                  "unit": "bits",
+                  "offset": 7308,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7308,
+                      "length": 1
+                    },
+                    {
+                      "offset": 7314,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7312,
+                  "length": 540,
+                  "ranges": [
+                    {
+                      "offset": 7312,
+                      "length": 3
+                    },
+                    {
+                      "offset": 7316,
+                      "length": 532
+                    },
+                    {
+                      "offset": 7849,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 7312,
+                      "length": 540,
+                      "ranges": [
+                        {
+                          "offset": 7312,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7316,
+                          "length": 532
+                        },
+                        {
+                          "offset": 7849,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 7312,
+                      "length": 540,
+                      "ranges": [
+                        {
+                          "offset": 7312,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7316,
+                          "length": 532
+                        },
+                        {
+                          "offset": 7849,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4035 bits, 26 subbands",
+              "offset": 7848,
+              "length": 512,
+              "ranges": [
+                {
+                  "offset": 7848,
+                  "length": 1
+                },
+                {
+                  "offset": 7852,
+                  "length": 504
+                },
+                {
+                  "offset": 8358,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4035,
+                  "unit": "bits",
+                  "offset": 7848,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 7848,
+                      "length": 1
+                    },
+                    {
+                      "offset": 7854,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 7852,
+                  "length": 508,
+                  "ranges": [
+                    {
+                      "offset": 7852,
+                      "length": 3
+                    },
+                    {
+                      "offset": 7856,
+                      "length": 500
+                    },
+                    {
+                      "offset": 8358,
+                      "length": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 26,
+                      "offset": 7852,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 7852,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7856,
+                          "length": 500
+                        },
+                        {
+                          "offset": 8358,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 7852,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 7852,
+                          "length": 3
+                        },
+                        {
+                          "offset": 7856,
+                          "length": 500
+                        },
+                        {
+                          "offset": 8358,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4084 bits, 27 subbands",
+              "offset": 8356,
+              "length": 516,
+              "ranges": [
+                {
+                  "offset": 8356,
+                  "length": 3
+                },
+                {
+                  "offset": 8360,
+                  "length": 508
+                },
+                {
+                  "offset": 8869,
+                  "length": 3
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4084,
+                  "unit": "bits",
+                  "offset": 8356,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 8356,
+                      "length": 3
+                    },
+                    {
+                      "offset": 8363,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8360,
+                  "length": 512,
+                  "ranges": [
+                    {
+                      "offset": 8360,
+                      "length": 508
+                    },
+                    {
+                      "offset": 8869,
+                      "length": 3
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 8360,
+                      "length": 512,
+                      "ranges": [
+                        {
+                          "offset": 8360,
+                          "length": 508
+                        },
+                        {
+                          "offset": 8869,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 8360,
+                      "length": 512,
+                      "ranges": [
+                        {
+                          "offset": 8360,
+                          "length": 508
+                        },
+                        {
+                          "offset": 8869,
+                          "length": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4048 bits, 27 subbands",
+              "offset": 8868,
+              "length": 512,
+              "ranges": [
+                {
+                  "offset": 8868,
+                  "length": 2
+                },
+                {
+                  "offset": 8872,
+                  "length": 508
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4048,
+                  "unit": "bits",
+                  "offset": 8868,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 8868,
+                      "length": 2
+                    },
+                    {
+                      "offset": 8874,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 8872,
+                  "length": 508,
+                  "ranges": [
+                    {
+                      "offset": 8872,
+                      "length": 3
+                    },
+                    {
+                      "offset": 8876,
+                      "length": 504
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 8872,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 8872,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8876,
+                          "length": 504
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 8872,
+                      "length": 508,
+                      "ranges": [
+                        {
+                          "offset": 8872,
+                          "length": 3
+                        },
+                        {
+                          "offset": 8876,
+                          "length": 504
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "4301 bits, 27 subbands",
+              "offset": 9376,
+              "length": 544,
+              "ranges": [
+                {
+                  "offset": 9376,
+                  "length": 1
+                },
+                {
+                  "offset": 9380,
+                  "length": 540
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame Length",
+                  "value": 4301,
+                  "unit": "bits",
+                  "offset": 9376,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 9376,
+                      "length": 1
+                    },
+                    {
+                      "offset": 9382,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "offset": 9380,
+                  "length": 540,
+                  "ranges": [
+                    {
+                      "offset": 9380,
+                      "length": 3
+                    },
+                    {
+                      "offset": 9384,
+                      "length": 536
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Used Subbands",
+                      "value": 27,
+                      "offset": 9380,
+                      "length": 540,
+                      "ranges": [
+                        {
+                          "offset": 9380,
+                          "length": 3
+                        },
+                        {
+                          "offset": 9384,
+                          "length": 536
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mid/Side Subbands",
+                      "value": "none",
+                      "offset": 9380,
+                      "length": 540,
+                      "ranges": [
+                        {
+                          "offset": 9380,
+                          "length": 3
+                        },
+                        {
+                          "offset": 9384,
+                          "length": 536
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "not decoded",
+              "offset": 9916,
+              "length": 496,
+              "ranges": [
+                {
+                  "offset": 9916,
+                  "length": 1
+                },
+                {
+                  "offset": 9920,
+                  "length": 492
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Musepack SV5",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 31775,
+        "duration": 0.7205215419501134,
+        "averageBitrate": 108.40703125,
+        "isVbr": true,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              8,
+              548,
+              736,
+              928,
+              1124,
+              1332,
+              1552,
+              1744,
+              1936,
+              2104,
+              2224,
+              2392,
+              2600,
+              2816,
+              3028,
+              3224,
+              3420,
+              3612,
+              3816,
+              4036,
+              5748,
+              6276,
+              6784,
+              7308,
+              7848,
+              8356,
+              8868,
+              9376
+            ],
+            "values": [
+              166.02578125,
+              57.3453125,
+              59.06796875,
+              60.13984375,
+              63.58515625,
+              67.06875,
+              59.4125,
+              58.646875,
+              51.25859375,
+              37.01796875,
+              51.6796875,
+              62.628125,
+              67.26015625,
+              63.73828125,
+              60.21640625,
+              60.178125,
+              59.06796875,
+              62.81953125,
+              66.45625,
+              525.25703125,
+              161.240625,
+              155.53671875,
+              161.0109375,
+              165.26015625,
+              155.23046875,
+              157.10625,
+              155.728125,
+              165.41328125
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              108
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "musepack.last-frame-unwritten",
+        "message": "The last of the 29 frames the header counts runs 13 bits past the end of the data: the SV4 and SV5 encoders write whole words only, and decoders (libmpcdec 1.2.6, mppdec) decode the frames before it.",
+        "offset": 9916,
+        "length": 496,
+        "path": [
+          0,
+          30
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

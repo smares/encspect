@@ -1,6 +1,6 @@
 """Reads Musepack streams the way the fixtures' manifests describe them, from the sources the parser
 cites: the SV8 specification for packets, libmpcdec r495 for SV7 headers, frames and sample counts,
-libmpcdec 1.2.6 for the headers of versions 4 to 6. Written apart from the analyzer, so the tests
+libmpcdec 1.2.6 for versions 4 to 6. Written apart from the analyzer, so the tests
 compare two readings; crosscheck_musepack_fixtures.py confirms this one with mpcdec, ffprobe and
 libmpcdec's own frame reading (mpcdec_frames.c).
 """
@@ -110,6 +110,64 @@ def sv7(data):
     samples = max(0, min(announced, len(frames) * FRAME - DELAY))
     return {"header": h, "frames": frames, "end": stream_end, "truncated": truncated, "extra_missing": extra_missing, "final": final,
             "samples": samples, "rate": RATES[h["rate"]], "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
+
+
+# libmpcdec 1.2.6 huffsv46.c mpc_table_Region_A, B, C: (code, length, index into Q_res) for subbands
+# 0 to 10, 11 to 22 and 23 up, codes left-aligned in 32 bits; mpc_decoder.c Q_res: the resolutions.
+REGION_A = [(2147483648, 1, 1), (2013265920, 5, 3), (1946157056, 6, 4), (1912602624, 7, 7), (1895825408, 8, 8), (1887436800, 9, 9),
+            (1883242496, 10, 10), (1881145344, 11, 11), (1880096768, 12, 12), (1879572480, 13, 13), (1879310336, 14, 14), (1879048192, 14, 15),
+            (1744830464, 5, 5), (1610612736, 5, 6), (1073741824, 3, 0), (0, 2, 2)]
+REGION_B = [(2147483648, 1, 1), (1073741824, 2, 0), (536870912, 3, 2), (268435456, 4, 3), (134217728, 5, 4), (67108864, 6, 5), (33554432, 7, 6),
+            (0, 7, 7)]
+REGION_C = [(2147483648, 1, 0), (1073741824, 2, 1), (536870912, 3, 2), (0, 3, 3)]
+Q_RES_A = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17]
+Q_RES_B = [0, 1, 2, 3, 4, 5, 6, 17]
+Q_RES_C = [0, 1, 2, 17]
+
+
+def old_header(w):
+    """libmpcdec 1.2.6 streaminfo_read_header_sv6."""
+    version = w.read(11, 10)
+    return {"bitrate": w.read(0, 9), "is": w.read(9, 1), "ms": w.read(10, 1), "version": version, "max_band": w.read(21, 5),
+            "block": w.read(26, 6), "frames": w.read(32, 16) if version == 4 else w.read(32, 32), "data": 48 if version == 4 else 64}
+
+
+def old_resolution(w, position, band):
+    table, resolutions = (REGION_A, Q_RES_A) if band < 11 else (REGION_B, Q_RES_B) if band <= 22 else (REGION_C, Q_RES_C)
+    code = w.read(position, 32)
+    for entry, length, index in table:
+        if code >= entry:
+            return position + length, resolutions[index]
+
+
+def old(data):
+    """A stream of version 4 or 5 with a variable bitrate, no intensity stereo and one frame per length,
+    as libmpcdec 1.2.6 reads it: mpc_decoder_read_bitstream_sv6 decodes each frame's resolutions (and
+    mid/side flags) by subband, and the decoder stops before the last counted frame, which the
+    encoders leave unfinished."""
+    w = Words(data)
+    h = old_header(w)
+    readable = h["version"] in (4, 5) and h["bitrate"] == 0 and not h["is"] and h["block"] == 1
+    frames, bit = [], h["data"]
+    for i in range(h["frames"] - 1 if readable else 0):
+        length = w.read(bit, 20)
+        position, used, mask = bit + 20, 0, 0
+        for band in range(min(h["max_band"], 31) + 1):
+            position, left = old_resolution(w, position, band)
+            flag = w.read(position, 1) if h["ms"] else 0
+            position += 1 if h["ms"] else 0
+            position, right = old_resolution(w, position, band)
+            if left or right:
+                used = band + 1
+                mask |= flag << band
+            if position > bit + 20 + length:
+                break
+        frames.append({"length": length, "used": used, "ms": mask, "overrun": position > bit + 20 + length})
+        bit += 20 + length
+    last_end = bit + 20 + w.read(bit, 20) if readable else None
+    decoded = len(frames) if readable else max(0, h["frames"] - 1) if h["version"] in (4, 5) else 0
+    return {"header": h, "readable": readable, "frames": frames, "last_runs_past": last_end - w.bits if readable else None,
+            "samples": max(0, decoded * FRAME - DELAY), "frame_bits": sum(f["length"] + 20 for f in frames)}
 
 
 def size(data, position, limit=None):
@@ -226,10 +284,17 @@ def manifest(data, start, end, extra=None):
         info = {"codec": "Musepack SV7", "sample_rate": s["rate"], "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * s["rate"] / coded / 1000 if coded else None}
     else:
-        w = Words(stream)
-        version = w.read(11, 10)
-        result["version"] = version
-        info = {"codec": f"Musepack SV{version}", "sample_rate": 44100, "channels": 2, "samples": 0, "average_bitrate": None}
+        s = old(stream)
+        h = s["header"]
+        result["version"] = h["version"]
+        result["header"] = {"Bitrate": f"{h['bitrate']} kbps", "Intensity Stereo": "true" if h["is"] else "false",
+                            "Mid/Side Stereo": "true" if h["ms"] else "false", "Stream Version": str(h["version"]), "Max Band": str(h["max_band"]),
+                            "Block Size": f"{h['block']} frame{'s' if h['block'] != 1 else ''}",
+                            "Frame Count": f"{h['frames']} frame{'s' if h['frames'] != 1 else ''}"}
+        result["frames"] = [[f["length"], f["used"], f"{f['ms']:x}", 0] for f in s["frames"]]
+        coded = len(s["frames"]) * FRAME
+        info = {"codec": f"Musepack SV{h['version']}", "sample_rate": 44100, "channels": 2, "samples": s["samples"],
+                "average_bitrate": s["frame_bits"] * 44100 / coded / 1000 if s["readable"] and coded else None}
     info["duration"] = info["samples"] / info["sample_rate"] if info["sample_rate"] else 0
     result["stream_infos"] = [info]
     result.update(extra or {})

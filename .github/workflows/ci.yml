@@ -261,7 +261,9 @@ jobs:
       - uses: actions/checkout@v5
 
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
-      # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source.
+      # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
+      # for SV4 and SV5 from the pinned libmpcdec 1.2.6. Without Wine, mppdec's check reads the frame
+      # counts recorded when the fixtures were written and says so.
       - name: Install musepack-tools and ffmpeg
         run: |
           sudo apt-get update

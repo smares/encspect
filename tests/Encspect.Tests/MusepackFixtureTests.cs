@@ -5,9 +5,9 @@ namespace Encspect.Tests;
 
 // Checks every Musepack fixture against its manifest (make_musepack_fixtures.py,
 // make_external_musepack_fixtures.py, both worked out by musepack_model.py and confirmed by
-// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV7 frame with
-// its length, used subbands, mid/side subbands and noise channels, every SV8 packet with its key and
-// bytes, the stream info and exactly the findings listed.
+// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV4, SV5 and SV7
+// frame with its length, used subbands, mid/side subbands and noise channels, every SV8 packet with
+// its key and bytes, the stream info and exactly the findings listed.
 public class MusepackFixtureTests
 {
     public static TheoryData<string> Names
@@ -49,9 +49,9 @@ public class MusepackFixtureTests
         }
 
         int version = manifest.GetProperty("version").GetInt32();
-        if (version == 7 && stream.Children.Any(c => c.Kind == NodeKind.Frame))
+        if (version is 4 or 5 or 7 && stream.Children.Any(c => c.Kind == NodeKind.Frame))
         {
-            List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame && c.Value?.ToString() != "cut short").ToList();
+            List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame && c.Value?.ToString() is not "cut short" and not "not decoded").ToList();
             JsonElement[] expected = manifest.GetProperty("frames").EnumerateArray().ToArray();
             int whole = frames.Count(f => f.Children.Any(c => c.Name == "Frame Data"));
             Assert.True(expected.Length <= frames.Count, $"{expected.Length} frames expected, {frames.Count} found");
@@ -61,7 +61,7 @@ public class MusepackFixtureTests
                 Node frame = frames[i];
                 Node data = frame.Children.Single(c => c.Name == "Frame Data");
                 string actual = $"{frame.Children.Single(c => c.Name == "Frame Length").Value?.AsInteger()} {data.Children.Single(c => c.Name == "Used Subbands").Value} "
-                    + $"{Mask(data.Children.Single(c => c.Name == "Mid/Side Subbands").Value!.ToString())} {data.Children.Single(c => c.Name == "Noise-Substituted Channels").Value}";
+                    + $"{Mask(data.Children.Single(c => c.Name == "Mid/Side Subbands").Value!.ToString())} {data.Children.SingleOrDefault(c => c.Name == "Noise-Substituted Channels")?.Value?.ToString() ?? "0"}";
                 Assert.Equal($"{item[0].GetInt64()} {item[1].GetInt32()} {item[2].GetString()} {item[3].GetInt32()}", actual);
             }
 
@@ -98,12 +98,71 @@ public class MusepackFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    // A stream of version 4 to 6 has no magic number; no fixture of another format passes for one.
+    [Fact]
+    public void OldStreamsAreNotFoundInOtherFormats()
+    {
+        var parser = new Encspect.Formats.Musepack.MusepackParser();
+        string musepack = Path.Combine(Fixtures.FixtureDirectory, "musepack");
+        foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories))
+        {
+            if (path.StartsWith(musepack, StringComparison.Ordinal) || path.EndsWith(".json", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            using FileStream stream = File.OpenRead(path);
+            var reader = new ByteReader(stream);
+            if (reader.Length >= 4 && !reader.MatchesAt(0, "MP+"u8) && !reader.MatchesAt(0, "MPCK"u8))
+            {
+                Assert.True(parser.Sniff(new SniffContext(reader)) == 0, path);
+            }
+        }
+    }
+
+    // The SV7 encoder table against what each encoder at hand wrote (sv7-encoders.json, written by
+    // make_external_musepack_fixtures.py): the fields the table reads, written into an SV7 stream,
+    // name that encoder with high confidence.
+    [Fact]
+    public void Sv7EncoderTableMatchesEncodes()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mppenc-standard.mpc"));
+        using JsonDocument rows = JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "musepack/sv7-encoders.json")));
+        foreach (JsonElement row in rows.RootElement.EnumerateArray())
+        {
+            byte[] data = (byte[])stream.Clone();
+            WriteBits(data, 72, 4, row.GetProperty("profile").GetInt32());
+            WriteBits(data, 80, 16, row.GetProperty("max_level").GetInt32());
+            WriteBits(data, 160, 1, row.GetProperty("gapless").GetBoolean() ? 1 : 0);
+            WriteBits(data, 161, 11, row.GetProperty("last").GetInt32());
+            WriteBits(data, 192, 8, row.GetProperty("encoder").GetInt32());
+            StreamInfo info = Encspect.Host.Analyzer.CreateDefault().Analyze("encoder.mpc", new MemoryStream(data)).Streams.Single();
+            Assert.True(row.GetProperty("detected").GetString() == info.Encoder, $"{row.GetProperty("build").GetString()}: {info.Encoder}");
+            Assert.Equal("High", info.EncoderConfidence?.ToString());
+        }
+    }
+
+    // Writes value into count bits at bit of the 32-bit little-endian words, read from their most
+    // significant bit.
+    private static void WriteBits(byte[] data, int bit, int count, int value)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            int position = bit + i;
+            int index = ((position >> 5) * 4) + 3 - ((position & 31) >> 3);
+            int mask = 0x80 >> (position & 7);
+            data[index] = (byte)(((value >> (count - 1 - i)) & 1) == 1 ? data[index] | mask : data[index] & ~mask);
+        }
+    }
+
     // A truncated copy of every encoder-made fixture, at every 97th byte, yields a report without a
     // parser failure, and its findings and streams point into the tree.
     [Theory]
     [InlineData("musepack/external-mppenc-extra-frame.mpc")]
     [InlineData("musepack/external-mpcenc-packets.mpc")]
     [InlineData("musepack/external-mpcenc-chapters.mpc")]
+    [InlineData("musepack/external-mppsv5-vbr.mpc")]
+    [InlineData("musepack/external-mppsv4-superframes.mpc")]
     public void TruncatedCopiesYieldFindings(string name)
     {
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));

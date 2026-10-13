@@ -525,10 +525,10 @@ internal static class Sv7Parser
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 
-        if (state.FinalSamples is { } final && final != h.LastSamples)
+        if (h.Gapless && state.FinalSamples is { } final && final != h.LastSamples)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.last-frame-samples-differ",
-                $"The 11 bits after the last frame give {final} samples, the header {h.LastSamples}; libmpcdec takes the bits after the frame.",
+                $"The 11 bits after the last frame give {final} samples, the header {h.LastSamples}; with true gapless, libmpcdec takes the bits after the frame.",
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 
@@ -542,7 +542,7 @@ internal static class Sv7Parser
         Node Cover(string name, NodeValue? value, string description) =>
             new(name, node.Offset, node.Length, value) { Description = description };
 
-        Node? encoder = MusepackEncoder.Detect(h.Encoder, null, header.Children.First(c => c.Name == "Encoder Version"), claims,
+        Node? encoder = MusepackEncoder.Detect(h, null, header.Children.First(c => c.Name == "Encoder Version"), claims,
             (name, value, description) => name == "Encoder"
                 ? new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.EncoderDetection }
                 : Cover(name, value, description),
