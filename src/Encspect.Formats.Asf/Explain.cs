@@ -149,7 +149,7 @@ internal static partial class Explain
     public const string DescriptionRecordsCount = "The number of attribute records (sections 4.7 and 4.8).";
     public const string Descriptor = "One attribute: a name and a value of a type (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorNameLength = "The number of bytes of the attribute's name (section 3.11).";
-    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (sections 3.11 and 7.4).";
+    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (the specification defines no \"WM/\" names; FFmpeg's asf.c and MediaInfoLib's File_Wm_Elements.cpp list them).";
     public const string DescriptorDataType = "The type of the value: 0 Unicode string, 1 byte array, 2 boolean, 3 32-bit integer, 4 64-bit integer, 5 16-bit integer, 6 GUID (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValueLength = "The number of bytes of the value (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValue = "The value of the attribute, typed by its data type.";
@@ -257,7 +257,9 @@ internal static partial class Explain
     public const string IndexSpecifier = "A stream and the kind of index it has (sections 4.9 to 4.11).";
     public const string IndexSpecifierStream = "The number of the indexed stream (sections 4.9 to 4.11).";
     public const string IndexType = "The kind of index: 1 nearest past data packet, 2 nearest past media object, 3 nearest past cleanpoint, 0xFF frame number offset (sections 4.9 and 4.10).";
-    public const string CompatibilityObject = "The Compatibility Object, reserved for future use (section 4.12).";
+    public const string CompatibilityObject = "The Compatibility Object, reserved for future use (section 4.12); the Windows Media Format SDK writes it into every file, with profile 2 and mode 1.";
+    public const string IndexPlaceholder = "An object that the specification and FFmpeg do not define and MediaInfoLib calls Index Placeholder; readers ignore it.";
+    public const string IndexPlaceholderData = "The object's data, which is not interpreted.";
     public const string CompatibilityProfile = "Reserved; should be 2 (section 4.12).";
     public const string CompatibilityMode = "Reserved; should be 1 (section 4.12).";
 
@@ -329,6 +331,7 @@ internal static partial class Explain
     public const string IndexPacketNumber = "The number of the data packet of this entry; for video, the closest key frame before the time (section 6.1).";
     public const string IndexPacketCount = "The number of data packets to send at this entry (section 6.1).";
     public const string FurtherEntries = "More entries, which the report does not list one by one.";
+    public const string FurtherIndexBlocks = "The index blocks after the first ones shown, which are read but not listed one by one.";
     public const string IndexObject = "The Index Object: indexes of any stream by time, in blocks of 32-bit offsets from a 64-bit base (section 6.2).";
     public const string MediaObjectIndex = "The Media Object Index Object: indexes by the number of media objects, for seeking by frame (section 6.3).";
     public const string TimecodeIndex = "The Timecode Index Object: indexes by the timecodes that ride along with the payloads (section 6.4).";

@@ -152,6 +152,12 @@ public sealed partial class AsfParser : IFormatParser
         for (int count = 0; count < 100_000 && position + ObjectHeaderSize <= reader.End; count++)
         {
             reader.CancellationToken.ThrowIfCancellationRequested();
+            if (ReadObjectHeader(reader, position, long.MaxValue) is { } open && open.Id == AsfGuids.Data && open.Size == 0)
+            {
+                // A Data Object of size 0 (a broadcast file) runs to the end of the file, and so owns what is at its end.
+                return reader.End;
+            }
+
             if (ReadObjectHeader(reader, position, long.MaxValue) is not { } top || top.Size < ObjectHeaderSize)
             {
                 break;

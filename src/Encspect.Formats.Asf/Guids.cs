@@ -27,10 +27,6 @@ internal static class AsfGuids
     public static readonly Guid ContentEncryption = new("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E");
     public static readonly Guid ExtendedContentEncryption = new("298AE614-2622-4C17-B935-DAE07EE9289C");
     public static readonly Guid DigitalSignature = new("2211B3FC-BD23-11D2-B4B7-00A0C955FC6E");
-    // Not in the specification (revision 01.20.03): a 26-byte object in the Header Extension Object of the
-    // files the Windows Media Format SDK's writer wrote (Windows 11, wmvcore 12.0.26100), which the
-    // project's fixtures show.
-    public static readonly Guid WriterExtension = new("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
     public static readonly Guid Padding = new("1806D474-CADF-4509-A4BA-9AABCB96AAE8");
 
     public static readonly Guid ExtendedStreamProperties = new("14E6A5CB-C672-4332-8399-A96952065B5A");
@@ -46,9 +42,15 @@ internal static class AsfGuids
     public static readonly Guid TimecodeIndexParameters = new("F55E496D-9797-4B5D-8C8B-604DFE9BFB24");
     public static readonly Guid AdvancedContentEncryption = new("43058533-6981-49E6-9B74-AD12CB86D58C");
 
-    // Section 10.3 prints the Header Object's GUID for the Compatibility Object. The two never meet,
-    // since it is only looked for inside the Header Extension Object.
-    public static readonly Guid Compatibility = Header;
+    // The Compatibility Object (section 4.12), which the Windows Media Format SDK's writer puts in every file. The
+    // text of revision 01.20.03 prints the Header Object's GUID for it in section 10.3, a misprint: 26 bytes with
+    // profile 2 and mode 1, as section 4.12 sets them, carry this GUID in all the SDK's files, and MediaInfoLib
+    // (File_Wm_Elements.cpp, Header_HeaderExtension_Compatibility) names it so.
+    public static readonly Guid Compatibility = new("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
+
+    // Not in the specification or in FFmpeg: MediaInfoLib (File_Wm_Elements.cpp) calls it Index Placeholder, and the
+    // Windows Media Format SDK's writer puts it in the Header Extension Object of Voice files. Readers ignore it.
+    public static readonly Guid IndexPlaceholder = new("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
 
     public static readonly Guid Reserved1 = new("ABD3D211-A9BA-11CF-8EE6-00C00C205365");
     public static readonly Guid Reserved2 = new("86D15241-311D-11D0-A3A4-00A0C90348F6");
@@ -104,6 +106,8 @@ internal static class AsfGuids
         [ExtendedContentEncryption] = "Extended Content Encryption Object",
         [DigitalSignature] = "Digital Signature Object",
         [Padding] = "Padding Object",
+        [Compatibility] = "Compatibility Object",
+        [IndexPlaceholder] = "Index Placeholder Object",
         [ExtendedStreamProperties] = "Extended Stream Properties Object",
         [AdvancedMutualExclusion] = "Advanced Mutual Exclusion Object",
         [GroupMutualExclusion] = "Group Mutual Exclusion Object",

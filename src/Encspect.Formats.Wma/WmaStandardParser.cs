@@ -14,6 +14,10 @@ namespace Encspect.Formats.Wma;
 // ends and what it holds.
 public sealed class WmaStandardParser : ICodecParser
 {
+    // Superframes (packets) are described in records up to this count, so a crafted file of millions of tiny ones
+    // stays bounded; the rest are counted but not read.
+    internal const int MaxPackets = 1 << 20;
+
     public const string CodecId = "wma";
 
     public string Id => CodecId;
@@ -61,6 +65,7 @@ public sealed class WmaStandardParser : ICodecParser
         nodes = new StandardNodes(stream);
 
         int index = 0;
+        long unread = 0;
         foreach (MappedBytes packet in packets)
         {
             if (index++ % 4096 == 0)
@@ -68,7 +73,19 @@ public sealed class WmaStandardParser : ICodecParser
                 context.CancellationToken.ThrowIfCancellationRequested();
             }
 
+            if (index > MaxPackets)
+            {
+                unread++;
+                continue;
+            }
+
             stream.Add(packet);
+        }
+
+        if (unread > 0)
+        {
+            findings.AddNow(Severity.Info, "wma.records-limit",
+                $"The stream has more than {MaxPackets} media objects; the {unread} after them are not read, so the statistics and the series cover the first {MaxPackets}.", parent);
         }
 
         stream.Finish();
@@ -77,7 +94,7 @@ public sealed class WmaStandardParser : ICodecParser
     }
 
     // Microsoft's encoders write a samples-per-block of 17 frames, the bit reservoir, variable block lengths and a
-    // block size count in the codec data of version 2 (the 10 Windows Media Audio 9.2 files of the project's
+    // block size count in the codec data of version 2 (the Windows Media Audio 9.2 files of the project's
     // fixtures, 44.1 kHz and 22.05 kHz); ffmpeg's encoder writes 0 and neither tool.
     private static List<WmaEncoder.Trait> ConfigurationTraits(int version, ReadOnlySpan<byte> data, StandardParameters p)
     {
@@ -103,7 +120,7 @@ public sealed class WmaStandardParser : ICodecParser
         if (bytes.Length != expected)
         {
             findings.AddNow(bytes.Length < (version == 1 ? 4 : 6) ? Severity.Warning : Severity.Info, "wma.codec-data-size",
-                $"The codec-specific data of Windows Media Audio {version} is {bytes.Length} bytes; the format states {expected} (ASF specification, section 11.1.1), and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(bytes.Length < (version == 1 ? 4 : 6) ? ", so it takes none here" : string.Empty)}.", holder);
+                $"The codec-specific data of Windows Media Audio {version} is {bytes.Length} bytes; {(version == 1 ? "FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(bytes.Length < (version == 1 ? 4 : 6) ? ", so it takes none here" : string.Empty)}.", holder);
         }
 
         Node? optionsNode = null;

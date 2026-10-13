@@ -8,6 +8,9 @@ public sealed partial class AsfParser
     // of entries stays a small tree.
     private const int MaxIndexEntryNodes = 1000;
 
+    // The same for the blocks of an Index Object; the blocks after them are read for the figures but get no nodes.
+    private const int MaxIndexBlockNodes = 1000;
+
     // ---- Simple Index Object (section 6.1) ----
 
     private static void ParseSimpleIndex(State state, ObjectHeader header, long end)
@@ -150,6 +153,37 @@ public sealed partial class AsfParser
             long invalidOffsets = 0;
             long unalignedOffsets = 0;
             long outsideOffsets = 0;
+            long oversizedBlocks = 0;
+            long unshownStart = -1;
+            long unshownBlocks = 0;
+            void Tally(uint[] offsets, List<ulong> positions)
+            {
+                for (int s = 0; s < offsets.Length; s++)
+                {
+                    if (offsets[s] == 0xFFFFFFFF)
+                    {
+                        invalidOffsets++;
+                        continue;
+                    }
+
+                    // A frame number offset (index type 0xFF) counts frames, not bytes (section 4.10).
+                    if (specifiers.Count > s && specifiers[s].Type == 0xFF)
+                    {
+                        continue;
+                    }
+
+                    ulong absolute = positions.Count > s ? positions[s] + offsets[s] : offsets[s];
+                    if (dataBytes > 0 && absolute >= (ulong)dataBytes)
+                    {
+                        outsideOffsets++;
+                    }
+                    else if (state.PacketSize > 0 && absolute % (ulong)state.PacketSize != 0)
+                    {
+                        unalignedOffsets++;
+                    }
+                }
+            }
+
             for (uint b = 0; b < blockCount; b++)
             {
                 f.Reader.CancellationToken.ThrowIfCancellationRequested();
@@ -160,6 +194,62 @@ public sealed partial class AsfParser
                 }
 
                 long blockAt = f.Position;
+                if (b >= MaxIndexBlockNodes)
+                {
+                    if (unshownStart < 0)
+                    {
+                        unshownStart = blockAt;
+                    }
+
+                    unshownBlocks++;
+                    if (b % 4096 == 0)
+                    {
+                        f.Reader.CancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    uint count = f.Reader.ReadUInt32LittleEndian();
+                    if (timecode)
+                    {
+                        f.Reader.ReadUInt16LittleEndian();
+                    }
+
+                    var blockPositions = new List<ulong>(specifierCount);
+                    for (int s = 0; s < specifierCount; s++)
+                    {
+                        blockPositions.Add(f.Reader.ReadUInt64LittleEndian());
+                    }
+
+                    long size = (timecode ? 4 : 0) + (4L * specifierCount);
+                    long room = size == 0 ? 0 : f.Remaining / size;
+                    if (count > room)
+                    {
+                        oversizedBlocks++;
+                    }
+
+                    var rawOffsets = new uint[specifierCount];
+                    for (long e = 0, n = Math.Min(count, room); e < n; e++)
+                    {
+                        if (e % 4096 == 0)
+                        {
+                            f.Reader.CancellationToken.ThrowIfCancellationRequested();
+                        }
+
+                        if (timecode)
+                        {
+                            f.Reader.ReadUInt32LittleEndian();
+                        }
+
+                        for (int s = 0; s < specifierCount; s++)
+                        {
+                            rawOffsets[s] = f.Reader.ReadUInt32LittleEndian();
+                        }
+
+                        Tally(rawOffsets, blockPositions);
+                    }
+
+                    continue;
+                }
+
                 var block = new Node("Index Block", blockAt, 0) { Description = Explain.IndexBlock };
                 var bf = new Fields(f.Reader, block);
                 uint entries = bf.Dword("Index Entry Count", Explain.IndexBlockEntryCount);
@@ -186,7 +276,7 @@ public sealed partial class AsfParser
                 long fit = entrySize == 0 ? 0 : bf.Remaining / entrySize;
                 if (entries > fit)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.index-size", $"An index block counts {entries} entries, but the {name} leaves room for {fit}.", node.Children[^1]);
+                    oversizedBlocks++;
                 }
 
                 long listed = Math.Min(entries, fit);
@@ -204,28 +294,9 @@ public sealed partial class AsfParser
                     for (int s = 0; s < offsetsPerEntry; s++)
                     {
                         offsets[s] = bf.Reader.ReadUInt32LittleEndian();
-                        if (offsets[s] == 0xFFFFFFFF)
-                        {
-                            invalidOffsets++;
-                            continue;
-                        }
-
-                        // A frame number offset (index type 0xFF) counts frames, not bytes (section 4.10).
-                        if (specifiers.Count > s && specifiers[s].Type == 0xFF)
-                        {
-                            continue;
-                        }
-
-                        ulong absolute = positions.Count > s ? positions[s] + offsets[s] : offsets[s];
-                        if (dataBytes > 0 && absolute >= (ulong)dataBytes)
-                        {
-                            outsideOffsets++;
-                        }
-                        else if (state.PacketSize > 0 && absolute % (ulong)state.PacketSize != 0)
-                        {
-                            unalignedOffsets++;
-                        }
                     }
+
+                    Tally(offsets, positions);
 
                     if (entryNodes++ < MaxIndexEntryNodes)
                     {
@@ -252,6 +323,16 @@ public sealed partial class AsfParser
                 }
 
                 node.Add(shown);
+            }
+
+            if (unshownBlocks > 0)
+            {
+                node.Add("Further Index Blocks", unshownStart, f.Position - unshownStart, NodeValue.Integer(unshownBlocks, "blocks", "block"), Explain.FurtherIndexBlocks);
+            }
+
+            if (oversizedBlocks > 0)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.index-size", $"{oversizedBlocks} index blocks of the {name} count more entries than its data leaves room for.", node.Children[^1], (int)Math.Min(oversizedBlocks, int.MaxValue));
             }
 
             if (outsideOffsets > 0)

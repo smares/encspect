@@ -177,7 +177,7 @@ internal sealed class StandardStream
         if (packet.Length > align)
         {
             Findings.Add(Severity.Info, "wma.superframe-long", () => SuperframeNode(index), count =>
-                $"{(count == 1 ? "A media object holds" : $"{count} media objects hold")} more bytes than the block alignment of {align}; a decoder uses the first {align} and ignores the rest.");
+                $"{(count == 1 ? "A media object holds" : $"{count} media objects hold")} more bytes than the block alignment of {align}; a decoder takes {align} bytes as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {align} only.");
         }
 
         Totals.UsedBytes += align;
@@ -240,6 +240,9 @@ internal sealed class StandardStream
                 return;
             }
 
+            // wmadec.c adds 8 * buf_size - 8 to last_superframe_len here, bits to a count of bytes, so its reservoir
+            // is longer than the bytes it holds and a frame that spans such a superframe is not rebuilt right. The
+            // bytes this superframe contributes are the align - 1 after its first, which is what this analysis keeps.
             record.Flags |= SuperframeRecord.Continues;
             Totals.ContinuationSuperframes++;
             AppendReservoir(data, 1, align - 1);
@@ -503,7 +506,7 @@ internal sealed class StandardStream
         FrameStatus.ExponentsMissing => "a block codes a channel but reuses exponents it never received",
         FrameStatus.CoefficientCode => "bits that are no code of the coefficient codebook",
         FrameStatus.CoefficientOverflow => "coefficients run past the end of the block",
-        FrameStatus.Overrun => "the frame needs more bits than it has",
+        FrameStatus.Overrun => "the frame needs more bits than it has (FFmpeg's reader accepts a frame that ends up to 8 bits past its superframe; this analysis reports any)",
         _ => "an error",
     };
 }

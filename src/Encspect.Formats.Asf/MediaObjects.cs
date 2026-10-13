@@ -29,6 +29,10 @@ public sealed partial class AsfParser
         uint number = 0;
         int collected = 0;
 
+        // The object's stated size; its buffer grows with the fragments that arrive, so a packet that states a
+        // large object and never delivers it costs what it holds, not what it states.
+        int total = 0;
+
         while (position < end)
         {
             reader.CancellationToken.ThrowIfCancellationRequested();
@@ -60,11 +64,7 @@ public sealed partial class AsfParser
                 PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
             }
 
-            int length = packet.PacketLength > 0 ? (int)Math.Min(packet.PacketLength, remaining) : count;
-            if (length < 1)
-            {
-                length = count;
-            }
+            int length = StepOf(state, packet, count, remaining);
 
             foreach (PayloadView payload in packet.Payloads)
             {
@@ -102,7 +102,8 @@ public sealed partial class AsfParser
                         continue;
                     }
 
-                    data = new byte[size];
+                    total = (int)size;
+                    data = new byte[Math.Min(total, Math.Max(payload.DataLength, 1))];
                     ranges.Clear();
                     collected = 0;
                     number = payload.ObjectNumber;
@@ -114,11 +115,16 @@ public sealed partial class AsfParser
                     continue;
                 }
 
-                int take = Math.Min(payload.DataLength, data!.Length - collected);
+                int take = Math.Min(payload.DataLength, total - collected);
                 if (take < payload.DataLength)
                 {
                     findings.Add(Severity.Warning, "asf.fragment-overrun", anchor, n =>
                         $"{(n == 1 ? "A fragment" : $"{n} fragments")} of stream {streamNumber} {(n == 1 ? "holds" : "hold")} more bytes than the media object's size leaves; the rest is dropped.");
+                }
+
+                if (data!.Length < collected + take)
+                {
+                    Array.Resize(ref data, (int)Math.Min(total, Math.Max(collected + take, data.Length * 2L)));
                 }
 
                 buffer.AsSpan(payload.DataPosition, take).CopyTo(data.AsSpan(collected));
@@ -128,7 +134,7 @@ public sealed partial class AsfParser
                 }
 
                 collected += take;
-                if (collected == data.Length)
+                if (collected == total)
                 {
                     yield return new MappedBytes(data, ranges);
                     data = null;

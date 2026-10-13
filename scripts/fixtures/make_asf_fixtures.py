@@ -199,7 +199,7 @@ def header_file():
          m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 2, 4) + b"sign"),
          m.obj("12345678-1234-1234-1234-123456789ABC", b"custom object data")],
         objects_in([1, 2], 4, 60, 256), 256, file_id=FILE_ID, play=500_000,
-        extension=m.obj(m.HEADER, bytes([5, 1]))
+        extension=m.obj(m.COMPATIBILITY, bytes([2, 1]))
         + m.obj(m.ADVANCED_CONTENT_ENCRYPTION, struct.pack("<H", 1) + m.guid("7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D") + struct.pack("<IH", 1, 1) + struct.pack("<HH", 1, 2) + struct.pack("<H", 1)
                  + struct.pack("<I", 3) + b"abc")
         + m.index_parameters(1000, [(1, 3)]) + m.padding(5))

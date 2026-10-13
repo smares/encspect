@@ -46,12 +46,41 @@ def stream_format(data):
     return tag, channels, rate, average, bits
 
 
+EXTENDED_CONTENT = bytes.fromhex("40a4d0d207e3d21197f000a0c95ea850")
+
+
+def header_is_vbr(data):
+    """The IsVBR attribute of the Extended Content Description Object, as the file itself states it; None where the
+    file has none. The writer stamps it, so it is evidence about the file, unlike the description the run writes."""
+    at = data.find(EXTENDED_CONTENT)
+    if at < 0 or len(data) < at + 26:
+        return None
+    size = struct.unpack_from("<Q", data, at + 16)[0]
+    count = struct.unpack_from("<H", data, at + 24)[0]
+    position = at + 26
+    for _ in range(count):
+        if position + 2 > min(len(data), at + size):
+            return None
+        name_length = struct.unpack_from("<H", data, position)[0]
+        name = data[position + 2:position + 2 + name_length].decode("utf-16-le", "replace").rstrip("\0")
+        kind, length = struct.unpack_from("<HH", data, position + 2 + name_length)
+        value = data[position + 6 + name_length:position + 6 + name_length + length]
+        if name == "IsVBR" and kind in (2, 3, 5):
+            return int.from_bytes(value, "little") != 0
+        position += 6 + name_length + length
+    return None
+
+
+def plural(count, noun):
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
 def describe(entry, actual):
     tool = TOOLS.get(entry.get("encoderPath", "wmf-sdk"), "Windows")
     text = f"Encoded by {tool} as {entry['codecName']}, {entry['mode'].upper()}, \"{entry['formatDescription']}\"."
     if entry.get("encoderPath") == "media-foundation":
         layout = {1: "mono", 2: "stereo", 6: "5.1"}.get(actual["channels"], f"{actual['channels']} channels")
-        text += f" The file is {layout} at {actual['bytes_per_second'] * 8 // 1000} kbit/s, as its header states; the request was {entry['requestedChannels']} channels at {entry['requestedBitrate'] // 1000} kbit/s."
+        text += f" The file is {layout} at {actual['bytes_per_second'] * 8 // 1000} kbit/s, as its header states; the request was {plural(entry['requestedChannels'], 'channel')} at {entry['requestedBitrate'] // 1000} kbit/s."
     return text
 
 
@@ -120,6 +149,9 @@ def main():
         if entry["sha256"] in seen:
             raise SystemExit(f"{entry['name']} and {seen[entry['sha256']]} are the same file.")
         seen[entry["sha256"]] = entry["name"]
+        stated = header_is_vbr((artifact / entry["file"]).read_bytes())
+        if stated is not None and stated != (entry["mode"] == "vbr"):
+            raise SystemExit(f"{entry['name']}: a {entry['mode']} request, but the file's IsVBR attribute says {int(stated)}.")
 
     imported = 0
     for entry in encodes:
@@ -165,7 +197,8 @@ def main():
                 "format_channels": entry["formatChannels"],
                 "format_rate": entry["formatRate"],
                 "format_bits": entry["formatBits"],
-                "format_bitrate": entry["formatBitrate"],
+                # Media Foundation takes a bitrate, not a format: what it wrote is the header's, and the request is under "requested".
+                "format_bitrate": actual["bytes_per_second"] * 8 if entry.get("encoderPath") == "media-foundation" else entry["formatBitrate"],
                 "config_bitrate": entry.get("configBitrate"),
                 "buffer_window_ms": entry.get("bufferWindow"),
                 "title": entry.get("title"),

@@ -7,8 +7,12 @@ public sealed partial class AsfParser
 {
     // Top-level objects, and objects in the header, are read up to these counts; a file of millions
     // of tiny objects is no ASF file anyone wrote.
-    private const int MaxTopLevelObjects = 1_000_000;
-    private const int MaxChildObjects = 100_000;
+    private const int MaxTopLevelObjects = 10_000;
+    private const int MaxChildObjects = 10_000;
+
+    // Entries of a list inside an object (codecs, encryption records) become nodes up to this count; the rest of
+    // the object is left as it is, with a finding.
+    private const int MaxListEntries = 1000;
 
     // Objects nest at most this deep (header, extension, extended stream properties, stream
     // properties), so the tree stays well within Node.MaxDepth.
@@ -170,6 +174,12 @@ public sealed partial class AsfParser
             long start = node.Children[^1].End;
             node.Add(new Node("Extra Data", start, node.End - start, NodeValue.Integer(node.End - start, "bytes", "byte")) { Description = Explain.ExtraData });
         }
+    }
+
+    private static void TooManyEntries(State state, Node node, Fields f, long count, string what)
+    {
+        state.Findings.AddNow(Severity.Warning, "asf.too-many-entries",
+            $"The {node.Name} counts {count} {what}; the first {MaxListEntries} are read, and the rest of the object, from 0x{f.Position:X}, is not.", node);
     }
 
     // ---- Header Object (section 3.1) ----
@@ -382,6 +392,10 @@ public sealed partial class AsfParser
         {
             ParseAdvancedContentEncryption(state, parent, header, end);
         }
+        else if (id == AsfGuids.IndexPlaceholder && inExtension)
+        {
+            ParseIndexPlaceholder(state, parent, header, end);
+        }
         else
         {
             Node node = ParseUnknown(state, parent, header, end);
@@ -469,7 +483,9 @@ public sealed partial class AsfParser
                 g => g == AsfGuids.NoErrorCorrection ? "No error correction" : g == AsfGuids.AudioSpread ? "Audio spread" : null);
             entry.TimeOffset = f.Qword("Time Offset", Explain.TimeOffset, v => NodeValue.Decimal(v / 10_000_000.0, 3, "s"));
             uint typeLength = f.Dword("Type-Specific Data Length", Explain.TypeSpecificDataLength, "bytes");
+            Node typeLengthNode = node.Children[^1];
             uint errorLength = f.Dword("Error Correction Data Length", Explain.ErrorCorrectionDataLength, "bytes");
+            Node errorLengthNode = node.Children[^1];
             long flagsAt = f.Position;
             ushort flags = f.Word("Flags", Explain.StreamFlags, v => NodeValue.Hex(v, 4));
             Node flagsNode = node.Children[^1];
@@ -486,7 +502,7 @@ public sealed partial class AsfParser
             if (typeLength > remaining)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.stream-data-length",
-                    $"Stream {entry.Number} states {typeLength} bytes of type-specific data, but the object holds {remaining} after its fixed fields.", node.Children[^7]);
+                    $"Stream {entry.Number} states {typeLength} bytes of type-specific data, but the object holds {remaining} after its fixed fields.", typeLengthNode);
             }
 
             if (typeBytes > 0)
@@ -498,7 +514,7 @@ public sealed partial class AsfParser
             if (errorLength > f.Remaining)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.stream-data-length",
-                    $"Stream {entry.Number} states {errorLength} bytes of error correction data, but the object holds {f.Remaining} after its type-specific data.", node.Children[^6]);
+                    $"Stream {entry.Number} states {errorLength} bytes of error correction data, but the object holds {f.Remaining} after its type-specific data.", errorLengthNode);
             }
 
             if (errorBytes > 0)
@@ -756,6 +772,12 @@ public sealed partial class AsfParser
             node.Value = NodeValue.Integer(count, "codecs", "codec");
             for (uint i = 0; i < count; i++)
             {
+                if (i == MaxListEntries)
+                {
+                    TooManyEntries(state, node, f, count, "codec entries");
+                    break;
+                }
+
                 if (f.Remaining < 10)
                 {
                     state.Findings.AddNow(Severity.Warning, "asf.codec-list-count", $"The Codec List Object counts {count} entries, but its data holds {i}.", node.Children[^1]);
@@ -1003,6 +1025,21 @@ public sealed partial class AsfParser
         });
     }
 
+    private static void ParseIndexPlaceholder(State state, Node parent, ObjectHeader header, long end)
+    {
+        (Node node, Fields f) = Begin(state, parent, header, end, "Index Placeholder Object", Explain.IndexPlaceholder);
+        Body(state, node, f, 24, () =>
+        {
+            long length = f.Remaining;
+            if (length > 0)
+            {
+                f.Bytes("Data", length, Explain.IndexPlaceholderData);
+            }
+
+            node.Value = NodeValue.Integer(length, "bytes", "byte");
+        });
+    }
+
     private static void ParsePadding(State state, Node parent, ObjectHeader header, long end)
     {
         (Node node, Fields f) = Begin(state, parent, header, end, "Padding Object", Explain.PaddingObject);
@@ -1080,8 +1117,15 @@ public sealed partial class AsfParser
         {
             ushort count = f.Word("Content Encryption Records Count", Explain.ContentEncryptionRecordsCount);
             node.Value = NodeValue.Integer(count, "records", "record");
+            int recordNodes = 0;
             for (int i = 0; i < count; i++)
             {
+                if (i == MaxListEntries)
+                {
+                    TooManyEntries(state, node, f, count, "content encryption records");
+                    break;
+                }
+
                 long at = f.Position;
                 var entry = new Node("Content Encryption Record", at, 0) { Description = Explain.ContentEncryptionRecord };
                 var r = new Fields(f.Reader, entry);
@@ -1090,6 +1134,14 @@ public sealed partial class AsfParser
                 ushort objects = r.Word("Encrypted Object Record Count", Explain.EncryptedObjectRecordCount);
                 for (int j = 0; j < objects; j++)
                 {
+                    if (++recordNodes > MaxListEntries)
+                    {
+                        TooManyEntries(state, node, f, objects, "encrypted object records");
+                        r.Reader.Position = r.Reader.End;
+                        i = count;
+                        break;
+                    }
+
                     long recordAt = r.Position;
                     var objectRecord = new Node("Encrypted Object Record", recordAt, 0) { Description = Explain.EncryptedObjectRecord };
                     var o = new Fields(r.Reader, objectRecord);
@@ -1103,6 +1155,11 @@ public sealed partial class AsfParser
                     }
 
                     entry.Add(shownRecord);
+                }
+
+                if (i >= count)
+                {
+                    break;
                 }
 
                 uint dataSize = r.Dword("Data Size", Explain.EncryptionDataSize, "bytes");

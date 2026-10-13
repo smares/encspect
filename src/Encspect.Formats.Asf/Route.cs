@@ -161,7 +161,7 @@ public sealed partial class AsfParser
                 continue;
             }
 
-            if (stream.Spread is { Span: > 1 })
+            if (stream.Spread is { Scrambles: true })
             {
                 state.Findings.AddNow(Severity.Info, "asf.audio-spread",
                     $"Stream {stream.Number} spreads its audio over {stream.Spread.Span} packets (section 9.1.1), which scrambles the media objects; descrambling is not done, so the stream is not analyzed.", anchor);
@@ -184,11 +184,12 @@ public sealed partial class AsfParser
         }
     }
 
-    // The writer of the file, from the way it lays out the header. The Windows Media Format SDK's writer
-    // and Media Foundation's ASF sink each write a layout of their own, which the files the project
-    // encoded with them show (the 12 and 11 files of tests/fixtures/asf, wmvcore 12.0.26100): neither
-    // is in the specification, so the evidence is medium, not high. A name the file states (WMFSDKVersion)
-    // is a low claim by itself.
+    // The writer of the file, from the way it lays out the header. The Windows Media Format SDK's writer and
+    // Media Foundation's ASF sink each write the header in a habit of their own, which the files the project
+    // encoded with them show (the SDK's and Media Foundation's files of tests/fixtures/asf, wmvcore 12.0.26100).
+    // The objects are the specification's (Codec List, Compatibility, Language List, Metadata, Padding), but
+    // that a writer chooses them is a habit, not a rule, so the evidence is medium. It names the writer, which
+    // drives whatever codec it was asked for; a name the file states (WMFSDKVersion) is a low claim by itself.
     private static void AddWriterEvidence(State state)
     {
         if (state.HeaderNode is not { } header || state.HeaderExtensionNode is not { } extension)
@@ -202,12 +203,12 @@ public sealed partial class AsfParser
         bool metadata = state.HeaderGuids.Contains(AsfGuids.Metadata);
         bool padding = state.HeaderGuids.Contains(AsfGuids.Padding);
         bool bitrates = state.HeaderGuids.Contains(AsfGuids.StreamBitrateProperties);
-        bool writerObject = state.HeaderGuids.Contains(AsfGuids.WriterExtension);
+        bool writerObject = state.HeaderGuids.Contains(AsfGuids.Compatibility);
 
         if (state.SdkVersion is { } version && writerObject && codecList)
         {
             state.Context.AddEncoderClaim(new EncoderClaim($"Windows Media Format SDK {version}", state.SdkVersionNode ?? extension,
-                $"ASF header: WMFSDKVersion {version}, a Codec List Object and an object with GUID {AsfGuids.Text(AsfGuids.WriterExtension)} in the Header Extension Object, the layout of the Windows Media Format SDK's writer{WriterSettings(state)}")
+                $"ASF header: WMFSDKVersion {version}, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer{WriterSettings(state)}")
             {
                 Confidence = Confidence.Medium,
             });

@@ -184,6 +184,7 @@ public sealed partial class AsfParser
         state.PacketsStart = start;
         state.PacketsEnd = end;
         state.PacketSize = PacketSizeOf(state);
+        state.PacketSizeIsFixed = state.PacketSize > 0 && state.MinPacketSize == state.MaxPacketSize;
         DataFigures figures = ScanPackets(state, node, start, end);
         state.Figures = figures;
         AddPacketNodes(state, node, figures, start, end);
@@ -273,11 +274,7 @@ public sealed partial class AsfParser
                 PacketParser.Parse(buffer.AsSpan(0, count), packetSize, packet);
             }
 
-            int length = packet.PacketLength > 0 ? (int)Math.Min(packet.PacketLength, remaining) : count;
-            if (length < 1)
-            {
-                length = count;
-            }
+            int length = StepOf(state, packet, count, remaining);
 
             Record(state, figures, packet, position, length, remaining);
             position += length;
@@ -285,6 +282,19 @@ public sealed partial class AsfParser
 
         figures.LastEnd = position;
         return figures;
+    }
+
+    // How far to the next packet: the fixed packet size where the file has one (FFmpeg treats the difference to a
+    // shorter length field as padding, asfdec_f.c), else the packet's own length.
+    internal static int StepOf(State state, ParsedPacket packet, int count, long remaining)
+    {
+        if (state.PacketSizeIsFixed)
+        {
+            return (int)Math.Min(state.PacketSize, remaining);
+        }
+
+        int length = packet.PacketLength > 0 ? (int)Math.Min(packet.PacketLength, remaining) : count;
+        return length < 1 ? count : length;
     }
 
     private static void Record(State state, DataFigures figures, ParsedPacket packet, long position, int length, long remaining)

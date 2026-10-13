@@ -78,7 +78,12 @@ internal sealed record WaveFormat(
     }
 }
 
-internal sealed record SpreadAudio(byte Span, ushort VirtualPacketLength, ushort VirtualChunkLength, ushort SilenceLength);
+internal sealed record SpreadAudio(byte Span, ushort VirtualPacketLength, ushort VirtualChunkLength, ushort SilenceLength)
+{
+    // FFmpeg turns descrambling off, and decodes the media objects as they are, where the chunk size is 0, the chunks
+    // do not divide the virtual packet or the packet holds one chunk or less (asfdec_f.c, asf_read_stream_properties).
+    public bool Scrambles => Span > 1 && VirtualChunkLength > 0 && VirtualPacketLength / VirtualChunkLength > 1 && VirtualPacketLength % VirtualChunkLength == 0;
+}
 
 // Everything the passes over the file share.
 internal sealed class State(ParseContext context, ByteReader reader)
@@ -193,6 +198,10 @@ internal sealed class State(ParseContext context, ByteReader reader)
     public long PacketsEnd { get; set; }
 
     public int PacketSize { get; set; }
+
+    // The File Properties Object gives one packet size as minimum and maximum, which fixes the size of every
+    // packet (section 8.2.13): a packet is stepped over by it, whatever its own length field says.
+    public bool PacketSizeIsFixed { get; set; }
 
     public DataFigures? Figures { get; set; }
 

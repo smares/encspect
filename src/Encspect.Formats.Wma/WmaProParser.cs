@@ -12,6 +12,10 @@ namespace Encspect.Formats.Wma;
 // it holds.
 public sealed class WmaProParser : ICodecParser
 {
+    // Superframes (packets) are described in records up to this count, so a crafted file of millions of tiny ones
+    // stays bounded; the rest are counted but not read.
+    internal const int MaxPackets = 1 << 20;
+
     public const string CodecId = "wma-pro";
 
     public string Id => CodecId;
@@ -60,6 +64,7 @@ public sealed class WmaProParser : ICodecParser
         nodes = new ProNodes(stream);
 
         int index = 0;
+        long unread = 0;
         foreach (MappedBytes packet in packets)
         {
             if (index++ % 4096 == 0)
@@ -67,7 +72,19 @@ public sealed class WmaProParser : ICodecParser
                 context.CancellationToken.ThrowIfCancellationRequested();
             }
 
+            if (index > MaxPackets)
+            {
+                unread++;
+                continue;
+            }
+
             stream.Add(packet);
+        }
+
+        if (unread > 0)
+        {
+            findings.AddNow(Severity.Info, "wma.records-limit",
+                $"The stream has more than {MaxPackets} media objects; the {unread} after them are not read, so the statistics and the series cover the first {MaxPackets}.", parent);
         }
 
         stream.Finish();

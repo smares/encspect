@@ -13,6 +13,9 @@ import uuid
 # ---- GUIDs (section 10) ----
 
 HEADER = "75B22630-668E-11CF-A6D9-00AA0062CE6C"
+# Section 4.12; the text prints the Header Object's GUID for it in section 10.3, a misprint (MediaInfoLib and the
+# Windows Media Format SDK's files use this one).
+COMPATIBILITY = "26F18B5D-4584-47EC-9F5F-0E651F0452C9"
 DATA = "75B22636-668E-11CF-A6D9-00AA0062CE6C"
 SIMPLE_INDEX = "33000890-E5B1-11CF-89F4-00A0C90349CB"
 INDEX = "D6E229D3-35DA-11D1-9034-00A0C90349BE"
@@ -434,7 +437,7 @@ def parse(data):
             elif g == HEADER_EXTENSION and size >= 46:
                 inner = struct.unpack_from("<I", data, offset + 24 + 16 + 2)[0]
                 for eg, eo, es in read_objects(data, offset + 46, min(offset + 46 + inner, offset + size)):
-                    result["extension_objects"].append(["Compatibility Object" if eg == HEADER else NAMES.get(eg, eg), eo, es])
+                    result["extension_objects"].append(["Compatibility Object" if eg == COMPATIBILITY else NAMES.get(eg, eg), eo, es])
                     if eg == EXTENDED_STREAM_PROPERTIES and es >= 24 + 64:
                         embedded = embedded_stream(data, eo, es)
                         if embedded:
