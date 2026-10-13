@@ -21,6 +21,8 @@ internal static class Explain
 {
     public const string File = "An ISO base media file: a run of boxes, each a size, a four-character type and its contents. MP4, M4A, M4B and QuickTime .mov files share this structure (ISO/IEC 14496-12 4.2).";
     public const string TrailingData = "Bytes after the last box that do not start another box, such as a tag appended to the file or the rest of a damaged box.";
+
+    public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside MP4 data without a declared end, which the tag breaks; the analyzer does not read them as boxes.";
     public const string UnusedBytes = "Bytes inside a box that are too few for a box header or that a damaged size left over; they are not read as boxes.";
     public const string Payload = "The box's contents, not read because the box nests deeper than the analyzer follows.";
     public const string UnreadData = "The rest of the box's contents, whose fields the analyzer does not read.";

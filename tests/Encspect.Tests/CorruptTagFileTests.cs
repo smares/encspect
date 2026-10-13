@@ -53,7 +53,16 @@ public class CorruptTagFileTests
         {
             try
             {
-                await Task.Run(() => AnalyzeAndCheck(variant)).WaitAsync(VariantLimit);
+                // The limit counts from the start of the analysis, not from Task.Run: parallel test
+                // classes can keep the pool busy for seconds on a loaded runner before it starts.
+                var started = new TaskCompletionSource();
+                Task work = Task.Run(() =>
+                {
+                    started.SetResult();
+                    AnalyzeAndCheck(variant);
+                });
+                await started.Task;
+                await work.WaitAsync(VariantLimit);
             }
             catch (TimeoutException)
             {
