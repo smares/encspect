@@ -12,6 +12,14 @@ namespace Encspect.Formats.Ac3;
 internal readonly struct SyncFrame(ulong raw)
 {
     public const int Length = 8;
+
+    // Annex E 2.3.1.3: frame sizes at the low end of frmsiz's range cannot hold a complete
+    // syncframe. The fields every E-AC-3 frame has take 84 bits at the least: syncinfo and BSI 54
+    // (Table E1.2, every option off), audfrm 12 (Table E1.3: eight flags, snroffststr and one
+    // channel's exponent strategy) and the end 18 (auxdatae, encinfo and the CRC), so a frame
+    // needs 6 words. Shorter ones are no sync; each frame kept costs about a
+    // hundred bytes whatever its size, so they would also multiply the memory a file takes.
+    public const int MinimumEac3Length = 12;
     public const int SyncWord = 0x0B77;
 
     public ulong Raw => raw;
@@ -25,7 +33,7 @@ internal readonly struct SyncFrame(ulong raw)
     // AC-3 (5.4.1.3, 5.4.1.4).
     public int Crc1 => (int)(raw >> 32) & 0xFFFF;
 
-    public int Fscod => IsEac3 ? (int)(raw >> 30) & 3 : (int)(raw >> 30) & 3;
+    public int Fscod => (int)(raw >> 30) & 3;
 
     public int FrameSizeCode => (int)(raw >> 24) & 0x3F;
 
@@ -109,7 +117,7 @@ internal readonly struct SyncFrame(ulong raw)
                 return Fscod != 3 && FrameSizeCode < 38;
             }
 
-            return bsid <= 16 && StreamType != 3 && (Fscod != 3 || Fscod2 != 3) && FrameLength >= Length;
+            return bsid <= 16 && StreamType != 3 && (Fscod != 3 || Fscod2 != 3) && FrameLength >= MinimumEac3Length;
         }
     }
 

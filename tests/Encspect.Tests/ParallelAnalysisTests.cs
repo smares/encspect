@@ -8,23 +8,27 @@ namespace Encspect.Tests;
 // parsers keep no per-call state; reports read on several threads at once build the same nodes.
 public class ParallelAnalysisTests
 {
-    private static List<string> AudioFixtures() =>
+    private static List<string> AudioFixtures(Func<string, bool> include) =>
         Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories)
-            .Where(p => Path.GetExtension(p) is ".mp1" or ".mp2" or ".mp3")
+            .Where(include)
             .Order(StringComparer.Ordinal)
             .ToList();
 
-    [Fact]
-    public void ParallelAnalysisMatchesSequential()
+    [Theory]
+    [InlineData("mpeg", 300)]
+    [InlineData("ac3", 30)]
+    public void ParallelAnalysisMatchesSequential(string kind, int least)
     {
-        List<string> files = AudioFixtures();
+        List<string> files = AudioFixtures(p => kind == "mpeg"
+            ? Path.GetExtension(p) is ".mp1" or ".mp2" or ".mp3"
+            : Path.GetFileName(Path.GetDirectoryName(p)) == "ac3" && Path.GetExtension(p) is ".ac3" or ".eac3" or ".mp4");
         var analyzer = Analyzer.CreateDefault();
         Dictionary<string, string> sequential = files.ToDictionary(f => f, f => Fixtures.ToJson(analyzer.AnalyzeFile(f)));
 
         var parallel = new ConcurrentDictionary<string, string>();
         Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount) }, f => parallel[f] = Fixtures.ToJson(analyzer.AnalyzeFile(f)));
 
-        Assert.True(files.Count > 300, $"{files.Count} fixtures");
+        Assert.True(files.Count > least, $"{files.Count} fixtures");
         Assert.DoesNotContain(files, f => parallel[f] != sequential[f]);
     }
 

@@ -1,0 +1,101 @@
+{
+ "description": "ffmpeg's mono E-AC-3 with spectral extension from sub-band 4 to 9 and delta bit allocation in block 4.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "make_external_ac3_fixtures.py",
+  "eac3-spx-delta",
+  "external-ffmpeg-eac3-mono-48k.eac3"
+ ],
+ "length": 3196,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   200
+  ],
+  [
+   200,
+   200
+  ],
+  [
+   400,
+   200
+  ],
+  [
+   600,
+   200
+  ],
+  [
+   800,
+   200
+  ],
+  [
+   1000,
+   202
+  ],
+  [
+   1202,
+   202
+  ],
+  [
+   1404,
+   200
+  ],
+  [
+   1604,
+   200
+  ],
+  [
+   1804,
+   200
+  ],
+  [
+   2004,
+   200
+  ],
+  [
+   2204,
+   196
+  ],
+  [
+   2400,
+   202
+  ],
+  [
+   2602,
+   200
+  ],
+  [
+   2802,
+   200
+  ],
+  [
+   3002,
+   194
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "1/0 (center)",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 24576,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)",
+  "AC-3/Frame/Audio Block[4]/Delta Bit Allocation/Delta Bit Allocation Segments (center)/Offset": "5 bands"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": true
+ }
+}

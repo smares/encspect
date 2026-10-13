@@ -121,11 +121,26 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
     // ETSI TS 102 366 F.4 (AC3SpecificBox) and F.6 (EC3SpecificBox): read field by field into the
     // box's node, and compared with what the frames hold.
-    private static void Configuration(Ac3Analysis analysis, CodecConfiguration configuration, Observed observed, bool eac3)
+    private static void Configuration(Ac3Analysis analysis, CodecConfiguration configuration, Observed observed, bool entryIsEac3)
     {
         MappedBytes data = configuration.Data;
         Node box = configuration.Parent;
         int position = 0;
+
+        // MP4 names a box's node by its type; the type decides the syntax, and a box of the other
+        // codec's type under the sample entry is reported.
+        bool eac3 = box.Name switch
+        {
+            "dac3" => false,
+            "dec3" => true,
+            _ => entryIsEac3,
+        };
+        if (eac3 != entryIsEac3)
+        {
+            analysis.Findings.AddNow(Severity.Warning, "ac3.config-box-type",
+                $"An {(entryIsEac3 ? "ec-3" : "ac-3")} sample entry holds a {box.Name} box, where ETSI TS 102 366 Annex F gives it {(entryIsEac3 ? "dec3" : "dac3")}.", box);
+        }
+
         int Read(string name, int width, string description, Func<int, NodeValue>? value = null)
         {
             if (position + width > data.Length * 8)
