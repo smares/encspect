@@ -19,6 +19,10 @@ public class WmaCorruptionTests
         "asf/external-windows-wma10pro-cbr-stereo-44k-64.wma",
         "asf/external-windows-wma92lossless-stereo-44k-16.wma",
         "asf/external-windows-wmavoice-cbr-mono-8k-5.wma",
+        "asf/external-windows-wma92-cbr-stereo-44k-32-sdk.wma",
+        "asf/external-windows-wma92-cbr-stereo-22k-20-sdk.wma",
+        "asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma",
+        "asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma",
     };
 
     [Theory]

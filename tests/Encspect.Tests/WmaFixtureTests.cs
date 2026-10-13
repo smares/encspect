@@ -182,6 +182,38 @@ public class WmaFixtureTests
         Assert.False(viaSdk.IsVbr);
     }
 
+    // Low rates make the SDK's encoder code noise bands, whose gains use the high-band gain codebook's negative
+    // symbols (the review found them misread): most blocks have such bands, and every frame is still read to its end.
+    [Theory]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-32-sdk.wma", 100, 900)]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-22k-20-sdk.wma", 60, 250)]
+    public void LowRateFilesCodeNoiseBands(string name, int minimumBlocks, int minimumBands)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Node statistics = Child(Assert.Single(report.Streams).Nodes[0], "Statistics");
+        Assert.True(Child(statistics, "Uses Noise Substitution").Value?.AsBoolean());
+        string blocks = Child(statistics, "Noise-Substituted Blocks").Value!.AsText()!;
+        Assert.True(int.Parse(blocks.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture) >= minimumBlocks, blocks);
+
+        int bands = 0;
+        void Count(Node node)
+        {
+            if (node.Name == "Noise Substitution" && node.Value?.AsText() is { } text)
+            {
+                bands += int.Parse(text.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            foreach (Node child in node.Children)
+            {
+                Count(child);
+            }
+        }
+
+        Count(report.Streams[0].Nodes[0]);
+        Assert.True(bands >= minimumBands, $"{bands} noise-coded bands");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wma.frame-invalid");
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void ReportMatchesGoldenFile(string name)

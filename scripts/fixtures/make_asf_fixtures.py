@@ -370,7 +370,7 @@ def packets_with_issues():
         m.packet([m.Payload(1, 3, samples(60))], 256, m.Layout(), payload_flags=0x80),
         m.packet([m.Payload(1, 4, samples(60), replicated=b"abc")], 256, m.Layout()),
         m.packet([m.Payload(0, 5, samples(60), stream_byte=0)], 256, m.Layout()),
-        m.packet([m.Payload(1, 6, samples(60))], 200, m.Layout(packet_length=2), declared_length=200),
+        m.packet([m.Payload(1, 6, samples(60))], 256, m.Layout(packet_length=2), declared_length=200, padding_field=0),
         m.packet([m.Payload(1, 7, samples(60))], 256, m.Layout(), ecc_flags=0xA2),
         m.packet([m.Payload(1, 8, samples(60))], 256, m.Layout(), padding_field=3),
         pk(number=9),

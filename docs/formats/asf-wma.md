@@ -10,7 +10,9 @@ Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c
 - **Header Object:** File Properties, Stream Properties (with the WAVEFORMATEX of audio streams, including the extensible form and spread audio), Header Extension, Codec List, Script Command, Marker, Content Description, Extended Content Description, Content Branding, Stream Bitrate Properties, Mutual Exclusion, Stream Prioritization, Bandwidth Sharing, Error Correction, Padding, Index Parameters, Language List, Metadata, Metadata Library, Extended Stream Properties (with a Stream Properties Object inside), Compatibility, and the encryption and signature objects (reported, not decrypted).
 - **Data Object:** every packet with its error correction data, length type flags, property flags, send time, duration and payloads; single and multiple payloads, replicated data with the media object size and presentation time, extension data, compressed payloads and padding.
 - **Index objects:** Simple Index, Index, Media Object Index and Timecode Index, checked against the packets.
-- **Unknown objects:** read as data and reported, as the specification tells readers to ignore them.
+- **Unknown objects:** read as data and reported, as the specification tells readers to ignore them. Two GUIDs are named although the specification does not define one of them:
+  - `26F18B5D-4584-47EC-9F5F-0E651F0452C9` is the Compatibility Object (section 4.12): the text of revision 01.20.03 misprints the Header Object's GUID for it in section 10.3, and in all the SDK's files it is 26 bytes with profile 2 and mode 1, as section 4.12 sets them. MediaInfoLib calls it Compatibility too.
+  - `D9AADE20-7C17-4F9C-BC28-8555DD98E2A2` is in neither the specification nor FFmpeg. MediaInfoLib (`File_Wm_Elements.cpp`) calls it Index Placeholder, and the SDK's writer puts it in the Header Extension Object of Voice files. It is shown by that name, data unread, and readers ignore it.
 
 ## ASF: what is reported
 
@@ -28,6 +30,10 @@ Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c
 ## ASF: damaged and large files
 
 - A damaged object or packet is a finding; the objects and packets that can be read are still read.
+- **Limits** keep a crafted file's tree small: at most 10,000 top-level objects, 10,000 objects in the header, 1,000 entries of a Codec List or Advanced Content Encryption Object (`asf.too-many-entries`), 1,000 entries and 1,000 blocks of an index as nodes (the rest are read for the figures, with a "Further" node), 1,048,576 packets described one by one, and 1,048,576 media objects of a Windows Media Audio stream (`wma.records-limit`). The buffer of a media object grows with the fragments that arrive, so a packet that states an object of 16 MiB costs what it holds.
+- **Packet size:** a file whose File Properties Object gives one packet size as minimum and maximum has packets of that size; a packet length field below it is a finding (`asf.packet-length`) and the difference is padding, as FFmpeg reads it (`asfdec_f.c`). The packets are stepped over by the size, not by the field.
+- **Spread audio** is descrambled by FFmpeg only where the chunk size is not 0 and divides the virtual packet length into more than one chunk; otherwise it decodes the media objects as they are, and so does this analysis.
+- **Broadcast files:** a Data Object of size 0 runs to the end of the file, so what is at its end is the Data Object's, not a tag.
 - The packets are read twice: the first pass keeps a compact record per packet and payload (the first 1,048,576 packets are detailed, the rest counted), and builds nodes on demand; the second pass puts media objects together as they are needed.
 
 ## WMA versions 1 and 2
@@ -68,8 +74,8 @@ Format tag 0x0162, routed as the codec "wma-pro". Read as FFmpeg's `wmaprodec.c`
 The Encoder node of a stream lists its evidence, each at its bytes, and names the strongest.
 
 - **High:** ffmpeg's wmav1 and wmav2 encoders pad every superframe after its frame with 'N' bytes (`wmaenc.c`), with no bit reservoir and no variable block lengths. Two or more padded superframes, all of them 'N', name "FFmpeg (wmav2 encoder)".
-- **Medium, from the container's layout:** the files the project encoded on a Windows runner (wmvcore 12.0.26100) show two layouts that tell the writers apart, and neither is in the specification.
-  - The Windows Media Format SDK's writer states WMFSDKVersion, writes a Codec List Object with a description such as "VBR Quality 75, 44 kHz, stereo 1-pass VBR", an object with GUID 26F18B5D-4584-47EC-9F5F-0E651F0452C9 in the Header Extension Object, and an Index Object.
+- **Medium, from the container's layout:** the files the project encoded on a Windows runner (wmvcore 12.0.26100) show two layouts that tell the writers apart. The objects are the specification's; that a writer chooses them is its habit.
+  - The Windows Media Format SDK's writer states WMFSDKVersion, writes a Codec List Object with a description such as "VBR Quality 75, 44 kHz, stereo 1-pass VBR", a Compatibility Object (section 4.12) in the Header Extension Object, and an Index Object.
   - Media Foundation's ASF sink states MediaFoundationVersion, writes a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object and a Padding Object, and no Codec List Object, WMFSDKVersion or index.
 - **Medium, from the codec data of versions 1 and 2:** Microsoft's encoders write a samples-per-block of 17 frames with the bit reservoir and variable block lengths; ffmpeg's write 0 and neither.
 - **Low:** a claim in the metadata (WMFSDKVersion, MediaFoundationVersion, WM/EncodingSettings, WM/ToolName), which survives a re-encode. ffmpeg's muxer writes its own version whatever encoded the stream, so alone it names none.
@@ -80,6 +86,10 @@ The Encoder node of a stream lists its evidence, each at its bytes, and names th
 
 ## Observed in Microsoft's files
 
+- FFmpeg's reader accepts a frame that ends up to 8 bits past its superframe; this analysis reports any frame that needs more bits than it has as invalid.
+- A superframe in the middle of a frame (no frame ends in it) adds its `align - 1` bytes after the first to the reservoir. `wmadec.c` adds `8 * buf_size - 8` to `last_superframe_len`, bits to a count of bytes, so a frame that spans such a superframe is not rebuilt right by FFmpeg; the analysis keeps the bytes, and `AFrameEndsAfterASuperframeInsideIt` builds such a stream.
+- The superframe's frame count field counts the frames that begin in the superframe, the last one included where it goes on in the next. The decoder takes one off before it decodes from the bit offset, so it decodes one frame fewer than the field says in the first superframe, which no frame precedes.
+- A media object longer than the block alignment is taken as a superframe of `align` bytes and the rest is fed in again by FFmpeg (`decode.c`); this analysis reads the first `align` bytes only.
 - A frame that begins in one superframe and ends in the next is often followed by bits up to the bit offset the next superframe states: zero bits, or more coded data. A decoder skips them (`wmadec.c` goes on at the bit offset); they are info findings (`wma.frame-stuffing`, `wma.frame-filler`), and the statistics count them.
 - The Simple Index Object of a file whose index is empty states an interval of 0, which is no finding.
 - Professional's packets of Media Foundation's CBR files end with padding after a frame whose trailer bit says no frame follows.

@@ -77,7 +77,7 @@
                     },
                     {
                       "name": "File ID",
-                      "value": "BF1412C5-E820-40D6-A07B-579A46486980",
+                      "value": "83D2D1AA-E76C-40CB-8E31-8BA6D98C46F1",
                       "offset": 54,
                       "length": 16
                     },
@@ -90,7 +90,7 @@
                     },
                     {
                       "name": "Creation Date",
-                      "value": "2026-10-13 16:15:44.4140000 UTC",
+                      "value": "2026-10-13 17:38:05.7060000 UTC",
                       "offset": 78,
                       "length": 8
                     },
@@ -268,15 +268,13 @@
                       ]
                     },
                     {
-                      "name": "Unknown Object",
-                      "value": 26,
-                      "unit": "bytes",
+                      "name": "Compatibility Object",
                       "offset": 219,
                       "length": 26,
                       "children": [
                         {
                           "name": "Object ID",
-                          "value": "26F18B5D-4584-47EC-9F5F-0E651F0452C9",
+                          "value": "Compatibility Object (26F18B5D-4584-47EC-9F5F-0E651F0452C9)",
                           "offset": 219,
                           "length": 16
                         },
@@ -288,11 +286,16 @@
                           "length": 8
                         },
                         {
-                          "name": "Object Data",
+                          "name": "Profile",
                           "value": 2,
-                          "unit": "bytes",
                           "offset": 243,
-                          "length": 2
+                          "length": 1
+                        },
+                        {
+                          "name": "Mode",
+                          "value": 1,
+                          "offset": 244,
+                          "length": 1
                         }
                       ]
                     },
@@ -1550,7 +1553,7 @@
                 },
                 {
                   "name": "File ID",
-                  "value": "BF1412C5-E820-40D6-A07B-579A46486980",
+                  "value": "83D2D1AA-E76C-40CB-8E31-8BA6D98C46F1",
                   "offset": 5019,
                   "length": 16
                 },
@@ -2886,7 +2889,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and an object with GUID 26F18B5D-4584-47EC-9F5F-0E651F0452C9 in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 10 Professional\", \"VBR Quality 50, 44 kHz, 2 channel 24 bit 1-pass VBR\"; IsVBR true (at 0x10F5)",
+                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 10 Professional\", \"VBR Quality 50, 44 kHz, 2 channel 24 bit 1-pass VBR\"; IsVBR true (at 0x10F5)",
                           "offset": 4995,
                           "length": 23954
                         },
@@ -29721,7 +29724,7 @@
                 },
                 {
                   "name": "File ID",
-                  "value": "BF1412C5-E820-40D6-A07B-579A46486980",
+                  "value": "83D2D1AA-E76C-40CB-8E31-8BA6D98C46F1",
                   "offset": 29051,
                   "length": 16
                 },
@@ -29935,21 +29938,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "asf.unknown-object",
-        "message": "The object 26F18B5D-4584-47EC-9F5F-0E651F0452C9 at 0xDB in the Header Extension Object is none of the objects the specification defines; readers ignore it (section 3.1).",
-        "offset": 219,
-        "length": 26,
-        "path": [
-          0,
-          0,
-          6,
-          6
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

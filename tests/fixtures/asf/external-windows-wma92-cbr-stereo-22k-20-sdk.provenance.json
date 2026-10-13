@@ -1,0 +1,58 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio 9.2, CBR, \" 20 kbps, 22 kHz, stereo CBR\".",
+ "encoder": {
+  "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+  "path": "wmf-sdk",
+  "codec": "Windows Media Audio 9.2",
+  "format_index": 16,
+  "achieved_bitrate": null,
+  "format_description": " 20 kbps, 22 kHz, stereo CBR",
+  "format_tag": "0x0161",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    22050
+   ],
+   "requestedBitrate": 20000
+  },
+  "format_channels": 2,
+  "format_rate": 22050,
+  "format_bits": 16,
+  "format_bitrate": 20008,
+  "config_bitrate": 20008,
+  "buffer_window_ms": 4294967295,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 22050,
+  "bits": 16,
+  "seconds": 3,
+  "frames": 66150,
+  "type": "plain",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma92-cbr-stereo-22k-20-sdk",
+ "actual": {
+  "format_tag": 353,
+  "channels": 2,
+  "rate": 22050,
+  "bytes_per_second": 2501,
+  "bits": 16
+ },
+ "bytes": 16501,
+ "sha256": "fac582dc3e72cc36eb0017236ee6af8b59fae45aab840217131587dffbfee2b7",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

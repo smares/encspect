@@ -146,7 +146,7 @@
                     },
                     {
                       "name": "File ID",
-                      "value": "45A99851-0C39-4C1A-8146-995C23450252",
+                      "value": "5726557D-1C2D-41E8-910D-AF8394D00308",
                       "offset": 144,
                       "length": 16
                     },
@@ -159,7 +159,7 @@
                     },
                     {
                       "name": "Creation Date",
-                      "value": "2026-10-13 16:15:54.5130000 UTC",
+                      "value": "2026-10-13 17:38:18.9370000 UTC",
                       "offset": 168,
                       "length": 8
                     },
@@ -337,15 +337,13 @@
                       ]
                     },
                     {
-                      "name": "Unknown Object",
-                      "value": 26,
-                      "unit": "bytes",
+                      "name": "Compatibility Object",
                       "offset": 309,
                       "length": 26,
                       "children": [
                         {
                           "name": "Object ID",
-                          "value": "26F18B5D-4584-47EC-9F5F-0E651F0452C9",
+                          "value": "Compatibility Object (26F18B5D-4584-47EC-9F5F-0E651F0452C9)",
                           "offset": 309,
                           "length": 16
                         },
@@ -357,11 +355,16 @@
                           "length": 8
                         },
                         {
-                          "name": "Object Data",
+                          "name": "Profile",
                           "value": 2,
-                          "unit": "bytes",
                           "offset": 333,
-                          "length": 2
+                          "length": 1
+                        },
+                        {
+                          "name": "Mode",
+                          "value": 1,
+                          "offset": 334,
+                          "length": 1
                         }
                       ]
                     },
@@ -1394,7 +1397,7 @@
                 },
                 {
                   "name": "File ID",
-                  "value": "45A99851-0C39-4C1A-8146-995C23450252",
+                  "value": "5726557D-1C2D-41E8-910D-AF8394D00308",
                   "offset": 5057,
                   "length": 16
                 },
@@ -3298,7 +3301,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and an object with GUID 26F18B5D-4584-47EC-9F5F-0E651F0452C9 in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 9.2\", \"VBR Quality 75, 44 kHz, stereo 1-pass VBR\"; IsVBR true (at 0x114F)",
+                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 9.2\", \"VBR Quality 75, 44 kHz, stereo 1-pass VBR\"; IsVBR true (at 0x114F)",
                           "offset": 5033,
                           "length": 26990
                         },
@@ -16308,7 +16311,7 @@
                 },
                 {
                   "name": "File ID",
-                  "value": "45A99851-0C39-4C1A-8146-995C23450252",
+                  "value": "5726557D-1C2D-41E8-910D-AF8394D00308",
                   "offset": 32121,
                   "length": 16
                 },
@@ -16501,20 +16504,6 @@
       }
     ],
     "findings": [
-      {
-        "severity": "Info",
-        "code": "asf.unknown-object",
-        "message": "The object 26F18B5D-4584-47EC-9F5F-0E651F0452C9 at 0x135 in the Header Extension Object is none of the objects the specification defines; readers ignore it (section 3.1).",
-        "offset": 309,
-        "length": 26,
-        "path": [
-          0,
-          0,
-          7,
-          6
-        ],
-        "count": 1
-      },
       {
         "severity": "Info",
         "code": "wma.reservoir-at-end",

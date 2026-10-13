@@ -1,7 +1,7 @@
 {
  "description": "Packets with a padding length past the packet, no payloads, replicated data of 3 bytes, a payload of stream 0, a packet length that differs from the packet size, an error correction length type that is reserved and a wrong padding length.",
  "format": "ASF",
- "length": 2574,
+ "length": 2630,
  "objects": [
   [
    "Header Object",
@@ -11,7 +11,7 @@
   [
    "Data Object",
    276,
-   2298
+   2354
   ]
  ],
  "header_objects": [
@@ -76,21 +76,21 @@
   ],
   [
    1606,
-   200,
-   1
-  ],
-  [
-   1806,
    256,
    1
   ],
   [
-   2062,
+   1862,
    256,
    1
   ],
   [
-   2318,
+   2118,
+   256,
+   1
+  ],
+  [
+   2374,
    256,
    1
   ]
@@ -245,7 +245,7 @@
    0,
    [
     [
-     1816,
+     1872,
      246
     ]
    ]
@@ -257,7 +257,7 @@
    0,
    [
     [
-     2093,
+     2149,
      60
     ]
    ]
@@ -269,14 +269,14 @@
    0,
    [
     [
-     2349,
+     2405,
      60
     ]
    ]
   ]
  ],
  "file": {
-  "file_size": 2574,
+  "file_size": 2630,
   "packets": 9,
   "play_duration": 500000,
   "send_duration": 0,
