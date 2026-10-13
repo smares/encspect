@@ -28,7 +28,15 @@ public class FuzzRegressionTests
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name));
 
         // Some of these once hung, as the fuzzer's 20 s limit found; this fails instead of waiting.
-        Report report = await Task.Run(() => Analyzer.CreateDefault().Analyze(name, new MemoryStream(data))).WaitAsync(TimeSpan.FromSeconds(20));
+        // The limit counts from the start of the analysis, as in CorruptTagFileTests.
+        var started = new TaskCompletionSource();
+        Task<Report> work = Task.Run(() =>
+        {
+            started.SetResult();
+            return Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
+        });
+        await started.Task;
+        Report report = await work.WaitAsync(TimeSpan.FromSeconds(20));
 
         Assert.Equal(data.Length, report.Root.Length);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
