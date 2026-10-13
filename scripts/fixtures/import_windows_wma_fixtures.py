@@ -71,6 +71,8 @@ def actual_name(entry, data):
     else:
         parts.append(str(round(entry["formatBitrate"] / 1000)))
     name = "-".join(parts)
+    if entry["mode"] == "cbr" and entry.get("encoderPath", "wmf-sdk") == "wmf-sdk" and tag != 0x000A:
+        name += "-sdk"
     if entry.get("title"):
         name += "-tagged"
     return name, {"format_tag": tag, "channels": channels, "rate": rate, "bytes_per_second": average, "bits": bits}
@@ -125,6 +127,9 @@ def main():
         name = requested
         if entry.get("status") != "ok":
             print(f"{name}: skipped, {entry.get('status')}")
+            continue
+        if "MISMATCH" in (entry.get("log") or ""):
+            print(f"{name}: skipped, a setting did not read back as it was set")
             continue
         source = artifact / entry["file"]
         data = source.read_bytes()

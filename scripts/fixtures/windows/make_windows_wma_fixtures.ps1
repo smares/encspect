@@ -113,6 +113,11 @@ $plan = @(
     @{ Name = 'wma92lossless-5.1-48k-24';    Codec = $lossless; Vbr = $true; Channels = 6; Rates = @(48000, 44100); Bits = 24; Quality = 100; Seconds = 0.5; Signal = 'quiet' }
     @{ Name = 'wmavoice-cbr-mono-8k-5'; Optional = $true;      Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000, 16000); Bitrate = 5000;  Seconds = 3; Signal = 'tones' }
     @{ Name = 'wmavoice-cbr-mono-16k-20'; Optional = $true;    Codec = $voice; Vbr = $false; Channels = 1; Rates = @(16000, 22050); Bitrate = 20000; Seconds = 3; Signal = 'tones' }
+    # Constant bitrate through the SDK's writer, which differs in its header from Media Foundation's; optional,
+    # since whether the SDK lists constant bitrate formats for these codecs is what the run finds out.
+    @{ Name = 'wma92-cbr-stereo-44k-128-sdk'; Optional = $true;     Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 128000; Seconds = 3; Signal = 'tones' }
+    @{ Name = 'wma10pro-cbr-stereo-44k-128-sdk'; Optional = $true;  Codec = $pro; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 128000; Seconds = 3; Signal = 'tones' }
+    @{ Name = 'wma10pro-cbr-stereo-44k-384-sdk'; Optional = $true;  Codec = $pro; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 384000; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma92-vbr-stereo-44k-q75-tagged'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 75; Seconds = 2; Signal = 'tones'; Title = 'Encspect test tone'; Author = 'Encspect' }
 )
 
@@ -313,7 +318,8 @@ foreach ($r in $results) {
 $problems = @()
 foreach ($r in $results) {
     if ($r.status -ne 'ok' -and -not $r.optional) { $problems += "$($r.name): $($r.status)" }
-    if ($r.status -eq 'wrong mode') { $problems += "$($r.name): the SDK offered only $($r.formatDescription) for a $($r.mode) request" }
+    if ($r.log -match 'MISMATCH') { $problems += "$($r.name): a setting did not read back as it was set" }
+    if ($r.status -eq 'wrong mode' -and -not $r.optional) { $problems += "$($r.name): the SDK offered only $($r.formatDescription) for a $($r.mode) request" }
 }
 foreach ($g in @(Find-Duplicates $results)) { $problems += "identical output: $g" }
 Stop-Transcript | Out-Null

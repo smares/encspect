@@ -33,10 +33,10 @@ namespace Encspect
         void GetCodecFormat(ref Guid type, uint codec, uint format, out IWMStreamConfig config);
         void GetCodecName(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder name, ref uint length);
         void GetCodecFormatDesc(ref Guid type, uint codec, uint format, out IWMStreamConfig config, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder desc, ref uint length);
-        void GetCodecFormatProp(ref Guid type, uint codec, uint format, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, byte[] value, ref uint size);
-        void GetCodecProp(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, byte[] value, ref uint size);
-        void SetCodecEnumerationSetting(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, uint dataType, byte[] value, uint size);
-        void GetCodecEnumerationSetting(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, byte[] value, ref uint size);
+        void GetCodecFormatProp(ref Guid type, uint codec, uint format, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref uint size);
+        void GetCodecProp(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref uint size);
+        void SetCodecEnumerationSetting(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, uint size);
+        void GetCodecEnumerationSetting(ref Guid type, uint codec, [MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref uint size);
     }
 
     [ComImport, Guid("96406BDC-2B2B-11d3-B36B-00C04F6108FF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -77,8 +77,8 @@ namespace Encspect
     public interface IWMPropertyVault
     {
         void GetPropertyCount(out uint count);
-        void GetPropertyByName([MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, byte[] value, ref uint size);
-        void SetProperty([MarshalAs(UnmanagedType.LPWStr)] string name, uint dataType, byte[] value, uint size);
+        void GetPropertyByName([MarshalAs(UnmanagedType.LPWStr)] string name, out uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref uint size);
+        void SetProperty([MarshalAs(UnmanagedType.LPWStr)] string name, uint dataType, [MarshalAs(UnmanagedType.LPArray)] byte[] value, uint size);
     }
 
     [ComImport, Guid("96406BDB-2B2B-11d3-B36B-00C04F6108FF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -121,9 +121,9 @@ namespace Encspect
     public interface IWMHeaderInfo
     {
         void GetAttributeCount(ushort stream, out ushort count);
-        void GetAttributeByIndex(ushort index, ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder name, ref ushort nameLength, out int type, byte[] value, ref ushort valueLength);
-        void GetAttributeByName(ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, out int type, byte[] value, ref ushort valueLength);
-        void SetAttribute(ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, int type, byte[] value, ushort valueLength);
+        void GetAttributeByIndex(ushort index, ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder name, ref ushort nameLength, out int type, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref ushort valueLength);
+        void GetAttributeByName(ref ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, out int type, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ref ushort valueLength);
+        void SetAttribute(ushort stream, [MarshalAs(UnmanagedType.LPWStr)] string name, int type, [MarshalAs(UnmanagedType.LPArray)] byte[] value, ushort valueLength);
     }
 
     [ComImport, Guid("96406BD9-2B2B-11d3-B36B-00C04F6108FF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -373,12 +373,26 @@ namespace Encspect
             return f.Description.IndexOf("VBR", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        static string CheckProperty(IWMPropertyVault vault, string name, uint expected)
+        {
+            uint dataType, size = 4;
+            byte[] back = new byte[4];
+            vault.GetPropertyByName(name, out dataType, back, ref size);
+            uint actual = BitConverter.ToUInt32(back, 0);
+            return string.Format("  {0}={1} {2}, read back {3}", name, expected, actual == expected ? "ok" : "MISMATCH", actual);
+        }
+
         static string TrySet(IWMCodecInfo3 info, Guid audio, uint codec, string name, uint type, int value)
         {
             try
             {
                 info.SetCodecEnumerationSetting(ref audio, codec, name, type, BitConverter.GetBytes(value), 4);
-                return name + "=" + value + " ok";
+                // A setting that did not arrive as sent (a byte[] marshaled as a SAFEARRAY once did that) fails the run.
+                uint dataType, size = 4;
+                byte[] back = new byte[4];
+                info.GetCodecEnumerationSetting(ref audio, codec, name, out dataType, back, ref size);
+                int actual = BitConverter.ToInt32(back, 0);
+                return actual == value ? name + "=" + value + " ok, read back " + actual : name + "=" + value + " MISMATCH, read back " + actual;
             }
             catch (Exception e)
             {
@@ -544,6 +558,8 @@ namespace Encspect
                     {
                         vault.SetProperty("_VBRENABLED", TypeBool, BitConverter.GetBytes(1), 4);
                         vault.SetProperty("_VBRQUALITY", TypeDword, BitConverter.GetBytes((uint)request.Quality), 4);
+                        log.AppendLine(CheckProperty(vault, "_VBRENABLED", 1));
+                        log.AppendLine(CheckProperty(vault, "_VBRQUALITY", (uint)request.Quality));
                     }
                 }
                 catch (Exception e)
