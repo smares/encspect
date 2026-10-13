@@ -209,7 +209,7 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         bool usac = (unit.Flags & IsUsac) != 0;
-        return new Node("Access Unit", unit.Offset, unit.Length, summary, withChildren ? () => UnitChildren(log, index, unit, ranges) : null)
+        return new Node("Access Unit", unit.Offset, Span(unit.Length, ranges), summary, withChildren ? () => UnitChildren(log, index, unit, ranges) : null)
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
@@ -230,13 +230,15 @@ public sealed class AacCodecParser : ICodecParser
         {
             List<Node> nodes = BlockLog.Nodes(log.Blocks!.Store, log.Blocks.Setup, unit.Skeleton, bytes);
             long end = nodes.Count > 0 ? nodes.Max(n => n.End) - unit.Offset : 0;
-            if (unit.Length > BlockLog.MaxBlockBytes && end < unit.Length)
-            {
-                nodes.Add(bytes.Bits("Unread Bytes", BlockLog.MaxBlockBytes * 8, unit.Length * 8, NodeValue.Integer(unit.Length - BlockLog.MaxBlockBytes, "bytes"), Explain.UnreadUnitBytes));
-            }
-            else if ((unit.Flags & HasTrailingBytes) != 0)
+            // A block read to its END owns the rest of its unit as trailing bytes, however long the
+            // unit, since the aac.unit-trailing-bytes finding points to that node.
+            if ((unit.Flags & HasTrailingBytes) != 0)
             {
                 nodes.Add(TrailingNode(bytes, UnitStore.BlockBits(log.Blocks.Store.Read(unit.Skeleton)), unit.Length));
+            }
+            else if (unit.Length > BlockLog.MaxBlockBytes && end < unit.Length)
+            {
+                nodes.Add(bytes.Bits("Unread Bytes", BlockLog.MaxBlockBytes * 8, unit.Length * 8, NodeValue.Integer(unit.Length - BlockLog.MaxBlockBytes, "bytes"), Explain.UnreadUnitBytes));
             }
 
             return nodes;
@@ -253,6 +255,10 @@ public sealed class AacCodecParser : ICodecParser
         log.Texts.TryGetValue(index, out string? text);
         return [.. element.Nodes(bytes, 0, text)];
     }
+
+    // The bytes an access unit's node covers: its length, or for a unit split across the file
+    // from its first range to its last, so the node in the tree and the one a finding names agree.
+    private static long Span(int length, IReadOnlyList<ByteRange>? ranges) => ranges is null ? length : ranges[^1].End - ranges[0].Offset;
 
     private static Node TrailingNode(UnitBytes bytes, int blockEnd, int length) =>
         bytes.Bits("Trailing Bytes", blockEnd, length * 8, NodeValue.Integer(length - (blockEnd / 8), "bytes"), Explain.TrailingUnitBytes);
@@ -376,8 +382,11 @@ public sealed class AacCodecParser : ICodecParser
             Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, flags, tag));
         }
 
-        private static Node UnitNodeAt(MappedBytes packet, IReadOnlyList<ByteRange> ranges) =>
-            new("Access Unit", packet.FileStart, ranges.Count > 1 ? ranges[^1].End - ranges[0].Offset : packet.Length) { Kind = NodeKind.Frame, Ranges = ranges.Count > 1 ? ranges : null };
+        private static Node UnitNodeAt(MappedBytes packet, IReadOnlyList<ByteRange> ranges)
+        {
+            IReadOnlyList<ByteRange>? split = ranges.Count > 1 ? ranges : null;
+            return new("Access Unit", packet.FileStart, Span(packet.Length, split)) { Kind = NodeKind.Frame, Ranges = split };
+        }
     }
 
     [StructLayout(LayoutKind.Auto)]
