@@ -30,7 +30,7 @@ FILES = [
     "libavformat/asf.h", "libavformat/asf.c", "libavformat/asfdec_f.c", "libavformat/asfenc.c", "libavformat/asfcrypt.c",
     "libavcodec/wma.c", "libavcodec/wma.h", "libavcodec/wmadec.c", "libavcodec/wmadata.h", "libavcodec/wma_common.c",
     "libavcodec/wma_freqs.c", "libavcodec/wmaprodec.c", "libavcodec/wmalosslessdec.c", "libavcodec/wmavoice.c",
-    "libavcodec/wmaenc.c", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
+    "libavcodec/wmaenc.c", "libavcodec/wmaprodata.h", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
 ]
 
 

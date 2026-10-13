@@ -27,6 +27,7 @@ import pathlib
 import shutil
 import sys
 
+TOOLS = {"wmf-sdk": "the Windows Media Format SDK writer (wmvcore.dll)", "media-foundation": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)"}
 ROOT = pathlib.Path(__file__).resolve().parent
 OUT = ROOT.parents[1] / "tests" / "fixtures" / "asf"
 LARGE = 600_000
@@ -78,11 +79,13 @@ def main():
             continue
         shutil.copyfile(source, target)
         provenance = {
-            "description": f"Encoded by the Windows Media Format SDK's writer (wmvcore.dll) as {entry['codecName']}, {entry['mode'].upper()}, \"{entry['formatDescription']}\".",
+            "description": f"Encoded by {TOOLS.get(entry.get('encoderPath', 'wmf-sdk'), 'Windows')} as {entry['codecName']}, {entry['mode'].upper()}, \"{entry['formatDescription']}\".",
             "encoder": {
-                "tool": "Windows Media Format SDK writer (wmvcore.dll)",
+                "tool": TOOLS.get(entry.get("encoderPath", "wmf-sdk"), "Windows"),
+                "path": entry.get("encoderPath", "wmf-sdk"),
                 "codec": entry["codecName"],
-                "format_index": entry["formatIndex"],
+                "format_index": entry.get("formatIndex"),
+                "achieved_bitrate": entry.get("achievedBitrate"),
                 "format_description": entry["formatDescription"],
                 "format_tag": entry["formatTag"],
                 "mode": entry["mode"],
