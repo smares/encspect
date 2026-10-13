@@ -134,6 +134,17 @@ public class AsfFindingTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "asf.packet-truncated" or "asf.payload-overrun" or "asf.data-unused");
     }
 
+    // FFmpeg turns descrambling off where the chunk size is 0 (asfdec_f.c) and decodes the media objects as they are, so
+    // the stream is analyzed instead of skipped.
+    [Fact]
+    public void SpreadAudioWithoutChunksIsNotSkipped()
+    {
+        byte[] scrambled = Patch("spread-audio", _ => { });
+        Assert.Contains(Analyzer.CreateDefault().Analyze("a.asf", new MemoryStream(scrambled)).Findings, f => f.Code == "asf.audio-spread");
+        byte[] data = Patch("spread-audio", d => Set16(d, At(d, StreamProperties) + 78 + Get32(d, At(d, StreamProperties) + 64) + 3, 0));
+        Assert.DoesNotContain(Analyzer.CreateDefault().Analyze("b.asf", new MemoryStream(data)).Findings, f => f.Code == "asf.audio-spread");
+    }
+
     // A broadcast file (Data Object of size 0) runs to the end of the file, so a TAG at its end is not an ID3v1 tag
     // that cuts the last packet.
     [Fact]
