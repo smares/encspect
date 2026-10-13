@@ -113,7 +113,7 @@
       {
         "severity": "Info",
         "code": "musepack.frames-not-read",
-        "message": "The frames of this Musepack SV6 stream are not read: no SV6 encoder was at hand to confirm the syntax of its frames.",
+        "message": "The frames of this Musepack SV6 stream are not read: libmpcdec 1.2.6 and the Portable Musepack decoder do not decode streams that have a constant bitrate (128 kbps).",
         "offset": 1,
         "length": 2,
         "path": [

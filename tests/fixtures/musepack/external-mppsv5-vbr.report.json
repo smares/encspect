@@ -2857,7 +2857,7 @@
       {
         "severity": "Info",
         "code": "musepack.last-frame-unwritten",
-        "message": "The last of the 29 frames the header counts runs 29 bits past the end of the data: the SV4 and SV5 encoders write whole words only, and decoders (libmpcdec 1.2.6, mppdec) decode the frames before it.",
+        "message": "The last of the 29 frames the header counts runs 29 bits past the end of the data: the SV4 and SV5 encoders write whole words only, and decoders (libmpcdec 1.2.6, the Portable Musepack decoder, mppdec) decode the frames before it.",
         "offset": 8788,
         "length": 488,
         "path": [

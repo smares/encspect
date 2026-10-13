@@ -11,6 +11,15 @@
 - mpcdec_frames126, the same program with -DLIBMPCDEC_126 over libmpcdec 1.2.6 (files.musepack.net,
   pinned by SHA-256), the last libmpcdec that decodes stream versions 4 to 6. Its configure step only
   writes config_types.h, which this script writes from the template with <stdint.h> types.
+- mpcdec_frames_portable and mpcdec_portable, the Portable Musepack decoder ((C) 1999-2002
+  Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski, LGPL; mpc.zip from Rarewares, pinned by
+  SHA-256), a second decoder of stream versions 4 to 6 written apart from libmpcdec 1.2.6: the first
+  is mpcdec_frames_portable.cpp over its library, which prints what mpcdec_frames126 prints, the
+  second the archive's own driver, sample.cpp, unchanged. Written for 32-bit Windows, it keeps 32-bit
+  words in "long", which is 64 bits on 64-bit Linux, where its bit reader then fails on the first
+  frame; the one patch turns every "long" that is not part of "long long" into "int", in every file the
+  build uses. Its endianness switch, MPC_LITTLE_ENDIAN, is defined only for WIN32, so the build
+  defines it.
 - Rarewares' Win32 builds of the old encoders and decoder, which Guruboolez contributed
   (www.rarewares.org/rrw/mpegplus.php), run under Wine: the SV4 and SV5 encoders (mppsv4, mppsv5),
   every SV7 mppenc from 0.90 to 1.15u and Buschmann's MP+ 1.7.8 to 1.7.9c, and mppdec. RAREWARES pins
@@ -44,6 +53,9 @@ LIBMPC = ("libmpc_0.1~r495.orig.tar.gz", "5182d7a30eec1b338cafc9c1706d663a6c8dc2
           ["https://deb.debian.org/debian/pool/main/libm/libmpc/libmpc_0.1~r495.orig.tar.gz"])
 LIBMPCDEC_126 = ("libmpcdec-1.2.6.tar.bz2", "4bd54929a80850754f27b568d7891e1e3e1b8d2f208d371f27d1fda09e6f12a8",
                  ["https://files.musepack.net/source/libmpcdec-1.2.6.tar.bz2"])
+PORTABLE = ("mpc.zip", "5490e2fbf9a7f766a6eb85747e601f30c6178f03ddc1cee26f33ab08074a0f48", ["https://www.rarewares.org/john33/mpc.zip"])
+PORTABLE_LIBRARY = ["mpc_dec.cpp", "streaminfo.cpp", "huffsv46.cpp", "huffsv7.cpp", "bitstream.cpp", "synth_filter.cpp", "requant.cpp", "idtag.cpp"]
+PORTABLE_HEADERS = ["mpc_dec.h", "mpc_math.h", "requant.h", "stdafx.h", "streaminfo.h"]
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 CACHE = ROOT / ".cache" / "encoders"
@@ -140,7 +152,7 @@ def rarewares_addresses(archive):
 def sources():
     """(archive, SHA-256, addresses) of every archive this script downloads, once each."""
     seen = set()
-    for spec in (MPPENC, LIBMPC, LIBMPCDEC_126):
+    for spec in (MPPENC, LIBMPC, LIBMPCDEC_126, PORTABLE):
         yield spec
     for archive, digest, _ in BUILDS.values():
         if archive not in seen:
@@ -236,6 +248,27 @@ def build_frames_126(directory=None):
     subprocess.run(["gcc", "-O1", "-w", "-DLIBMPCDEC_126", "-DMPC_SUPPORT_SV456", "-DMPC_LITTLE_ENDIAN", "-I", str(source / "include"), "-I",
                     str(source / "src"), "-o", str(binary), str(HERE / "mpcdec_frames.c"), *(str(source / "src" / f) for f in files), "-lm"], check=True)
     return binary
+
+
+def build_portable(directory=None):
+    """The paths of mpcdec_frames_portable and mpcdec_portable, built in directory (a new temporary one
+    by default) from the patched archive."""
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="mpc-portable-"))
+    directory.mkdir(parents=True, exist_ok=True)
+    archive = fetch(PORTABLE, directory)
+    source = directory / "mpc"
+    source.mkdir(exist_ok=True)
+    with zipfile.ZipFile(archive) as files:
+        for member in [*PORTABLE_LIBRARY, *PORTABLE_HEADERS, "sample.cpp"]:
+            text = files.read(member).decode("latin-1")
+            (source / member).write_bytes(re.sub(r"(?<!long )\blong\b(?! long)", "int", text).encode("latin-1"))
+    library = [str(source / f) for f in PORTABLE_LIBRARY]
+    flags = ["g++", "-O1", "-w", "-DMPC_LITTLE_ENDIAN", "-I", str(source)]
+    frames = directory / "mpcdec_frames_portable"
+    decoder = directory / "mpcdec_portable"
+    subprocess.run([*flags, "-o", str(frames), str(HERE / "mpcdec_frames_portable.cpp"), *library], check=True)
+    subprocess.run([*flags, "-o", str(decoder), str(source / "sample.cpp"), *library], check=True)
+    return frames, decoder
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 """Reads Musepack streams the way the fixtures' manifests describe them, from the sources the parser
 cites: the SV8 specification for packets, libmpcdec r495 for SV7 headers, frames and sample counts,
-libmpcdec 1.2.6 for versions 4 to 6. Written apart from the analyzer, so the tests
-compare two readings; crosscheck_musepack_fixtures.py confirms this one with mpcdec, ffprobe and
-libmpcdec's own frame reading (mpcdec_frames.c).
+libmpcdec 1.2.6 and the Portable Musepack decoder for versions 4 to 6. Written apart from the
+analyzer, so the tests compare two readings; crosscheck_musepack_fixtures.py confirms this one with
+mpcdec, ffprobe and the decoders' own frame reading (mpcdec_frames.c, mpcdec_frames_portable.cpp).
 """
 
 import struct
@@ -150,16 +150,27 @@ def old_resolution(w, position, band):
             return position + length, resolutions[index]
 
 
+def last_frame_output(given):
+    """The samples libmpcdec 1.2.6 (mpc_decoder_decode_internal) and the Portable Musepack decoder
+    (decode_internal) output for the last frame of version 6, from the 11 bits after it: 0 stands for
+    1,152, and the synthesis filter's delay follows, wrapping at a frame."""
+    samples = given or FRAME
+    decay = (samples + DELAY) % FRAME
+    return FRAME + decay if samples + DELAY >= FRAME else decay
+
+
 def old(data):
-    """A stream of version 4 or 5 with a variable bitrate, no intensity stereo and one frame per length,
-    as libmpcdec 1.2.6 reads it: mpc_decoder_read_bitstream_sv6 decodes each frame's resolutions (and
-    mid/side flags) by subband, and the decoder stops before the last counted frame, which the
-    encoders leave unfinished."""
+    """A stream of version 4 to 6 with a variable bitrate, no intensity stereo and one frame per length,
+    as libmpcdec 1.2.6 and the Portable Musepack decoder read it: mpc_decoder_read_bitstream_sv6
+    decodes each frame's resolutions (and mid/side flags) by subband. In versions 4 and 5 the decoders
+    stop before the last counted frame, which the encoders leave unfinished; in version 6 they decode
+    it too and take its samples from the 11 bits after it."""
     w = Words(data)
     h = old_header(w)
-    readable = h["version"] in (4, 5) and h["bitrate"] == 0 and not h["is"] and h["block"] == 1
+    readable = h["version"] in (4, 5, 6) and h["bitrate"] == 0 and not h["is"] and h["block"] == 1
+    keeps_last = h["version"] == 6
     frames, bit = [], h["data"]
-    for i in range(h["frames"] - 1 if readable else 0):
+    for i in range((h["frames"] if keeps_last else h["frames"] - 1) if readable else 0):
         length = w.read(bit, 20)
         position, used, mask = bit + 20, 0, 0
         for band in range(min(h["max_band"], 31) + 1):
@@ -174,10 +185,12 @@ def old(data):
                 break
         frames.append({"length": length, "used": used, "ms": mask, "overrun": position > bit + 20 + length})
         bit += 20 + length
-    last_end = bit + 20 + w.read(bit, 20) if readable else None
+    final = w.read(bit, 11) if readable and keeps_last and frames else None
+    last_end = bit + 20 + w.read(bit, 20) if readable and not keeps_last else None
     decoded = len(frames) if readable else max(0, h["frames"] - 1) if h["version"] in (4, 5) else 0
-    return {"header": h, "readable": readable, "frames": frames, "last_runs_past": last_end - w.bits if readable else None,
-            "samples": max(0, decoded * FRAME - DELAY), "frame_bits": sum(f["length"] + 20 for f in frames)}
+    samples = (decoded - 1) * FRAME + last_frame_output(final) - DELAY if final is not None else max(0, decoded * FRAME - DELAY)
+    return {"header": h, "readable": readable, "frames": frames, "last_runs_past": last_end - w.bits if last_end is not None else None,
+            "final": final, "samples": samples, "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
 
 
 def size(data, position, limit=None):
@@ -322,6 +335,8 @@ def manifest(data, start, end, extra=None):
                             "Block Size": f"{h['block']} frame{'s' if h['block'] != 1 else ''}",
                             "Frame Count": f"{h['frames']} frame{'s' if h['frames'] != 1 else ''}"}
         result["frames"] = [[f["length"], f["used"], f"{f['ms']:x}", 0] for f in s["frames"]]
+        if s["final"] is not None:
+            result["last_frame_samples"] = s["final"]
         coded = len(s["frames"]) * FRAME
         info = {"codec": f"Musepack SV{h['version']}", "sample_rate": 44100, "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * 44100 / coded / 1000 if s["readable"] and coded else None}

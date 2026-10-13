@@ -18,9 +18,8 @@ Musepack SV8, SV7, and SV4 to SV6.
   - With true gapless, the last frame's samples come from the 11 bits after it, as libmpcdec takes them, not from the header.
   - The extra frame that gapless may need is read only where it can be there: not where a tag starts at the next word, nor where its subband resolutions run past its length or out of range.
   - After 4,096 frames in a row with a length of 0, which no encoder writes, the frames are not followed further.
-- **SV4 and SV5**: the header, then frame by frame as libmpcdec 1.2.6 reads them: the used subbands and the mid/side subbands. This covers streams with a variable bitrate, no intensity stereo and one frame per length.
-- **SV4 and SV5 streams that libmpcdec 1.2.6 refuses** (a constant bitrate, intensity stereo, blocks of frames): the header only, with a finding that says why.
-- **SV6**: the header only. No SV6 encoder was found to confirm the frame syntax.
+- **SV4 to SV6**: the header, then frame by frame as libmpcdec 1.2.6 and the Portable Musepack decoder read them: the used subbands and the mid/side subbands. This covers streams with a variable bitrate, no intensity stereo and one frame per length.
+- **SV4 to SV6 streams that both decoders refuse** (a constant bitrate, intensity stereo, blocks of frames): the header only, with a finding that says why.
 
 ## Reported
 
@@ -31,13 +30,22 @@ Musepack SV8, SV7, and SV4 to SV6.
 ## SV4 and SV5 particulars
 
 - The encoders write whole 32-bit words only, so the last frame can run up to 31 bits past the end of the data.
-- Decoders (libmpcdec 1.2.6, mppdec) decode all frames but the last, which is reported and not read.
+- Decoders (libmpcdec 1.2.6, the Portable Musepack decoder, mppdec) decode all frames but the last, which is reported and not read.
 - A stream whose last frame ends inside its last word, followed by zero bits, is not recognized: the encoders never write one, and accepting it would weaken the check that stands in for a magic number.
+
+## SV6 particulars
+
+- No SV6 encoder was found: every Rarewares mppenc build from 0.90 to 1.15u writes SV7.
+- The SV6 frame syntax comes from the source of libmpcdec 1.2.6 and the Portable Musepack decoder, which read SV4, SV5 and SV6 frames with one function, and from fixtures derived from SV5 encodes. No SV6 encoder output confirms it.
+- Unlike SV4 and SV5, both decoders decode the last counted frame. They then read 11 bits after it: how many of its samples belong to the audio, 0 meaning all 1,152. These bits are reported after the last frame, and the output samples follow them.
+- More than 1,152 samples in those bits is a finding; the decoders still decode the frame.
+- mppdec, Rarewares' build of Buschmann's decoder, also decodes every counted frame of the derived fixtures.
+- The stream must end in the word that holds those 11 bits, since the decoders need the last frame whole.
+- The SV6 fixtures are SV5 encodes relabeled as version 6, not an encoder's output (see [development](../development.md)).
 
 ## Not yet covered
 
-- the frames inside SV8 audio packets, which have no length of their own;
-- the frames of SV6.
+- the frames inside SV8 audio packets, which have no length of their own.
 
 ## Encoder detection
 

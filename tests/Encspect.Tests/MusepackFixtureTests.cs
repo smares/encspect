@@ -5,9 +5,10 @@ namespace Encspect.Tests;
 
 // Checks every Musepack fixture against its manifest (make_musepack_fixtures.py,
 // make_external_musepack_fixtures.py, both worked out by musepack_model.py and confirmed by
-// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV4, SV5 and SV7
-// frame with its length, used subbands, mid/side subbands and noise channels, every SV8 packet with
-// its key and bytes, the stream info and exactly the findings listed.
+// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV4 to SV7 frame
+// with its length, used subbands, mid/side subbands and noise channels, the 11 bits after the last
+// frame of SV6, every SV8 packet with its key and bytes, the stream info and exactly the findings
+// listed.
 public class MusepackFixtureTests
 {
     public static TheoryData<string> Names
@@ -49,7 +50,7 @@ public class MusepackFixtureTests
         }
 
         int version = manifest.GetProperty("version").GetInt32();
-        if (version is 4 or 5 or 7 && manifest.TryGetProperty("frames", out JsonElement listed) && listed.GetArrayLength() > 0)
+        if (version is >= 4 and <= 7 && manifest.TryGetProperty("frames", out JsonElement listed) && listed.GetArrayLength() > 0)
         {
             List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame && c.Value?.ToString() is not "cut short" and not "not decoded").ToList();
             JsonElement[] expected = manifest.GetProperty("frames").EnumerateArray().ToArray();
@@ -66,6 +67,15 @@ public class MusepackFixtureTests
             }
 
             Assert.True(whole >= expected.Length);
+
+            // Version 6 keeps its last counted frame and follows it with how many of its samples
+            // belong to the audio; versions 4 and 5 leave that frame undecoded.
+            Node? final = frames[expected.Length - 1].Children.SingleOrDefault(c => c.Name == "Last Frame Samples");
+            if (version is 4 or 5 or 6)
+            {
+                Assert.Equal(manifest.TryGetProperty("last_frame_samples", out JsonElement samples) ? samples.GetInt64() : null, final?.Value?.AsInteger());
+                Assert.Equal(version == 6 ? 0 : 1, stream.Children.Count(c => c.Kind == NodeKind.Frame && c.Value?.ToString() == "not decoded"));
+            }
         }
 
         if (version == 8)
@@ -206,6 +216,7 @@ public class MusepackFixtureTests
     [InlineData("musepack/external-mpcenc-packets.mpc")]
     [InlineData("musepack/external-mpcenc-chapters.mpc")]
     [InlineData("musepack/external-mppsv5-vbr.mpc")]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc")]
     [InlineData("musepack/external-mppsv4-superframes.mpc")]
     public void TruncatedCopiesYieldFindings(string name)
     {
