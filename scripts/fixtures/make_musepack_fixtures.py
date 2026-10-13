@@ -16,8 +16,18 @@ ReplayGain packet, a packet size that cannot be followed, seek tables with too m
 entries, 4,100 unknown packets before the header, with or without two of an invalid key after them; SV7 streams without the gapless frame but with an
 APEv2 tag after them, whose last frame's samples differ or are invalid, without frames, of another
 version, with an invalid resolution, whose ID3v2 tag names another encoder, broken by a tag a SEEK
-frame finds; and an SV5 stream followed by such a tag. Streams of version 6, of which no encoder was found, are
-written from their header layout (libmpcdec 1.2.6), with frames of zero bits. Each has a
+frame finds; and an SV5 stream followed by such a tag.
+
+No SV6 encoder was found, so the SV6 fixtures are derived: the SV5 encoder's variable bitrate streams,
+with and without mid/side, relabeled as version 6 (derived-*-as-sv6, not an encoder's output). SV5
+decoders drop the last counted frame, which the SV5 encoder leaves cut short, while libmpcdec 1.2.6
+decodes it in SV6 and reads 11 bits after it; so the frame
+count is lowered by one, the 11 bits after the new last frame give its samples (0, meaning all 1,152,
+and 300, so both of the decoder's ways of ending the output are taken), and the stream ends in the
+word that holds them. From them come an SV6 stream whose frame is too short for its subband
+resolutions, one followed by a tag a SEEK frame finds, one whose 11 bits give more than a frame and
+one of its first 12 frames, which end on a word boundary, followed by a zero word as mppenc 1.16 writes;
+one more SV6 stream with a constant bitrate is written from the header layout. Each fixture has a
 manifest worked out by musepack_model.py plus the findings the analyzer must report.
 
 Standard library only and deterministic, so CI reruns it and fails when the committed files differ.
@@ -205,11 +215,10 @@ def sv7_damaged_length():
     return struct.pack(f"<{len(words)}I", *words)
 
 
-def sv5_band_overrun():
+def band_overrun(data):
     """The fourth frame's length cut to 100 bits and the fifth's lengthened by as much, so the units
     still end where the encoder ends them, but the fourth frame's subband resolutions run past its
     length."""
-    data = external("mppsv5-vbr")
     w = m.Words(data)
     words = list(struct.unpack(f"<{len(data) // 4}I", data))
     bit = 64
@@ -220,6 +229,47 @@ def sv5_band_overrun():
     write_bits(words, bit, 20, 100)
     write_bits(words, bit + 120, 20, fifth + fourth - 100)
     return struct.pack(f"<{len(words)}I", *words)
+
+
+def sv5_band_overrun():
+    return band_overrun(external("mppsv5-vbr"))
+
+
+def as_sv6(name, final, frames=None, zero_word=False):
+    """The SV5 encoder's stream relabeled as version 6: the frame count lowered by one (or to frames),
+    so the frame the SV5 encoder leaves cut short, which SV5 decoders drop, is no longer counted; 11
+    bits after the new last frame that give its samples; the rest of their word zero, and the stream
+    ending there, or one zero word later, as mppenc 1.16 ends a stream that fills its last word."""
+    data = external(name)
+    w = m.Words(data)
+    h = m.old_header(w)
+    assert h["version"] == 5 and h["block"] == 1
+    count = h["frames"] - 1 if frames is None else frames
+    words = list(struct.unpack(f"<{len(data) // 4}I", data))
+    write_bits(words, 11, 10, 6)
+    write_bits(words, 32, 32, count)
+    bit = h["data"]
+    for _ in range(count):
+        bit += 20 + w.read(bit, 20)
+    end = (bit + 11 + 31) // 32 * 32
+    write_bits(words, bit, 11, final)
+    write_bits(words, bit + 11, end - bit - 11, 0)
+    assert not zero_word or end == bit + 11
+    return struct.pack(f"<{end // 32}I", *words[:end // 32]) + bytes(4 if zero_word else 0)
+
+
+def sv6_ms():
+    return as_sv6("mppsv5-vbr", 0)
+
+
+def sv6_band_overrun():
+    return band_overrun(sv6_ms())
+
+
+def sv6_seek_tag():
+    """A SEEK frame in a leading ID3v2.4 tag points to an ID3v2.4 tag right after an SV6 stream."""
+    data = sv6_ms()
+    return seek_tag(len(data), "Leading") + data + inner_tag("After")
 
 
 def sv7_trailing_data():
@@ -519,8 +569,23 @@ FIXTURES = {
     "sv8-many-unknown-first": (sv8_many_unknown_first, None, [("musepack.key-unknown", "4100 packets")]),
     "sv5-band-overrun": (sv5_band_overrun, None, [("musepack.band-header-overrun", "1 frame's subband resolutions run past"),
                                                   ("musepack.last-frame-unwritten", "bits past the end of the data")]),
-    "sv6": (lambda: old(6), None, [("musepack.frames-not-read", "no SV6 encoder")]),
-    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.frames-not-read", "no SV6 encoder")]),
+    "derived-mppsv5-vbr-as-sv6": (sv6_ms, None, []),
+    "derived-mppsv5-left-right-vbr-as-sv6": (lambda: as_sv6("mppsv5-left-right-vbr", 300), None, []),
+    "sv6-band-overrun": (sv6_band_overrun, None, [("musepack.band-header-overrun", "1 frame's subband resolutions run past")]),
+    "sv6-seek-tag": (sv6_seek_tag, lambda d: seek_layout(d, "Musepack SV6"), []),
+    "sv6-last-frame-samples-invalid": (lambda: as_sv6("mppsv5-vbr", 1900), None, [("musepack.last-frame-samples-invalid", "give 1900 samples")]),
+    # The first 12 frames and the 11 bits after them end on a word boundary.
+    "sv6-padding-word": (lambda: as_sv6("mppsv5-vbr", 0, frames=12, zero_word=True), None, []),
+    "sv6-constant-bitrate": (lambda: old(6, bitrate=128), None, [("musepack.frames-not-read", "have a constant bitrate (128 kbps)")]),
+}
+
+# The SV5 encoder's streams relabeled as version 6, which the cross-check reads as valid streams, with
+# the line mppdec (musepack_tool.mppdec_line, under Wine) printed for each relabeled file when it was
+# first written; the cross-check compares it with mppdec where Wine is installed.
+DERIVED = {
+    "derived-mppsv5-vbr-as-sv6": ("external-mppsv5-vbr.mpc", "EOF reached after 28 Frames or 00:00:00.731 hms"),
+    "derived-mppsv5-left-right-vbr-as-sv6": ("external-mppsv5-left-right-vbr.mpc", "EOF reached after 28 Frames or 00:00:00.731 hms"),
+    "sv6-padding-word": ("external-mppsv5-vbr.mpc", "EOF reached after 12 Frames or 00:00:00.313 hms"),
 }
 
 # The damaged frame length makes the frames after it be read from the wrong bits, which still decode
@@ -572,8 +637,11 @@ def main():
             start, end = 0, len(data)
             regions = [{"name": name_of(data), "offset": 0, "length": len(data)}]
         expected = DAMAGED if findings is None else findings
-        result = m.manifest(data, start, end, {"regions": regions, "findings": [{"code": c, "contains": t} for c, t in expected],
-                                               "crosscheck": {"valid": False}})
+        extra = {"regions": regions, "findings": [{"code": c, "contains": t} for c, t in expected], "crosscheck": {"valid": name in DERIVED}}
+        if name in DERIVED:
+            extra["derived"] = {"from": DERIVED[name][0], "mppdec": DERIVED[name][1], "note": "Not an encoder's output: no SV6 encoder was found. The SV5 encoder's stream relabeled as version 6, "
+                                "its frame count lowered and 11 bits written after the new last frame."}
+        result = m.manifest(data, start, end, extra)
         (OUT / f"{name}.mpc").write_bytes(data)
         (OUT / f"{name}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Wrote {len(FIXTURES)} fixtures to {OUT}")

@@ -5,9 +5,10 @@ namespace Encspect.Tests;
 
 // Checks every Musepack fixture against its manifest (make_musepack_fixtures.py,
 // make_external_musepack_fixtures.py, both worked out by musepack_model.py and confirmed by
-// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV4, SV5 and SV7
-// frame with its length, used subbands, mid/side subbands and noise channels, every SV8 packet with
-// its key and bytes, the stream info and exactly the findings listed.
+// crosscheck_musepack_fixtures.py): the top-level regions, the header fields, every SV4 to SV7 frame
+// with its length, used subbands, mid/side subbands and noise channels, the 11 bits after the last
+// frame of SV6, every SV8 packet with its key and bytes, the stream info and exactly the findings
+// listed.
 public class MusepackFixtureTests
 {
     public static TheoryData<string> Names
@@ -49,7 +50,7 @@ public class MusepackFixtureTests
         }
 
         int version = manifest.GetProperty("version").GetInt32();
-        if (version is 4 or 5 or 7 && manifest.TryGetProperty("frames", out JsonElement listed) && listed.GetArrayLength() > 0)
+        if (version is >= 4 and <= 7 && manifest.TryGetProperty("frames", out JsonElement listed) && listed.GetArrayLength() > 0)
         {
             List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame && c.Value?.ToString() is not "cut short" and not "not decoded").ToList();
             JsonElement[] expected = manifest.GetProperty("frames").EnumerateArray().ToArray();
@@ -66,6 +67,15 @@ public class MusepackFixtureTests
             }
 
             Assert.True(whole >= expected.Length);
+
+            // Version 6 keeps its last counted frame and follows it with how many of its samples
+            // belong to the audio; versions 4 and 5 leave that frame undecoded.
+            Node? final = frames[expected.Length - 1].Children.SingleOrDefault(c => c.Name == "Last Frame Samples");
+            if (version is 4 or 5 or 6)
+            {
+                Assert.Equal(manifest.TryGetProperty("last_frame_samples", out JsonElement samples) ? samples.GetInt64() : null, final?.Value?.AsInteger());
+                Assert.Equal(version == 6 ? 0 : 1, stream.Children.Count(c => c.Kind == NodeKind.Frame && c.Value?.ToString() == "not decoded"));
+            }
         }
 
         if (version == 8)
@@ -121,6 +131,46 @@ public class MusepackFixtureTests
                 Assert.True(parser.Sniff(new SniffContext(reader)) == 0, path);
             }
         }
+    }
+
+    // The sniff takes no SV6 stream cut short, since it needs the last frame and the 11 bits after it,
+    // but the parser reads one where it is handed it without the sniff: cut in the 11 bits, in the last
+    // frame and in the middle, the stream says so, its last frame claims no 11 bits, and every finding
+    // points into the tree.
+    [Theory]
+    [InlineData("musepack/derived-mppsv5-left-right-vbr-as-sv6.mpc", 4, 27)]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc", 4, 27)]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc", 4000, 19)]
+    public void CutSv6StreamsParseWithoutTheSniff(string name, int cut, int whole)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+        Assert.Equal(0, new Encspect.Formats.Musepack.MusepackParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data[..^cut])))));
+        Report report = new Encspect.Host.Analyzer([new ForcedMusepack()]).Analyze("cut.mpc", new MemoryStream(data[..^cut]));
+
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Finding missing = Assert.Single(report.Findings, f => f.Code == "musepack.frames-missing");
+        Assert.Equal($"The header counts 28 frames, but the data holds {whole} whole ones: the stream is cut short.", missing.Message);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Assert.Equal(whole, report.Streams.Single().Samples is { } samples ? (samples + 481) / 1152 : -1);
+        List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame).ToList();
+        Assert.Equal(whole + 1, frames.Count);
+        Assert.DoesNotContain(frames.SelectMany(f => f.Children), c => c.Name == "Last Frame Samples");
+        Assert.All(frames, f => Assert.DoesNotContain("followed by 11 bits", f.Description, StringComparison.Ordinal));
+        Assert.Equal(whole == 27, frames[^1].Description!.Contains("the data ends before", StringComparison.Ordinal));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // The Musepack parser with a sniff that takes anything.
+    private sealed class ForcedMusepack : IFormatParser
+    {
+        private readonly Encspect.Formats.Musepack.MusepackParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public int Sniff(SniffContext context) => 100;
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
     // Frames of length 0, which no encoder writes, stop being followed after a run of them, so 30 MB
@@ -206,6 +256,7 @@ public class MusepackFixtureTests
     [InlineData("musepack/external-mpcenc-packets.mpc")]
     [InlineData("musepack/external-mpcenc-chapters.mpc")]
     [InlineData("musepack/external-mppsv5-vbr.mpc")]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc")]
     [InlineData("musepack/external-mppsv4-superframes.mpc")]
     public void TruncatedCopiesYieldFindings(string name)
     {
