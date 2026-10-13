@@ -54,6 +54,7 @@ internal static class AudioSpecificConfig
             UsacSampleRate = state.UsacSampleRate,
             UsacOutputFrameLength = state.UsacOutputFrameLength,
             UsacSbrRatio = state.UsacSbrRatio,
+            UsacLayout = state.UsacLayout,
         };
     }
 
@@ -425,31 +426,40 @@ internal static class AudioSpecificConfig
 
                 state.Channels = (int)count;
                 state.Layout = AacTables.UsacPositions(positions);
-                node.Add(f.Span("UsacChannelConfig", channelStart, NodeValue.Integer(count, "channels"), Explain.UsacChannelConfig, channels));
+                usac.Add(f.Span("UsacChannelConfig", channelStart, NodeValue.Integer(count, "channels"), Explain.UsacChannelConfig, channels));
             }
 
             int decoderStart = f.Position;
             var decoder = new Node("UsacDecoderConfig", 0, 0);
             long elements = f.Escaped(decoder, "Elements", Explain.UsacElements, 4, 8, 16, add: 1);
+            var layouts = new List<UsacElementLayout>();
             for (long i = 0; i < elements; i++)
             {
                 int elementStart = f.Position;
                 var element = new Node("Element", 0, 0);
                 long kind = f.Read(element, "Element Type", 2, Explain.UsacElementType, v => v switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" });
-                bool stop = false;
+                string name = kind switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" };
+                var layout = new UsacElementLayout { Kind = name };
                 if (kind is 0 or 1)
                 {
-                    f.Flag(element, "HasTimeWarpedMdct", Explain.TimeWarpedMdct);
-                    f.Flag(element, "HasNoiseFilling", Explain.NoiseFilling);
+                    layout = layout with
+                    {
+                        TimeWarpedMdct = f.Flag(element, "HasTimeWarpedMdct", Explain.TimeWarpedMdct),
+                        NoiseFilling = f.Flag(element, "HasNoiseFilling", Explain.NoiseFilling),
+                    };
                     if (sbrRatio > 0)
                     {
-                        f.Flag(element, "HasHarmonicSbr", Explain.HarmonicSbr, Topics.Sbr);
-                        f.Flag(element, "HasInterTes", Explain.InterTes, Topics.Sbr);
-                        f.Flag(element, "HasPvc", Explain.Pvc, Topics.Sbr);
-                        f.Read(element, "Default Start Frequency", 4, Explain.DefaultStartFreq, topic: Topics.Sbr);
-                        f.Read(element, "Default Stop Frequency", 4, Explain.DefaultStopFreq, topic: Topics.Sbr);
+                        layout = layout with
+                        {
+                            HarmonicSbr = f.Flag(element, "HasHarmonicSbr", Explain.HarmonicSbr, Topics.Sbr),
+                            InterTes = f.Flag(element, "HasInterTes", Explain.InterTes, Topics.Sbr),
+                            Pvc = f.Flag(element, "HasPvc", Explain.Pvc, Topics.Sbr),
+                            StartFrequency = f.Read(element, "Default Start Frequency", 4, Explain.DefaultStartFreq, topic: Topics.Sbr),
+                            StopFrequency = f.Read(element, "Default Stop Frequency", 4, Explain.DefaultStopFreq, topic: Topics.Sbr),
+                        };
                         bool extra1 = f.Flag(element, "HasDefaultHeaderExtra1", Explain.DefaultHeaderExtra1);
                         bool extra2 = f.Flag(element, "HasDefaultHeaderExtra2", Explain.DefaultHeaderExtra2);
+                        layout = layout with { DefaultHeaderExtra2 = extra2 };
                         if (extra1)
                         {
                             f.Read(element, "Default Frequency Scale", 2, Explain.DefaultFreqScale);
@@ -468,7 +478,11 @@ internal static class AudioSpecificConfig
                         if (kind == 1)
                         {
                             long stereo = f.Read(element, "Stereo Config Index", 2, Explain.StereoConfigIndex);
-                            stop = stereo > 0;
+                            layout = layout with { StereoConfigIndex = stereo };
+                            if (stereo > 0)
+                            {
+                                Mps212Config(f, element, stereo);
+                            }
                         }
                     }
                 }
@@ -477,28 +491,38 @@ internal static class AudioSpecificConfig
                     long extensionType = f.Escaped(element, "Extension Element Type", Explain.ExtElementType, 4, 8, 16);
                     element.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 1 => "MPEG Surround", 2 => "SAOC", 3 => "audio pre-roll", 4 => "DRC", _ => "reserved" }})";
                     long length = f.Escaped(element, "Configuration Length", Explain.ExtConfigLength, 4, 8, 16);
-                    if (f.Flag(element, "HasDefaultLength", Explain.HasDefaultLength))
+                    bool hasDefaultLength = f.Flag(element, "HasDefaultLength", Explain.HasDefaultLength);
+                    if (hasDefaultLength)
                     {
                         f.Escaped(element, "Default Length", Explain.DefaultLength, 8, 16, 0, add: 1);
                     }
 
-                    f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
-                    f.Skip(length * 8);
+                    bool fragmented = f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
+                    // UsacExtElementConfig() (ISO/IEC 23003-3 5.2) reads no configuration for a fill or
+                    // audio pre-roll element, whatever usacExtElementConfigLength says, as ffmpeg and
+                    // libxaac decode it; fdk-aac skips the bytes the length gives.
+                    if (extensionType is 0 or 3)
+                    {
+                        if (length > 0)
+                        {
+                            report(Severity.Warning, "aac.usac-extension-config-length",
+                                $"An extension element of type {extensionType} declares {length} configuration bytes, but ISO/IEC 23003-3 reads no configuration for this type; the next fields are read where the element ends, as ffmpeg and libxaac read them, while fdk-aac skips the bytes.", node);
+                        }
+                    }
+                    else
+                    {
+                        f.Skip(length * 8);
+                    }
+
+                    layout = layout with { ExtensionType = extensionType, ConfigLength = length, HasDefaultLength = hasDefaultLength, Fragmented = fragmented };
                 }
 
-                string name = kind switch { 0 => "SCE", 1 => "CPE", 2 => "LFE", _ => "EXT" };
+                layouts.Add(layout);
                 decoder.Add(f.Span("Element", elementStart, name, Explain.UsacElement, element));
-                if (stop)
-                {
-                    report(Severity.Info, "aac.usac-config-not-analyzed",
-                        "The USAC configuration is read up to a channel pair element with MPEG Surround 2-1-2 stereo, whose configuration is not analyzed yet.", node);
-                    state.StoppedEarly = true;
-                    node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
-                    return;
-                }
             }
 
             usac.Add(f.Span("UsacDecoderConfig", decoderStart, NodeValue.Integer(elements, "elements"), Explain.UsacDecoderConfig, decoder));
+            var extensionLayouts = new List<UsacExtensionLayout>();
             if (f.Flag(usac, "HasConfigExtension", Explain.HasConfigExtension))
             {
                 int extensionStart = f.Position;
@@ -509,13 +533,16 @@ internal static class AudioSpecificConfig
                     long extensionType = f.Escaped(extensions, "Extension Type", Explain.ConfigExtensionType, 4, 8, 16);
                     extensions.Children[^1].Value = $"{extensionType} ({extensionType switch { 0 => "fill", 2 => "loudness info", 7 => "stream ID", _ => "reserved" }})";
                     long length = f.Escaped(extensions, "Extension Length", Explain.ConfigExtensionLength, 4, 8, 16);
+                    bool single = extensionType == 2 && IsSingleLoudnessMeasurement(f, length);
                     f.Skip(length * 8);
+                    extensionLayouts.Add(new UsacExtensionLayout(extensionType, length, single));
                 }
 
                 usac.Add(f.Span("UsacConfigExtension", extensionStart, NodeValue.Integer(count, "extensions"), Explain.UsacConfigExtension, extensions));
             }
 
-            node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
+            Node config = node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
+            state.UsacLayout = new UsacLayout(config, (int)frameIndex, layouts, extensionLayouts);
         }
         catch (EndOfStreamException)
         {
@@ -526,6 +553,61 @@ internal static class AudioSpecificConfig
 
             throw;
         }
+    }
+
+    // Mps212Config() (ISO/IEC 23003-3 5.2), the MPEG Surround 2-1-2 settings of a channel pair
+    // element whose stereoConfigIndex is 1 to 3, read as ffmpeg (aacdec_usac.c) and fdk-aac
+    // (sac_bitdec.cpp, SpatialDecParseMps212Config) read it.
+    private static void Mps212Config(BitFields f, Node element, long stereoConfigIndex)
+    {
+        int start = f.Position;
+        var mps = new Node("Mps212Config", 0, 0);
+        f.Read(mps, "Frequency Resolution", 3, Explain.MpsFreqRes, v => v switch
+        {
+            0 => "0 (reserved)",
+            _ => $"{v} ({new[] { 0, 28, 20, 14, 10, 7, 5, 4 }[v]} parameter bands)",
+        });
+        f.Read(mps, "Fixed Downmix Gain", 3, Explain.MpsFixedGainDmx);
+        long shaping = f.Read(mps, "Temporal Shaping Config", 2, Explain.MpsTempShapeConfig);
+        f.Read(mps, "Decorrelation Config", 2, Explain.MpsDecorrConfig);
+        f.Flag(mps, "HasHighRateMode", Explain.MpsHighRateMode);
+        f.Flag(mps, "HasPhaseCoding", Explain.MpsPhaseCoding);
+        if (f.Flag(mps, "HasOttBandsPhase", Explain.MpsOttBandsPhasePresent))
+        {
+            f.Read(mps, "OTT Bands Phase", 5, Explain.MpsOttBandsPhase);
+        }
+
+        if (stereoConfigIndex > 1)
+        {
+            f.Read(mps, "Residual Bands", 5, Explain.MpsResidualBands);
+            f.Flag(mps, "HasPseudoLr", Explain.MpsPseudoLr);
+        }
+
+        if (shaping == 2)
+        {
+            f.Read(mps, "Envelope Quantization Mode", 1, Explain.MpsEnvQuantMode);
+        }
+
+        element.Add(f.Span("Mps212Config", start, null, Explain.Mps212Config, mps));
+    }
+
+    // Whether a loudness info configuration extension holds a loudnessInfoSet() (ISO/IEC 23003-4)
+    // of no album loudness and one loudnessInfo() with a sample peak, no true peak and one
+    // measurement, as exhale writes it: its first 43 bits, read ahead without nodes, as ffmpeg's
+    // decode_loudness_set and decode_loudness_info read them.
+    private static bool IsSingleLoudnessMeasurement(BitFields f, long length)
+    {
+        if (length * 8 < 43 || f.Remaining < 43)
+        {
+            return false;
+        }
+
+        long bits = f.Look(43);
+        long Field(int from, int width) => (bits >> (43 - from - width)) & ((1L << width) - 1);
+        // loudnessInfoAlbumCount, loudnessInfoCount, drcSetId, downmixId, samplePeakLevelPresent;
+        // bsSamplePeakLevel (12 bits) is skipped; truePeakLevelPresent, measurementCount.
+        return Field(0, 6) == 0 && Field(6, 6) == 1 && Field(12, 6) == 0 && Field(18, 7) == 0 && Field(25, 1) == 1
+            && Field(38, 1) == 0 && Field(39, 4) == 1;
     }
 
     private sealed class State
@@ -555,6 +637,8 @@ internal static class AudioSpecificConfig
         public int? UsacOutputFrameLength { get; set; }
 
         public int? UsacSbrRatio { get; set; }
+
+        public UsacLayout? UsacLayout { get; set; }
 
         public bool IsCut { get; set; }
 

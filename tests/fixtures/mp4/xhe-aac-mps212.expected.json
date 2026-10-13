@@ -1,0 +1,281 @@
+{
+ "description": "xHE-AAC with 2:1 SBR whose channel pair element uses MPEG Surround 2-1-2 with residual coding: its Mps212Config is read and the fill element after it too. No encoder is named.",
+ "length": 2071,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   24
+  ],
+  [
+   "moov",
+   24,
+   704
+  ],
+  [
+   "moov/mvhd",
+   32,
+   108
+  ],
+  [
+   "moov/trak",
+   140,
+   588
+  ],
+  [
+   "moov/trak/tkhd",
+   148,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   240,
+   488
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   248,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   280,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   325,
+   403
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   333,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   349,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   357,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   373,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   385,
+   343
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   393,
+   115
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   409,
+   99
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   445,
+   63
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   508,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   532,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   560,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   700,
+   28
+  ],
+  [
+   "mdat",
+   728,
+   1343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "xHE-AAC (USAC)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 61440,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   736,
+   21
+  ],
+  [
+   757,
+   34
+  ],
+  [
+   791,
+   47
+  ],
+  [
+   838,
+   60
+  ],
+  [
+   898,
+   23
+  ],
+  [
+   921,
+   36
+  ],
+  [
+   957,
+   49
+  ],
+  [
+   1006,
+   62
+  ],
+  [
+   1068,
+   25
+  ],
+  [
+   1093,
+   38
+  ],
+  [
+   1131,
+   51
+  ],
+  [
+   1182,
+   64
+  ],
+  [
+   1246,
+   27
+  ],
+  [
+   1273,
+   40
+  ],
+  [
+   1313,
+   53
+  ],
+  [
+   1366,
+   66
+  ],
+  [
+   1432,
+   29
+  ],
+  [
+   1461,
+   42
+  ],
+  [
+   1503,
+   55
+  ],
+  [
+   1558,
+   68
+  ],
+  [
+   1626,
+   31
+  ],
+  [
+   1657,
+   44
+  ],
+  [
+   1701,
+   57
+  ],
+  [
+   1758,
+   70
+  ],
+  [
+   1828,
+   33
+  ],
+  [
+   1861,
+   46
+  ],
+  [
+   1907,
+   59
+  ],
+  [
+   1966,
+   22
+  ],
+  [
+   1988,
+   35
+  ],
+  [
+   2023,
+   48
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig": "3 elements",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Stereo Config Index": "2",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/Frequency Resolution": "2 (20 parameter bands)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/Temporal Shaping Config": "2",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/OTT Bands Phase": "7",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/Residual Bands": "5",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/HasPseudoLr": "true",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]/Mps212Config/Envelope Quantization Mode": "0",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[2]/Extension Element Type": "0 (fill)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/HasConfigExtension": "false"
+ },
+ "findings": [
+  [
+   "aac.usac-frames-not-analyzed",
+   "usacIndependencyFlag"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "mp4box_samples": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
+   "faad": "faad2 2.11 does not read USAC configurations (it fails to open the file)."
+  }
+ }
+}

@@ -46,6 +46,10 @@ internal sealed record AacConfig
 
     public int? UsacSbrRatio { get; init; }
 
+    // How the UsacConfig lays out its elements and configuration extensions, where it was read to
+    // its end; encoders differ in it (AacEncoder).
+    public UsacLayout? UsacLayout { get; init; }
+
     // Whether the access units hold SBR data, and SBR data with the parametric stereo extension;
     // null where they were not read.
     public bool? SbrFound { get; init; }

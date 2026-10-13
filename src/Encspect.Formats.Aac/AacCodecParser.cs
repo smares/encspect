@@ -121,7 +121,8 @@ public sealed class AacCodecParser : ICodecParser
             context.EncoderClaims,
             (name, value, description) => Cover(name, value, description, topic: name == "Encoder" ? Topics.EncoderDetection : null),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
-                $"The {claim.Description} names \"{text}\", but the stream points to {name}; the file may have been written by other software, or kept its metadata when the audio was re-encoded."));
+                $"The {claim.Description} names \"{text}\", but the stream points to {name}; the file may have been written by other software, or kept its metadata when the audio was re-encoded."),
+            config?.UsacLayout);
         if (encoder is not null)
         {
             leading.Add(encoder);
