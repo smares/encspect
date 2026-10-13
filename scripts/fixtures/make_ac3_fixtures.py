@@ -112,6 +112,12 @@ def fixture(name, extension, description, data, frames, streams, findings, field
     })
 
 
+# The hand-built frames' SNR offsets are 0, so no mantissa takes a bit (bap 0, A/52 7.2.2.7): a
+# skip field moved within the last block changes no sample. The encoder-made and derived fixtures
+# run the control.
+ZERO_ALLOCATION = "The frames' SNR offsets are 0, so no mantissa takes a bit and a moved skip field in the last block changes no sample."
+
+
 def silent(count, **options):
     return b"".join(ac3(**options) for _ in range(count))
 
@@ -246,23 +252,23 @@ def build():
     data = eac3(acmod=1, numblkscod=1, words=64, bsmod=0) * 6
     fixture("two-blocks", ".eac3", "Six mono frames of two blocks each.", data, frames_of(data), [stream("E-AC-3", 48000, 1, 0, 6 * 512)], [],
             fields={"AC-3/Frame/Bit Stream Information/Blocks Code": "2 blocks"},
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True})
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}})
     data = eac3(acmod=2, expstre=0, words=200) * 4
     fixture("frame-exponents", ".eac3", "Four 2/0 frames whose exponent strategies come from frmchexpstr (Table E2.10).", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, 4 * 1536)], [],
             fields={"AC-3/Frame/Audio Frame/Frame Exponent Strategy (left)": "0 (D15, R, R, R, R, R)"},
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True})
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}})
 
     # Spectral extension, and coupling in E-AC-3.
     data = eac3(acmod=2, spx=True, words=200) * 4
     fixture("spectral-extension", ".eac3", "Four 2/0 frames with spectral extension in both channels from sub-band 4 to 7.", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, 4 * 1536)], [],
             fields={"AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)"},
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True})
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}})
     data = eac3(acmod=7, cplinu=True, words=320) * 4
     fixture("coupling", ".eac3", "Four 3/2 frames with coupling from sub-band 3 in every block.", data, frames_of(data),
             [stream("E-AC-3", 48000, 7, 0, 4 * 1536)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True})
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}})
 
     # Where the analyzer stops: the adaptive hybrid transform, enhanced coupling, a reduced rate.
     data = eac3(acmod=2, ahte=1, aht_channel=1, words=200) * 3

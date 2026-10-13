@@ -43,7 +43,11 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
-  "skip_insertion": true
+  "skip_insertion": true,
+  "skip_control": false,
+  "skip": {
+   "skip_control": "The frames' SNR offsets are 0, so no mantissa takes a bit and a moved skip field in the last block changes no sample."
+  }
  },
  "block_ends": {
   "0": [

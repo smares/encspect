@@ -22,7 +22,11 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   skip fields of one byte of 0xA5 inserted where the report puts each block's mantissas, the
   skip field syntax switched on and the frame size and CRC updated; ffmpeg must decode the rewritten
   file to exactly the same samples as the original, which it only does when every block's mantissas
-  start where the report says.
+  start where the report says. As a negative control, the skip field of each block of the first
+  frame is moved a bit earlier and a bit later in turn, and each move must change the samples;
+  a block whose mantissas take no bits cannot show a wrong position, so a fixture of such blocks
+  turns the control off ("skip_control": false) with its reason. A block's mantissas end where the
+  next block's start; the last block's end is not checked this way.
 - "skip": the checks that are not run on the fixture, each with its reason.
 
 The analyzer's agreement with the manifests is checked by the tests (Ac3FixtureTests). Needs ffmpeg,
@@ -42,7 +46,7 @@ import channel_layouts
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "ac3"
-CHECKS = ("ffprobe", "ffprobe_bitrate", "decode", "liba52", "skip_insertion")
+CHECKS = ("ffprobe", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "skip_control")
 
 
 def ffprobe(path):
@@ -161,10 +165,11 @@ def find(node, name):
         yield from find(child, name)
 
 
-def check_skip_insertion(analyzer, path, problems, work):
-    data = path.read_bytes()
+def insert_skips(data, frames, moved=None):
+    """Every frame with a one-byte skip field before each block's mantissas; moved = (frame, block,
+    bits) shifts one of them."""
     rewritten = bytearray()
-    for frame in report_frames(analyzer, path):
+    for index, frame in enumerate(frames):
         start, length = frame["offset"], frame["length"]
         bits = bits_of(data[start:start + length])
 
@@ -173,6 +178,8 @@ def check_skip_insertion(analyzer, path, problems, work):
 
         flag = bit(next(find(frame, "HasSkipFields")))
         mantissas = [bit(n) for n in find(frame, "Mantissas")]
+        if moved is not None and moved[0] == index:
+            mantissas[moved[1]] += moved[2]
         out = bits[:flag] + "1"
         previous = flag + 1
         for position in mantissas:
@@ -185,15 +192,30 @@ def check_skip_insertion(analyzer, path, problems, work):
         out = out[:21] + f"{words - 1:011b}" + out[32:]
         body = bytes_of(out)
         rewritten += body + m.crc16(body[2:]).to_bytes(2, "big")
+    return bytes(rewritten)
+
+
+def pcm(source):
+    return subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", "eac3", "-i", str(source), "-f", "s32le", "-"],
+                          capture_output=True).stdout
+
+
+def check_skip_insertion(analyzer, path, problems, work, control):
+    data = path.read_bytes()
+    frames = report_frames(analyzer, path)
     target = work / "rewritten.eac3"
-    target.write_bytes(bytes(rewritten))
-
-    def pcm(source):
-        return subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", "eac3", "-i", str(source), "-f", "s32le", "-"],
-                              capture_output=True, check=True).stdout
-
-    if pcm(path) != pcm(target):
+    target.write_bytes(insert_skips(data, frames))
+    original = pcm(path)
+    if original != pcm(target):
         problems.append("ffmpeg decodes the file with skip fields at the report's mantissa positions to other samples")
+    if not control:
+        return
+    blocks = sum(1 for _ in find(frames[0], "Mantissas"))
+    for block in range(blocks):
+        for shift in (-1, 1):
+            target.write_bytes(insert_skips(data, frames, (0, block, shift)))
+            if pcm(target) == original:
+                problems.append(f"moving the skip field of block {block} of the first frame by {shift:+d} bit leaves the samples unchanged")
 
 
 def main():
@@ -223,7 +245,7 @@ def main():
                 if analyzer is None:
                     print(f"{path.name}: the skip insertion check needs --analyzer; not run")
                 else:
-                    check_skip_insertion(analyzer, path, problems, work)
+                    check_skip_insertion(analyzer, path, problems, work, check.get("skip_control", True))
             checked += 1
             for problem in problems:
                 print(f"{path.name}: {problem}")

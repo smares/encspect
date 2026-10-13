@@ -16,6 +16,14 @@ its version and the command are recorded too.
 
 rewrites the manifests from the committed files without the encoders, keeping the parts only the
 tools give. Needs ffmpeg 6.1, aften, liba52-0.7.4-dev and a C compiler otherwise.
+
+The derived-* fixtures rewrite encoder-made frames where the analyzer's report puts their fields
+(--analyzer path/to/encspect), for what the encoders do not write but needs real mantissas to be
+checked: delta bit allocation in the coupling channel and both channels of ffmpeg's 2/0 AC-3
+(liba52 confirms every block's end), and spectral extension with delta bit allocation in ffmpeg's
+mono E-AC-3 (the skip field insertion check confirms every block's start). Where a block's bit
+allocation changes, its mantissas are cut or filled with zero bits to the length the analyzer
+gives; the cross-checks then test that length against liba52 and ffmpeg.
 """
 
 import json
@@ -29,6 +37,7 @@ import tempfile
 import wave
 
 import ac3_model as m
+import crosscheck_ac3_fixtures as cc
 
 ROOT = pathlib.Path(__file__).resolve().parent
 OUT = ROOT.parents[1] / "tests" / "fixtures" / "ac3"
@@ -56,6 +65,138 @@ FIXTURES = [
     ("external-ffmpeg-mp4-5.1-448k", ".mp4", "ffmpeg", (48000, 6, "tones"), ["-c:a", "ac3", "-b:a", "448k"], [("mp4.moov-after-mdat", "not optimized for streaming")], {}),
     ("external-ffmpeg-mp4-eac3-stereo-96k", ".mp4", "ffmpeg", (48000, 2, "tones"), ["-c:a", "eac3", "-b:a", "96k"], [("mp4.moov-after-mdat", "not optimized for streaming")], {}),
 ]
+
+
+# name, source fixture, rewrite, description
+DERIVED = [
+    ("derived-ffmpeg-stereo-192k-delta", "external-ffmpeg-stereo-192k.ac3", "ac3-delta",
+     "ffmpeg's 2/0 AC-3 with delta bit allocation in block 5: two segments for the coupling channel, three for each channel."),
+    ("derived-ffmpeg-eac3-mono-48k-spx-delta", "external-ffmpeg-eac3-mono-48k.eac3", "eac3-spx-delta",
+     "ffmpeg's mono E-AC-3 with spectral extension from sub-band 4 to 9 and delta bit allocation in block 4."),
+]
+
+
+DERIVED_FIELDS = {
+    "ac3-delta": {"AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (coupling)/Offset": "31 bands",
+                  "AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (left)/Offset": "3 bands"},
+    "eac3-spx-delta": {"AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)",
+                       "AC-3/Frame/Audio Block[4]/Delta Bit Allocation/Delta Bit Allocation Segments (center)/Offset": "5 bands"},
+}
+
+
+def segment(offset, length, ba):
+    return f"{offset:05b}{length:04b}{ba:03b}"
+
+
+# Deltas of +12 to +24 dB (Table 5.17) raise the masking curve over most bands, so the blocks need
+# fewer mantissa bits. Coupling bands are counted from band 0 (A/52 7.2.2.6), so its segments
+# start at band 31, inside the coupling range. Every segment ends before band 49: liba52 refuses
+# one that reaches band 49 (parse_deltba checks j + deltlen >= 50).
+CPL_SEGMENTS = "001" + segment(31, 15, 7) + segment(0, 3, 5)
+
+
+def channel_segments(ch):
+    return "010" + segment(3 + ch, 15, 7) + segment(0, 15, 6) + segment(0, 15, 5)
+
+
+def start_bit(node, base):
+    return (node["offset"] - base) * 8 + node.get("bitOffset", 0)
+
+
+def blocks_of(frame):
+    return [c for c in frame["children"] if c["name"] == "Audio Block"]
+
+
+def first(node, name):
+    return next(cc.find(node, name))
+
+
+def rewrite_ac3(data, frames, lengths):
+    """Block 5 of every frame gets delta bit allocation; lengths, once known, are its mantissa bits."""
+    out = bytearray()
+    for index, frame in enumerate(frames):
+        base, size = frame["offset"], frame["length"]
+        bits = cc.bits_of(data[base:base + size])
+        block = blocks_of(frame)[5]
+        flag = start_bit(first(block, "HasDeltaBitAllocation"), base)
+        mantissas = first(block, "Mantissas")
+        start, length = start_bit(mantissas, base), mantissas["value"]
+        delta = "1" + "01" * 3 + CPL_SEGMENTS + channel_segments(0) + channel_segments(1)
+        body = bits[:flag] + delta + bits[flag + 1:start]
+        keep = lengths[index] if lengths else length
+        body += (bits[start:start + min(keep, length)] + "0" * max(0, keep - length))
+        # The next nominal bitrate (192 to 224 kbps) leaves room for the new fields.
+        code = int(bits[34:40], 2) + 2
+        body = body[:34] + f"{code:06b}" + body[40:]
+        end = m.WORDS[int(bits[32:34], 2)][code] * 16 - 18
+        if len(body) > end:
+            raise SystemExit(f"Frame at {base}: the rewritten blocks take {len(body)} bits, more than {end}.")
+        body += "0" * (end - len(body)) + bits[len(bits) - 18:]
+        frame_bytes = m.fix_crc1(cc.bytes_of(body))
+        out += m.fix_crc2(frame_bytes)
+    return bytes(out)
+
+
+def rewrite_eac3(data, frames, lengths):
+    """Spectral extension in every block (sub-bands 4 to 9, where ffmpeg's bandwidth code 0 ends
+    the channel, so no exponent changes) and delta bit allocation in block 4."""
+    out = bytearray()
+    for index, frame in enumerate(frames):
+        base, size = frame["offset"], frame["length"]
+        bits = cc.bits_of(data[base:base + size])
+        edits = []  # (start, end, replacement)
+        audio_frame = first(frame, "Audio Frame")
+        dba = first(audio_frame, "HasDeltaBitAllocation")
+        edits.append((start_bit(dba, base), start_bit(dba, base) + 1, "1"))
+        blocks = blocks_of(frame)
+        last_end = None
+        for number, block in enumerate(blocks):
+            if number == 0:
+                flag = start_bit(first(block, "IsSpectralExtensionInUse"), base)
+                # spxstrtf 1, spxbegf 2, spxendf 3, default band structure; coordinates: blend,
+                # master, and 4 bands of exponent and mantissa.
+                spx = "1" + "01" + "010" + "011" + "0" + "00000" + "00" + "000000" * 4
+                edits.append((flag, flag + 1, spx))
+            else:
+                flag = start_bit(first(block, "HasSpectralExtensionStrategy"), base)
+                edits.append((flag + 1, flag + 1, "0"))
+            for node in cc.find(block, "Bandwidth Code (center)"):
+                at = start_bit(node, base)
+                edits.append((at, at + 6, ""))
+            mantissas = first(block, "Mantissas")
+            start, length = start_bit(mantissas, base), mantissas["value"]
+            delta = "1" + "01" + "010" + segment(5, 4, 7) + segment(10, 6, 6) + segment(4, 3, 5) if number == 4 else "0"
+            edits.append((start, start, delta))
+            if number == 4 and lengths:
+                keep = lengths[index]
+                edits.append((start + min(keep, length), start + length, "0" * max(0, keep - length)))
+            last_end = start + length
+        body = ""
+        previous = 0
+        for at, until, text in sorted(edits, key=lambda e: (e[0], e[1])):
+            body += bits[previous:at] + text
+            previous = until
+        # The rest up to auxdatae, then fill to whole words, encinfo and the CRC.
+        body += bits[previous:last_end] + bits[last_end:len(bits) - 18] + bits[len(bits) - 18]
+        body += "0" * (-(len(body) + 17) % 16)
+        body += bits[len(bits) - 17]
+        words = (len(body) + 16) // 16
+        body = body[:21] + f"{words - 1:011b}" + body[32:]
+        payload = cc.bytes_of(body)
+        out += payload + m.crc16(payload[2:]).to_bytes(2, "big")
+    return bytes(out)
+
+
+def derive(analyzer, kind, source, target):
+    """Rewrites source into target in two passes: the first gives the analyzer the new fields, whose
+    bit allocation then gives the changed block's mantissa length for the second."""
+    data = source.read_bytes()
+    frames = cc.report_frames(analyzer, source)
+    rewrite = rewrite_ac3 if kind == "ac3-delta" else rewrite_eac3
+    changed = 5 if kind == "ac3-delta" else 4
+    target.write_bytes(rewrite(data, frames, None))
+    lengths = [first(blocks_of(f)[changed], "Mantissas")["value"] for f in cc.report_frames(analyzer, target)]
+    target.write_bytes(rewrite(data, frames, lengths))
 
 
 def signal(rate, channels, kind, path):
@@ -179,7 +320,45 @@ def main():
             data = target.read_bytes()
             result = manifest(name, extension, tool, settings, arguments, findings, fields, data, previous, block_ends, packets)
             manifest_path.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"{len(FIXTURES)} manifests written to {OUT}.")
+        analyzer = sys.argv[sys.argv.index("--analyzer") + 1] if "--analyzer" in sys.argv else None
+        if not only_manifests and analyzer is None:
+            raise SystemExit("The derived fixtures need --analyzer path/to/encspect, or pass --manifests-only.")
+        for name, source, kind, description in DERIVED:
+            extension = pathlib.Path(source).suffix
+            target = OUT / (name + extension)
+            manifest_path = OUT / (name + ".expected.json")
+            previous = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
+            block_ends = None
+            if not only_manifests:
+                derive(analyzer, kind, OUT / source, target)
+                if extension == ".ac3":
+                    block_ends = liba52_block_ends(tool_path, target)
+            data = target.read_bytes()
+            rows_with, stream = streams_of(data)
+            result = {
+                "description": description,
+                "encoder": FFMPEG_VERSION,
+                "command": ["make_external_ac3_fixtures.py", kind, source],
+                "length": len(data),
+                "format": "AC-3",
+                "frames": [[offset, h["length"]] for offset, h in rows_with],
+                "gaps": [],
+                "streams": stream,
+                "fields": DERIVED_FIELDS[kind],
+                "findings": [],
+                "crosscheck": {"ffprobe": True, "decode": True, **({"liba52": True} if extension == ".ac3" else {"skip_insertion": True})},
+            }
+            if kind == "ac3-delta":
+                result["crosscheck"]["decode"] = False
+                result["crosscheck"]["skip"] = {"decode": "ffmpeg 6.1 counts the coupling channel's delta bit allocation bands from the coupling's first band "
+                                                "(ac3.c, ff_ac3_bit_alloc_calc_mask), not from band 0 as A/52 7.2.2.6 and liba52 do, so it rejects "
+                                                "segments that start at band 31."}
+            if block_ends is not None:
+                result["block_ends"] = block_ends
+            elif previous and "block_ends" in previous:
+                result["block_ends"] = previous["block_ends"]
+            manifest_path.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"{len(FIXTURES) + len(DERIVED)} manifests written to {OUT}.")
     return 0
 
 
