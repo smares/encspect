@@ -20,6 +20,8 @@ internal sealed class Ac3Analysis
     private readonly List<Program> _finished = [];
     private readonly AnalysisContext _context;
     private Program? _current;
+    private int _currentType;
+    private int _blocksOfSubstream0;
     private int _frameIndex;
     private long _frameOffset;
 
@@ -164,6 +166,10 @@ internal sealed class Ac3Analysis
                 Findings.Add(Severity.Warning, "ac3.block-overrun", Field, count =>
                     $"An audio block runs past the end of its frame: {detail} (A/52 7.10.2, check 21). First in {at} ({Times(count)}).");
                 break;
+            case Issue.HeaderOverrun:
+                Findings.Add(Severity.Warning, "ac3.header-overrun", Field, count =>
+                    $"The frame is too short for its own fields: {detail}, so its audio blocks are not read (A/52 7.10.2, check 21). First in {at} ({Times(count)}).");
+                break;
             case Issue.UndefinedBsid:
                 Findings.Add(Severity.Info, "ac3.bsid-undefined", Field, count =>
                     $"bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and liba52 decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in {at} ({Times(count)}).");
@@ -210,11 +216,30 @@ internal sealed class Ac3Analysis
                 return null;
             }
 
+            if (_currentType == 2)
+            {
+                Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame },
+                    count => $"{Count(count)} of a dependent substream follow an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{Frames[index].Offset:X}.");
+            }
+
             _current.Regions.Add(region);
             return _current;
         }
 
         int id = header.IsEac3 ? header.SubstreamId : 0;
+        _currentType = header.IsEac3 ? header.StreamType : 0;
+        if (id == 0)
+        {
+            _blocksOfSubstream0 = header.Blocks;
+        }
+        else if (_blocksOfSubstream0 != 0 && header.Blocks != _blocksOfSubstream0)
+        {
+            int blocks = header.Blocks;
+            int expected = _blocksOfSubstream0;
+            Findings.Add(Severity.Warning, "ac3.substream-blocks-differ", () => new Node("Frame", Frames[index].Offset, Frames[index].Length) { Kind = NodeKind.Frame },
+                count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{Frames[index].Offset:X}.");
+        }
+
         var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon);
         if (!_programs.TryGetValue(id, out Program? program) || program.Key != key)
         {

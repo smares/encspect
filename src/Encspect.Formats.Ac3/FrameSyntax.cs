@@ -12,6 +12,7 @@ internal enum Issue : byte
     BlockInconsistent,
     BlockInvalid,
     Overrun,
+    HeaderOverrun,
     UndefinedBsid,
     ReducedRate,
     Aht,
@@ -55,7 +56,6 @@ internal sealed partial class FrameSyntax
     private int _strmtyp;
     private int _blocks;
     private int _frameWords;
-    private int _crc1End;
 
     // E-AC-3 audio frame (Annex E 2.2.3).
     private bool _expstre;
@@ -152,6 +152,10 @@ internal sealed partial class FrameSyntax
         Read(header);
     }
 
+    // Called where building a frame's nodes read another number of the record's bits than the
+    // analysis kept (frame offset, kept, read): the two readings went apart. A check for tests.
+    internal static Action<long, int, int>? RecordMismatch { get; set; }
+
     // Builds the nodes of a frame from its record. crc1, crc2: the verdicts of its CRCs.
     public List<Node> Nodes(byte[] record, int keptBits, long offset, int length, SyncFrame header, string crc1, string crc2)
     {
@@ -160,6 +164,11 @@ internal sealed partial class FrameSyntax
         _crc1Verdict = crc1;
         _crc2Verdict = crc2;
         Read(header);
+        if (_b.KeptBits != keptBits)
+        {
+            RecordMismatch?.Invoke(offset, keptBits, _b.KeptBits);
+        }
+
         return _t.Nodes;
     }
 
@@ -172,6 +181,7 @@ internal sealed partial class FrameSyntax
         _blocks = header.Blocks;
         _frameWords = header.FrameSizeWords;
         _r.Reset(_blocks);
+        string part = "the bit stream information";
         try
         {
             SyncInfo(header);
@@ -192,6 +202,7 @@ internal sealed partial class FrameSyntax
             {
                 if (_eac3)
                 {
+                    part = "the audio frame fields (audfrm)";
                     AudioFrame();
                 }
 
@@ -204,6 +215,7 @@ internal sealed partial class FrameSyntax
                     // The audio blocks and the auxiliary data end before auxdatae and the error
                     // check, the frame's last 18 bits (5.3.4, 5.3.5; Annex E 2.2.5, 2.2.6).
                     _b.LimitTo((_frameWords * 16) - 18);
+                    part = "an audio block";
                     Blocks();
                 }
             }
@@ -216,8 +228,10 @@ internal sealed partial class FrameSyntax
                 _r.StopBit = _b.Position;
                 if (_r.Stop == StopReason.Overrun)
                 {
-                    Report(Issue.Overrun, LastField(), _lastStart, _lastEnd,
-                        $"what follows the field {LastField()} reaches past the end of the frame, so the rest of its audio blocks are not read");
+                    bool block = part == "an audio block";
+                    Report(block ? Issue.Overrun : Issue.HeaderOverrun, LastField(), _lastStart, _lastEnd, block
+                        ? $"it reaches past the frame's end after the field {LastField()}, so the rest of the frame's audio blocks are not read"
+                        : $"reading {part} reaches past its end after the field {LastField()}");
                 }
             }
         }
@@ -319,9 +333,7 @@ internal sealed partial class FrameSyntax
             }
 
             _fscod = F("Sample Rate Code", 2, Explain.Fscod, SampleRateCode);
-            int frmsizecod = F("Frame Size Code", 6, Explain.Frmsizecod, v => FrameSize(v, _fscod));
-            int words = _fscod < 3 && frmsizecod < 38 ? SyncFrame.WordsOf(_fscod, frmsizecod) : 0;
-            _crc1End = ((words >> 1) + (words >> 3)) * 16;
+            F("Frame Size Code", 6, Explain.Frmsizecod, v => FrameSize(v, _fscod));
         }
 
         Close();
@@ -406,7 +418,7 @@ internal sealed partial class FrameSyntax
             if (Flag("HasExtendedInfo2", Explain.Xbsi2e))
             {
                 Open("Extended Information 2", Explain.Xbsi2);
-                F("Dolby Surround EX Mode", 2, Explain.Dsurexmod, v => $"{v} ({Ac3Names.DolbySurroundEx(v)})");
+                F("Dolby Surround EX Mode", 2, Explain.Dsurexmod, v => $"{v} ({Ac3Names.DolbySurroundEx(v, _acmod)})");
                 ReservedIf(F("Dolby Headphone Mode", 2, Explain.Dheadphonmod, v => $"{v} ({Ac3Names.DolbyHeadphone(v)})") == 3);
                 F("A/D Converter Type", 1, Explain.Adconvtyp, v => v == 0 ? "0 (standard)" : "1 (HDCD)");
                 ReservedIf(F("Reserved", 8, Explain.Xbsi2Reserved, v => NodeValue.Hex(v, 2)) != 0);
@@ -631,7 +643,7 @@ internal sealed partial class FrameSyntax
 
             if (_acmod >= 6)
             {
-                F("Dolby Surround EX Mode", 2, Explain.Dsurexmod, v => $"{v} ({Ac3Names.DolbySurroundEx(v)})");
+                F("Dolby Surround EX Mode", 2, Explain.Dsurexmod, v => $"{v} ({Ac3Names.DolbySurroundEx(v, _acmod)})");
             }
 
             for (int channel = 0; channel < (_acmod == 0 ? 2 : 1); channel++)
@@ -687,46 +699,68 @@ internal sealed partial class FrameSyntax
         int start = _b.Position;
         int end = start + ((length + 2) * 8);
         Open("Mixing Parameters", Explain.MixingParameters);
-        if (Flag("HasChannelScales", Explain.Mixdata2e))
-        {
-            PremixFields();
-            ChannelScale("Left");
-            ChannelScale("Center");
-            ChannelScale("Right");
-            ChannelScale("Left Surround");
-            ChannelScale("Right Surround");
-            ChannelScale("LFE");
-            if (Flag("HasDownmixScale", Explain.Dmixscle))
-            {
-                F("Downmix Scale", 4, Explain.Dmixscl, Ac3Names.ExternalChannelScale);
-            }
 
-            if (Flag("HasAuxiliaryChannelScales", Explain.Addche))
-            {
-                ChannelScale("First Auxiliary");
-                ChannelScale("Second Auxiliary");
-            }
-        }
-
-        if (Flag("HasSpeechData", Explain.Mixdata3e))
+        // The fields stop where the mixing data ends: a field past it is not read, so the group
+        // ends at the length mixdeflen gives.
+        bool overrun = false;
+        _b.LimitTo(end);
+        try
         {
-            F("Speech Data", 5, Explain.Spchdat);
-            if (Flag("HasSpeechData1", Explain.Addspchdate))
+            if (Flag("HasChannelScales", Explain.Mixdata2e))
             {
-                F("Speech Data 1", 5, Explain.Spchdat1);
-                F("Speech Attenuation 1", 2, Explain.Spchan1att);
-                if (Flag("HasSpeechData2", Explain.Addspchdat1e))
+                PremixFields();
+                ChannelScale("Left");
+                ChannelScale("Center");
+                ChannelScale("Right");
+                ChannelScale("Left Surround");
+                ChannelScale("Right Surround");
+                ChannelScale("LFE");
+                if (Flag("HasDownmixScale", Explain.Dmixscle))
                 {
-                    F("Speech Data 2", 5, Explain.Spchdat2);
-                    F("Speech Attenuation 2", 3, Explain.Spchan2att);
+                    F("Downmix Scale", 4, Explain.Dmixscl, Ac3Names.ExternalChannelScale);
+                }
+
+                if (Flag("HasAuxiliaryChannelScales", Explain.Addche))
+                {
+                    ChannelScale("First Auxiliary");
+                    ChannelScale("Second Auxiliary");
                 }
             }
+
+            if (Flag("HasSpeechData", Explain.Mixdata3e))
+            {
+                F("Speech Data", 5, Explain.Spchdat);
+                if (Flag("HasSpeechData1", Explain.Addspchdate))
+                {
+                    F("Speech Data 1", 5, Explain.Spchdat1);
+                    F("Speech Attenuation 1", 2, Explain.Spchan1att);
+                    if (Flag("HasSpeechData2", Explain.Addspchdat1e))
+                    {
+                        F("Speech Data 2", 5, Explain.Spchdat2);
+                        F("Speech Attenuation 2", 3, Explain.Spchan2att);
+                    }
+                }
+            }
+
+        }
+        catch (EndOfStreamException)
+        {
+            overrun = true;
+        }
+        finally
+        {
+            _b.Unlimit();
         }
 
-        if (_b.Position > end)
+        if (overrun)
         {
-            Report(Issue.MixDataOverrun, "Mixing Parameters", start, _b.Position,
-                $"its fields take {_b.Position - start} bits of the {end - start} that mixdeflen gives");
+            if (end > _b.FrameBitCount)
+            {
+                throw new EndOfStreamException();
+            }
+
+            Report(Issue.MixDataOverrun, "Mixing Parameters", start, end,
+                $"its fields need more than the {end - start} bits that mixdeflen gives");
         }
         else if (_b.Position < end)
         {
@@ -735,8 +769,8 @@ internal sealed partial class FrameSyntax
             _t?.Field("Mixing Data", rest, end, NodeValue.Integer(end - rest, "bits"), Explain.Mixdata);
         }
 
-        Close();
         _b.MoveTo(end);
+        Close();
     }
 
     private void ChannelScale(string channel)
