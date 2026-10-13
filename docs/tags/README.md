@@ -13,6 +13,12 @@ Tag parsers are separate from the format parsers. The host finds the tags of a f
 
 Tags are found by position and structure, never by a signature alone, because short signatures collide with each other and with audio data. The full rules, and the fixtures that prove them, are in the plan's section [Tag detection and false positives](../PLAN.md#tag-detection-and-false-positives).
 
-- **Positions:** each tag type is looked for only where its specification allows it, such as ID3v1 at exactly 128 bytes before the end of the file. The one guided search follows an ID3v2.4 SEEK frame.
+- **Positions:** each tag type is looked for only where its specification allows it:
+  - ID3v1 at exactly 128 bytes before the end of the file;
+  - APE through its footer at the end or just before another trailing tag, or (APEv2) through its header at the start or directly after a leading tag;
+  - ID3v2 at the start or directly after a leading tag, and an ID3v2.4 tag also through its footer ("3DI") at the end or just before another trailing tag;
+  - Lyrics3 directly before an ID3v1 tag, where its specification places it, and also without one, with a finding.
+
+  The one guided search follows an ID3v2.4 SEEK frame to the next tag.
 - **Validation:** structure decides how confident a tag is, not whether it exists. A tag that breaks its specification stays in the report, with a finding for each violation and a lower confidence.
 - **Ownership:** where candidates claim the same bytes, the strongest evidence wins, and a signature inside bytes another tag or a container already owns is rejected. Rejected candidates become findings.
