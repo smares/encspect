@@ -18,6 +18,7 @@ From the audio coding mode and the LFE flag. E-AC-3's dependent substreams add t
 ## Not yet covered
 
 - E-AC-3 frames that use the adaptive hybrid transform or enhanced coupling are read only up to that point.
+- E-AC-3 frames at a reduced sample rate (fscod2) and AC-3 frames with bsid 9 or 10 (half and quarter rate): only their headers are read, not their audio blocks.
 - Dolby Atmos.
 
 ## Encoder detection
