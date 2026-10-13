@@ -181,6 +181,32 @@ public class AacBlockTests
         Assert.True(count > 2000, $"{count} blocks");
     }
 
+    // An AAC LC access unit handed over by a container that holds bytes after its END element: the
+    // Trailing Bytes node the finding points to is in the tree, also where the unit is longer than
+    // the reader reads (BlockLog.MaxBlockBytes) or spans pages, and lies inside its unit's node.
+    [Theory]
+    [InlineData(100, 4)]
+    [InlineData(600, 2)]
+    [InlineData(BlockLog.MaxBlockBytes + 100, 255)]
+    public void TrailingBytesOfAnAccessUnitAreInTheTree(int length, int segmentsPerPage)
+    {
+        byte[] unit = new byte[length];
+        Array.Fill(unit, (byte)0x55);
+        unit[0] = 0xE0;
+        (byte[] file, _) = PagedContainer.Build(segmentsPerPage, [0x12, 0x10], unit, [0xE0]);
+
+        Report report = TestFiles.Analyze(file, new PagedContainer("aac", configured: true));
+
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Finding trailing = Assert.Single(report.Findings, f => f.Code == "aac.unit-trailing-bytes");
+        Node found = TestFiles.Follow(report.Root, trailing.Path!);
+        Assert.Equal(("Trailing Bytes", trailing.Node!.Offset, trailing.Node.Length), (found.Name, found.Offset, found.Length));
+        Node accessUnit = TestFiles.Follow(report.Root, trailing.Path!.SkipLast(1).ToList());
+        Assert.Equal("Access Unit", accessUnit.Name);
+        Assert.Equal(TestFiles.RangesOf(accessUnit)[^1].End, accessUnit.End);
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
     private static IEnumerable<Node> Frames(Node node)
     {
         if (node.Kind == NodeKind.Frame && node.Name == "Frame")
