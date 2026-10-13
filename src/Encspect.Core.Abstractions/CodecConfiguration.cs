@@ -25,4 +25,8 @@ public sealed record CodecConfiguration
     // one, null when it says nothing (MP4's DecoderConfigDescriptor sets avgBitrate to 0 for a
     // variable bitrate, ISO/IEC 14496-1 7.2.6.6.2).
     public bool? IsVbr { get; init; }
+
+    // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
+    // come with the configuration, whose Data then holds the bytes after the structure.
+    public AudioFormat? Format { get; init; }
 }

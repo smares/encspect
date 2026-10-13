@@ -1,0 +1,309 @@
+{
+ "description": "Every other header object: a codec list, a script command, a marker, mutual exclusions, a stream prioritization, a bandwidth sharing, bitrate records, padding, two encryption objects, a signature, an object of no known GUID, and in the header extension a compatibility object, an advanced content encryption object and index parameters.",
+ "format": "ASF",
+ "length": 2109,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   1547
+  ],
+  [
+   "Data Object",
+   1547,
+   562
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Stream Properties Object",
+   230,
+   96
+  ],
+  [
+   "Codec List Object",
+   326,
+   194
+  ],
+  [
+   "Script Command Object",
+   520,
+   156
+  ],
+  [
+   "Marker Object",
+   676,
+   150
+  ],
+  [
+   "Bitrate Mutual Exclusion Object",
+   826,
+   46
+  ],
+  [
+   "Advanced Mutual Exclusion Object",
+   872,
+   46
+  ],
+  [
+   "Group Mutual Exclusion Object",
+   918,
+   50
+  ],
+  [
+   "Stream Prioritization Object",
+   968,
+   34
+  ],
+  [
+   "Bandwidth Sharing Object",
+   1002,
+   54
+  ],
+  [
+   "Stream Bitrate Properties Object",
+   1056,
+   38
+  ],
+  [
+   "Padding Object",
+   1094,
+   61
+  ],
+  [
+   "Content Encryption Object",
+   1155,
+   85
+  ],
+  [
+   "Extended Content Encryption Object",
+   1240,
+   33
+  ],
+  [
+   "Digital Signature Object",
+   1273,
+   36
+  ],
+  [
+   "12345678-1234-1234-1234-123456789ABC",
+   1309,
+   42
+  ],
+  [
+   "Header Extension Object",
+   1351,
+   196
+  ]
+ ],
+ "extension_objects": [
+  [
+   "Compatibility Object",
+   1397,
+   26
+  ],
+  [
+   "Advanced Content Encryption Object",
+   1423,
+   61
+  ],
+  [
+   "Index Parameters Object",
+   1484,
+   34
+  ],
+  [
+   "Padding Object",
+   1518,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  },
+  {
+   "number": 2,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   1597,
+   256,
+   3
+  ],
+  [
+   1853,
+   256,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   2,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   1,
+   2,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   60,
+   0,
+   [
+    [
+     1628,
+     60
+    ]
+   ]
+  ],
+  [
+   2,
+   1,
+   60,
+   25,
+   [
+    [
+     1705,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   60,
+   50,
+   [
+    [
+     1782,
+     60
+    ]
+   ]
+  ],
+  [
+   2,
+   2,
+   60,
+   75,
+   [
+    [
+     1884,
+     60
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 2109,
+  "packets": 2,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.unknown-object",
+   "contains": "12345678-1234-1234-1234-123456789ABC"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Digital Rights Management"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Windows Media Rights Manager"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "network devices"
+  },
+  {
+   "code": "asf.index-missing",
+   "contains": "no Index Object"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ }
+}

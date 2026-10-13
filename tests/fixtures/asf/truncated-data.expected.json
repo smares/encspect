@@ -1,0 +1,139 @@
+{
+ "description": "A file cut in the middle of the third packet.",
+ "format": "ASF",
+ "length": 494,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   276
+  ],
+  [
+   "Data Object",
+   276,
+   218
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Header Extension Object",
+   230,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   326,
+   168,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   20,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     357,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1094,
+  "packets": 3,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.object-truncated",
+   "contains": "ends"
+  },
+  {
+   "code": "asf.file-size",
+   "contains": "1094 bytes"
+  },
+  {
+   "code": "asf.packet-count",
+   "contains": "counts 3 data packets"
+  },
+  {
+   "code": "asf.packet-count",
+   "contains": "Data Object counts 3"
+  },
+  {
+   "code": "asf.packet-truncated",
+   "contains": "ends before"
+  },
+  {
+   "code": "asf.payload-overrun",
+   "contains": "extends past"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the file is cut inside a payload, which ffmpeg returns as a short packet."
+ }
+}

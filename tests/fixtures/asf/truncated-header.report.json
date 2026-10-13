@@ -1,0 +1,295 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "truncated-header.asf",
+    "root": {
+      "name": "File",
+      "value": "ASF",
+      "offset": 0,
+      "length": 130,
+      "children": [
+        {
+          "name": "ASF",
+          "value": "no streams",
+          "offset": 0,
+          "length": 130,
+          "children": [
+            {
+              "name": "Header Object",
+              "value": 1,
+              "unit": "objects",
+              "offset": 0,
+              "length": 130,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": "Header Object (75B22630-668E-11CF-A6D9-00AA0062CE6C)",
+                  "offset": 0,
+                  "length": 16
+                },
+                {
+                  "name": "Object Size",
+                  "value": 276,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 8
+                },
+                {
+                  "name": "Number of Header Objects",
+                  "value": 3,
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Reserved1",
+                  "value": 1,
+                  "offset": 28,
+                  "length": 1
+                },
+                {
+                  "name": "Reserved2",
+                  "value": 2,
+                  "offset": 29,
+                  "length": 1
+                },
+                {
+                  "name": "File Properties Object",
+                  "offset": 30,
+                  "length": 100,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "File Properties Object (8CABDCA1-A947-11CF-8EE4-00C00C205365)",
+                      "offset": 30,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 104,
+                      "unit": "bytes",
+                      "offset": 46,
+                      "length": 8
+                    },
+                    {
+                      "name": "File ID",
+                      "value": "04030201-0605-0807-090A-0B0C0D0E0F10",
+                      "offset": 54,
+                      "length": 16
+                    },
+                    {
+                      "name": "File Size",
+                      "value": 1094,
+                      "unit": "bytes",
+                      "offset": 70,
+                      "length": 8
+                    },
+                    {
+                      "name": "Creation Date",
+                      "value": "0 (not set)",
+                      "offset": 78,
+                      "length": 8
+                    },
+                    {
+                      "name": "Data Packets Count",
+                      "value": 3,
+                      "offset": 86,
+                      "length": 8
+                    },
+                    {
+                      "name": "Play Duration",
+                      "value": 0.1,
+                      "unit": "s",
+                      "offset": 94,
+                      "length": 8
+                    },
+                    {
+                      "name": "Send Duration",
+                      "value": 0,
+                      "unit": "s",
+                      "offset": 102,
+                      "length": 8
+                    },
+                    {
+                      "name": "Preroll",
+                      "value": 0,
+                      "unit": "ms",
+                      "offset": 110,
+                      "length": 8
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 2,
+                      "offset": 118,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Broadcast Flag",
+                          "value": false,
+                          "offset": 118,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Seekable Flag",
+                          "value": true,
+                          "offset": 118,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 0,
+                          "offset": 118,
+                          "length": 4,
+                          "bitOffset": 2,
+                          "bitLength": 30,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Minimum Data Packet Size",
+                      "value": 256,
+                      "unit": "bytes",
+                      "offset": 122,
+                      "length": 4
+                    },
+                    {
+                      "name": "Maximum Data Packet Size",
+                      "value": 256,
+                      "unit": "bytes",
+                      "offset": 126,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "asf.object-truncated",
+        "message": "The Header Object at 0x0 states a size of 276 bytes, but the file ends 146 bytes sooner: the file is cut short.",
+        "offset": 0,
+        "length": 130,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.missing-file-properties",
+        "message": "The Header Object holds no File Properties Object, which the specification requires (section 2.3).",
+        "offset": 0,
+        "length": 130,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.missing-header-extension",
+        "message": "The Header Object holds no Header Extension Object, which the specification requires (section 2.3).",
+        "offset": 0,
+        "length": 130,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.no-streams",
+        "message": "The Header Object holds no Stream Properties Object, which the specification requires (section 2.3).",
+        "offset": 0,
+        "length": 130,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.missing-data",
+        "message": "The file holds no Data Object, which the specification requires (section 2.2).",
+        "offset": 0,
+        "length": 130,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.header-object-count",
+        "message": "The Header Object counts 3 objects, but it holds 1 (the Header Extension Object counts as one, section 3.1).",
+        "offset": 24,
+        "length": 4,
+        "path": [
+          0,
+          0,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.object-size",
+        "message": "The File Properties Object at 0x1E is 100 bytes; the specification gives at least 104.",
+        "offset": 30,
+        "length": 100,
+        "path": [
+          0,
+          0,
+          5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.object-truncated",
+        "message": "The File Properties Object at 0x1E is 100 bytes, too few for its fields; they are read as far as they go.",
+        "offset": 30,
+        "length": 100,
+        "path": [
+          0,
+          0,
+          5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.object-overruns",
+        "message": "The File Properties Object at 0x1E states a size of 104 bytes, 4 more than the Header Object that holds it has left; it is read up to the end of the Header Object.",
+        "offset": 30,
+        "length": 100,
+        "path": [
+          0,
+          0,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

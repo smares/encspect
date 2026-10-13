@@ -1,0 +1,335 @@
+{
+ "description": "Packets with a padding length past the packet, no payloads, replicated data of 3 bytes, a payload of stream 0, a packet length that differs from the packet size, an error correction length type that is reserved and a wrong padding length.",
+ "format": "ASF",
+ "length": 2574,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   276
+  ],
+  [
+   "Data Object",
+   276,
+   2298
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Header Extension Object",
+   230,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   326,
+   256,
+   1
+  ],
+  [
+   582,
+   256,
+   1
+  ],
+  [
+   838,
+   256,
+   0
+  ],
+  [
+   1094,
+   256,
+   1
+  ],
+  [
+   1350,
+   256,
+   1
+  ],
+  [
+   1606,
+   200,
+   1
+  ],
+  [
+   1806,
+   256,
+   1
+  ],
+  [
+   2062,
+   256,
+   1
+  ],
+  [
+   2318,
+   256,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   4,
+   0,
+   3,
+   60,
+   false,
+   true
+  ],
+  [
+   4,
+   0,
+   5,
+   0,
+   8,
+   60,
+   false,
+   false
+  ],
+  [
+   5,
+   1,
+   6,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   6,
+   0,
+   0,
+   0,
+   0,
+   246,
+   false,
+   false
+  ],
+  [
+   7,
+   1,
+   8,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   8,
+   1,
+   9,
+   0,
+   8,
+   60,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   60,
+   0,
+   [
+    [
+     357,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   60,
+   0,
+   [
+    [
+     613,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   60,
+   0,
+   [
+    [
+     1120,
+     60
+    ]
+   ]
+  ],
+  [
+   0,
+   5,
+   60,
+   0,
+   [
+    [
+     1381,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   60,
+   0,
+   [
+    [
+     1639,
+     60
+    ]
+   ]
+  ],
+  [
+   0,
+   0,
+   246,
+   0,
+   [
+    [
+     1816,
+     246
+    ]
+   ]
+  ],
+  [
+   1,
+   8,
+   60,
+   0,
+   [
+    [
+     2093,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   9,
+   60,
+   0,
+   [
+    [
+     2349,
+     60
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 2574,
+  "packets": 9,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.padding-length",
+   "contains": "more padding"
+  },
+  {
+   "code": "asf.no-payloads",
+   "contains": "no payloads"
+  },
+  {
+   "code": "asf.replicated-length",
+   "contains": "2 to 7"
+  },
+  {
+   "code": "asf.payload-stream-zero",
+   "contains": "stream 0"
+  },
+  {
+   "code": "asf.packet-length",
+   "contains": "differs from the packet size"
+  },
+  {
+   "code": "asf.ecc-length-type",
+   "contains": "reserves"
+  },
+  {
+   "code": "asf.padding-mismatch",
+   "contains": "padding length"
+  },
+  {
+   "code": "asf.stream-number-type",
+   "contains": "stream number length type"
+  },
+  {
+   "code": "asf.payload-unknown-stream",
+   "contains": "stream 0"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the packets are damaged on purpose."
+ }
+}

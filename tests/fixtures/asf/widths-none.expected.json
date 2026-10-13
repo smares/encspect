@@ -1,0 +1,225 @@
+{
+ "description": "The fields that may be left out are: no padding length, no replicated data, no offset and no media object number; every payload is a whole object.",
+ "format": "ASF",
+ "length": 1094,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   276
+  ],
+  [
+   "Data Object",
+   276,
+   818
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Header Extension Object",
+   230,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   326,
+   256,
+   2
+  ],
+  [
+   582,
+   256,
+   2
+  ],
+  [
+   838,
+   256,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   0,
+   0,
+   0,
+   50,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     341,
+     50
+    ]
+   ]
+  ],
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     394,
+     50
+    ]
+   ]
+  ],
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     597,
+     50
+    ]
+   ]
+  ],
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     650,
+     50
+    ]
+   ]
+  ],
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     853,
+     50
+    ]
+   ]
+  ],
+  [
+   1,
+   0,
+   50,
+   0,
+   [
+    [
+     906,
+     50
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1094,
+  "packets": 3,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "ffmpeg rejects a payload with no replicated data and no offset field (\"packet fragment position invalid\")."
+ }
+}

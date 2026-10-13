@@ -1,0 +1,2990 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "header-objects.asf",
+    "root": {
+      "name": "File",
+      "value": "ASF",
+      "offset": 0,
+      "length": 2109,
+      "children": [
+        {
+          "name": "ASF",
+          "value": "2 streams (2 audio)",
+          "offset": 0,
+          "length": 2109,
+          "children": [
+            {
+              "name": "Header Object",
+              "value": 18,
+              "unit": "objects",
+              "offset": 0,
+              "length": 1547,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": "Header Object (75B22630-668E-11CF-A6D9-00AA0062CE6C)",
+                  "offset": 0,
+                  "length": 16
+                },
+                {
+                  "name": "Object Size",
+                  "value": 1547,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 8
+                },
+                {
+                  "name": "Number of Header Objects",
+                  "value": 18,
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Reserved1",
+                  "value": 1,
+                  "offset": 28,
+                  "length": 1
+                },
+                {
+                  "name": "Reserved2",
+                  "value": 2,
+                  "offset": 29,
+                  "length": 1
+                },
+                {
+                  "name": "File Properties Object",
+                  "value": "0.050 s",
+                  "offset": 30,
+                  "length": 104,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "File Properties Object (8CABDCA1-A947-11CF-8EE4-00C00C205365)",
+                      "offset": 30,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 104,
+                      "unit": "bytes",
+                      "offset": 46,
+                      "length": 8
+                    },
+                    {
+                      "name": "File ID",
+                      "value": "04030201-0605-0807-090A-0B0C0D0E0F10",
+                      "offset": 54,
+                      "length": 16
+                    },
+                    {
+                      "name": "File Size",
+                      "value": 2109,
+                      "unit": "bytes",
+                      "offset": 70,
+                      "length": 8
+                    },
+                    {
+                      "name": "Creation Date",
+                      "value": "0 (not set)",
+                      "offset": 78,
+                      "length": 8
+                    },
+                    {
+                      "name": "Data Packets Count",
+                      "value": 2,
+                      "offset": 86,
+                      "length": 8
+                    },
+                    {
+                      "name": "Play Duration",
+                      "value": 0.05,
+                      "unit": "s",
+                      "offset": 94,
+                      "length": 8
+                    },
+                    {
+                      "name": "Send Duration",
+                      "value": 0,
+                      "unit": "s",
+                      "offset": 102,
+                      "length": 8
+                    },
+                    {
+                      "name": "Preroll",
+                      "value": 0,
+                      "unit": "ms",
+                      "offset": 110,
+                      "length": 8
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 2,
+                      "offset": 118,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Broadcast Flag",
+                          "value": false,
+                          "offset": 118,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Seekable Flag",
+                          "value": true,
+                          "offset": 118,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 0,
+                          "offset": 118,
+                          "length": 4,
+                          "bitOffset": 2,
+                          "bitLength": 30,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Minimum Data Packet Size",
+                      "value": 256,
+                      "unit": "bytes",
+                      "offset": 122,
+                      "length": 4
+                    },
+                    {
+                      "name": "Maximum Data Packet Size",
+                      "value": 256,
+                      "unit": "bytes",
+                      "offset": 126,
+                      "length": 4
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 0,
+                      "unit": "bps",
+                      "offset": 130,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream Properties Object",
+                  "value": "stream 1, audio",
+                  "offset": 134,
+                  "length": 96,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Stream Properties Object (B7DC0791-A9B7-11CF-8EE6-00C00C205365)",
+                      "offset": 134,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 96,
+                      "unit": "bytes",
+                      "offset": 150,
+                      "length": 8
+                    },
+                    {
+                      "name": "Stream Type",
+                      "value": "Audio (F8699E40-5B4D-11CF-A8FD-00805F5C442B)",
+                      "offset": 158,
+                      "length": 16
+                    },
+                    {
+                      "name": "Error Correction Type",
+                      "value": "No error correction (20FB5700-5B55-11CF-A8FD-00805F5C442B)",
+                      "offset": 174,
+                      "length": 16
+                    },
+                    {
+                      "name": "Time Offset",
+                      "value": 0,
+                      "unit": "s",
+                      "offset": 190,
+                      "length": 8
+                    },
+                    {
+                      "name": "Type-Specific Data Length",
+                      "value": 18,
+                      "unit": "bytes",
+                      "offset": 198,
+                      "length": 4
+                    },
+                    {
+                      "name": "Error Correction Data Length",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 202,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 1,
+                      "offset": 206,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Stream Number",
+                          "value": 1,
+                          "offset": 206,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 7,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 0,
+                          "offset": 206,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 8,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Encrypted Content Flag",
+                          "value": false,
+                          "offset": 207,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 208,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type-Specific Data",
+                      "value": 18,
+                      "unit": "bytes",
+                      "offset": 212,
+                      "length": 18,
+                      "children": [
+                        {
+                          "name": "Format Tag",
+                          "value": "0x0001 (PCM)",
+                          "offset": 212,
+                          "length": 2
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "offset": 214,
+                          "length": 2
+                        },
+                        {
+                          "name": "Samples Per Second",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 216,
+                          "length": 4
+                        },
+                        {
+                          "name": "Average Bytes Per Second",
+                          "value": 16000,
+                          "unit": "bytes/s",
+                          "offset": 220,
+                          "length": 4
+                        },
+                        {
+                          "name": "Block Alignment",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 224,
+                          "length": 2
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 226,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Specific Data Size",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 228,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream Properties Object",
+                  "value": "stream 2, audio",
+                  "offset": 230,
+                  "length": 96,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Stream Properties Object (B7DC0791-A9B7-11CF-8EE6-00C00C205365)",
+                      "offset": 230,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 96,
+                      "unit": "bytes",
+                      "offset": 246,
+                      "length": 8
+                    },
+                    {
+                      "name": "Stream Type",
+                      "value": "Audio (F8699E40-5B4D-11CF-A8FD-00805F5C442B)",
+                      "offset": 254,
+                      "length": 16
+                    },
+                    {
+                      "name": "Error Correction Type",
+                      "value": "No error correction (20FB5700-5B55-11CF-A8FD-00805F5C442B)",
+                      "offset": 270,
+                      "length": 16
+                    },
+                    {
+                      "name": "Time Offset",
+                      "value": 0,
+                      "unit": "s",
+                      "offset": 286,
+                      "length": 8
+                    },
+                    {
+                      "name": "Type-Specific Data Length",
+                      "value": 18,
+                      "unit": "bytes",
+                      "offset": 294,
+                      "length": 4
+                    },
+                    {
+                      "name": "Error Correction Data Length",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 298,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 2,
+                      "offset": 302,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Stream Number",
+                          "value": 2,
+                          "offset": 302,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 7,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 0,
+                          "offset": 302,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 8,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Encrypted Content Flag",
+                          "value": false,
+                          "offset": 303,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 304,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type-Specific Data",
+                      "value": 18,
+                      "unit": "bytes",
+                      "offset": 308,
+                      "length": 18,
+                      "children": [
+                        {
+                          "name": "Format Tag",
+                          "value": "0x0001 (PCM)",
+                          "offset": 308,
+                          "length": 2
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "offset": 310,
+                          "length": 2
+                        },
+                        {
+                          "name": "Samples Per Second",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 312,
+                          "length": 4
+                        },
+                        {
+                          "name": "Average Bytes Per Second",
+                          "value": 16000,
+                          "unit": "bytes/s",
+                          "offset": 316,
+                          "length": 4
+                        },
+                        {
+                          "name": "Block Alignment",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 320,
+                          "length": 2
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 322,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Specific Data Size",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 324,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Codec List Object",
+                  "value": 3,
+                  "unit": "codecs",
+                  "offset": 326,
+                  "length": 194,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Codec List Object (86D15240-311D-11D0-A3A4-00A0C90348F6)",
+                      "offset": 326,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 194,
+                      "unit": "bytes",
+                      "offset": 342,
+                      "length": 8
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": "86D15241-311D-11D0-A3A4-00A0C90348F6",
+                      "offset": 350,
+                      "length": 16
+                    },
+                    {
+                      "name": "Codec Entries Count",
+                      "value": 3,
+                      "offset": 366,
+                      "length": 4
+                    },
+                    {
+                      "name": "Codec Entry",
+                      "value": "Windows Media Audio V8",
+                      "offset": 370,
+                      "length": 106,
+                      "children": [
+                        {
+                          "name": "Type",
+                          "value": "Audio codec",
+                          "offset": 370,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name Length",
+                          "value": 23,
+                          "unit": "characters",
+                          "offset": 372,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name",
+                          "value": "Windows Media Audio V8",
+                          "offset": 374,
+                          "length": 46
+                        },
+                        {
+                          "name": "Codec Description Length",
+                          "value": 25,
+                          "unit": "characters",
+                          "offset": 420,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Description",
+                          "value": "128 kbps, 44 kHz, stereo",
+                          "offset": 422,
+                          "length": 50
+                        },
+                        {
+                          "name": "Codec Information Length",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 472,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Information",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 474,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Codec Entry",
+                      "value": "Video",
+                      "offset": 476,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Type",
+                          "value": "Video codec",
+                          "offset": 476,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name Length",
+                          "value": 6,
+                          "unit": "characters",
+                          "offset": 478,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name",
+                          "value": "Video",
+                          "offset": 480,
+                          "length": 12
+                        },
+                        {
+                          "name": "Codec Description Length",
+                          "value": 0,
+                          "unit": "characters",
+                          "offset": 492,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Description",
+                          "value": "",
+                          "offset": 494,
+                          "length": 0
+                        },
+                        {
+                          "name": "Codec Information Length",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 494,
+                          "length": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Codec Entry",
+                      "value": "Other",
+                      "offset": 496,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Type",
+                          "value": "Unknown codec",
+                          "offset": 496,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name Length",
+                          "value": 6,
+                          "unit": "characters",
+                          "offset": 498,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Name",
+                          "value": "Other",
+                          "offset": 500,
+                          "length": 12
+                        },
+                        {
+                          "name": "Codec Description Length",
+                          "value": 2,
+                          "unit": "characters",
+                          "offset": 512,
+                          "length": 2
+                        },
+                        {
+                          "name": "Codec Description",
+                          "value": "x",
+                          "offset": 514,
+                          "length": 4
+                        },
+                        {
+                          "name": "Codec Information Length",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 518,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Script Command Object",
+                  "value": 2,
+                  "unit": "commands",
+                  "offset": 520,
+                  "length": 156,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Script Command Object (1EFB1A30-0B62-11D0-A39B-00A0C90348F6)",
+                      "offset": 520,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 156,
+                      "unit": "bytes",
+                      "offset": 536,
+                      "length": 8
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": "4B1ACBE3-100B-11D0-A39B-00A0C90348F6",
+                      "offset": 544,
+                      "length": 16
+                    },
+                    {
+                      "name": "Commands Count",
+                      "value": 2,
+                      "offset": 560,
+                      "length": 2
+                    },
+                    {
+                      "name": "Command Types Count",
+                      "value": 2,
+                      "offset": 562,
+                      "length": 2
+                    },
+                    {
+                      "name": "Command Type Name Length",
+                      "value": 4,
+                      "unit": "characters",
+                      "offset": 564,
+                      "length": 2
+                    },
+                    {
+                      "name": "Command Type Name",
+                      "value": "URL",
+                      "offset": 566,
+                      "length": 8
+                    },
+                    {
+                      "name": "Command Type Name Length",
+                      "value": 9,
+                      "unit": "characters",
+                      "offset": 574,
+                      "length": 2
+                    },
+                    {
+                      "name": "Command Type Name",
+                      "value": "FILENAME",
+                      "offset": 576,
+                      "length": 18
+                    },
+                    {
+                      "name": "Command",
+                      "value": "URL: http://example.invalid/ at 1000 ms",
+                      "offset": 594,
+                      "length": 56,
+                      "children": [
+                        {
+                          "name": "Presentation Time",
+                          "value": 1000,
+                          "unit": "ms",
+                          "offset": 594,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type Index",
+                          "value": 0,
+                          "offset": 598,
+                          "length": 2
+                        },
+                        {
+                          "name": "Command Name Length",
+                          "value": 24,
+                          "unit": "characters",
+                          "offset": 600,
+                          "length": 2
+                        },
+                        {
+                          "name": "Command Name",
+                          "value": "http://example.invalid/",
+                          "offset": 602,
+                          "length": 48
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Command",
+                      "value": "FILENAME: next.asf at 2000 ms",
+                      "offset": 650,
+                      "length": 26,
+                      "children": [
+                        {
+                          "name": "Presentation Time",
+                          "value": 2000,
+                          "unit": "ms",
+                          "offset": 650,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type Index",
+                          "value": 1,
+                          "offset": 654,
+                          "length": 2
+                        },
+                        {
+                          "name": "Command Name Length",
+                          "value": 9,
+                          "unit": "characters",
+                          "offset": 656,
+                          "length": 2
+                        },
+                        {
+                          "name": "Command Name",
+                          "value": "next.asf",
+                          "offset": 658,
+                          "length": 18
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Marker Object",
+                  "value": 2,
+                  "unit": "markers",
+                  "offset": 676,
+                  "length": 150,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Marker Object (F487CD01-A951-11CF-8EE6-00C00C205365)",
+                      "offset": 676,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 150,
+                      "unit": "bytes",
+                      "offset": 692,
+                      "length": 8
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": "4CFEDB20-75F6-11CF-9C0F-00A0C90349CB",
+                      "offset": 700,
+                      "length": 16
+                    },
+                    {
+                      "name": "Markers Count",
+                      "value": 2,
+                      "offset": 716,
+                      "length": 4
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 720,
+                      "length": 2
+                    },
+                    {
+                      "name": "Name Length",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 722,
+                      "length": 2
+                    },
+                    {
+                      "name": "Name",
+                      "value": "Markers",
+                      "offset": 724,
+                      "length": 16
+                    },
+                    {
+                      "name": "Marker",
+                      "value": "Start",
+                      "offset": 740,
+                      "length": 42,
+                      "children": [
+                        {
+                          "name": "Offset",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 740,
+                          "length": 8
+                        },
+                        {
+                          "name": "Presentation Time",
+                          "value": 0,
+                          "unit": "s",
+                          "offset": 748,
+                          "length": 8
+                        },
+                        {
+                          "name": "Entry Length",
+                          "value": 24,
+                          "unit": "bytes",
+                          "offset": 756,
+                          "length": 2
+                        },
+                        {
+                          "name": "Send Time",
+                          "value": 0,
+                          "unit": "ms",
+                          "offset": 758,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 762,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker Description Length",
+                          "value": 6,
+                          "unit": "characters",
+                          "offset": 766,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker Description",
+                          "value": "Start",
+                          "offset": 770,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Marker",
+                      "value": "Chorus",
+                      "offset": 782,
+                      "length": 44,
+                      "children": [
+                        {
+                          "name": "Offset",
+                          "value": 400,
+                          "unit": "bytes",
+                          "offset": 782,
+                          "length": 8
+                        },
+                        {
+                          "name": "Presentation Time",
+                          "value": 0.5,
+                          "unit": "s",
+                          "offset": 790,
+                          "length": 8
+                        },
+                        {
+                          "name": "Entry Length",
+                          "value": 26,
+                          "unit": "bytes",
+                          "offset": 798,
+                          "length": 2
+                        },
+                        {
+                          "name": "Send Time",
+                          "value": 500,
+                          "unit": "ms",
+                          "offset": 800,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 804,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker Description Length",
+                          "value": 7,
+                          "unit": "characters",
+                          "offset": 808,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker Description",
+                          "value": "Chorus",
+                          "offset": 812,
+                          "length": 14
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Bitrate Mutual Exclusion Object",
+                  "value": "bitrate: streams 1, 2",
+                  "offset": 826,
+                  "length": 46,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Bitrate Mutual Exclusion Object (D6E229DC-35DA-11D1-9034-00A0C90349BE)",
+                      "offset": 826,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 46,
+                      "unit": "bytes",
+                      "offset": 842,
+                      "length": 8
+                    },
+                    {
+                      "name": "Exclusion Type",
+                      "value": "bitrate (D6E22A01-35DA-11D1-9034-00A0C90349BE)",
+                      "offset": 850,
+                      "length": 16
+                    },
+                    {
+                      "name": "Stream Numbers Count",
+                      "value": 2,
+                      "offset": 866,
+                      "length": 2
+                    },
+                    {
+                      "name": "Stream Numbers",
+                      "value": "1, 2",
+                      "offset": 868,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Advanced Mutual Exclusion Object",
+                  "value": "language: streams 1, 2",
+                  "offset": 872,
+                  "length": 46,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Advanced Mutual Exclusion Object (A08649CF-4775-4670-8A16-6E35357566CD)",
+                      "offset": 872,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 46,
+                      "unit": "bytes",
+                      "offset": 888,
+                      "length": 8
+                    },
+                    {
+                      "name": "Exclusion Type",
+                      "value": "language (D6E22A00-35DA-11D1-9034-00A0C90349BE)",
+                      "offset": 896,
+                      "length": 16
+                    },
+                    {
+                      "name": "Stream Numbers Count",
+                      "value": 2,
+                      "offset": 912,
+                      "length": 2
+                    },
+                    {
+                      "name": "Stream Numbers",
+                      "value": "1, 2",
+                      "offset": 914,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Group Mutual Exclusion Object",
+                  "value": "language: 2 records",
+                  "offset": 918,
+                  "length": 50,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Group Mutual Exclusion Object (D1465A40-5A79-4338-B71B-E36B8FD6C249)",
+                      "offset": 918,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 50,
+                      "unit": "bytes",
+                      "offset": 934,
+                      "length": 8
+                    },
+                    {
+                      "name": "Exclusion Type",
+                      "value": "language (D6E22A00-35DA-11D1-9034-00A0C90349BE)",
+                      "offset": 942,
+                      "length": 16
+                    },
+                    {
+                      "name": "Record Count",
+                      "value": 2,
+                      "offset": 958,
+                      "length": 2
+                    },
+                    {
+                      "name": "Record",
+                      "value": "streams 1",
+                      "offset": 960,
+                      "length": 4
+                    },
+                    {
+                      "name": "Record",
+                      "value": "streams 2",
+                      "offset": 964,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream Prioritization Object",
+                  "value": 2,
+                  "unit": "records",
+                  "offset": 968,
+                  "length": 34,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Stream Prioritization Object (D4FED15B-88D3-454F-81F0-ED5C45999E24)",
+                      "offset": 968,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 34,
+                      "unit": "bytes",
+                      "offset": 984,
+                      "length": 8
+                    },
+                    {
+                      "name": "Priority Records Count",
+                      "value": 2,
+                      "offset": 992,
+                      "length": 2
+                    },
+                    {
+                      "name": "Priority Record",
+                      "value": "stream 1, mandatory",
+                      "offset": 994,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Stream Number",
+                          "value": 1,
+                          "offset": 994,
+                          "length": 2
+                        },
+                        {
+                          "name": "Priority Flags",
+                          "value": 1,
+                          "offset": 996,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Mandatory Flag",
+                              "value": true,
+                              "offset": 996,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Priority Record",
+                      "value": "stream 2",
+                      "offset": 998,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Stream Number",
+                          "value": 2,
+                          "offset": 998,
+                          "length": 2
+                        },
+                        {
+                          "name": "Priority Flags",
+                          "value": 0,
+                          "offset": 1000,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Mandatory Flag",
+                              "value": false,
+                              "offset": 1000,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Bandwidth Sharing Object",
+                  "value": "partial: streams 1, 2",
+                  "offset": 1002,
+                  "length": 54,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Bandwidth Sharing Object (A69609E6-517B-11D2-B6AF-00C04FD908E9)",
+                      "offset": 1002,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 54,
+                      "unit": "bytes",
+                      "offset": 1018,
+                      "length": 8
+                    },
+                    {
+                      "name": "Sharing Type",
+                      "value": "Partial (AF6060AB-5197-11D2-B6AF-00C04FD908E9)",
+                      "offset": 1026,
+                      "length": 16
+                    },
+                    {
+                      "name": "Data Bitrate",
+                      "value": 128000,
+                      "unit": "bps",
+                      "offset": 1042,
+                      "length": 4
+                    },
+                    {
+                      "name": "Buffer Size",
+                      "value": 8000,
+                      "unit": "bits",
+                      "offset": 1046,
+                      "length": 4
+                    },
+                    {
+                      "name": "Stream Numbers Count",
+                      "value": 2,
+                      "offset": 1050,
+                      "length": 2
+                    },
+                    {
+                      "name": "Stream Numbers",
+                      "value": "1, 2",
+                      "offset": 1052,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream Bitrate Properties Object",
+                  "value": 2,
+                  "unit": "records",
+                  "offset": 1056,
+                  "length": 38,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Stream Bitrate Properties Object (7BF875CE-468D-11D1-8D82-006097C9A2B2)",
+                      "offset": 1056,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 38,
+                      "unit": "bytes",
+                      "offset": 1072,
+                      "length": 8
+                    },
+                    {
+                      "name": "Bitrate Records Count",
+                      "value": 2,
+                      "offset": 1080,
+                      "length": 2
+                    },
+                    {
+                      "name": "Bitrate Record",
+                      "value": "stream 1: 16000 bps",
+                      "offset": 1082,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Flags",
+                          "value": 1,
+                          "offset": 1082,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 1,
+                              "offset": 1082,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 1082,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 9,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 16000,
+                          "unit": "bps",
+                          "offset": 1084,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bitrate Record",
+                      "value": "stream 2: 16000 bps",
+                      "offset": 1088,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Flags",
+                          "value": 2,
+                          "offset": 1088,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 2,
+                              "offset": 1088,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 1088,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 9,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 16000,
+                          "unit": "bps",
+                          "offset": 1090,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Padding Object",
+                  "value": 37,
+                  "unit": "bytes",
+                  "offset": 1094,
+                  "length": 61,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Padding Object (1806D474-CADF-4509-A4BA-9AABCB96AAE8)",
+                      "offset": 1094,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 61,
+                      "unit": "bytes",
+                      "offset": 1110,
+                      "length": 8
+                    },
+                    {
+                      "name": "Padding Data",
+                      "value": 37,
+                      "unit": "bytes",
+                      "offset": 1118,
+                      "length": 37
+                    }
+                  ]
+                },
+                {
+                  "name": "Content Encryption Object",
+                  "value": "DRM",
+                  "offset": 1155,
+                  "length": 85,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Content Encryption Object (2211B3FB-BD23-11D2-B4B7-00A0C955FC6E)",
+                      "offset": 1155,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 85,
+                      "unit": "bytes",
+                      "offset": 1171,
+                      "length": 8
+                    },
+                    {
+                      "name": "Secret Data Length",
+                      "value": 6,
+                      "unit": "bytes",
+                      "offset": 1179,
+                      "length": 4
+                    },
+                    {
+                      "name": "Secret Data",
+                      "value": 6,
+                      "unit": "bytes",
+                      "offset": 1183,
+                      "length": 6
+                    },
+                    {
+                      "name": "Protection Type Length",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 1189,
+                      "length": 4
+                    },
+                    {
+                      "name": "Protection Type",
+                      "value": "DRM",
+                      "offset": 1193,
+                      "length": 4
+                    },
+                    {
+                      "name": "Key ID Length",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 1197,
+                      "length": 4
+                    },
+                    {
+                      "name": "Key ID",
+                      "value": "key",
+                      "offset": 1201,
+                      "length": 4
+                    },
+                    {
+                      "name": "License URL Length",
+                      "value": 31,
+                      "unit": "bytes",
+                      "offset": 1205,
+                      "length": 4
+                    },
+                    {
+                      "name": "License URL",
+                      "value": "http://example.invalid/license",
+                      "offset": 1209,
+                      "length": 31
+                    }
+                  ]
+                },
+                {
+                  "name": "Extended Content Encryption Object",
+                  "offset": 1240,
+                  "length": 33,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Extended Content Encryption Object (298AE614-2622-4C17-B935-DAE07EE9289C)",
+                      "offset": 1240,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 33,
+                      "unit": "bytes",
+                      "offset": 1256,
+                      "length": 8
+                    },
+                    {
+                      "name": "Data Size",
+                      "value": 5,
+                      "unit": "bytes",
+                      "offset": 1264,
+                      "length": 4
+                    },
+                    {
+                      "name": "Data",
+                      "value": 5,
+                      "unit": "bytes",
+                      "offset": 1268,
+                      "length": 5
+                    }
+                  ]
+                },
+                {
+                  "name": "Digital Signature Object",
+                  "offset": 1273,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Digital Signature Object (2211B3FC-BD23-11D2-B4B7-00A0C955FC6E)",
+                      "offset": 1273,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 36,
+                      "unit": "bytes",
+                      "offset": 1289,
+                      "length": 8
+                    },
+                    {
+                      "name": "Signature Type",
+                      "value": 2,
+                      "offset": 1297,
+                      "length": 4
+                    },
+                    {
+                      "name": "Signature Data Length",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 1301,
+                      "length": 4
+                    },
+                    {
+                      "name": "Signature Data",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 1305,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Unknown Object",
+                  "value": 42,
+                  "unit": "bytes",
+                  "offset": 1309,
+                  "length": 42,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "12345678-1234-1234-1234-123456789ABC",
+                      "offset": 1309,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 42,
+                      "unit": "bytes",
+                      "offset": 1325,
+                      "length": 8
+                    },
+                    {
+                      "name": "Object Data",
+                      "value": 18,
+                      "unit": "bytes",
+                      "offset": 1333,
+                      "length": 18
+                    }
+                  ]
+                },
+                {
+                  "name": "Header Extension Object",
+                  "value": 4,
+                  "unit": "objects",
+                  "offset": 1351,
+                  "length": 196,
+                  "children": [
+                    {
+                      "name": "Object ID",
+                      "value": "Header Extension Object (5FBF03B5-A92E-11CF-8EE3-00C00C205365)",
+                      "offset": 1351,
+                      "length": 16
+                    },
+                    {
+                      "name": "Object Size",
+                      "value": 196,
+                      "unit": "bytes",
+                      "offset": 1367,
+                      "length": 8
+                    },
+                    {
+                      "name": "Reserved Field 1",
+                      "value": "ABD3D211-A9BA-11CF-8EE6-00C00C205365",
+                      "offset": 1375,
+                      "length": 16
+                    },
+                    {
+                      "name": "Reserved Field 2",
+                      "value": 6,
+                      "offset": 1391,
+                      "length": 2
+                    },
+                    {
+                      "name": "Header Extension Data Size",
+                      "value": 150,
+                      "unit": "bytes",
+                      "offset": 1393,
+                      "length": 4
+                    },
+                    {
+                      "name": "Compatibility Object",
+                      "offset": 1397,
+                      "length": 26,
+                      "children": [
+                        {
+                          "name": "Object ID",
+                          "value": "Header Object (75B22630-668E-11CF-A6D9-00AA0062CE6C)",
+                          "offset": 1397,
+                          "length": 16
+                        },
+                        {
+                          "name": "Object Size",
+                          "value": 26,
+                          "unit": "bytes",
+                          "offset": 1413,
+                          "length": 8
+                        },
+                        {
+                          "name": "Profile",
+                          "value": 5,
+                          "offset": 1421,
+                          "length": 1
+                        },
+                        {
+                          "name": "Mode",
+                          "value": 1,
+                          "offset": 1422,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Advanced Content Encryption Object",
+                      "value": 1,
+                      "unit": "records",
+                      "offset": 1423,
+                      "length": 61,
+                      "children": [
+                        {
+                          "name": "Object ID",
+                          "value": "Advanced Content Encryption Object (43058533-6981-49E6-9B74-AD12CB86D58C)",
+                          "offset": 1423,
+                          "length": 16
+                        },
+                        {
+                          "name": "Object Size",
+                          "value": 61,
+                          "unit": "bytes",
+                          "offset": 1439,
+                          "length": 8
+                        },
+                        {
+                          "name": "Content Encryption Records Count",
+                          "value": 1,
+                          "offset": 1447,
+                          "length": 2
+                        },
+                        {
+                          "name": "Content Encryption Record",
+                          "offset": 1449,
+                          "length": 35,
+                          "children": [
+                            {
+                              "name": "System ID",
+                              "value": "7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D",
+                              "offset": 1449,
+                              "length": 16
+                            },
+                            {
+                              "name": "System Version",
+                              "value": 1,
+                              "offset": 1465,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encrypted Object Record Count",
+                              "value": 1,
+                              "offset": 1469,
+                              "length": 2
+                            },
+                            {
+                              "name": "Encrypted Object Record",
+                              "offset": 1471,
+                              "length": 6,
+                              "children": [
+                                {
+                                  "name": "Encrypted Object ID Type",
+                                  "value": 1,
+                                  "offset": 1471,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Encrypted Object ID Length",
+                                  "value": 2,
+                                  "unit": "bytes",
+                                  "offset": 1473,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Encrypted Object ID",
+                                  "value": 2,
+                                  "unit": "bytes",
+                                  "offset": 1475,
+                                  "length": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Data Size",
+                              "value": 3,
+                              "unit": "bytes",
+                              "offset": 1477,
+                              "length": 4
+                            },
+                            {
+                              "name": "Data",
+                              "value": 3,
+                              "unit": "bytes",
+                              "offset": 1481,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Index Parameters Object",
+                      "value": 1,
+                      "unit": "specifiers",
+                      "offset": 1484,
+                      "length": 34,
+                      "children": [
+                        {
+                          "name": "Object ID",
+                          "value": "Index Parameters Object (D6E229DF-35DA-11D1-9034-00A0C90349BE)",
+                          "offset": 1484,
+                          "length": 16
+                        },
+                        {
+                          "name": "Object Size",
+                          "value": 34,
+                          "unit": "bytes",
+                          "offset": 1500,
+                          "length": 8
+                        },
+                        {
+                          "name": "Index Entry Time Interval",
+                          "value": 1000,
+                          "unit": "ms",
+                          "offset": 1508,
+                          "length": 4
+                        },
+                        {
+                          "name": "Index Specifiers Count",
+                          "value": 1,
+                          "offset": 1512,
+                          "length": 2
+                        },
+                        {
+                          "name": "Index Specifier",
+                          "value": "stream 1, nearest past cleanpoint",
+                          "offset": 1514,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 1,
+                              "offset": 1514,
+                              "length": 2
+                            },
+                            {
+                              "name": "Index Type",
+                              "value": "3 (nearest past cleanpoint)",
+                              "offset": 1516,
+                              "length": 2
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Padding Object",
+                      "value": 5,
+                      "unit": "bytes",
+                      "offset": 1518,
+                      "length": 29,
+                      "children": [
+                        {
+                          "name": "Object ID",
+                          "value": "Padding Object (1806D474-CADF-4509-A4BA-9AABCB96AAE8)",
+                          "offset": 1518,
+                          "length": 16
+                        },
+                        {
+                          "name": "Object Size",
+                          "value": 29,
+                          "unit": "bytes",
+                          "offset": 1534,
+                          "length": 8
+                        },
+                        {
+                          "name": "Padding Data",
+                          "value": 5,
+                          "unit": "bytes",
+                          "offset": 1542,
+                          "length": 5
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Object",
+              "value": "2 packets",
+              "offset": 1547,
+              "length": 562,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": "Data Object (75B22636-668E-11CF-A6D9-00AA0062CE6C)",
+                  "offset": 1547,
+                  "length": 16
+                },
+                {
+                  "name": "Object Size",
+                  "value": 562,
+                  "unit": "bytes",
+                  "offset": 1563,
+                  "length": 8
+                },
+                {
+                  "name": "File ID",
+                  "value": "04030201-0605-0807-090A-0B0C0D0E0F10",
+                  "offset": 1571,
+                  "length": 16
+                },
+                {
+                  "name": "Total Data Packets",
+                  "value": 2,
+                  "offset": 1587,
+                  "length": 8
+                },
+                {
+                  "name": "Reserved",
+                  "value": 257,
+                  "offset": 1595,
+                  "length": 2
+                },
+                {
+                  "name": "Data Packets",
+                  "value": 2,
+                  "unit": "packets",
+                  "offset": 1597,
+                  "length": 512,
+                  "children": [
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "3 payloads",
+                      "offset": 1597,
+                      "length": 256,
+                      "children": [
+                        {
+                          "name": "Error Correction Flags",
+                          "value": 130,
+                          "offset": 1597,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Error Correction Data Length",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1597,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Opaque Data Present",
+                              "value": false,
+                              "offset": 1597,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Length Type",
+                              "value": 0,
+                              "offset": 1597,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Present",
+                              "value": true,
+                              "offset": 1597,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Error Correction Data",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 1598,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Type and Number",
+                              "value": 0,
+                              "offset": 1598,
+                              "length": 1
+                            },
+                            {
+                              "name": "Cycle",
+                              "value": 0,
+                              "offset": 1599,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Type Flags",
+                          "value": 17,
+                          "offset": 1600,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Multiple Payloads Present",
+                              "value": true,
+                              "offset": 1600,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Sequence Type",
+                              "value": 0,
+                              "offset": 1600,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Padding Length Type",
+                              "value": 2,
+                              "offset": 1600,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Packet Length Type",
+                              "value": 0,
+                              "offset": 1600,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Present",
+                              "value": false,
+                              "offset": 1600,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Property Flags",
+                          "value": 93,
+                          "offset": 1601,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Replicated Data Length Type",
+                              "value": 1,
+                              "offset": 1601,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Offset Into Media Object Length Type",
+                              "value": 3,
+                              "offset": 1601,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Media Object Number Length Type",
+                              "value": 1,
+                              "offset": 1601,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Stream Number Length Type",
+                              "value": 1,
+                              "offset": 1601,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding Length",
+                          "value": 11,
+                          "unit": "bytes",
+                          "offset": 1602,
+                          "length": 2
+                        },
+                        {
+                          "name": "Send Time",
+                          "value": 0,
+                          "unit": "ms",
+                          "offset": 1604,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0,
+                          "unit": "ms",
+                          "offset": 1608,
+                          "length": 2
+                        },
+                        {
+                          "name": "Payload Flags",
+                          "value": 131,
+                          "offset": 1610,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Number of Payloads",
+                              "value": 3,
+                              "offset": 1610,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 6,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Payload Length Type",
+                              "value": 2,
+                              "offset": 1610,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Payload",
+                          "value": "stream 1",
+                          "offset": 1611,
+                          "length": 77,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 129,
+                              "offset": 1611,
+                              "length": 1,
+                              "children": [
+                                {
+                                  "name": "Stream Number",
+                                  "value": 1,
+                                  "offset": 1611,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Key Frame Bit",
+                                  "value": true,
+                                  "offset": 1611,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Media Object Number",
+                              "value": 1,
+                              "offset": 1612,
+                              "length": 1
+                            },
+                            {
+                              "name": "Offset Into Media Object",
+                              "value": 0,
+                              "unit": "bytes",
+                              "offset": 1613,
+                              "length": 4
+                            },
+                            {
+                              "name": "Replicated Data Length",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1617,
+                              "length": 1
+                            },
+                            {
+                              "name": "Replicated Data",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1618,
+                              "length": 8,
+                              "children": [
+                                {
+                                  "name": "Media Object Size",
+                                  "value": 60,
+                                  "unit": "bytes",
+                                  "offset": 1618,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Presentation Time",
+                                  "value": 0,
+                                  "unit": "ms",
+                                  "offset": 1622,
+                                  "length": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Payload Length",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1626,
+                              "length": 2
+                            },
+                            {
+                              "name": "Payload Data",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1628,
+                              "length": 60
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Payload",
+                          "value": "stream 2",
+                          "offset": 1688,
+                          "length": 77,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 130,
+                              "offset": 1688,
+                              "length": 1,
+                              "children": [
+                                {
+                                  "name": "Stream Number",
+                                  "value": 2,
+                                  "offset": 1688,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Key Frame Bit",
+                                  "value": true,
+                                  "offset": 1688,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Media Object Number",
+                              "value": 1,
+                              "offset": 1689,
+                              "length": 1
+                            },
+                            {
+                              "name": "Offset Into Media Object",
+                              "value": 0,
+                              "unit": "bytes",
+                              "offset": 1690,
+                              "length": 4
+                            },
+                            {
+                              "name": "Replicated Data Length",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1694,
+                              "length": 1
+                            },
+                            {
+                              "name": "Replicated Data",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1695,
+                              "length": 8,
+                              "children": [
+                                {
+                                  "name": "Media Object Size",
+                                  "value": 60,
+                                  "unit": "bytes",
+                                  "offset": 1695,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Presentation Time",
+                                  "value": 25,
+                                  "unit": "ms",
+                                  "offset": 1699,
+                                  "length": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Payload Length",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1703,
+                              "length": 2
+                            },
+                            {
+                              "name": "Payload Data",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1705,
+                              "length": 60
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Payload",
+                          "value": "stream 1",
+                          "offset": 1765,
+                          "length": 77,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 129,
+                              "offset": 1765,
+                              "length": 1,
+                              "children": [
+                                {
+                                  "name": "Stream Number",
+                                  "value": 1,
+                                  "offset": 1765,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Key Frame Bit",
+                                  "value": true,
+                                  "offset": 1765,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Media Object Number",
+                              "value": 2,
+                              "offset": 1766,
+                              "length": 1
+                            },
+                            {
+                              "name": "Offset Into Media Object",
+                              "value": 0,
+                              "unit": "bytes",
+                              "offset": 1767,
+                              "length": 4
+                            },
+                            {
+                              "name": "Replicated Data Length",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1771,
+                              "length": 1
+                            },
+                            {
+                              "name": "Replicated Data",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1772,
+                              "length": 8,
+                              "children": [
+                                {
+                                  "name": "Media Object Size",
+                                  "value": 60,
+                                  "unit": "bytes",
+                                  "offset": 1772,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Presentation Time",
+                                  "value": 50,
+                                  "unit": "ms",
+                                  "offset": 1776,
+                                  "length": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Payload Length",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1780,
+                              "length": 2
+                            },
+                            {
+                              "name": "Payload Data",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1782,
+                              "length": 60
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 11,
+                          "unit": "bytes",
+                          "offset": 1842,
+                          "length": 11
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "1 payload",
+                      "offset": 1853,
+                      "length": 256,
+                      "children": [
+                        {
+                          "name": "Error Correction Flags",
+                          "value": 130,
+                          "offset": 1853,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Error Correction Data Length",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1853,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Opaque Data Present",
+                              "value": false,
+                              "offset": 1853,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Length Type",
+                              "value": 0,
+                              "offset": 1853,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Present",
+                              "value": true,
+                              "offset": 1853,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Error Correction Data",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 1854,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Type and Number",
+                              "value": 0,
+                              "offset": 1854,
+                              "length": 1
+                            },
+                            {
+                              "name": "Cycle",
+                              "value": 0,
+                              "offset": 1855,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Type Flags",
+                          "value": 17,
+                          "offset": 1856,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Multiple Payloads Present",
+                              "value": true,
+                              "offset": 1856,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Sequence Type",
+                              "value": 0,
+                              "offset": 1856,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Padding Length Type",
+                              "value": 2,
+                              "offset": 1856,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Packet Length Type",
+                              "value": 0,
+                              "offset": 1856,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Correction Present",
+                              "value": false,
+                              "offset": 1856,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Property Flags",
+                          "value": 93,
+                          "offset": 1857,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Replicated Data Length Type",
+                              "value": 1,
+                              "offset": 1857,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Offset Into Media Object Length Type",
+                              "value": 3,
+                              "offset": 1857,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Media Object Number Length Type",
+                              "value": 1,
+                              "offset": 1857,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Stream Number Length Type",
+                              "value": 1,
+                              "offset": 1857,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding Length",
+                          "value": 165,
+                          "unit": "bytes",
+                          "offset": 1858,
+                          "length": 2
+                        },
+                        {
+                          "name": "Send Time",
+                          "value": 25,
+                          "unit": "ms",
+                          "offset": 1860,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0,
+                          "unit": "ms",
+                          "offset": 1864,
+                          "length": 2
+                        },
+                        {
+                          "name": "Payload Flags",
+                          "value": 129,
+                          "offset": 1866,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Number of Payloads",
+                              "value": 1,
+                              "offset": 1866,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 6,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Payload Length Type",
+                              "value": 2,
+                              "offset": 1866,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Payload",
+                          "value": "stream 2",
+                          "offset": 1867,
+                          "length": 77,
+                          "children": [
+                            {
+                              "name": "Stream Number",
+                              "value": 130,
+                              "offset": 1867,
+                              "length": 1,
+                              "children": [
+                                {
+                                  "name": "Stream Number",
+                                  "value": 2,
+                                  "offset": 1867,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Key Frame Bit",
+                                  "value": true,
+                                  "offset": 1867,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Media Object Number",
+                              "value": 2,
+                              "offset": 1868,
+                              "length": 1
+                            },
+                            {
+                              "name": "Offset Into Media Object",
+                              "value": 0,
+                              "unit": "bytes",
+                              "offset": 1869,
+                              "length": 4
+                            },
+                            {
+                              "name": "Replicated Data Length",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1873,
+                              "length": 1
+                            },
+                            {
+                              "name": "Replicated Data",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 1874,
+                              "length": 8,
+                              "children": [
+                                {
+                                  "name": "Media Object Size",
+                                  "value": 60,
+                                  "unit": "bytes",
+                                  "offset": 1874,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Presentation Time",
+                                  "value": 75,
+                                  "unit": "ms",
+                                  "offset": 1878,
+                                  "length": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Payload Length",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1882,
+                              "length": 2
+                            },
+                            {
+                              "name": "Payload Data",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 1884,
+                              "length": 60
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 165,
+                          "unit": "bytes",
+                          "offset": 1944,
+                          "length": 165
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "value": "2 packets",
+                  "offset": 1597,
+                  "length": 512,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 2,
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Payloads",
+                      "value": 4,
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Packet Size",
+                      "value": 256,
+                      "unit": "bytes",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Packets with Multiple Payloads",
+                      "value": 2,
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Packets with Error Correction",
+                      "value": 2,
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Compressed Payloads",
+                      "value": 0,
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Payload Bytes",
+                      "value": 240,
+                      "unit": "bytes",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Padding Bytes",
+                      "value": 176,
+                      "unit": "bytes",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Packet Overhead",
+                      "value": 96,
+                      "unit": "bytes",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "First Send Time",
+                      "value": 0,
+                      "unit": "ms",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Last Send Time",
+                      "value": 25,
+                      "unit": "ms",
+                      "offset": 1597,
+                      "length": 512
+                    },
+                    {
+                      "name": "Stream 1",
+                      "value": "2 payloads",
+                      "offset": 1597,
+                      "length": 512,
+                      "children": [
+                        {
+                          "name": "Stream Type",
+                          "value": "audio",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Payloads",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Payload Bytes",
+                          "value": 120,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Media Objects",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Fragmented Media Objects",
+                          "value": 0,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Key Frame Payloads",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Smallest Media Object",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Largest Media Object",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "First Presentation Time",
+                          "value": 0,
+                          "unit": "ms",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Last Presentation Time",
+                          "value": 50,
+                          "unit": "ms",
+                          "offset": 1597,
+                          "length": 512
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Stream 2",
+                      "value": "2 payloads",
+                      "offset": 1597,
+                      "length": 512,
+                      "children": [
+                        {
+                          "name": "Stream Type",
+                          "value": "audio",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Payloads",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Payload Bytes",
+                          "value": 120,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Media Objects",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Fragmented Media Objects",
+                          "value": 0,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Key Frame Payloads",
+                          "value": 2,
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Smallest Media Object",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Largest Media Object",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "First Presentation Time",
+                          "value": 25,
+                          "unit": "ms",
+                          "offset": 1597,
+                          "length": 512
+                        },
+                        {
+                          "name": "Last Presentation Time",
+                          "value": 75,
+                          "unit": "ms",
+                          "offset": 1597,
+                          "length": 512
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "asf.codec-not-analyzed",
+        "message": "Stream 1 is coded as PCM (format tag 0x0001), which has no parser here; its media objects are not analyzed.",
+        "offset": 134,
+        "length": 96,
+        "path": [
+          0,
+          0,
+          6
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "asf.codec-not-analyzed",
+        "message": "Stream 2 is coded as PCM (format tag 0x0001), which has no parser here; its media objects are not analyzed.",
+        "offset": 230,
+        "length": 96,
+        "path": [
+          0,
+          0,
+          7
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "asf.content-encrypted",
+        "message": "The file is protected by Microsoft Digital Rights Management version 1; its streams are encrypted and are reported as the file holds them.",
+        "offset": 1155,
+        "length": 85,
+        "path": [
+          0,
+          0,
+          18
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "asf.content-encrypted",
+        "message": "The file is protected by the Windows Media Rights Manager; its streams are encrypted and are reported as the file holds them.",
+        "offset": 1240,
+        "length": 33,
+        "path": [
+          0,
+          0,
+          19
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "asf.unknown-object",
+        "message": "The object 12345678-1234-1234-1234-123456789ABC at 0x51D in the Header Object is none of the objects the specification defines; readers ignore it (section 3.1).",
+        "offset": 1309,
+        "length": 42,
+        "path": [
+          0,
+          0,
+          21
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "asf.content-encrypted",
+        "message": "The file is protected by Windows Media DRM for network devices; its streams are encrypted and are reported as the file holds them.",
+        "offset": 1423,
+        "length": 61,
+        "path": [
+          0,
+          0,
+          22,
+          6
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.index-missing",
+        "message": "The header holds an Index Parameters Object, but the file holds no Index Object.",
+        "offset": 1484,
+        "length": 34,
+        "path": [
+          0,
+          0,
+          22,
+          7
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

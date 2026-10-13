@@ -165,6 +165,11 @@ jobs:
           python3 scripts/fixtures/make_ac3_fixtures.py
           python3 scripts/fixtures/make_external_ac3_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built ASF fixtures and the encoder-made WMA ones' manifests
+        run: |
+          python3 scripts/fixtures/make_asf_fixtures.py
+          python3 scripts/fixtures/make_external_asf_fixtures.py --manifests-only
+
       - name: Fail if they differ from the committed files
         run: |
           git status --porcelain -- tests/fixtures
@@ -275,6 +280,26 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_musepack_fixtures.py
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
+  asf-crosscheck:
+    name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked
+      # with. The tables of the WMA parser are generated from FFmpeg 6.1.1's source, pinned by its
+      # SHA-256; the check fails if Tables.cs differs from what wma_tables.py writes.
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Check the WMA tables against FFmpeg's source
+        run: python3 scripts/fixtures/wma_tables.py --check
+
+      - name: Cross-check the ASF and WMA fixtures
+        run: python3 scripts/fixtures/crosscheck_asf_fixtures.py
 
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg and liba52

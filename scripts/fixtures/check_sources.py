@@ -13,10 +13,12 @@ import tempfile
 import time
 
 import aotuv_tool
+import asf_specs
 import blade_tool
 import check_mp3pro_samples
 import conformance_mpeg_audio
 import downloads
+import ffmpeg_sources
 import fhg_tool
 import gogo_tool
 import helix_tool
@@ -55,6 +57,8 @@ def sources():
     for archive, digest in aotuv_tool.WINDOWS.values():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
+    yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
+    yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES
 
 
 def main():
