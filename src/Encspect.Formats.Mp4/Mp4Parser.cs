@@ -80,9 +80,32 @@ public sealed partial class Mp4Parser : IFormatParser
         return position > reader.Start ? position : null;
     }
 
+    // Tags an ID3v2.4 SEEK frame points to inside data without a declared end (no ftyp or moov to
+    // give one) are already in the report. Such a tag breaks the box structure, so the boxes are
+    // read up to the first one, and the bytes between and after them are reported as not read.
     public void Parse(ParseContext context)
     {
-        ByteReader reader = context.Reader;
+        ByteReader window = context.Reader;
+        List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
+        ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
+        ParseBoxes(context, reader);
+        long position = reader.End;
+        foreach (Node? tag in tags.Append<Node?>(null))
+        {
+            long end = Math.Min(tag?.Offset ?? window.End, window.End);
+            if (end > position)
+            {
+                Node data = context.Root.Add(new Node("Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.AfterEmbeddedTag });
+                context.AddFinding(Severity.Warning, "mp4.data-after-tag",
+                    $"{end - position} bytes at 0x{position:X} follow an ID3v2 tag inside the MP4 data, which breaks its boxes; they are not read.", data);
+            }
+
+            position = Math.Max(position, tag?.End ?? position);
+        }
+    }
+
+    private static void ParseBoxes(ParseContext context, ByteReader reader)
+    {
         var state = new State(context, reader);
         Node file = context.Root.Add(new Node("MP4", reader.Start, reader.Length) { Description = Explain.File, Topic = Topics.IsoBaseMediaFormat });
         state.File = file;
