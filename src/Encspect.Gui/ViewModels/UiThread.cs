@@ -6,5 +6,15 @@ namespace Encspect.Gui.ViewModels;
 // through a post function, which tests replace with a queue they drain themselves.
 public static class UiThread
 {
-    public static Action<Action> Post { get; } = action => Dispatcher.UIThread.Post(action);
+    // Read on the thread that builds the view model. Background work then posts to that
+    // dispatcher and never reads Dispatcher.UIThread itself: when nothing holds that slot, as
+    // between headless tests, reading it makes the calling pool thread the UI thread.
+    public static Action<Action> Post
+    {
+        get
+        {
+            Dispatcher dispatcher = Dispatcher.UIThread;
+            return action => dispatcher.Post(action);
+        }
+    }
 }
