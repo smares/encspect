@@ -250,6 +250,8 @@ jobs:
 
       - name: Check the xHE-AAC manifest against the samples
         run: python3 scripts/fixtures/check_usac_samples.py .cache/usac
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -260,6 +262,8 @@ jobs:
 
       - name: Check the analyzer against the xHE-AAC manifest
         run: python3 scripts/fixtures/check_usac_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/usac
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe and speexdec
