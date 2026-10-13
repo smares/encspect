@@ -12,6 +12,8 @@ internal sealed partial class FrameSyntax
     private readonly bool[] _previousChincpl = new bool[5];
     private readonly int[] _cplbndstrcAbsolute = new int[18];
     private bool _couplingUsedInFrame;
+    private bool _cplBandsChanged;
+    private readonly bool[] _bandwidthChanged = new bool[Channels];
     private bool _spxUsedInFrame;
     private int _rematflg;
     private bool _allocationStarted;
@@ -188,6 +190,7 @@ internal sealed partial class FrameSyntax
                     : "a channel reuses exponents in block 0 (check 8)");
             }
 
+            _bandwidthChanged[ch] = end != _endMant[ch];
             if (end != _endMant[ch])
             {
                 _realloc[ch] = true;
@@ -360,6 +363,7 @@ internal sealed partial class FrameSyntax
         _previousCplBegin = _cplInUse ? _cplbegf : -1;
         _previousCplEnd = _cplInUse ? _cplendf : -1;
         Array.Copy(_chincpl, _previousChincpl, 5);
+        _cplBandsChanged = false;
         bool strategy = _eac3 ? _cplstre[blk] : Flag("HasCouplingStrategy", Explain.Cplstre, Topics.Coupling);
         if (!_eac3 && blk == 0 && !strategy)
         {
@@ -430,11 +434,18 @@ internal sealed partial class FrameSyntax
             int bits = F("Coupling Band Structure", width, Explain.Cplbndstrc, v => BandStructureText(v, width), Topics.Coupling);
             for (int i = 0; i < width; i++)
             {
-                _cplbndstrcAbsolute[_cplbegf + 1 + i] = (bits >> (width - 1 - i)) & 1;
+                int flag = (bits >> (width - 1 - i)) & 1;
+                _cplBandsChanged |= _cplbndstrcAbsolute[_cplbegf + 1 + i] != flag;
+                _cplbndstrcAbsolute[_cplbegf + 1 + i] = flag;
             }
         }
         else if (!explicitStructure && !_couplingUsedInFrame)
         {
+            for (int i = 0; i < _cplbndstrcAbsolute.Length; i++)
+            {
+                _cplBandsChanged |= _cplbndstrcAbsolute[i] != Tables.DefaultCouplingBandStructure[i];
+            }
+
             Array.Copy(Tables.DefaultCouplingBandStructure, _cplbndstrcAbsolute, _cplbndstrcAbsolute.Length);
         }
 
@@ -468,7 +479,7 @@ internal sealed partial class FrameSyntax
             return true;
         }
 
-        bool changed = !_previousCplInUse || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd;
+        bool changed = !_previousCplInUse || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd || _cplBandsChanged;
         bool any = false;
         for (int ch = 0; ch < _nfchans; ch++)
         {
@@ -638,7 +649,7 @@ internal sealed partial class FrameSyntax
             Close();
             reallocAll = true;
         }
-        else if (!_eac3 && blk == 0)
+        else if (blk == 0 && (!_eac3 || _bamode))
         {
             Inconsistent("baie is 0 in block 0 (check 12)");
         }
@@ -761,9 +772,13 @@ internal sealed partial class FrameSyntax
             else
             {
                 leak = Flag("HasCouplingLeak", Explain.Cplleake, Topics.Coupling);
-                if (!_eac3 && !leak && (blk == 0 || !_previousCplInUse))
+                if (!_eac3 && !leak && blk == 0)
                 {
-                    Inconsistent("cplleake is 0 where coupling starts (checks 14 and 26)");
+                    Inconsistent("cplleake is 0 in block 0 (check 14)");
+                }
+                else if (!_eac3 && !leak && !_previousCplInUse)
+                {
+                    Inconsistent("cplleake is 0 where coupling starts after a block without it (5.4.3.44)");
                 }
             }
 
@@ -777,7 +792,14 @@ internal sealed partial class FrameSyntax
         }
 
         // Delta bit allocation (5.4.3.47 to 5.4.3.57, 7.2.2.6).
-        bool delta = (!_eac3 || _dbaflde) && Flag("HasDeltaBitAllocation", Explain.Deltbaie, Topics.AudioBlocks);
+        bool deltaSyntax = !_eac3 || _dbaflde;
+        int active = 0;
+        for (int ch = 0; ch < Channels; ch++)
+        {
+            active |= _deltbae[ch] is 0 or 1 ? 1 << ch : 0;
+        }
+
+        bool delta = deltaSyntax && Flag("HasDeltaBitAllocation", Explain.Deltbaie, Topics.AudioBlocks);
         if (delta)
         {
             Open("Delta Bit Allocation", Explain.DeltaBitAllocation, Topics.AudioBlocks);
@@ -791,14 +813,10 @@ internal sealed partial class FrameSyntax
                 _deltbae[ch] = FC("Delta Bit Allocation Mode", ch, 2, Explain.Deltbae, v => $"{v} ({Ac3Names.DeltaBitAllocation(v)})");
             }
 
-            for (int ch = 0; ch < Channels; ch++)
+            // The coupling channel's segments come first, then the channels' (5.3.3, Table E1.4).
+            for (int i = _cplInUse ? -1 : 0; i < _nfchans; i++)
             {
-                bool used = ch < _nfchans || (ch == Cpl && _cplInUse);
-                if (!used)
-                {
-                    continue;
-                }
-
+                int ch = i < 0 ? Cpl : i;
                 if (_deltbae[ch] == 3)
                 {
                     Close();
@@ -820,6 +838,11 @@ internal sealed partial class FrameSyntax
             Close();
             _r.DeltaBitAllocationBlocks++;
             reallocAll = true;
+        }
+
+        if (deltaSyntax && blk > 0)
+        {
+            DeltaChecks(delta, active);
         }
         else if (blk == 0)
         {
@@ -875,6 +898,27 @@ internal sealed partial class FrameSyntax
         return fits;
     }
 
+    // Checks 27 and 28 of 7.10.2: where the coupling range or a channel's bandwidth changes while
+    // a delta bit allocation is active, the block must give a new one.
+    private void DeltaChecks(bool delta, int active)
+    {
+        bool cplDeltaActive = (active & (1 << Cpl)) != 0;
+        bool cplNew = delta && _deltbae[Cpl] != 0;
+        if (_cplInUse && _previousCplInUse && (_cplbegf != _previousCplBegin || _cplendf != _previousCplEnd) && cplDeltaActive && !cplNew)
+        {
+            Inconsistent("the coupling range changed but the coupling delta bit allocation is kept (check 27)");
+        }
+
+        for (int ch = 0; ch < _nfchans; ch++)
+        {
+            if (_bandwidthChanged[ch] && (active & (1 << ch)) != 0 && !(delta && _deltbae[ch] != 0))
+            {
+                Inconsistent("a channel's bandwidth changed but its delta bit allocation is kept (check 28)");
+                return;
+            }
+        }
+    }
+
     // The mantissas (5.4.3.61 to 5.4.3.63): their length follows from the bit allocation pointers
     // (7.2.2.7, Table 7.17), with the 3, 5 and 11 level quantizers grouped across the block (7.3.5).
     private bool Mantissas()
@@ -912,10 +956,10 @@ internal sealed partial class FrameSyntax
             _t?.Field("Mantissas", start, Math.Max(start, end), NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.AudioBlocks);
             _r.Stop = truncated ? StopReason.DataEnds : StopReason.Overrun;
             _r.StopBit = start;
-            if (!truncated)
+            if (!truncated && !Counted(Issue.Overrun))
             {
                 Report(Issue.Overrun, "Mantissas", start, Math.Max(start, end),
-                    $"the bit allocation gives this block's mantissas {bits} bits, more than the frame holds after them");
+                    $"the bit allocation gives an audio block's mantissas {bits} bits, more than the frame holds after them");
             }
 
             _b.MoveTo(Math.Max(start, end));
@@ -1023,13 +1067,22 @@ internal sealed partial class FrameSyntax
         }
     }
 
-    private void Inconsistent(string detail) => Report(Issue.BlockInconsistent, LastField(), _lastStart, _lastEnd, detail);
+    private void Inconsistent(string detail)
+    {
+        if (!Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, LastField(), _lastStart, _lastEnd, detail);
+        }
+    }
 
     private void Invalid(string detail)
     {
         _r.Stop = StopReason.Invalid;
         _r.StopBit = _b.Position;
-        Report(Issue.BlockInvalid, LastField(), _lastStart, _lastEnd, detail);
+        if (!Counted(Issue.BlockInvalid))
+        {
+            Report(Issue.BlockInvalid, LastField(), _lastStart, _lastEnd, detail);
+        }
     }
 
     // A field of one channel, named with the channel ("IsBlockSwitched (left)").

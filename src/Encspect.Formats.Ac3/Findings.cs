@@ -22,6 +22,19 @@ internal sealed class Findings
         _order.Add(code);
     }
 
+    // Counts one more case of a kind already reported; false where none is, so the caller builds
+    // the first case's finding.
+    public bool CountIfKnown(string code)
+    {
+        if (_aggregated.TryGetValue(code, out Entry? existing))
+        {
+            existing.Count++;
+            return true;
+        }
+
+        return false;
+    }
+
     public void AddNow(Severity severity, string code, string message, Node node) => _immediate.Add(new Finding(severity, code, message, node));
 
     public void Flush(AnalysisContext context)

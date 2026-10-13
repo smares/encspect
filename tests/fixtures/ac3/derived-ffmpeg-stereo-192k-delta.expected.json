@@ -1,0 +1,235 @@
+{
+ "description": "ffmpeg's 2/0 AC-3 with delta bit allocation in block 5: two segments for the coupling channel, three for each channel.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "make_external_ac3_fixtures.py",
+  "ac3-delta",
+  "external-ffmpeg-stereo-192k.ac3"
+ ],
+ "length": 14336,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   896
+  ],
+  [
+   896,
+   896
+  ],
+  [
+   1792,
+   896
+  ],
+  [
+   2688,
+   896
+  ],
+  [
+   3584,
+   896
+  ],
+  [
+   4480,
+   896
+  ],
+  [
+   5376,
+   896
+  ],
+  [
+   6272,
+   896
+  ],
+  [
+   7168,
+   896
+  ],
+  [
+   8064,
+   896
+  ],
+  [
+   8960,
+   896
+  ],
+  [
+   9856,
+   896
+  ],
+  [
+   10752,
+   896
+  ],
+  [
+   11648,
+   896
+  ],
+  [
+   12544,
+   896
+  ],
+  [
+   13440,
+   896
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (coupling)/Offset": "31 bands",
+  "AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (left)/Offset": "3 bands"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "liba52": true,
+  "skip": {
+   "decode": "ffmpeg 6.1 counts the coupling channel's delta bit allocation bands from the coupling's first band (ac3.c, ff_ac3_bit_alloc_calc_mask), not from band 0 as A/52 7.2.2.6 and liba52 do, so it rejects segments that start at band 31."
+  }
+ },
+ "block_ends": {
+  "0": [
+   2241,
+   3908,
+   5125,
+   5613,
+   5813,
+   6089
+  ],
+  "896": [
+   1848,
+   2683,
+   3522,
+   4361,
+   5200,
+   5616
+  ],
+  "1792": [
+   1852,
+   2691,
+   3530,
+   4369,
+   5208,
+   5605
+  ],
+  "2688": [
+   1857,
+   2705,
+   3553,
+   4401,
+   5249,
+   5646
+  ],
+  "3584": [
+   1239,
+   1491,
+   1769,
+   1999,
+   4044,
+   5650
+  ],
+  "4480": [
+   2518,
+   3307,
+   3530,
+   3753,
+   3976,
+   5592
+  ],
+  "5376": [
+   2688,
+   4609,
+   5391,
+   5637,
+   5883,
+   6172
+  ],
+  "6272": [
+   1855,
+   2697,
+   3565,
+   4433,
+   5279,
+   5682
+  ],
+  "7168": [
+   1847,
+   2685,
+   3571,
+   4457,
+   5291,
+   5690
+  ],
+  "8064": [
+   1862,
+   2715,
+   3568,
+   4421,
+   5274,
+   5664
+  ],
+  "8960": [
+   973,
+   1185,
+   1397,
+   2886,
+   4561,
+   5579
+  ],
+  "9856": [
+   1258,
+   1507,
+   1756,
+   2001,
+   4006,
+   5656
+  ],
+  "10752": [
+   2995,
+   3950,
+   4437,
+   5080,
+   5621,
+   5938
+  ],
+  "11648": [
+   1850,
+   2687,
+   3550,
+   4413,
+   5250,
+   5640
+  ],
+  "12544": [
+   1863,
+   2717,
+   3571,
+   4421,
+   5271,
+   5683
+  ],
+  "13440": [
+   1112,
+   1519,
+   1926,
+   3335,
+   5725,
+   6171
+  ]
+ }
+}

@@ -96,7 +96,12 @@ internal static class Ac3Names
         4 => "associated service: dialogue",
         5 => "associated service: commentary",
         6 => "associated service: emergency",
-        _ => acmod == 1 ? "associated service: voice over" : "main audio service: karaoke",
+        _ => acmod switch
+        {
+            0 => "not defined for 1+1",
+            1 => "associated service: voice over",
+            _ => "main audio service: karaoke",
+        },
     };
 
     public static string BitStreamId(int bsid) => bsid switch
@@ -150,8 +155,8 @@ internal static class Ac3Names
         _ => "reserved",
     };
 
-    // Annex D Table D2.7.
-    public static string DolbySurroundEx(int code) => code switch
+    // Annex D Table D2.7, defined for 2/2 and 3/2 only; reserved in the other modes.
+    public static string DolbySurroundEx(int code, int acmod) => acmod < 6 ? "reserved in this audio coding mode" : code switch
     {
         0 => "not indicated",
         1 => "not Dolby Surround EX, Dolby Pro Logic IIx or Dolby Pro Logic IIz encoded",

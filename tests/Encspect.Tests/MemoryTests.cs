@@ -142,11 +142,11 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An AC-3 stream keeps a record per frame (offset, length, header, CRC verdicts), the fields its
-    // nodes are built from without the exponent groups and mantissas, and its per-frame series:
-    // the frames repeat a committed mono fixture of 384-byte frames at 96 kbps, 116 bytes kept per
-    // frame on linux-x64 and a peak of 117. The bounds are about twice that and far below what
-    // keeping each frame's bytes would cost.
+    // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
+    // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
+    // and its per-frame series: the frames repeat a committed mono fixture of 384-byte frames at
+    // 96 kbps, 70 bytes kept per frame on linux-x64 and a peak of 64. The bounds leave room and
+    // stay far below what keeping each frame's bytes would cost.
     [Fact]
     public void ManyAc3FramesStayCompact()
     {
@@ -166,6 +166,32 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(peak < frames * 300L, $"The live heap grew by {peak / frames} bytes per frame.");
         GC.KeepAlive(report);
     }
+
+    // The smallest E-AC-3 frames the parser takes, 12 bytes (6 words), each reading up to an
+    // overrun: a frame keeps its 16-byte record, the bits its nodes are built from (about 14
+    // bytes) and its two values of the per-frame bitrate series, 46 bytes in all on linux-x64, with
+    // a peak of 80. The bounds leave about twice that, and for the peak room for macOS on arm64.
+    [Fact]
+    public void TinyEac3FramesStayCompact()
+    {
+        const int frames = 200_000;
+        byte[] frame = [0x0B, 0x77, 0x00, 0x05, 0x02, 0x86, 0x0F, 0x28, 0, 0, 0, 0];
+        int crc = Encspect.Formats.Ac3.Crc16.Compute(frame.AsSpan(2, 8));
+        frame[10] = (byte)(crc >> 8);
+        frame[11] = (byte)crc;
+        byte[] data = [.. Enumerable.Repeat(frame, frames).SelectMany(b => b)];
+
+        (Report report, long kept, long peak) = Measure("tiny.eac3", data);
+
+        Assert.Equal(frames * 256L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * TinyKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * TinyPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    private const long TinyKeptBound = 90;
+    private const long TinyPeakBound = 180;
 
     // A Musepack SV7 stream keeps a 24-byte record per frame and its per-frame series and figures,
     // 42 bytes in all on linux-x64, with a peak of 59; the frames' nodes are built in blocks when

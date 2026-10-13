@@ -115,24 +115,46 @@ public class Ac3FixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
-    // Reading a frame's nodes from its record gives the same nodes every time, also after the
-    // collector took them, and the nodes cover the frame's bits in order.
+    // A frame's nodes, built from its record, read exactly the bits the analysis kept, and every
+    // node lies inside its parent, after the sibling before it.
     [Theory]
     [MemberData(nameof(Names))]
     public void FrameNodesCoverTheirFrames(string name)
     {
-        Report report = Fixtures.AnalyzeMpeg(name);
-        foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
+        var mismatches = new System.Collections.Concurrent.ConcurrentBag<string>();
+        Action<long, int, int> record = (offset, kept, read) => mismatches.Add($"{offset}: {kept} bits kept, {read} read");
+        Encspect.Formats.Ac3.FrameSyntax.RecordMismatch += record;
+        try
         {
-            long previous = 0;
-            foreach (Node child in frame.Children)
+            Report report = Fixtures.AnalyzeMpeg(name);
+            foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
             {
-                long start = ((child.Offset - frame.Offset) * 8) + (child.BitOffset ?? 0);
-                Assert.True(start >= previous, $"{child.Name} at bit {start} of the frame at {frame.Offset} starts before the node before it ends ({previous}).");
-                previous = EndBit(child, frame.Offset);
+                CheckChildren(frame, frame.Offset);
             }
         }
+        finally
+        {
+            Encspect.Formats.Ac3.FrameSyntax.RecordMismatch -= record;
+        }
+
+        Assert.Empty(mismatches);
     }
+
+    private static void CheckChildren(Node parent, long frameOffset)
+    {
+        long previous = StartBit(parent, frameOffset);
+        long end = EndBit(parent, frameOffset);
+        foreach (Node child in parent.Children)
+        {
+            long start = StartBit(child, frameOffset);
+            Assert.True(start >= previous, $"{child.Name} at bit {start} of the frame at {frameOffset} starts before the node before it ends ({previous}).");
+            previous = EndBit(child, frameOffset);
+            Assert.True(previous <= end, $"{child.Name} of the frame at {frameOffset} ends at bit {previous}, after {parent.Name} ({end}).");
+            CheckChildren(child, frameOffset);
+        }
+    }
+
+    private static long StartBit(Node node, long frameOffset) => ((node.Offset - frameOffset) * 8) + (node.BitOffset ?? 0);
 
     private static long EndBit(Node node, long frameOffset) =>
         node.BitLength is { } bits ? ((node.Offset - frameOffset) * 8) + node.BitOffset!.Value + bits : (node.End - frameOffset) * 8;
