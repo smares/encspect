@@ -23,7 +23,7 @@ internal sealed class Vlc
         {
             if (lengths[i] > 0)
             {
-                Add(codes[i], lengths[i], _symbols[i]);
+                Add(codes[i], lengths[i], i);
             }
         }
     }
@@ -55,6 +55,7 @@ internal sealed class Vlc
     // Whether the codes are a complete prefix code: no code starts another and they use all of the code space.
     public bool IsComplete { get; private set; }
 
+    // The lookup holds the index into the table, not the symbol, which may be negative.
     private void Add(uint code, int length, int symbol)
     {
         if (length <= LookupBits)
@@ -109,7 +110,7 @@ internal sealed class Vlc
         if (entry >= 0)
         {
             bits.Skip(entry & 31);
-            return entry >> 5;
+            return _symbols[entry >> 5];
         }
 
         if (entry == -1)
@@ -132,7 +133,7 @@ internal sealed class Vlc
 
             if (node < _leaves.Count && _leaves[node] >= 0 && _nodes[node] == (-1, -1))
             {
-                return _leaves[node] >> 5;
+                return _symbols[_leaves[node] >> 5];
             }
         }
 
