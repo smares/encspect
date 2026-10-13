@@ -1,8 +1,8 @@
 """Reads Musepack streams the way the fixtures' manifests describe them, from the sources the parser
 cites: the SV8 specification for packets, libmpcdec r495 for SV7 headers, frames and sample counts,
-libmpcdec 1.2.6 and the Portable Musepack decoder for versions 4 to 6. Written apart from the
-analyzer, so the tests compare two readings; crosscheck_musepack_fixtures.py confirms this one with
-mpcdec, ffprobe and the decoders' own frame reading (mpcdec_frames.c, mpcdec_frames_portable.cpp).
+libmpcdec 1.2.6 for versions 4 to 6. Written apart from the analyzer, so the tests compare two
+readings; crosscheck_musepack_fixtures.py confirms this one with mpcdec, ffprobe and the decoders' own
+frame reading (mpcdec_frames.c, also built over libmpcdec 1.2.6 and its C++ ancestor).
 """
 
 import struct
@@ -151,9 +151,9 @@ def old_resolution(w, position, band):
 
 
 def last_frame_output(given):
-    """The samples libmpcdec 1.2.6 (mpc_decoder_decode_internal) and the Portable Musepack decoder
-    (decode_internal) output for the last frame of version 6, from the 11 bits after it: 0 stands for
-    1,152, and the synthesis filter's delay follows, wrapping at a frame."""
+    """The samples libmpcdec 1.2.6 (mpc_decoder_decode_internal) outputs for the last frame of version
+    6, from the 11 bits after it: 0 stands for 1,152, and the synthesis filter's delay follows,
+    wrapping at a frame."""
     samples = given or FRAME
     decay = (samples + DELAY) % FRAME
     return FRAME + decay if samples + DELAY >= FRAME else decay
@@ -161,10 +161,10 @@ def last_frame_output(given):
 
 def old(data):
     """A stream of version 4 to 6 with a variable bitrate, no intensity stereo and one frame per length,
-    as libmpcdec 1.2.6 and the Portable Musepack decoder read it: mpc_decoder_read_bitstream_sv6
-    decodes each frame's resolutions (and mid/side flags) by subband. In versions 4 and 5 the decoders
-    stop before the last counted frame, which the encoders leave unfinished; in version 6 they decode
-    it too and take its samples from the 11 bits after it."""
+    as libmpcdec 1.2.6 reads it: mpc_decoder_read_bitstream_sv6 decodes each frame's resolutions (and
+    mid/side flags) by subband. In versions 4 and 5 the decoder stops before the last counted frame,
+    which the encoders leave unfinished; in version 6 it decodes it too and takes its samples from the
+    11 bits after it."""
     w = Words(data)
     h = old_header(w)
     readable = h["version"] in (4, 5, 6) and h["bitrate"] == 0 and not h["is"] and h["block"] == 1

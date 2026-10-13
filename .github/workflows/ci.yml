@@ -263,8 +263,8 @@ jobs:
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
       # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
       # for SV4 to SV6 from the pinned libmpcdec 1.2.6 and, with the runner's g++, the pinned Portable
-      # Musepack decoder. Without Wine, mppdec's check reads the frame counts recorded when the
-      # fixtures were written and says so.
+      # Musepack decoder it was ported from. Without Wine, mppdec's check reads what it printed when
+      # the fixtures were written and says so.
       - name: Install musepack-tools and ffmpeg
         run: |
           sudo apt-get update

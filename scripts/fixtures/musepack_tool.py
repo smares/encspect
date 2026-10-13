@@ -13,9 +13,11 @@
   writes config_types.h, which this script writes from the template with <stdint.h> types.
 - mpcdec_frames_portable and mpcdec_portable, the Portable Musepack decoder ((C) 1999-2002
   Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski, LGPL; mpc.zip from Rarewares, pinned by
-  SHA-256), a second decoder of stream versions 4 to 6 written apart from libmpcdec 1.2.6: the first
-  is mpcdec_frames_portable.cpp over its library, which prints what mpcdec_frames126 prints, the
-  second the archive's own driver, sample.cpp, unchanged. Written for 32-bit Windows, it keeps 32-bit
+  SHA-256), the C++ code libmpcdec 1.2.6 was ported to C from (its AUTHORS: "Port to pure C"; the
+  two share their functions, names and comments), so the same reading of stream versions 4 to 6 in an
+  earlier form, not an independent one; building it catches errors in building libmpcdec 1.2.6 or in
+  this patch. The first program is mpcdec_frames_portable.cpp over its library, which prints what
+  mpcdec_frames126 prints, the second the archive's own driver, sample.cpp, unchanged. Written for 32-bit Windows, it keeps 32-bit
   words in "long", which is 64 bits on 64-bit Linux, where its bit reader then fails on the first
   frame; the one patch turns every "long" that is not part of "long long" into "int", in every file the
   build uses. Its endianness switch, MPC_LITTLE_ENDIAN, is defined only for WIN32, so the build
@@ -218,18 +220,28 @@ def encode_windows(build, arguments, source, target):
         shutil.move(written, target)
 
 
-def mppdec_frames(path):
-    """The frames mppdec decodes from the stream at path, under Wine, as it reports them ("EOF reached
-    after N Frames"), or None where Wine is missing. Its WAVE file is no count: it rounds the data up
-    (32768 samples for 28 frames)."""
+def mppdec_line(path):
+    """The line mppdec prints when it has decoded the stream at path, under Wine ("EOF reached after N
+    Frames or ... hms"), "" where it prints none, or None where Wine is missing."""
     if shutil.which("wine") is None:
         return None
     with tempfile.TemporaryDirectory() as temp:
         binary = windows_binary("mppdec", temp)
         shutil.copy(path, pathlib.Path(temp) / "in.mpc")
         result = wine(binary, ["in.mpc", "out.wav"], temp)
-        found = re.search(r"after (\d+) Frames", result.stdout)
-        return int(found.group(1)) if found else 0
+        found = re.search(r"EOF reached after \d+ Frames[^\n]*", result.stdout)
+        return found.group(0).strip() if found else ""
+
+
+def mppdec_frames(path):
+    """The frames mppdec decodes from the stream at path, under Wine, as it reports them ("EOF reached
+    after N Frames"), or None where Wine is missing. Its WAVE file is no count: it rounds the data up
+    (32768 samples for 28 frames)."""
+    line = mppdec_line(path)
+    if line is None:
+        return None
+    found = re.search(r"after (\d+) Frames", line)
+    return int(found.group(1)) if found else 0
 
 
 def build_frames_126(directory=None):

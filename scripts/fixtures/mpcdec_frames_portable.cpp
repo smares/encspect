@@ -1,7 +1,7 @@
 /* Prints what the Portable Musepack decoder (mpc.zip from Rarewares, (C) 1999-2002
  * Buschmann/Klemm/Piecha/Wolf, (C) 2003-2004 Peter Pawlowski) reads from a stream of version 4 to 6,
  * in the same lines as mpcdec_frames.c built with -DLIBMPCDEC_126, so crosscheck_musepack_fixtures.py
- * compares the two decoders' readings: the header's verdict (StreamInfo::ReadStreamInfo, which takes
+ * compares it with libmpcdec 1.2.6, its C port, line for line: the header's verdict (StreamInfo::ReadStreamInfo, which takes
  * a stream without "MP+" as version 4 to 6) and its fields, then one line per frame, "<bits> <used
  * subbands> <mid/side mask in hex> 0", "invalid" where the decoder's bits differ from the frame's
  * length, and the samples it outputs. Built by musepack_tool.py against the library sources with

@@ -18,12 +18,15 @@ make_external_musepack_fixtures.py):
   libmpcdec r495 do not reach, as they read only SV7 and SV8): for SV4 to SV6, the header fields
   and whether libmpcdec accepts the stream, then each frame's bits, used subbands and mid/side
   subbands and the samples it outputs.
-- mpcdec_frames_portable and mpcdec_portable (musepack_tool.py: the Portable Musepack decoder, a
-  second decoder of versions 4 to 6): the same lines as mpcdec_frames126, line for line, and the
-  samples the archive's own driver decodes. For SV6, of which no encoder was found, the two decoders'
-  readings of the SV5 streams relabeled as version 6 are all there is to confirm the frame syntax.
-- mppdec (Rarewares' Win32 build, under Wine where it is installed): the frames it decodes from each
-  SV4 to SV6 fixture, against those it decoded when the fixture was written (in the manifest).
+- mpcdec_frames_portable and mpcdec_portable (musepack_tool.py: the Portable Musepack decoder, the
+  C++ code libmpcdec 1.2.6 was ported to C from, so the same reading in an earlier form, not an
+  independent one): the same lines as mpcdec_frames126, line for line, and the samples the archive's
+  own driver decodes. It catches errors in building either, and in the portability patch.
+- mppdec (Buschmann's decoder of June 2000, Rarewares' Win32 build, under Wine where it is
+  installed), the one separate decoder at hand: the frames it decodes from each SV4 to SV6 fixture,
+  against the line or count recorded when the fixture was written (in the manifest). For SV6, of which
+  no encoder was found, it confirms that the last counted frame is decoded, but not the 11 bits after
+  it or the sample count; those rest on libmpcdec 1.2.6's reading alone.
 
 Fixtures that are not "valid" say why the others do not apply; every skipped check prints its
 reason. Disagreements fail the run.
@@ -230,8 +233,8 @@ def decoder_lines(tool, path):
 
 
 def check_old(name, manifest, path, frames126, portable, problems):
-    """libmpcdec 1.2.6's and the Portable Musepack decoder's reading of an SV4 to SV6 stream, and
-    mppdec's frame count."""
+    """libmpcdec 1.2.6's reading of an SV4 to SV6 stream, the same in the Portable Musepack decoder it
+    was ported from, and mppdec's frame count."""
     lines = decoder_lines(frames126, path)
     portable_frames, portable_decoder = portable
     if (other := decoder_lines(portable_frames, path)) != lines:
@@ -270,19 +273,27 @@ def check_old(name, manifest, path, frames126, portable, problems):
             problems.append(f"the Portable Musepack decoder's own driver: {' '.join(output.split())[-80:]!r}, manifest {samples} samples")
     else:
         why = {2: "a constant bitrate (ERROR_CODE_CBR)", 3: "intensity stereo (ERROR_CODE_IS)", 4: "a block size other than 1 (ERROR_CODE_BLOCKSIZE)"}
-        skip(name, "the decoders' frames", f"libmpcdec 1.2.6 and the Portable Musepack decoder refuse the stream for {why[expected_status]}")
-    recorded = (manifest.get("encoder") or manifest.get("derived") or {}).get("mppdec_frames")
+        skip(name, "the decoders' frames", f"libmpcdec 1.2.6 and its C++ ancestor refuse the stream for {why[expected_status]}")
+    # SV4 and SV5 manifests hold the frames mppdec decoded when the encoder wrote the fixture, the
+    # derived SV6 ones the line it printed for the relabeled file.
+    line = (manifest.get("derived") or {}).get("mppdec")
+    recorded = (manifest.get("encoder") or {}).get("mppdec_frames")
+    if line is not None:
+        recorded = int(re.search(r"after (\d+) Frames", line).group(1))
     if recorded is not None and recorded != decoded_frames:
         problems.append(f"mppdec decoded {recorded} frames when the fixture was written, expected {decoded_frames} of the {frames} the header counts")
     if shutil.which("wine") is None:
-        skip(name, "mppdec", "Wine is not installed" + ("; the manifest holds the frames mppdec decoded when the fixture was written" if recorded is not None else ""))
+        skip(name, "mppdec", "Wine is not installed" + ("; recorded, not run: the manifest holds what mppdec printed when the fixture was written" if recorded is not None else ""))
+    elif line is not None:
+        if (now := musepack_tool.mppdec_line(path)) != line:
+            problems.append(f"mppdec prints {now!r}, {line!r} when the fixture was written")
     elif (decoded_now := musepack_tool.mppdec_frames(path)) != decoded_frames:
         problems.append(f"mppdec decodes {decoded_now} frames, expected {decoded_frames} of the {frames} the header counts")
 
 
 def check_damaged_old(name, manifest, path, frames126, portable, problems):
-    """A frame damaged on purpose: both decoders read the frames before it as the manifest has them,
-    then report it invalid."""
+    """A frame damaged on purpose: libmpcdec 1.2.6 and the Portable Musepack decoder read the frames
+    before it as the manifest has them, then report it invalid."""
     lines = decoder_lines(frames126, path)
     if decoder_lines(portable[0], path) != lines:
         problems.append("the Portable Musepack decoder and libmpcdec 1.2.6 read the damaged stream differently")
@@ -318,7 +329,7 @@ def main():
             if name in DAMAGED:
                 skip(name, "every tool", DAMAGED[name])
             elif manifest["header"]["Bitrate"] != "0 kbps":
-                skip(name, "every tool", "hand-built SV6 with a constant bitrate, which the decoders refuse; its frames are zero bits")
+                skip(name, "every tool", "hand-built SV6 with a constant bitrate, which libmpcdec 1.2.6 refuses; its frames are zero bits")
             else:
                 check_damaged_old(name, manifest, path, frames126, portable, problems)
         elif name in REFUSED:

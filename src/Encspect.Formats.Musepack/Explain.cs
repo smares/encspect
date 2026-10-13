@@ -22,8 +22,9 @@ internal static class Topics
 // packet nodes are built by the hundred thousand, so a description picks one of these and never
 // allocates. The sources: the SV8 specification (Musepack's, as mirrored in mutagen-specs,
 // mpc/sv8.rst), libmpcdec and libmpcenc of musepack_src r495, mppenc 1.16, libmpcdec 1.2.6 for
-// stream versions 4 to 6, checked against the Portable Musepack decoder (Rarewares' mpc.zip, 2004), and
-// ffmpeg 6.1's mpc and mpc8 demuxers.
+// stream versions 4 to 6, and ffmpeg 6.1's mpc and mpc8 demuxers. The Portable Musepack decoder
+// (Rarewares' mpc.zip, 2004), the C++ code libmpcdec 1.2.6 was ported from, reads versions 4 to 6 the
+// same way, so it is cited as the same reading, not a second one.
 internal static class Explain
 {
     public const string Sv7Stream = "A Musepack stream of version 7: a header of 25 bytes, then frames of 1,152 samples per channel, each led by its length in bits, in 32-bit little-endian words (libmpcdec r495 streaminfo.c, mpc_demux.c).";
@@ -75,15 +76,17 @@ internal static class Explain
     public const string Sv4StreamVersion = "The stream version, 4, 5 or 6, in 10 bits (libmpcdec 1.2.6).";
     public const string Sv4MaxBand = "The highest subband the frames code, counted from 0 (libmpcdec 1.2.6).";
     public const string Sv4BlockSize = "How many frames each length leads; libmpcdec 1.2.6 decodes only 1. The SV4 encoder writes what its -frm switch asks, and both the SV4 and the SV5 encoder wrote 16 when asked for intensity stereo at a constant bitrate.";
-    public const string Sv4FrameCount = "The number of frames: 16 bits in version 4, 32 in 5 and 6. In versions 4 and 5, libmpcdec 1.2.6, the Portable Musepack decoder and mppdec decode all but the last of them; in version 6, libmpcdec 1.2.6 and the Portable Musepack decoder decode them all.";
-    public const string OldFrame = "One frame of 1,152 samples per channel: a 20-bit length, then that many bits of subband resolutions, mid/side flags, scalefactors and samples (libmpcdec 1.2.6 mpc_decoder_read_bitstream_sv6, the Portable Musepack decoder's Lese_Bitstrom_SV6).";
-    public const string OldLastFrame = "The last frame the header counts in version 4 or 5, which decoders (libmpcdec 1.2.6, the Portable Musepack decoder, mppdec) do not decode. The SV4 and SV5 encoders write whole 32-bit words only, so it can run up to 31 bits past the end of the data.";
-    public const string Sv6LastFrame = "The last frame the header counts in version 6, which libmpcdec 1.2.6 and the Portable Musepack decoder decode like the others, followed by 11 bits that say how many of its samples belong to the audio (mpc_decoder.c, mpc_dec.cpp).";
-    public const string Sv6FinalSamples = "The 11 bits after the last frame of version 6: how many of its 1,152 samples belong to the audio, 0 meaning all of them. libmpcdec 1.2.6 and the Portable Musepack decoder output them and then the synthesis filter's 481 samples of decay (\"reconstruct exact filelength\").";
-    public const string OldStatFrames = "The frames decoders decode: those the header counts but the last (libmpcdec 1.2.6, the Portable Musepack decoder, mppdec).";
-    public const string Sv6StatFrames = "The frames decoders decode: in version 6 all the header counts, the last one too (libmpcdec 1.2.6, the Portable Musepack decoder).";
-    public const string OldStatSamples = "The samples per channel libmpcdec 1.2.6 outputs: the decoded frames' samples less the synthesis filter's 481.";
-    public const string Sv6StatSamples = "The samples per channel libmpcdec 1.2.6 and the Portable Musepack decoder output: 1,152 for each frame before the last and the samples the 11 bits after the last frame give; the 481 of the synthesis filter's delay dropped at the start are decoded at the end.";
+    public const string Sv4FrameCount = "The number of frames: 16 bits in version 4, 32 in 5 and 6. In versions 4 and 5, libmpcdec 1.2.6 and mppdec decode all but the last of them; in version 6 they decode them all.";
+    public const string OldFrame = "One frame of 1,152 samples per channel: a 20-bit length, then that many bits of subband resolutions, mid/side flags, scalefactors and samples (libmpcdec 1.2.6 mpc_decoder_read_bitstream_sv6).";
+    public const string OldLastFrame = "The last frame the header counts in version 4 or 5, which decoders (libmpcdec 1.2.6, mppdec) do not decode. The SV4 and SV5 encoders write whole 32-bit words only, so it can run up to 31 bits past the end of the data.";
+    public const string Sv6LastFrame = "The last frame the header counts in version 6, which libmpcdec 1.2.6 decodes like the others, followed by 11 bits that say how many of its samples belong to the audio (mpc_decoder.c mpc_decoder_decode_internal).";
+    public const string Sv6LastFrameCut = "The last frame the header counts in version 6, which libmpcdec 1.2.6 decodes like the others; the data ends before the frame or the 11 bits that should follow it do.";
+    public const string Sv6FinalSamples = "The 11 bits after the last frame of version 6: how many of its 1,152 samples belong to the audio, 0 meaning all of them. libmpcdec 1.2.6 outputs them and then the synthesis filter's 481 samples of decay (\"reconstruct exact filelength\").";
+    public const string Sv6PaddingWord = "A 32-bit word of zeros after a stream that ends on a word boundary. mppenc 1.16, the SV7 encoder that descends from the earlier ones, always writes the word it is filling at the end, even an empty one (encode_sv7.c FinishBitstream); decoders take nothing from it.";
+    public const string OldStatFrames = "The frames decoders decode: those the header counts but the last (libmpcdec 1.2.6, mppdec).";
+    public const string Sv6StatFrames = "The frames decoders decode: in version 6 all the header counts, the last one too (libmpcdec 1.2.6, mppdec).";
+    public const string OldStatSamples = "The samples per channel the frames before the last give when libmpcdec 1.2.6 decodes them whole, less the synthesis filter's 481. A damaged frame stops the decoder, which then outputs fewer.";
+    public const string Sv6StatSamples = "The samples per channel the counted frames give when libmpcdec 1.2.6 decodes them whole: 1,152 for each frame before the last and the samples the 11 bits after the last frame give; the 481 of the synthesis filter's delay dropped at the start are decoded at the end. A damaged frame stops the decoder, which then outputs fewer.";
 
     public const string UndetailedPackets = "Packets the analyzer no longer details, once it has detailed 4,096, that neither carry audio nor describe the stream, such as packets of unknown keys, kept as one node with their count; decoders skip packets they do not know (SV8 specification, Packet formatting).";
     public const string Sv8Magic = "The magic number \"MPCK\" (SV8 specification, File magic number). The seek table counts its offsets from here.";

@@ -133,6 +133,46 @@ public class MusepackFixtureTests
         }
     }
 
+    // The sniff takes no SV6 stream cut short, since it needs the last frame and the 11 bits after it,
+    // but the parser reads one where it is handed it without the sniff: cut in the 11 bits, in the last
+    // frame and in the middle, the stream says so, its last frame claims no 11 bits, and every finding
+    // points into the tree.
+    [Theory]
+    [InlineData("musepack/derived-mppsv5-left-right-vbr-as-sv6.mpc", 4, 27)]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc", 4, 27)]
+    [InlineData("musepack/derived-mppsv5-vbr-as-sv6.mpc", 4000, 19)]
+    public void CutSv6StreamsParseWithoutTheSniff(string name, int cut, int whole)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+        Assert.Equal(0, new Encspect.Formats.Musepack.MusepackParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data[..^cut])))));
+        Report report = new Encspect.Host.Analyzer([new ForcedMusepack()]).Analyze("cut.mpc", new MemoryStream(data[..^cut]));
+
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Finding missing = Assert.Single(report.Findings, f => f.Code == "musepack.frames-missing");
+        Assert.Equal($"The header counts 28 frames, but the data holds {whole} whole ones: the stream is cut short.", missing.Message);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Assert.Equal(whole, report.Streams.Single().Samples is { } samples ? (samples + 481) / 1152 : -1);
+        List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame).ToList();
+        Assert.Equal(whole + 1, frames.Count);
+        Assert.DoesNotContain(frames.SelectMany(f => f.Children), c => c.Name == "Last Frame Samples");
+        Assert.All(frames, f => Assert.DoesNotContain("followed by 11 bits", f.Description, StringComparison.Ordinal));
+        Assert.Equal(whole == 27, frames[^1].Description!.Contains("the data ends before", StringComparison.Ordinal));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // The Musepack parser with a sniff that takes anything.
+    private sealed class ForcedMusepack : IFormatParser
+    {
+        private readonly Encspect.Formats.Musepack.MusepackParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public int Sniff(SniffContext context) => 100;
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
     // Frames of length 0, which no encoder writes, stop being followed after a run of them, so 30 MB
     // of zero bytes do not become 12 million frame records.
     [Fact]

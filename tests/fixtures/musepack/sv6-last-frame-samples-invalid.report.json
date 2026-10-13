@@ -2843,7 +2843,7 @@
       {
         "severity": "Warning",
         "code": "musepack.last-frame-samples-invalid",
-        "message": "The 11 bits after the last frame give 1900 samples, more than a frame's 1152; libmpcdec 1.2.6 and the Portable Musepack decoder still decode the frame, which adds 748 samples to their output.",
+        "message": "The 11 bits after the last frame give 1900 samples, more than a frame's 1,152; libmpcdec 1.2.6 still decodes the frame, which adds 748 samples to its output.",
         "offset": 8788,
         "length": 3,
         "path": [
