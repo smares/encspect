@@ -3,8 +3,14 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Lists of children past two blocks, read by several threads at once (see ThreadSafetyTests). Its own
-// class, so that xUnit runs it beside the others.
+// Tests that hammer one list with more threads than the machine has cores. They run alone: beside other
+// tests that keep the cores busy, a list that reads its hint twice failed in about one run of ten, and
+// alone in every one.
+[CollectionDefinition("Thread hammers", DisableParallelization = true)]
+public class ThreadHammerCollection;
+
+// Lists of children past two blocks, read by several threads at once (see ThreadSafetyTests).
+[Collection("Thread hammers")]
 public class LongListReadTests
 {
     // Each long list is read for at least this many reads per thread and this long.

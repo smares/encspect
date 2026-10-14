@@ -5,6 +5,7 @@ namespace Encspect.Tests;
 
 // The one implementation of the weak, blocked list of a node's children that every format's long
 // lists use: blocks of 1,024 built when first read, held weakly, the block read last held strongly.
+[Collection("Thread hammers")]
 public class BlockedChildrenTests
 {
     private const int Block = 1024;
@@ -154,7 +155,7 @@ public class BlockedChildrenTests
     [Fact]
     public void ThreadsBuildingTheSameBlockAtOnceAllGetCorrectNodes()
     {
-        for (int round = 0; round < 20; round++)
+        for (int round = 0; round < 8; round++)
         {
             using var barrier = new Barrier(8);
             var list = new BlockedChildren(Leading(1), 2 * Block, i =>

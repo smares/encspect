@@ -47,21 +47,32 @@ public class ThreadSafetyTests
 
     internal static Report AnalyzeLong(string name) => Analyzer.CreateDefault().Analyze(name, new MemoryStream(LongInputs.Build(name)));
 
-    // Nodes built again after a collection are the nodes built first.
+    // Nodes built again after a collection are the nodes built first. Every report of the directory is
+    // written, then one collection drops the nodes none of them holds (their children are held weakly), then
+    // each is written again.
     [Theory]
     [MemberData(nameof(FixtureDirectories))]
     public void RebuiltAfterCollectionMatches(string directory)
     {
         var analyzer = Analyzer.CreateDefault();
-        var differing = new List<string>();
-        foreach (string file in FixturesIn(directory))
+        List<string> files = FixturesIn(directory);
+        var reports = new List<Report>();
+        var first = new List<string>();
+        foreach (string file in files)
         {
             Report report = analyzer.AnalyzeFile(file);
-            string first = ReportRendering.All(report);
-            ReportRendering.Collect();
-            if (ReportRendering.All(report) != first)
+            reports.Add(report);
+            first.Add(ReportRendering.All(report));
+        }
+
+        ReportRendering.Collect();
+
+        var differing = new List<string>();
+        for (int i = 0; i < files.Count; i++)
+        {
+            if (ReportRendering.All(reports[i]) != first[i])
             {
-                differing.Add(file);
+                differing.Add(files[i]);
             }
         }
 

@@ -109,13 +109,15 @@ internal static class ReportRendering
     }
 
     // A thread that forces collections of all generations until disposed, so that the nodes held weakly
-    // are dropped while other threads read them.
+    // are dropped while other threads read them. The longer the pause between collections, the fewer
+    // blocks are built again; a collection every few milliseconds makes threads meet in the list most
+    // often, but a report of costly nodes written meanwhile would only build the same blocks again.
     public sealed class Collector : IDisposable
     {
         private readonly CancellationTokenSource _stop = new();
         private readonly Thread _thread;
 
-        public Collector()
+        public Collector(int maximumPauseMilliseconds = 4)
         {
             _thread = new Thread(() =>
             {
@@ -123,7 +125,7 @@ internal static class ReportRendering
                 while (!_stop.IsCancellationRequested)
                 {
                     GC.Collect(random.Next(3), GCCollectionMode.Forced, blocking: true, compacting: false);
-                    Thread.Sleep(random.Next(4));
+                    Thread.Sleep(random.Next(maximumPauseMilliseconds));
                 }
             })
             { IsBackground = true };
