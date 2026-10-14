@@ -1,8 +1,8 @@
 {
- "description": "afconvert -v -f adts -d aacp -s 0 -b 32000 pcm/st44.wav encoded/hev2-adts-cbr-st44.aac on 2 s of the tones signal of wma_signals.py.",
+ "description": "afconvert -v -f adts -d aacp -s 0 -b 32000 pcm/st44h.wav encoded/hev2-adts-cbr-st44.aac on 1.0 s of the tones signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
-  "command": "afconvert -v -f adts -d aacp -s 0 -b 32000 pcm/st44.wav encoded/hev2-adts-cbr-st44.aac",
+  "command": "afconvert -v -f adts -d aacp -s 0 -b 32000 pcm/st44h.wav encoded/hev2-adts-cbr-st44.aac",
   "file_type": "adts",
   "format_id": "aacp",
   "codec": "HE-AAC v2",
@@ -20,10 +20,10 @@
     "----",
     "Data format:     1 ch,  22050 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
     "Channel layout: Mono",
-    "estimated duration: 1.801874 sec",
-    "audio bytes: 8985",
-    "audio packets: 46",
-    "bit rate: 33647 bits per second",
+    "estimated duration: 0.998100 sec",
+    "audio bytes: 4977",
+    "audio packets: 25",
+    "bit rate: 34294 bits per second",
     "packet size upper bound: 768",
     "maximum packet size: 394",
     "audio data file offset: 0",
@@ -40,17 +40,17 @@
   }
  },
  "input": {
-  "name": "st44",
+  "name": "st44h",
   "channels": 2,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 1.0,
   "signal": "tones",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "3faa7af4cb363a6ebd529a67a6ce6ff4a279e88a918f507a6914049e9dd7178b"
+  "sha256": "7854a9c4ab0271395204e7b025f9639e504934ea5e97ac16a309885380575b84"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -59,7 +59,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -74,8 +74,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 8985,
- "sha256": "47f452ce53f0beed9458a801ee8c7b807cb98e3e3852085c0e07fe1079d66bb5",
+ "bytes": 4977,
+ "sha256": "6ea2f1438dd0615f6974f30672d20367c5c3dbb4b79bd052ce3b874bf6989342",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }

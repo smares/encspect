@@ -111,7 +111,7 @@ public sealed partial class Mp4Parser
     }
 
     // The writer of the file, from the way it lays out the AAC track. Every AAC file afconvert wrote on macOS 15.7
-    // (46 files on each of arm64 and x86-64: AAC-LC, HE-AAC, HE-AAC v2, AAC-LD and AAC-ELD, in M4A, MP4, 3GP and 3GP2)
+    // (56 files on each of arm64 and x86-64: AAC-LC including 5.1, HE-AAC, HE-AAC v2, AAC-LD and AAC-ELD, in M4A, MP4, 3GP and 3GP2)
     // has a DecoderConfigDescriptor whose stream type byte is 0x14, the reserved bit that ISO/IEC 14496-1 7.2.6.6
     // sets to 1 written as 0; all 85 esds boxes of the 83 other fixtures (ffmpeg, fdkaac, FAAC, MP4Box, hand-built) write 0x15. The M4A
     // files also carry an sbtd box in the sample entry, and all of them a free box that pads the audio data to a

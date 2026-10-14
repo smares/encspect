@@ -1,5 +1,5 @@
 {
- "description": "afconvert -f adts -d aacp -s 0 -b 32000 pcm/st44.wav {out} on 2 s of the deterministic signal of wma_signals.py (pcm/st44.wav).",
+ "description": "afconvert -f adts -d aacp -s 0 -b 32000 pcm/st44h.wav {out} on the deterministic signal of wma_signals.py (pcm/st44h.wav).",
  "encoder": {
   "command": [
    "afconvert",
@@ -11,11 +11,11 @@
    "0",
    "-b",
    "32000",
-   "pcm/st44.wav",
+   "pcm/st44h.wav",
    "{out}"
   ]
  },
- "length": 8985,
+ "length": 4977,
  "format": "AAC",
  "boxes": [],
  "streams": [
@@ -34,7 +34,7 @@
     "Low"
    ],
    "ffprobe_profile": "HE-AACv2",
-   "samples": 94208
+   "samples": 51200
   }
  ],
  "units": [
@@ -128,106 +128,22 @@
   ],
   [
    4521,
-   337
+   332
   ],
   [
-   4858,
-   202
+   4853,
+   94
   ],
   [
-   5060,
-   150
-  ],
-  [
-   5210,
-   126
-  ],
-  [
-   5336,
-   259
-  ],
-  [
-   5595,
-   205
-  ],
-  [
-   5800,
-   222
-  ],
-  [
-   6022,
-   132
-  ],
-  [
-   6154,
-   123
-  ],
-  [
-   6277,
-   322
-  ],
-  [
-   6599,
-   182
-  ],
-  [
-   6781,
-   154
-  ],
-  [
-   6935,
-   97
-  ],
-  [
-   7032,
-   316
-  ],
-  [
-   7348,
-   131
-  ],
-  [
-   7479,
-   147
-  ],
-  [
-   7626,
-   91
-  ],
-  [
-   7717,
-   125
-  ],
-  [
-   7842,
-   394
-  ],
-  [
-   8236,
-   292
-  ],
-  [
-   8528,
-   139
-  ],
-  [
-   8667,
-   98
-  ],
-  [
-   8765,
-   183
-  ],
-  [
-   8948,
-   37
+   4947,
+   30
   ]
  ],
  "fields": {},
  "findings": [
   [
    "aac.implicit-sbr",
-   "46 of 46 raw data blocks hold SBR data, and 46 carry the parametric stereo extension"
+   "25 of 25 raw data blocks hold SBR data, and 25 carry the parametric stereo extension"
   ]
  ],
  "crosscheck": {

@@ -1,5 +1,5 @@
 {
- "description": "afconvert -v -f m4af -d alac pcm/st44q16.wav encoded/alac-m4a-st44q16.m4a on 2 s of the quiet signal of wma_signals.py.",
+ "description": "afconvert -v -f m4af -d alac pcm/st44q16.wav encoded/alac-m4a-st44q16.m4a on 0.5 s of the quiet signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
   "command": "afconvert -v -f m4af -d alac pcm/st44q16.wav encoded/alac-m4a-st44q16.m4a",
@@ -20,15 +20,15 @@
     "----",
     "Data format:     2 ch,  44100 Hz, alac (0x00000001) from 16-bit source, 4096 frames/packet",
     "                no channel layout.",
-    "estimated duration: 2.000000 sec",
-    "audio bytes: 199466",
-    "audio packets: 22",
-    "bit rate: 780934 bits per second",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 51218",
+    "audio packets: 6",
+    "bit rate: 735258 bits per second",
     "packet size upper bound: 10031",
     "maximum packet size: 10031",
     "audio data file offset: 4096",
     "optimized",
-    "audio 88200 valid frames + 0 priming + 1912 remainder = 90112",
+    "audio 22050 valid frames + 0 priming + 2526 remainder = 24576",
     "source bit depth: I16",
     "----"
    ]
@@ -39,13 +39,13 @@
   "channels": 2,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 0.5,
   "signal": "quiet",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "2e83da518c96147b70bb8f1dcdf0934d754894b20e398fb3872991ece4947d4e"
+  "sha256": "385325e66e56a13a9c27ada755c8bfb7c0568ee66a18667586adde4bcc9d520a"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -54,7 +54,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -69,8 +69,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 203562,
- "sha256": "18d6af65512883cf48489d2398ff93b03dd8b5f0f527c4cfb05f58ec8a07fedb",
+ "bytes": 55314,
+ "sha256": "53a7e5b9c82e792c53907ef48f161f9b76883b9afe42dde9d6dff5cf710e84b5",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }

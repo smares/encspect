@@ -5,7 +5,7 @@ using Encspect.Host;
 namespace Encspect.Tests;
 
 // Apple's AAC encoder is named from the way its files are written (AacEncoder, Mp4Parser.AddAppleEvidence): the files afconvert wrote
-// on the macOS 15.7 runners are in tests/fixtures/aac (apple-*), and here each piece of the evidence is taken away in turn.
+// on the macOS 15.7 runners are in tests/fixtures/aac (apple-*, with manifests and golden reports) and tests/fixtures/apple (the rest), and here each piece of the evidence is taken away in turn.
 public class AppleEncoderTests
 {
     private const string Apple = "Apple AAC encoder (AudioToolbox)";
@@ -72,11 +72,15 @@ public class AppleEncoderTests
     }
 
     [Theory]
-    [InlineData("aac/apple-lc-3gp-cbr-st44.3gp")]
+    [InlineData("apple/apple-lc-3gp-cbr-st44.3gp")]
     [InlineData("aac/apple-he-m4a-cbr-st44.m4a")]
     [InlineData("aac/apple-hev2-m4a-cbr-st44.m4a")]
     [InlineData("aac/apple-aacl-m4a-cbr-mono44.m4a")]
-    [InlineData("aac/apple-intel-he-m4a-cbr-st44.m4a")]
+    [InlineData("apple/apple-intel-he-m4a-cbr-st44.m4a")]
+    [InlineData("apple/apple-intel-lc-m4a-cbr-mono44.m4a")]
+    [InlineData("apple/apple-lc-m4a-cbr-six48-lout.m4a")]
+    [InlineData("apple/apple-lc-m4a-soundcheck-st44.m4a")]
+    [InlineData("apple/apple-lc-m4a-condensed-st44.m4a")]
     public void EveryContainerAndProfileIsNamed(string name)
     {
         StreamInfo stream = Assert.Single(Analyze(name, Read(name)).Streams);
@@ -85,7 +89,7 @@ public class AppleEncoderTests
 
     [Theory]
     [InlineData("aac/apple-lc-adts-cbr-st44.aac")]
-    [InlineData("aac/apple-intel-lc-adts-cbr-st44.aac")]
+    [InlineData("apple/apple-intel-lc-adts-cbr-st44.aac")]
     [InlineData("aac/apple-hev2-adts-cbr-st44.aac")]
     public void AdtsHeadersNameAppleWithLowConfidence(string name)
     {
@@ -132,7 +136,7 @@ public class AppleEncoderTests
     public void AdtsWithOneOtherFrameNamesNothing()
     {
         byte[] bytes = Read("aac/apple-lc-adts-cbr-st44.aac");
-        bytes[Frames(bytes).ElementAt(40) + 3] &= 0xDF;
+        bytes[Frames(bytes).ElementAt(10) + 3] &= 0xDF;
         Assert.Null(Assert.Single(Analyze("apple.aac", bytes).Streams).Encoder);
     }
 
@@ -164,11 +168,25 @@ public class AppleEncoderTests
     // 14496-3 4.4.2.2); read forwards, the payloads ran past their fill elements.
     [Theory]
     [InlineData("aac/apple-he-m4a-cbr-st44.m4a")]
-    [InlineData("aac/apple-intel-he-m4a-cbr-st44.m4a")]
-    [InlineData("aac/apple-he-adts-cbr-st44.aac")]
+    [InlineData("apple/apple-intel-he-m4a-cbr-st44.m4a")]
+    [InlineData("apple/apple-he-adts-cbr-st44.aac")]
     public void StereoSbrPayloadsFitTheirFillElements(string name)
     {
         Report report = Analyze(name, Read(name));
         Assert.DoesNotContain(report.Findings, f => f.Code is "aac.sbr-past-fill" or "aac.sbr-data-invalid");
+    }
+
+    // Sound Check adds an iTunNORM item and a loudness box, afconvert's 16-bit framing a compact sample size box, and 5.1 a channel configuration.
+    [Theory]
+    [InlineData("apple/apple-lc-m4a-soundcheck-st44.m4a")]
+    [InlineData("apple/apple-lc-m4a-condensed-st44.m4a")]
+    [InlineData("apple/apple-lc-m4a-cbr-six48-lout.m4a")]
+    [InlineData("apple/apple-lc-3gp-cbr-st44.3gp")]
+    [InlineData("apple/apple-lc-m4a-vbr-q64-st44.m4a")]
+    public void OtherAppleFilesReportNothingBeyondInformation(string name)
+    {
+        Report report = Analyze(name, Read(name));
+        Assert.All(report.Findings, f => Assert.True(f.Severity < Severity.Warning, f.Message));
+        Assert.Single(report.Streams);
     }
 }

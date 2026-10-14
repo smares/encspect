@@ -1,5 +1,5 @@
 {
- "description": "afconvert -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav {out} on 2 s of the deterministic signal of wma_signals.py (pcm/mono44.wav).",
+ "description": "afconvert -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav {out} on the deterministic signal of wma_signals.py (pcm/mono44.wav).",
  "encoder": {
   "command": [
    "afconvert",
@@ -15,7 +15,7 @@
    "{out}"
   ]
  },
- "length": 12142,
+ "length": 6122,
  "format": "MP4",
  "boxes": [
   [
@@ -26,7 +26,7 @@
   [
    "moov",
    null,
-   1539
+   1015
   ],
   [
    "moov/mvhd",
@@ -36,7 +36,7 @@
   [
    "moov/trak",
    null,
-   1173
+   649
   ],
   [
    "moov/trak/tkhd",
@@ -46,7 +46,7 @@
   [
    "moov/trak/mdia",
    null,
-   1073
+   549
   ],
   [
    "moov/trak/mdia/mdhd",
@@ -61,7 +61,7 @@
   [
    "moov/trak/mdia/minf",
    null,
-   999
+   475
   ],
   [
    "moov/trak/mdia/minf/smhd",
@@ -86,7 +86,7 @@
   [
    "moov/trak/mdia/minf/stbl",
    null,
-   939
+   415
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd",
@@ -121,12 +121,12 @@
   [
    "moov/trak/mdia/minf/stbl/stsz",
    null,
-   716
+   200
   ],
   [
    "moov/trak/mdia/minf/stbl/stco",
    null,
-   32
+   24
   ],
   [
    "moov/udta",
@@ -171,12 +171,12 @@
   [
    "free",
    null,
-   2521
+   3045
   ],
   [
    "mdat",
    null,
-   8054
+   2034
   ]
  ],
  "streams": [
@@ -194,7 +194,7 @@
     "Medium"
    ],
    "ffprobe_profile": "LD",
-   "samples": 89088
+   "samples": 23040
   }
  ],
  "units": [
@@ -372,544 +372,28 @@
   ],
   [
    6022,
-   55
-  ],
-  [
-   6077,
-   45
-  ],
-  [
-   6122,
-   45
-  ],
-  [
-   6167,
-   43
-  ],
-  [
-   6210,
-   45
-  ],
-  [
-   6255,
-   45
-  ],
-  [
-   6300,
-   47
-  ],
-  [
-   6347,
-   45
-  ],
-  [
-   6392,
-   51
-  ],
-  [
-   6443,
-   43
-  ],
-  [
-   6486,
-   60
-  ],
-  [
-   6546,
-   48
-  ],
-  [
-   6594,
-   38
-  ],
-  [
-   6632,
-   38
-  ],
-  [
-   6670,
-   50
-  ],
-  [
-   6720,
-   46
-  ],
-  [
-   6766,
-   46
-  ],
-  [
-   6812,
-   45
-  ],
-  [
-   6857,
-   59
-  ],
-  [
-   6916,
-   38
-  ],
-  [
-   6954,
-   45
-  ],
-  [
-   6999,
-   45
-  ],
-  [
-   7044,
-   46
-  ],
-  [
-   7090,
-   46
-  ],
-  [
-   7136,
-   55
-  ],
-  [
-   7191,
-   37
-  ],
-  [
-   7228,
-   50
-  ],
-  [
-   7278,
-   62
-  ],
-  [
-   7340,
-   68
-  ],
-  [
-   7408,
-   51
-  ],
-  [
-   7459,
-   39
-  ],
-  [
-   7498,
-   37
-  ],
-  [
-   7535,
-   40
-  ],
-  [
-   7575,
-   36
-  ],
-  [
-   7611,
-   38
-  ],
-  [
-   7649,
-   45
-  ],
-  [
-   7694,
-   46
-  ],
-  [
-   7740,
-   47
-  ],
-  [
-   7787,
-   46
-  ],
-  [
-   7833,
-   47
-  ],
-  [
-   7880,
-   47
-  ],
-  [
-   7927,
-   46
-  ],
-  [
-   7973,
-   46
-  ],
-  [
-   8019,
-   46
-  ],
-  [
-   8065,
-   46
-  ],
-  [
-   8111,
-   65
-  ],
-  [
-   8176,
-   41
-  ],
-  [
-   8217,
-   43
-  ],
-  [
-   8260,
-   46
-  ],
-  [
-   8306,
-   37
-  ],
-  [
-   8343,
-   47
-  ],
-  [
-   8390,
-   46
-  ],
-  [
-   8436,
-   48
-  ],
-  [
-   8484,
-   46
-  ],
-  [
-   8530,
-   46
-  ],
-  [
-   8576,
-   46
-  ],
-  [
-   8622,
-   46
-  ],
-  [
-   8668,
-   47
-  ],
-  [
-   8715,
-   46
-  ],
-  [
-   8761,
-   48
-  ],
-  [
-   8809,
-   47
-  ],
-  [
-   8856,
-   47
-  ],
-  [
-   8903,
-   52
-  ],
-  [
-   8955,
    61
   ],
   [
-   9016,
-   41
-  ],
-  [
-   9057,
-   41
-  ],
-  [
-   9098,
-   47
-  ],
-  [
-   9145,
-   37
-  ],
-  [
-   9182,
-   44
-  ],
-  [
-   9226,
-   46
-  ],
-  [
-   9272,
-   48
-  ],
-  [
-   9320,
-   46
-  ],
-  [
-   9366,
-   47
-  ],
-  [
-   9413,
-   48
-  ],
-  [
-   9461,
-   45
-  ],
-  [
-   9506,
-   46
-  ],
-  [
-   9552,
-   48
-  ],
-  [
-   9600,
-   44
-  ],
-  [
-   9644,
-   46
-  ],
-  [
-   9690,
-   47
-  ],
-  [
-   9737,
-   63
-  ],
-  [
-   9800,
-   49
-  ],
-  [
-   9849,
-   38
-  ],
-  [
-   9887,
-   40
-  ],
-  [
-   9927,
-   46
-  ],
-  [
-   9973,
-   45
-  ],
-  [
-   10018,
-   43
-  ],
-  [
-   10061,
-   48
-  ],
-  [
-   10109,
-   45
-  ],
-  [
-   10154,
-   55
-  ],
-  [
-   10209,
-   47
-  ],
-  [
-   10256,
-   43
-  ],
-  [
-   10299,
-   41
-  ],
-  [
-   10340,
-   47
-  ],
-  [
-   10387,
-   46
-  ],
-  [
-   10433,
-   47
-  ],
-  [
-   10480,
-   49
-  ],
-  [
-   10529,
-   44
-  ],
-  [
-   10573,
-   64
-  ],
-  [
-   10637,
-   48
-  ],
-  [
-   10685,
-   41
-  ],
-  [
-   10726,
-   44
-  ],
-  [
-   10770,
-   47
-  ],
-  [
-   10817,
-   43
-  ],
-  [
-   10860,
-   44
-  ],
-  [
-   10904,
-   46
-  ],
-  [
-   10950,
-   44
-  ],
-  [
-   10994,
-   45
-  ],
-  [
-   11039,
-   46
-  ],
-  [
-   11085,
-   44
-  ],
-  [
-   11129,
-   55
-  ],
-  [
-   11184,
-   44
-  ],
-  [
-   11228,
-   41
-  ],
-  [
-   11269,
-   48
-  ],
-  [
-   11317,
-   46
-  ],
-  [
-   11363,
-   69
-  ],
-  [
-   11432,
-   62
-  ],
-  [
-   11494,
-   44
-  ],
-  [
-   11538,
-   43
-  ],
-  [
-   11581,
-   46
-  ],
-  [
-   11627,
-   47
-  ],
-  [
-   11674,
-   43
-  ],
-  [
-   11717,
-   46
-  ],
-  [
-   11763,
-   45
-  ],
-  [
-   11808,
-   42
-  ],
-  [
-   11850,
-   47
-  ],
-  [
-   11897,
-   46
-  ],
-  [
-   11943,
-   42
-  ],
-  [
-   11985,
-   49
-  ],
-  [
-   12034,
-   65
-  ],
-  [
-   12099,
-   43
+   6083,
+   39
   ]
  ],
  "fields": {
   "MP4/moov/mvhd/Timescale": "44100 units per second",
-  "MP4/moov/mvhd/Duration": "89088 (2.020 s)",
+  "MP4/moov/mvhd/Duration": "23040 (0.522 s)",
   "MP4/moov/trak/tkhd/Track ID": "1",
-  "MP4/moov/trak/tkhd/Duration": "89088 (2.020 s)",
+  "MP4/moov/trak/tkhd/Duration": "23040 (0.522 s)",
   "MP4/moov/trak/mdia/mdhd/Timescale": "44100 units per second",
-  "MP4/moov/trak/mdia/mdhd/Duration": "89088 (2.020 s)",
+  "MP4/moov/trak/mdia/mdhd/Duration": "23040 (0.522 s)",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "2",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
-  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "32104 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "1152 bit/s",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "32000 bit/s",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Stream Type": "5 (audio), reserved bit 0",
   "MP4/moov/trak/Gapless/Encoder Delay (iTunSMPB)": "584 samples",
-  "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "88200 samples",
-  "MP4/moov/trak/Gapless/Padding (iTunSMPB)": "304 samples"
+  "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "22050 samples",
+  "MP4/moov/trak/Gapless/Padding (iTunSMPB)": "406 samples"
  },
  "findings": [],
  "crosscheck": {

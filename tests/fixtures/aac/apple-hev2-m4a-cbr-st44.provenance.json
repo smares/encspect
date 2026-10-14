@@ -1,8 +1,8 @@
 {
- "description": "afconvert -v -f m4af -d aacp -s 0 -b 32000 pcm/st44.wav encoded/hev2-m4a-cbr-st44.m4a on 2 s of the tones signal of wma_signals.py.",
+ "description": "afconvert -v -f m4af -d aacp -s 0 -b 32000 pcm/st44h.wav encoded/hev2-m4a-cbr-st44.m4a on 1.0 s of the tones signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
-  "command": "afconvert -v -f m4af -d aacp -s 0 -b 32000 pcm/st44.wav encoded/hev2-m4a-cbr-st44.m4a",
+  "command": "afconvert -v -f m4af -d aacp -s 0 -b 32000 pcm/st44h.wav encoded/hev2-m4a-cbr-st44.m4a",
   "file_type": "m4af",
   "format_id": "aacp",
   "codec": "HE-AAC v2",
@@ -20,15 +20,15 @@
     "----",
     "Data format:     1 ch,  22050 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
     "                no channel layout.",
-    "estimated duration: 2.000000 sec",
-    "audio bytes: 8663",
-    "audio packets: 46",
-    "bit rate: 32442 bits per second",
+    "estimated duration: 1.000000 sec",
+    "audio bytes: 4802",
+    "audio packets: 25",
+    "bit rate: 33088 bits per second",
     "packet size upper bound: 394",
     "maximum packet size: 394",
     "audio data file offset: 4096",
     "optimized",
-    "audio 44100 valid frames + 2112 priming + 892 remainder = 47104",
+    "audio 22050 valid frames + 2112 priming + 1438 remainder = 25600",
     "source bit depth: I16",
     "format list:",
     "[ 0] format:\t  2 ch,  44100 Hz, aacp (0x00000000) 0 bits/channel, 0 bytes/packet, 2048 frames/packet, 0 bytes/frame",
@@ -42,17 +42,17 @@
   }
  },
  "input": {
-  "name": "st44",
+  "name": "st44h",
   "channels": 2,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 1.0,
   "signal": "tones",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "3faa7af4cb363a6ebd529a67a6ce6ff4a279e88a918f507a6914049e9dd7178b"
+  "sha256": "7854a9c4ab0271395204e7b025f9639e504934ea5e97ac16a309885380575b84"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -61,7 +61,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -76,8 +76,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 12759,
- "sha256": "b53dab131335ae774f2dc240efb671a7a308a4cb0fb0db6826d20384ae61e72f",
+ "bytes": 8898,
+ "sha256": "241c994c3ca90b56eee75bccbbb964d7c53117cbb934988a22df933c4e9e7e77",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }

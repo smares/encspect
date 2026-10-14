@@ -1,5 +1,5 @@
 {
- "description": "afconvert -v -f m4af -d aace -s 0 -b 32000 pcm/mono44.wav encoded/aace-m4a-cbr-mono44.m4a on 2 s of the tones signal of wma_signals.py.",
+ "description": "afconvert -v -f m4af -d aace -s 0 -b 32000 pcm/mono44.wav encoded/aace-m4a-cbr-mono44.m4a on 0.5 s of the tones signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
   "command": "afconvert -v -f m4af -d aace -s 0 -b 32000 pcm/mono44.wav encoded/aace-m4a-cbr-mono44.m4a",
@@ -20,15 +20,15 @@
     "----",
     "Data format:     1 ch,  44100 Hz, aace (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
     "                no channel layout.",
-    "estimated duration: 2.000000 sec",
-    "audio bytes: 7980",
-    "audio packets: 173",
-    "bit rate: 31784 bits per second",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 1976",
+    "audio packets: 44",
+    "bit rate: 30945 bits per second",
     "packet size upper bound: 67",
     "maximum packet size: 67",
     "audio data file offset: 4096",
     "optimized",
-    "audio 88200 valid frames + 328 priming + 48 remainder = 88576",
+    "audio 22050 valid frames + 328 priming + 150 remainder = 22528",
     "source bit depth: I16",
     "format list:",
     "[ 0] format:\t  1 ch,  44100 Hz, aace (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
@@ -42,13 +42,13 @@
   "channels": 1,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 0.5,
   "signal": "tones",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "e4f39620f450775b5bd7ebee4d5bb83cea344f8044897a88d3851ff15e4b20b8"
+  "sha256": "2e1578c40bd4c084892322ceb5a608aa844f161372a6d724aed58dab9ba12737"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -57,7 +57,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -72,8 +72,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 12076,
- "sha256": "4ed6f8cb1d44bc3a384d74462a39b3b049329933be9cfd5ca16d526eae0cf98f",
+ "bytes": 6072,
+ "sha256": "494b39551ca98d894319e82ece1ce8ec7b6a9e1984c556be437d3a0201256b85",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }

@@ -1,5 +1,5 @@
 {
- "description": "afconvert -v -f adts -d aac -s 0 -b 128000 pcm/st44.wav encoded/lc-adts-cbr-st44.aac on 2 s of the tones signal of wma_signals.py.",
+ "description": "afconvert -v -f adts -d aac -s 0 -b 128000 pcm/st44.wav encoded/lc-adts-cbr-st44.aac on 0.5 s of the tones signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
   "command": "afconvert -v -f adts -d aac -s 0 -b 128000 pcm/st44.wav encoded/lc-adts-cbr-st44.aac",
@@ -20,12 +20,12 @@
     "----",
     "Data format:     2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
     "Channel layout: Stereo (L R)",
-    "estimated duration: 1.772205 sec",
-    "audio bytes: 33571",
-    "audio packets: 89",
-    "bit rate: 129957 bits per second",
+    "estimated duration: 0.477483 sec",
+    "audio bytes: 9045",
+    "audio packets: 24",
+    "bit rate: 129845 bits per second",
     "packet size upper bound: 1536",
-    "maximum packet size: 625",
+    "maximum packet size: 536",
     "audio data file offset: 0",
     "optimized",
     "format list:",
@@ -40,13 +40,13 @@
   "channels": 2,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 0.5,
   "signal": "tones",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "3faa7af4cb363a6ebd529a67a6ce6ff4a279e88a918f507a6914049e9dd7178b"
+  "sha256": "9ac267147a57725bd9616bd7532b9c167914426672b4b0c2cb53f4962ea99ed8"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -55,7 +55,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -70,8 +70,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 33571,
- "sha256": "a3149d4986381f95cfb2a3d68742abe81c99c8633b9a82b937b5287bd62ab022",
+ "bytes": 9045,
+ "sha256": "e4c5aacc88dc1d6dc6f164293ca3b52b80233efe2fb933499350a380053b02b5",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }

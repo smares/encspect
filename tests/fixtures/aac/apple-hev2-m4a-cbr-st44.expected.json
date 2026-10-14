@@ -1,5 +1,5 @@
 {
- "description": "afconvert -f m4af -d aacp -s 0 -b 32000 pcm/st44.wav {out} on 2 s of the deterministic signal of wma_signals.py (pcm/st44.wav).",
+ "description": "afconvert -f m4af -d aacp -s 0 -b 32000 pcm/st44h.wav {out} on the deterministic signal of wma_signals.py (pcm/st44h.wav).",
  "encoder": {
   "command": [
    "afconvert",
@@ -11,11 +11,11 @@
    "0",
    "-b",
    "32000",
-   "pcm/st44.wav",
+   "pcm/st44h.wav",
    "{out}"
   ]
  },
- "length": 12759,
+ "length": 8898,
  "format": "MP4",
  "boxes": [
   [
@@ -26,7 +26,7 @@
   [
    "moov",
    null,
-   1035
+   943
   ],
   [
    "moov/mvhd",
@@ -36,7 +36,7 @@
   [
    "moov/trak",
    null,
-   669
+   577
   ],
   [
    "moov/trak/tkhd",
@@ -46,7 +46,7 @@
   [
    "moov/trak/mdia",
    null,
-   569
+   477
   ],
   [
    "moov/trak/mdia/mdhd",
@@ -61,7 +61,7 @@
   [
    "moov/trak/mdia/minf",
    null,
-   495
+   403
   ],
   [
    "moov/trak/mdia/minf/smhd",
@@ -86,7 +86,7 @@
   [
    "moov/trak/mdia/minf/stbl",
    null,
-   435
+   343
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd",
@@ -121,12 +121,12 @@
   [
    "moov/trak/mdia/minf/stbl/stsz",
    null,
-   204
+   120
   ],
   [
    "moov/trak/mdia/minf/stbl/stco",
    null,
-   36
+   28
   ],
   [
    "moov/udta",
@@ -171,12 +171,12 @@
   [
    "free",
    null,
-   3025
+   3117
   ],
   [
    "mdat",
    null,
-   8671
+   4810
   ]
  ],
  "streams": [
@@ -195,7 +195,7 @@
     "Medium"
    ],
    "ffprobe_profile": "HE-AACv2",
-   "samples": 94208
+   "samples": 51200
   }
  ],
  "units": [
@@ -289,116 +289,32 @@
   ],
   [
    8463,
-   330
+   325
   ],
   [
-   8793,
-   195
+   8788,
+   87
   ],
   [
-   8988,
-   143
-  ],
-  [
-   9131,
-   119
-  ],
-  [
-   9250,
-   252
-  ],
-  [
-   9502,
-   198
-  ],
-  [
-   9700,
-   215
-  ],
-  [
-   9915,
-   125
-  ],
-  [
-   10040,
-   116
-  ],
-  [
-   10156,
-   315
-  ],
-  [
-   10471,
-   175
-  ],
-  [
-   10646,
-   147
-  ],
-  [
-   10793,
-   90
-  ],
-  [
-   10883,
-   309
-  ],
-  [
-   11192,
-   124
-  ],
-  [
-   11316,
-   140
-  ],
-  [
-   11456,
-   84
-  ],
-  [
-   11540,
-   118
-  ],
-  [
-   11658,
-   387
-  ],
-  [
-   12045,
-   285
-  ],
-  [
-   12330,
-   132
-  ],
-  [
-   12462,
-   91
-  ],
-  [
-   12553,
-   176
-  ],
-  [
-   12729,
-   30
+   8875,
+   23
   ]
  ],
  "fields": {
   "MP4/moov/mvhd/Timescale": "22050 units per second",
-  "MP4/moov/mvhd/Duration": "47104 (2.136 s)",
+  "MP4/moov/mvhd/Duration": "25600 (1.161 s)",
   "MP4/moov/trak/tkhd/Track ID": "1",
-  "MP4/moov/trak/tkhd/Duration": "47104 (2.136 s)",
+  "MP4/moov/trak/tkhd/Duration": "25600 (1.161 s)",
   "MP4/moov/trak/mdia/mdhd/Timescale": "22050 units per second",
-  "MP4/moov/trak/mdia/mdhd/Duration": "47104 (2.136 s)",
+  "MP4/moov/trak/mdia/mdhd/Duration": "25600 (1.161 s)",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "2",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
-  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "34488 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "24008 bit/s",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "32000 bit/s",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Stream Type": "5 (audio), reserved bit 0",
   "MP4/moov/trak/Gapless/Encoder Delay (iTunSMPB)": "2112 samples",
-  "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "44100 samples",
-  "MP4/moov/trak/Gapless/Padding (iTunSMPB)": "892 samples",
+  "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "22050 samples",
+  "MP4/moov/trak/Gapless/Padding (iTunSMPB)": "1438 samples",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Sync Extension": "SBR and PS present"
  },
  "findings": [],

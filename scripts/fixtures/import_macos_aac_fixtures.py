@@ -11,7 +11,7 @@ a file that is the same bytes as an earlier one is not imported twice. It then c
 and unrewritten:
 
 - AAC in M4A, MP4, 3GP and ADTS to tests/fixtures/aac/apple-<name>, where the other encoders'
-  files are, and Apple Lossless to tests/fixtures/alac/apple-<name> (ALAC is phase 3: the analyzer
+  files are (the GOLDEN set, which has manifests and golden reports), or to tests/fixtures/apple (the rest), and Apple Lossless to tests/fixtures/alac/apple-<name> (ALAC is phase 3: the analyzer
   shows the container and an unknown codec today, and the files wait for its parser);
 - AAC in CAF to tests/fixtures/caf/apple-<name>.caf, for a container the analyzer does not read yet.
 
@@ -52,12 +52,13 @@ CONTAINERS = {"m4af": "MP4", "mp4f": "MP4", "3gpp": "MP4", "3gp2": "MP4", "adts"
 
 # The set imported by default: AAC-LC in M4A with a constant bitrate (stereo, mono, the 32 kHz rate Apple picks at
 # 64 kbit/s) and a variable one, ADTS and 3GP; HE-AAC and HE-AAC v2 in M4A and ADTS (stereo SBR with a FIXVAR frame
-# grid, mono); AAC-LD and AAC-ELD; and ALAC at 16 and 24 bits in both containers. A golden report is about 2 MB, so
-# the set stays small; --all imports everything.
+# grid, mono); AAC-LD and AAC-ELD; 5.1, Sound Check (iTunNORM, loudness box) and 16-bit sample sizes (stz2); and ALAC at 16 and 24 bits in both containers. The golden reports are 0.6 to 1.7 MB each, so
+# only the GOLDEN set below goes to tests/fixtures/aac; --all imports everything.
 CHOSEN = [
     "lc-m4a-cbr-st44", "lc-m4a-cbr-mono44", "lc-m4a-cbr-st44-64", "lc-m4a-vbr-q64-st44", "lc-adts-cbr-st44", "lc-3gp-cbr-st44",
     "he-m4a-cbr-st44", "he-m4a-cbr-mono44", "he-adts-cbr-st44", "hev2-m4a-cbr-st44", "hev2-adts-cbr-st44",
     "aacl-m4a-cbr-mono44", "aace-m4a-cbr-mono44",
+    "lc-m4a-cbr-six48-lout", "lc-m4a-soundcheck-st44", "lc-m4a-condensed-st44",
     "alac-m4a-st44q16", "alac-caf-st44q16", "alac-m4a-st44q24", "alac-caf-st44q24",
 ]
 
@@ -151,13 +152,22 @@ def runner(environment):
     }
 
 
-def destination(encode):
+# The files with a manifest and a golden report in tests/fixtures/aac, which the MP4 fixture tests and the cross-check walk;
+# a golden report is 0.6 to 1.7 MB, so the others (the other runner's, the rest of the containers and options) go to
+# tests/fixtures/apple, where only AppleEncoderTests reads them.
+GOLDEN = {
+    "lc-m4a-cbr-st44", "lc-adts-cbr-st44", "he-m4a-cbr-st44", "he-m4a-cbr-mono44", "hev2-m4a-cbr-st44", "hev2-adts-cbr-st44",
+    "aacl-m4a-cbr-mono44", "aace-m4a-cbr-mono44",
+}
+
+
+def destination(encode, runner=False):
     extension = pathlib.Path(encode["output"]).suffix
     if encode["format"] == "alac":
         return FIXTURES / "alac", extension
     if encode["file_type"] == "caff":
         return FIXTURES / "caf", extension
-    return FIXTURES / "aac", extension
+    return (FIXTURES / "aac" if encode["name"] in GOLDEN and not runner else FIXTURES / "apple"), extension
 
 
 def import_encode(artifact, encode, sources, environment, force, allow_large, prefix="apple-"):
@@ -166,7 +176,7 @@ def import_encode(artifact, encode, sources, environment, force, allow_large, pr
     if len(data) > LARGE and not allow_large:
         print(f"{name}: skipped, {len(data)} bytes is over {LARGE}; pass --allow-large")
         return False
-    directory, extension = destination(encode)
+    directory, extension = destination(encode, prefix != "apple-")
     directory.mkdir(parents=True, exist_ok=True)
     target = directory / f"{prefix}{name}{extension}"
     if target.exists() and target.read_bytes() != data and not force:

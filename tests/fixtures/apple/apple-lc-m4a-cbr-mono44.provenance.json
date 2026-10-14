@@ -1,54 +1,54 @@
 {
- "description": "afconvert -v -f m4af -d aac -s 3 -u vbrq 64 pcm/st44.wav encoded/lc-m4a-vbr-q64-st44.m4a on 2 s of the tones signal of wma_signals.py.",
+ "description": "afconvert -v -f m4af -d aac -s 0 -b 64000 pcm/mono44.wav encoded/lc-m4a-cbr-mono44.m4a on 0.5 s of the tones signal of wma_signals.py.",
  "encoder": {
   "tool": "afconvert (Apple AudioToolbox)",
-  "command": "afconvert -v -f m4af -d aac -s 3 -u vbrq 64 pcm/st44.wav encoded/lc-m4a-vbr-q64-st44.m4a",
+  "command": "afconvert -v -f m4af -d aac -s 0 -b 64000 pcm/mono44.wav encoded/lc-m4a-cbr-mono44.m4a",
   "file_type": "m4af",
   "format_id": "aac",
   "codec": "AAC LC",
-  "strategy": "vbr",
-  "options": "-s 3 -u vbrq 64",
+  "strategy": "cbr",
+  "options": "-s 0 -b 64000",
   "exit_status": 0,
   "afinfo": {
    "channels": null,
    "sample_rate": null,
    "format_id": null,
    "lines": [
-    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/lc-m4a-vbr-q64-st44.m4a",
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/lc-m4a-cbr-mono44.m4a",
     "File type ID:   m4af",
     "Num Tracks:     1",
     "----",
-    "Data format:     2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Data format:     1 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
     "                no channel layout.",
-    "estimated duration: 2.000000 sec",
-    "audio bytes: 22590",
-    "audio packets: 89",
-    "bit rate: 87448 bits per second",
-    "packet size upper bound: 555",
-    "maximum packet size: 555",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 4406",
+    "audio packets: 24",
+    "bit rate: 63250 bits per second",
+    "packet size upper bound: 320",
+    "maximum packet size: 320",
     "audio data file offset: 4096",
     "optimized",
-    "audio 88200 valid frames + 2112 priming + 824 remainder = 91136",
+    "audio 22050 valid frames + 2112 priming + 414 remainder = 24576",
     "source bit depth: I16",
     "format list:",
-    "[ 0] format:\t  2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
-    "Channel layout: Stereo (L R)",
+    "[ 0] format:\t  1 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Mono",
     "----"
    ]
   }
  },
  "input": {
-  "name": "st44",
-  "channels": 2,
+  "name": "mono44",
+  "channels": 1,
   "rate": 44100,
   "bits": 16,
-  "seconds": 2,
+  "seconds": 0.5,
   "signal": "tones",
   "generator": "wma_signals.py",
   "channel_mask": null,
   "channel_layout_tag": null,
   "info_tags": null,
-  "sha256": "3faa7af4cb363a6ebd529a67a6ce6ff4a279e88a918f507a6914049e9dd7178b"
+  "sha256": "2e1578c40bd4c084892322ceb5a608aa844f161372a6d724aed58dab9ba12737"
  },
  "runner": {
   "image": "macos15 20260907.0337.1",
@@ -57,7 +57,7 @@
    "ProductVersion": "15.7.9",
    "BuildVersion": "24G830"
   },
-  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
   "hardware": [
    "Apple M1 (Virtual)",
    "VirtualMac2,1",
@@ -72,8 +72,8 @@
    "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
   ]
  },
- "bytes": 26686,
- "sha256": "88ddd564c7edbf3c90e9fbd1f49d5d66d3d714bfce9f2dbcd3e5e982c464ac7c",
+ "bytes": 8502,
+ "sha256": "81118e37466175f9001b8a79aae694da52333197e527da0de673ce0f61407885",
  "reproducible": false,
  "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
 }
