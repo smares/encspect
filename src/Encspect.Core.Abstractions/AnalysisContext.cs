@@ -68,6 +68,13 @@ public abstract class AnalysisContext
         _encoderClaims.Insert(index + 1, claim);
     }
 
+    // Takes back a claim that holds for one stream only, such as a container's evidence about one track, once the codec parser has read it.
+    public void RemoveEncoderClaim(EncoderClaim claim)
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+        _encoderClaims.Remove(claim);
+    }
+
     // Hands one contiguous payload, such as a WAV data chunk of MPEG audio, to the codec parser
     // with that ID, which adds its nodes under parent; its findings and streams join this
     // context's. Returns false when no codec parser has the ID, and reports nothing then. Damage

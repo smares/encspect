@@ -59,8 +59,7 @@ internal static partial class AacEncoder
         ("exhale", ["exhale"]),
         ("Nero", ["nero"]),
         ("qaac", ["qaac"]),
-        ("iTunes", ["itunes"]),
-        ("Apple", ["apple aac", "audiotoolbox"]),
+        ("Apple", ["apple aac", "audiotoolbox", "itunes"]),
     ];
 
     private static readonly Dictionary<string, Regex> MarkerPatterns = Families.SelectMany(f => f.Markers).ToDictionary(m => m, m =>
@@ -208,6 +207,20 @@ internal static partial class AacEncoder
             [{ Type: 2, Length: >= 7 and <= 9, SingleLoudnessMeasurement: true }] => true,
             _ => false,
         };
+    }
+
+    // Why a claim and the stream disagree, for the finding. A claim of low confidence is a name some software wrote; a stronger one is a
+    // layout, whose description reads "what it is: the traces".
+    public static string Disagreement(EncoderClaim claim, string text, string name, string lowCause)
+    {
+        if (claim.Confidence == Confidence.Low)
+        {
+            return $"The {claim.Description} names \"{text}\", but the stream points to {name}; {lowCause}";
+        }
+
+        int colon = claim.Description.IndexOf(':', StringComparison.Ordinal);
+        string subject = colon > 0 ? claim.Description[..colon] : claim.Description;
+        return $"The {subject} points to \"{text}\", but the stream points to {name}; the file may have been rewritten by other software around the stream.";
     }
 
     private static HashSet<string> FamiliesOf(string text)

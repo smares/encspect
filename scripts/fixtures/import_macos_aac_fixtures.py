@@ -48,7 +48,7 @@ CODECS = {"aac": "AAC LC", "aach": "HE-AAC", "aacp": "HE-AAC v2", "alac": "Apple
 MODES = {"cbr": "constant bitrate (-s 0)", "abr": "average bitrate (-s 1)", "constrained-vbr": "constrained variable bitrate (-s 2)",
          "vbr": "variable bitrate (-s 3)", "lossless": "lossless", "default": "afconvert's default strategy"}
 # Containers by file type; the analyzer's format name for the manifest.
-CONTAINERS = {"m4af": "MP4", "mp4f": "MP4", "3gpp": "MP4", "3gp2": "MP4", "adts": "AAC", "caff": "CAF"}
+CONTAINERS = {"m4af": "MP4", "mp4f": "MP4", "3gpp": "MP4", "3gp2": "MP4", "adts": "AAC", "caff": "CAF", "m4bf": "MP4"}
 
 # The set imported by default: AAC-LC in M4A with a constant bitrate (stereo, mono, the 32 kHz rate Apple picks at
 # 64 kbit/s) and a variable one, ADTS and 3GP; HE-AAC and HE-AAC v2 in M4A and ADTS (stereo SBR with a FIXVAR frame
@@ -60,6 +60,7 @@ CHOSEN = [
     "aacl-m4a-cbr-mono44", "aace-m4a-cbr-mono44",
     "lc-m4a-cbr-six48-lout", "lc-m4a-soundcheck-st44", "lc-m4a-condensed-st44",
     "alac-m4a-st44q16", "alac-caf-st44q16", "alac-m4a-st44q24", "alac-caf-st44q24",
+    "he-m4a-cbr-st44-32", "he-m4a-cbr-mono22", "lc-m4a-music-st44", "lc-m4b-cbr-st44",
 ]
 
 
@@ -106,7 +107,8 @@ def verify(artifact, manifest):
     return worked, sources
 
 
-AFINFO_FORMAT = re.compile(r"(\d+) ch,\s+(\d+) Hz,\s+'(.{4})'")
+# afinfo prints "2 ch,  22050 Hz, aac  (0x00000000) 0 bits/channel, ..." and in the format list "aach (0x00000000)": the ID, padded to four, then its flags
+AFINFO_FORMAT = re.compile(r"(\d+) ch,\s+(\d+) Hz,\s+(\S{1,4})\s*\(")
 
 
 def read_afinfo(text, format_id=None):
@@ -186,7 +188,10 @@ def import_encode(artifact, encode, sources, environment, force, allow_large, pr
     source = sources[encode["source"]]
     afinfo = read_afinfo((artifact / encode["afinfo"]).read_text(encoding="utf-8", errors="replace"), encode["format"])
     container = CONTAINERS.get(encode["file_type"], encode["file_type"])
-    describe = f"afconvert {' '.join(encode['command'].split()[1:])} on {source['seconds']} s of the {source['signal']} signal of wma_signals.py."
+    if source.get("foreign"):
+        describe = f"afconvert {' '.join(encode['command'].split()[1:])}: the packets of {source['from']} copied (-d 0), not encoded."
+    else:
+        describe = f"afconvert {' '.join(encode['command'].split()[1:])} on {source['seconds']} s of the {source['signal']} signal of wma_signals.py."
     provenance = {
         "description": describe,
         "encoder": {
@@ -200,7 +205,7 @@ def import_encode(artifact, encode, sources, environment, force, allow_large, pr
             "exit_status": encode["exit_status"],
             "afinfo": afinfo,
         },
-        "input": {k: source[k] for k in ("name", "channels", "rate", "bits", "seconds", "signal", "generator", "channel_mask", "channel_layout_tag", "info_tags", "sha256")},
+        "input": {k: source[k] for k in ("name", "from", "channels", "rate", "bits", "seconds", "signal", "generator", "channel_mask", "channel_layout_tag", "info_tags", "sha256") if k in source},
         "runner": runner(environment),
         "bytes": len(data),
         "sha256": sha256(data),

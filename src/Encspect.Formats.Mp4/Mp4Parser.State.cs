@@ -37,8 +37,6 @@ public sealed partial class Mp4Parser
 
         public bool HasPageAlignedMdat { get; set; }
 
-        public bool AppleClaimed { get; set; }
-
         public List<Track> Tracks { get; } = [];
 
         public Track? Track { get; set; }

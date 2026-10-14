@@ -124,14 +124,19 @@ def with_unlisted(path, rows):
     """MP4Box's rows with the unlisted boxes added after the esds box of the sample entry that holds them, sized by the file."""
     data = pathlib.Path(path).read_bytes()
     out = list(rows)
+    # only inside the sample description box, not in the media data
+    stsd = data.find(b"stsd")
+    if stsd < 4:
+        return out
+    stsd_end = stsd - 4 + int.from_bytes(data[stsd - 4:stsd], "big")
     for kind in UNLISTED_BOXES:
-        at = data.find(kind.encode("ascii"))
-        while at >= 4:
+        at = data.find(kind.encode("ascii"), stsd, stsd_end)
+        while 4 <= at < stsd_end:
             size = int.from_bytes(data[at - 4:at], "big")
             index = next((i for i, (p, _) in enumerate(out) if p.endswith("/esds")), None)
             if index is not None and size >= 8:
                 out.insert(index + 1, (out[index][0].rsplit("/", 1)[0] + "/" + kind, size))
-            at = data.find(kind.encode("ascii"), at + 1)
+            at = data.find(kind.encode("ascii"), at + 1, stsd_end)
     return out
 
 

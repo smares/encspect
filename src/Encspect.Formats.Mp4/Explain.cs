@@ -120,9 +120,9 @@ internal static class Explain
     public const string Url = "A URL where the stream's data is (ISO/IEC 14496-1 7.2.6.5).";
     public const string OcrEsId = "The ID of the stream whose clock this stream follows (ISO/IEC 14496-1 7.2.6.5).";
     public const string ObjectTypeIndication = "The coding of the stream: 0x40 for MPEG-4 audio, with the object type in its AudioSpecificConfig, 0x66 to 0x68 for MPEG-2 AAC, 0x69 and 0x6B for MPEG-2 and MPEG-1 audio (ISO/IEC 14496-1 7.2.6.6; MP4 registration authority).";
-    public const string SourceBitDepth = "The bit depth of the source audio as Apple's writers spell it: I for integer samples and the bits, such as I16 or I24.";
+    public const string SourceBitDepth = "The bit depth of the source audio as afconvert's files spell it: I for integer samples and the number of bits (I16 in the files seen).";
 
-    public const string StreamType = "The kind of stream, 5 for audio, whether it flows upstream, and a reserved bit that ISO/IEC 14496-1 7.2.6.6 sets to 1 (Apple's writers write 0).";
+    public const string StreamType = "The kind of stream, 5 for audio, whether it flows upstream, and a reserved bit that ISO/IEC 14496-1 7.2.6.6 sets to 1 (afconvert's files have 0).";
     public const string DecoderBufferSize = "The size of the decoder's input buffer the stream needs, in bytes (ISO/IEC 14496-1 7.2.6.6).";
     public const string DecoderMaxBitrate = "The highest bitrate of the stream over any one-second window, as the writer states it (ISO/IEC 14496-1 7.2.6.6).";
     public const string DecoderAverageBitrate = "The stream's average bitrate as the writer states it; 0 marks a variable bitrate (ISO/IEC 14496-1 7.2.6.6).";
@@ -314,7 +314,7 @@ internal static class Explain
         "sbgp" => "Sample to group: which samples belong to which group description (ISO/IEC 14496-12 8.9.2).",
         "csgp" => "Compact sample to group: a compact form of the sample-to-group table (ISO/IEC 14496-12).",
         "esds" => "Elementary stream descriptor box: the MPEG-4 descriptors of the stream, with the decoder's configuration, for AAC the AudioSpecificConfig (ISO/IEC 14496-14 5.6).",
-        "sbtd" => "Source bit depth box: a box Apple's file writers add to an audio sample entry, with the bit depth of the audio that was encoded as text (\"I16\" for 16-bit integers). It is not part of ISO/IEC 14496-12 or 14496-14.",
+        "sbtd" => "Source bit depth box: a box in the audio sample entries of afconvert's M4A files, with the bit depth of the audio that was encoded as text (\"I16\" for 16-bit integers). It is not part of ISO/IEC 14496-12 or 14496-14.",
         "btrt" => "Bitrate box: the decoder's buffer size and the stream's maximum and average bitrate (ISO/IEC 14496-12 8.5.2.2).",
         "chan" => "QuickTime channel layout: which speaker each channel feeds, as Core Audio's AudioChannelLayout: a layout tag, a channel bitmap or a description per channel (QuickTime File Format, Audio channel layout atom).",
         "chnl" => "Channel layout box: whether the track carries channels or objects, and which speaker each channel feeds, as a channel configuration of ISO/IEC 23091-3 or a speaker position per channel (ISO/IEC 14496-12 12.2.4).",

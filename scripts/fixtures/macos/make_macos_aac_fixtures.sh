@@ -118,13 +118,13 @@ encode() {
     shift 5
     local ext input output log status required=0
     ext="$(extension "$filetype")"
-    input="$(ls "$OUT/pcm/$source".* 2>/dev/null | head -1)"
+    input="$(ls "$OUT/pcm/$source".* "$OUT/foreign/$source".* 2>/dev/null | head -1)"
     output="encoded/$name.$ext"
     log="logs/$name.log"
     case "$REQUIRED" in *" $name "*) required=1 ;; esac
     rm -f "${OUT:?}/${output:?}"
     # shellcheck disable=SC2206 # VERBOSE is empty or "-v"
-    local command=(afconvert $VERBOSE -f "$filetype" -d "$format" "$@" "pcm/$(basename "$input")" "$output")
+    local command=(afconvert $VERBOSE -f "$filetype" -d "$format" "$@" "${input#"$OUT"/}" "$output")
     echo "${command[*]}" >> "$COMMANDS"
     say "-- $name: ${command[*]}"
     (
@@ -298,6 +298,25 @@ encode alac-caf-st44q24      st44q24   caff alac lossless
 encode alac-m4a-mono44       mono44    m4af alac lossless
 encode alac-m4a-six48q16     six48q16  m4af alac lossless
 encode alac-caf-six48q16     six48q16  caff alac lossless
+
+# ---- packets of other encoders, copied: -d 0 "specifies the same format as the source file, with packets copied
+# exactly". The sources are fixtures of this repository that Apple's encoder did not write (ffmpeg, FAAC and fdkaac,
+# in ADTS and M4A), copied into foreign/ by macos_aac_support.py. Does Apple's file writer then add the traces its
+# own encodes have (stream type byte 0x14, the sbtd box, the padding to 4,096), and does an ADTS file get its headers?
+say "== packets copied from other encoders (-d 0)"
+encode passthru-m4a-from-ffmpeg-adts   ffmpeg-adts     m4af 0 copy
+encode passthru-adts-from-ffmpeg-adts   ffmpeg-adts     adts 0 copy
+encode passthru-caf-from-ffmpeg-adts    ffmpeg-adts     caff 0 copy
+encode passthru-m4a-from-ffmpeg-m4a     ffmpeg-m4a      m4af 0 copy
+encode passthru-adts-from-ffmpeg-m4a    ffmpeg-m4a      adts 0 copy
+encode passthru-m4a-from-faac-m4a       faac-m4a        m4af 0 copy
+encode passthru-mp4-from-faac-m4a       faac-m4a        mp4f 0 copy
+encode passthru-adts-from-faac-m4a      faac-m4a        adts 0 copy
+encode passthru-m4a-from-fdkaac-m4a     fdkaac-m4a      m4af 0 copy
+encode passthru-adts-from-fdkaac-m4a    fdkaac-m4a      adts 0 copy
+encode passthru-m4a-from-fdkaac-he-m4a  fdkaac-he-m4a   m4af 0 copy
+encode passthru-m4a-from-fdkaac-he-adts fdkaac-he-adts  m4af 0 copy
+encode passthru-adts-from-fdkaac-he-adts fdkaac-he-adts adts 0 copy
 
 # ---- record ------------------------------------------------------------------------------------
 say "== manifest"

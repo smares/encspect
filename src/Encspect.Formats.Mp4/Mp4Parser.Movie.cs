@@ -133,8 +133,8 @@ public sealed partial class Mp4Parser
         }
     }
 
-    // A box Apple's writers put into an audio sample entry: a version and flags word, then the bit depth of
-    // the source as text ("I16": 16-bit integers), which afinfo prints as "source bit depth". Not in ISO/IEC
+    // A box afconvert's M4A files carry in the audio sample entry: four bytes that are zero in every file seen, then the
+    // bit depth of the source as text ("I16": 16-bit integers), which afinfo prints as "source bit depth". Not in ISO/IEC
     // 14496-12 or 14496-14, so it is read as the files show it (macOS 15, afconvert).
     private static void SourceBitDepth(State state, Node node, BoxFields f)
     {

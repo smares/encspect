@@ -5,11 +5,13 @@ runner's python3 (3.9 or later):
     macos_aac_support.py signals <out directory>
     macos_aac_support.py manifest <out directory> <encodes.tsv> <environment.txt>
 
-- "signals" writes the source PCM into <out>/pcm and its description to <out>/sources.json. The
+- "signals" writes the source PCM into <out>/pcm, copies the other encoders' fixtures that the packet copy (-d 0) takes into
+  <out>/foreign, and writes their description to <out>/sources.json. The
   samples are those of wma_signals.py ("tones" and "quiet"), so every encoder in the project is
   fed the same audio. Files with more than two channels or more than 16 bits are
-  WAVE_FORMAT_EXTENSIBLE with a channel mask, which is how afconvert learns a 5.1 layout; one 5.1
-  file is a CAF with an explicit MPEG_5_1_A channel layout tag as well; one stereo file carries a
+  WAVE_FORMAT_EXTENSIBLE with a channel mask, which is how afconvert learns a 5.1 layout; two 5.1
+  files are CAFs with an explicit channel layout tag (MPEG_5_1_A and MPEG_5_1_D); the stereo files with a name ending
+  in "h" run 1 s, for HE-AAC's 2,048-sample frames; one stereo file carries a
   LIST/INFO chunk, to see whether afconvert passes it on as iTunes-style metadata.
 - "manifest" turns the tab-separated record of every afconvert run into <out>/manifest.json, with
   the size and SHA-256 of each output and of each source.
@@ -32,6 +34,16 @@ MPEG_5_1_D = (124 << 16) | 6  # kAudioChannelLayoutTag_MPEG_5_1_D: C L R Ls Rs L
 INFO = [("INAM", "Encspect test tone"), ("IART", "Encspect"), ("IPRD", "Encspect fixtures"), ("ICMT", "afconvert metadata test"), ("ICRD", "2026"), ("IGNR", "Test")]
 
 # name, channels, rate, bits, kind, extras
+# Fixtures of this repository that Apple's encoder did not write, for afconvert's packet copy (-d 0): name, path under tests/fixtures.
+FOREIGN = [
+    ("ffmpeg-adts", "aac/ffmpeg-adts.aac"),
+    ("ffmpeg-m4a", "aac/ffmpeg-lc.m4a"),
+    ("faac-m4a", "aac/faac-1.40.m4a"),
+    ("fdkaac-m4a", "aac/fdkaac-lc.m4a"),
+    ("fdkaac-he-m4a", "aac/fdkaac-he.m4a"),
+    ("fdkaac-he-adts", "aac/fdkaac-he-adts.aac"),
+]
+
 SOURCES = [
     ("mono44", 1, 44100, 16, "tones", {}),
     ("mono48", 1, 48000, 16, "tones", {}),
@@ -114,8 +126,16 @@ def signals(out):
             "channel_layout_tag": extras.get("caf_layout"), "info_tags": dict(extras["info"]) if "info" in extras else None,
             "bytes": len(content), "sha256": sha256(path),
         })
+    foreign = out / "foreign"
+    foreign.mkdir(parents=True, exist_ok=True)
+    fixtures = pathlib.Path(__file__).resolve().parents[3] / "tests" / "fixtures"
+    for name, relative in FOREIGN:
+        source = fixtures / relative
+        target = foreign / f"{name}{source.suffix}"
+        target.write_bytes(source.read_bytes())
+        records.append({"name": name, "file": f"foreign/{target.name}", "foreign": True, "from": f"tests/fixtures/{relative}", "bytes": target.stat().st_size, "sha256": sha256(target)})
     (out / "sources.json").write_text(json.dumps(records, indent=1) + "\n", encoding="utf-8")
-    print(f"{len(records)} source files written to {pcm}")
+    print(f"{len(records)} source files written to {out}")
 
 
 COLUMNS = ["name", "source", "file_type", "format", "strategy", "flags", "exit_status", "output", "command", "log", "required"]

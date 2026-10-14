@@ -421,6 +421,51 @@ def sbr_harmonics(w, counts, present):
         w.put(0, counts[0])
 
 
+def sbr_fixvar_grid(w, resolutions):
+    """sbr_grid of a FIXVAR frame (4.4.2.8): bs_var_bord 0, the relative borders (each 2 bits, value 0), bs_pointer 0 and then bs_freq_res
+    of the LAST envelope first, which is what a reader that takes them in envelope order gets wrong. resolutions are in envelope order."""
+    count = len(resolutions)
+    w.put(GRID_CLASSES["FIXVAR"], 2).put(0, 2).put(count - 1, 2)
+    for _ in range(count - 1):
+        w.put(0, 2)
+    w.put(0, (1, 2, 2, 3, 3)[count - 1])
+    for resolution in reversed(resolutions):
+        w.put(resolution, 1)
+
+
+def sbr_fixvar_data(w, counts, channels):
+    """sbr_data of a single channel element (one entry in channels) or a channel pair without coupling (two) whose grids are FIXVAR frames of
+    several envelopes. Each channel is a list of (frequency resolution, difference) per envelope: the envelope is coded across frequency with
+    that resolution's band count, the differences being the same size with alternating signs, so the bits an envelope takes depend on its resolution and a reader
+    that pairs the resolutions with the wrong envelopes finds another length. Two noise floors, coded across frequency (3 dB header)."""
+    high, low, n_q = counts
+    pair = len(channels) == 2
+    w.put(0, 1)                                      # bs_data_extra
+    if pair:
+        w.put(0, 1)                                  # bs_coupling
+    for channel in channels:
+        sbr_fixvar_grid(w, [r for r, _ in channel])
+    for channel in channels:
+        for _ in channel:
+            w.put(0, 1)                              # bs_df_env: across frequency
+        w.put(0, 1).put(0, 1)                        # bs_df_noise of the two noise floors
+    for _ in channels:
+        w.put(0, 2 * n_q)                            # bs_invf_mode
+    for channel in channels:
+        for resolution, difference in channel:
+            name = "f_huffman_env_3_0dB"
+            w.put(31, 6)
+            for band in range((high if resolution else low) - 1):
+                # the sign alternates, so the values stay in range whatever the difference
+                w.code(T.SBR_HUFFMAN[name], codebook_lav(name) + (difference if band % 2 == 0 else -difference))
+    for _ in channels:
+        for _ in range(2):
+            sbr_noise(w, counts, 10, False)
+    for _ in channels:
+        w.put(0, 1)                                  # bs_add_harmonic_flag
+    w.put(0, 1)                                      # bs_extended_data
+
+
 def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data_extra=False, time_env=False, time_noise=False, harmonic=False,
              extension=False):
     """sbr_single_channel_element or sbr_channel_pair_element (4.4.2), then the extended data, here a parametric stereo extension of a
@@ -588,7 +633,10 @@ def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=Fa
         w.put(1 if header else 0, 1)
         if header:
             sbr_header(w, header)
-        sbr_data(w, counts, pair, coupled, ps, **tools)
+        if "fixvar" in tools:
+            sbr_fixvar_data(w, counts, tools["fixvar"])
+        else:
+            sbr_data(w, counts, pair, coupled, ps, **tools)
     return payload_bytes(write)
 
 
