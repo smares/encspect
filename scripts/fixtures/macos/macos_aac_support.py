@@ -24,7 +24,8 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import wma_signals  # noqa: E402
 
-SECONDS = 2
+SECONDS = 0.5  # enough for 20 ADTS frames of AAC-LC at 44.1 and 48 kHz (21 and 23, with the encoder delay); HE-AAC frames hold 2,048 samples, so its sources run longer
+HE_SECONDS = 1.0
 SPEAKERS_5_1 = 0x3F  # front left and right, center, LFE, back left and right: WAV's 5.1 order
 MPEG_5_1_A = (121 << 16) | 6  # kAudioChannelLayoutTag_MPEG_5_1_A: L R C LFE Ls Rs, the order of the WAV's channels
 MPEG_5_1_D = (124 << 16) | 6  # kAudioChannelLayoutTag_MPEG_5_1_D: C L R Ls Rs LFE, AAC's own order (channel configuration 6); afinfo names the tag it reads
@@ -36,6 +37,9 @@ SOURCES = [
     ("mono48", 1, 48000, 16, "tones", {}),
     ("mono22", 1, 22050, 16, "tones", {}),
     ("st44", 2, 44100, 16, "tones", {}),
+    ("mono44h", 1, 44100, 16, "tones", {"seconds": HE_SECONDS}),
+    ("st44h", 2, 44100, 16, "tones", {"seconds": HE_SECONDS}),
+    ("st48h", 2, 48000, 16, "tones", {"seconds": HE_SECONDS}),
     ("st48", 2, 48000, 16, "tones", {}),
     ("st22", 2, 22050, 16, "tones", {}),
     ("st44tag", 2, 44100, 16, "tones", {"info": INFO}),
@@ -50,12 +54,12 @@ SOURCES = [
 ]
 
 
-def pcm_bytes(channels, rate, bits, kind, floating=False):
+def pcm_bytes(channels, rate, bits, kind, floating=False, seconds=SECONDS):
     if floating:
         # 32-bit IEEE float, the 16-bit signal scaled to +-1
-        return b"".join(struct.pack("<f", v / 32768.0) for v in wma_signals.samples(rate, channels, 16, SECONDS, kind))
+        return b"".join(struct.pack("<f", v / 32768.0) for v in wma_signals.samples(rate, channels, 16, seconds, kind))
     pack = (lambda v: struct.pack("<h", v)) if bits == 16 else (lambda v: struct.pack("<i", v)[:3])
-    return b"".join(pack(v) for v in wma_signals.samples(rate, channels, bits, SECONDS, kind))
+    return b"".join(pack(v) for v in wma_signals.samples(rate, channels, bits, seconds, kind))
 
 
 def chunk(tag, body):
@@ -97,14 +101,15 @@ def signals(out):
     pcm.mkdir(parents=True, exist_ok=True)
     records = []
     for name, channels, rate, bits, kind, extras in SOURCES:
-        data = pcm_bytes(channels, rate, bits, kind, extras.get("float", False))
+        seconds = extras.get("seconds", SECONDS)
+        data = pcm_bytes(channels, rate, bits, kind, extras.get("float", False), seconds)
         if "caf_layout" in extras:
             path, content = pcm / f"{name}.caf", caf(channels, rate, bits, data, extras["caf_layout"])
         else:
             path, content = pcm / f"{name}.wav", wav(channels, rate, bits, data, extras.get("mask"), extras.get("info"), extras.get("float", False))
         path.write_bytes(content)
         records.append({
-            "name": name, "file": f"pcm/{path.name}", "channels": channels, "rate": rate, "bits": bits, "seconds": SECONDS, "signal": kind,
+            "name": name, "file": f"pcm/{path.name}", "channels": channels, "rate": rate, "bits": bits, "seconds": seconds, "signal": kind,
             "generator": "wma_signals.py", "channel_mask": extras.get("mask"),
             "channel_layout_tag": extras.get("caf_layout"), "info_tags": dict(extras["info"]) if "info" in extras else None,
             "bytes": len(content), "sha256": sha256(path),

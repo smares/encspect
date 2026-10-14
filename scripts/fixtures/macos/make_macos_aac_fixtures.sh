@@ -237,30 +237,30 @@ encode lc-caf-tag-st44         st44 caff aac cbr -s 0 -b 128000 -t
 
 # ---- HE-AAC ('aach') ---------------------------------------------------------------------------
 say "== HE-AAC"
-encode he-m4a-cbr-st44       st44      m4af aach cbr -s 0 -b 64000
-encode he-m4a-cbr-st44-32    st44      m4af aach cbr -s 0 -b 32000
-encode he-m4a-cbr-mono44     mono44    m4af aach cbr -s 0 -b 32000
-encode he-m4a-cbr-st48       st48      m4af aach cbr -s 0 -b 48000
+encode he-m4a-cbr-st44       st44h      m4af aach cbr -s 0 -b 64000
+encode he-m4a-cbr-st44-32    st44h      m4af aach cbr -s 0 -b 32000
+encode he-m4a-cbr-mono44     mono44h    m4af aach cbr -s 0 -b 32000
+encode he-m4a-cbr-st48       st48h      m4af aach cbr -s 0 -b 48000
 encode he-m4a-cbr-st22       st22      m4af aach cbr -s 0 -b 24000
 encode he-m4a-cbr-mono22     mono22    m4af aach cbr -s 0 -b 16000
-encode he-m4a-abr-st44       st44      m4af aach abr -s 1 -b 64000
-encode he-m4a-vbr-q64-st44   st44      m4af aach vbr -s 3 -u vbrq 64
-encode he-adts-cbr-st44      st44      adts aach cbr -s 0 -b 64000
-encode he-adts-cbr-mono44    mono44    adts aach cbr -s 0 -b 32000
-encode he-caf-cbr-st44       st44      caff aach cbr -s 0 -b 64000
+encode he-m4a-abr-st44       st44h      m4af aach abr -s 1 -b 64000
+encode he-m4a-vbr-q64-st44   st44h      m4af aach vbr -s 3 -u vbrq 64
+encode he-adts-cbr-st44      st44h      adts aach cbr -s 0 -b 64000
+encode he-adts-cbr-mono44    mono44h    adts aach cbr -s 0 -b 32000
+encode he-caf-cbr-st44       st44h      caff aach cbr -s 0 -b 64000
 
 # ---- HE-AAC v2 ('aacp'): parametric stereo, so stereo input -------------------------------------
 say "== HE-AAC v2"
-encode hev2-m4a-cbr-st44     st44      m4af aacp cbr -s 0 -b 32000
-encode hev2-m4a-cbr-st44-24  st44      m4af aacp cbr -s 0 -b 24000
-encode hev2-m4a-cbr-st44-48  st44      m4af aacp cbr -s 0 -b 48000
-encode hev2-m4a-cbr-st48     st48      m4af aacp cbr -s 0 -b 32000
+encode hev2-m4a-cbr-st44     st44h      m4af aacp cbr -s 0 -b 32000
+encode hev2-m4a-cbr-st44-24  st44h      m4af aacp cbr -s 0 -b 24000
+encode hev2-m4a-cbr-st44-48  st44h      m4af aacp cbr -s 0 -b 48000
+encode hev2-m4a-cbr-st48     st48h      m4af aacp cbr -s 0 -b 32000
 encode hev2-m4a-cbr-st22     st22      m4af aacp cbr -s 0 -b 24000
-encode hev2-m4a-abr-st44     st44      m4af aacp abr -s 1 -b 32000
-encode hev2-m4a-vbr-q64-st44 st44      m4af aacp vbr -s 3 -u vbrq 64
-encode hev2-m4a-cbr-mono44   mono44    m4af aacp cbr -s 0 -b 32000
-encode hev2-adts-cbr-st44    st44      adts aacp cbr -s 0 -b 32000
-encode hev2-caf-cbr-st44     st44      caff aacp cbr -s 0 -b 32000
+encode hev2-m4a-abr-st44     st44h      m4af aacp abr -s 1 -b 32000
+encode hev2-m4a-vbr-q64-st44 st44h      m4af aacp vbr -s 3 -u vbrq 64
+encode hev2-m4a-cbr-mono44   mono44h    m4af aacp cbr -s 0 -b 32000
+encode hev2-adts-cbr-st44    st44h      adts aacp cbr -s 0 -b 32000
+encode hev2-caf-cbr-st44     st44h      caff aacp cbr -s 0 -b 32000
 
 # ---- the other AAC formats, only where -hf lists the ID -------------------------------------------
 say "== AAC-LD, AAC-ELD, ELD with SBR (only if listed)"
