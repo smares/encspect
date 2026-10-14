@@ -369,3 +369,34 @@ jobs:
 
       - name: Cross-check the AC-3 fixtures
         run: python3 scripts/fixtures/crosscheck_ac3_fixtures.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect
+
+  # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
+  # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled, and
+  # only success passes: a skipped job counts as a failure, since none of the jobs above is conditional.
+  # A matrix job reports one result for all its legs, which is not success if any leg failed.
+  all-checks:
+    name: all checks passed
+    if: always()
+    needs:
+      - build-test
+      - fuzz
+      - format
+      - fixtures
+      - mpeg-crosscheck
+      - mp4-crosscheck
+      - ogg-crosscheck
+      - musepack-crosscheck
+      - wavpack-crosscheck
+      - asf-crosscheck
+      - ac3-crosscheck
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every job to succeed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$NEEDS" | jq -e 'all(.[]; .result == "success") | not' > /dev/null; then
+            echo "::error::A job did not succeed."
+            exit 1
+          fi
