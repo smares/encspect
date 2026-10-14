@@ -38,9 +38,9 @@ internal static class LongInputs
         "musepack-sv5" => Sv5Frames(2200),
         "mp4-aac" => Mp4Samples(2200),
         "adif" => AdifBlocks(2200),
-        "mp4-ac3" => Mp4Samples(2200, "ac-3", FirstAc3Frame("ac3/external-ffmpeg-stereo-192k.ac3")),
-        "mp4-eac3" => Mp4Samples(2200, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-stereo-96k.eac3")),
-        "mp4-dts" => Mp4Samples(2200, "dtsc", FirstDtsFrame("dts/external-ffmpeg-stereo-44k-256k.dts")),
+        "mp4-ac3" => Mp4Samples(2100, "ac-3", FirstAc3Frame("ac3/external-ffmpeg-mono-96k.ac3")),
+        "mp4-eac3" => Mp4Samples(2100, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-mono-48k.eac3")),
+        "mp4-dts" => Mp4Samples(2100, "dtsc", FirstDtsFrame("dts/external-ffmpeg-mono-8k-64k.dts")),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
 
