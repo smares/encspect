@@ -1,0 +1,63 @@
+name: AAC and ALAC fixtures from Apple's encoders
+
+# Encodes the project's test signals with Apple's AudioToolbox through afconvert (AAC-LC, HE-AAC,
+# HE-AAC v2 and Apple Lossless, in M4A, ADTS and CAF, in each bitrate strategy) and uploads the
+# files with their source PCM and a record of the macOS version, the AudioToolbox and CoreAudio
+# versions, afconvert's help and the exact command lines. Run by hand (Actions, "AAC and ALAC
+# fixtures from Apple's encoders", Run workflow) or by pushing the branch fixtures/apple-aac.
+# Nothing is released and no build is uploaded: only the fixture files, for seven days.
+# scripts/fixtures/import_macos_aac_fixtures.py takes them into tests/fixtures/aac and
+# tests/fixtures/alac.
+#
+# Two runners encode the same signals: macos-15 (arm64) and macos-15-intel (x86-64). Apple's
+# encoder is one codebase, but its floating-point code has separate paths per architecture, and
+# whether the bytes differ is not something to assume; the importer compares the two artifacts. The
+# Intel leg also shows whether the encoder's own marks (iTunSMPB, Encoding Params) depend on the
+# architecture, which a detection rule must not.
+#
+# The output is not reproducible byte for byte if the muxer stamps the time of the encode into the
+# movie header (creation and modification times of an M4A or CAF). The fixtures are therefore
+# committed once and checked by their content, never regenerated.
+on:
+  workflow_dispatch:
+  push:
+    branches: [fixtures/apple-aac]
+
+permissions:
+  contents: read
+
+jobs:
+  encode:
+    name: encode on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Encode with afconvert
+        shell: /bin/bash {0}
+        run: bash scripts/fixtures/macos/make_macos_aac_fixtures.sh apple-out
+
+      # The lines to look at first: the failed encodes and what afinfo says of three of the files.
+      - name: Print the encoder output
+        if: always()
+        shell: bash
+        continue-on-error: true
+        run: |
+          cat apple-out/problems.txt || true
+          awk -F '\t' '$7 != 0 { print "FAILED (" $7 "): " $9 }' apple-out/encodes.tsv
+          for name in lc-m4a-cbr-st44 he-m4a-cbr-st44 hev2-m4a-cbr-st44 alac-m4a-st44q16; do
+            echo "== $name"; cat "apple-out/info/$name.afinfo.txt"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-aac-fixtures-${{ matrix.runner }}
+          path: apple-out
+          retention-days: 7
+          if-no-files-found: error
