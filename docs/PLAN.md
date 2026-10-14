@@ -458,7 +458,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - XLL channel set headers: the lossless layer's bit depth, rate and layout.
    - `.dtshd` files: DTSHDHDR chunks, after FFmpeg's demuxer, with the build version chunk as encoder evidence.
    - DTS:X detection from checkable sources only.
-5. WMA Voice frames, read like Speex from FFmpeg's wmavoice.c; like Speex, a lossy speech codec.
+5. WMA Voice frames: a lossy speech codec, read like Speex, from FFmpeg's wmavoice.c.
 6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only.
 7. DRM and protection reporting.
    - A typed per-stream protection field, shown in the CLI summary and the GUI.
