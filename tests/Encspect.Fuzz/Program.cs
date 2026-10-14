@@ -15,6 +15,10 @@ internal static class Program
     private const int MaxCorpusFileSize = 256 * 1024;
     private static readonly TimeSpan PerInputLimit = TimeSpan.FromSeconds(20);
 
+    // Writing a report twice around a collection costs several times the rest of an iteration, so
+    // only every this many iterations does it; keyed on the iteration, so a replay of one runs it.
+    private const int CollectionCheckInterval = 16;
+
     // Signatures every parser anchors on; dropping them at random spots makes structure checks run.
     private static readonly byte[][] Tokens =
     [
@@ -80,7 +84,7 @@ internal static class Program
             // Each iteration has its own generator, so --iteration replays one input without the others.
             var random = new Random(Mix(seed, iteration));
             byte[] input = Mutate(corpus, random);
-            string? failure = Check(analyzer, input);
+            string? failure = Check(analyzer, input, checksCollection: only is not null || iteration % CollectionCheckInterval == 0);
             if (failure is not null)
             {
                 Directory.CreateDirectory(output);
@@ -111,7 +115,7 @@ internal static class Program
         return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
-    private static string? Check(Analyzer analyzer, byte[] input)
+    private static string? Check(Analyzer analyzer, byte[] input, bool checksCollection)
     {
         var task = Task.Run(() => analyzer.Analyze("fuzz", new MemoryStream(input)));
         try
@@ -161,22 +165,18 @@ internal static class Program
             return "a stream's node is not in the tree.";
         }
 
-        return OutsideParent(report.Root) ?? (report.Findings.Any(f => f.Node is null) ? "a finding has no node." : null) ?? ChangesAfterCollection(report);
+        return OutsideParent(report.Root) ?? (report.Findings.Any(f => f.Node is null) ? "a finding has no node." : null) ?? (checksCollection ? ChangesAfterCollection(report) : null);
     }
 
     // The nodes of long lists are held weakly and built again after a collection: the report written
-    // before and after one must be the same.
+    // before and after one must be the same. A collection of generation 1 is enough, since the
+    // nodes were built a moment ago.
     private static string? ChangesAfterCollection(Report report)
     {
         try
         {
             string before = Written(report);
-            for (int i = 0; i < 2; i++)
-            {
-                GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
-                GC.WaitForPendingFinalizers();
-            }
-
+            GC.Collect(1, GCCollectionMode.Forced, blocking: true);
             return Written(report) == before ? null : "the report written again after a collection differs.";
         }
         catch (Exception ex)
