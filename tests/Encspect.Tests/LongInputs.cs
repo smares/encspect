@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
+using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -12,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac",
+        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -35,6 +37,10 @@ internal static class LongInputs
         "musepack-sv7" => Sv7Frames(2200),
         "musepack-sv5" => Sv5Frames(2200),
         "mp4-aac" => Mp4Samples(2200),
+        "adif" => AdifBlocks(2200),
+        "mp4-ac3" => Mp4Samples(2200, "ac-3", FirstAc3Frame("ac3/external-ffmpeg-stereo-192k.ac3")),
+        "mp4-eac3" => Mp4Samples(2200, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-stereo-96k.eac3")),
+        "mp4-dts" => Mp4Samples(2200, "dtsc", FirstDtsFrame("dts/external-ffmpeg-stereo-44k-256k.dts")),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
 
@@ -45,6 +51,44 @@ internal static class LongInputs
         for (int at = 0; at < data.Length; at += source.Length)
         {
             source.CopyTo(data, at);
+        }
+
+        return data;
+    }
+
+    // The first syncframe of an AC-3 or E-AC-3 file, which the sample entries of MP4 hold one apiece.
+    private static byte[] FirstAc3Frame(string fixture)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));
+        int length = Encspect.Formats.Ac3.SyncFrame.Read(source).FrameLength;
+        return source[..length];
+    }
+
+    // The first core frame of a DTS file in 16-bit big-endian words: up to the second sync word.
+    private static byte[] FirstDtsFrame(string fixture)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));
+        ReadOnlySpan<byte> sync = [0x7F, 0xFE, 0x80, 0x01];
+        if (!source.AsSpan().StartsWith(sync)) { throw new InvalidDataException(fixture); }
+        int second = source.AsSpan(4).IndexOf(sync) + 4;
+        return source[..second];
+    }
+
+    // An ADIF file: the header of the fixture and its raw data blocks repeated.
+    private static byte[] AdifBlocks(int blocks)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"));
+        Report report = Analyzer.CreateDefault().Analyze("adif.aac", new MemoryStream(source));
+        Node first = report.Root.Children.Single(c => c.Name == "ADIF").Children.First(c => c.Name == "Raw Data Block");
+        int header = (int)first.Offset;
+        byte[] body = source[header..];
+        int perCopy = report.Root.Children.Single(c => c.Name == "ADIF").Children.Count(c => c.Name == "Raw Data Block");
+        int copies = (blocks + perCopy - 1) / perCopy;
+        var data = new byte[header + (body.Length * copies)];
+        source.AsSpan(0, header).CopyTo(data);
+        for (int i = 0; i < copies; i++)
+        {
+            body.CopyTo(data, header + (i * body.Length));
         }
 
         return data;
@@ -243,8 +287,9 @@ internal static class LongInputs
         return data;
     }
 
-    // An M4A file of count silent AAC LC stereo access units of 100 bytes in one chunk after moov.
-    private static byte[] Mp4Samples(int count)
+    // An M4A file of count silent AAC LC stereo access units of 100 bytes in one chunk after moov, or
+    // with another sample entry (AC-3, E-AC-3, DTS) and the same bytes as every sample.
+    private static byte[] Mp4Samples(int count, string entry = "mp4a", byte[]? sample = null)
     {
         static byte[] Box(string type, params byte[][] parts)
         {
@@ -254,11 +299,11 @@ internal static class LongInputs
 
         static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 
-        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
+        byte[] unit = sample ?? [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
         byte[] Moov(int mdatPayload)
         {
             byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);
-            byte[] mp4a = Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
+            byte[] mp4a = Box(entry, new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], entry == "mp4a" ? esds : []);
             byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Enumerable.Range(0, count).SelectMany(_ => BigEndian(unit.Length)).ToArray());
             byte[] stbl = Box("stbl",
                 Box("stsd", [0, 0, 0, 0], BigEndian(1), mp4a),

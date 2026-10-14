@@ -61,7 +61,7 @@ public sealed class WmaProParser : ICodecParser
         ProStream stream = null!;
         ProNodes nodes = null!;
         stream = new ProStream(parameters, findings, i => nodes.PacketNode(i), i => nodes.FrameNode(i));
-        nodes = new ProNodes(stream);
+        nodes = new ProNodes(stream.Records);
 
         int index = 0;
         long unread = 0;

@@ -14,10 +14,13 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
     public string Id => id;
 
+    // Set by a test to check that frame nodes read the bits the analysis kept (see FrameRecords).
+    internal Action<long, int, int>? RecordMismatch { get; init; }
+
     public void Parse(CodecContext context)
     {
         Node parent = context.Parent;
-        var analysis = new Ac3Analysis(context);
+        var analysis = new Ac3Analysis(context, RecordMismatch);
         var region = new Ac3Analysis.Region(0);
         analysis.Regions.Add(region);
         var observed = new Observed();

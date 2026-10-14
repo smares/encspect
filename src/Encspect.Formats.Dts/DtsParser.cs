@@ -58,7 +58,8 @@ public sealed class DtsParser : IFormatParser
     {
         var region = new DtsAnalysis.Region(analysis.Frames.Count);
         analysis.Regions.Add(region);
-        region.Node = parent.Add(new Node("DTS", start, end - start, null, () => RegionChildren(analysis, region))
+        DtsRecords records = analysis.Records;
+        region.Node = parent.Add(new Node("DTS", start, end - start, null, () => RegionChildren(records, region))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
@@ -157,10 +158,10 @@ public sealed class DtsParser : IFormatParser
         return layout;
     }
 
-    private static IReadOnlyList<Node> RegionChildren(DtsAnalysis analysis, DtsAnalysis.Region region)
+    private static IReadOnlyList<Node> RegionChildren(DtsRecords records, DtsAnalysis.Region region)
     {
-        int end = region.End ?? analysis.Frames.Count;
-        return new BlockedChildren(region.Leading, end - region.First, i => analysis.FrameNode(region.First + i));
+        int end = region.End ?? records.Count;
+        return new BlockedChildren(region.Leading, end - region.First, i => records.FrameNode(region.First + i));
     }
 
     // The offset of the first sync word in [from, limit) that a chain of frames follows, or -1.

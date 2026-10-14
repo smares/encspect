@@ -10,6 +10,8 @@ namespace Encspect.Formats.Ac3;
 // number of bits than the analysis kept (frame offset, kept, read): a check for tests.
 internal sealed class FrameRecords(ChunkedList<Ac3Analysis.Frame> frames, ByteStore store, Action<long, int, int>? recordMismatch)
 {
+    public int Count => frames.Count;
+
     // A frame's node, with its fields built from the record when first read.
     public Node FrameNode(int index)
     {

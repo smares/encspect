@@ -21,7 +21,12 @@ internal sealed class DtsAnalysis
     public DtsAnalysis(AnalysisContext context)
     {
         _context = context;
+        Records = new DtsRecords(Frames, Store);
     }
+
+    // What unit nodes are built from, apart from the analysis, which holds the context and with it
+    // the input.
+    public DtsRecords Records { get; }
 
     public ChunkedList<Frame> Frames { get; } = new();
 
@@ -309,32 +314,6 @@ internal sealed class DtsAnalysis
             EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
             Series = stream.Figures.Series(bitrate, Cancellation),
         });
-    }
-
-    // A unit's node, with its fields built from the record when first read.
-    public Node FrameNode(int index)
-    {
-        Frame frame = Frames[index];
-        if (frame.IsGap)
-        {
-            return new Node("Gap", frame.Offset, frame.Store, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap };
-        }
-
-        ByteStore store = Store;
-        UnitRecord.Open open = UnitRecord.Read(store, frame);
-        return new Node("Frame", frame.Offset, frame.Length, open.Summary(), () => FrameChildren(open))
-        {
-            Kind = NodeKind.Frame,
-            Description = Explain.Frame,
-            Topic = Topics.CoreFrames,
-        };
-    }
-
-    private static List<Node> FrameChildren(UnitRecord.Open open)
-    {
-        var syntax = new UnitSyntax(open.View, open.Layout, open.NewVerdicts());
-        syntax.Run();
-        return syntax.Nodes;
     }
 
     // A unit's record, 24 bytes: its offset, where its kept bytes lie in the store, and its length. The kept bytes are the layout, the

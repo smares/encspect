@@ -65,7 +65,8 @@ public sealed class RawAacParser : IFormatParser
     {
         var region = new Region(state.Frames.Count);
         state.Regions.Add(region);
-        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(state.Records, region))
+        Records records = state.Records;
+        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(records, region))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Adts,
@@ -762,7 +763,8 @@ public sealed class RawAacParser : IFormatParser
     // What frame nodes are built from once the parse is over, and nothing else: the frames, their
     // details and, per run of frames with one fixed header, the setup and store their blocks were
     // kept in. The parse's block cache (and the reader it reads), findings and block readers stay
-    // with State, which no node builder reaches, so a build cannot consume them.
+    // with State, which node factories must not capture (hoist `state.Records` into a local first):
+    // a report that holds State keeps the input stream alive and a build could consume its readers.
     private sealed class Records
     {
         private readonly List<(int First, StreamSetup Setup, UnitStore Store)> _units = [];

@@ -112,6 +112,33 @@ internal sealed class ProTotals
     public long FramesWithoutPrefixBytes { get; set; }
 }
 
+// The records a stream's nodes are built from, and nothing else: the stream's parameters and the
+// lists the walk fills. The stream that wrote them also keeps the frame decoder, its reassembly
+// buffer and the findings, which a node builder must never reach: it runs again after a collection
+// and on several threads, and what it captures stays alive as long as the report. Written only while
+// the stream is walked.
+internal sealed class ProRecords(ProParameters parameters)
+{
+    public ProParameters Parameters => parameters;
+
+    public ChunkedList<ProPacketRecord> Packets { get; } = new();
+
+    public ChunkedList<ProFrameRecord> Frames { get; } = new();
+
+    public ChunkedList<ProSubframeRecord> Subframes { get; } = new();
+
+    public ChunkedList<ProChannelRecord> Channels { get; } = new();
+
+    public ChunkedList<ProGroupRecord> Groups { get; } = new();
+
+    public ChunkedList<FramePart> Parts { get; } = new();
+
+    public Dictionary<int, ByteRange[]> Ranges { get; } = [];
+
+    // The packet each frame began in, by frame.
+    public List<int> StartPackets { get; } = [];
+}
+
 // Walks a stream's packets, joins the frames that run from one into the next and reads each frame's
 // syntax, as FFmpeg's decode_packet in wmaprodec.c does for frames with a length prefix: a packet
 // starts with its sequence number, two unused bits and the count of bits that finish the frame before,
@@ -135,6 +162,7 @@ internal sealed class ProStream
 
     public ProStream(ProParameters parameters, FindingCollector findings, Func<int, Node> packetNode, Func<int, Node> frameNode)
     {
+        Records = new ProRecords(parameters);
         Parameters = parameters;
         Findings = findings;
         PacketNode = packetNode;
@@ -150,24 +178,25 @@ internal sealed class ProStream
 
     public Func<int, Node> FrameNode { get; }
 
-    public ChunkedList<ProPacketRecord> Packets { get; } = new();
+    public ProRecords Records { get; }
 
-    public ChunkedList<ProFrameRecord> Frames { get; } = new();
+    public ChunkedList<ProPacketRecord> Packets => Records.Packets;
 
-    public ChunkedList<ProSubframeRecord> Subframes { get; } = new();
+    public ChunkedList<ProFrameRecord> Frames => Records.Frames;
 
-    public ChunkedList<ProChannelRecord> Channels { get; } = new();
+    public ChunkedList<ProSubframeRecord> Subframes => Records.Subframes;
 
-    public ChunkedList<ProGroupRecord> Groups { get; } = new();
+    public ChunkedList<ProChannelRecord> Channels => Records.Channels;
 
-    public ChunkedList<FramePart> Parts { get; } = new();
+    public ChunkedList<ProGroupRecord> Groups => Records.Groups;
 
-    public Dictionary<int, ByteRange[]> Ranges { get; } = [];
+    public ChunkedList<FramePart> Parts => Records.Parts;
+
+    public Dictionary<int, ByteRange[]> Ranges => Records.Ranges;
 
     public ProTotals Totals { get; } = new();
 
-    // The packet each frame began in, by frame.
-    public List<int> StartPackets { get; } = [];
+    public List<int> StartPackets => Records.StartPackets;
 
     public void Add(MappedBytes media)
     {

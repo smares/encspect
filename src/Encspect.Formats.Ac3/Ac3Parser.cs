@@ -54,7 +54,8 @@ public sealed class Ac3Parser : IFormatParser
     {
         var region = new Ac3Analysis.Region(analysis.Frames.Count);
         analysis.Regions.Add(region);
-        region.Node = parent.Add(new Node("AC-3", start, end - start, null, () => RegionChildren(analysis, region))
+        FrameRecords records = analysis.Records;
+        region.Node = parent.Add(new Node("AC-3", start, end - start, null, () => RegionChildren(records, region))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
@@ -118,11 +119,10 @@ public sealed class Ac3Parser : IFormatParser
         }
     }
 
-    private static IReadOnlyList<Node> RegionChildren(Ac3Analysis analysis, Ac3Analysis.Region region)
+    private static IReadOnlyList<Node> RegionChildren(FrameRecords records, Ac3Analysis.Region region)
     {
         int first = region.First;
-        int end = region.End ?? analysis.Frames.Count;
-        FrameRecords records = analysis.Records;
+        int end = region.End ?? records.Count;
         return new BlockedChildren(region.Leading, end - first, i => records.FrameNode(first + i));
     }
 

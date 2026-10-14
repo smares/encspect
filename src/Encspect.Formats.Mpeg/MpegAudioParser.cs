@@ -84,6 +84,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         AddStatistics(stream);
         AddStreams(stream, context);
 
+        // The region nodes' factories hold their RegionState; the scan holds the block reader, and
+        // with it the input, which the report must not keep alive.
+        foreach (RegionState region in stream.Regions)
+        {
+            region.Ancillary = null;
+        }
+
         findings.Flush(context);
     }
 
@@ -116,18 +123,23 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
+    // Built in a method of its own so that the node's factory captures these arguments and not the
+    // locals of ParseSegment, whose block reader would stay alive with the report, and with it the input.
+    private static Node RegionNode(long start, long length, RegionState regionState, BuildContext build) =>
+        new("MPEG Audio", start, length, null, () => BuildRegion(regionState, build))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Region,
+            Topic = Topics.FrameSync,
+        };
+
     private static void ParseSegment(StreamState state, Node root, long start, long end)
     {
         (BlockReader blocks, FindingCollector findings) = (state.Blocks, state.Findings);
         BuildContext build = state.Build;
         var regionState = new RegionState(build.Frames.Count);
         state.Regions.Add(regionState);
-        Node region = root.Add(new Node("MPEG Audio", start, end - start, null, () => BuildRegion(regionState, build))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.Region,
-            Topic = Topics.FrameSync,
-        });
+        Node region = root.Add(RegionNode(start, end - start, regionState, build));
         regionState.Node = region;
         int frames = 0;
         long position = start;
