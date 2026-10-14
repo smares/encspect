@@ -19,6 +19,7 @@ internal sealed partial class BlockReader
     private readonly StreamSetup _setup;
     private readonly CodingTally? _tally;
     private readonly Dictionary<int, SbrHeader> _sbr = [];
+    private readonly Dictionary<int, int> _sbrHeaderBlock = [];
     private readonly List<BlockCut> _cuts = [];
     private readonly List<ElementSpan> _elements = [];
     private readonly List<SoftFinding> _soft = [];

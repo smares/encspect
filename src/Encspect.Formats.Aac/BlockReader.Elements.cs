@@ -747,6 +747,13 @@ internal sealed partial class BlockReader
         if (header is not null)
         {
             tally.SbrHeaders++;
+            tally.SbrPlainHeaders += FaacSbr.HeaderFits(header) ? 1 : 0;
+            if (_sbrHeaderBlock.TryGetValue(key, out int before) && !FaacSbr.OnPeriod(header, _block - before))
+            {
+                tally.SbrHeadersOnPeriod = false;
+            }
+
+            _sbrHeaderBlock[key] = _block;
             if (!_sbr.TryGetValue(key, out SbrHeader? previous) || !previous.SameFrequencies(header))
             {
                 (SbrBands? bands, string? error) = Sbr.Derive(header, _setup.SbrSampleRate);
@@ -793,7 +800,7 @@ internal sealed partial class BlockReader
         var sub = bits.Window(dataStart, end);
         try
         {
-            (int ps, string? error) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1);
+            (int ps, string? error, bool plain) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1);
             if (error is not null)
             {
                 Soft("aac.sbr-data-invalid", $"SBR data with {error}", dataStart, end, "SBR Data");
@@ -801,6 +808,8 @@ internal sealed partial class BlockReader
                 return -1;
             }
 
+            tally.SbrPayloads++;
+            tally.SbrPlainPayloads += plain ? 1 : 0;
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",
@@ -836,7 +845,7 @@ internal sealed partial class BlockReader
         Field(n, "HasHeaderExtra1", start + 14, start + 15, NodeValue.Boolean(extra1), Explain.SbrHeaderExtra1);
         bool extra2 = bits.ReadBit();
         Field(n, "HasHeaderExtra2", start + 15, start + 16, NodeValue.Boolean(extra2), Explain.SbrHeaderExtra2);
-        var header = new SbrHeader { AmpRes = ampRes, StartFrequency = startFrequency, StopFrequency = stopFrequency, XoverBand = xover };
+        var header = new SbrHeader { AmpRes = ampRes, StartFrequency = startFrequency, StopFrequency = stopFrequency, XoverBand = xover, HasHeaderExtra1 = extra1, HasHeaderExtra2 = extra2 };
         if (extra1)
         {
             int at = bits.Original;

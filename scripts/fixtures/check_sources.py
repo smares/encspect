@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Downloads every pinned file the scripts fetch from every one of its addresses (downloads.py)
 and checks its SHA-256, so the scheduled sources workflow notices when an original address or one
-of its copies stops serving it, before the fallback is all that is left.
+of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
+the commits of their tags (faac_tool.py), which it asks both repositories for.
 
 Usage: python3 scripts/fixtures/check_sources.py
 """
@@ -16,10 +17,12 @@ import aotuv_tool
 import asf_specs
 import blade_tool
 import check_mp3pro_samples
+import check_sbr_samples
 import check_usac_samples
 import conformance_mpeg_audio
 import downloads
 import dts_specs
+import faac_tool
 import ffmpeg_sources
 import fhg_tool
 import gogo_tool
@@ -48,6 +51,9 @@ def sources():
     usac = json.loads((ROOT / "tests" / "conformance" / "usac-samples.json").read_text(encoding="utf-8"))
     for sample in usac["samples"]:
         yield sample["file"], sample["sha256"], check_usac_samples.addresses(sample)
+    sbr = json.loads((ROOT / "tests" / "conformance" / "sbr-samples.json").read_text(encoding="utf-8"))
+    for sample in sbr["samples"]:
+        yield sample["file"], sample["sha256"], check_sbr_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
@@ -110,6 +116,12 @@ def main():
             if digest != expected:
                 problems += 1
                 print(f"{tag}: {old_lame_tool.svn_url(version)} holds tree digest {digest}")
+    # FAAC's releases are pinned by their commits, which git checks against the tree: each repository must
+    # still serve each tag with its commit.
+    checked += len(faac_tool.RELEASES) * len(faac_tool.REPOSITORIES)
+    for problem in faac_tool.tag_problems():
+        problems += 1
+        print(problem)
     print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 

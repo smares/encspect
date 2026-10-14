@@ -301,7 +301,7 @@ jobs:
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
 
   mp4-crosscheck:
-    name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC samples with the manifest
+    name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC and HE-AAC samples with the manifests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -328,6 +328,20 @@ jobs:
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
+      # The SBR conformance and aacPlus decoder check streams, which the FAAC 2.x layout rule is checked
+      # against; fetched from FFmpeg's FATE suite (or the private repository's copies), checked against their
+      # SHA-256 and cached.
+      - name: Cache the HE-AAC samples
+        uses: actions/cache@v4
+        with:
+          path: .cache/sbr
+          key: sbr-samples-${{ hashFiles('tests/conformance/sbr-samples.json') }}
+
+      - name: Check the HE-AAC manifest against the samples
+        run: python3 scripts/fixtures/check_sbr_samples.py .cache/sbr
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -337,6 +351,11 @@ jobs:
 
       - name: Check the analyzer against the xHE-AAC manifest
         run: python3 scripts/fixtures/check_usac_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/usac
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
+      - name: Check the analyzer against the HE-AAC manifest
+        run: python3 scripts/fixtures/check_sbr_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/sbr
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
