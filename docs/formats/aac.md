@@ -24,7 +24,22 @@ The channel configuration, a program config element, or parametric stereo.
 
 ## Encoder detection
 
-- ffmpeg's and FAAC's encoders, from the version they write into a fill element, with high confidence.
+- ffmpeg's encoder and FAAC 1.30 to 1.50, from the version they write into a fill element, with high confidence:
+  - ffmpeg writes "Lavc60.31.102" at the start of an access unit;
+  - FAAC's `WriteFAACStr` writes "libfaac <version>" into the first access unit; fixtures confirm 1.30, 1.31.1, 1.40 and 1.50, in M4A and ADTS;
+  - 1.31.1 writes "libfaac 1.31.1", while 1.40 and 1.50 write their build's project version, "libfaac 1.40.0" and "libfaac 1.50.0", so the encoder is named "FAAC 1.40.0" and "FAAC 1.50.0".
+- FAAC 2.0 and later, which dropped that text (upstream commit 960a0ea), in two ways:
+  - The MP4 tool atom (©too) of the front end, "FAAC 2.2.0 (6acbe23)", names the encoder with low confidence, as any claim does.
+  - The SBR layout of its HE-AAC encoder names "FAAC" with medium confidence, without a version, which an agreeing ©too claim supplies. The layout, from `libfaac/sbr_bitstream.c` and `sbr.c` (`SbrInit`, `SbrUpdate`):
+    - every SBR header sends bs_header_extra_1 and not bs_header_extra_2, with bs_noise_bands 0, bs_start_freq 15 and bs_xover_band 0;
+    - 2.2 adds bs_freq_scale 1 to 3 (by bitrate per channel), bs_alter_scale 0, bs_amp_res 1 and a bs_stop_freq of 10 to 13 by sample rate (13 at 32 kHz, 12 at 44.1 kHz, 11 at 48 kHz, 10 above), and repeats the header every 30 access units;
+    - 2.0 and 2.1 add bs_freq_scale 0 with a bs_stop_freq of 10, and are not held to the header spacing (they repeat it in the last access units of some files);
+    - every sbr_data payload is plain: no extra data bits, no coupling, only FIXFIX and VARFIX frame classes, every envelope and noise floor coded across frequency, no sinusoids and no extended data;
+    - at least three payloads, none unread.
+  - `check_faac_sbr.py` holds the rule against FAAC 2.0, 2.1 and 2.2 (98 HE-AAC files each, over sample rates of 32 to 96 kHz, mono and stereo, and bitrates of 16 to 128 kbps, as ADTS and M4A), which it must name, and against 450 files of fdkaac 1.0.0 (HE-AAC and HE-AAC v2, both containers, bitrates and VBR modes), which it must not. fdkaac's fixtures have a start frequency of 10 or 12, a stop frequency of 9 and the default extra fields.
+  - Not at hand, so not checked: Nero's, Apple's and Dolby's HE-AAC encoders.
+  - The private repository's samples are xHE-AAC, whose SBR sits in the UsacConfig and not in fill elements, so the rule does not apply to them.
+  - The hand-built SBR fixtures use other fields (start frequency 5) and are not named.
 - exhale 1.1.2 and later, from the layout of the UsacConfig, with medium confidence. Releases 1.0.0 to 1.1.1 write no audio pre-roll element and are named only by their tool atom. The layout:
   - coreSbrFrameLengthIndex 1, or 3 with SBR;
   - an audio pre-roll extension element first, with no configuration, default length or fragmentation;
@@ -39,8 +54,13 @@ The channel configuration, a program config element, or parametric stereo.
   - the eight ISO/IEC 23003-3 conformance streams checked have a fill element and no pre-roll element.
 - `check_usac_samples.py` checks the downloaded files in CI (see [development](../development.md)).
 - Other encoders from the metadata, with low confidence.
+- FAAC 2.x in low complexity cannot be named by the stream:
+  - it writes no text, and no fill element at all unless `--cbr` stuffs frames with zero bytes;
+  - what else it writes is shared: FAAC 1.x has the same fill bit rounding (`WriteAACFillBits`), element order and ADTS header (profile LC, buffer fullness 0x7FF), and on pink noise with a tone every channel pair of 1.30, 1.31.1, 1.50, 2.2 and ffmpeg has a common window;
+  - tool use (mid/side, intensity stereo, noise substitution, window sequences) depends on the signal and on the release's tuning, not on a layout that every file shows;
+  - an ADTS file of 2.x LC, or a 1.x file cut after its first access units, shows no signature, so only the ©too claim in MP4 names it.
 
 ## Not yet covered
 
 - USAC, ER AAC and the SBR envelope data (planned: entropy pass).
-- FAAC 1.31 to 2.2 detection and Apple's encoder (planned: phase 2).
+- Apple's encoder (planned: phase 2).

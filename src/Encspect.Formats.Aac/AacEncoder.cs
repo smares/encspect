@@ -57,8 +57,9 @@ internal static partial class AacEncoder
     [GeneratedRegex(@"^Lavc\d+\.\d+\.\d+$")]
     private static partial Regex LavcVersion();
 
-    // FAAC 1.30 writes "libfaac 1.30" into a fill element of the first access unit, in M4A and ADTS
-    // alike, as its fixtures show.
+    // FAAC 1.30, 1.31.1, 1.40 and 1.50 write "libfaac 1.30", "libfaac 1.31.1", "libfaac 1.40.0" and
+    // "libfaac 1.50.0" into a fill element of the first access unit, in M4A and ADTS alike, as their
+    // fixtures show.
     [GeneratedRegex(@"^libfaac (\d+\.\d+(?:\.\d+)?)$")]
     private static partial Regex FaacVersion();
 
@@ -69,7 +70,7 @@ internal static partial class AacEncoder
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a
     // claim that names another encoder than the stream's evidence.
     public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs,
-        UsacLayout? usac = null)
+        UsacLayout? usac = null, CodingTally? tally = null)
     {
         Node? encoder = null;
         bool versionless = false;
@@ -97,6 +98,18 @@ internal static partial class AacEncoder
                 : $"one loudness info extension of {usac.ConfigExtensions[0].Length} bytes with one measurement";
             encoder.Add(cover("Evidence",
                 $"The UsacConfig at 0x{usac.Config.Offset:X} has the layout exhale writes: an audio pre-roll element first, then only channel elements without time-warped MDCT and no fill element{sbr}, and {extension}",
+                Explain.Evidence));
+            versionless = true;
+        }
+        else if (tally is not null && FaacSbr.IsLayout(tally))
+        {
+            encoder = cover("Encoder", "FAAC", Explain.Encoder);
+            encoder.Add(cover("Confidence", "Medium", Explain.Confidence));
+            SbrHeader header = tally.FirstHeader!;
+            string period = header.FrequencyScale == 0 ? string.Empty : $", repeated every {FaacSbr.HeaderPeriod} access units";
+            encoder.Add(cover("Evidence",
+                $"The {tally.SbrHeaders} SBR headers and {tally.SbrPayloads} SBR payloads have the layout FAAC 2.x writes: headers that send bs_header_extra_1 and not bs_header_extra_2, with start frequency 15, crossover band 0, no noise bands and stop frequency {header.StopFrequency}{period}, "
+                + "and data that codes every envelope and noise floor across frequency, with no coupling, sinusoids or extended data",
                 Explain.Evidence));
             versionless = true;
         }

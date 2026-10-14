@@ -109,6 +109,17 @@ internal sealed class CodingTally
 
     public bool SbrHeaderChanged { get; set; }
 
+    // SBR payloads read in full, and those of plain data; headers that FAAC 2.x's layout fits, and
+    // whether every header after the first of its element came a multiple of FaacSbr.HeaderPeriod
+    // access units after the one before (see FaacSbr).
+    public long SbrPayloads { get; set; }
+
+    public long SbrPlainPayloads { get; set; }
+
+    public long SbrPlainHeaders { get; set; }
+
+    public bool SbrHeadersOnPeriod { get; set; } = true;
+
     public long SbrUnread { get; set; }
 
     // Access units whose channel elements differ from what the channel configuration defines.
