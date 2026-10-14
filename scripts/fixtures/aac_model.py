@@ -364,68 +364,121 @@ def sbr_header(w, header):
         w.put(header.get("freq_scale", 2), 2).put(header.get("alter_scale", 1), 1).put(header.get("noise_bands", 2), 2)
 
 
-def sbr_grid(w):
-    """sbr_grid: frame class FIXFIX, one envelope, of high frequency resolution. One FIXFIX envelope uses 1.5 dB steps."""
-    w.put(0, 2).put(0, 2).put(1, 1)
+GRID_CLASSES = {"FIXFIX": 0, "FIXVAR": 1, "VARFIX": 2, "VARVAR": 3}
 
 
-def sbr_envelope(w, counts, start, balance):
-    """sbr_envelope coded across frequency: a start value, then differences of zero."""
+def sbr_grid(w, kind="FIXFIX"):
+    """sbr_grid with one envelope, of high frequency resolution. FIXFIX uses 1.5 dB steps for one envelope; the other classes (FIXVAR, VARFIX
+    and VARVAR, here without relative borders and with bs_pointer 0) use the header's bs_amp_res."""
+    w.put(GRID_CLASSES[kind], 2)
+    if kind == "FIXFIX":
+        w.put(0, 2).put(1, 1)                        # bs_num_env_raw, bs_freq_res
+        return
+    w.put(0, 4 if kind == "VARVAR" else 2)           # bs_var_bord_0 and _1, or bs_var_bord
+    w.put(0, 4 if kind == "VARVAR" else 2)           # bs_num_rel_0 and _1, or bs_num_rel
+    w.put(0, 1).put(1, 1)                            # bs_pointer (one bit for one envelope), bs_freq_res
+
+
+def codebook_lav(name):
+    codes, _ = T.SBR_HUFFMAN[name]
+    return (len(codes) - 1) // 2
+
+
+def sbr_envelope(w, counts, start, balance, coarse=False, time=False):
+    """sbr_envelope of one envelope of high frequency resolution: coded across frequency, a start value, then differences of zero, or
+    across time, differences of zero from the previous frame."""
     high = counts[0]
-    w.put(start, 6 if balance else 7)
-    table, lav = ("f_huffman_env_bal_1_5dB", 24) if balance else ("f_huffman_env_1_5dB", 60)
+    steps = "3_0dB" if coarse else "1_5dB"
+    if time:
+        name = f"t_huffman_env_{'bal_' if balance else ''}{steps}"
+        for _ in range(high):
+            w.code(T.SBR_HUFFMAN[name], codebook_lav(name))
+        return
+    w.put(start, (5 if balance else 6) if coarse else (6 if balance else 7))
+    name = f"f_huffman_env_{'bal_' if balance else ''}{steps}"
     for _ in range(high - 1):
-        w.code(T.SBR_HUFFMAN[table], lav)
+        w.code(T.SBR_HUFFMAN[name], codebook_lav(name))
 
 
-def sbr_noise(w, counts, start, balance):
-    """sbr_noise coded across frequency: a start value, then differences of zero."""
+def sbr_noise(w, counts, start, balance, time=False):
+    """sbr_noise of one noise floor: coded across frequency, a start value, then differences of zero, or across time."""
     n_q = counts[2]
+    if time:
+        name = "t_huffman_noise_bal_3_0dB" if balance else "t_huffman_noise_3_0dB"
+        for _ in range(n_q):
+            w.code(T.SBR_HUFFMAN[name], codebook_lav(name))
+        return
     w.put(start, 5)
-    table, lav = ("f_huffman_env_bal_3_0dB", 12) if balance else ("f_huffman_env_3_0dB", 31)
+    name = "f_huffman_env_bal_3_0dB" if balance else "f_huffman_env_3_0dB"
     for _ in range(n_q - 1):
-        w.code(T.SBR_HUFFMAN[table], lav)
+        w.code(T.SBR_HUFFMAN[name], codebook_lav(name))
 
 
-def sbr_data(w, counts, pair=False, coupled=False, ps=False):
+def sbr_harmonics(w, counts, present):
+    """bs_add_harmonic_flag and, if set, a bs_add_harmonic bit per high resolution band, none of them set."""
+    w.put(1 if present else 0, 1)
+    if present:
+        w.put(0, counts[0])
+
+
+def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data_extra=False, time_env=False, time_noise=False, harmonic=False,
+             extension=False):
     """sbr_single_channel_element or sbr_channel_pair_element (4.4.2), then the extended data, here a parametric stereo extension of a
-    PS header that enables nothing and no envelopes, so a decoder upmixes the mono core plainly."""
+    PS header that enables nothing and no envelopes, so a decoder upmixes the mono core plainly. The options are the optional tools a
+    stream may use: extra data bits, the frame class of the grid, envelopes and noise floors coded across time (of the first channel),
+    sinusoids (of the first channel) and an extension of another ID than parametric stereo's."""
     n_q = counts[2]
+    coarse = grid != "FIXFIX"
     if not pair:
-        w.put(0, 1)                                  # bs_data_extra
-        sbr_grid(w)
-        w.put(0, 1).put(0, 1)                        # bs_df_env, bs_df_noise: across frequency
+        w.put(1 if data_extra else 0, 1)             # bs_data_extra
+        if data_extra:
+            w.put(0, 4)                              # bs_reserved
+        sbr_grid(w, grid)
+        w.put(1 if time_env else 0, 1).put(1 if time_noise else 0, 1)   # bs_df_env, bs_df_noise
         w.put(0, 2 * n_q)                            # bs_invf_mode
-        sbr_envelope(w, counts, 40, False)
-        sbr_noise(w, counts, 10, False)
-        w.put(0, 1)                                  # bs_add_harmonic_flag
+        sbr_envelope(w, counts, 40, False, coarse, time_env)
+        sbr_noise(w, counts, 10, False, time_noise)
+        sbr_harmonics(w, counts, harmonic)
     elif coupled:
-        w.put(0, 1).put(1, 1)                        # bs_data_extra, bs_coupling
-        sbr_grid(w)
-        w.put(0, 2).put(0, 2)                        # sbr_dtdf of both channels
+        w.put(1 if data_extra else 0, 1)
+        if data_extra:
+            w.put(0, 8)
+        w.put(1, 1)                                  # bs_coupling
+        sbr_grid(w, grid)
+        w.put(1 if time_env else 0, 1).put(1 if time_noise else 0, 1)   # sbr_dtdf of the first channel
+        w.put(0, 2)                                  # and of the second
         w.put(0, 2 * n_q)
-        sbr_envelope(w, counts, 40, False)
-        sbr_noise(w, counts, 10, False)
-        sbr_envelope(w, counts, 12, True)
+        sbr_envelope(w, counts, 40, False, coarse, time_env)
+        sbr_noise(w, counts, 10, False, time_noise)
+        sbr_envelope(w, counts, 12, True, coarse)
         sbr_noise(w, counts, 6, True)
-        w.put(0, 1).put(0, 1)
+        sbr_harmonics(w, counts, harmonic)
+        sbr_harmonics(w, counts, False)
     else:
-        w.put(0, 1).put(0, 1)
-        sbr_grid(w)
-        sbr_grid(w)
-        w.put(0, 2).put(0, 2)
+        w.put(1 if data_extra else 0, 1)
+        if data_extra:
+            w.put(0, 8)
+        w.put(0, 1)
+        sbr_grid(w, grid)
+        sbr_grid(w, grid)
+        w.put(1 if time_env else 0, 1).put(1 if time_noise else 0, 1)
+        w.put(0, 2)
         w.put(0, 4 * n_q)
-        sbr_envelope(w, counts, 40, False)
-        sbr_envelope(w, counts, 40, False)
+        sbr_envelope(w, counts, 40, False, coarse, time_env)
+        sbr_envelope(w, counts, 40, False, coarse)
+        sbr_noise(w, counts, 10, False, time_noise)
         sbr_noise(w, counts, 10, False)
-        sbr_noise(w, counts, 10, False)
-        w.put(0, 1).put(0, 1)
+        sbr_harmonics(w, counts, harmonic)
+        sbr_harmonics(w, counts, False)
     if ps:
         w.put(1, 1).put(2, 4)                        # bs_extended_data, two bytes of extensions
         w.put(2, 2)                                  # bs_extension_id EXT_ID_PS
         # ps_data: enable_ps_header, enable_iid 0, enable_icc 0, enable_ext 0, frame_class 0, num_env_idx 0.
         w.put(1, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 2)
         w.put(0, 7)                                  # bs_fill_bits
+    elif extension:
+        w.put(1, 1).put(1, 4)                        # bs_extended_data, one byte of extensions
+        w.put(0, 2).put(0, 6)                        # bs_extension_id 0, which defines nothing, and its bits
     else:
         w.put(0, 1)
 
@@ -527,7 +580,7 @@ def payload_bytes(writer_function, count=None):
     return data
 
 
-def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=False):
+def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=False, **tools):
     def write(w):
         w.put(EXT_SBR_DATA_CRC if crc else EXT_SBR_DATA, 4)
         if crc:
@@ -535,7 +588,7 @@ def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=Fa
         w.put(1 if header else 0, 1)
         if header:
             sbr_header(w, header)
-        sbr_data(w, counts, pair, coupled, ps)
+        sbr_data(w, counts, pair, coupled, ps, **tools)
     return payload_bytes(write)
 
 

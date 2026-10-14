@@ -1,0 +1,198 @@
+{
+ "description": "{faac 2.1} --object-type he-aac-v1 -b 16 -o {out} {six} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{faac 2.1}",
+   "--object-type",
+   "he-aac-v1",
+   "-b",
+   "16",
+   "-o",
+   "{out}",
+   "{six}"
+  ]
+ },
+ "length": 7906,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 6,
+   "channel_mode": "5.1",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AAC",
+   "samples": 69632
+  }
+ ],
+ "units": [
+  [
+   0,
+   226
+  ],
+  [
+   226,
+   215
+  ],
+  [
+   441,
+   252
+  ],
+  [
+   693,
+   231
+  ],
+  [
+   924,
+   247
+  ],
+  [
+   1171,
+   232
+  ],
+  [
+   1403,
+   246
+  ],
+  [
+   1649,
+   212
+  ],
+  [
+   1861,
+   215
+  ],
+  [
+   2076,
+   218
+  ],
+  [
+   2294,
+   232
+  ],
+  [
+   2526,
+   247
+  ],
+  [
+   2773,
+   229
+  ],
+  [
+   3002,
+   233
+  ],
+  [
+   3235,
+   228
+  ],
+  [
+   3463,
+   226
+  ],
+  [
+   3689,
+   245
+  ],
+  [
+   3934,
+   229
+  ],
+  [
+   4163,
+   245
+  ],
+  [
+   4408,
+   245
+  ],
+  [
+   4653,
+   219
+  ],
+  [
+   4872,
+   260
+  ],
+  [
+   5132,
+   242
+  ],
+  [
+   5374,
+   250
+  ],
+  [
+   5624,
+   216
+  ],
+  [
+   5840,
+   249
+  ],
+  [
+   6089,
+   228
+  ],
+  [
+   6317,
+   231
+  ],
+  [
+   6548,
+   246
+  ],
+  [
+   6794,
+   244
+  ],
+  [
+   7038,
+   248
+  ],
+  [
+   7286,
+   219
+  ],
+  [
+   7505,
+   338
+  ],
+  [
+   7843,
+   63
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "34 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "34 of 34 raw data blocks hold SBR data"
+  ],
+  [
+   "aac.sbr-without-channel-element",
+   "SBR data"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead.",
+   "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element (aac.sbr-without-channel-element), and its trace holds one raw data block."
+  }
+ }
+}

@@ -20,6 +20,12 @@ internal sealed record SbrHeader
 
     public int NoiseBands { get; init; } = 2;
 
+    // Whether the header sends bs_header_extra_1's fields (frequency scale, alter scale and noise bands)
+    // and bs_header_extra_2's (the limiter, interpolation and smoothing), or leaves them at their defaults.
+    public bool HasHeaderExtra1 { get; init; }
+
+    public bool HasHeaderExtra2 { get; init; }
+
     public int LimiterBands { get; init; } = 2;
 
     public int LimiterGains { get; init; } = 2;
@@ -246,8 +252,12 @@ internal static class Sbr
     // What ReadData gives for the parametric stereo extension's ID in a channel pair's SBR data.
     public const int PsInPair = -2;
 
-    public static (int PsAt, string? Error) ReadData(ref AacBits bits, SbrHeader header, bool pair)
+    // Plain is whether the data uses none of the optional coding tools an encoder may choose: no extra
+    // data bits, no channel coupling, only FIXFIX and VARFIX frame classes, no envelope or noise floor
+    // coded across time, no sinusoids and no extended data (see FaacSbr).
+    public static (int PsAt, string? Error, bool Plain) ReadData(ref AacBits bits, SbrHeader header, bool pair)
     {
+        bool plain = true;
         SbrBands bands = header.Bands!.Value;
         Span<int> envelopes = stackalloc int[2];
         Span<int> noises = stackalloc int[2];
@@ -261,40 +271,43 @@ internal static class Sbr
             if (bits.ReadBit())
             {
                 bits.Skip(4);
+                plain = false;
             }
 
-            if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution)) is not null)
+            if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution, ref plain)) is not null)
             {
-                return (-1, error);
+                return (-1, error, false);
             }
 
-            Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise);
+            Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise, ref plain);
             bits.Skip(2 * bands.Noise);
             Envelope(ref bits, bands, 0, false, envelopes, ampRes, resolution, timeEnvelope);
             Noise(ref bits, bands, 0, false, noises, timeNoise);
-            Harmonics(ref bits, bands);
+            Harmonics(ref bits, bands, ref plain);
         }
         else
         {
             if (bits.ReadBit())
             {
                 bits.Skip(8);
+                plain = false;
             }
 
             bool coupled = bits.ReadBit();
             if (coupled)
             {
-                if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution)) is not null)
+                plain = false;
+                if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution, ref plain)) is not null)
                 {
-                    return (-1, error);
+                    return (-1, error, false);
                 }
 
                 envelopes[1] = envelopes[0];
                 noises[1] = noises[0];
                 ampRes[1] = ampRes[0];
                 resolution[..MaxEnvelopes].CopyTo(resolution[MaxEnvelopes..]);
-                Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise);
-                Directions(ref bits, 1, envelopes, noises, timeEnvelope, timeNoise);
+                Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise, ref plain);
+                Directions(ref bits, 1, envelopes, noises, timeEnvelope, timeNoise, ref plain);
                 bits.Skip(2 * bands.Noise);
                 Envelope(ref bits, bands, 0, false, envelopes, ampRes, resolution, timeEnvelope);
                 Noise(ref bits, bands, 0, false, noises, timeNoise);
@@ -303,14 +316,14 @@ internal static class Sbr
             }
             else
             {
-                if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution)) is not null
-                    || (error = Grid(ref bits, header, 1, envelopes, noises, ampRes, resolution)) is not null)
+                if ((error = Grid(ref bits, header, 0, envelopes, noises, ampRes, resolution, ref plain)) is not null
+                    || (error = Grid(ref bits, header, 1, envelopes, noises, ampRes, resolution, ref plain)) is not null)
                 {
-                    return (-1, error);
+                    return (-1, error, false);
                 }
 
-                Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise);
-                Directions(ref bits, 1, envelopes, noises, timeEnvelope, timeNoise);
+                Directions(ref bits, 0, envelopes, noises, timeEnvelope, timeNoise, ref plain);
+                Directions(ref bits, 1, envelopes, noises, timeEnvelope, timeNoise, ref plain);
                 bits.Skip(4 * bands.Noise);
                 Envelope(ref bits, bands, 0, false, envelopes, ampRes, resolution, timeEnvelope);
                 Envelope(ref bits, bands, 1, false, envelopes, ampRes, resolution, timeEnvelope);
@@ -318,13 +331,14 @@ internal static class Sbr
                 Noise(ref bits, bands, 1, false, noises, timeNoise);
             }
 
-            Harmonics(ref bits, bands);
-            Harmonics(ref bits, bands);
+            Harmonics(ref bits, bands, ref plain);
+            Harmonics(ref bits, bands, ref plain);
         }
 
         int ps = -1;
         if (bits.ReadBit())
         {
+            plain = false;
             int size = (int)bits.Read(4);
             if (size == 15)
             {
@@ -350,12 +364,12 @@ internal static class Sbr
             bits.Skip(left);
         }
 
-        return (ps, null);
+        return (ps, null, plain);
     }
 
     // sbr_grid: the frame class, the envelopes and noise floors and each envelope's
     // frequency resolution.
-    private static string? Grid(ref AacBits bits, SbrHeader header, int channel, scoped Span<int> envelopes, scoped Span<int> noises, scoped Span<int> ampRes, scoped Span<byte> resolution)
+    private static string? Grid(ref AacBits bits, SbrHeader header, int channel, scoped Span<int> envelopes, scoped Span<int> noises, scoped Span<int> ampRes, scoped Span<byte> resolution, ref bool plain)
     {
         int frameClass = (int)bits.Read(2);
         int count;
@@ -384,12 +398,14 @@ internal static class Sbr
                 noises[channel] = count > 1 ? 2 : 1;
                 return null;
             case 1 or 2:
+                plain &= frameClass == 2;
                 bits.Skip(2);
                 int relative = (int)bits.Read(2);
                 count = relative + 1;
                 bits.Skip(2 * relative);
                 break;
             default:
+                plain = false;
                 bits.Skip(4);
                 int lead = (int)bits.Read(2);
                 int trail = (int)bits.Read(2);
@@ -420,16 +436,18 @@ internal static class Sbr
     }
 
     // sbr_dtdf: for each envelope and noise floor, whether it is coded across time.
-    private static void Directions(ref AacBits bits, int channel, scoped Span<int> envelopes, scoped Span<int> noises, scoped Span<byte> timeEnvelope, scoped Span<byte> timeNoise)
+    private static void Directions(ref AacBits bits, int channel, scoped Span<int> envelopes, scoped Span<int> noises, scoped Span<byte> timeEnvelope, scoped Span<byte> timeNoise, ref bool plain)
     {
         for (int e = 0; e < envelopes[channel]; e++)
         {
             timeEnvelope[(channel * MaxEnvelopes) + e] = (byte)bits.Read(1);
+            plain &= timeEnvelope[(channel * MaxEnvelopes) + e] == 0;
         }
 
         for (int n = 0; n < noises[channel]; n++)
         {
             timeNoise[(channel * 2) + n] = (byte)bits.Read(1);
+            plain &= timeNoise[(channel * 2) + n] == 0;
         }
     }
 
@@ -490,10 +508,11 @@ internal static class Sbr
     }
 
     // bs_add_harmonic_flag and sbr_sinusoidal_coding: a flag per high resolution band.
-    private static void Harmonics(ref AacBits bits, SbrBands bands)
+    private static void Harmonics(ref AacBits bits, SbrBands bands, ref bool plain)
     {
         if (bits.ReadBit())
         {
+            plain = false;
             bits.Skip(bands.High);
         }
     }

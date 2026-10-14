@@ -297,6 +297,61 @@ def implicit_sbr_adts():
         rate=22050)
 
 
+# The SBR layout of FAAC 2.2's HE-AAC encoder at 44100 Hz (FaacSbr): bs_header_extra_1 sent and bs_header_extra_2 not, bs_noise_bands 0, a start
+# frequency of 15, a crossover band of 0, a frequency scale of 1 with an alter scale of 0, 3 dB steps and a stop frequency of 12, the header
+# in the first access unit and every 30 after it, and plain sbr_data.
+FAAC_HEADER = {"amp_res": 1, "start": 15, "stop": 12, "xover": 0, "freq_scale": 1, "alter_scale": 0, "noise_bands": 0}
+FAAC_UNITS = 32
+FAAC_DEVIANT = 10
+# name, what the access unit FAAC_DEVIANT does differently (the options of aac_model.sbr_data), and how the description says it.
+FAAC_VARIANTS = [
+    ("plain", {}, "nothing: every access unit is plain, FIXFIX or VARFIX frames coded across frequency"),
+    ("data-extra", {"data_extra": True}, "sends extra data bits (bs_data_extra)"),
+    ("coupling", {"coupled": True}, "couples its channels (bs_coupling)"),
+    ("fixvar", {"grid": "FIXVAR"}, "uses a FIXVAR frame class"),
+    ("varvar", {"grid": "VARVAR"}, "uses a VARVAR frame class"),
+    ("time-envelope", {"time_env": True}, "codes its envelope across time (bs_df_env)"),
+    ("time-noise", {"time_noise": True}, "codes its noise floor across time (bs_df_noise)"),
+    ("harmonic", {"harmonic": True}, "sends sinusoids (bs_add_harmonic_flag)"),
+    ("extended-data", {"extension": True}, "sends extended data (bs_extended_data)"),
+]
+
+
+def faac_style_adts(name, tools, what):
+    """ADTS at a core rate of 22050 Hz of channel pairs each followed by SBR data in FAAC 2.2's layout, but for what one access unit does
+    differently: the analyzer names FAAC only for the stream that does nothing differently."""
+    counts = M.sbr_bands(FAAC_HEADER, 44100)
+    blocks = []
+    for i in range(FAAC_UNITS):
+        header = FAAC_HEADER if i % 30 == 0 else None
+        options = tools if i == FAAC_DEVIANT else {"grid": "VARFIX" if i % 7 == 3 else "FIXFIX"}
+        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, header, pair=True, **options))
+        block, _ = pair_block(0, rate=22050, extra=[fill], first=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=22050),
+                              second=channel(M.ONLY_LONG, 1, [[(9, 4), (1, 16)]], seed=i + 1, rate=22050))
+        blocks.append(block)
+    data, rows = concat(adts_frames(blocks, rate=22050, channels=2))
+    named = not tools
+    prefix = "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header"
+    fields = {
+        prefix + "/bs_start_freq": "15", prefix + "/bs_stop_freq": "12", prefix + "/bs_freq_scale": "1", prefix + "/bs_alter_scale": "0",
+        prefix + "/bs_noise_bands": "0", prefix + "/HasHeaderExtra1": "true", prefix + "/HasHeaderExtra2": "false",
+        **sbr_fields("ADTS", FAAC_UNITS, 2, False),
+    }
+    return f"faac-style-{name}.aac", data, manifest(
+        f"ADTS at a core rate of 22050 Hz whose channel pairs are each followed by a fill element of SBR data in the layout FAAC 2.2 writes at "
+        f"44100 Hz (the header in the first access unit and again in the 31st), where access unit "
+        f"{FAAC_DEVIANT + 1} does {what}.",
+        data, rows,
+        [stream("HE-AAC", 44100, 2, "Stereo", FAAC_UNITS * 2048, encoder=("FAAC", "Medium") if named else None, ffprobe_profile="HE-AAC")], fields,
+        [["aac.implicit-sbr", f"{FAAC_UNITS} of {FAAC_UNITS} raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."},
+        rate=22050)
+
+
+def faac_style_fixtures():
+    return [faac_style_adts(name, tools, what) for name, tools, what in FAAC_VARIANTS]
+
+
 def mp4_fixture(name, description, config, rate, channels, units, codec, out_rate, out_channels, mode, fields, findings, faad, ffprobe_profile=None,
                 ffprobe_channels=None):
     entry = mp4a(channels, rate, esds(0x40, config, 0, 0))
@@ -618,6 +673,6 @@ def corrupt():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), fill_and_data()] + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     return out

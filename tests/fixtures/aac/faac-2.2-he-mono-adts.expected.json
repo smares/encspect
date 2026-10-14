@@ -1,0 +1,209 @@
+{
+ "description": "{faac 2.2} --object-type he-aac-v1 -b 32 -o {out} {mono48} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{faac 2.2}",
+   "--object-type",
+   "he-aac-v1",
+   "-b",
+   "32",
+   "-o",
+   "{out}",
+   "{mono48}"
+  ]
+ },
+ "length": 6466,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "is_vbr": true,
+   "encoder": [
+    "FAAC",
+    "Medium"
+   ],
+   "ffprobe_profile": "HE-AACv2",
+   "ffprobe_channels": 2,
+   "samples": 77824
+  }
+ ],
+ "units": [
+  [
+   0,
+   189
+  ],
+  [
+   189,
+   133
+  ],
+  [
+   322,
+   113
+  ],
+  [
+   435,
+   137
+  ],
+  [
+   572,
+   132
+  ],
+  [
+   704,
+   190
+  ],
+  [
+   894,
+   148
+  ],
+  [
+   1042,
+   221
+  ],
+  [
+   1263,
+   154
+  ],
+  [
+   1417,
+   200
+  ],
+  [
+   1617,
+   168
+  ],
+  [
+   1785,
+   176
+  ],
+  [
+   1961,
+   182
+  ],
+  [
+   2143,
+   165
+  ],
+  [
+   2308,
+   193
+  ],
+  [
+   2501,
+   159
+  ],
+  [
+   2660,
+   218
+  ],
+  [
+   2878,
+   161
+  ],
+  [
+   3039,
+   224
+  ],
+  [
+   3263,
+   160
+  ],
+  [
+   3423,
+   189
+  ],
+  [
+   3612,
+   168
+  ],
+  [
+   3780,
+   172
+  ],
+  [
+   3952,
+   182
+  ],
+  [
+   4134,
+   164
+  ],
+  [
+   4298,
+   193
+  ],
+  [
+   4491,
+   157
+  ],
+  [
+   4648,
+   214
+  ],
+  [
+   4862,
+   160
+  ],
+  [
+   5022,
+   200
+  ],
+  [
+   5222,
+   163
+  ],
+  [
+   5385,
+   186
+  ],
+  [
+   5571,
+   175
+  ],
+  [
+   5746,
+   170
+  ],
+  [
+   5916,
+   206
+  ],
+  [
+   6122,
+   300
+  ],
+  [
+   6422,
+   22
+  ],
+  [
+   6444,
+   22
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "38 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "38 of 38 raw data blocks hold SBR data"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}

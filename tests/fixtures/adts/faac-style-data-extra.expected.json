@@ -1,0 +1,177 @@
+{
+ "description": "ADTS at a core rate of 22050 Hz whose channel pairs are each followed by a fill element of SBR data in the layout FAAC 2.2 writes at 44100 Hz (the header in the first access unit and again in the 31st), where access unit 11 does sends extra data bits (bs_data_extra).",
+ "length": 4824,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 65536,
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AAC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   153
+  ],
+  [
+   153,
+   151
+  ],
+  [
+   304,
+   150
+  ],
+  [
+   454,
+   150
+  ],
+  [
+   604,
+   151
+  ],
+  [
+   755,
+   151
+  ],
+  [
+   906,
+   152
+  ],
+  [
+   1058,
+   150
+  ],
+  [
+   1208,
+   150
+  ],
+  [
+   1358,
+   150
+  ],
+  [
+   1508,
+   150
+  ],
+  [
+   1658,
+   151
+  ],
+  [
+   1809,
+   151
+  ],
+  [
+   1960,
+   151
+  ],
+  [
+   2111,
+   152
+  ],
+  [
+   2263,
+   151
+  ],
+  [
+   2414,
+   152
+  ],
+  [
+   2566,
+   149
+  ],
+  [
+   2715,
+   150
+  ],
+  [
+   2865,
+   150
+  ],
+  [
+   3015,
+   149
+  ],
+  [
+   3164,
+   151
+  ],
+  [
+   3315,
+   150
+  ],
+  [
+   3465,
+   151
+  ],
+  [
+   3616,
+   150
+  ],
+  [
+   3766,
+   151
+  ],
+  [
+   3917,
+   152
+  ],
+  [
+   4069,
+   151
+  ],
+  [
+   4220,
+   151
+  ],
+  [
+   4371,
+   150
+  ],
+  [
+   4521,
+   153
+  ],
+  [
+   4674,
+   150
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/bs_start_freq": "15",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/bs_stop_freq": "12",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/bs_freq_scale": "1",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/bs_alter_scale": "0",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/bs_noise_bands": "0",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/HasHeaderExtra1": "true",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Header/HasHeaderExtra2": "false",
+  "ADTS/Statistics/SBR": "32 access units (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo": "0 access units (0.0%)",
+  "ADTS/Statistics/SBR/SBR Headers": "2 headers"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "32 of 32 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}
