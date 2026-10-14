@@ -105,7 +105,7 @@ public sealed partial class OggParser : IFormatParser
             AddStream(context, region, window, node, stream);
         }
 
-        node.Add(new Node("Pages", start, end - start, NodeValue.Integer(region.PageCount, "pages", "page"), () => new PageList(region))
+        node.Add(new Node("Pages", start, end - start, NodeValue.Integer(region.PageCount, "pages", "page"), () => new BlockedChildren([], region.Pages.Count, i => PageNode(region, i)))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Pages,

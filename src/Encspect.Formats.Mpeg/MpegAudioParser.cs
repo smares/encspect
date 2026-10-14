@@ -463,7 +463,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             nodes.Add(statistics);
         }
 
-        return new RegionChildren(nodes, region.First, region.End ?? build.Frames.Count, build);
+        int first = region.First;
+        return new BlockedChildren(nodes, (region.End ?? build.Frames.Count) - first, (start, length) => RegionBlock(build, first, start, length));
     }
 
     private static Node GapNode(in Entry gap) =>
@@ -1444,123 +1445,31 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public Dictionary<long, int> MusicCrcs { get; } = [];
     }
 
-    // The children of a region: its encoder, enhancement, OFL block and statistics, then a node for
-    // each of its frames and gaps. Those are built from the records in blocks when first read and
-    // held weakly, as Node holds children built on demand, so writing a region of a million frames
-    // never keeps all their nodes, and readers on several threads get the same nodes while a block
-    // lives.
-    private sealed class RegionChildren : IReadOnlyList<Node>
+    // Neighboring frames mostly share a header, and so the text that sums it up. The nodes of a
+    // region's frames and gaps are built in blocks (BlockedChildren) after its leading nodes.
+    private static Node[] RegionBlock(BuildContext build, int first, int start, int length)
     {
-        private const int BlockSize = 1024;
-
-        private readonly List<Node> _leading;
-        private readonly int _first;
-        private readonly int _count;
-        private readonly BuildContext _build;
-        private readonly WeakReference<Node[]>?[] _blocks;
-
-        // The block read last, kept so that reading the nodes in order or near each other does not
-        // look up a weak reference each time.
-        private Block? _last;
-
-        public RegionChildren(List<Node> leading, int first, int end, BuildContext build)
+        var nodes = new Node[length];
+        var summaries = new Dictionary<uint, NodeValue>();
+        for (int i = 0; i < nodes.Length; i++)
         {
-            _leading = leading;
-            _first = first;
-            _count = end - first;
-            _build = build;
-            _blocks = new WeakReference<Node[]>?[(_count + BlockSize - 1) / BlockSize];
+            int index = first + start + i;
+            ref readonly Entry entry = ref build.Frames[index];
+            if (entry.IsGap)
+            {
+                nodes[i] = GapNode(entry);
+                continue;
+            }
+
+            if (!summaries.TryGetValue(entry.Header, out NodeValue? summary))
+            {
+                summaries[entry.Header] = summary = new MpegHeader(entry.Header).Summary;
+            }
+
+            nodes[i] = FrameNode(index, build, summary);
         }
 
-        public int Count => _leading.Count + _count;
-
-        public Node this[int index]
-        {
-            get
-            {
-                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)index, (uint)Count, nameof(index));
-                if (index < _leading.Count)
-                {
-                    return _leading[index];
-                }
-
-                int entry = index - _leading.Count;
-                return BlockOf(entry / BlockSize)[entry % BlockSize];
-            }
-        }
-
-        public IEnumerator<Node> GetEnumerator()
-        {
-            foreach (Node node in _leading)
-            {
-                yield return node;
-            }
-
-            for (int block = 0; block < _blocks.Length; block++)
-            {
-                foreach (Node node in BlockOf(block))
-                {
-                    yield return node;
-                }
-            }
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
-        private Node[] BlockOf(int block)
-        {
-            if (Volatile.Read(ref _last) is { } last && last.Index == block)
-            {
-                return last.Nodes;
-            }
-
-            Node[]? built = null;
-            while (true)
-            {
-                WeakReference<Node[]>? current = Volatile.Read(ref _blocks[block]);
-                if (current is not null && current.TryGetTarget(out Node[]? existing))
-                {
-                    Volatile.Write(ref _last, new Block(block, existing));
-                    return existing;
-                }
-
-                built ??= Build(block);
-                if (Interlocked.CompareExchange(ref _blocks[block], new WeakReference<Node[]>(built), current) == current)
-                {
-                    Volatile.Write(ref _last, new Block(block, built));
-                    return built;
-                }
-            }
-        }
-
-        // Neighboring frames mostly share a header, and so the text that sums it up.
-        private Node[] Build(int block)
-        {
-            int start = block * BlockSize;
-            var nodes = new Node[Math.Min(BlockSize, _count - start)];
-            var summaries = new Dictionary<uint, NodeValue>();
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                int index = _first + start + i;
-                ref readonly Entry entry = ref _build.Frames[index];
-                if (entry.IsGap)
-                {
-                    nodes[i] = GapNode(entry);
-                    continue;
-                }
-
-                if (!summaries.TryGetValue(entry.Header, out NodeValue? summary))
-                {
-                    summaries[entry.Header] = summary = new MpegHeader(entry.Header).Summary;
-                }
-
-                nodes[i] = FrameNode(index, _build, summary);
-            }
-
-            return nodes;
-        }
-
-        private sealed record Block(int Index, Node[] Nodes);
+        return nodes;
     }
 
     // A Layer II frame's bytes up to its samples, the bytes of a multichannel candidate, from the
