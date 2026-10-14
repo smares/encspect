@@ -1,0 +1,134 @@
+{
+ "description": "Encoded by ffmpeg's dca encoder from 2 channels at 22050 Hz and 192kbit/s.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "dca",
+  "-strict",
+  "-2",
+  "-b:a",
+  "192k",
+  "-af",
+  "aformat=channel_layouts=stereo"
+ ],
+ "length": 13046,
+ "format": "MP4",
+ "frames": [
+  [
+   44,
+   560
+  ],
+  [
+   604,
+   560
+  ],
+  [
+   1164,
+   560
+  ],
+  [
+   1724,
+   560
+  ],
+  [
+   2284,
+   560
+  ],
+  [
+   2844,
+   560
+  ],
+  [
+   3404,
+   560
+  ],
+  [
+   3964,
+   560
+  ],
+  [
+   4524,
+   560
+  ],
+  [
+   5084,
+   560
+  ],
+  [
+   5644,
+   560
+  ],
+  [
+   6204,
+   560
+  ],
+  [
+   6764,
+   560
+  ],
+  [
+   7324,
+   560
+  ],
+  [
+   7884,
+   560
+  ],
+  [
+   8444,
+   560
+  ],
+  [
+   9004,
+   560
+  ],
+  [
+   9564,
+   560
+  ],
+  [
+   10124,
+   560
+  ],
+  [
+   10684,
+   560
+  ],
+  [
+   11244,
+   560
+  ],
+  [
+   11804,
+   560
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 11264,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip": {}
+ }
+}

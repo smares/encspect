@@ -60,6 +60,32 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(dts\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex DtsCode();
+
+    // Every code the DTS parser emits is listed by a fixture's manifest, whose test compares the findings exactly.
+    [Fact]
+    public void EveryDtsCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.Dts"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => DtsCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 30, $"Found only {emitted.Count} codes.");
+
+        var asserted = new HashSet<string>();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "dts"), "*.expected.json"))
+        {
+            foreach (Match m in DtsCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No fixture's manifest lists: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex(", \"(wavpack\\.[a-z0-9-]+)\"\\);")]
     private static partial Regex WavPackBoundedCode();
 

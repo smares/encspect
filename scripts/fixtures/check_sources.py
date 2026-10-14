@@ -19,11 +19,13 @@ import check_mp3pro_samples
 import check_usac_samples
 import conformance_mpeg_audio
 import downloads
+import dts_specs
 import ffmpeg_sources
 import fhg_tool
 import gogo_tool
 import helix_tool
 import lame_win_tool
+import libdca_source
 import mctoolamed_tool
 import musepack_tool
 import old_lame_tool
@@ -64,6 +66,8 @@ def sources():
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
+    yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
+    yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES
 
 

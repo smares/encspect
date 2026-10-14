@@ -17,11 +17,12 @@ public class ParallelAnalysisTests
     [Theory]
     [InlineData("mpeg", 300)]
     [InlineData("ac3", 30)]
+    [InlineData("dts", 30)]
     public void ParallelAnalysisMatchesSequential(string kind, int least)
     {
         List<string> files = AudioFixtures(p => kind == "mpeg"
             ? Path.GetExtension(p) is ".mp1" or ".mp2" or ".mp3"
-            : Path.GetFileName(Path.GetDirectoryName(p)) == "ac3" && Path.GetExtension(p) is ".ac3" or ".eac3" or ".mp4");
+            : Path.GetFileName(Path.GetDirectoryName(p)) == kind && Path.GetExtension(p) is ".ac3" or ".eac3" or ".dts" or ".mp4");
         var analyzer = Analyzer.CreateDefault();
         Dictionary<string, string> sequential = files.ToDictionary(f => f, f => Fixtures.ToJson(analyzer.AnalyzeFile(f)));
 

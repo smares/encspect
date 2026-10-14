@@ -1,0 +1,51 @@
+{
+ "description": "Four units whose extension substream holds two assets: a core with a lossless component, and a low bit rate one.",
+ "length": 2976,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   744
+  ],
+  [
+   744,
+   744
+  ],
+  [
+   1488,
+   744
+  ],
+  [
+   2232,
+   744
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Audio Assets": "2 assets"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD MA or HRA only after it has decoded the extension, which the stub components do not allow"
+  }
+ }
+}

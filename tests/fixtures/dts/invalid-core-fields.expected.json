@@ -1,0 +1,92 @@
+{
+ "description": "Six stereo core frames, each with one invalid field: SHORT 5 in a normal frame, 20 blocks, 4 subframes for 16 blocks, 3 primary channels for 2/0, 33 active subbands, and a joint source that comes after its channel.",
+ "length": 3072,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3200,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.frame-type",
+   "SHORT is 5"
+  ],
+  [
+   "dts.block-count",
+   "20 blocks"
+  ],
+  [
+   "dts.subframe-count",
+   "4 subframes"
+  ],
+  [
+   "dts.channel-count",
+   "3 primary channels"
+  ],
+  [
+   "dts.subband-count",
+   "33 active subbands"
+  ],
+  [
+   "dts.joint-source",
+   "channel 1 copies channel 1"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": false,
+  "ffprobe_packets": false,
+  "decode_errors": {
+   "0": "Deficit samples are not supported",
+   "512": "Unsupported number of PCM sample blocks (20)",
+   "1024": "Subband sample buffer overflow",
+   "1536": "Invalid number of primary audio channels (3) for audio channel arrangement (2)",
+   "2048": "Invalid subband activity count",
+   "2560": null
+  },
+  "skip": {
+   "ffprobe_packets": "ffmpeg's parser takes a sync word as a frame only when the bits after it are those of a normal frame, FTYPE 1 and SHORT 31 (dca_parser.c, IS_CORE_MARKER), so it skips the first frame and reports the first packet at position 0",
+   "decode": "ffmpeg rejects five of the six frames, each with its own error (decode_errors), and accepts the joint source after its channel",
+   "libdca": "libdca reads the frames with 3 primary channels, 33 subbands and the others as it can; its reading of invalid fields says nothing"
+  }
+ }
+}

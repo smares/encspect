@@ -1,0 +1,205 @@
+{
+ "description": "Six stereo core frames in MP4, the first sample followed by eight bytes that are no frame.",
+ "length": 3681,
+ "format": "MP4",
+ "frames": [
+  [
+   601,
+   512
+  ],
+  [
+   1121,
+   512
+  ],
+  [
+   1633,
+   512
+  ],
+  [
+   2145,
+   512
+  ],
+  [
+   2657,
+   512
+  ],
+  [
+   3169,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   1113,
+   8
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.sample-not-frame",
+   "no core frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_packets": [
+   [
+    601,
+    520
+   ],
+   [
+    1121,
+    512
+   ],
+   [
+    1633,
+    512
+   ],
+   [
+    2145,
+    512
+   ],
+   [
+    2657,
+    512
+   ],
+   [
+    3169,
+    512
+   ]
+  ],
+  "ffprobe_packets_reason": "an MP4 file's packets are its samples, here the frame and the 8 bytes after it",
+  "skip": {
+   "libdca": "libdca reads raw DTS only."
+  }
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   565
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   449
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   349
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   264
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   204
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/dtsc",
+   413,
+   64
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/dtsc/ddts",
+   449,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   477,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   501,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   529,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   573,
+   20
+  ],
+  [
+   "mdat",
+   593,
+   3088
+  ]
+ ]
+}

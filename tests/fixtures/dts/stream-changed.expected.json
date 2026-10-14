@@ -1,0 +1,77 @@
+{
+ "description": "Three stereo core frames at 48 kHz, then three 3/2 frames with an LFE channel at 44.1 kHz.",
+ "length": 4608,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   1024
+  ],
+  [
+   2560,
+   1024
+  ],
+  [
+   3584,
+   1024
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  },
+  {
+   "codec": "DTS",
+   "sample_rate": 44100,
+   "channels": 6,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.stream-changed",
+   "The stream changes at 0x600"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "libdca": true,
+  "skip": {
+   "ffprobe": "ffprobe reports the first stream only and its packets continue across the change."
+  }
+ }
+}

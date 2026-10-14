@@ -1,0 +1,63 @@
+{
+ "description": "Six stereo core frames, the third cut to its first 300 bytes.",
+ "length": 2860,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   300
+  ],
+  [
+   1324,
+   512
+  ],
+  [
+   1836,
+   512
+  ],
+  [
+   2348,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.frame-damaged",
+   "cut short by the next frame's sync word"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "libdca": false,
+  "decode_note": "ffmpeg decodes the damaged frame without an error: the frame's silent subframes take a few dozen of its bytes, the rest is padding that no decoder reads, and a core frame without CRC words (CPF 0) has no other check of its own",
+  "skip": {
+   "ffprobe": "ffmpeg's parser keeps the damaged bytes in the packets around them.",
+   "libdca": "libdca's tool reads frames by their sizes, so it does not resync after the cut frame, and the next frame's bytes are the cut frame's missing ones."
+  }
+ }
+}

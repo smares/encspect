@@ -1,0 +1,74 @@
+{
+ "description": "Six stereo core frames, the fourth with FSIZE 60, which no frame can have (a frame has at least 96 bytes).",
+ "length": 3072,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   1536,
+   512
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2560,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.header-invalid",
+   "FSIZE is 60"
+  ],
+  [
+   "dts.sync-lost",
+   "Sync is lost for 512 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "decode_errors": {
+   "1536": [
+    512,
+    "Invalid core frame size"
+   ]
+  },
+  "skip": {
+   "decode": "ffmpeg rejects the frame whose FSIZE is 60 (dca_core.c: 'Invalid core frame size')",
+   "ffprobe": "ffmpeg's parser keeps the damaged bytes in the packets around them.",
+   "libdca": "libdca's tool stops at a frame size it rejects (frame sizes under 96 bytes)."
+  }
+ }
+}

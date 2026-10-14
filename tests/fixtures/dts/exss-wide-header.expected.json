@@ -1,0 +1,51 @@
+{
+ "description": "Four units whose extension substream uses the wide header form (12-bit header size, 20-bit sizes).",
+ "length": 2816,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   704
+  ],
+  [
+   1408,
+   704
+  ],
+  [
+   2112,
+   704
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid XLL sub-header checksum",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD MA or HRA only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+  }
+ }
+}

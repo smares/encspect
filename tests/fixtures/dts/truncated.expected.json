@@ -1,0 +1,63 @@
+{
+ "description": "Six stereo core frames, the last cut after 300 bytes.",
+ "length": 2860,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   300
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.frame-truncated",
+   "has 300 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg drops the truncated frame.",
+   "decode": "ffmpeg drops the truncated frame.",
+   "libdca": "libdca's tool reads whole frames only."
+  }
+ }
+}

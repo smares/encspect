@@ -167,6 +167,56 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A DTS stream keeps a 24-byte record per unit, the fields its nodes are built from (the headers; the subframes are
+    // not read), and its per-frame series. The units repeat a committed mono fixture of 256-byte core frames at 11.025 kHz.
+    // The bounds stay far below what keeping each frame's bytes or nodes would cost.
+    [Fact]
+    public void ManyDtsFramesStayCompact()
+    {
+        const int frames = 50_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-mono-11k.dts"));
+        byte[] data = new byte[source.Length * (frames / (source.Length / 256))];
+        for (int at = 0; at < data.Length; at += source.Length)
+        {
+            source.CopyTo(data, at);
+        }
+
+        (Report report, long kept, long peak) = Measure("frames.dts", data, source);
+
+        Assert.Equal(frames * 256L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * DtsKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * DtsPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // Units with an extension substream keep their header fields and the descriptors' too, and a lossless asset's.
+    [Fact]
+    public void ManyDtsSubstreamsStayCompact()
+    {
+        const int units = 30_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "exss-two-assets.dts"));
+        int unit = source.Length / 4;
+        byte[] data = new byte[unit * units];
+        for (int at = 0; at < data.Length; at += unit)
+        {
+            source.AsSpan(0, unit).CopyTo(data.AsSpan(at));
+        }
+
+        (Report report, long kept, long peak) = Measure("units.dts", data, source);
+
+        Assert.Equal(units * 512L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
+        Assert.True(kept < units * DtsSubstreamKeptBound, $"The report keeps {kept / units} bytes per unit.");
+        Assert.True(peak < units * DtsSubstreamPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        GC.KeepAlive(report);
+    }
+
+    private const long DtsKeptBound = 160;
+    private const long DtsPeakBound = 200;
+    private const long DtsSubstreamKeptBound = 450;
+    private const long DtsSubstreamPeakBound = 500;
+
     // The smallest E-AC-3 frames the parser takes, 12 bytes (6 words), each reading up to an
     // overrun: a frame keeps its 16-byte record, the bits its nodes are built from (about 14
     // bytes) and its two values of the per-frame bitrate series, 46 bytes in all on linux-x64, with

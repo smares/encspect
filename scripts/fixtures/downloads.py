@@ -40,6 +40,11 @@ def has_token(url):
     return not url.startswith(PRIVATE) or bool(os.environ.get(TOKEN))
 
 
+# ETSI's server refuses curl's own user agent, so its addresses name a browser's.
+BROWSER = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+BROWSER_PREFIXES = ("https://www.etsi.org/",)
+
+
 def download(url, path):
     """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
     refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
@@ -49,8 +54,9 @@ def download(url, path):
     header = f"Authorization: Bearer {os.environ[TOKEN]}\n" if url.startswith(PRIVATE) else ""
     # A server that stops sending mid-transfer would otherwise hold curl until the job's timeout: below
     # 1 KB/s for a minute, or 15 minutes in all, counts as an error and is retried.
+    agent = ["-A", BROWSER] if url.startswith(BROWSER_PREFIXES) else []
     result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--retry-all-errors", "--connect-timeout", "30",
-                             "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900",
+                             "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900", *agent,
                              "-H", "@-", "-o", str(path), url], input=header, capture_output=True, text=True)
     return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
 

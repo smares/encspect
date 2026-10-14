@@ -3,7 +3,7 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4, raw AAC and Ogg
+// Truncated, byte-flipped and garbage-prefixed variants of every tag, MPEG, MP4, raw AAC, Ogg and DTS
 // fixture must yield a report, never an exception or a hang, and every node must stay inside the
 // file and its parent. The hang guard is per variant: a variant takes milliseconds, so the limit is
 // far from anything CPU contention on a slow runner causes, where a limit on a fixture's 1,300 or so
@@ -36,6 +36,12 @@ public class CorruptTagFileTests
             foreach (string name in Fixtures.OggFixtures())
             {
                 data.Add(name);
+            }
+
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "dts"), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
+                .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
+            {
+                data.Add($"dts/{Path.GetFileName(path)}");
             }
 
             return data;

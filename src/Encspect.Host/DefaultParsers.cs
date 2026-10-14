@@ -2,6 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Formats.Ac3;
 using Encspect.Formats.Asf;
+using Encspect.Formats.Dts;
 using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Formats.Musepack;
@@ -50,11 +51,12 @@ public static class DefaultParsers
     // 0x0B; one further in (50) ranks below them all. ASF is certain of the GUID of its Header
     // Object at the start (100). WavPack is certain of a block header that passes libwavpack's checks
     // and is followed by another one at the start of the data (100), and takes a chain of them
-    // further in (60), below MPEG audio.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser()];
+    // further in (60), below MPEG audio. A DTS chain at the start of the data (93) outranks AC-3's 92: no
+    // chain is both, since the sync words differ; one further in (91) ranks just above MPEG audio's 90, below AC-3's 92 and the containers' 95 and 100 (see DtsParser.Sniff for why).
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
-    // Speex, Vorbis and Opus in Ogg, AC-3 and E-AC-3 in MP4, Windows Media Audio in ASF.
+    // Speex, Vorbis and Opus in Ogg, AC-3 and E-AC-3 in MP4, Windows Media Audio in ASF, DTS in MP4.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
-        [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser()];
+        [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser(), new DtsCodecParser()];
 }

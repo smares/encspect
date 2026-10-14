@@ -1,0 +1,173 @@
+{
+ "description": "Six stereo core frames in MP4 whose ddts box ends after 12 bytes, inside its fields.",
+ "length": 3665,
+ "format": "MP4",
+ "frames": [
+  [
+   593,
+   512
+  ],
+  [
+   1105,
+   512
+  ],
+  [
+   1617,
+   512
+  ],
+  [
+   2129,
+   512
+  ],
+  [
+   2641,
+   512
+  ],
+  [
+   3153,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.config-truncated",
+   "ends inside a field"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "skip": {
+   "libdca": "libdca reads raw DTS only."
+  }
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   557
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   441
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   341
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   256
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   196
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   72
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/dtsc",
+   413,
+   56
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/dtsc/ddts",
+   449,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   469,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   493,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   521,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   565,
+   20
+  ],
+  [
+   "mdat",
+   585,
+   3080
+  ]
+ ]
+}

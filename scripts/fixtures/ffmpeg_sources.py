@@ -15,6 +15,10 @@ repository and extracts the files the WMA and ASF work is written from:
   ffprobe's readings with.
 - libavcodec/wavpackenc.c, libavformat/wvenc.c and apetag.c: the WavPack encoder and muxer that write the FFmpeg fixture (stream version
   0x410, no new config block and no block checksums, and an APEv2 tag with an "encoder" item).
+- libavcodec/dca.c, dca.h, dca_syncwords.h, dca_core.c, dca_core.h, dca_exss.c, dca_exss.h, dca_lbr.c, dca_xll.c, dca_parser.c,
+  dca_sample_rate_tab.h, dcadata.c, dcadata.h and dcadec.c: the DTS core, extension substream and DTS-HD decoder and parser the DTS
+  cross-check explains ffprobe's and ffmpeg's readings with; dcaenc.c and dcaenc.h, the encoder that writes the FFmpeg fixtures.
+- libavformat/dtsdec.c, dtshddec.c and isom.c: the raw DTS probe, the DTS-HD file reader and the MP4 object type table (0xA9 for DTS).
 
 The release is the one Ubuntu 24.04's ffmpeg 6.1.1 is built from, which the cross-checks run.
 """
@@ -37,6 +41,10 @@ FILES = [
     "libavcodec/wmaenc.c", "libavcodec/wmaprodata.h", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
     "libavformat/wv.h", "libavformat/wv.c", "libavformat/wvdec.c", "libavcodec/wavpack.c",
     "libavcodec/wavpackenc.c", "libavformat/wvenc.c", "libavformat/apetag.c",
+    "libavcodec/dca.c", "libavcodec/dca.h", "libavcodec/dca_syncwords.h", "libavcodec/dca_core.c", "libavcodec/dca_core.h",
+    "libavcodec/dca_exss.c", "libavcodec/dca_exss.h", "libavcodec/dca_lbr.c", "libavcodec/dca_xll.c", "libavcodec/dca_parser.c",
+    "libavcodec/dca_sample_rate_tab.h", "libavcodec/dcadata.c", "libavcodec/dcadata.h", "libavcodec/dcadec.c",
+    "libavcodec/dcaenc.c", "libavcodec/dcaenc.h", "libavformat/dtsdec.c", "libavformat/dtshddec.c", "libavformat/isom.c",
 ]
 
 

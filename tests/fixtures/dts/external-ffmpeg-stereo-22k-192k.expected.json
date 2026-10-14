@@ -1,0 +1,129 @@
+{
+ "description": "Encoded by ffmpeg's dca encoder from 2 channels at 22050 Hz and 192kbit/s.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "dca",
+  "-strict",
+  "-2",
+  "-b:a",
+  "192k",
+  "-af",
+  "aformat=channel_layouts=stereo"
+ ],
+ "length": 12320,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   560
+  ],
+  [
+   560,
+   560
+  ],
+  [
+   1120,
+   560
+  ],
+  [
+   1680,
+   560
+  ],
+  [
+   2240,
+   560
+  ],
+  [
+   2800,
+   560
+  ],
+  [
+   3360,
+   560
+  ],
+  [
+   3920,
+   560
+  ],
+  [
+   4480,
+   560
+  ],
+  [
+   5040,
+   560
+  ],
+  [
+   5600,
+   560
+  ],
+  [
+   6160,
+   560
+  ],
+  [
+   6720,
+   560
+  ],
+  [
+   7280,
+   560
+  ],
+  [
+   7840,
+   560
+  ],
+  [
+   8400,
+   560
+  ],
+  [
+   8960,
+   560
+  ],
+  [
+   9520,
+   560
+  ],
+  [
+   10080,
+   560
+  ],
+  [
+   10640,
+   560
+  ],
+  [
+   11200,
+   560
+  ],
+  [
+   11760,
+   560
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 11264,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

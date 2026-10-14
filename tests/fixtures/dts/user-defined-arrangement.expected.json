@@ -1,0 +1,56 @@
+{
+ "description": "Four core frames with AMODE 20, a user defined channel arrangement of two channels.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "user defined",
+   "channel_layout": [
+    "discrete",
+    "discrete"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.user-defined-arrangement",
+   "AMODE 20"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "decode_error": "Unsupported audio channel arrangement (20)",
+  "skip": {
+   "ffprobe": "ffmpeg's decoder rejects the arrangement, so ffprobe gets no sampling frequency or channels",
+   "decode": "ffmpeg supports the arrangements up to 15 only (dca.c, DCA_AMODE_COUNT)",
+   "libdca": "libdca does not decode user defined arrangements (its flags stop at DCA_CHANNEL_MAX)."
+  }
+ }
+}

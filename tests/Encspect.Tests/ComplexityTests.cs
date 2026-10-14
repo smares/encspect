@@ -129,6 +129,62 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
+    // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
+    // scan looks for 16 KiB on, and finds none; the time must stay linear in the data.
+    [Fact]
+    public void ManyCoreHeadersThatChainNowhere()
+    {
+        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..12];
+        SetBits(header, 46, 14, 16383);
+        var data = new byte[24 << 20];
+        for (int at = 0; at + 96 <= data.Length; at += 96)
+        {
+            header.CopyTo(data, at);
+        }
+
+        TimedDts(data);
+    }
+
+    // Sync words one after the other, each a header that is invalid, and extension substream headers that state a megabyte.
+    [Fact]
+    public void ManySyncWordsWithoutHeaders()
+    {
+        TimedDts([.. Repeat([0x7F, 0xFE, 0x80, 0x01], 6 << 20)]);
+        byte[] exss = [0x64, 0x58, 0x20, 0x25, 0, 0, 0x0F, 0x01, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0];
+        TimedDts([.. Repeat(exss, 1 << 20)]);
+    }
+
+    private static void SetBits(byte[] data, int start, int width, int value)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            int bit = start + i;
+            int on = (value >> (width - 1 - i)) & 1;
+            data[bit >> 3] = (byte)((data[bit >> 3] & ~(0x80 >> (bit & 7))) | (on << (7 - (bit & 7))));
+        }
+    }
+
+    private static void TimedDts(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("flood.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    private sealed class ForcedDts : IFormatParser
+    {
+        private readonly Encspect.Formats.Dts.DtsParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public int Sniff(SniffContext context) => 100;
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
     private sealed class ForcedWavPack : IFormatParser
     {
         private readonly Encspect.Formats.WavPack.WavPackParser _parser = new();

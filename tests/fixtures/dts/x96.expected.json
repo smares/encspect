@@ -1,0 +1,50 @@
+{
+ "description": "Four 3/2 core frames with an X96 extension, which doubles the sampling frequency to 96 kHz.",
+ "length": 4096,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1024
+  ],
+  [
+   1024,
+   1024
+  ],
+  [
+   2048,
+   1024
+  ],
+  [
+   3072,
+   1024
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS 96/24",
+   "sample_rate": 48000,
+   "channels": 5,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Extension Sampling Frequency": "96000 Hz"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}
