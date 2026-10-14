@@ -19,6 +19,11 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 - **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`.
 
+## CI
+
+- The final job of `.github/workflows/ci.yml`, `all checks passed` (job ID `all-checks`), succeeds only when every other job succeeded. The repository ruleset requires that one check and no other, so it never lists job names.
+- A new CI job must be added to the `needs` list of `all-checks`; `CiWorkflowTests` fails when a job is missing from it.
+
 ## Fixtures and cross-checks
 
 Every format has three kinds of fixture:
