@@ -225,14 +225,14 @@ say "== AAC-LC options"
 encode lc-m4a-nofiller-st44    st44 m4af aac cbr -s 0 -b 128000 --no-filler
 encode lc-m4a-soundcheck-st44  st44 m4af aac cbr -s 0 -b 128000 --soundcheck-generate
 encode lc-m4a-hash-st44        st44 m4af aac cbr -s 0 -b 128000 --generate-hash
-encode lc-m4a-music-st44       st44 m4af aac cbr -s 0 -b 128000 --media-kind Music
-encode lc-m4a-podcast-st44     st44 m4af aac cbr -s 0 -b 128000 --media-kind Podcast
+encode lc-m4a-music-st44       st44 m4af aac cbr -s 0 -b 128000 --soundcheck-generate --media-kind Music
+encode lc-m4a-podcast-st44     st44 m4af aac cbr -s 0 -b 128000 --soundcheck-generate --media-kind Podcast
 encode lc-m4a-prime0-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 0
 encode lc-m4a-prime1-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 1
 encode lc-m4a-prime2-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 2
 encode lc-m4a-960-st44         st44 m4af "aac#960" cbr -s 0 -b 128000
 encode lc-m4a-condensed-st44   st44 m4af aac cbr -s 0 -b 128000 --condensed-framing 16
-encode lc-m4b-cbr-st44         st44 m4bf aac cbr -s 0 -b 128000 --media-kind Audiobook
+encode lc-m4b-cbr-st44         st44 m4bf aac cbr -s 0 -b 128000 --soundcheck-generate --media-kind Audiobook
 encode lc-caf-tag-st44         st44 caff aac cbr -s 0 -b 128000 -t
 
 # ---- HE-AAC ('aach') ---------------------------------------------------------------------------
