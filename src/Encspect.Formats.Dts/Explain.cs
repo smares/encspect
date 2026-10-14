@@ -49,7 +49,7 @@ internal static class Explain
     public const string Timef = "TIMEF: whether a time stamp follows the audio data at the end of the core frame (5.4.2, Table 5-9).";
     public const string Auxf = "AUXF: whether auxiliary data bytes follow the audio data (5.4.2, Table 5-10).";
     public const string Hdcd = "HDCD: whether the source was mastered in HDCD format (5.4.2).";
-    public const string ExtAudioId = "EXT_AUDIO_ID: which extension the extended audio holds, when EXT_AUDIO is set: channel extension (XCh), frequency extension (X96) or channel extension beyond 5.1 (XXCh) (5.4.2, Table 5-11).";
+    public const string ExtAudioId = "EXT_AUDIO_ID: which extension the extended audio holds, when EXT_AUDIO is set: channel extension (XCh), frequency extension (X96) or channel extension beyond 5.1 (XXCH) (5.4.2, Table 5-11).";
     public const string ExtAudio = "EXT_AUDIO: whether extended audio data follow the core audio data in the frame (5.4.2, Table 5-12).";
     public const string Aspf = "ASPF: whether the DSYNC word 0xFFFF follows each subsubframe or only each subframe (5.4.2, Table 5-13).";
     public const string Lff = "LFF: whether the frame codes an LFE channel and the factor by which its samples are interpolated (5.4.2, Table 5-14).";
@@ -59,7 +59,7 @@ internal static class Explain
     public const string Vernum = "VERNUM: the revision of the encoder software, 7 for the one the specification describes; it also says whether DIALNORM is present (5.4.2, Table 5-16).";
     public const string Chist = "CHIST: the copy history of the audio, whose definition the specification leaves out on purpose (5.4.2).";
     public const string Pcmr = "PCMR: the resolution of the source PCM samples, 16, 20 or 24 bits, and with it the ES flag (5.4.2, Table 5-17).";
-    public const string Es = "ES: whether the surround channels of the source were mastered in DTS ES format (5.4.2, Table 5-17).";
+    public const string Es = "ES: whether the surround channels of the source were mastered in the DTS-ES format (5.4.2, Table 5-17).";
     public const string Sumf = "SUMF: whether the front left and right channels were sum/difference encoded before coding and need decoding afterward (5.4.2, Table 5-18).";
     public const string Sums = "SUMS: whether the surround left and right channels were sum/difference encoded before coding (5.4.2, Table 5-19).";
     public const string Dialnorm = "DNG: the dialog normalization gain in dB, from DIALNORM and VERNUM 6 or 7, which scales the decoder's output samples (5.4.2, Table 5-20).";
@@ -100,18 +100,18 @@ internal static class Explain
     public const string Ahcrc96 = "AHCRC96: the extension header's CRC, present when the core's CPF is 1; the value is not used (6.2.4.4).";
     public const string X96Data = "The side information and audio data of the extension subbands. Not read (6.2.4.5, 6.2.4.6).";
     public const string Xxch = "The channel extension XXCH: up to 32 channels beyond 5.1, coded like the core's channels in up to four channel sets (6.5.1).";
-    public const string XxchSync = "SYNCXXCh: 0x47004A03 on a 32-bit boundary, the sync word of the XXCH extension (6.5.2, Table 6-21).";
-    public const string XxchHeaderSize = "nuHeaderSizeXXCh: the size of the frame header in bytes, from the sync word to its CRC; the first channel set starts after it (6.5.2).";
-    public const string XxchSetCrc = "bCRCPresent4ChSetHeaderXXCh: whether each channel set header ends with a CRC (6.5.2).";
-    public const string XxchMaskBits = "nuBits4SpkrMaskXXCh: how many bits the loudspeaker masks have (6.5.2).";
-    public const string XxchSets = "nuNumChSetsInXXCh: the number of channel sets, which are decodable separately (6.5.2).";
-    public const string XxchSetSizes = "pnuChSetFsizeXXCh: the size in bytes of each channel set, from which the position of the next follows (6.5.2).";
+    public const string XxchSync = "SYNCXXCH: 0x47004A03 on a 32-bit boundary, the sync word of the XXCH extension (6.5.2, Table 6-21).";
+    public const string XxchHeaderSize = "nuHeaderSizeXXCH: the size of the frame header in bytes, from the sync word to its CRC; the first channel set starts after it (6.5.2).";
+    public const string XxchSetCrc = "bCRCPresent4ChSetHeaderXXCH: whether each channel set header ends with a CRC (6.5.2).";
+    public const string XxchMaskBits = "nuBits4SpkrMaskXXCH: how many bits the loudspeaker masks have (6.5.2).";
+    public const string XxchSets = "nuNumChSetsInXXCH: the number of channel sets, which are decodable separately (6.5.2).";
+    public const string XxchSetSizes = "pnuChSetFsizeXXCH: the size in bytes of each channel set, from which the position of the next follows (6.5.2).";
     public const string XxchCoreMask = "nuCoreSpkrActivityMask: the loudspeaker positions the core channels feed, by the bits of Table 6-22 (6.5.2).";
-    public const string XxchCrc = "nCRC16HeaderXXCh: the CRC16 of the frame header from the size field to the byte alignment (6.5.2, Annex B).";
+    public const string XxchCrc = "nCRC16HeaderXXCH: the CRC16 of the frame header from the size field to the byte alignment (6.5.2, Annex B).";
     public const string XxchSet = "A channel set of the XXCH extension: its header and its data (6.5.3).";
-    public const string XxchSetHeaderSize = "nuXXChChSetHeaderSize: the channel set header's size in bytes, which locates its audio data (6.5.3).";
-    public const string XxchSetChannels = "nuChInChSetXXCh: the number of channels in the channel set (6.5.3).";
-    public const string XxchSetMask = "nuXXChSpkrLayoutMask: the positions of the channel set's channels, in addition to the core's, by the bits of Table 6-22 (6.5.3).";
+    public const string XxchSetHeaderSize = "nuXXCHChSetHeaderSize: the channel set header's size in bytes, which locates its audio data (6.5.3).";
+    public const string XxchSetChannels = "nuChInChSetXXCH: the number of channels in the channel set (6.5.3).";
+    public const string XxchSetMask = "nuXXCHSpkrLayoutMask: the positions of the channel set's channels, in addition to the core's, by the bits of Table 6-22 (6.5.3).";
     public const string XxchSetCrcField = "nCRC16HeaderChSet: the CRC16 of the channel set header (6.5.3, Annex B).";
     public const string XxchSetData = "The channel set header's remaining fields and its audio data. Not read (6.5.3, 6.5.4).";
 
@@ -157,7 +157,7 @@ internal static class Explain
     public const string MaxSampleRate = "nuMaxSampleRate: the highest sampling frequency among the asset's channels (7.5.3.2, Table 7-9).";
     public const string TotalChannels = "nuTotalNumChs + 1: the number of channels that can be decoded separately (7.5.3.2).";
     public const string OneToOne = "bOne2OneMapChannels2Speakers: whether each channel is the feed of a loudspeaker, or a signal that describes the sound field (7.5.3.2).";
-    public const string RepresentationType = "nuRepresentationType: what a sound field asset is, such as a mixing asset or an Lt/Rt or headphone downmix (7.5.3.2, Table 7-11).";
+    public const string RepresentationType = "nuRepresentationType: what a sound field asset is, such as a mixing asset or a left total, right total or headphone downmix (7.5.3.2, Table 7-11).";
     public const string EmbeddedStereo = "bEmbeddedStereoFlag: whether the left and right channels already hold a stereo downmix that a stereo decoder uses alone (7.5.3.2).";
     public const string EmbeddedSix = "bEmbeddedSixChFlag: whether a 5.1 downmix is embedded in the asset (7.5.3.2).";
     public const string SpeakerMaskEnabled = "bSpkrMaskEnabled: whether the loudspeakers are given by a mask of the predefined positions (7.5.3.2).";
@@ -265,7 +265,7 @@ internal static class Explain
     public const string DdtsLayout = "CoreLayout: the channel arrangement of the core (Table E-3), or 31 to use ChannelLayout where there is no core substream (E.2.2.3.2).";
     public const string DdtsCoreSize = "CoreSize: the size in bytes of a core substream access unit; 0 without a core substream (E.2.2.3.2).";
     public const string DdtsDownmix = "StereoDownmix: whether an embedded stereo downmix is present; not valid for stereo or mono streams (E.2.2.3.2).";
-    public const string DdtsRepresentation = "RepresentationType: special properties of the audio presentation, valid when ChannelLayout is 0: 0 for an asset meant for mixing, 2 for Lt/Rt and 3 for headphone audio (E.2.2.3.2, Table E-4).";
+    public const string DdtsRepresentation = "RepresentationType: special properties of the audio presentation, valid when ChannelLayout is 0: 0 for an asset meant for mixing, 2 for left total, right total and 3 for headphone audio (E.2.2.3.2, Table E-4).";
     public const string DdtsChannelLayout = "ChannelLayout: the loudspeaker positions of the channels in the stream, core and extensions, by the bits of Table E-5 (E.2.2.3.2).";
     public const string DdtsMultiAsset = "MultiAssetFlag: whether the stream holds more than one asset, which implies an extension substream; the other fields describe the first asset (E.2.2.3.2).";
     public const string DdtsLbrDuration = "LBRDurationMod: whether the LBR frame lasts half as long again as FrameDuration says, a case of 1/3 or 2/3 band limiting (E.2.2.3.2).";
@@ -301,7 +301,8 @@ internal static class Explain
     public const string StatCrcErrors = "How many frames have a CRC that fails, in an extension substream's or an extension's header (Annex B).";
     public const string StatComponents = "The coding components the frames hold, by Table E-2's names, and the StreamConstruction value that table gives them (E.2.2.3.2).";
     public const string StatAssets = "How many audio assets the first extension substream describes, and their channels.";
-    public const string Profile = "How the stream's components are usually named: core only DTS, with XCh or XXCh DTS-ES, with X96 DTS 96/24, with XBR, XXCh or X96 in a substream DTS-HD High Resolution Audio, with XLL DTS-HD Master Audio and LBR alone DTS Express. FFmpeg's dca_parser.c names them the same way; the specification names none.";
+    public const string MisalignedSubstream = "An extension substream whose sync word is not on a 32-bit boundary of the unit, where 7.5.1 puts it; its bytes are not read, as FFmpeg's decoder does not find it.";
+    public const string Profile = "How the stream's components are usually named: core only DTS, with XCh or XXCH DTS-ES, with X96 DTS 96/24, with XBR, XXCH or X96 in an extension substream DTS-HD High Resolution Audio, with XLL DTS-HD Master Audio, and with LBR, alone or with a core, DTS Express. The first asset of the first extension substream names the stream, and LBR comes before XLL, as in FFmpeg's dca_parser.c and dcadec.c, which also name them this way; the specification names none.";
     public const string Evidence = "What in the stream shows the profile.";
     public const string IsLossless = "Whether the stream has a lossless extension (XLL), which makes the audio exact.";
     public const string HasExtensionSubstream = "Whether any frame is followed by, or is, an extension substream (7.2).";

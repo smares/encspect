@@ -12,8 +12,8 @@ references: ETSI TS 102 114 V1.6.1 (2019-08), 5.3; FFmpeg 6.1.1 libavcodec/dca_s
 - 16-bit big endian: 7F FE 80 01, the form the specification describes.
 - 16-bit little endian: the same bytes with each pair swapped, FE 7F 01 80.
 - 14-bit big endian: 1F FF E8 00 07 Fx.
-- 14-bit little endian: the same with each pair swapped, FF 1F 00 E8 F0 07.
+- 14-bit little endian: the same with each pair swapped, FF 1F 00 E8 Fx 07.
 
-In the 14-bit forms the 16-bit word holds 14 bits of the stream and repeats bit 13 in its two top bits. A frame of FSIZE + 1 bytes of the stream then takes (FSIZE + 1) x 8 / 14 words in the file, rounded down. The specification describes only the first form; the others are read as FFmpeg's decoder and libdca define them, and both decode frames in every form.
+In the 14-bit forms the 16-bit word holds 14 bits of the stream and repeats bit 13 in its two top bits. A frame of FSIZE + 1 bytes of the stream then takes (FSIZE + 1) x 8 / 14 words in the file, rounded up, and a frame in the little endian 16-bit form ends on a whole word too. The specification describes only the first form; the others are read as FFmpeg's decoder and libdca define them, and both decode frames in every form.
 
 **What you see.** The form in each frame's synchronization, offsets in the file's bytes, and nodes for fields that straddle word boundaries covering the bytes that hold them.

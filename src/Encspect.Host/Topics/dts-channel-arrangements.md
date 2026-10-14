@@ -5,7 +5,7 @@ related: dts-core-frames, dts-core-extensions, channel-layouts, channel-modes
 references: ETSI TS 102 114 V1.6.1 (2019-08), 5.4.2 Table 5-4, 6.5.3 and 7.5.3 Tables 6-22 and 7-10
 ---
 
-**The problem.** A decoder has to know how many channels follow and which speaker each feeds, in a format that spans mono to 22.2.
+**The problem.** A decoder has to know how many channels follow and which speaker each feeds, in a format with many arrangements.
 
 **How it works.** The core header's AMODE selects one of 16 arrangements in Table 5-4: 1/0 mono, a dual mono, 2/0 stereo (also as sum and difference, or left total and right total), 3/0, 2/1, 3/1, 2/2, 3/2 and several with center speakers, overhead or more surrounds, up to 8 channels. Values from 16 are user defined. The core codes at most five channels (PCHS); the LFE channel is a flag (LFF) of the frame. More channels come from XCh and XXCH, and the extension substream states its own speaker mask for each asset, in Table 7-10.
 

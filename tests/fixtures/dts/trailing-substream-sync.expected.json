@@ -1,0 +1,55 @@
+{
+ "description": "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC16.",
+ "length": 1568,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   1536,
+   32
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.trailing-data",
+   "32 bytes after the last frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": true,
+  "skip": {
+   "ffprobe": "ffmpeg's parser takes the bytes after the last frame into its last packet",
+   "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC16 (dca_exss.c: 'Invalid EXSS header checksum')"
+  }
+ }
+}

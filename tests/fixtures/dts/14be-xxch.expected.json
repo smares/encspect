@@ -1,0 +1,56 @@
+{
+ "description": "Four 3/2 core frames with an XXCH extension that adds a pair of rear channels (DTS-ES 7.1, XXCH), written in 14-bit words, big endian.",
+ "length": 4688,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1172
+  ],
+  [
+   1172,
+   1172
+  ],
+  [
+   2344,
+   1172
+  ],
+  [
+   3516,
+   1172
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-ES",
+   "sample_rate": 48000,
+   "channels": 7,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "side left",
+    "side right",
+    "back left",
+    "back right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": true,
+  "decode_error": "DSYNC check failed",
+  "libdca_channels": 5,
+  "skip": {
+   "ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed'), so ffprobe gets 5 channels from the core and no profile of the extension",
+   "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check."
+  }
+ }
+}

@@ -359,6 +359,23 @@ def xxch(chsets=((1, 0x40),), core_mask=0x3F, mask_bits=16, crc_chset=False, bad
     return out + bytes(-len(out) % 4)
 
 
+def xxch_overrun(size=12, sets=4, mask_bits=32):
+    """An XXCH extension (6.5.2) of size bytes whose header CRC16 holds but whose fields (the number of channel sets and the speaker
+    mask) need more bits than the extension has, so the frame ends inside its header."""
+    bits = Bits()
+    bits.put(SYNC_XXCH, 32)
+    bits.put(size - 1, 6)
+    bits.put(0, 1)
+    bits.put(mask_bits - 1, 5)
+    bits.put(sets - 1, 2)
+    bits.align()
+    raw = bytearray(bits.bytes())
+    raw = raw[:size - 2] + bytearray(size - 2 - len(raw[:size - 2]))
+    raw += crc16(bytes(raw[4:size - 2])).to_bytes(2, "big")
+    assert len(raw) == size and size % 4 == 0
+    return bytes(raw)
+
+
 # --- extension substream -----------------------------------------------------------------------
 
 COMPONENT_BITS = {"core": 0x10, "xbr": 0x20, "xxch": 0x40, "x96": 0x80, "lbr": 0x100, "xll": 0x200}
@@ -640,8 +657,8 @@ def exss(assets, index=0, wide=False, static=True, ref_clock=2, duration_code=0,
             head.put(0, 2)  # 4 bits per mixer output mask
             head.put(0, 2)  # one mixing configuration
             head.put(0x3, 4)
-    for payload in payloads:
-        head.put(len(payload) - 1, size_bits)
+    for a, payload in zip(assets, payloads):
+        head.put(a.get("asset_size", len(payload)) - 1, size_bits)
     for a in assets:
         descriptor = asset_descriptor(a, wide, static, mix_enabled=mix)
         head.put(descriptor.value, descriptor.count)

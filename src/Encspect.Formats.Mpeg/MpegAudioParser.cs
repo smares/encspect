@@ -1025,7 +1025,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
             foreach (int candidate in FreeLengths(blocks, position, header, end))
             {
-                if (IsChain(blocks, position, header, candidate, end))
+                if (IsChain(blocks, position, header, candidate, end) && (!header.IsFreeFormat || IsCredibleFreeFormat(blocks, position, header, candidate, end)))
                 {
                     freeLength = candidate;
                     return position;
@@ -1111,6 +1111,62 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         return true;
+    }
+
+    // A free-format chain is only four bytes of header repeating at one distance, which data with a header-like word at a fixed period
+    // (the 0xFFFF that ends a DTS subframe, in frames of one size) makes as well. Real free-format frames hold what their headers
+    // promise, and those with a CRC pass it: the chain's frames that fit in the data must be well-formed, and in Layers I and II, where
+    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4).
+    private static bool IsCredibleFreeFormat(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
+    {
+        var protectedFrames = new List<bool>();
+        int count = 0;
+        long next = position;
+        MpegHeader header = first;
+        while (count < 3 && next + header.FrameLength(freeLength) <= end)
+        {
+            if (header.IsProtected)
+            {
+                protectedFrames.Add(FrameCrcHolds(blocks, next, header, header.FrameLength(freeLength)));
+            }
+
+            next += header.FrameLength(freeLength);
+            count++;
+            if (count < 3 && blocks.TryReadUInt32(next, out uint raw) && new MpegHeader(raw) is { IsValid: true } following)
+            {
+                header = following;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // Layers I and II are silent when their allocation is all zero, which any run of zero bytes under a repeating header is; only a CRC
+        // that holds says such a frame was written as one.
+        bool crcHolds = protectedFrames.Contains(true);
+        return count > 0 && IsWellFormedRun(blocks, position, count, freeLength) && (crcHolds || (protectedFrames.Count == 0 && first.Layer == 3));
+    }
+
+    // Whether the CRC of the protected frame at position is the one its header and bit allocation give (Layer II needs its allocation tables).
+    private static bool FrameCrcHolds(BlockReader blocks, long position, MpegHeader header, int length)
+    {
+        byte[] bytes = blocks.Read(position, length);
+        if (bytes.Length < 6)
+        {
+            return false;
+        }
+
+        int stored = (bytes[4] << 8) | bytes[5];
+        if (header.Layer == 2)
+        {
+            var audio = Layer2AudioData.Read(bytes, header);
+            return audio.ScalefactorStart <= bytes.Length * 8
+                && Crc16.ComputeBits(bytes, audio.AllocationStart, audio.ScalefactorStart - audio.AllocationStart, Crc16.ComputeBits(bytes, 16, 16)) == stored;
+        }
+
+        int coverage = header.CrcCoverage;
+        return coverage >= 0 && 6 + coverage <= bytes.Length && Crc16.Compute(bytes.AsSpan(6, coverage), Crc16.Compute(bytes.AsSpan(2, 2))) == stored;
     }
 
     // Whether count consecutive frames from position each hold what their headers promise: in

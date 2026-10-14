@@ -48,6 +48,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     private readonly HashSet<int> _sizes = [];
     private readonly HashSet<int> _constructions = [];
     private int _componentUnion;
+    private int _profileUnion;
     private int _extensionRate;
     private int _assetChannels;
     private int _assets;
@@ -93,7 +94,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public int Channels => Layout.Count;
 
-    public string Codec => Profile.Name(_componentUnion);
+    // The sampling frequency the stream delivers: the highest the core and the extensions state (X96 doubles the core's, an asset names
+    // its own); the core's is key.SampleRate.
+    public int DeliveredRate => Math.Max(key.SampleRate, _extensionRate);
+
+    public string Codec => Profile.Name(_profileUnion);
 
     // The bits per sample the stream states: the source PCM resolution of the core, else the asset's.
     public int? BitsPerSample => _resolutions.Count == 1 && _resolutions.First() > 0 ? _resolutions.First() : _firstAsset?.BitResolution is > 0 and var bits ? bits : null;
@@ -109,6 +114,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         }
 
         _componentUnion |= facts.Components;
+        _profileUnion |= facts.ProfileComponents;
         if (facts.HasCore)
         {
             CoreFrames++;
@@ -261,7 +267,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             Node extensions = Add("Frames With Extension", Counted(XchFrames + X96Frames + XxchFrames), Explain.StatExtensions, Topics.CoreExtensions);
             extensions.Add(cover("XCh", Counted(XchFrames), NodeKind.Detail, Explain.StatExtensions, Topics.CoreExtensions));
             extensions.Add(cover("X96", Counted(X96Frames), NodeKind.Detail, Explain.StatExtensions, Topics.CoreExtensions));
-            extensions.Add(cover("XXCh", Counted(XxchFrames), NodeKind.Detail, Explain.StatExtensions, Topics.CoreExtensions));
+            extensions.Add(cover("XXCH", Counted(XxchFrames), NodeKind.Detail, Explain.StatExtensions, Topics.CoreExtensions));
             Add("Frames With Dynamic Range Coefficients", Counted(DynamicRangeFrames), Explain.StatFlags, Topics.DynamicRange);
             Add("Frames With Time Stamps", Counted(TimeStampFrames), Explain.StatFlags, Topics.CoreFrames);
             Add("Frames With Auxiliary Data", Counted(AuxiliaryFrames), Explain.StatFlags, Topics.CoreFrames);
@@ -291,32 +297,32 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     private string ProfileEvidence()
     {
-        if (HasLossless)
+        if ((_profileUnion & Tables.ExtensionLbr) != 0)
         {
-            return "an asset of the extension substream has the lossless component (XLL, mask 0x200)";
+            return "the first asset of the extension substream has the low bit rate component (LBR, mask 0x100)";
         }
 
-        if ((_componentUnion & Tables.ExtensionLbr) != 0)
+        if ((_profileUnion & Tables.ExtensionXll) != 0)
         {
-            return "an asset of the extension substream has the LBR component (mask 0x100)";
+            return "the first asset of the extension substream has the lossless component (XLL, mask 0x200)";
         }
 
-        if ((_componentUnion & (Tables.ExtensionXbr | Tables.ExtensionXxch | Tables.ExtensionX96)) != 0)
+        if ((_profileUnion & (Tables.ExtensionXbr | Tables.ExtensionXxch | Tables.ExtensionX96)) != 0)
         {
-            return "an asset of the extension substream has XBR, XXCh or X96 (mask 0x020, 0x040 or 0x080)";
+            return "the first asset of the extension substream has XBR, XXCH or X96 (mask 0x020, 0x040 or 0x080)";
         }
 
-        if ((_componentUnion & Tables.CoreSubstreamX96) != 0)
+        if ((_profileUnion & Tables.CoreSubstreamX96) != 0)
         {
             return "the core has the X96 extension, found at the distance from the end of the frame that its size gives";
         }
 
-        if ((_componentUnion & (Tables.CoreSubstreamXch | Tables.CoreSubstreamXxch)) != 0)
+        if ((_profileUnion & (Tables.CoreSubstreamXch | Tables.CoreSubstreamXxch)) != 0)
         {
             return "the core has the XCh or the XXCH extension, found where its sync word and its size or CRC say";
         }
 
-        return (_componentUnion & Tables.CoreSubstreamCore) != 0 ? "a core with no extension" : "an extension substream without any of those components";
+        return (_profileUnion & Tables.CoreSubstreamCore) != 0 ? "a core with no extension" : "an extension substream without any of those components";
     }
 
     private static string RateText(int code) => code switch
@@ -339,14 +345,14 @@ internal static class Profile
 {
     public static string Name(int components)
     {
-        if ((components & Tables.ExtensionXll) != 0)
-        {
-            return "DTS-HD Master Audio";
-        }
-
         if ((components & Tables.ExtensionLbr) != 0)
         {
             return "DTS Express";
+        }
+
+        if ((components & Tables.ExtensionXll) != 0)
+        {
+            return "DTS-HD Master Audio";
         }
 
         if ((components & (Tables.ExtensionXbr | Tables.ExtensionXxch | Tables.ExtensionX96)) != 0)

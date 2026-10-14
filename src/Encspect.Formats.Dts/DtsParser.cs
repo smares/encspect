@@ -20,18 +20,19 @@ public sealed class DtsParser : IFormatParser
 
     // A chain at the start of the data, after any zero bytes, takes 93, above AC-3's 92, ADTS's 91 and MPEG audio's 90: the sync words
     // of these formats differ in their first bytes (0x7F, 0xFE, 0x1F, 0xFF with a second byte that is not 0xFx, 0x64 and 0x58, against 0x0B,
-    // and 0xFF with 0xFx), so no chain is two formats' at once. One found further in takes 91, just above MPEG audio's 90 for a stream
-    // anywhere in the first MiB, whose free format reads the bytes DTS frames hold (the 0xFFFF that ends a subframe, followed by zero
-    // bytes) as a chain of its own frames. A DTS chain is a four-byte sync word, a header that must be valid and two more frames of the
-    // same form and sampling frequency at the offsets the sizes give, which junk or another format's data does not make. It stays below
-    // AC-3's 92 and every container's 95 and 100, which a payload of DTS frames in an MP4 file, or in the junk of another format, cannot take.
+    // and 0xFF with 0xFx), so no chain is two formats' at once. One found further in takes 50, as AC-3's does, below MPEG audio, ADTS
+    // (91 at the start of the data), Ogg's 60, Musepack's 60 and WavPack's 60, so a DTS stream in the junk of another format does not take
+    // its file; MPEG audio does not take DTS data with junk in front, since it asks a free-format chain for frames that hold what their
+    // headers promise and, in Layers I and II, a CRC that holds. A DTS chain is a four-byte sync word, a header that must be valid and
+    // two more frames of the same form and sampling frequency at the offsets the sizes give, which junk or another format's data does not
+    // make. It stays below every container's 95 and 100.
     public int Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
         long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
-        return found < 0 ? 0 : found == start ? 93 : 91;
+        return found < 0 ? 0 : found == start ? 93 : 50;
     }
 
     public void Parse(ParseContext context)
@@ -73,11 +74,11 @@ public sealed class DtsParser : IFormatParser
                 analysis.Cancellation.ThrowIfCancellationRequested();
             }
 
-            if (stream is { } current && Framing.UnitAt(cache, position, end, false) is { } unit && unit.First.Continues(current.First))
+            if (stream is { } current && Framing.UnitAt(cache, position, end, true) is { } unit && unit.First.Continues(current.First))
             {
                 long unitEnd = position + unit.Length;
                 long cutAt = unitEnd;
-                if (unitEnd < end && (Framing.UnitAt(cache, unitEnd, end, false) is not { } next || !next.First.Continues(unit.First)))
+                if (unitEnd < end && (Framing.UnitAt(cache, unitEnd, end, true) is not { } next || !next.First.Continues(unit.First)))
                 {
                     long restart = FindChain(cache, position + 1, Math.Min(unitEnd, end), end);
                     if (restart > position)
@@ -165,9 +166,11 @@ public sealed class DtsParser : IFormatParser
     // The offset of the first sync word in [from, limit) that a chain of frames follows, or -1.
     internal static long FindChain(BlockCache cache, long from, long limit, long end)
     {
+        var budget = new CrcBudget();
         for (long position = cache.IndexOfAny(SyncStarts, from, limit); position >= 0; position = cache.IndexOfAny(SyncStarts, position + 1, limit))
         {
-            if (Framing.UnitAt(cache, position, end, true) is { } unit && Framing.Chains(cache, position, unit, end))
+            budget.Scanned(position);
+            if (Framing.UnitAt(cache, position, end, true, budget) is { } unit && Framing.Chains(cache, position, unit, end, budget))
             {
                 return position;
             }

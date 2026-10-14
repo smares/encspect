@@ -1,0 +1,54 @@
+{
+ "description": "Four stereo core frames whose header says an XCh extension follows, with no sync word where its size would put it, written in 16-bit words, little endian.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.extension-missing",
+   "XCh"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "decode_error": "XCH sync word not found",
+  "skip": {
+   "decode": "ffmpeg looks for the XCh sync word as the frame's header says and rejects the frame without it (dca_core.c: 'XCH sync word not found')"
+  }
+ }
+}

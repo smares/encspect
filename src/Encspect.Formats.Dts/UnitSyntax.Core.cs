@@ -55,7 +55,7 @@ internal sealed partial class UnitSyntax
             _tree?.Close(cutEnd, NodeValue.Integer(availablePacked, "bytes"));
             if (!IsIncomplete)
             {
-                Report(Issue.HeaderOverrun, cutName, baseBit, cutEnd, "the core frame ends inside its header");
+                ReportGroup(Issue.HeaderOverrun, cutName, baseBit, cutEnd, "the core frame ends inside its header");
             }
 
             return;
@@ -106,7 +106,7 @@ internal sealed partial class UnitSyntax
         {
             if (!IsIncomplete)
             {
-                Report(Issue.HeaderOverrun, inSubstream ? "Core" : "Core Substream", baseBit, endBit, "the core frame ends inside its header");
+                ReportGroup(Issue.HeaderOverrun, inSubstream ? "Core" : "Core Substream", baseBit, endBit, "the core frame ends inside its header");
             }
         }
 
@@ -120,7 +120,7 @@ internal sealed partial class UnitSyntax
             }
             else if (header.HasExtendedAudio && header.ExtensionAudioId is 0 or 2 or 6 && !IsIncomplete && !_isBuilding)
             {
-                Report(Issue.ExtensionMissing, "Core Substream", baseBit, endBit, $"{ExtensionName(header)}: no sync word lies at the distance from the end of the frame that its size gives");
+                ReportGroup(Issue.ExtensionMissing, "Core Substream", baseBit, endBit, HowFound(header));
             }
         }
 
@@ -200,12 +200,15 @@ internal sealed partial class UnitSyntax
         Num("Sampling Frequency", 4, Explain.Sfreq, v => Tables.SampleRate(v) is var rate and > 0 ? NodeValue.Integer(rate, "Hz") : $"{v} (invalid)", Topics.CoreFrames);
         start = _pos;
         int rateCode = Num("Bit Rate", 5, Explain.Rate, RateValue, Topics.BitrateModes);
-        if (rateCode is > 24 and not Tables.RateOpen)
+        if (rateCode == Tables.RateLossless)
+        {
+            Report(Issue.RateLossless, "Bit Rate", start, _pos, string.Empty);
+        }
+        else if (rateCode is > 24 and not Tables.RateOpen)
         {
             Report(Issue.RateCode, "Bit Rate", start, _pos, rateCode switch
             {
                 Tables.RateVariable => "30, which FFmpeg and libdca read as a variable rate",
-                Tables.RateLossless => "31, which 5.6 and FFmpeg and libdca read as lossless",
                 _ => $"{rateCode}, which FFmpeg and libdca read as {Tables.DecodersRateKbps(rateCode)} kbit/s",
             });
         }

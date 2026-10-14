@@ -154,7 +154,7 @@
                       "length": 2048
                     },
                     {
-                      "name": "XXCh",
+                      "name": "XXCH",
                       "value": 0,
                       "unit": "frames",
                       "offset": 0,
@@ -3160,7 +3160,7 @@
       {
         "severity": "Warning",
         "code": "dts.extension-missing",
-        "message": "The header says the frame holds an extension (XCh: no sync word lies at the distance from the end of the frame that its size gives), which 6.4.2 and 6.2.4.2 say to find by the sync word's distance from the end of the frame. First in the frame at 0x0 (4 times).",
+        "message": "The header says the frame holds an extension, but no XCh sync word lies at the distance from the end of the frame that its size gives (6.4.2). First in the frame at 0x0 (4 times).",
         "offset": 0,
         "length": 512,
         "path": [

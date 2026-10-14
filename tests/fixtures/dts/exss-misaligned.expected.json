@@ -1,0 +1,46 @@
+{
+ "description": "Three units of a core frame of 1,001 bytes followed at once by an extension substream, whose sync word is then not on a 32-bit boundary.",
+ "length": 3579,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1193
+  ],
+  [
+   1193,
+   1193
+  ],
+  [
+   2386,
+   1193
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.substream-misaligned",
+   "3 bytes before the boundary"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

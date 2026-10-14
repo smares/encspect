@@ -22,6 +22,7 @@ internal sealed partial class UnitSyntax
         int firstWord = (((_pos - (baseByte * 8)) + 7) / 8 + 3) / 4;
         int lastWord = (Math.Min(declared, availablePacked) / 4) - 1;
         uint wanted = header.ExtensionAudioId switch { 0 => XchSync, 2 => X96Sync, _ => XxchSync };
+        FoundExtension? damaged = null;
         for (int word = lastWord; word >= firstWord; word--)
         {
             int at = baseByte + (word * 4);
@@ -51,16 +52,70 @@ internal sealed partial class UnitSyntax
                     break;
                 default:
                     int headerSize = (int)(next >> 26) + 1;
-                    if (headerSize >= 11 && headerSize <= distance && Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
+                    if (headerSize >= 11 && headerSize <= distance)
                     {
-                        return new FoundExtension(CoreExtension.Xxch, at, false);
+                        if (Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
+                        {
+                            return new FoundExtension(CoreExtension.Xxch, at, false);
+                        }
+
+                        // A header whose CRC16 fails is still the extension's where its channel set sizes lead to the end of the frame.
+                        if (damaged is null && XxchSizesReachEnd(at, headerSize, distance))
+                        {
+                            damaged = new FoundExtension(CoreExtension.Xxch, at, false);
+                        }
                     }
 
                     break;
             }
         }
 
-        return null;
+        return damaged;
+    }
+
+    // 6.5.2 Table 6-21: the header and the channel sets' sizes (14 bits each, after the 14 bits that give the header size, the
+    // channel set CRC flag, the speaker mask width and the number of sets) add up to the distance, less the up to three bytes that
+    // align the end of the frame.
+    private bool XxchSizesReachEnd(int at, int headerSize, int distance)
+    {
+        int bit = (at + 4) * 8 + 12;
+        int sets = PeekBits(bit, 2) + 1;
+        if (sets < 1)
+        {
+            return false;
+        }
+
+        long total = headerSize;
+        for (int i = 0; i < sets; i++)
+        {
+            int size = PeekBits(bit + 2 + (i * 14), 14);
+            if (size < 0)
+            {
+                return false;
+            }
+
+            total += size + 1;
+        }
+
+        return total <= distance && distance - total <= 3;
+    }
+
+    // Up to 24 bits at a bit position of the unit, or -1 where the bytes are not there.
+    private int PeekBits(int bit, int width)
+    {
+        int value = 0;
+        for (int i = 0; i < width; i++)
+        {
+            int b = _view.PeekByte((bit + i) >> 3);
+            if (b < 0)
+            {
+                return -1;
+            }
+
+            value = (value << 1) | ((b >> (7 - ((bit + i) & 7))) & 1);
+        }
+
+        return value;
     }
 
     private uint? PeekWord(int index)
@@ -72,7 +127,14 @@ internal sealed partial class UnitSyntax
         return (a | b | c | d) < 0 ? null : (uint)((a << 24) | (b << 16) | (c << 8) | d);
     }
 
-    private string ExtensionName(CoreHeader header) => header.ExtensionAudioId switch { 0 => "XCh", 2 => "X96", _ => "XXCh" };
+    private static string HowFound(CoreHeader header) => header.ExtensionAudioId switch
+    {
+        0 => "no XCh sync word lies at the distance from the end of the frame that its size gives (6.4.2)",
+        2 => "no X96 sync word lies at the distance from the end of the frame that its size gives (6.2.4.2)",
+        _ => "no XXCH sync word lies in the frame with a header size that fits and either a CRC16 that holds or channel set sizes that lead to the end of the frame (6.5.2)",
+    };
+
+    private string ExtensionName(CoreHeader header) => header.ExtensionAudioId switch { 0 => "XCh", 2 => "X96", _ => "XXCH" };
 
     // The core's data after its headers: the subframes, the optional information, up to the extension or the end of the frame.
     private void AddCoreData(int headerEnd, int dataEnd)
@@ -105,7 +167,7 @@ internal sealed partial class UnitSyntax
         _pos = syncBit;
         int depth = _tree?.Depth ?? 0;
         Facts.Extension = found.Kind;
-        string name = found.Kind switch { CoreExtension.Xch => "XCh Extension", CoreExtension.X96 => "X96 Extension", _ => "XXCh Extension" };
+        string name = found.Kind switch { CoreExtension.Xch => "XCh Extension", CoreExtension.X96 => "X96 Extension", _ => "XXCH Extension" };
         _tree?.Open(name, syncBit, found.Kind switch { CoreExtension.Xch => Explain.Xch, CoreExtension.X96 => Explain.X96, _ => Explain.Xxch }, Topics.CoreExtensions);
         try
         {
@@ -126,7 +188,7 @@ internal sealed partial class UnitSyntax
         {
             if (!IsIncomplete)
             {
-                Report(Issue.HeaderOverrun, name, syncBit, endBit, $"the frame ends inside the {ExtensionName(header)} extension's header");
+                ReportGroup(Issue.HeaderOverrun, name, syncBit, endBit, $"the frame ends inside the {ExtensionName(header)} extension's header");
             }
         }
 

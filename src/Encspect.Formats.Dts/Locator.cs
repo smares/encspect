@@ -39,6 +39,13 @@ internal readonly struct Locator(StreamForm form, long offset, int length)
             return Node.FromBits(name, offset, startBit, endBit, value, kind, description, topic);
         }
 
+        // A group the data ended before its first field covers no byte; it lies where the next field would have started.
+        if (endBit <= startBit)
+        {
+            long at = Clamp(offset + (form == StreamForm.LittleEndian16 ? startBit >> 3 : startBit / 14 * 2));
+            return new Node(name, at, 0, value) { Kind = kind, Description = description, Topic = topic };
+        }
+
         (long first, long last) = Cover(startBit, endBit);
         return new Node(name, first, last - first + 1, value) { Kind = kind, Description = description, Topic = topic };
     }

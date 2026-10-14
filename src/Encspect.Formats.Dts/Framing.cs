@@ -12,8 +12,9 @@ internal static class Framing
     private const int HeaderBytes = 16;
 
     // The item that starts at position, or null. An extension substream counts only with the right CRC16 where strict, which
-    // chains start with, since its sync word has nothing else to check it against.
-    public static Item? ItemAt(ISource source, long position, long end, bool strict)
+    // chains start with, since its sync word has nothing else to check it against; budget limits the CRC work that a
+    // search spends on candidates (see CrcBudget).
+    public static Item? ItemAt(ISource source, long position, long end, bool strict, CrcBudget? budget = null)
     {
         if (position >= end)
         {
@@ -48,7 +49,7 @@ internal static class Framing
             return null;
         }
 
-        if (strict && !HasValidCrc(source, position, end, found, exss))
+        if (strict && !HasValidCrc(source, position, end, found, exss, budget))
         {
             return null;
         }
@@ -57,31 +58,38 @@ internal static class Framing
     }
 
     // 7.5.2: the CRC16 over the header from byte 5 to its end, the CRC included, comes to zero.
-    public static bool HasValidCrc(ISource source, long position, long end, StreamForm form, ExssHeader header)
+    public static bool HasValidCrc(ISource source, long position, long end, StreamForm form, ExssHeader header, CrcBudget? budget = null)
     {
         int size = header.HeaderSize;
-        if (size > ExssHeader.MaximumHeaderSize || position + size > end)
+        if (size > ExssHeader.MaximumHeaderSize || position + size > end || (budget is not null && !budget.TryCharge(size)))
         {
             return false;
         }
 
-        byte[] file = new byte[size + (size & 1)];
-        if (source.Read(position, file.AsSpan(0, size)) < size)
+        Span<byte> file = stackalloc byte[ExssHeader.MaximumHeaderSize + 2];
+        file = file[..(size + (size & 1))];
+        file.Clear();
+        if (source.Read(position, file[..size]) < size)
         {
             return false;
         }
 
-        var packed = new byte[file.Length];
+        Span<byte> packed = stackalloc byte[ExssHeader.MaximumHeaderSize + 2];
+        packed = packed[..file.Length];
         Forms.Unpack(file, form, packed);
-        return Crc16.Compute(packed.AsSpan(5, size - 5)) == 0;
+        return Crc16.Compute(packed.Slice(5, size - 5)) == 0;
     }
 
     // A unit starting with first: its core frame, if it is one, and the extension substreams that follow, each with a higher index
     // than the one before, at the end of the core frame or of the previous substream, or at the next 32-bit boundary after it (7.5.1
-    // adds one to three null bytes to align them).
-    public static UnitInfo? UnitAt(ISource source, long position, long end, bool strict)
+    // adds one to three null bytes to align them). A substream right after the end, off the boundary, is kept in the unit but flagged
+    // (ExssRef.IsMisaligned): FFmpeg looks for it at the boundary only (dcadec.c, FFALIGN(frame_size, 4)) and so does not read it.
+    // A substream after a core frame needs the right CRC16, or to be whole and followed by a unit that passes the same test or the end of the data, so a
+    // damaged header is still reported and a sync word in junk is not taken for one. Null bytes that align the next unit's sync word
+    // belong to the unit.
+    public static UnitInfo? UnitAt(ISource source, long position, long end, bool strict, CrcBudget? budget = null)
     {
-        if (ItemAt(source, position, end, strict) is not { } first)
+        if (ItemAt(source, position, end, strict, budget) is not { } first)
         {
             return null;
         }
@@ -89,19 +97,20 @@ internal static class Framing
         var unit = new UnitInfo(first, first.Length);
         if (first.Form.Is14Bit())
         {
-            return unit;
+            return Padded(source, position, end, unit);
         }
 
         int lastIndex = first.IsCore ? -1 : first.Exss.Index;
-        long next = position + first.Length;
         while (unit.Count < UnitLayout.MaxExtensionSubstreams)
         {
+            long next = position + unit.Length;
             long aligned = position + ((unit.Length + 3L) & ~3L);
             Item? exss = null;
             long at = 0;
             foreach (long candidate in aligned == next ? [next] : new[] { next, aligned })
             {
-                if (candidate < end && ItemAt(source, candidate, end, false) is { IsCore: false } item && item.Exss.Index > lastIndex && item.Form == first.Form)
+                if (candidate < end && ItemAt(source, candidate, end, false) is { IsCore: false } item && item.Exss.Index > lastIndex && item.Form == first.Form
+                    && IsSubstream(source, candidate, end, item, budget))
                 {
                     exss = item;
                     at = candidate;
@@ -114,16 +123,45 @@ internal static class Framing
                 break;
             }
 
-            unit = unit.With(new ExssRef((int)(at - position), found.Length, found.Exss.Index, found.Length), (int)(at + found.Length - position));
+            unit = unit.With(new ExssRef((int)(at - position), found.Length, found.Exss.Index, found.Length, at != aligned), (int)(at + found.Length - position));
             lastIndex = found.Exss.Index;
-            next = position + unit.Length;
         }
 
-        return unit;
+        return Padded(source, position, end, unit);
+    }
+
+    private static bool IsSubstream(ISource source, long position, long end, Item item, CrcBudget? budget)
+    {
+        if (HasValidCrc(source, position, end, item.Form, item.Exss, budget))
+        {
+            return true;
+        }
+
+        long after = position + item.Length;
+        return after <= end && (after == end || ItemAt(source, after, end, true, budget) is not null);
+    }
+
+    // Adds the one to three null bytes that bring the next unit's sync word to a 32-bit boundary (7.5.1), where one follows or the data ends.
+    private static UnitInfo Padded(ISource source, long position, long end, UnitInfo unit)
+    {
+        int pad = (4 - (unit.Length & 3)) & 3;
+        long at = position + unit.Length;
+        if (pad == 0 || at + pad > end)
+        {
+            return unit;
+        }
+
+        Span<byte> bytes = stackalloc byte[3];
+        if (source.Read(at, bytes[..pad]) < pad || bytes[..pad].IndexOfAnyExcept((byte)0) >= 0 || (at + pad < end && ItemAt(source, at + pad, end, false) is null))
+        {
+            return unit;
+        }
+
+        return unit.WithLength(unit.Length + pad);
     }
 
     // A chain of units from position: each one at the end of the one before, in the same stream.
-    public static bool Chains(ISource source, long position, UnitInfo first, long end)
+    public static bool Chains(ISource source, long position, UnitInfo first, long end, CrcBudget? budget = null)
     {
         long next = position + first.Length;
         UnitInfo previous = first;
@@ -139,7 +177,7 @@ internal static class Framing
                 return false;
             }
 
-            if (UnitAt(source, next, end, false) is not { } following || !following.First.Continues(previous.First))
+            if (UnitAt(source, next, end, true, budget) is not { } following || !following.First.Continues(previous.First))
             {
                 return false;
             }
@@ -152,6 +190,40 @@ internal static class Framing
             }
         }
 
+        return true;
+    }
+}
+
+// The CRC work a search for a chain may spend on extension substream candidates: a header of up to 4 KiB is read and checked for each
+// sync word, and a file of sync words 16 bytes apart would otherwise cost 256 times its size. A search earns some bytes of work for
+// every byte it scans, after a start allowance that covers the headers of a real stream.
+internal sealed class CrcBudget
+{
+    private const long StartAllowance = 1 << 20;
+    private const int PerScannedByte = 4;
+
+    private long _allowance = StartAllowance;
+    private long _scanned;
+
+    public void Scanned(long position)
+    {
+        if (_scanned == 0)
+        {
+            _scanned = position;
+        }
+
+        _allowance += Math.Max(0, position - _scanned) * PerScannedByte;
+        _scanned = position;
+    }
+
+    public bool TryCharge(int bytes)
+    {
+        if (_allowance < bytes)
+        {
+            return false;
+        }
+
+        _allowance -= bytes;
         return true;
     }
 }
@@ -192,6 +264,8 @@ internal readonly struct UnitInfo
     public int Count { get; }
 
     public ExssRef this[int index] => index switch { 0 => _a, 1 => _b, 2 => _c, _ => _d };
+
+    public UnitInfo WithLength(int length) => new(First, length, Count, _a, _b, _c, _d);
 
     public UnitInfo With(ExssRef substream, int length) => Count switch
     {

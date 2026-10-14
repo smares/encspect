@@ -7,6 +7,7 @@ internal enum Issue
     ReservedValue,
     UserDefinedArrangement,
     RateCode,
+    RateLossless,
     RevisionIncompatible,
     CrcPresent,
     FrameTypeInconsistent,
@@ -24,9 +25,12 @@ internal enum Issue
     AssetDescriptorOverrun,
     ComponentSync,
     CodingModeAuxiliary,
+    SubstreamMisaligned,
 }
 
-internal delegate void IssueSink(Issue issue, string field, int startBit, int endBit, string detail);
+// isGroup: the node the finding points to is a group of fields (Tree.Close, Locator.Group), not a single field (Locator.Field); in the
+// little endian and 14-bit forms the two cover different bytes.
+internal delegate void IssueSink(Issue issue, string field, int startBit, int endBit, string detail, bool isGroup);
 
 // The verdicts a unit's checks gave (CRCs, sync words at the places the sizes lead to), in the order
 // the syntax reached them: 0 failed, 1 held, 2 not checked. The analysis writes them, the node pass reads them back.

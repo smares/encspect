@@ -1,0 +1,50 @@
+{
+ "description": "Four 3/2 core frames with an XCh extension for a back center channel (DTS-ES 6.1), written in 14-bit words, little endian.",
+ "length": 4688,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1172
+  ],
+  [
+   1172,
+   1172
+  ],
+  [
+   2344,
+   1172
+  ],
+  [
+   3516,
+   1172
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-ES",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "back center"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "libdca_channels": 5
+ }
+}

@@ -48,6 +48,18 @@ internal sealed class UnitFacts
     // Frames whose header or substream CRC failed.
     public bool HasCrcMismatch { get; set; }
 
+    // The components that name the stream: those of the core and its extension, and of the first asset of the first extension
+    // substream only, as FFmpeg's decoder reads a stream (dcadec.c, assets[0]).
+    public int ProfileComponents
+    {
+        get
+        {
+            int mask = HasCore ? Tables.CoreSubstreamCore : 0;
+            mask |= Extension switch { CoreExtension.Xch => Tables.CoreSubstreamXch, CoreExtension.X96 => Tables.CoreSubstreamX96, CoreExtension.Xxch => Tables.CoreSubstreamXxch, _ => 0 };
+            return mask | (Substreams.FirstOrDefault()?.Assets.FirstOrDefault()?.Components ?? 0);
+        }
+    }
+
     // The components Table E-2 lists, as Tables.CoreSubstreamCore and the like, that this unit holds.
     public int Components
     {

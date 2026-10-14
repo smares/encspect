@@ -1,0 +1,64 @@
+{
+ "description": "Three 3/2 core frames with an LFE channel and an XXCH extension whose frame header CRC16 fails in the second.",
+ "length": 3072,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1024
+  ],
+  [
+   1024,
+   1024
+  ],
+  [
+   2048,
+   1024
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-ES",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "side left",
+    "side right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Frames Failing a CRC": "1 frame"
+ },
+ "findings": [
+  [
+   "dts.crc-mismatch",
+   "XXCH frame header's CRC16"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": true,
+  "decode_errors": {
+   "0": "DSYNC check failed",
+   "1024": "XXCH sync word not found",
+   "2048": "DSYNC check failed"
+  },
+  "libdca_channels": 6,
+  "skip": {
+   "ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed')",
+   "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"
+  }
+ }
+}

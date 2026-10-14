@@ -43,7 +43,7 @@
   "libdca": true,
   "ffprobe_profile": false,
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD MA or HRA only after it has decoded the extension, which the stub components do not allow"
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow"
   }
  }
 }

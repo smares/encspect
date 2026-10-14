@@ -67,15 +67,51 @@ internal sealed partial class UnitSyntax
 
         foreach (ExssRef substream in _layout.Substreams)
         {
-            ReadSubstream(substream);
+            if (substream.IsMisaligned)
+            {
+                SkipMisalignedSubstream(substream);
+            }
+            else
+            {
+                ReadSubstream(substream);
+            }
         }
+    }
+
+    // 7.5.1 puts every sync word on a 32-bit boundary. FFmpeg finds an extension substream only there (dcadec.c), so one that is not
+    // is shown as the bytes it is and not read.
+    private void SkipMisalignedSubstream(ExssRef substream)
+    {
+        int startBit = substream.Start * 8;
+        int endBit = startBit + (Math.Min(substream.Length, substream.Available) * 8);
+        _tree?.Add(Locator.Group("Misaligned Extension Substream", startBit, endBit, NodeValue.Integer(substream.Length, "bytes"), Explain.MisalignedSubstream, Topics.ExtensionSubstream));
+        ReportGroup(Issue.SubstreamMisaligned, "Misaligned Extension Substream", startBit, endBit, $"{(4 - (substream.Start & 3)) & 3} bytes before the boundary");
     }
 
     private Locator Locator => new(_layout.Form, _layout.Offset, _layout.Length);
 
     private bool IsIncomplete => _layout.IsCut || _layout.IsTruncated;
 
-    private void Report(Issue issue, string field, int startBit, int endBit, string detail) => _issues?.Invoke(issue, field, startBit, endBit, detail);
+    private void Report(Issue issue, string field, int startBit, int endBit, string detail) => Invoke(issue, field, startBit, endBit, detail, false);
+
+    // A finding on a group of fields, whose node the tree builds with Locator.Group.
+    private void ReportGroup(Issue issue, string field, int startBit, int endBit, string detail) => Invoke(issue, field, startBit, endBit, detail, true);
+
+    private void Invoke(Issue issue, string field, int startBit, int endBit, string detail, bool isGroup)
+    {
+        if (_issues is null)
+        {
+            return;
+        }
+
+        // Frames Failing a CRC counts a unit with a header CRC that fails, wherever the header lies.
+        if (issue == Issue.CrcMismatch)
+        {
+            Facts.HasCrcMismatch = true;
+        }
+
+        _issues(issue, field, startBit, endBit, detail, isGroup);
+    }
 
     // The end of the group being read, in bits: a field never runs past it, so every node lies inside its parent. A read that would is the
     // data ending inside the group.

@@ -1,0 +1,46 @@
+{
+ "description": "Two core frames with AMODE 10, which Table 5-4 lists with 6 channels.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1024
+  ],
+  [
+   1024,
+   1024
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "4/2",
+   "channel_layout": [
+    "front left of center",
+    "front right of center",
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 1024,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg (dca.c, DCA_AMODE_COUNT is 10: 'Unsupported audio channel arrangement') and libdca (arrangements up to 9) reject AMODE 10 to 15; the channels and layout in this manifest rest on ETSI TS 102 114 Table 5-4 alone, with no tool to confirm them",
+   "decode": "ffmpeg (dca.c, DCA_AMODE_COUNT is 10: 'Unsupported audio channel arrangement') and libdca (arrangements up to 9) reject AMODE 10 to 15; the channels and layout in this manifest rest on ETSI TS 102 114 Table 5-4 alone, with no tool to confirm them",
+   "libdca": "ffmpeg (dca.c, DCA_AMODE_COUNT is 10: 'Unsupported audio channel arrangement') and libdca (arrangements up to 9) reject AMODE 10 to 15; the channels and layout in this manifest rest on ETSI TS 102 114 Table 5-4 alone, with no tool to confirm them"
+  }
+ }
+}

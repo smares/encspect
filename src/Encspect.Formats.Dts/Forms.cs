@@ -26,8 +26,10 @@ internal static class Forms
     public static int WordBits(this StreamForm form) => form.Is14Bit() ? 14 : 16;
 
     // The form a core frame starting at bytes (at least SyncLength of them) is written in, or null.
-    // A 14-bit sync word goes on into the next word (libdca's dca_syncinfo, FFmpeg's dts_probe): the
-    // four bits that finish the 32-bit sync word, then the six of FTYPE and SHORT.
+    // A 14-bit sync word goes on into the next word: the four bits (0001) that finish the 32-bit sync word. libdca (dca_syncinfo)
+    // and FFmpeg (dts_probe, IS_CORE_MARKER) also ask for FTYPE 1 and SHORT 31 there, which leaves termination frames out of
+    // their 14-bit streams; ETSI TS 102 114 5.3 defines them for the core stream whatever its form, so they count here, and a
+    // frame type that disagrees with SHORT is reported (dts.frame-type).
     public static StreamForm? Detect(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length < SyncLength)
@@ -39,16 +41,22 @@ internal static class Forms
         {
             (0x7F, 0xFE, 0x80, 0x01) => StreamForm.BigEndian16,
             (0xFE, 0x7F, 0x01, 0x80) => StreamForm.LittleEndian16,
-            (0x1F, 0xFF, 0xE8, 0x00) when bytes[4] == 0x07 && (bytes[5] & 0xF0) == 0xF0 => StreamForm.BigEndian14,
-            (0xFF, 0x1F, 0x00, 0xE8) when (bytes[4] & 0xF0) == 0xF0 && bytes[5] == 0x07 => StreamForm.LittleEndian14,
+            (0x1F, 0xFF, 0xE8, 0x00) when (bytes[4] & 0xFC) == 0x04 => StreamForm.BigEndian14,
+            (0xFF, 0x1F, 0x00, 0xE8) when (bytes[5] & 0xFC) == 0x04 => StreamForm.LittleEndian14,
             _ => null,
         };
     }
 
-    // How many bytes a frame of packedLength bytes (FSIZE + 1) takes in a form: the same in the 16-bit
-    // forms, and in the 14-bit forms the words that hold its bits, as libdca counts them
-    // (frame_size * 8 / 14 * 2).
-    public static int FileLength(int packedLength, StreamForm form) => form.Is14Bit() ? packedLength * 8 / 14 * 2 : packedLength;
+    // How many bytes a frame of packedLength bytes (FSIZE + 1) takes in a form: in the big endian 16-bit form as many; in the little
+    // endian one the whole 16-bit words that hold them; in the 14-bit forms the whole words that hold its bits. A frame that ends
+    // inside a word fills it up (FFmpeg's avpriv_dca_convert_bitstream reads (size + 1) / 2 words); libdca counts the 14-bit words
+    // rounded down (frame_size * 8 / 14 * 2) and finds the next sync word a word later.
+    public static int FileLength(int packedLength, StreamForm form) => form switch
+    {
+        StreamForm.BigEndian16 => packedLength,
+        StreamForm.LittleEndian16 => (packedLength + 1) & ~1,
+        _ => ((packedLength * 8) + 13) / 14 * 2,
+    };
 
     // Converts file bytes to the bit-packed stream; returns its length in bytes. A 14-bit form holds
     // 14 bits per two bytes, so n bytes make n / 2 * 14 bits, rounded up to whole bytes as FFmpeg's flush_put_bits does.

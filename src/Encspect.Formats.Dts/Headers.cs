@@ -217,7 +217,8 @@ internal sealed class UnitLayout
 }
 
 // An extension substream of a unit: where it starts relative to the unit, its length (nuExtSSFsize) and its index.
-internal readonly record struct ExssRef(int Start, int Length, int Index, int Available);
+// IsMisaligned: the sync word is not on a 32-bit boundary of the unit (7.5.1), so a decoder that follows FFmpeg does not find it.
+internal readonly record struct ExssRef(int Start, int Length, int Index, int Available, bool IsMisaligned = false);
 
 // A core extension found in a frame: its kind, where its sync word lies in the unit and whether its size field gives the distance
 // itself, which 6.4.2 accepts for legacy streams.

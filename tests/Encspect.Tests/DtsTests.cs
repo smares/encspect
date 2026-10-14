@@ -48,11 +48,64 @@ public class DtsTests
     }
 
     [Fact]
-    public void LeadingZeroBytesAreSkippedAndOtherJunkTakes91()
+    public void LeadingZeroBytesAreSkippedAndOtherJunkTakes50()
     {
         byte[] data = Fixture("core-16be.dts");
         Assert.Equal(93, Sniff([.. new byte[100], .. data]));
-        Assert.Equal(91, Sniff([.. Enumerable.Range(0, 30).Select(i => (byte)(0x80 | i)), .. data]));
+        Assert.Equal(50, Sniff([.. Enumerable.Range(0, 30).Select(i => (byte)(0x80 | i)), .. data]));
+    }
+
+    private static string FormatOf(byte[] data, IEnumerable<IFormatParser>? parsers = null) =>
+        (parsers is null ? Analyzer.CreateDefault() : new Analyzer(parsers)).Analyze("mixed", new MemoryStream(data)).Root.Value?.ToString() ?? string.Empty;
+
+    private static byte[] Junk() => [.. Enumerable.Range(0, 30).Select(i => (byte)(0x80 | i))];
+
+    // A DTS stream ranks below MPEG audio, ADTS and the containers when it starts further in, so it cannot take an MP3 file that has it
+    // appended; and the free-format chains MPEG audio finds in DTS data are no frames, so junk in front of DTS data does not give the
+    // file to MPEG audio.
+    [Fact]
+    public void MpegAudioFollowedByDtsStaysMpegAudio()
+    {
+        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade-stereo.mp3"));
+        foreach (string name in new[] { "external-ffmpeg-stereo-44k-256k.dts", "core-16be.dts" })
+        {
+            Assert.Equal("MPEG Audio", FormatOf([.. mp3, .. Fixture(name)]));
+        }
+    }
+
+    [Theory]
+    [InlineData("core-16be.dts")]
+    [InlineData("junk-around.dts")]
+    [InlineData("external-ffmpeg-5.1-48k-768k.dts")]
+    [InlineData("external-ffmpeg-stereo-44k-256k.dts")]
+    [InlineData("14le-x96.dts")]
+    [InlineData("exss-lossless.dts")]
+    public void DtsAfterJunkIsStillDts(string name)
+    {
+        Assert.Equal("DTS", FormatOf([.. Junk(), .. Fixture(name)]));
+    }
+
+    // Extension substream sync words with headers of a megabyte, which each point at the next one, are no units: the CRC16 of a substream
+    // is checked wherever one follows a core frame or starts a unit, so the bytes after the last frame stay trailing data.
+    [Fact]
+    public void ExtensionSubstreamHeadersThatFailTheirCrcAfterTheLastFrameAreTrailingData()
+    {
+        byte[] header = (((new System.Numerics.BigInteger(0x64582025) << 43) | (System.Numerics.BigInteger.One << 32) | (4095L << 20) | 0xFFFFF) << 5).ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] flood = [.. Enumerable.Range(0, 1 << 17).SelectMany(_ => header.Concat(new byte[6]))];
+        byte[] core = Fixture("core-16be.dts");
+        Report report = Analyzer.CreateDefault().Analyze("flood.dts", new MemoryStream([.. core[..1536], .. flood]));
+        Assert.Single(report.Streams);
+        Assert.Equal(["dts.trailing-data"], report.Findings.Select(f => f.Code));
+    }
+
+    // ADTS at the start takes 91 and DTS further in 50, whichever comes first in the list of parsers.
+    [Fact]
+    public void AdtsFollowedByDtsIsAdtsInEitherOrderOfTheParsers()
+    {
+        byte[] adts = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "cbr.aac"));
+        byte[] data = [.. adts, .. Fixture("core-16be.dts")];
+        Assert.Equal("AAC", FormatOf(data));
+        Assert.Equal("AAC", FormatOf(data, DefaultParsers.Formats.Reverse()));
     }
 
     // Frames that end exactly at the end of the data are a chain, however few; a frame followed by the start of another that the data
@@ -121,12 +174,16 @@ public class DtsTests
         }
     }
 
+    // Fixtures written in the little endian 16-bit or a 14-bit form, by their names.
+    private static bool IsOtherForm(string name) =>
+        new[] { "core-14", "core-16le", "14be-", "14le-", "16le-", "le16-", "core-odd-size-14", "core-odd-size-16le", "termination-14", "termination-16le" }.Any(prefix => name.StartsWith(prefix, StringComparison.Ordinal));
+
     public static TheoryData<string> BigEndianInputs()
     {
         var data = new TheoryData<string>();
         string root = Fixtures.FixtureDirectory;
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "dts")).Concat(Directory.EnumerateFiles(Path.Combine(root, "fuzz"), "dts-*.bin"))
-            .Where(p => !p.EndsWith(".json", StringComparison.Ordinal) && !Path.GetFileName(p).StartsWith("core-14", StringComparison.Ordinal) && !Path.GetFileName(p).StartsWith("core-16le", StringComparison.Ordinal))
+            .Where(p => !p.EndsWith(".json", StringComparison.Ordinal) && !IsOtherForm(Path.GetFileName(p)))
             .Order(StringComparer.Ordinal))
         {
             data.Add(Path.GetRelativePath(root, path).Replace('\\', '/'));

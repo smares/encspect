@@ -54,7 +54,7 @@
    "2112": "Packet too short for EXSS frame"
   },
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD MA or HRA only after it has decoded the extension, which the stub components do not allow",
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
    "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum'), and the cut substream is 'too short for EXSS frame' (dca_exss.c)"
   }
  }

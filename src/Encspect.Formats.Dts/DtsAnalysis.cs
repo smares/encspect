@@ -114,11 +114,11 @@ internal sealed class DtsAnalysis
     private static string Times(int count) => count == 1 ? "once" : $"{count} times";
 
     // The finding of each kind the syntax reports: one code, the first case's node, a count.
-    private void OnIssue(Issue issue, string field, int start, int end, string detail)
+    private void OnIssue(Issue issue, string field, int start, int end, string detail, bool isGroup)
     {
         long offset = _unitOffset;
         Locator locator = _locator;
-        Node Field() => locator.Field(field, start, end);
+        Node Field() => isGroup ? locator.Group(field, start, end) : locator.Field(field, start, end);
         string at = $"the frame at 0x{offset:X}";
         switch (issue)
         {
@@ -133,6 +133,10 @@ internal sealed class DtsAnalysis
             case Issue.RateCode:
                 Findings.Add(Severity.Warning, "dts.rate-code", Field, count =>
                     $"RATE is not one of the codes Table 5-7 lists: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.RateLossless:
+                Findings.Add(Severity.Info, "dts.rate-lossless", Field, count =>
+                    $"RATE is 31, which Table 5-7 does not list; 5.6 uses it to select the step-size table of a lossless stream, and FFmpeg and libdca read it as lossless. First in {at} ({Times(count)}).");
                 break;
             case Issue.RevisionIncompatible:
                 Findings.Add(Severity.Warning, "dts.revision-incompatible", Field, count =>
@@ -176,7 +180,7 @@ internal sealed class DtsAnalysis
                 break;
             case Issue.ExtensionMissing:
                 Findings.Add(Severity.Warning, "dts.extension-missing", Field, count =>
-                    $"The header says the frame holds an extension ({detail}), which 6.4.2 and 6.2.4.2 say to find by the sync word's distance from the end of the frame. First in {at} ({Times(count)}).");
+                    $"The header says the frame holds an extension, but {detail}. First in {at} ({Times(count)}).");
                 break;
             case Issue.ExtensionSizeLegacy:
                 Findings.Add(Severity.Info, "dts.extension-size-legacy", Field, count =>
@@ -197,6 +201,10 @@ internal sealed class DtsAnalysis
             case Issue.ComponentSync:
                 Findings.Add(Severity.Warning, "dts.component-sync", Field, count =>
                     $"A component of an asset does not start with its sync word at the place the sizes in the header lead to: {detail} (7.5.3.4). First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubstreamMisaligned:
+                Findings.Add(Severity.Warning, "dts.substream-misaligned", Field, count =>
+                    $"An extension substream starts {detail} ; a decoder that follows FFmpeg looks for it on the boundary only, so the stream plays as its core. First in {at} ({Times(count)}).");
                 break;
             case Issue.CodingModeAuxiliary:
                 Findings.Add(Severity.Info, "dts.coding-mode-auxiliary", Field, count =>
@@ -275,6 +283,7 @@ internal sealed class DtsAnalysis
             first.Leading.Add(encoder);
         }
 
+        stream.Figures.DeliveredRate = stream.DeliveredRate;
         Node statistics = stream.Statistics(Cover, out Node bitrate);
         if (named)
         {
@@ -287,7 +296,7 @@ internal sealed class DtsAnalysis
         {
             Nodes = [.. Regions.Where(r => stream.Regions.Contains(r)).Select(r => r.Node!)],
             Codec = stream.Codec,
-            SampleRate = stream.Key.SampleRate,
+            SampleRate = stream.DeliveredRate,
             Channels = stream.Channels,
             ChannelMode = stream.ChannelMode,
             ChannelLayout = stream.Layout,
@@ -377,7 +386,7 @@ internal static class UnitRecord
         {
             Put32(buffer, substream.Start);
             Put32(buffer, substream.Length);
-            buffer.Add((byte)substream.Index);
+            buffer.Add((byte)(substream.Index | (substream.IsMisaligned ? 0x80 : 0)));
             Put32(buffer, substream.Available);
         }
 
@@ -443,10 +452,11 @@ internal static class UnitRecord
         {
             int start = BinaryPrimitives.ReadInt32BigEndian(data[at..]);
             int length = BinaryPrimitives.ReadInt32BigEndian(data[(at + 4)..]);
-            int index = data[at + 8];
+            int index = data[at + 8] & 3;
+            bool misaligned = (data[at + 8] & 0x80) != 0;
             int available = BinaryPrimitives.ReadInt32BigEndian(data[(at + 9)..]);
             at += 13;
-            layout.Substreams.Add(new ExssRef(start, length, index, available));
+            layout.Substreams.Add(new ExssRef(start, length, index, available, misaligned));
         }
 
         int verdictCount = data[at++];

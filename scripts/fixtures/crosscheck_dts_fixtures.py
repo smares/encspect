@@ -4,8 +4,8 @@
 For every fixture, its manifest's "crosscheck" says what to confirm:
 
 - "ffprobe": ffprobe (ffmpeg 6.1) must report the first stream's codec, sampling frequency (the
-  extension's where the stream has one, such as 96 kHz with X96), channels, profile (DTS, DTS-ES,
-  DTS 96/24, DTS-HD MA, DTS-HD HRA, DTS Express; "ffprobe_profile": false where ffmpeg reads the
+  extension's where the stream has one, such as 96 kHz with X96; "ffprobe_rate" where ffmpeg reads another), channels, profile (DTS, DTS-ES,
+  DTS 96/24, DTS-HD Master Audio, DTS-HD High Resolution Audio, DTS Express, which ffmpeg writes "DTS-HD MA" and "DTS-HD HRA"; "ffprobe_profile": false where ffmpeg reads the
   fixture otherwise), a channel layout that feeds the manifest's speakers (channel_layouts.py;
   ffmpeg places a lone surround pair at the sides, the analyzer at the back as the WAVE channel
   mask does, so a lone pair counts as one position), the nominal bitrate the first frame's RATE
@@ -51,7 +51,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "dts"
 CHECKS = ("ffprobe", "ffprobe_profile", "ffprobe_bitrate", "ffprobe_packets", "decode", "libdca")
 
-# ffmpeg's profile names (libavcodec/profiles.c, ff_dca_profiles) for the analyzer's codec names.
+# ffmpeg's profile names (libavcodec/profiles.c, ff_dca_profiles) for the analyzer's codec names, which are written out in full.
 PROFILES = {"DTS": "DTS", "DTS-ES": "DTS-ES", "DTS 96/24": "DTS 96/24", "DTS-HD Master Audio": "DTS-HD MA",
             "DTS-HD High Resolution Audio": "DTS-HD HRA", "DTS Express": "DTS Express"}
 
@@ -67,6 +67,13 @@ def nominal_bitrate(report):
         return None
     number = mi.leading_number(text)
     return None if number is None else round(number * 1000)
+
+
+def core_rate(report, fallback):
+    """The sampling frequency of the core frames, which libdca reads, from the golden report's statistics; the stream's rate is the highest the extensions state."""
+    statistics = next((n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics"), None)
+    number = mi.leading_number(str(mi.value(statistics, "Sampling Frequency"))) if statistics else None
+    return int(number) if number else fallback
 
 
 def extension_rate(manifest):
@@ -97,7 +104,7 @@ def check_ffprobe(path, manifest, report, problems):
         problems.append("ffprobe finds no audio stream")
         return
     actual, expected = streams[0], manifest["streams"][0]
-    rate = extension_rate(manifest) or expected["sample_rate"]
+    rate = check.get("ffprobe_rate") or extension_rate(manifest) or expected["sample_rate"]
     channels = check.get("ffprobe_channels", expected["channels"])
     if actual.get("codec_name") != "dts" or int(actual.get("sample_rate", 0)) != rate or int(actual.get("channels", 0)) != channels:
         problems.append(f"ffprobe: {actual.get('codec_name')}, {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected dts, {rate} Hz, {channels}")
@@ -185,7 +192,12 @@ def check_libdca(tool, path, manifest, report, problems):
     damaged = set(check.get("libdca_damaged", []))
     nominal = nominal_bitrate(report)
     # The stream each frame belongs to: the streams' samples add up frame by frame.
-    streams = manifest["streams"]
+    streams = [dict(s) for s in manifest["streams"]]
+    if len(streams) == 1:
+        # The stream's rate and samples are those it delivers, the highest the extensions state; libdca reads the core's.
+        core = core_rate(report, streams[0]["sample_rate"])
+        streams[0]["samples"] = round(streams[0]["samples"] * core / streams[0]["sample_rate"])
+        streams[0]["sample_rate"] = core
     index, used = 0, 0
     for offset, length, flags, rate, bitrate, samples, status in found:
         if used >= streams[index]["samples"] and index + 1 < len(streams):
@@ -231,9 +243,40 @@ MEDIAINFO_READS_OTHERWISE = {
         ["channels", "channel layout"], "MediaInfo gives no channels for a user defined arrangement (File_Dts.cpp, Streams_Fill_Core: Core_Core_AMODE<16), where the "
                                        "analyzer reports the two channels the core codes as discrete"),
     "xxch": dict.fromkeys(
-        ["commercial name", "channels", "channel layout"], "MediaInfo names a core with XXCH \"DTS\" with the feature XXCh and counts only the core's channels "
+        ["commercial name", "channels", "channel layout"], "MediaInfo names a core with XXCH \"DTS\" with the feature XXCH and counts only the core's channels "
                                                        "(File_Dts.cpp, Streams_Fill: presence_Core_XXCH fills the core), where the analyzer adds the extension's channels"),
 }
+
+# Fixtures added after the first reading of MediaInfo's source, where MediaInfo 24.01's reading was measured: the reason says so.
+MEASURED = "measured with MediaInfo 24.01"
+BYTES_14 = ("MediaInfo counts the bytes of a 14-bit frame as FSIZE + 1 times 8 over 7, rounded down, and of a 16-bit frame as FSIZE + 1, where a frame that ends inside a word "
+            "takes the whole word in the file (" + MEASURED + ": 585 bytes for the frame of 586), so its bitrate is a little under the one the frames' lengths give")
+LITTLE_ENDIAN_EXSS = ("MediaInfo finds an extension substream behind a core frame in the big endian 16-bit form only (" + MEASURED + ": it reports the core of these little endian files alone)")
+FOURTEEN_BIT_EXTENSION = "MediaInfo finds the extensions of a core frame in the 16-bit forms only (" + MEASURED + ": it reports the core of these 14-bit files alone)"
+for fixture_name in ("core-odd-size-14be", "core-odd-size-14le", "core-odd-size-16le"):
+    MEDIAINFO_READS_OTHERWISE[fixture_name] = {"bitrate": BYTES_14}
+for form in ("14be", "14le"):
+    for source in ("extension-missing", "xch", "x96", "xxch", "xxch-header-overrun"):
+        MEDIAINFO_READS_OTHERWISE[f"{form}-{source}"] = {"bitrate": BYTES_14}
+    MEDIAINFO_READS_OTHERWISE[f"{form}-xch"].update(dict.fromkeys(["commercial name", "channels", "channel layout"], FOURTEEN_BIT_EXTENSION))
+    MEDIAINFO_READS_OTHERWISE[f"{form}-x96"].update(dict.fromkeys(["commercial name", "sampling rate", "samples per frame"], FOURTEEN_BIT_EXTENSION))
+    MEDIAINFO_READS_OTHERWISE[f"{form}-xxch"].update(MEDIAINFO_READS_OTHERWISE["xxch"])
+    MEDIAINFO_READS_OTHERWISE[f"{form}-xxch-header-overrun"]["commercial name"] = FOURTEEN_BIT_EXTENSION
+MEDIAINFO_READS_OTHERWISE["16le-xxch"] = MEDIAINFO_READS_OTHERWISE["xxch"]
+MEDIAINFO_READS_OTHERWISE["xxch-bad-crc"] = MEDIAINFO_READS_OTHERWISE["xxch"]
+for fixture_name in ("xxch-header-overrun", "16le-xxch-header-overrun"):
+    MEDIAINFO_READS_OTHERWISE[fixture_name] = {"format": "MediaInfo 24.01 does not recognize the file as DTS (" + MEASURED + "): the XXCH extension of 12 bytes ends the core frame inside its header"}
+for fixture_name in ("exss-lossless", "exss-bad-crc", "exss-bad-component-sync", "exss-descriptor-overrun", "exss-sizes-overrun", "exss-two-assets", "exss-assets-overrun", "exss-component-header-overrun", "exss-high-resolution"):
+    MEDIAINFO_READS_OTHERWISE.setdefault("le16-" + fixture_name, {}).update(dict.fromkeys(MIXED, LITTLE_ENDIAN_EXSS))
+MEDIAINFO_READS_OTHERWISE["exss-component-header-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="the lossless component is a sync word and four bytes, which MediaInfo does not take for the component (" + MEASURED + "), where the analyzer reports dts.header-overrun and names the stream from the descriptor"))
+MEDIAINFO_READS_OTHERWISE["exss-assets-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it ends the asset where its size says, 60 bytes, and finds no component's sync word in the first 60 bytes, which the analyzer reports as dts.substream-overrun and names the stream from the descriptor (" + MEASURED + ")"))
+MEDIAINFO_READS_OTHERWISE["xbr-bad-crc"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the XBR frame header's CRC16 and leaves a component that fails it (" + MEASURED + "), which the analyzer reports as dts.crc-mismatch and reads on"))
+MEDIAINFO_READS_OTHERWISE["exss-misaligned"] = dict.fromkeys(MIXED, "MediaInfo looks for the extension substream right after the core frame, not where 32-bit alignment puts it, and reads this one (" + MEASURED + "), where the analyzer and FFmpeg's decoder (dcadec.c) do not")
+for fixture_name in ("le16-exss-high-resolution", "xbr-bad-crc"):
+    MEDIAINFO_READS_OTHERWISE[fixture_name].pop("bitrate mode")
+MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
+for amode in range(10, 16):
+    MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}
 
 # MediaInfo's commercial names (File_Dts.cpp, Streams_Fill) for the analyzer's codec names.
 COMMERCIAL = {"DTS": "DTS", "DTS-ES": "DTS-ES Discrete", "DTS 96/24": "DTS 96/24", "DTS Express": "DTS Express"}

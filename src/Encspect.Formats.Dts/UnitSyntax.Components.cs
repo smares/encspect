@@ -13,7 +13,7 @@ internal sealed partial class UnitSyntax
     [
         (Tables.ComponentCore, "Core", SubstreamCoreSync),
         (Tables.ComponentXbr, "XBR", XbrSync),
-        (Tables.ComponentXxch, "XXCh", XxchSync),
+        (Tables.ComponentXxch, "XXCH", XxchSync),
         (Tables.ComponentX96, "X96", X96Sync),
         (Tables.ComponentLbr, "LBR", LbrSync),
         (Tables.ComponentXll, "XLL", XllSync),
@@ -56,7 +56,7 @@ internal sealed partial class UnitSyntax
 
         if (sum > substream.Length)
         {
-            Report(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {sum} bytes, more than the substream's {substream.Length}");
+            ReportGroup(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {sum} bytes, more than the substream's {substream.Length}");
         }
 
         for (int i = 0; i < assets.Length; i++)
@@ -91,7 +91,7 @@ internal sealed partial class UnitSyntax
 
             if (used > assetSizes[i])
             {
-                Report(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {used} bytes, more than the {assetSizes[i]} its size gives");
+                ReportGroup(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {used} bytes, more than the {assetSizes[i]} its size gives");
             }
 
             _tree?.Close(assetLimit * 8, NodeValue.Integer(assetSizes[i], "bytes"));
@@ -165,7 +165,7 @@ internal sealed partial class UnitSyntax
         {
             if (!IsIncomplete)
             {
-                Report(Issue.HeaderOverrun, name, startBit, endBit, $"the data ends inside the {name} component's header");
+                ReportGroup(Issue.HeaderOverrun, name, startBit, endBit, $"the data ends inside the {name} component's header");
             }
         }
 
@@ -227,7 +227,7 @@ internal sealed partial class UnitSyntax
     private static string SyncDescription(string name) => name switch
     {
         "XBR" => Explain.XbrSync,
-        "XXCh" => Explain.XxchSync,
+        "XXCH" => Explain.XxchSync,
         "X96" => Explain.X96Sync,
         "LBR" => Explain.LbrSync,
         _ => Explain.XllSync,

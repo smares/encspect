@@ -154,6 +154,25 @@ public class ComplexityTests
         TimedDts([.. Repeat(exss, 1 << 20)]);
     }
 
+    // An extension substream sync word every 16 bytes, each header stating a size of 4,096 bytes and a megabyte of substream (so the next
+    // header lies where the size points) and failing its CRC16: each is a candidate that costs a 4 KiB read and a CRC if checked in full.
+    // The search spends a bounded amount of that work, so the time stays linear in the data.
+    [Fact]
+    public void ManyExtensionSubstreamHeadersThatFailTheirCrc()
+    {
+        // Sync word, user bits 0, index 0, long header (1), header size 4095, substream size 0xFFFFF, then the first bit of the next field.
+        byte[] header = (((new System.Numerics.BigInteger(0x64582025) << 43) | (System.Numerics.BigInteger.One << 32) | (4095L << 20) | 0xFFFFF) << 5).ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] template = new byte[16];
+        header.CopyTo(template, 0);
+        var data = new byte[32 << 20];
+        for (int at = 0; at + 16 <= data.Length; at += 16)
+        {
+            template.CopyTo(data, at);
+        }
+
+        TimedDts(data);
+    }
+
     private static void SetBits(byte[] data, int start, int width, int value)
     {
         for (int i = 0; i < width; i++)

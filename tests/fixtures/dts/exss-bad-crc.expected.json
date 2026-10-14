@@ -49,7 +49,7 @@
   "ffprobe_profile": false,
   "decode_error": "Invalid EXSS header checksum",
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD MA or HRA only after it has decoded the extension, which the stub components do not allow",
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
    "decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum')"
   }
  }

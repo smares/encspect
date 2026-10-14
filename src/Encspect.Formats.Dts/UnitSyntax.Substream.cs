@@ -51,7 +51,7 @@ internal sealed partial class UnitSyntax
         {
             if (!IsIncomplete)
             {
-                Report(Issue.HeaderOverrun, "Extension Substream", baseBit, endBit, "the data ends inside the extension substream's header");
+                ReportGroup(Issue.HeaderOverrun, "Extension Substream", baseBit, endBit, "the data ends inside the extension substream's header");
             }
         }
 
@@ -141,7 +141,6 @@ internal sealed partial class UnitSyntax
         if (verdict == 0)
         {
             Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, "The extension substream header's CRC16 (7.5.2) fails");
-            Facts.HasCrcMismatch = true;
         }
 
         headerEnd = _pos;
@@ -263,7 +262,7 @@ internal sealed partial class UnitSyntax
         ReadNavigation(asset, oneToOne, mixPresent);
         if (_pos > end)
         {
-            Report(Issue.AssetDescriptorOverrun, $"Asset Descriptor {ordinal + 1}", groupStart, _pos, $"asset {ordinal + 1}'s fields end {(_pos - end + 7) / 8} bytes past the {size} bytes of its descriptor");
+            ReportGroup(Issue.AssetDescriptorOverrun, $"Asset Descriptor {ordinal + 1}", groupStart, _pos, $"asset {ordinal + 1}'s fields end {(_pos - end + 7) / 8} bytes past the {size} bytes of its descriptor");
         }
 
         // Reserved bits and the byte alignment complete the descriptor (nuAssetDescriptFsize).
@@ -317,7 +316,7 @@ internal sealed partial class UnitSyntax
             Num("Representation Type", 3, Explain.RepresentationType, v => v switch
             {
                 0 => "0 (audio asset for mixing or replacement)",
-                2 => "2 (Lt/Rt encoded for matrix surround decoding)",
+                2 => "2 (left total, right total encoded for matrix surround decoding)",
                 3 => "3 (processed for headphone playback)",
                 _ => $"{v} (reserved)",
             }, Topics.ExtensionSubstream);
@@ -484,7 +483,7 @@ internal sealed partial class UnitSyntax
 
                 if ((mask & Tables.ComponentXxch) != 0)
                 {
-                    sizes[Tables.ComponentXxch] = Num("XXCh Size", 14, Explain.XxchSize, Topics.ExtensionSubstream, "bytes", 1) + 1;
+                    sizes[Tables.ComponentXxch] = Num("XXCH Size", 14, Explain.XxchSize, Topics.ExtensionSubstream, "bytes", 1) + 1;
                 }
 
                 if ((mask & Tables.ComponentX96) != 0)
@@ -603,7 +602,7 @@ internal sealed partial class UnitSyntax
         return $"0x{mask:X3} ({(names.Count == 0 ? "none" : string.Join(", ", names))})";
     }
 
-    // The coding components of Table 7-15 in Table E-2's bits: the extension substream's core, XXCh, X96, XBR, XLL and LBR.
+    // The coding components of Table 7-15 in Table E-2's bits: the extension substream's core, XXCH, X96, XBR, XLL and LBR.
     private static int ComponentsOfMask(int mask)
     {
         int bits = 0;

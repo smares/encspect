@@ -99,9 +99,9 @@ internal static class Tables
         7 => "3/1 (center, left, right, surround)",
         8 => "2/2 (left, right, left surround, right surround)",
         9 => "3/2 (center, left, right, left surround, right surround)",
-        10 => "3/2 with center left and center right (center left, center right, left, right, left surround, right surround)",
+        10 => "4/2 (center left, center right, left, right, left surround, right surround)",
         11 => "3/2 with overhead (center, left, right, left rear, right rear, overhead)",
-        12 => "2/2 with center front and center rear (center front, center rear, left front, right front, left rear, right rear)",
+        12 => "3/3 (center front, center rear, left front, right front, left rear, right rear)",
         13 => "5/2 (center left, center, center right, left, right, left surround, right surround)",
         14 => "4/4 (center left, center right, left, right, first and second left surround, first and second right surround)",
         15 => "5/3 (center left, center, center right, left, right, left surround, surround, right surround)",
@@ -120,9 +120,9 @@ internal static class Tables
         7 => "3/1",
         8 => "2/2",
         9 => "3/2",
-        10 => "3/2 (center left and right)",
+        10 => "4/2",
         11 => "3/2 (overhead)",
-        12 => "2/2 (center front and rear)",
+        12 => "3/3",
         13 => "5/2",
         14 => "4/4",
         15 => "5/3",
@@ -168,7 +168,7 @@ internal static class Tables
         _ => 384000,
     };
 
-    // Table 5-17: the source PCM resolution by PCMR and whether the surround channels are DTS ES mastered; 0 for the invalid codes.
+    // Table 5-17: the source PCM resolution by PCMR and whether the surround channels are DTS-ES mastered; 0 for the invalid codes.
     public static int SourceResolution(int pcmr) => pcmr switch
     {
         0 or 1 => 16,
@@ -193,7 +193,7 @@ internal static class Tables
     {
         0 => "channel extension (XCh)",
         2 => "frequency extension (X96)",
-        6 => "channel extension (XXCh)",
+        6 => "channel extension (XXCH)",
         _ => "reserved",
     };
 
@@ -222,12 +222,12 @@ internal static class Tables
     public static readonly string[] Components =
     [
         "core in the core substream",
-        "XXCh in the core substream",
+        "XXCH in the core substream",
         "X96 in the core substream",
         "XCh in the core substream",
         "core",
         "XBR",
-        "XXCh",
+        "XXCH",
         "X96",
         "LBR",
         "XLL",
@@ -244,7 +244,7 @@ internal static class Tables
     public const int ComponentReserved = 0xC00;
 
     // Table E-2: the streams that the DTS-in-ISOBMFF box's StreamConstruction names, as the components they hold: bit 0 core, 1 XCh, 2 X96,
-    // 3 XXCh of the core substream and bit 4 core, 5 XXCh, 6 X96, 7 XBR, 8 XLL, 9 LBR of the extension substream.
+    // 3 XXCH of the core substream and bit 4 core, 5 XXCH, 6 X96, 7 XBR, 8 XLL, 9 LBR of the extension substream.
     public const int CoreSubstreamCore = 1;
     public const int CoreSubstreamXch = 2;
     public const int CoreSubstreamX96 = 4;
@@ -287,7 +287,7 @@ internal static class Tables
 
     public static string ComponentNames(int components)
     {
-        string[] names = ["core", "XCh", "X96", "XXCh", "extension substream core", "extension substream XXCh", "extension substream X96", "XBR", "XLL", "LBR"];
+        string[] names = ["core", "XCh", "X96", "XXCH", "extension substream core", "extension substream XXCH", "extension substream X96", "XBR", "XLL", "LBR"];
         var set = new List<string>();
         for (int bit = 0; bit < names.Length; bit++)
         {

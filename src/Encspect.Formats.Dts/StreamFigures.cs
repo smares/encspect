@@ -16,7 +16,13 @@ internal sealed class StreamFigures(int sampleRate)
 
     public long Bytes { get; private set; }
 
-    public long Samples { get; private set; }
+    private long _samples;
+
+    // The sampling frequency the stream delivers where it is higher than the one its frames are counted at (the core's), such as with
+    // X96; Samples then counts at that frequency, and the duration and bitrates stay the same.
+    public int DeliveredRate { get; set; }
+
+    public long Samples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round(_samples * (double)DeliveredRate / sampleRate) : _samples;
 
     public int Smallest { get; private set; } = int.MaxValue;
 
@@ -26,10 +32,10 @@ internal sealed class StreamFigures(int sampleRate)
 
     public double MaximumBitrate { get; private set; }
 
-    public double Duration => sampleRate > 0 ? Samples / (double)sampleRate : 0;
+    public double Duration => sampleRate > 0 ? _samples / (double)sampleRate : 0;
 
     // In kbps; null without a duration.
-    public double? AverageBitrate => Samples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / Samples / 1000 : null;
+    public double? AverageBitrate => _samples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / _samples / 1000 : null;
 
     public void Add(long offset, int length, int samples)
     {
@@ -38,7 +44,7 @@ internal sealed class StreamFigures(int sampleRate)
         if (sampleRate > 0)
         {
             // A unit is shorter than a second, so every second has one that starts in it.
-            int second = (int)(Samples / sampleRate);
+            int second = (int)(_samples / sampleRate);
             while (_seconds.Count <= second)
             {
                 _seconds.Add(default);
@@ -49,7 +55,7 @@ internal sealed class StreamFigures(int sampleRate)
         }
 
         Bytes += length;
-        Samples += samples;
+        _samples += samples;
         Smallest = Math.Min(Smallest, length);
         Largest = Math.Max(Largest, length);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
