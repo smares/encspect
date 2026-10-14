@@ -45,6 +45,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 ## Verification
 
 - Run the checks the CI workflow runs, locally, before calling a change done. Mirror the pipeline instead of picking a subset. Cloud sessions install the .NET SDK through the SessionStart hook in `.claude/settings.json` (`scripts/install-dotnet.sh`); if the SDK is still missing, a blocked host is the likely cause, so name it. If the SDK is not available, say so and rely on the CI run.
+- At the start of a working session, run `python3 scripts/ci_report.py` (set `GITHUB_TOKEN` to see the failing tests) and raise any red run on main or in the nightly schedule with the user before starting new work.
 - Parsers are verified against known-input fixtures, cross-checks with other tools, golden reports and corrupt-file tests, as described in the plan. A parser change without a fixture or golden-report update is incomplete.
 - After each milestone, an independent review agent that has not seen the author's conclusions reviews the code against the spec.
 - Agents for implementation and simple tasks run on Sonnet with medium effort; review agents, including the milestone review, run on Opus with high effort.
