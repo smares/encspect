@@ -55,13 +55,24 @@ public sealed class Settings
             return;
         }
 
+        // Written next to the file and moved over it, so two instances closing at once cannot leave
+        // a torn file: the last move wins, and each file is whole.
+        string temporary = $"{FilePath}.{Guid.NewGuid():N}.tmp";
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Options));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(this, Options));
+            File.Move(temporary, FilePath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            try
+            {
+                File.Delete(temporary);
+            }
+            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+            {
+            }
         }
     }
 }

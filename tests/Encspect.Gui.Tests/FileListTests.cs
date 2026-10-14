@@ -41,6 +41,36 @@ public class FileListTests
         Assert.Equal("4 files", model.Status);
     }
 
+    // Workers queue their results and post one drain for the first of them; the drain clears the flag that
+    // says one is posted, then empties the queue. With a store that could stay buffered, a result queued
+    // in between would never be drained (the flag still read set), so the run's end drains once more.
+    // Many tiny files and a UI thread that spins make that window as wide as it gets.
+    [Fact]
+    public void Every_result_of_a_large_folder_reaches_its_row()
+    {
+        using var temp = new TempFolder();
+        for (int i = 0; i < 1500; i++)
+        {
+            temp.Write($"f{i:D4}.txt", "not audio"u8.ToArray());
+        }
+
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, parallelism: 4, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        while (model.IsRunning)
+        {
+            Assert.True(clock.Elapsed < TimeSpan.FromSeconds(60), "The run did not finish.");
+            ui.RunPending();
+        }
+
+        ui.RunPending();
+        Assert.Equal(1500, model.Rows.Count);
+        Assert.All(model.Rows, r => Assert.Equal(FileState.Analyzed, r.State));
+        Assert.Equal(1500, model.Analyzed);
+    }
+
     // The list reads streams, so MP4 and raw AAC fill in as MPEG audio does.
     [Fact]
     public void Mp4_and_aac_files_fill_in_from_their_streams()
