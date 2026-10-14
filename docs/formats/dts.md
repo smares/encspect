@@ -79,6 +79,7 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 
 ## Not covered
 
-- The subframes (side information, scale factors, samples) and the audio data of the extensions: no entropy decoding. A damaged core frame without CRC words shows no finding unless its header is damaged; decoders such as FFmpeg cannot tell either (see `docs/development.md`).
-- DTS:X and IMAX metadata, the core's optional information (time stamp, auxiliary data) beyond its flags, and the XLL channel set headers and navigation (the common header is read).
-- DTS-HD files (`.dtshd`) with their own `DTSHDHDR` chunks: raw streams of the same frames are read, the chunk container is not.
+- The subframes (side information, scale factors, samples) and the audio data of the extensions: no entropy decoding (planned: entropy pass). A damaged core frame without CRC words shows no finding unless its header is damaged; decoders such as FFmpeg cannot tell either (see `docs/development.md`).
+- DTS:X and IMAX metadata, and the XLL channel set headers and navigation (the common header is read); planned: DTS-HD step of phase 2.
+- The core's optional information (time stamp, auxiliary data) beyond its flags (planned: entropy pass, as DTS coding statistics).
+- DTS-HD files (`.dtshd`) with their own `DTSHDHDR` chunks: raw streams of the same frames are read, the chunk container is not (planned: DTS-HD step of phase 2).

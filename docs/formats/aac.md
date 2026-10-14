@@ -39,3 +39,8 @@ The channel configuration, a program config element, or parametric stereo.
   - the eight ISO/IEC 23003-3 conformance streams checked have a fill element and no pre-roll element.
 - `check_usac_samples.py` checks the downloaded files in CI (see [development](../development.md)).
 - Other encoders from the metadata, with low confidence.
+
+## Not yet covered
+
+- USAC, ER AAC and the SBR envelope data (planned: entropy pass).
+- FAAC 1.31 to 2.2 detection and Apple's encoder (planned: phase 2).

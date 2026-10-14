@@ -48,7 +48,7 @@ Musepack SV8, SV7, and SV4 to SV6.
 
 ## Not yet covered
 
-- the frames inside SV8 audio packets, which have no length of their own.
+- the frames inside SV8 audio packets, which have no length of their own (planned: entropy pass).
 
 ## Encoder detection
 

@@ -4,8 +4,9 @@ wmav1 and wmav2 encoders on two seconds of the deterministic signal of wma_signa
 stereo, at 22.05, 32 and 44.1 kHz and from 24 to 128 kbit/s. ffmpeg's encoder writes superframes of
 the container's block alignment with no bit reservoir and no variable block lengths, pads them with
 'N' bytes and sets the encode options to 1 (exponent VLC), so its files do not reach the reservoir,
-the variable block sizes or the LSP exponents; Microsoft's encoder files (external-windows-*, see
-import_windows_wma_fixtures.py) and the hand-built ones do.
+or the variable block sizes; Microsoft's encoder files (external-windows-*, see
+import_windows_wma_fixtures.py) and the hand-built ones do. No fixture uses the LSP
+exponents: every external golden report that shows Exponent Coding says scale factor codes.
 
 Each external-*.expected.json holds what the tools say of the file: ffprobe's stream and packet count
 and ffmpeg's decoded sample count, which the tests hold the analyzer's frame count to, plus the
