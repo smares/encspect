@@ -329,7 +329,8 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
       # The SBR conformance and aacPlus decoder check streams, which the FAAC 2.x layout rule is checked
-      # against; fetched from FFmpeg's FATE suite, checked against their SHA-256 and cached.
+      # against; fetched from FFmpeg's FATE suite (or the private repository's copies), checked against their
+      # SHA-256 and cached.
       - name: Cache the HE-AAC samples
         uses: actions/cache@v4
         with:
@@ -338,6 +339,8 @@ jobs:
 
       - name: Check the HE-AAC manifest against the samples
         run: python3 scripts/fixtures/check_sbr_samples.py .cache/sbr
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -353,6 +356,8 @@ jobs:
 
       - name: Check the analyzer against the HE-AAC manifest
         run: python3 scripts/fixtures/check_sbr_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/sbr
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe, speexdec and MediaInfo
