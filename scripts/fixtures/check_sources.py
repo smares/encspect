@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Downloads every pinned file the scripts fetch from every one of its addresses (downloads.py)
 and checks its SHA-256, so the scheduled sources workflow notices when an original address or one
-of its copies stops serving it, before the fallback is all that is left.
+of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
+the commits of their tags (faac_tool.py), which it asks both repositories for.
 
 Usage: python3 scripts/fixtures/check_sources.py
 """
@@ -20,6 +21,7 @@ import check_usac_samples
 import conformance_mpeg_audio
 import downloads
 import dts_specs
+import faac_tool
 import ffmpeg_sources
 import fhg_tool
 import gogo_tool
@@ -110,6 +112,12 @@ def main():
             if digest != expected:
                 problems += 1
                 print(f"{tag}: {old_lame_tool.svn_url(version)} holds tree digest {digest}")
+    # FAAC's releases are pinned by their commits, which git checks against the tree: each repository must
+    # still serve each tag with its commit.
+    checked += len(faac_tool.RELEASES) * len(faac_tool.REPOSITORIES)
+    for problem in faac_tool.tag_problems():
+        problems += 1
+        print(problem)
     print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 
