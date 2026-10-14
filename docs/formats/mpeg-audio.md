@@ -44,3 +44,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 
 - **From tags:** the LAME tag, and the version string LAME writes into ancillary data, name the encoder with a confidence level.
 - **From habits:** without a tag, Shine, Helix, Fraunhofer's encoders and TwoLAME are recognized from habits their encodes show, with low confidence.
+
+## Not yet covered
+
+- Layer III scalefactors and Huffman spectral data, and Layer II samples (planned: entropy pass, MP3 first).

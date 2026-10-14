@@ -27,3 +27,7 @@ From the vendor string:
 - aoTuV by release, from its sources and builds;
 - Lancer;
 - ffmpeg.
+
+## Not yet covered
+
+- Floors and residues (planned: entropy pass).

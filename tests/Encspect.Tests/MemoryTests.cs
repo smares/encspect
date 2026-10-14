@@ -577,28 +577,50 @@ public class MemoryTests(ITestOutputHelper output)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
     ];
 
-    // The heap the report keeps, and the most the analysis held live at once: while it runs, a
-    // sampler thread forces a blocking full collection every few milliseconds and reads the heap
-    // that survived it from the collector's record of that collection. Reading the heap's size
-    // afterwards also counts what the analysis allocated since, which on a busy machine, where the
-    // sampler waits to run again, tripled the peak (macOS on x64, 125 bytes per Opus packet where
-    // linux-x64 measures 41). Reading the collector's last figures without forcing a collection
-    // measures nothing where none happens during a short analysis. The forced collections slow the
-    // analysis down, so the files stay small.
+    // The heap the report keeps, and the most the analysis held live at once.
+    //
+    // Kept is the difference of two readings taken one after the other once the analysis is over:
+    // with the report alive, and with it dropped (the report is analyzed again for the caller
+    // afterwards). The heap before the analysis is no baseline: the process holds the dead large
+    // arrays of the tests that ran before, which the collector reports as live until a later
+    // collection lets go of them, at a time that varies by run and platform. Taken across an
+    // analysis, that read as 47 MB negative (ubuntu CI, and here in half of the runs) or, on
+    // macOS, as 4 MB too much. Two readings in a row see the same leftovers.
+    //
+    // Peak: while the analysis runs, a sampler thread forces a blocking full collection every few
+    // milliseconds and reads the heap that survived it from the collector's record of that
+    // collection. Reading the heap's size afterwards also counts what the analysis allocated
+    // since, which on a busy machine, where the sampler waits to run again, tripled the peak
+    // (macOS on x64, 125 bytes per Opus packet where linux-x64 measures 41). It is taken from the
+    // heap before the analysis, so those leftovers can only lower it, never fail a test. The forced
+    // collections slow the analysis down, so the files stay small.
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         long before = Live();
-        long liveBefore = LastFullCollection();
-        long peak = liveBefore;
+        long peak = before;
+        long withReport = SampledAnalysis(analyzer, name, data, ref peak);
+        long withoutReport = Live();
+        Report report = analyzer.Analyze(name, new MemoryStream(data));
+        GC.KeepAlive(data);
+        return (report, withReport - withoutReport, Volatile.Read(ref peak) - before);
+    }
+
+    // The live heap with the report of an analysis alive; the report is dropped on return.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, ref long peak)
+    {
+        long observed = Volatile.Read(ref peak);
+        long highest = observed;
         bool done = false;
+        long shared = observed;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
             {
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: false);
-                Volatile.Write(ref peak, Math.Max(Volatile.Read(ref peak), LastFullCollection()));
+                Volatile.Write(ref shared, Math.Max(Volatile.Read(ref shared), LastFullCollection()));
                 Thread.Sleep(SampleInterval);
             }
         });
@@ -606,9 +628,11 @@ public class MemoryTests(ITestOutputHelper output)
         Report report = analyzer.Analyze(name, new MemoryStream(data));
         Volatile.Write(ref done, true);
         sampler.Join();
-        long kept = Live() - before;
-        GC.KeepAlive(data);
-        return (report, kept, Volatile.Read(ref peak) - liveBefore);
+        long live = Live();
+        GC.KeepAlive(report);
+        highest = Math.Max(highest, Volatile.Read(ref shared));
+        peak = highest;
+        return live;
     }
 
     // The heap that survived the last blocking full collection, as it stood when that collection
@@ -619,16 +643,28 @@ public class MemoryTests(ITestOutputHelper output)
         return info.HeapSizeBytes - info.FragmentedBytes;
     }
 
-    // The live heap after a full, compacting collection that also compacts the large object heap,
+    // The live heap after full, compacting collections that also compact the large object heap,
     // where series and record chunks live, so the space their growth left behind does not count.
+    // Read from the collector's record of the last collection, as the sampler does, not from
+    // GC.GetTotalMemory: that is the collector's running estimate, not a measurement of what
+    // survived. With the segments collector (DOTNET_GCName=libclrgc) it reads 94 MB where the
+    // record says 49 MB and the gap changes between calls, which showed as 3.5 MB kept after 1
+    // million unknown SV8 packets and 9.4 MB after 4 million. Collections repeat until two
+    // readings in a row agree to within 64 KB.
     private static long Live()
     {
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
-        GC.WaitForPendingFinalizers();
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
-        return GC.GetTotalMemory(forceFullCollection: false);
+        long previous = long.MaxValue;
+        long current = 0;
+        for (int i = 0; i < 8 && Math.Abs(previous - current) > 64 * 1024; i++)
+        {
+            previous = current;
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+            GC.WaitForPendingFinalizers();
+            current = LastFullCollection();
+        }
+
+        return current;
     }
 
     // An M4A file of count silent AAC LC stereo access units of 100 bytes (a channel pair element with
