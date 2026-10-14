@@ -1,0 +1,193 @@
+{
+ "description": "HE-AAC and HE-AAC v2 files by other encoders than FAAC, which show how SBR data is laid out where nobody chose FAAC's settings: MPEG-4 audio SBR and parametric stereo conformance streams (al_sbr_*) and Coding Technologies' aacPlus decoder check streams (CT_DecoderCheck: File1 to File7, also published as sbr_bc-ps_*, sbr_bic-ps_i, sbr_i-ps_*), all from FFmpeg's FATE suite. The analyzer names FAAC 2.x from the layout of the SBR headers and data (FaacSbr.cs), which only means something where other encoders lay them out differently; none of these files may be named FAAC. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, what ffprobe reads from its first audio stream, the codec and encoder the analyzer must report (null: no encoder named), and its warnings and errors (\"findings\").",
+ "samples": [
+  {
+   "file": "al_sbr_cm_48_2.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/al_sbr_cm_48_2.mp4",
+   "sha256": "7e7c0390c950eda21775d1a193e05ee703257bed85602884e7d30a8b3c65be90",
+   "written_by": "MPEG-4 audio SBR conformance stream, from FFmpeg's FATE suite: HE-AAC at 48 kHz, stereo",
+   "ffprobe": {
+    "profile": "HE-AAC",
+    "sample_rate": 48000,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC",
+   "analyzer_encoder": null,
+   "findings": [
+    "aac.sbr-past-fill"
+   ]
+  },
+  {
+   "file": "al_sbr_cm_48_5.1.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/al_sbr_cm_48_5.1.mp4",
+   "sha256": "c49bf6c206e015b26f34d109693ac11e2434edebc321462c75b254d27a49ccf5",
+   "written_by": "MPEG-4 audio SBR conformance stream, from FFmpeg's FATE suite: HE-AAC at 48 kHz, 5.1",
+   "ffprobe": {
+    "profile": "HE-AAC",
+    "sample_rate": 48000,
+    "channels": 6
+   },
+   "analyzer_codec": "HE-AAC",
+   "analyzer_encoder": null,
+   "findings": [
+    "aac.sbr-past-fill"
+   ]
+  },
+  {
+   "file": "al_sbr_ps_04_new.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/al_sbr_ps_04_new.mp4",
+   "sha256": "f5b3271f340162096a153a87e8b67c7e1b69f5c3198a6c6e525daa86ca548bb9",
+   "written_by": "MPEG-4 audio parametric stereo conformance stream, from FFmpeg's FATE suite",
+   "ffprobe": {
+    "profile": "HE-AAC",
+    "sample_rate": 32000,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "al_sbr_ps_06_new.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/al_sbr_ps_06_new.mp4",
+   "sha256": "19d241d01cc3490a133ade50f3dec58d2872ada855cf0d0f954102e774cd9841",
+   "written_by": "MPEG-4 audio parametric stereo conformance stream, from FFmpeg's FATE suite",
+   "ffprobe": {
+    "profile": "HE-AAC",
+    "sample_rate": 32000,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "al_sbr_sr_48_2_fsaac48.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/al_sbr_sr_48_2_fsaac48.mp4",
+   "sha256": "d0b286c5f9bdb47ee1722ab64775cc507de27744c6a21143ce41fc7410cdbceb",
+   "written_by": "MPEG-4 audio SBR conformance stream (name: fsaac48), from FFmpeg's FATE suite",
+   "ffprobe": {
+    "profile": "HE-AAC",
+    "sample_rate": 48000,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC",
+   "analyzer_encoder": null,
+   "findings": [
+    "aac.sbr-past-fill"
+   ]
+  },
+  {
+   "file": "File1.aac",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File1.aac",
+   "sha256": "2b7312468bef3ba96a41b51e6e43b54a3edb1f6638d4c6cb96331efb757818b4",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File1_fixed.aac",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File1_fixed.aac",
+   "sha256": "76e84aa3e0d142696699bdb5d9bc8b037415065c604e2fa9f7d00e5f59bb597d",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_i-ps_i.aac",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File2.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File2.mp4",
+   "sha256": "dcd2e94da030f048938c412f6f2025468628fbf33e6e3dcf427e443bd163d2bd",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_i-ps_i.mp4",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File3.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File3.mp4",
+   "sha256": "f251f65bb38cd3f2d53bf0ef9da0a249b394263168312df97430e152064aa021",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_bc-ps_i.mp4",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File4.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File4.mp4",
+   "sha256": "c6303c32dbc4a47c27923578ee30b0f9182068c3496e74bef129d957a6ffbe01",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_bc-ps_bc.mp4",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File5.mp4",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File5.mp4",
+   "sha256": "49595c57f80deae34c2570bc227658a8d856babd978cd8151f74d43054a63ba5",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_i-ps_bic.mp4",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File6.3gp",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File6.3gp",
+   "sha256": "bf4f1288fb3faa1dd23f6bfffad2bf6f3e8074a0c4d12e93e4982adfb2734058",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_bc-ps_i.3gp",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  },
+  {
+   "file": "File7.3gp",
+   "url": "https://fate-suite.ffmpeg.org/aac/CT_DecoderCheck/File7.3gp",
+   "sha256": "bee9c5c9cae168c2ce4cab43564c1f83739b6dd07fd9c27bb490525f4142f885",
+   "written_by": "Coding Technologies' aacPlus decoder check stream (CT_DecoderCheck), from FFmpeg's FATE suite; the same bytes as sbr_bic-ps_i.3gp",
+   "ffprobe": {
+    "profile": "HE-AACv2",
+    "sample_rate": 44100,
+    "channels": 2
+   },
+   "analyzer_codec": "HE-AAC v2",
+   "analyzer_encoder": null,
+   "findings": []
+  }
+ ]
+}

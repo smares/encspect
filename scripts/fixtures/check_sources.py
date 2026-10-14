@@ -17,6 +17,7 @@ import aotuv_tool
 import asf_specs
 import blade_tool
 import check_mp3pro_samples
+import check_sbr_samples
 import check_usac_samples
 import conformance_mpeg_audio
 import downloads
@@ -50,6 +51,9 @@ def sources():
     usac = json.loads((ROOT / "tests" / "conformance" / "usac-samples.json").read_text(encoding="utf-8"))
     for sample in usac["samples"]:
         yield sample["file"], sample["sha256"], check_usac_samples.addresses(sample)
+    sbr = json.loads((ROOT / "tests" / "conformance" / "sbr-samples.json").read_text(encoding="utf-8"))
+    for sample in sbr["samples"]:
+        yield sample["file"], sample["sha256"], check_sbr_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES

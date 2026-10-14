@@ -1,7 +1,7 @@
 """Downloads a file that is pinned by its SHA-256 from the first of its addresses that serves it.
 
 The scripts download what the repository may not or need not hold: the ISO conformance streams,
-the mp3PRO samples, other encoders' xHE-AAC files, mctoolamed, and the encoders that write fixtures: Fraunhofer's, Xing's,
+the mp3PRO samples, other encoders' xHE-AAC and HE-AAC files, mctoolamed, and the encoders that write fixtures: Fraunhofer's, Xing's,
 BladeEnc's and Helix's 5.0 sources. Each has its original address and, where
 one works, a fallback: the copy the Internet Archive's Wayback Machine keeps, or another mirror. The
 SHA-256 decides whether a copy is the right file, so any address is safe to try. The files the
