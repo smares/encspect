@@ -11,6 +11,14 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 - **mp3PRO and MP3 Surround:** detected from the signature their encoders put into the ancillary data of every frame.
 - **Fraunhofer's Original File Length block.**
 
+## Detection
+
+- Sniffing gives 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data.
+- A free-format chain is only a header repeating at one distance, which other formats' data can make too. It scores 90 only when it is credible, and 30 otherwise, below DTS's 50 and every other format's chain:
+  - its first three frames that fit in the data must be well-formed (audio data or side information that fits the frame, no forbidden Layer I allocation 15);
+  - in Layers I and II, one of them must also be protected and have the CRC its header and bit allocation give, as an all-zero frame is valid there.
+- The score only ranks formats. Parsing does not depend on it: a free-format stream without a CRC, or with damaged CRCs, is read as MPEG audio when it is the only candidate or the parser is forced.
+
 ## Statistics
 
 Each MPEG Audio region reports:

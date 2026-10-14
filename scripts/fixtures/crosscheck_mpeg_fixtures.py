@@ -628,7 +628,10 @@ def guessenc_counts_like_us(path, manifest):
     frames = manifest["frames"]
     constant = [{k: v for k, v in f["fields"].items() if k.startswith("Header/") and k not in VARIABLE_HEADER_FIELDS} for f in frames]
     headers = sum(1 for f in frames if "Xing" in f["fields"] or "VBRI/Version" in f["fields"] or "VBRI" in f["fields"])
-    return (sum(1 for r in manifest["regions"] if "statistics" in r) == 1 and not manifest["gaps"]
+    # mp3guessenc finds the length of a free-format Layer I frame no better than 640 kbps of a fixed one: it counts one frame of
+    # mpeg1-layer1-free-format.mp1 and a data rate of 640 kbps.
+    layer1_free = any(c.get("Header/Layer") == "I" and c.get("Header/Bitrate") == "free" for c in [f["fields"] for f in frames])
+    return (sum(1 for r in manifest["regions"] if "statistics" in r) == 1 and not manifest["gaps"] and not layer1_free
             and all(c == constant[0] for c in constant) and headers <= 1
             and all(f["code"].startswith(GUESSENC_NEUTRAL) or f["code"] in GUESSENC_NEUTRAL_CODES for f in manifest["findings"])
             and ("detected" in guessenc_tag_lines(path)) == (manifest.get("vbr_header") is not None))

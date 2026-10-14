@@ -13,6 +13,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 {
     private const int SniffLimit = 1 << 20;
 
+    private const int IncredibleFreeFormatScore = 30;
+
     // Free-format frames are found from the next matching header; 640 kbps at 32000 Hz is the
     // largest frame LAME writes, and this leaves room for Layer I.
     private const int MaxFreeFormatLength = 8192;
@@ -27,7 +29,29 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         var blocks = new BlockReader(reader);
         // Zero bytes before the audio are common padding and cheap to skip.
         long limit = Math.Min(reader.End, ZeroRunEnd(blocks, reader.Start, reader.End) + SniffLimit);
-        return FindStreamStart(blocks, reader.Start, limit, reader.End, out _) >= 0 ? 90 : 0;
+        // A free-format chain that is not credible ranks below every other format's chain, not out: it may be genuine, but it is also what
+        // data with a header-like word at a fixed period makes, and the format that owns that data should win.
+        bool found = false;
+        for (long from = reader.Start; from < limit;)
+        {
+            long position = FindStreamStart(blocks, from, limit, reader.End, out int freeLength);
+            if (position < 0)
+            {
+                break;
+            }
+
+            found = true;
+            blocks.TryReadUInt32(position, out uint raw);
+            var header = new MpegHeader(raw);
+            if (!header.IsFreeFormat || IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End))
+            {
+                return 90;
+            }
+
+            from = position + 1;
+        }
+
+        return found ? IncredibleFreeFormatScore : 0;
     }
 
     public void Parse(ParseContext context)
@@ -1025,7 +1049,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
             foreach (int candidate in FreeLengths(blocks, position, header, end))
             {
-                if (IsChain(blocks, position, header, candidate, end) && (!header.IsFreeFormat || IsCredibleFreeFormat(blocks, position, header, candidate, end)))
+                if (IsChain(blocks, position, header, candidate, end))
                 {
                     freeLength = candidate;
                     return position;

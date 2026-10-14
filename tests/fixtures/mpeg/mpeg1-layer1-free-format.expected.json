@@ -1,0 +1,141 @@
+{
+ "description": "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and no CRC, which ISO/IEC 11172-3 allows: recognized as MPEG audio when nothing else claims the file.",
+ "length": 6000,
+ "crosscheck": "mpg123",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 6000,
+   "statistics": {
+    "Statistics": "6 frames, 0.048 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "2304",
+    "Statistics/Duration": "0.048 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "1000.0 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/free": "6 frames (100.0%)",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Joint stereo": "6 frames (100.0%)",
+    "Statistics/Intensity Stereo Bounds": "6 frames",
+    "Statistics/Intensity Stereo Bounds/Bands 4 to 31": "6 frames (100.0%)",
+    "Statistics/Bitrate Distribution/free/Unpadded": "6 frames of 1000 bytes",
+    "Statistics/Ancillary Data": "5868 bytes",
+    "Statistics/Ancillary Data/Share": "97.8 %",
+    "Statistics/Ancillary Data/Data Rate": "978.0 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "978 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "978 bytes",
+    "Statistics/UsesPadding": "false"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 1000,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 2000,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 3000,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 4000,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 5000,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "48000 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer I",
+   "sample_rate": 48000,
+   "samples": 2304,
+   "duration": "0.048 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "average_bitrate": "1000.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "1000"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.free-format",
+   "contains": "1000"
+  }
+ ]
+}

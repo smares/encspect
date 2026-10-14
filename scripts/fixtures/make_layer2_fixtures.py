@@ -851,6 +851,35 @@ def free_format_44100():
 
 
 @fixture
+def free_format_unprotected():
+    f = Layer2Fixture(
+        "free-format-48000-unprotected",
+        "Free-format MPEG-1 Layer II stereo at 48000 Hz with 240-byte frames and no CRC, which ISO/IEC 11172-3 allows. "
+        "Nothing but the frames themselves says they are MPEG audio, which is all the analyzer needs when no other "
+        "format claims the file.",
+        crosscheck="madplay",
+    )
+    f.add_frames([Layer2Frame(bitrate=None, free_length=240, rate=48000, mode="Stereo", protected=False, seed=i) for i in range(6)])
+    return f.finding("mpeg.free-format", "240")
+
+
+@fixture
+def free_format_first_crc_mismatch():
+    f = Layer2Fixture(
+        "free-format-44100-crc-mismatch",
+        "Free-format MPEG-1 Layer II stereo at 44100 Hz with 555-byte frames and CRC; the first frame's CRC is wrong, as "
+        "after damage, and the stream is still MPEG audio.",
+        crosscheck="madplay",
+        silent=False,
+    )
+    frames = [Layer2Frame(bitrate=None, free_length=555, rate=44100, mode="Stereo", protected=True, seed=i) for i in range(6)]
+    frames[0].bad_crc = True
+    f.add_frames(frames)
+    f.finding("mpeg.free-format", "555")
+    return f.finding("mpeg.crc-mismatch", "1 frame")
+
+
+@fixture
 def not_multichannel():
     f = Layer2Fixture(
         "ancillary-not-multichannel",
