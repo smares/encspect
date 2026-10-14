@@ -125,6 +125,19 @@ def id3v2():
     return b"ID3\x03\0\0" + bytes([size >> 21 & 0x7F, size >> 14 & 0x7F, size >> 7 & 0x7F, size & 0x7F]) + frame
 
 
+def id3v2_seek(distance):
+    """An ID3v2.4 tag whose SEEK frame says the next tag starts distance bytes after this one's end."""
+    seek = b"SEEK" + (4).to_bytes(4, "big") + b"\0\0" + distance.to_bytes(4, "big")
+    size = len(seek)
+    return b"ID3\x04\0\0" + bytes([size >> 21 & 0x7F, size >> 14 & 0x7F, size >> 7 & 0x7F, size & 0x7F]) + seek
+
+
+def id3v2_title():
+    frame = b"TIT2" + (6).to_bytes(4, "big") + b"\0\0" + b"\0Title"
+    size = len(frame)
+    return b"ID3\x04\0\0" + bytes([size >> 21 & 0x7F, size >> 14 & 0x7F, size >> 7 & 0x7F, size & 0x7F]) + frame
+
+
 def ape_tag(*items):
     """An APEv2 tag with a header and a footer, its text items (key, value) sorted ascending by size."""
     body = b"".join(struct.pack("<II", len(value), 0) + key.encode() + b"\0" + value.encode() for key, value in sorted(items, key=lambda kv: len(kv[0]) + len(kv[1])))
@@ -310,6 +323,9 @@ def build():
                                     [("wavpack.block-set-broken", "holds 8 blocks without a final block"), ("wavpack.block-index-gap", "samples are missing"),
                                      ("wavpack.total-samples-mismatch", "hold 3000")], False)
     b["leading-id3v2"] = ("An ID3v2 tag before the blocks.", id3v2() + aa(a), [], True)
+    seek = id3v2_seek(100 + len(a[0]))
+    b["seek-tag-between-blocks"] = ("Stray bytes and a block after an ID3v2.4 tag whose SEEK frame points at a second ID3v2 tag, then the other blocks: the stream declares no end, so it is read up to the second tag and the bytes after it are not read.",
+                                    seek + junk(100) + a[0] + id3v2_title() + aa(a[1:]), [("wavpack.data-after-tag", "follow an ID3v2 tag"), ("wavpack.data-skipped", "100 bytes"), ("wavpack.total-samples-mismatch", "holds")], False)
     return b
 
 
@@ -326,6 +342,11 @@ def regions(data, name):
     if name == "built-leading-id3v2":
         size = len(id3v2())
         return [("ID3v2", 0, size), ("WavPack", size, len(data) - size)]
+    if name == "built-seek-tag-between-blocks":
+        first = len(id3v2_seek(0)) + 100 + len(blocks(base("lossless-16-stereo"))[0])
+        tag = len(id3v2_title())
+        return [("ID3v2", 0, len(id3v2_seek(0))), ("WavPack", len(id3v2_seek(0)), first - len(id3v2_seek(0))),
+                ("ID3v2", first, tag), ("Data", first + tag, len(data) - first - tag)]
     return [("WavPack", 0, len(data))]
 
 
@@ -336,8 +357,10 @@ def main():
         full = f"built-{name}"
         (DIRECTORY / f"{full}.wv").write_bytes(data)
         top = regions(data, full)
-        start = top[1][1] if full == "built-leading-id3v2" else 0
+        start = top[1][1] if full in ("built-leading-id3v2", "built-seek-tag-between-blocks") else 0
         end = top[0][1] + top[0][2] if full != "built-leading-id3v2" else len(data)
+        if full == "built-seek-tag-between-blocks":
+            end = top[1][1] + top[1][2]
         result = m.manifest(data, start, end, {"regions": [{"name": n, "offset": o, "length": l} for n, o, l in top], "description": description,
                                                "findings": [{"code": c, "contains": t} for c, t in findings], "crosscheck": {"valid": valid}})
         (DIRECTORY / f"{full}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

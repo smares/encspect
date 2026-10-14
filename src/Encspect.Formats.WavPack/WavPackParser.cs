@@ -76,12 +76,30 @@ public sealed class WavPackParser : IFormatParser
         return position;
     }
 
+    // Tags an ID3v2.4 SEEK frame found inside the data are already in the report. A tag between
+    // blocks breaks the chain, so the blocks are read up to the first one, and the bytes between and
+    // after the tags are reported as not read.
     public void Parse(ParseContext context)
     {
         ByteReader window = context.Reader;
-        var tags = context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).Select(t => (t.Offset, Math.Min(t.End, window.End)));
-        var state = new State(new Source(window, tags), context.CancellationToken);
+        List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
+        ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
+        var state = new State(new Source(reader), context.CancellationToken);
         Reader.Run(state);
         Summary.Finish(state, context);
+
+        long position = reader.End;
+        foreach (Node? tag in tags.Append<Node?>(null))
+        {
+            long end = Math.Min(tag?.Offset ?? window.End, window.End);
+            if (end > position)
+            {
+                Node data = context.Root.Add(new Node("Data", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.AfterEmbeddedTag });
+                context.AddFinding(Severity.Warning, "wavpack.data-after-tag",
+                    $"{end - position} bytes at 0x{position:X} follow an ID3v2 tag inside the WavPack data, which breaks the chain of blocks; they are not read.", data);
+            }
+
+            position = Math.Max(position, tag?.End ?? position);
+        }
     }
 }

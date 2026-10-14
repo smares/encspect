@@ -93,10 +93,11 @@ public class WavPackTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "wavpack.data-skipped" or "parse.failed");
     }
 
-    // Where the data does not start with a block, the stream declares no end, and the parser skips the
-    // tag and reads the blocks on both sides of it.
+    // Where the data does not start with a block, the stream declares no end, and the tag still
+    // breaks the chain: the stream is read up to it, so no node covers the tag, and the bytes after
+    // it are reported as data.
     [Fact]
-    public void ATagBetweenBlocksIsSkippedWhereNoEndIsDeclared()
+    public void ATagBetweenBlocksEndsTheStreamWhereNoEndIsDeclared()
     {
         List<byte[]> blocks = Blocks(Fixture("external-lossless-16-stereo.wv"));
         byte[] junk = new byte[100];
@@ -105,12 +106,13 @@ public class WavPackTests
 
         Report report = Analyze(data);
 
-        Assert.Equal(["ID3v2", "WavPack", "ID3v2"], report.Root.Children.Select(c => c.Name));
+        Assert.Equal(["ID3v2", "WavPack", "ID3v2", "Data"], report.Root.Children.Select(c => c.Name));
         Node stream = Stream(report);
-        Assert.Equal(3, stream.Children.Count(c => c.Name == "Block"));
+        Assert.Equal(1, stream.Children.Count(c => c.Name == "Block"));
         Assert.Equal(1, stream.Children.Count(c => c.Name == "Skipped Data"));
-        Assert.Equal(["wavpack.data-skipped"], report.Findings.Where(f => f.Code.StartsWith("wavpack.", StringComparison.Ordinal)).Select(f => f.Code));
-        Assert.Equal(24000, report.Streams.Single().Samples);
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.data-after-tag");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal(blocks[0].Length + junk.Length, stream.Length);
     }
 
     // An ID3v2.4 tag whose SEEK frame points past the first block (and the bytes in front of it), then

@@ -53,7 +53,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Tags
 
-- APEv2 and ID3v1 tags after the last block are the host's, as are ID3v2 tags in front. An ID3v2.4 SEEK frame that points between blocks ends the stream there, and the bytes after it are reported as data.
+- APEv2 and ID3v1 tags after the last block are the host's, as are ID3v2 tags in front. An ID3v2.4 SEEK frame that points between blocks ends the stream there, whether or not the data starts with a block, and the bytes after the tag are reported as data (`wavpack.data-after-tag` where the stream declares no end).
 - A tag candidate inside the chain of blocks belongs to the stream.
 
 ## Findings

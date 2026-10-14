@@ -7,7 +7,7 @@ make_wavpack_fixtures.py):
 - wavpack_blocks (wavpack_tool.py: libwavpack 5.6.0 built from the pinned source): every block
   read_next_header finds, with its offset, size, version, first sample, samples, flags and CRC and
   whether WavpackVerifySingleBlock accepts it, against the manifest, for every fixture, damaged ones
-  too; only the four that READER_DEPARTURES lists differ on purpose, each with its evidence, and the
+  too; only the five that READER_DEPARTURES lists differ on purpose, each with its evidence, and the
   run fails if one of them agrees after all. The figures the library derives from a file that
   opens, against the analyzer's golden report: the version, channels, channel mask,
   sample rate, bits, samples, mode flags (hybrid, lossless, float, fast, high, very high, extra level),
@@ -59,6 +59,8 @@ READER_DEPARTURES = {
                                  "(13500 bytes), the analyzer ends the block where the next header begins (13499, wavpack.block-size-mismatch)",
     "built-truncated-last-block": "the last block is cut 1000 bytes before its end; libwavpack lists it with the size it states (23058 bytes) though it cannot read them, "
                                   "the analyzer with the bytes that are there (22058, wavpack.block-truncated)",
+    "built-seek-tag-between-blocks": "an ID3v2.4 tag sits between the first block and the others; libwavpack's reader skips the tag's bytes and lists all 3 blocks, the analyzer "
+                                     "ends the stream at the tag, which an ID3v2.4 SEEK frame found, and lists the block before it (wavpack.data-after-tag)",
     "built-version-unsupported": "the blocks have stream version 0x411; read_next_header refuses a header of a version above 0x410 (MAX_STREAM_VERS), so libwavpack finds "
                                  "no block, while the analyzer relaxes the minor version and reports it (wavpack.version-unsupported)",
 }

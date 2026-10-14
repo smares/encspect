@@ -27,6 +27,7 @@ internal static class Explain
     public const string Stream = "The blocks of a WavPack file, one after another: each has a 32-byte header and metadata sub-blocks, the last of which is normally the compressed audio (WavPack 4 and 5 binary file/block format, section 1.0).";
     public const string Block = "One block: a header and the sub-blocks that follow it up to the size the header states. Every block decodes by itself to mono or stereo audio; a multichannel file repeats a set of blocks, one for each stereo pair or single channel (format document, sections 1.0 to 3.0).";
     public const string MetadataBlock = "A block that counts no sample: it carries metadata only, such as a wrapper or a checksum of the audio, and no audio (format document, section 2.0, \"block_samples\").";
+    public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies between the WavPack blocks, which the tag breaks; the analyzer does not read them as blocks.";
     public const string SkippedData = "Bytes between or around blocks that hold no block header; libwavpack's reader skips such bytes up to the next header (read_next_header in open_utils.c).";
     public const string CutHeader = "The start of a block header that the data ends inside.";
     public const string UndetailedBlocks = "Blocks that count no sample and hold nothing but their header, which the report no longer lists one by one once it has detailed 4,096 blocks. They are read and checked in every case.";

@@ -23,20 +23,11 @@ internal static class Reader
                 s.Cancellation.ThrowIfCancellationRequested();
             }
 
-            long after = source.SkipTags(position);
-            if (after != position)
-            {
-                Skip(s, ref skipFrom, position);
-                position = after;
-                continue;
-            }
-
             if (!source.TryHeader(position, out BlockHeader header))
             {
                 skipFrom = skipFrom < 0 ? position : skipFrom;
-                long stop = Math.Min(end, source.NextTag(position));
-                long found = source.FindChain(position + 1, stop);
-                position = found >= 0 ? found : stop;
+                long found = source.FindChain(position + 1, end);
+                position = found >= 0 ? found : end;
                 if (found >= 0)
                 {
                     Skip(s, ref skipFrom, position);
@@ -69,8 +60,7 @@ internal static class Reader
         long end = source.End;
         if (statedEnd <= end)
         {
-            long next = source.SkipTags(statedEnd);
-            if (next == end || source.TryHeader(next, out _))
+            if (statedEnd == end || source.TryHeader(statedEnd, out _))
             {
                 return (header.BlockSize, BlockStatus.None);
             }
