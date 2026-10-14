@@ -10,7 +10,7 @@ namespace Encspect.Formats.WavPack;
 // the node they point to.
 internal static partial class Nodes
 {
-    public static Node Skipped(State s, int entry)
+    public static Node Skipped(Records s, int entry)
     {
         Entry e = s.Entries[entry];
         bool isCut = (e.Status & BlockStatus.CutHeader) != 0;
@@ -21,7 +21,7 @@ internal static partial class Nodes
         };
     }
 
-    public static Node Block(State s, int entry)
+    public static Node Block(Records s, int entry)
     {
         Entry e = s.Entries[entry];
         if (e.Kind == EntryKind.Run)
@@ -40,10 +40,10 @@ internal static partial class Nodes
         };
     }
 
-    public static Node HeaderField(State s, int entry, string name) =>
+    public static Node HeaderField(Records s, int entry, string name) =>
         s.Entries[entry].Kind == EntryKind.Run ? Block(s, entry) : HeaderNode(s, entry).Children.First(c => c.Name == name);
 
-    public static Node SubBlock(State s, int entry, int index)
+    public static Node SubBlock(Records s, int entry, int index)
     {
         Entry e = s.Entries[entry];
         if (e.Detail < 0 || index >= s.Details[e.Detail].SubBlocks.Count)
@@ -54,7 +54,7 @@ internal static partial class Nodes
         return SubBlockNode(s, e, s.Details[e.Detail], index);
     }
 
-    private static IReadOnlyList<Node> BlockChildren(State s, int entry)
+    private static IReadOnlyList<Node> BlockChildren(Records s, int entry)
     {
         Entry e = s.Entries[entry];
         var children = new List<Node> { HeaderNode(s, entry) };
@@ -95,7 +95,7 @@ internal static partial class Nodes
         return children;
     }
 
-    private static Node HeaderNode(State s, int entry)
+    private static Node HeaderNode(Records s, int entry)
     {
         Entry e = s.Entries[entry];
         BlockHeader h = e.Header;
@@ -152,7 +152,7 @@ internal static partial class Nodes
         return flags;
     }
 
-    private static Node SubBlockNode(State s, Entry e, Detail detail, int index)
+    private static Node SubBlockNode(Records s, Entry e, Detail detail, int index)
     {
         SubBlock sb = detail.SubBlocks[index];
         int function = sb.Function;
@@ -177,7 +177,7 @@ internal static partial class Nodes
         _ => Topics.SubBlocks,
     };
 
-    private static IReadOnlyList<Node> SubBlockChildren(State s, Entry e, Detail detail, int index)
+    private static IReadOnlyList<Node> SubBlockChildren(Records s, Entry e, Detail detail, int index)
     {
         SubBlock sb = detail.SubBlocks[index];
         long o = sb.Offset;

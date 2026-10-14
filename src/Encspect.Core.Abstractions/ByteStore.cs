@@ -1,11 +1,11 @@
-namespace Encspect.Formats.Dts;
+namespace Encspect.Core;
 
 // The records frame nodes are built from once the stream is closed (a report outlives the stream it
 // was read from), packed one after another into shared blocks: no array per frame. A position
 // holds the block in its high 16 bits and the offset in it in the low ones, so blocks are at most
 // 64 KiB and the store holds 4 GiB; an item never spans two blocks. Written only while parsing,
 // so builders on several threads read it safely.
-internal sealed class ByteStore
+public sealed class ByteStore
 {
     private const int BlockSize = 1 << 16;
 

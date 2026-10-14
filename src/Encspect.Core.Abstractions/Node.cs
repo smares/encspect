@@ -290,11 +290,20 @@ public sealed class Node
     {
         try
         {
-            return ((Func<IReadOnlyList<Node>>)_source!)();
+            IReadOnlyList<Node> children = ((Func<IReadOnlyList<Node>>)_source!)();
+            (children as BlockedChildren)?.SetOwner(Offset, Length);
+            return children;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
+        catch (Exception ex) when (IsBuildFailure(ex))
         {
-            return [new Node("Error", Offset, Length, $"The children could not be built: {ex.GetType().Name}: {ex.Message}") { Description = ErrorDescription }];
+            return [BuildFailure(Offset, Length, ex)];
         }
     }
+
+    // Whether an exception from a builder shows as an error node: all but cancellation and memory.
+    internal static bool IsBuildFailure(Exception ex) => ex is not OperationCanceledException and not OutOfMemoryException;
+
+    // The node that stands for children that could not be built, over the bytes of their parent.
+    internal static Node BuildFailure(long offset, long length, Exception ex) =>
+        new("Error", offset, length, $"The children could not be built: {ex.GetType().Name}: {ex.Message}") { Description = ErrorDescription };
 }

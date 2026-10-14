@@ -1,9 +1,10 @@
-namespace Encspect.Formats.Mp4;
+namespace Encspect.Core;
 
-// Records of every sample of a fragmented track, in blocks: a long track's records are never copied into a larger
-// array and never need one array of their full size. The first block grows as a List does, so a
-// short stream allocates little.
-internal sealed class ChunkedList<T>
+// Records of a stream's access units, frames or packets, in blocks: a long stream's records are
+// never copied into a larger array and never need one array of their full size. The first block
+// grows as a List does, so a short stream allocates little. Written by the one thread that parses;
+// once parsing is over, any number of threads may read it, as long as nobody adds or replaces.
+public sealed class ChunkedList<T>
     where T : struct
 {
     private const int BlockBits = 12;
@@ -39,5 +40,11 @@ internal sealed class ChunkedList<T>
 
         _blocks[block][slot] = item;
         Count++;
+    }
+
+    public void SetLast(in T item)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(Count);
+        _blocks[(Count - 1) >> BlockBits][(Count - 1) & (BlockSize - 1)] = item;
     }
 }

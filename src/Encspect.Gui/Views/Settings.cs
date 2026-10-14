@@ -13,6 +13,7 @@ public sealed record WindowPlacement(int? X, int? Y, double Width, double Height
 public sealed class Settings
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+    private static readonly TimeSpan StaleTemporaryAge = TimeSpan.FromHours(1);
 
     public WindowPlacement? DetailWindow { get; set; }
 
@@ -55,10 +56,43 @@ public sealed class Settings
             return;
         }
 
+        // Written next to the file and moved over it, so two instances closing at once cannot leave
+        // a torn file: the last move wins, and each file is whole.
+        string temporary = $"{FilePath}.{Guid.NewGuid():N}.tmp";
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Options));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(this, Options));
+            File.Move(temporary, FilePath, overwrite: true);
+            SweepStaleTemporaries();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                File.Delete(temporary);
+            }
+            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    // A temporary file survives only a process that ended between writing and moving it. One an hour
+    // old is no other instance's in-flight write.
+    private void SweepStaleTemporaries()
+    {
+        try
+        {
+            string directory = Path.GetDirectoryName(FilePath)!;
+            DateTime cutoff = DateTime.UtcNow - StaleTemporaryAge;
+            foreach (string file in Directory.EnumerateFiles(directory, Path.GetFileName(FilePath) + ".*.tmp"))
+            {
+                if (File.GetLastWriteTimeUtc(file) < cutoff)
+                {
+                    File.Delete(file);
+                }
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

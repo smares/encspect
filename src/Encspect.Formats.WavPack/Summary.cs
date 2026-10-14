@@ -19,7 +19,9 @@ internal static partial class Summary
         long end = s.Source.End;
         Node? stream = null;
         Node Stream() => stream!;
-        stream = new Node("WavPack", start, end - start, null, () => new BlockedChildren(s.Leading, s.Entries.Count, i => EntryNode(s, i)))
+        Records records = s.Records;
+        List<Node> leading = s.Leading;
+        stream = new Node("WavPack", start, end - start, null, () => new BlockedChildren(leading, records.Entries.Count, i => EntryNode(records, i)))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
@@ -48,7 +50,7 @@ internal static partial class Summary
     // correction file's.
     private static bool IsCorrection(State s) => s.AudioBlocks > 0 && s.WvBlocks == 0 && s.DsdBlocks == 0 && (s.WvcBlocks > 0 || s.WvxBlocks > 0);
 
-    private static Node EntryNode(State s, int index) =>
+    private static Node EntryNode(Records s, int index) =>
         s.Entries[index].Kind == EntryKind.Skipped ? Nodes.Skipped(s, index) : Nodes.Block(s, index);
 
     private static void Checks(State s, Func<Node> stream)
@@ -71,7 +73,7 @@ internal static partial class Summary
         {
             int firstExtra = s.ExtraOnlyFirst;
             long at = s.Entries[firstExtra].Offset;
-            s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s, firstExtra), _ =>
+            s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, firstExtra), _ =>
                 $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.");
         }
 
@@ -90,7 +92,7 @@ internal static partial class Summary
         if (s.FirstIndex > 0)
         {
             long first = s.FirstIndex;
-            s.Findings.Add(Severity.Info, "wavpack.first-block-index", () => Nodes.HeaderField(s, s.FirstAudio, "Block Index"), _ =>
+            s.Findings.Add(Severity.Info, "wavpack.first-block-index", () => Nodes.HeaderField(s.Records, s.FirstAudio, "Block Index"), _ =>
                 $"The first audio block begins at sample {first} instead of 0, as in a part cut from a longer stream; libwavpack takes the length from the last block then.");
         }
 
@@ -98,20 +100,20 @@ internal static partial class Summary
         {
             if (declared != counted)
             {
-                s.Findings.Add(Severity.Warning, "wavpack.total-samples-mismatch", () => Nodes.HeaderField(s, s.DeclaredEntry, "Total Samples"), _ =>
+                s.Findings.Add(Severity.Warning, "wavpack.total-samples-mismatch", () => Nodes.HeaderField(s.Records, s.DeclaredEntry, "Total Samples"), _ =>
                     $"The first block says the file holds {declared} samples, but its audio blocks hold {counted}.");
             }
         }
         else if (s.FirstIndex <= 0)
         {
-            s.Findings.Add(Severity.Info, "wavpack.total-samples-unknown", () => Nodes.HeaderField(s, s.DeclaredEntry >= 0 ? s.DeclaredEntry : s.FirstAudio, "Total Samples"), _ =>
+            s.Findings.Add(Severity.Info, "wavpack.total-samples-unknown", () => Nodes.HeaderField(s.Records, s.DeclaredEntry >= 0 ? s.DeclaredEntry : s.FirstAudio, "Total Samples"), _ =>
                 "The first audio block does not say how many samples the file holds (the count is -1, as an encoder writes it when it cannot seek back); libwavpack finds the length from the last block.");
         }
 
         if (s.ChannelInfo is { } info && s.FirstSetChannels != 0 && info.Value.Channels != s.FirstSetChannels)
         {
             int stated = info.Value.Channels;
-            s.Findings.Add(Severity.Warning, "wavpack.channel-count-mismatch", () => Nodes.SubBlock(s, info.Entry, info.SubBlock), _ =>
+            s.Findings.Add(Severity.Warning, "wavpack.channel-count-mismatch", () => Nodes.SubBlock(s.Records, info.Entry, info.SubBlock), _ =>
                 $"The channel info says {stated} channels, but the first set of blocks holds {s.FirstSetChannels}.");
         }
     }

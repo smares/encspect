@@ -237,7 +237,7 @@ public sealed partial class OpusParser
             }
 
             Records records = _records;
-            return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new PacketList(records))
+            return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new BlockedChildren([], records.Count, i => PacketNode(records, i)))
             {
                 Kind = NodeKind.Stream,
                 Description = Explain.AudioPackets,

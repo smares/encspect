@@ -27,8 +27,25 @@ internal static class UiPump
 internal sealed class TestDispatcher
 {
     private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _queue = new();
+    private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _withheld = new();
 
-    public Action<Action> Post => _queue.Enqueue;
+    // Decides for each posted action whether it is withheld: never run, so that a test can have the
+    // UI thread miss a post it would otherwise get.
+    public Func<Action, bool>? Withhold { get; init; }
+
+    public int WithheldCount => _withheld.Count;
+
+    public Action<Action> Post => action =>
+    {
+        if (Withhold?.Invoke(action) == true)
+        {
+            _withheld.Enqueue(action);
+        }
+        else
+        {
+            _queue.Enqueue(action);
+        }
+    };
 
     public void RunPending()
     {

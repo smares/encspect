@@ -8,7 +8,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 ## Layout
 
-- `src/Encspect.Core.Abstractions`: result model, byte and bit readers, mapped bytes, parser interfaces and their contexts.
+- `src/Encspect.Core.Abstractions`: result model, byte and bit readers, mapped bytes, parser interfaces and their contexts, and the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`).
 - `src/Encspect.Host`: analyzer (format detection, parser orchestration, the routes between parsers), report writers and the input walker both front ends use.
 - `src/Encspect.Cli`: console app, assembly name `encspect`.
 - `src/Encspect.Gui`: Avalonia GUI, assembly name `encspect-gui`; it references the host only.
@@ -17,7 +17,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 ## Architecture rules
 
-- Parsers depend only on `Core.Abstractions` (parser interfaces, result model, byte and bit readers, mapped bytes). They never reference each other and never reference a decoder. They reach other parsers only through the host's routes on their context: a container hands a payload to a codec parser by codec ID (`ParseStream`, or `ParsePackets` for packets as `MappedBytes`) and a tag it holds to a tag parser by name (`ParseTag`).
+- Parsers depend only on `Core.Abstractions` (parser interfaces, result model, byte and bit readers, mapped bytes, `BlockedChildren`, `ChunkedList`, `ByteStore`). They never reference each other and never reference a decoder. They reach other parsers only through the host's routes on their context: a container hands a payload to a codec parser by codec ID (`ParseStream`, or `ParsePackets` for packets as `MappedBytes`) and a tag it holds to a tag parser by name (`ParseTag`).
 - The core, the host and the parsers stay a library that any front end could use: no UI types, settings, caches or console output below the front ends, which reach the analysis only through the host's public API (see "A library others could use" in the plan).
 - Tag parsers (ID3, APE, Lyrics3) are separate from format parsers. The host orchestrates detection and assembles one report.
 - The result model is a node tree; every node carries a name, a kind (`NodeKind`), a typed value (`NodeValue`: numbers, booleans and hex codes typed, with their unit; only names, descriptions and mixed text as text), byte offset and length, and a field that does not cover whole bytes also its bit position (`Node.FromBits`); a node whose bytes are not contiguous in the file (a packet that spans Ogg pages) also its `Ranges`, with offset and length covering them. Format parsers report their streams as `StreamInfo` with series for graphs. Findings carry a severity and point to a node of the tree, equal in name, offset and length; the host resolves its path. Front ends read kinds and streams, never node names. Trees nest at most `Node.MaxDepth` levels; deeper nesting is a finding.

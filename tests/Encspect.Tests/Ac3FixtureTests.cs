@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -122,21 +123,23 @@ public class Ac3FixtureTests
     public void FrameNodesCoverTheirFrames(string name)
     {
         var mismatches = new System.Collections.Concurrent.ConcurrentBag<string>();
-        Action<long, int, int> record = (offset, kept, read) => mismatches.Add($"{offset}: {kept} bits kept, {read} read");
-        Encspect.Formats.Ac3.FrameSyntax.RecordMismatch += record;
-        try
+        void Mismatch(long offset, int kept, int read) => mismatches.Add($"{offset}: {kept} bits kept, {read} read");
+        var parser = new Encspect.Formats.Ac3.Ac3Parser { RecordMismatch = Mismatch };
+        IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(f => f is Encspect.Formats.Ac3.Ac3Parser ? parser : f);
+        IEnumerable<ICodecParser> codecs = DefaultParsers.Codecs.Select(c => c is Encspect.Formats.Ac3.Ac3CodecParser codec
+            ? new Encspect.Formats.Ac3.Ac3CodecParser(codec.Id) { RecordMismatch = Mismatch }
+            : c);
+        var analyzer = new Analyzer(DefaultParsers.Tags, formats, codecs);
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = analyzer.Analyze(Path.GetFileName(name), stream);
+        int frames = 0;
+        foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
         {
-            Report report = Fixtures.AnalyzeMpeg(name);
-            foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
-            {
-                CheckChildren(frame, frame.Offset);
-            }
-        }
-        finally
-        {
-            Encspect.Formats.Ac3.FrameSyntax.RecordMismatch -= record;
+            CheckChildren(frame, frame.Offset);
+            frames++;
         }
 
+        Assert.True(frames > 0, $"{name}: no frame was checked.");
         Assert.Empty(mismatches);
     }
 

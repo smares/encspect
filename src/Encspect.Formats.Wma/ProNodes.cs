@@ -6,21 +6,21 @@ namespace Encspect.Formats.Wma;
 // Builds the nodes of the packets, frames and subframes of a Professional stream from its records, when they are read.
 internal sealed class ProNodes
 {
-    private readonly ProStream _stream;
+    private readonly ProRecords _records;
     private readonly PartsMap _map;
 
-    public ProNodes(ProStream stream)
+    public ProNodes(ProRecords records)
     {
-        _stream = stream;
+        _records = records;
         _map = new PartsMap(Packet);
     }
 
-    private ProParameters P => _stream.Parameters;
+    private ProParameters P => _records.Parameters;
 
     private MappedBytes Packet(int index)
     {
-        ProPacketRecord record = _stream.Packets[index];
-        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _stream.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
+        ProPacketRecord record = _records.Packets[index];
+        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _records.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
         return PartsMap.Mapped(record.Length, ranges, record.Offset);
     }
 
@@ -28,8 +28,8 @@ internal sealed class ProNodes
     // it and the start of the one that goes on.
     public Node PacketNode(int index)
     {
-        ProPacketRecord record = _stream.Packets[index];
-        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _stream.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
+        ProPacketRecord record = _records.Packets[index];
+        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _records.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
         long end = ranges.Count > 0 ? ranges[^1].End : record.Offset + record.Length;
         int started = FramesStartedIn(index).Count;
         string value = record.Has(ProPacketRecord.Skipped) ? "not read" : Count(started, "frame", "frames");
@@ -46,21 +46,21 @@ internal sealed class ProNodes
     // first of the next packet's if that began here.
     private List<int> FramesStartedIn(int packet)
     {
-        ProPacketRecord record = _stream.Packets[packet];
+        ProPacketRecord record = _records.Packets[packet];
         var frames = new List<int>();
         for (int i = record.FirstFrame; i < record.FirstFrame + record.FrameCount; i++)
         {
-            if (_stream.StartPackets[i] == packet)
+            if (_records.StartPackets[i] == packet)
             {
                 frames.Add(i);
             }
         }
 
         // The frame that goes on in the next packet is finished there, and counted there.
-        for (int next = packet + 1; next < _stream.Packets.Count && next <= packet + 1; next++)
+        for (int next = packet + 1; next < _records.Packets.Count && next <= packet + 1; next++)
         {
-            ProPacketRecord following = _stream.Packets[next];
-            if (following.FrameCount > 0 && _stream.StartPackets[following.FirstFrame] == packet)
+            ProPacketRecord following = _records.Packets[next];
+            if (following.FrameCount > 0 && _records.StartPackets[following.FirstFrame] == packet)
             {
                 frames.Add(following.FirstFrame);
             }
@@ -71,7 +71,7 @@ internal sealed class ProNodes
 
     private List<Node> PacketChildren(int index)
     {
-        ProPacketRecord record = _stream.Packets[index];
+        ProPacketRecord record = _records.Packets[index];
         var nodes = new List<Node>();
         int headerBits = 6 + P.Log2FrameSize;
         FramePart[] whole = [new FramePart(index, 0, record.Length * 8)];
@@ -98,16 +98,16 @@ internal sealed class ProNodes
 
         foreach (int frame in FramesStartedIn(index))
         {
-            ProFrameRecord frameRecord = _stream.Frames[frame];
-            FramePart first = _stream.Parts[frameRecord.FirstPart];
+            ProFrameRecord frameRecord = _records.Frames[frame];
+            FramePart first = _records.Parts[frameRecord.FirstPart];
             int start = first.StartBit + frameRecord.StartBit;
             int end = frameRecord.PartCount == 1 ? first.StartBit + frameRecord.EndBit : record.Length * 8;
             string value = frameRecord.Status == 0 ? Count(frameRecord.SubframeCount, "subframe", "subframes") : "invalid";
-            string name = frameRecord.PartCount > 1 && _stream.StartPackets[frame] == index ? "Frame Start" : "Frame Data";
+            string name = frameRecord.PartCount > 1 && _records.StartPackets[frame] == index ? "Frame Start" : "Frame Data";
             nodes.Add(Field(start, end, name, value, name == "Frame Start" ? ProExplain.PacketFrameStart : ProExplain.PacketFrameData, Topics.WmaPro));
         }
 
-        bool tailIsFrame = FramesStartedIn(index).Any(f => _stream.Frames[f].PartCount > 1 && _stream.StartPackets[f] == index && record.TailBits > 0);
+        bool tailIsFrame = FramesStartedIn(index).Any(f => _records.Frames[f].PartCount > 1 && _records.StartPackets[f] == index && record.TailBits > 0);
         if (record.TailBits > 0 && !tailIsFrame)
         {
             bool begins = record.Has(ProPacketRecord.TailBeginsFrame);
@@ -121,7 +121,7 @@ internal sealed class ProNodes
     // in the ranges of both.
     public Node FrameNode(int index)
     {
-        ProFrameRecord frame = _stream.Frames[index];
+        ProFrameRecord frame = _records.Frames[index];
         List<FramePart> parts = PartsOf(frame);
         (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, frame.StartBit, frame.EndBit);
         string value = frame.Status == 0
@@ -139,7 +139,7 @@ internal sealed class ProNodes
     // The file offset of the first byte of a frame.
     public long FrameOffset(int index)
     {
-        ProFrameRecord frame = _stream.Frames[index];
+        ProFrameRecord frame = _records.Frames[index];
         return _map.Cover(PartsOf(frame), frame.StartBit, Math.Max(frame.StartBit + 1, frame.EndBit)).Offset;
     }
 
@@ -148,7 +148,7 @@ internal sealed class ProNodes
         var parts = new List<FramePart>(frame.PartCount);
         for (int i = 0; i < frame.PartCount; i++)
         {
-            parts.Add(_stream.Parts[frame.FirstPart + i]);
+            parts.Add(_records.Parts[frame.FirstPart + i]);
         }
 
         return parts;
@@ -156,7 +156,7 @@ internal sealed class ProNodes
 
     private List<Node> FrameChildren(int index, List<FramePart> parts)
     {
-        ProFrameRecord frame = _stream.Frames[index];
+        ProFrameRecord frame = _records.Frames[index];
         var nodes = new List<Node>();
         ProParameters p = P;
         Node Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
@@ -173,7 +173,7 @@ internal sealed class ProNodes
             var lengths = new List<string>();
             for (int s = 0; s < frame.SubframeCount; s++)
             {
-                ProSubframeRecord subframe = _stream.Subframes[frame.FirstSubframe + s];
+                ProSubframeRecord subframe = _records.Subframes[frame.FirstSubframe + s];
                 if ((subframe.ChannelMask & (1 << channel)) != 0)
                 {
                     lengths.Add(subframe.Length.ToString(CultureInfo.InvariantCulture));
@@ -202,7 +202,7 @@ internal sealed class ProNodes
 
         for (int s = 0; s < frame.SubframeCount; s++)
         {
-            nodes.Add(SubframeNode(parts, _stream.Subframes[frame.FirstSubframe + s], frame.Status != 0 && s == frame.SubframeCount - 1));
+            nodes.Add(SubframeNode(parts, _records.Subframes[frame.FirstSubframe + s], frame.Status != 0 && s == frame.SubframeCount - 1));
         }
 
         if (frame.Status == 0)
@@ -248,7 +248,7 @@ internal sealed class ProNodes
             Node transform = Field(subframe.FillEnd + 1, subframe.TransformEnd, "Channel Transform", NodeValue.Text(Count(subframe.GroupCount, "group", "groups")), ProExplain.ChannelTransform, Topics.WmaPro);
             for (int g = 0; g < subframe.GroupCount; g++)
             {
-                transform.Add(GroupNode(parts, _stream.Groups[subframe.FirstGroup + g]));
+                transform.Add(GroupNode(parts, _records.Groups[subframe.FirstGroup + g]));
             }
 
             node.Add(transform);
@@ -259,7 +259,7 @@ internal sealed class ProNodes
             var flags = new List<string>();
             for (int i = 0; i < subframe.ChannelCount; i++)
             {
-                flags.Add(_stream.Channels[subframe.FirstChannel + i].Has(ProChannelRecord.Transmits) ? "yes" : "no");
+                flags.Add(_records.Channels[subframe.FirstChannel + i].Has(ProChannelRecord.Transmits) ? "yes" : "no");
             }
 
             node.Add(Field(subframe.TransformEnd, subframe.FlagsEnd, "Coefficients Sent", NodeValue.Text(string.Join(", ", flags)), ProExplain.CoefficientsSent, Topics.WmaPro));
@@ -272,7 +272,7 @@ internal sealed class ProNodes
 
         if (subframe.VectorEnd > subframe.FlagsEnd)
         {
-            node.Add(Field(subframe.FlagsEnd, subframe.VectorEnd, "Vector Coefficients", subframe.Has(ProSubframeRecord.SendsVectorCounts) ? NodeValue.Text(string.Join(", ", Enumerable.Range(0, subframe.ChannelCount).Select(i => _stream.Channels[subframe.FirstChannel + i].VectorCoefficients))) : NodeValue.Text("all"), ProExplain.VectorCoefficients, Topics.WmaPro));
+            node.Add(Field(subframe.FlagsEnd, subframe.VectorEnd, "Vector Coefficients", subframe.Has(ProSubframeRecord.SendsVectorCounts) ? NodeValue.Text(string.Join(", ", Enumerable.Range(0, subframe.ChannelCount).Select(i => _records.Channels[subframe.FirstChannel + i].VectorCoefficients))) : NodeValue.Text("all"), ProExplain.VectorCoefficients, Topics.WmaPro));
         }
 
         if (subframe.StepEnd > subframe.VectorEnd)
@@ -282,7 +282,7 @@ internal sealed class ProNodes
 
         for (int i = 0; i < subframe.ChannelCount; i++)
         {
-            ProChannelRecord channel = _stream.Channels[subframe.FirstChannel + i];
+            ProChannelRecord channel = _records.Channels[subframe.FirstChannel + i];
             if (!channel.Has(ProChannelRecord.Transmits))
             {
                 continue;

@@ -36,7 +36,7 @@ internal static class Sv7Parser
         (0x4000, 4, -2), (0x0, 2, -1),
     ];
 
-    public static int[] SampleRates { get; } = [44100, 48000, 37800, 32000];
+    public static ReadOnlySpan<int> SampleRates => [44100, 48000, 37800, 32000];
 
     public static string ProfileName(int profile) => profile >= 0 && profile < ProfileNames.Length ? ProfileNames[profile] : "n.a.";
 

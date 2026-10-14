@@ -16,7 +16,9 @@ internal sealed record SpeexHeader(string Version, int VersionId, int HeaderSize
     // positions (SPEEX_GET_LOOKAHEAD of an encoder in libspeex 1.2.1).
     public static ReadOnlySpan<int> Lookahead => [40, 143, 349];
 
-    public static string[] ModeNames { get; } = ["Narrowband", "Wideband", "Ultra-wideband"];
+    private static readonly string[] Modes = ["Narrowband", "Wideband", "Ultra-wideband"];
+
+    public static ReadOnlySpan<string> ModeNames => Modes;
 
     public bool IsModeValid => Mode is >= 0 and <= 2;
 
