@@ -1,0 +1,89 @@
+{
+ "description": "Encoded by ffmpeg's dca encoder from 6 channels at 11025 Hz and 384kbit/s.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "dca",
+  "-strict",
+  "-2",
+  "-b:a",
+  "384k",
+  "-af",
+  "aformat=channel_layouts=5.1(side)"
+ ],
+ "length": 24552,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   2232
+  ],
+  [
+   2232,
+   2232
+  ],
+  [
+   4464,
+   2232
+  ],
+  [
+   6696,
+   2232
+  ],
+  [
+   8928,
+   2232
+  ],
+  [
+   11160,
+   2232
+  ],
+  [
+   13392,
+   2232
+  ],
+  [
+   15624,
+   2232
+  ],
+  [
+   17856,
+   2232
+  ],
+  [
+   20088,
+   2232
+  ],
+  [
+   22320,
+   2232
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 11025,
+   "channels": 6,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 5632,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

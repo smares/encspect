@@ -33,6 +33,10 @@ internal static class Program
         [0x62, 0x01, 0x00, 0x00], [0x61, 0x01, 0x00, 0x00], [0xE0, 0x00],
         "MPCK"u8.ToArray(), "MP+\x07"u8.ToArray(), "SH"u8.ToArray(), "AP"u8.ToArray(), "SE\x03"u8.ToArray(), "ST"u8.ToArray(),
         "wvpk"u8.ToArray(), [0x10, 0x04], [0x02, 0x04], [0x2F, 0x02], [0x2F, 0x03], [0x8A], [0x21, 0x16], [0x25, 0x01], [0x2A, 0x00], [0x0D, 0x01],
+        [0x7F, 0xFE, 0x80, 0x01], [0xFE, 0x7F, 0x01, 0x80], [0x1F, 0xFF, 0xE8, 0x00, 0x07, 0xF0], [0xFF, 0x1F, 0x00, 0xE8, 0xF0, 0x07],
+        [0x64, 0x58, 0x20, 0x25], [0x58, 0x64, 0x25, 0x20], [0x5A, 0x5A, 0x5A, 0x5A], [0x1D, 0x95, 0xF2, 0x62], [0x47, 0x00, 0x4A, 0x03],
+        [0x65, 0x5E, 0x31, 0x5E], [0x0A, 0x80, 0x19, 0x21], [0x41, 0xA2, 0x95, 0x47], [0x02, 0xB0, 0x92, 0x61], "ddts"u8.ToArray(), "dtsc"u8.ToArray(),
+        "dtsh"u8.ToArray(), "dtsl"u8.ToArray(), "dtse"u8.ToArray(),
     ];
 
     private static readonly uint[] Sizes = [0, 1, 0x7F, 0x80, 0x7F7F7F7F, 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 10, 128];
@@ -57,7 +61,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".dts" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

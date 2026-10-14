@@ -1,0 +1,53 @@
+{
+ "description": "Six stereo core frames of 512 samples at 48 kHz in 14-bit words with 14 bits in each 16-bit word, little endian.",
+ "length": 3456,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   576
+  ],
+  [
+   576,
+   576
+  ],
+  [
+   1152,
+   576
+  ],
+  [
+   1728,
+   576
+  ],
+  [
+   2304,
+   576
+  ],
+  [
+   2880,
+   576
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

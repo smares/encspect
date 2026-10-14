@@ -230,6 +230,11 @@ jobs:
           python3 scripts/fixtures/make_ac3_fixtures.py
           python3 scripts/fixtures/make_external_ac3_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built DTS fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_dts_fixtures.py
+          python3 scripts/fixtures/make_external_dts_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built ASF fixtures and the encoder-made WMA ones' manifests
         run: |
           python3 scripts/fixtures/make_asf_fixtures.py
@@ -430,6 +435,22 @@ jobs:
       - name: Cross-check the AC-3 fixtures
         run: python3 scripts/fixtures/crosscheck_ac3_fixtures.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect
 
+  dts-crosscheck:
+    name: DTS fixtures agree with ffprobe, ffmpeg, libdca and MediaInfo
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 6.1, libdca 0.0.7 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
+      # checked with; dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
+      - name: Install ffmpeg, libdca and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential
+
+      - name: Cross-check the DTS fixtures
+        run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
+
   # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
   # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled, and
   # only success passes: a skipped job counts as a failure, since none of the jobs above is conditional.
@@ -449,6 +470,7 @@ jobs:
       - wavpack-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
+      - dts-crosscheck
     runs-on: ubuntu-24.04
     steps:
       - name: Require every job to succeed

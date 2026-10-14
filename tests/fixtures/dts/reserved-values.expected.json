@@ -1,0 +1,56 @@
+{
+ "description": "Four stereo core frames with FixedBit set, LFF 3, PCMR 7 and SHUFF and BHUFF 7.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.reserved-value",
+   "reserves"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "decode_error": "Reserved bit set",
+  "skip": {
+   "ffprobe": "ffmpeg's decoder rejects the frames ('Reserved bit set': FixedBit), so ffprobe gets no sampling frequency or channels",
+   "decode": "ffmpeg rejects the set FixedBit, the first invalid field it reads (dca.c, ff_dca_parse_core_frame_header)",
+   "libdca": "libdca stops at the invalid tables."
+  }
+ }
+}

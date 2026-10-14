@@ -1,0 +1,52 @@
+{
+ "description": "Three units of a 48 kHz core frame and an extension substream whose lossless asset names 96 kHz as its highest sampling frequency.",
+ "length": 2112,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   704
+  ],
+  [
+   1408,
+   704
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 96000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Sampling Frequency": "48000 Hz",
+  "DTS/Statistics/Extension Sampling Frequency": "96000 Hz"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "ffprobe_rate": 48000,
+  "decode_error": "Invalid XLL sub-header checksum",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "ffprobe_rate": "ffmpeg's parser takes the rate of a core with an extension substream from the core (dca_parser.c); its decoder sets the 96 kHz of the lossless extension (dca_xll.c) only after it has decoded it, which the stub does not allow",
+   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+  }
+ }
+}

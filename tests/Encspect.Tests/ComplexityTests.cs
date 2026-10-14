@@ -129,6 +129,81 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
+    // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
+    // scan looks for 16 KiB on, and finds none; the time must stay linear in the data.
+    [Fact]
+    public void ManyCoreHeadersThatChainNowhere()
+    {
+        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..12];
+        SetBits(header, 46, 14, 16383);
+        var data = new byte[24 << 20];
+        for (int at = 0; at + 96 <= data.Length; at += 96)
+        {
+            header.CopyTo(data, at);
+        }
+
+        TimedDts(data);
+    }
+
+    // Sync words one after the other, each a header that is invalid, and extension substream headers that state a megabyte.
+    [Fact]
+    public void ManySyncWordsWithoutHeaders()
+    {
+        TimedDts([.. Repeat([0x7F, 0xFE, 0x80, 0x01], 6 << 20)]);
+        byte[] exss = [0x64, 0x58, 0x20, 0x25, 0, 0, 0x0F, 0x01, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0];
+        TimedDts([.. Repeat(exss, 1 << 20)]);
+    }
+
+    // An extension substream sync word every 16 bytes, each header stating a size of 4,096 bytes and a megabyte of substream (so the next
+    // header lies where the size points) and failing its CRC16: each is a candidate that costs a 4 KiB read and a CRC if checked in full.
+    // The search spends a bounded amount of that work, so the time stays linear in the data.
+    [Fact]
+    public void ManyExtensionSubstreamHeadersThatFailTheirCrc()
+    {
+        // Sync word, user bits 0, index 0, long header (1), header size 4095, substream size 0xFFFFF, then the first bit of the next field.
+        byte[] header = (((new System.Numerics.BigInteger(0x64582025) << 43) | (System.Numerics.BigInteger.One << 32) | (4095L << 20) | 0xFFFFF) << 5).ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] template = new byte[16];
+        header.CopyTo(template, 0);
+        var data = new byte[32 << 20];
+        for (int at = 0; at + 16 <= data.Length; at += 16)
+        {
+            template.CopyTo(data, at);
+        }
+
+        TimedDts(data);
+    }
+
+    private static void SetBits(byte[] data, int start, int width, int value)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            int bit = start + i;
+            int on = (value >> (width - 1 - i)) & 1;
+            data[bit >> 3] = (byte)((data[bit >> 3] & ~(0x80 >> (bit & 7))) | (on << (7 - (bit & 7))));
+        }
+    }
+
+    private static void TimedDts(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("flood.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    private sealed class ForcedDts : IFormatParser
+    {
+        private readonly Encspect.Formats.Dts.DtsParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public int Sniff(SniffContext context) => 100;
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
     private sealed class ForcedWavPack : IFormatParser
     {
         private readonly Encspect.Formats.WavPack.WavPackParser _parser = new();

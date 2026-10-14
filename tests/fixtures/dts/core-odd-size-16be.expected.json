@@ -1,0 +1,41 @@
+{
+ "description": "Three stereo core frames whose FSIZE + 1 is 1001, which does not end on a whole 16-bit word, in 16-bit words, big endian: each takes 1001 bytes in the file.",
+ "length": 3003,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1001
+  ],
+  [
+   1001,
+   1001
+  ],
+  [
+   2002,
+   1001
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

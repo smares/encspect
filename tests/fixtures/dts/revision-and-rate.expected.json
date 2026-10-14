@@ -1,0 +1,54 @@
+{
+ "description": "Four stereo core frames with VERNUM 9 and a targeted rate of 32 kbit/s, far below what the frames use.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.revision-incompatible",
+   "revision incompatible"
+  ],
+  [
+   "dts.rate-exceeded",
+   "512 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

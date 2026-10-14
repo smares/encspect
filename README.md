@@ -16,12 +16,13 @@ Formats read so far ([details](docs/formats/README.md)):
 - Ogg, with Speex, Vorbis and Opus
 - Musepack SV4 to SV8
 - AC-3 and E-AC-3, raw and in MP4
+- DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams), raw and in MP4
 - WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2 and Professional, and Lossless and Voice at header level
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
 
-Next: DTS, then the lossless formats, among them the frames of WMA Lossless.
+Phase 2, the lossy formats, is done. Next: the lossless formats, among them the frames of WMA Lossless.
 
 ## Documentation
 

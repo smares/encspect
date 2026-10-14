@@ -1,0 +1,82 @@
+{
+ "description": "30 bytes of junk, three frames, 50 bytes of junk, three frames, 20 bytes of junk.",
+ "length": 3172,
+ "format": "DTS",
+ "frames": [
+  [
+   30,
+   512
+  ],
+  [
+   542,
+   512
+  ],
+  [
+   1054,
+   512
+  ],
+  [
+   1616,
+   512
+  ],
+  [
+   2128,
+   512
+  ],
+  [
+   2640,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   0,
+   30
+  ],
+  [
+   1566,
+   50
+  ],
+  [
+   3152,
+   20
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.leading-junk",
+   "30 bytes before the first frame"
+  ],
+  [
+   "dts.sync-lost",
+   "Sync is lost for 50 bytes"
+  ],
+  [
+   "dts.trailing-data",
+   "20 bytes after"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "libdca": true,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the junk into the packets around it."
+  }
+ }
+}

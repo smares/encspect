@@ -1,0 +1,56 @@
+{
+ "description": "Four units whose asset descriptor gives a size of 4 bytes, less than its fields take.",
+ "length": 2816,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   704
+  ],
+  [
+   1408,
+   704
+  ],
+  [
+   2112,
+   704
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.asset-descriptor-overrun",
+   "4 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Read past end of EXSS asset descriptor",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the descriptor whose fields run past its size (dca_exss.c: 'Read past end of EXSS asset descriptor')"
+  }
+ }
+}

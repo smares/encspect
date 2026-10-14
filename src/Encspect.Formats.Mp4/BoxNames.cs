@@ -45,6 +45,7 @@ internal static class BoxNames
         "btrt" => "Bitrate",
         "dac3" => "AC-3 Specific",
         "dec3" => "E-AC-3 Specific",
+        "ddts" => "DTS Specific",
         "chan" => "Channel Layout",
         "chnl" => "Channel Layout",
         "wave" => "Sound Decompression Parameters",

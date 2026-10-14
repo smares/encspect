@@ -58,7 +58,7 @@ public sealed partial class Mp4Parser
             case "esds":
                 ElementaryStreamDescriptor(state, node, f);
                 return true;
-            case "dac3" or "dec3":
+            case "dac3" or "dec3" or "ddts":
                 CodecSpecificBox(state, node, f);
                 return true;
             case "btrt":

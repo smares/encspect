@@ -1,0 +1,51 @@
+{
+ "description": "Four units of a core frame and an extension substream with XBR, X96 and XXCH components.",
+ "length": 2560,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   640
+  ],
+  [
+   640,
+   640
+  ],
+  [
+   1280,
+   640
+  ],
+  [
+   1920,
+   640
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD High Resolution Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid number of bits for XBR scale factor index",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg reads the XBR frame header and its CRC, then rejects the channel set data, which is filler (dca_core.c: 'Invalid number of bits for XBR scale factor index')"
+  }
+ }
+}

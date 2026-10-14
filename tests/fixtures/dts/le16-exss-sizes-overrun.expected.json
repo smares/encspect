@@ -1,0 +1,56 @@
+{
+ "description": "Four units whose extension substream is 72 bytes long, less than its header and the sizes of its assets' components add up to, written in 16-bit words, little endian.",
+ "length": 2336,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   584
+  ],
+  [
+   584,
+   584
+  ],
+  [
+   1168,
+   584
+  ],
+  [
+   1752,
+   584
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.substream-overrun",
+   "more than the substream's"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "EXSS asset out of bounds",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the assets' sizes that add up to more than the substream (dca_exss.c: 'EXSS asset out of bounds')"
+  }
+ }
+}

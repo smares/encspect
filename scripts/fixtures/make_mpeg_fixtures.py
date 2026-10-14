@@ -563,6 +563,19 @@ def free_format():
 
 
 @fixture
+def free_format_layer1_unprotected():
+    f = Fixture(
+        "mpeg1-layer1-free-format",
+        ".mp1",
+        "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and no CRC, which ISO/IEC 11172-3 allows: "
+        "recognized as MPEG audio when nothing else claims the file.",
+        crosscheck="mpg123",
+    )
+    f.add_frames([Frame(layer=1, bitrate=None, rate=48000, free_length=1000) for _ in range(6)])
+    return f.finding("mpeg.free-format", "1000")
+
+
+@fixture
 def mpeg25_layer2():
     f = Fixture(
         "mpeg25-layer2-mono",

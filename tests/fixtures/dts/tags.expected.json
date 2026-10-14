@@ -1,0 +1,104 @@
+{
+ "description": "An ID3v2 tag, five stereo core frames, an APEv2 tag and an ID3v1 tag.",
+ "length": 2849,
+ "format": "DTS",
+ "frames": [
+  [
+   47,
+   512
+  ],
+  [
+   559,
+   512
+  ],
+  [
+   1071,
+   512
+  ],
+  [
+   1583,
+   512
+  ],
+  [
+   2095,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2560,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Encoder": "dtsenc 1.0"
+ },
+ "findings": [
+  [
+   "dts.encoder-claim",
+   "APE Encoder item"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_packets": [
+   [
+    47,
+    512
+   ],
+   [
+    559,
+    512
+   ],
+   [
+    1071,
+    512
+   ],
+   [
+    1583,
+    512
+   ],
+   [
+    2095,
+    754
+   ]
+  ],
+  "ffprobe_packets_reason": "ffmpeg's last packet takes the APEv2 and ID3v1 tags that end the file into it",
+  "skip": {
+   "libdca": "libdca's tool does not skip tags."
+  }
+ },
+ "regions": [
+  [
+   "ID3v2",
+   0,
+   47
+  ],
+  [
+   "DTS",
+   47,
+   2560
+  ],
+  [
+   "APE",
+   2607,
+   114
+  ],
+  [
+   "ID3v1",
+   2721,
+   128
+  ]
+ ]
+}

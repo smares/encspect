@@ -1,0 +1,47 @@
+{
+ "description": "Three units of a core frame of 1,001 bytes, three null bytes, a lossless extension substream and the null bytes that align the next sync word.",
+ "length": 3588,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1196
+  ],
+  [
+   1196,
+   1196
+  ],
+  [
+   2392,
+   1196
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid XLL sub-header checksum",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+  }
+ }
+}

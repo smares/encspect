@@ -1,0 +1,56 @@
+{
+ "description": "Three stereo core frames and a termination frame of 8 blocks, in 14-bit words, little endian.",
+ "length": 2304,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   576
+  ],
+  [
+   576,
+   576
+  ],
+  [
+   1152,
+   576
+  ],
+  [
+   1728,
+   576
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1792,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Termination Frames": "1 frame"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": false,
+  "ffprobe_packets": false,
+  "decode_errors": {
+   "1728": "Deficit samples are not supported"
+  },
+  "skip": {
+   "ffprobe_packets": "ffmpeg's parser takes a sync word as a frame only when the bits after it are those of a normal frame, FTYPE 1 and SHORT 31 (dca_parser.c, IS_CORE_MARKER), so the termination frame is part of the packet before it",
+   "decode": "ffmpeg's decoder rejects termination frames in every form (dca.c: 'Deficit samples are not supported')",
+   "libdca": "libdca's sync search reads FTYPE 1 and SHORT 31 in the 14-bit forms and its tool stops at a frame it rejects"
+  }
+ }
+}

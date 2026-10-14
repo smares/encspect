@@ -1,0 +1,50 @@
+{
+ "description": "Four stereo core frames with RATE 31, which Table 5-7 does not list and 5.6 uses to select the lossless step-size table.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.rate-lossless",
+   "RATE is 31"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "description": "Four units whose extension substream holds an asset with coding mode 3, auxiliary.",
+ "length": 2288,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   572
+  ],
+  [
+   572,
+   572
+  ],
+  [
+   1144,
+   572
+  ],
+  [
+   1716,
+   572
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.coding-mode-auxiliary",
+   "coding mode 3"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "skip": {
+   "ffprobe_profile": "ffmpeg reads no component of the auxiliary asset and leaves the profile DTS (dca_exss.c, coding mode 3 sets no extension mask)"
+  }
+ }
+}

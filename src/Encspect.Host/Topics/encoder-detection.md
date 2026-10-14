@@ -15,9 +15,10 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 - In AAC, ffmpeg's or FAAC's version text in a [fill element](aac-raw-data-blocks) (high); in [xHE-AAC](usac), exhale's element layout (medium).
 - In Vorbis, the [comment](vorbis-comments)'s vendor string: each libvorbis, aoTuV and Lancer release writes its own, which its source or builds confirm.
 - In Musepack, the encoder's version in the stream ([SV8 packets](musepack-sv8-packets)).
+- In DTS, VERNUM is a revision field; it names no encoder.
 - In WavPack, libwavpack 5.0's [config block](wavpack-blocks) and checksums (medium).
 - In ASF, [metadata](asf-metadata) such as WMFSDKVersion and the header's layout tell Microsoft's writers apart (medium); in WMA, ffmpeg's 'N' filler bytes count high.
-- An ID3v2 TSSE frame, an APE Encoder item or an MP4 [©too item](itunes-metadata), which whatever software wrote the tag fills in. Alone, it names an encoder with low confidence; for AC-3, whose frames name none, it is the only evidence.
+- An ID3v2 TSSE frame, an APE Encoder item or an MP4 [©too item](itunes-metadata), which whatever software wrote the tag fills in. Alone, it names an encoder with low confidence; for AC-3 and DTS, whose frames name none, it is the only evidence.
 
 **Confidence.** High means the encoder signed the file in a way that checks out; medium, specific but weaker evidence; low, only habits or text other software may have written.
 

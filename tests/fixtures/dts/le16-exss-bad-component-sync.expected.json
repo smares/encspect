@@ -1,0 +1,54 @@
+{
+ "description": "Four units whose lossless component does not start with its sync word, written in 16-bit words, little endian.",
+ "length": 2816,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   704
+  ],
+  [
+   1408,
+   704
+  ],
+  [
+   2112,
+   704
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.component-sync",
+   "sync word"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow"
+  }
+ }
+}

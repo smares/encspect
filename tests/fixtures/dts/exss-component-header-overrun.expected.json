@@ -1,0 +1,48 @@
+{
+ "description": "Two units whose lossless component is its sync word and four bytes, so the data ends inside its header.",
+ "length": 1296,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   648
+  ],
+  [
+   648,
+   648
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1024,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.header-overrun",
+   "ends inside the XLL component's header"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid XLL common header checksum",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+  }
+ }
+}

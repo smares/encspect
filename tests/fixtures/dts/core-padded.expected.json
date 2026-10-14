@@ -1,0 +1,41 @@
+{
+ "description": "Three stereo core frames of 1,001 bytes, each followed by the three null bytes that align the next sync word to 32 bits.",
+ "length": 3012,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1004
+  ],
+  [
+   1004,
+   1004
+  ],
+  [
+   2008,
+   1004
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

@@ -1,0 +1,72 @@
+{
+ "description": "Encoded by ffmpeg's dca encoder from 1 channel at 8000 Hz and 64kbit/s.",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-c:a",
+  "dca",
+  "-strict",
+  "-2",
+  "-b:a",
+  "64k",
+  "-af",
+  "aformat=channel_layouts=mono"
+ ],
+ "length": 4096,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   512
+  ],
+  [
+   3072,
+   512
+  ],
+  [
+   3584,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 8000,
+   "channels": 1,
+   "channel_mode": "1/0",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 4096,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

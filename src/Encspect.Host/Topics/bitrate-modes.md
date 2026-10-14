@@ -1,8 +1,8 @@
 ---
 id: bitrate-modes
 title: CBR, VBR and ABR
-related: wavpack-hybrid-mode, bit-reservoir, xing-header, lame-tag, padding, adts, musepack-subband-coding
-references: ISO/IEC 11172-3 2.4.2.3; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6
+related: dts-extension-substream, wavpack-hybrid-mode, bit-reservoir, xing-header, lame-tag, padding, adts, musepack-subband-coding
+references: ISO/IEC 11172-3 2.4.2.3; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6; ETSI TS 102 114 5.4.2 Table 5-7
 ---
 
 Every MPEG audio frame states its own bitrate, so a stream can use one bitrate throughout or change it from frame to frame.
@@ -14,6 +14,8 @@ Every MPEG audio frame states its own bitrate, so a stream can use one bitrate t
 **ABR**, average bitrate, is a mode of LAME and other encoders: the bitrate varies like VBR but is steered toward a target average, so the file's size is predictable.
 
 **AAC** frames state no bitrate. An [ADTS](adts) buffer fullness of 0x7FF and an average bitrate of 0 in MP4's decoder configuration mark a variable bitrate.
+
+**In DTS** RATE states a targeted bitrate; a stream counts as variable when its frame sizes or targeted rates differ, and with the lossless XLL component ([extension substreams](dts-extension-substream)).
 
 **What you see.** IsVbr in the statistics says whether the frames use more than one bitrate, from the frames themselves. A VBR header alone does not make a file VBR: LAME writes an "Info" header into CBR files too. The LAME tag's VBR Method says which mode the encoder was set to, and the bitrate distribution shows how many frames use each bitrate.
 
