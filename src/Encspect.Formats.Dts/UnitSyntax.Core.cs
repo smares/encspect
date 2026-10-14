@@ -98,8 +98,15 @@ internal sealed partial class UnitSyntax
             if (!inSubstream)
             {
                 facts.HasAudioHeader = true;
-                extension = _isBuilding ? _layout.Extension : FindExtension(header, baseByte, length, declared);
-                _layout.Extension = extension;
+                if (_isBuilding)
+                {
+                    extension = _layout.Extension;
+                }
+                else
+                {
+                    extension = FindExtension(header, baseByte, length, declared);
+                    _layout.Extension = extension;
+                }
             }
         }
         catch (EndOfStreamException)

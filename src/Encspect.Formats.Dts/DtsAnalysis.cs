@@ -332,7 +332,7 @@ internal sealed class DtsAnalysis
 
     private static List<Node> FrameChildren(UnitRecord.Open open)
     {
-        var syntax = new UnitSyntax(open.View, open.Layout, open.Verdicts);
+        var syntax = new UnitSyntax(open.View, open.Layout, open.NewVerdicts());
         syntax.Run();
         return syntax.Nodes;
     }
@@ -493,7 +493,9 @@ internal static class UnitRecord
     {
         public UnitLayout Layout => layout;
 
-        public Verdicts Verdicts => verdicts;
+        // A node pass consumes its verdicts in order, and a frame's children are built again whenever the builder
+        // runs (they are held weakly, and readers on several threads may each build them): each pass gets its own cursor.
+        public Verdicts NewVerdicts() => new(verdicts.Values);
 
         public UnitView View => view;
 

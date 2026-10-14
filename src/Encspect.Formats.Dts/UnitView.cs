@@ -138,16 +138,19 @@ internal sealed class UnitView
 
     private Segment SegmentOf(int first, int last)
     {
-        if (_last < _segments.Count && Fits(_segments[_last], first, last))
+        // The hint is read once: node builders on several threads share one view, and a hint that another thread
+        // moves between the check and the return would name a segment that does not hold the bytes.
+        int hint = Volatile.Read(ref _last);
+        if (hint < _segments.Count && Fits(_segments[hint], first, last))
         {
-            return _segments[_last];
+            return _segments[hint];
         }
 
         for (int i = 0; i < _segments.Count; i++)
         {
             if (Fits(_segments[i], first, last))
             {
-                _last = i;
+                Volatile.Write(ref _last, i);
                 return _segments[i];
             }
         }
