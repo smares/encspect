@@ -23,3 +23,7 @@ From mapping family 0 or 1. Ambisonics and family 255 name no speakers.
 ## Encoder detection
 
 opusenc and ffmpeg, from the vendor string.
+
+## Not yet covered
+
+- The SILK and CELT layers (planned: entropy pass).
