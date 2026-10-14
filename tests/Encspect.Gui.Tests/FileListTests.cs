@@ -41,10 +41,35 @@ public class FileListTests
         Assert.Equal("4 files", model.Status);
     }
 
-    // Workers queue their results and post one drain for the first of them; the drain clears the flag that
-    // says one is posted, then empties the queue. With a store that could stay buffered, a result queued
-    // in between would never be drained (the flag still read set), so the run's end drains once more.
-    // Many tiny files and a UI thread that spins make that window as wide as it gets.
+    // Workers queue their results and post one drain for the first of them; the drain empties the queue.
+    // A result queued after the drain looked and before it cleared the flag that says one is posted
+    // would never be drained, so the run's end drains once more. The UI thread here misses the drain
+    // post altogether, which is that window at its widest: every result then waits in the queue for
+    // the run's end, and none may be left unapplied (and its row marked canceled).
+    [Fact]
+    public void Every_result_of_a_large_folder_reaches_its_row_when_the_drain_post_is_missed()
+    {
+        using var temp = new TempFolder();
+        for (int i = 0; i < 200; i++)
+        {
+            temp.Write($"f{i:D3}.txt", "not audio"u8.ToArray());
+        }
+
+        // The drain is the closure made in Apply; the compiler names it after its method.
+        var ui = new TestDispatcher { Withhold = action => action.Method.Name.Contains("<Apply>", StringComparison.Ordinal) };
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, parallelism: 4, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning, timeoutMilliseconds: 60000);
+
+        Assert.True(ui.WithheldCount > 0, "No drain was posted, so none was withheld.");
+        Assert.Equal(200, model.Rows.Count);
+        Assert.All(model.Rows, r => Assert.Equal(FileState.Analyzed, r.State));
+        Assert.Equal(200, model.Analyzed);
+    }
+
+    // Many tiny files and a UI thread that spins: the drains and the workers race as they do in a
+    // window. A smoke test, since whether a result is stranded depends on timing.
     [Fact]
     public void Every_result_of_a_large_folder_reaches_its_row()
     {

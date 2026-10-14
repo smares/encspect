@@ -13,6 +13,7 @@ public sealed record WindowPlacement(int? X, int? Y, double Width, double Height
 public sealed class Settings
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+    private static readonly TimeSpan StaleTemporaryAge = TimeSpan.FromHours(1);
 
     public WindowPlacement? DetailWindow { get; set; }
 
@@ -63,6 +64,7 @@ public sealed class Settings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(temporary, JsonSerializer.Serialize(this, Options));
             File.Move(temporary, FilePath, overwrite: true);
+            SweepStaleTemporaries();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -73,6 +75,27 @@ public sealed class Settings
             catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
             {
             }
+        }
+    }
+
+    // A temporary file survives only a process that ended between writing and moving it. One an hour
+    // old is no other instance's in-flight write.
+    private void SweepStaleTemporaries()
+    {
+        try
+        {
+            string directory = Path.GetDirectoryName(FilePath)!;
+            DateTime cutoff = DateTime.UtcNow - StaleTemporaryAge;
+            foreach (string file in Directory.EnumerateFiles(directory, Path.GetFileName(FilePath) + ".*.tmp"))
+            {
+                if (File.GetLastWriteTimeUtc(file) < cutoff)
+                {
+                    File.Delete(file);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
         }
     }
 }
