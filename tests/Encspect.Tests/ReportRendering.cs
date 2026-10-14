@@ -49,6 +49,75 @@ internal static class ReportRendering
         _ => Csv(report),
     };
 
+    // A report written to a string by writer 0 (JSON), 1 (text) or 2 (CSV), for a failure's message only.
+    public static string Render(Report report, int writer)
+    {
+        using var stream = new MemoryStream();
+        using (var text = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
+        {
+            switch (writer % 3)
+            {
+                case 0:
+                    text.Flush();
+                    ReportJsonWriter.Write([report], stream, ReportFilter.All, explain: true);
+                    break;
+                case 1:
+                    ReportTextWriter.Write(report, text, showOffsets: true, ReportFilter.All, explain: true);
+                    break;
+                default:
+                    ReportCsvWriter.Write([report], text);
+                    break;
+            }
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    // What the hashes of two renderings cannot say: written again now, the report and a reference
+    // (another analysis of the same file) are compared by all three writers, and the first line that
+    // differs is named. When they agree now, the difference came and went with a collection or a race.
+    public static string Differences(Report report, Report reference)
+    {
+        for (int writer = 0; writer < 3; writer++)
+        {
+            string difference = FirstDifference(Render(reference, writer), Render(report, writer));
+            if (difference.Length > 0)
+            {
+                return $"Written again now, writer {writer} differs from a fresh analysis: {difference}";
+            }
+        }
+
+        return "Written again now, the report equals a fresh analysis: the difference did not persist (a collection or a race).";
+    }
+
+    // The first line where two texts differ, with its number and both lines (cut to 160 characters), or
+    // an empty string when they are equal.
+    public static string FirstDifference(string expected, string actual)
+    {
+        int at = 0;
+        while (at < expected.Length && at < actual.Length && expected[at] == actual[at])
+        {
+            at++;
+        }
+
+        if (at == expected.Length && at == actual.Length)
+        {
+            return string.Empty;
+        }
+
+        int line = 1 + expected.AsSpan(0, at).Count('\n');
+        int start = expected.LastIndexOf('\n', Math.Max(at - 1, 0)) + 1;
+        string Line(string text)
+        {
+            int begin = Math.Min(start, text.Length);
+            int end = text.IndexOf('\n', begin);
+            string value = text[begin..(end < 0 ? text.Length : end)];
+            return value.Length > 160 ? value[..160] + "..." : value;
+        }
+
+        return $"line {line}, offset {at}: expected \"{Line(expected)}\", got \"{Line(actual)}\".";
+    }
+
     private sealed class HashingStream : Stream
     {
         private readonly System.Security.Cryptography.IncrementalHash _hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);

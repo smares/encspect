@@ -6,6 +6,7 @@ namespace Encspect.Tests;
 
 // One analyzer, and so one instance of every parser, serves all threads (DefaultParsers), so
 // parsers keep no per-call state; reports read on several threads at once build the same nodes.
+[Collection("Thread hammers")]
 public class ParallelAnalysisTests
 {
     // Analyses of the files of a directory on several threads write the same reports as one thread does,
@@ -23,7 +24,9 @@ public class ParallelAnalysisTests
             f => parallel[f] = ReportRendering.All(analyzer.AnalyzeFile(f)));
 
         Assert.Equal(files.Count, parallel.Count);
-        Assert.DoesNotContain(files, f => parallel[f] != sequential[f]);
+        string? differing = files.FirstOrDefault(f => parallel[f] != sequential[f]);
+        Assert.True(differing is null, differing is null ? string.Empty
+            : $"{differing} differs between the parallel and the sequential analysis. {ReportRendering.Differences(analyzer.AnalyzeFile(differing), analyzer.AnalyzeFile(differing))}");
     }
 
     // One report written on eight threads at once, by the JSON, text and CSV writers mixed, with collections
@@ -61,7 +64,7 @@ public class ParallelAnalysisTests
 
         for (int i = 0; i < written.Length; i++)
         {
-            Assert.True(written[i] == expected[i % 3], $"{fixture}: writer {i % 3} on thread {i} wrote something else.");
+            Assert.True(written[i] == expected[i % 3], $"{fixture}: writer {i % 3} on thread {i} wrote something else. {ReportRendering.Differences(report, Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, fixture)))}");
         }
     }
 

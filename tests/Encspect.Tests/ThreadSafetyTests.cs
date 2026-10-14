@@ -8,6 +8,7 @@ namespace Encspect.Tests;
 // them weakly and build them again after a collection; two threads reading one block may both build
 // it. These tests read reports the ways that could go wrong: on several threads, with collections in
 // between, and past more than one block, which no committed fixture is.
+[Collection("Thread hammers")]
 public class ThreadSafetyTests
 {
     internal const int BlockSize = 1024;
@@ -68,15 +69,17 @@ public class ThreadSafetyTests
         ReportRendering.Collect();
 
         var differing = new List<string>();
+        string detail = string.Empty;
         for (int i = 0; i < files.Count; i++)
         {
             if (ReportRendering.All(reports[i]) != first[i])
             {
                 differing.Add(files[i]);
+                detail = detail.Length > 0 ? detail : ReportRendering.Differences(reports[i], analyzer.AnalyzeFile(files[i]));
             }
         }
 
-        Assert.Empty(differing);
+        Assert.True(differing.Count == 0, $"Written again after a collection, these differ: {string.Join(", ", differing)}. First: {detail}");
     }
 
     [Fact]

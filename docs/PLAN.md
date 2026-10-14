@@ -53,7 +53,7 @@ flowchart TD
     Host --> Formats["Format parsers, one project each<br/>MP1/2/3 (v1), FLAC, Ogg, MP4, ..."]
     Host --> Codecs["Codec parsers<br/>MPEG audio (in WAV, MP4), Vorbis, Opus, AAC, ..."]
     Formats -.->|"payloads, packets and tags,<br/>through the host's routes"| Host
-    Tags --> Core["Core.Abstractions<br/>parser interfaces, byte and bit readers, mapped bytes,<br/>result model: node tree with name, kind,<br/>typed value, byte offset and length,<br/>streams with series, plus findings"]
+    Tags --> Core["Core.Abstractions<br/>parser interfaces, byte and bit readers, mapped bytes,<br/>result model: node tree with name, kind,<br/>typed value, byte offset and length,<br/>streams with series, plus findings,<br/>shared lazy-children list (BlockedChildren),<br/>ChunkedList and ByteStore"]
     Formats --> Core
     Codecs --> Core
 ```

@@ -3,10 +3,12 @@ using Encspect.Core;
 namespace Encspect.Tests;
 
 // Long reports written on several threads, and written again after a collection (see ThreadSafetyTests).
-// Its own class, so that xUnit runs it beside the others.
+// In the collection that runs alone: a thread that forces collections stalls every other test of the
+// process, and CorruptTagFileTests allows each variant 10 seconds.
+[Collection("Thread hammers")]
 public class LongReportWriteTests
 {
-    // One report written on eight threads at once by the three writers, with collections going on, writes
+    // One report written on four threads at once by the three writers, with collections going on, writes
     // what a single thread writes.
     [Theory]
     [MemberData(nameof(ThreadSafetyTests.LongInputNames), MemberType = typeof(ThreadSafetyTests))]
@@ -20,7 +22,7 @@ public class LongReportWriteTests
 
         for (int i = 0; i < written.Length; i++)
         {
-            Assert.True(written[i] == expected[i % 3], $"{name}: writer {i % 3} on thread {i} wrote something else.");
+            Assert.True(written[i] == expected[i % 3], $"{name}: writer {i % 3} on thread {i} wrote something else. {ReportRendering.Differences(report, ThreadSafetyTests.AnalyzeLong(name))}");
         }
     }
 
@@ -32,6 +34,6 @@ public class LongReportWriteTests
         string first = ReportRendering.Json(report);
         ReportRendering.Collect();
 
-        Assert.True(ReportRendering.Json(report) == first, $"{name} differs after a collection.");
+        Assert.True(ReportRendering.Json(report) == first, $"{name} differs after a collection. {ReportRendering.Differences(report, ThreadSafetyTests.AnalyzeLong(name))}");
     }
 }

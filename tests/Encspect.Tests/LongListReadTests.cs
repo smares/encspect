@@ -3,9 +3,10 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Tests that hammer one list with more threads than the machine has cores. They run alone: beside other
-// tests that keep the cores busy, a list that reads its hint twice failed in about one run of ten, and
-// alone in every one.
+// Tests that hammer one list with more threads than the machine has cores, or force collections while
+// threads read. They run alone: beside other tests that keep the cores busy, a list that reads its hint
+// twice failed in about one run of ten, and alone in every one; and a forced collection stalls every
+// other test of the process for as long as it takes.
 [CollectionDefinition("Thread hammers", DisableParallelization = true)]
 public class ThreadHammerCollection;
 
