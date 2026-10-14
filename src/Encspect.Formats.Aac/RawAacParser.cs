@@ -608,6 +608,16 @@ public sealed class RawAacParser : IFormatParser
         }
     }
 
+    private const int AppleMinimumFrames = 20;
+
+    // The headers afconvert writes (macOS 15.7, 14 ADTS files of AAC-LC, HE-AAC and HE-AAC v2, 7 on each of arm64 and
+    // x86-64): the MPEG-2 ID, no CRC, the original/copy bit set, the other flag bits clear and a buffer fullness of 0 in
+    // every frame. In the 55 other ADTS fixtures (FAAC, fdkaac, ffmpeg, hand-built) the original/copy bit is clear and
+    // the buffer fullness is 0x7FF, 256, or varies.
+    private static bool IsAppleHeader(AdtsHeader header) =>
+        header.Id == 1 && !header.IsProtected && header.IsOriginal && !header.IsHome && !header.IsPrivate && !header.CopyrightIdBit
+        && !header.IsCopyrightIdStart && header.BufferFullness == 0;
+
     private static string Describe(AdtsHeader header) =>
         $"{header.ProfileName}, {header.SampleRate} Hz, channel configuration {header.ChannelConfiguration}";
 
@@ -629,6 +639,7 @@ public sealed class RawAacParser : IFormatParser
         var figures = new StreamFigures(config.OutputSampleRate);
         int vbr = 0;
         int frames = 0;
+        int appleHeaders = 0;
         for (int i = start; i < end; i++)
         {
             if (i % 4096 == 0)
@@ -645,6 +656,7 @@ public sealed class RawAacParser : IFormatParser
             var frameHeader = new AdtsHeader(frame.Header);
             figures.Add(frame.Offset, frame.Length, config.OutputFrameLength * frameHeader.RawDataBlocks);
             vbr += frameHeader.IsVbr ? 1 : 0;
+            appleHeaders += IsAppleHeader(frameHeader) ? 1 : 0;
             frames++;
         }
 
@@ -661,6 +673,13 @@ public sealed class RawAacParser : IFormatParser
         // and cover it.
         Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
             new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind, Description = description, Topic = topic };
+
+        // Apple's ADTS writer: see IsAppleHeader. A habit of one writer, so a claim of low confidence.
+        if (frames >= AppleMinimumFrames && appleHeaders == frames)
+        {
+            claims = [.. claims, new EncoderClaim("Apple AAC encoder (AudioToolbox)", FirstFrame(),
+                $"ADTS headers: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0, as Apple's AudioToolbox writes them")];
+        }
 
         Node? encoder = AacEncoder.Detect(
             state.Signature is { } signature && signature.Index >= start && signature.Index < end

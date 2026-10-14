@@ -9,11 +9,10 @@ name: AAC and ALAC fixtures from Apple's encoders
 # scripts/fixtures/import_macos_aac_fixtures.py takes them into tests/fixtures/aac and
 # tests/fixtures/alac.
 #
-# Two runners encode the same signals: macos-15 (arm64) and macos-15-intel (x86-64). Apple's
-# encoder is one codebase, but its floating-point code has separate paths per architecture, and
-# whether the bytes differ is not something to assume; the importer compares the two artifacts. The
-# Intel leg also shows whether the encoder's own marks (iTunSMPB, Encoding Params) depend on the
-# architecture, which a detection rule must not.
+# Two runners encode the same signals: macos-15 (arm64) and macos-15-intel (x86-64). The first
+# run showed that the bytes differ between them (other access unit sizes and spectral data, the
+# same structure and iTunSMPB), so a detection rule can use only the structure; the importer's
+# --compare lists the differences. A later macOS version could be added to the matrix the same way.
 #
 # The output is not reproducible byte for byte if the muxer stamps the time of the encode into the
 # movie header (creation and modification times of an M4A or CAF). The fixtures are therefore

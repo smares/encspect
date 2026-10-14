@@ -341,6 +341,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 break;
             case "mdat":
                 state.Mdats.Add((header.PayloadStart, header.End, node));
+                state.HasPageAlignedMdat |= state.FreeEnd == header.Offset && header.PayloadStart % 4096 == 0;
                 state.FirstMdat ??= header.Offset;
                 if (header.End > header.PayloadStart)
                 {
@@ -349,6 +350,11 @@ public sealed partial class Mp4Parser : IFormatParser
 
                 break;
             case "free" or "skip" or "wide" or "junk":
+                if (header.Type == "free" && depth == 0)
+                {
+                    state.FreeEnd = header.End;
+                }
+
                 if (header.End > header.PayloadStart)
                 {
                     node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.FreeData });

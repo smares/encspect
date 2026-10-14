@@ -92,7 +92,7 @@ listed() {
     grep -Eq "(^|[^A-Za-z0-9])$1([^A-Za-z0-9]|\$)" "$OUT/afconvert-formats.txt"
 }
 say "== IDs the -hf output names (every encode below is tried regardless, except where it says 'only if listed')"
-for id in m4af mp4f 3gpp 3gp2 adts caff aac aach aacp aacl aace aacf aacg usac alac; do
+for id in m4af m4bf mp4f 3gpp 3gp2 loas adts caff aac aach aacp aacl aace aacf aacg usac alac; do
     if listed "$id"; then say "$id: yes"; else say "$id: no"; fi
 done | tee "$OUT/listed.txt"
 
@@ -107,7 +107,7 @@ REQUIRED=" lc-m4a-cbr-st44 he-m4a-cbr-st44 hev2-m4a-cbr-st44 lc-adts-cbr-st44 lc
 
 extension() {
     case "$1" in
-        m4af) echo m4a ;; mp4f) echo mp4 ;; adts) echo aac ;; caff) echo caf ;; 3gpp) echo 3gp ;; 3gp2) echo 3g2 ;; *) echo bin ;;
+        m4af) echo m4a ;; m4bf) echo m4b ;; loas) echo loas ;; mp4f) echo mp4 ;; adts) echo aac ;; caff) echo caf ;; 3gpp) echo 3gp ;; 3gp2) echo 3g2 ;; *) echo bin ;;
     esac
 }
 
@@ -163,8 +163,6 @@ encode lc-m4a-cbr-mono44     mono44    m4af aac cbr -s 0 -b 64000
 encode lc-m4a-cbr-st48       st48      m4af aac cbr -s 0 -b 128000
 encode lc-m4a-cbr-st44-64    st44      m4af aac cbr -s 0 -b 64000
 encode lc-m4a-cbr-st44-256   st44      m4af aac cbr -s 0 -b 256000
-encode lc-m4a-cbr-six48      six48     m4af aac cbr -s 0 -b 384000
-encode lc-m4a-cbr-six48caf   six48caf  m4af aac cbr -s 0 -b 384000
 encode lc-m4a-default-st44   st44      m4af aac default
 encode lc-m4a-abr-st44       st44      m4af aac abr -s 1 -b 128000
 encode lc-m4a-cvbr-st44      st44      m4af aac constrained-vbr -s 2 -b 128000
@@ -180,13 +178,62 @@ encode lc-adts-cbr-st44      st44      adts aac cbr -s 0 -b 128000
 encode lc-adts-cbr-mono44    mono44    adts aac cbr -s 0 -b 64000
 encode lc-adts-cbr-st48      st48      adts aac cbr -s 0 -b 128000
 encode lc-adts-vbr-q64-st44  st44      adts aac vbr -s 3 -u vbrq 64
-encode lc-adts-cbr-six48     six48     adts aac cbr -s 0 -b 384000
 encode lc-caf-cbr-st44       st44      caff aac cbr -s 0 -b 128000
 encode lc-caf-vbr-q64-st44   st44      caff aac vbr -s 3 -u vbrq 64
-encode lc-caf-cbr-six48      six48     caff aac cbr -s 0 -b 384000
 encode lc-mp4-cbr-st44       st44      mp4f aac cbr -s 0 -b 128000
 encode lc-3gp-cbr-st44       st44      3gpp aac cbr -s 0 -b 128000
 encode lc-3g2-cbr-st44       st44      3gp2 aac cbr -s 0 -b 128000
+
+# ---- 5.1: the first run failed with "ExtAudioFileSetProperty ('cfmt') failed ('!dat')" for a WAV with a channel mask
+# (WAVE_5_1_B) and for a CAF with MPEG_5_1_A. AAC's own order is MPEG_5_1_D, so the output layout is given, with the input
+# layout too, and a CAF that carries MPEG_5_1_D already. The first variant that works carries on to ADTS, CAF and HE-AAC.
+say "== AAC-LC 5.1"
+SIX_SRC=""
+SIX_OPTS=""
+last_ok() { tail -1 "$TSV" | awk -F '\t' '{ exit ($7 != 0) }'; }
+six_try() {
+    # six_try NAME SOURCE option ...
+    local name="$1" source="$2"
+    shift 2
+    encode "$name" "$source" m4af aac cbr -s 0 -b 384000 "$@"
+    if [ -z "$SIX_SRC" ] && last_ok; then
+        SIX_SRC="$source"
+        SIX_OPTS="$*"
+    fi
+}
+six_try lc-m4a-cbr-six48            six48
+six_try lc-m4a-cbr-six48caf         six48caf
+six_try lc-m4a-cbr-six48-lout       six48    -l MPEG_5_1_D
+six_try lc-m4a-cbr-six48-lin-lout   six48    -l WAVE_5_1_B -l MPEG_5_1_D
+six_try lc-m4a-cbr-six48caf-lio     six48caf -l MPEG_5_1_A -l MPEG_5_1_D
+six_try lc-m4a-cbr-six48d           six48d
+six_try lc-m4a-cbr-six48d-lout      six48d   -l MPEG_5_1_D
+say "5.1 variant that worked: source '${SIX_SRC}' options '${SIX_OPTS}'"
+if [ -n "$SIX_SRC" ]; then
+    # shellcheck disable=SC2086 # SIX_OPTS is a list of options
+    {
+        encode lc-adts-cbr-six48-ok  "$SIX_SRC" adts aac  cbr -s 0 -b 384000 $SIX_OPTS
+        encode lc-caf-cbr-six48-ok   "$SIX_SRC" caff aac  cbr -s 0 -b 384000 $SIX_OPTS
+        encode he-m4a-cbr-six48-ok   "$SIX_SRC" m4af aach cbr -s 0 -b 128000 $SIX_OPTS
+        encode he-adts-cbr-six48-ok  "$SIX_SRC" adts aach cbr -s 0 -b 128000 $SIX_OPTS
+    }
+fi
+
+# ---- options afconvert -h documents that change what is written: no page alignment, Sound Check, hash, media kind,
+# priming methods, 960-sample frames, 16-bit framing, the CAF user chunk
+say "== AAC-LC options"
+encode lc-m4a-nofiller-st44    st44 m4af aac cbr -s 0 -b 128000 --no-filler
+encode lc-m4a-soundcheck-st44  st44 m4af aac cbr -s 0 -b 128000 --soundcheck-generate
+encode lc-m4a-hash-st44        st44 m4af aac cbr -s 0 -b 128000 --generate-hash
+encode lc-m4a-music-st44       st44 m4af aac cbr -s 0 -b 128000 --media-kind Music
+encode lc-m4a-podcast-st44     st44 m4af aac cbr -s 0 -b 128000 --media-kind Podcast
+encode lc-m4a-prime0-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 0
+encode lc-m4a-prime1-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 1
+encode lc-m4a-prime2-st44      st44 m4af aac cbr -s 0 -b 128000 --prime-method 2
+encode lc-m4a-960-st44         st44 m4af "aac#960" cbr -s 0 -b 128000
+encode lc-m4a-condensed-st44   st44 m4af aac cbr -s 0 -b 128000 --condensed-framing 16
+encode lc-m4b-cbr-st44         st44 m4bf aac cbr -s 0 -b 128000 --media-kind Audiobook
+encode lc-caf-tag-st44         st44 caff aac cbr -s 0 -b 128000 -t
 
 # ---- HE-AAC ('aach') ---------------------------------------------------------------------------
 say "== HE-AAC"
@@ -196,7 +243,6 @@ encode he-m4a-cbr-mono44     mono44    m4af aach cbr -s 0 -b 32000
 encode he-m4a-cbr-st48       st48      m4af aach cbr -s 0 -b 48000
 encode he-m4a-cbr-st22       st22      m4af aach cbr -s 0 -b 24000
 encode he-m4a-cbr-mono22     mono22    m4af aach cbr -s 0 -b 16000
-encode he-m4a-cbr-six48      six48     m4af aach cbr -s 0 -b 128000
 encode he-m4a-abr-st44       st44      m4af aach abr -s 1 -b 64000
 encode he-m4a-vbr-q64-st44   st44      m4af aach vbr -s 3 -u vbrq 64
 encode he-adts-cbr-st44      st44      adts aach cbr -s 0 -b 64000
@@ -217,8 +263,8 @@ encode hev2-adts-cbr-st44    st44      adts aacp cbr -s 0 -b 32000
 encode hev2-caf-cbr-st44     st44      caff aacp cbr -s 0 -b 32000
 
 # ---- the other AAC formats, only where -hf lists the ID -------------------------------------------
-say "== AAC-LD, AAC-ELD, xHE-AAC (only if listed)"
-for id in aacl aace aacf aacg usac; do
+say "== AAC-LD, AAC-ELD, ELD with SBR (only if listed)"
+for id in aacl aace aacf aacg; do
     if listed "$id"; then
         encode "$id-m4a-cbr-st44"     st44   m4af "$id" cbr -s 0 -b 64000
         encode "$id-caf-cbr-st44"     st44   caff "$id" cbr -s 0 -b 64000
@@ -228,6 +274,20 @@ for id in aacl aace aacf aacg usac; do
         say "-- $id is not listed by afconvert -hf; not tried"
     fi
 done
+
+# ---- xHE-AAC: -hf lists usac for caff, loas and mp4f only, and the first run's CAF encode failed with
+# "ExtAudioFileSetProperty ('cfmt') failed ('fmt?')", the client format being refused. Tried over the file types
+# that list it, 44.1 and 48 kHz, 16-bit integer and 32-bit float sources, mono and stereo, with and without a bitrate.
+if listed usac; then
+    say "== xHE-AAC (usac)"
+    for ft in mp4f caff loas; do
+        for src in st44 st48 st48f32 mono48f32; do
+            encode "usac-$ft-$src"        "$src" "$ft" usac default
+            encode "usac-$ft-$src-b64"    "$src" "$ft" usac cbr -b 64000
+            encode "usac-$ft-$src-vbr64"  "$src" "$ft" usac vbr -s 3 -u vbrq 64
+        done
+    done
+fi
 
 # ---- Apple Lossless ('alac') for phase 3: the bit depth is the source's ---------------------------
 say "== ALAC"

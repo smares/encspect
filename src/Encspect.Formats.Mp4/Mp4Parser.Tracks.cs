@@ -99,10 +99,54 @@ public sealed partial class Mp4Parser
                 configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first) };
             }
 
+            if (codec == "aac")
+            {
+                AddAppleEvidence(state, entry);
+            }
+
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
         }
 
         CompareLayouts(state, entry, streams, label);
+    }
+
+    // The writer of the file, from the way it lays out the AAC track. Every AAC file afconvert wrote on macOS 15.7
+    // (46 files on each of arm64 and x86-64: AAC-LC, HE-AAC, HE-AAC v2, AAC-LD and AAC-ELD, in M4A, MP4, 3GP and 3GP2)
+    // has a DecoderConfigDescriptor whose stream type byte is 0x14, the reserved bit that ISO/IEC 14496-1 7.2.6.6
+    // sets to 1 written as 0; all 85 esds boxes of the 83 other fixtures (ffmpeg, fdkaac, FAAC, MP4Box, hand-built) write 0x15. The M4A
+    // files also carry an sbtd box in the sample entry, and all of them a free box that pads the audio data to a
+    // 4,096-byte boundary (afconvert --no-filler turns that off). The habit belongs to Apple's file writer, which
+    // takes the audio of Apple's AAC encoder (AudioToolbox), so it names the encoder with medium confidence; a
+    // remux by other software drops the traces and names nothing.
+    private static void AddAppleEvidence(State state, SampleEntry entry)
+    {
+        if (state.AppleClaimed || entry.StreamTypeByte is not { } streamType || (streamType & 1) != 0 || (streamType >> 2) != 5)
+        {
+            return;
+        }
+
+        var parts = new List<string> { $"a DecoderConfigDescriptor whose stream type byte is 0x{streamType:X2} (reserved bit 0)" };
+        if (entry.SourceBitDepthNode is not null)
+        {
+            parts.Add("an sbtd box in the sample entry");
+        }
+
+        if (state.HasPageAlignedMdat)
+        {
+            parts.Add("a free box that pads the audio data to a 4,096-byte boundary");
+        }
+
+        if (parts.Count < 2)
+        {
+            return;
+        }
+
+        state.AppleClaimed = true;
+        state.Context.AddEncoderClaim(new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode ?? entry.Node,
+            $"MP4 layout: {string.Join(", ", parts)}, the layout of Apple's AudioToolbox writer")
+        {
+            Confidence = Confidence.Medium,
+        });
     }
 
     // What the file says about the bitrate: Apple's encoder records its mode in Encoding Params, and
@@ -405,7 +449,8 @@ public sealed partial class Mp4Parser
             nodes.Add(Cover("Samples (iTunSMPB)", Units(smpb.Samples), Explain.SmpbGaplessSamples));
             nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
-            if (total > 0 && state.Fragments == 0 && (ulong)sum != total)
+            // Apple's lossless writer shortens the last packet by the padding, so the track lasts delay plus samples.
+            if (total > 0 && state.Fragments == 0 && (ulong)sum != total && (ulong)(sum - smpb.Padding) != total)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",
                     $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {total} units of its timescale.", smpb.Node);

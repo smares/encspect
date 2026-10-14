@@ -27,6 +27,7 @@ import wma_signals  # noqa: E402
 SECONDS = 2
 SPEAKERS_5_1 = 0x3F  # front left and right, center, LFE, back left and right: WAV's 5.1 order
 MPEG_5_1_A = (121 << 16) | 6  # kAudioChannelLayoutTag_MPEG_5_1_A: L R C LFE Ls Rs, the order of the WAV's channels
+MPEG_5_1_D = (124 << 16) | 6  # kAudioChannelLayoutTag_MPEG_5_1_D: C L R Ls Rs LFE, AAC's own order (channel configuration 6); afinfo names the tag it reads
 INFO = [("INAM", "Encspect test tone"), ("IART", "Encspect"), ("IPRD", "Encspect fixtures"), ("ICMT", "afconvert metadata test"), ("ICRD", "2026"), ("IGNR", "Test")]
 
 # name, channels, rate, bits, kind, extras
@@ -40,13 +41,19 @@ SOURCES = [
     ("st44tag", 2, 44100, 16, "tones", {"info": INFO}),
     ("six48", 6, 48000, 16, "tones", {"mask": SPEAKERS_5_1}),
     ("six48caf", 6, 48000, 16, "tones", {"caf_layout": MPEG_5_1_A}),
+    ("six48d", 6, 48000, 16, "tones", {"caf_layout": MPEG_5_1_D}),
+    ("st48f32", 2, 48000, 32, "tones", {"float": True}),
+    ("mono48f32", 1, 48000, 32, "tones", {"float": True}),
     ("st44q16", 2, 44100, 16, "quiet", {}),
     ("st44q24", 2, 44100, 24, "quiet", {}),
     ("six48q16", 6, 48000, 16, "quiet", {"mask": SPEAKERS_5_1}),
 ]
 
 
-def pcm_bytes(channels, rate, bits, kind):
+def pcm_bytes(channels, rate, bits, kind, floating=False):
+    if floating:
+        # 32-bit IEEE float, the 16-bit signal scaled to +-1
+        return b"".join(struct.pack("<f", v / 32768.0) for v in wma_signals.samples(rate, channels, 16, SECONDS, kind))
     pack = (lambda v: struct.pack("<h", v)) if bits == 16 else (lambda v: struct.pack("<i", v)[:3])
     return b"".join(pack(v) for v in wma_signals.samples(rate, channels, bits, SECONDS, kind))
 
@@ -55,9 +62,11 @@ def chunk(tag, body):
     return tag + struct.pack("<I", len(body)) + (body + b"\0" if len(body) % 2 else body)
 
 
-def wav(channels, rate, bits, data, mask=None, info=None):
+def wav(channels, rate, bits, data, mask=None, info=None, floating=False):
     block = channels * bits // 8
-    if channels > 2 or bits > 16:
+    if floating:
+        fmt = struct.pack("<HHIIHH", 3, channels, rate, rate * block, block, bits)
+    elif channels > 2 or bits > 16:
         # WAVE_FORMAT_EXTENSIBLE: 22 bytes of extension, the mask, and the PCM sub-format GUID.
         mask = mask if mask is not None else {1: 4, 2: 3}.get(channels, 0)
         fmt = struct.pack("<HHIIHH", 0xFFFE, channels, rate, rate * block, block, bits)
@@ -88,11 +97,11 @@ def signals(out):
     pcm.mkdir(parents=True, exist_ok=True)
     records = []
     for name, channels, rate, bits, kind, extras in SOURCES:
-        data = pcm_bytes(channels, rate, bits, kind)
+        data = pcm_bytes(channels, rate, bits, kind, extras.get("float", False))
         if "caf_layout" in extras:
             path, content = pcm / f"{name}.caf", caf(channels, rate, bits, data, extras["caf_layout"])
         else:
-            path, content = pcm / f"{name}.wav", wav(channels, rate, bits, data, extras.get("mask"), extras.get("info"))
+            path, content = pcm / f"{name}.wav", wav(channels, rate, bits, data, extras.get("mask"), extras.get("info"), extras.get("float", False))
         path.write_bytes(content)
         records.append({
             "name": name, "file": f"pcm/{path.name}", "channels": channels, "rate": rate, "bits": bits, "seconds": SECONDS, "signal": kind,

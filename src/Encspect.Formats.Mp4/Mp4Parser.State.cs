@@ -31,6 +31,14 @@ public sealed partial class Mp4Parser
 
         public List<(long Start, long End, Node Node)> Mdats { get; } = [];
 
+        // Where the last top-level free box ends, and whether an mdat box follows one with its data starting
+        // on a 4,096-byte boundary: how Apple's file writer pads the audio data to a page.
+        public long FreeEnd { get; set; } = -1;
+
+        public bool HasPageAlignedMdat { get; set; }
+
+        public bool AppleClaimed { get; set; }
+
         public List<Track> Tracks { get; } = [];
 
         public Track? Track { get; set; }
@@ -143,6 +151,11 @@ public sealed partial class Mp4Parser
         public uint? MaxBitrate { get; set; }
 
         public uint? AverageBitrate { get; set; }
+
+        // The DecoderConfigDescriptor's byte of stream type, upstream flag and reserved bit, and the sbtd box.
+        public int? StreamTypeByte { get; set; }
+
+        public Node? SourceBitDepthNode { get; set; }
 
         // The speakers a chan or chnl box in the entry states, the box's node and its type.
         public IReadOnlyList<Speaker>? Layout { get; set; }

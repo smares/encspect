@@ -13,6 +13,7 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 - A signature in the [ancillary data](ancillary-data), such as LAME's version text, or an extension only certain encoders write (mp3PRO, MP3 Surround).
 - Habits: Shine never uses the bit reservoir or short blocks, Xing's encoder never switches to short blocks, Fraunhofer's encoders never use scfsi. Only habits every encode shows, over at least 20 frames, count, with low confidence, since a new encoder may share them.
 - In AAC, ffmpeg's or FAAC 1.x's version text in a [fill element](aac-raw-data-blocks) (high); exhale's [xHE-AAC](usac) layout and the [SBR](sbr) layout of FAAC 2.x's HE-AAC (medium), which other HE-AAC encoders' files, including the SBR conformance streams, do not match.
+- In AAC, Apple's encoder writes no text, but its files are laid out in a way of their own: an MP4 stream type byte of 0x14 with a source-bit-depth box or audio data padded to a 4,096-byte boundary (medium), and ADTS headers with the original/copy bit set and a buffer fullness of 0 (low). These belong to the file's writer, so a remux drops them.
 - In Vorbis, the [comment](vorbis-comments)'s vendor string: each libvorbis, aoTuV and Lancer release writes its own, which its source or builds confirm.
 - In Musepack, the encoder's version in the stream ([SV8 packets](musepack-sv8-packets)).
 - In DTS, VERNUM is a revision field; it names no encoder.

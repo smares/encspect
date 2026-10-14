@@ -425,9 +425,10 @@ internal static class Sbr
             return $"bs_pointer {pointer} points past the {count} envelopes of the SBR frame";
         }
 
+        // bs_freq_res of a FIXVAR frame is sent for the last envelope first (4.4.2.2, sbr_grid).
         for (int e = 0; e < count; e++)
         {
-            resolution[(channel * MaxEnvelopes) + e] = (byte)bits.Read(1);
+            resolution[(channel * MaxEnvelopes) + (frameClass == 1 ? count - 1 - e : e)] = (byte)bits.Read(1);
         }
 
         envelopes[channel] = count;

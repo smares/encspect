@@ -1,0 +1,79 @@
+{
+ "description": "afconvert -v -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav encoded/aacl-m4a-cbr-mono44.m4a on 2 s of the tones signal of wma_signals.py.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav encoded/aacl-m4a-cbr-mono44.m4a",
+  "file_type": "m4af",
+  "format_id": "aacl",
+  "codec": "AAC LD",
+  "strategy": "cbr",
+  "options": "-s 0 -b 32000",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": null,
+   "sample_rate": null,
+   "format_id": null,
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/aacl-m4a-cbr-mono44.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     1 ch,  44100 Hz, aacl (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
+    "                no channel layout.",
+    "estimated duration: 2.000000 sec",
+    "audio bytes: 8046",
+    "audio packets: 174",
+    "bit rate: 31863 bits per second",
+    "packet size upper bound: 69",
+    "maximum packet size: 69",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 88200 valid frames + 584 priming + 304 remainder = 89088",
+    "source bit depth: I16",
+    "format list:",
+    "[ 0] format:\t  1 ch,  44100 Hz, aacl (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
+    "Channel layout: Mono",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "mono44",
+  "channels": 1,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 2,
+  "signal": "tones",
+  "generator": "wma_signals.py",
+  "channel_mask": null,
+  "channel_layout_tag": null,
+  "info_tags": null,
+  "sha256": "e4f39620f450775b5bd7ebee4d5bb83cea344f8044897a88d3851ff15e4b20b8"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin sat12-bq165-64cb8ca7-9b03-457d-bafc-598dabb517f6-8AFE982EFAD3.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 12142,
+ "sha256": "b1fe08f5caa6d64c8671fbe0ed8d1571f7f000c4030dc8e9e8adb6c50e655391",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}
