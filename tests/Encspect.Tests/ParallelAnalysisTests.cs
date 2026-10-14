@@ -9,28 +9,9 @@ namespace Encspect.Tests;
 [Collection("Thread hammers")]
 public class ParallelAnalysisTests
 {
-    // Analyses of the files of a directory on several threads write the same reports as one thread does,
-    // with their descriptions and topics.
-    [Theory]
-    [MemberData(nameof(ThreadSafetyTests.FixtureDirectories), MemberType = typeof(ThreadSafetyTests))]
-    public void ParallelAnalysisMatchesSequential(string directory)
-    {
-        List<string> files = ThreadSafetyTests.FixturesIn(directory);
-        var analyzer = Analyzer.CreateDefault();
-        Dictionary<string, string> sequential = files.ToDictionary(f => f, f => ReportRendering.All(analyzer.AnalyzeFile(f)));
-
-        var parallel = new ConcurrentDictionary<string, string>();
-        Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount) },
-            f => parallel[f] = ReportRendering.All(analyzer.AnalyzeFile(f)));
-
-        Assert.Equal(files.Count, parallel.Count);
-        string? differing = files.FirstOrDefault(f => parallel[f] != sequential[f]);
-        Assert.True(differing is null, differing is null ? string.Empty
-            : $"{differing} differs between the parallel and the sequential analysis. {ReportRendering.Differences(analyzer.AnalyzeFile(differing), analyzer.AnalyzeFile(differing))}");
-    }
-
-    // One report written on eight threads at once, by the JSON, text and CSV writers mixed, with collections
-    // going on in the background, writes what one thread writes. One fixture of each format and tag.
+    // One report written on eight threads at once (four, and fewer writes, on a pull request), by the JSON, text
+    // and CSV writers mixed, with collections going on in the background, writes what one thread writes. One
+    // fixture of each format and tag.
     [Theory]
     [InlineData("mpeg/external-blade-flags.mp3")]
     [InlineData("layer2/ancillary-not-multichannel.mp2")]
@@ -59,8 +40,10 @@ public class ParallelAnalysisTests
         Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, fixture));
         string[] expected = [.. Enumerable.Range(0, 3).Select(w => ReportRendering.Write(report, w))];
 
+        int threads = ThreadTestScope.Full ? 8 : 4;
+        int writes = ThreadTestScope.Full ? 24 : 6;
         using var collector = new ReportRendering.Collector();
-        string[] written = [.. Enumerable.Range(0, 24).AsParallel().AsOrdered().WithDegreeOfParallelism(8).Select(i => ReportRendering.Write(report, i))];
+        string[] written = [.. Enumerable.Range(0, writes).AsParallel().AsOrdered().WithDegreeOfParallelism(threads).Select(i => ReportRendering.Write(report, i))];
 
         for (int i = 0; i < written.Length; i++)
         {

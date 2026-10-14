@@ -9,7 +9,6 @@ namespace Encspect.Tests;
 // its reader or its decoder keeps the whole stream alive. Each file is analyzed from a MemoryStream held
 // only through a weak reference, the stream is dropped, and a collection must free it while the report
 // is alive.
-[Collection("Thread hammers")]
 public class InputReleaseTests
 {
     public static TheoryData<string> FixtureDirectories() => ThreadSafetyTests.FixtureDirectories();
