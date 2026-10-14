@@ -39,7 +39,7 @@ dotnet run -c Release --project src/Encspect.Cli -- song.mp3
 dotnet run -c Release --project src/Encspect.Gui
 ```
 
-C# on .NET, with Avalonia UI for the GUI. Windows, macOS and Linux (Wayland and X11) on x64 and ARM64.
+C# on .NET, with Avalonia UI for the GUI. Windows, macOS and Linux (X11, also under XWayland; native Wayland is experimental and opt-in) on x64 and ARM64.
 
 ## License
 

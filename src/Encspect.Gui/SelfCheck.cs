@@ -66,8 +66,8 @@ internal static class SelfCheck
     // window. Windows draws through ANGLE (av_libGLESv2) and falls back to software drawing
     // without it, so its absence is reported but is no failure; macOS has no window at all without
     // Avalonia.Native. Linux's backends (Wayland and X11) are managed code over the system's own
-    // libraries. Where a display is reachable (DISPLAY or WAYLAND_DISPLAY) the backend is started
-    // without a window and named, so CI can assert which one was chosen.
+    // libraries. Where the display the chosen backend needs is reachable, the backend is started
+    // without showing a window and named, so CI can assert which one was chosen.
     private static bool LoadPlatformBackend()
     {
         (string? library, Assembly? assembly, bool isRequired) = OperatingSystem.IsWindows() ? ("av_libGLESv2.dll", typeof(Win32PlatformOptions).Assembly, false)
@@ -99,9 +99,19 @@ internal static class SelfCheck
             return true;
         }
 
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")) && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
+        // Only the chosen backend's display counts: a set WAYLAND_DISPLAY does not start Wayland
+        // unless ENCSPECT_GUI_BACKEND asks for it, and a set DISPLAY does not start X11 when it does.
+        if (PlatformBackend.Requested() == BackendChoice.Wayland)
         {
-            Console.Out.WriteLine("Windowing backend: not started, no DISPLAY or WAYLAND_DISPLAY.");
+            if (!PlatformBackend.IsWaylandDisplayReachable())
+            {
+                Console.Out.WriteLine("Windowing backend: not started, Wayland is chosen but there is no WAYLAND_DISPLAY and no wayland-0 in XDG_RUNTIME_DIR.");
+                return true;
+            }
+        }
+        else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
+        {
+            Console.Out.WriteLine("Windowing backend: not started, X11 is chosen but there is no DISPLAY.");
             return true;
         }
 

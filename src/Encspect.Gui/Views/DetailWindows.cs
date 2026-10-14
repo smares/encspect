@@ -150,7 +150,10 @@ public sealed class DetailWindows
     // How often a window's row was looked up in the list to find its neighbors.
     internal int NeighborLookups(DetailWindow window) => _neighbors.TryGetValue(window, out ListNeighbors? neighbors) ? neighbors.Lookups : 0;
 
-    private bool CanPlace => !PlatformBackend.IsWayland(_main);
+    // Whether the windowing system lets a program place its windows; tests set it to exercise both.
+    internal bool? CanPlaceOverride { get; set; }
+
+    private bool CanPlace => CanPlaceOverride ?? PlatformBackend.CanPlaceWindows(_main);
 
     private DetailWindow Create()
     {
@@ -208,13 +211,13 @@ public sealed class DetailWindows
     // window. Returns the placement used, or null when centered.
     private WindowPlacement? Place(Window window, WindowPlacement? placement)
     {
-        if (placement is { Width: > 0, Height: > 0 } && (!CanPlace || _main.Screens.ScreenFromPoint(new PixelPoint(placement.X + 40, placement.Y + 20)) is not null))
+        if (placement is { Width: > 0, Height: > 0 } && (!CanPlace || (placement is { X: { } x, Y: { } y } && _main.Screens.ScreenFromPoint(new PixelPoint(x + 40, y + 20)) is not null)))
         {
             window.Width = placement.Width;
             window.Height = placement.Height;
             if (CanPlace)
             {
-                window.Position = new PixelPoint(placement.X, placement.Y);
+                window.Position = new PixelPoint(placement.X!.Value, placement.Y!.Value);
             }
 
             if (placement.IsMaximized)
@@ -251,5 +254,5 @@ public sealed class DetailWindows
     private WindowPlacement PlacementOf(Window window, bool isMaximized) =>
         CanPlace
             ? new(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, isMaximized)
-            : new(_settings.DetailWindow?.X ?? 0, _settings.DetailWindow?.Y ?? 0, window.ClientSize.Width, window.ClientSize.Height, isMaximized);
+            : new(_settings.DetailWindow?.X, _settings.DetailWindow?.Y, window.ClientSize.Width, window.ClientSize.Height, isMaximized);
 }

@@ -83,33 +83,49 @@ The Graphs tab, next to the findings, draws the stream's series: the bitrate and
 ## Look and platform
 
 - Light and dark mode, the accent color and the UI font follow the system.
-- The file dialogs are the system's.
+- The file dialogs are the system's (on Linux, the desktop portal's; see "Linux: X11 and Wayland").
 - On macOS the menus are in the menu bar.
-- Linux runs natively on Wayland when a compositor is reachable (`WAYLAND_DISPLAY`) and on X11 otherwise, which includes XWayland. See "Linux: Wayland and X11".
+- Linux runs on X11 by default, which on a Wayland desktop means XWayland. Native Wayland is experimental and opt-in. See "Linux: X11 and Wayland".
 - The GUI is built on Avalonia. Its dependencies and their licenses are listed in [third_party/README.md](../third_party/README.md).
 - The graphs are drawn by the GUI itself, without a charting library.
 
-## Linux: Wayland and X11
+## Linux: X11 and Wayland
 
-- **Choice:** the GUI starts on Wayland when a compositor is reachable and otherwise on X11, which also covers XWayland sessions.
-- **Experimental:** Avalonia 12.1 calls its Wayland backend (`Avalonia.Wayland`) experimental. If a window misbehaves on your desktop, force X11.
-- **`ENCSPECT_GUI_BACKEND`:** `x11` forces X11 (through XWayland in a Wayland session), `wayland` forces Wayland and fails to start without a compositor, anything else or unset chooses as above.
-  ```sh
-  ENCSPECT_GUI_BACKEND=x11 encspect-gui
-  ```
-- **Libraries:** both backends are managed code over the system's own libraries (libwayland-client and EGL, or the X11 libraries); the GUI ships no native library for them.
-- **Which one runs:** `encspect-gui --self-check` prints `Windowing backend: Wayland.` or `Windowing backend: X11.` when `WAYLAND_DISPLAY` or `DISPLAY` is set, and says it did not start one otherwise.
+- **Default:** X11. On a Wayland desktop that runs through XWayland. Setting or unsetting `WAYLAND_DISPLAY` does not change the choice; only `ENCSPECT_GUI_BACKEND` does.
+- **Experimental:** Avalonia 12.1 calls its native Wayland backend (`Avalonia.Wayland`) experimental, so it is opt-in: `ENCSPECT_GUI_BACKEND=wayland encspect-gui`. Some paths could not be run here (see below), and the file dialogs differ.
+- **`ENCSPECT_GUI_BACKEND`:** `x11` is the default, spelled out. `wayland` uses native Wayland. Any other non-empty value prints a warning naming the accepted values to stderr, and the default is used.
+- **Without its display:** a backend that cannot connect (`wayland` without a compositor, `x11` without an X server) ends with one line on stderr naming `ENCSPECT_GUI_BACKEND`, `WAYLAND_DISPLAY` and `DISPLAY`, and exit code 1.
+- **Which compositor:** with `wayland`, libwayland connects to `$WAYLAND_DISPLAY`, and when that is unset to `wayland-0` in `$XDG_RUNTIME_DIR`.
+- **Libraries:** both backends are managed code over the system's own libraries, and the GUI ships no native library for them.
+  - X11: libX11, libXrandr, libXi, libXext, libXfixes, libXcursor, libSM and libICE; libgtk-3 and libgdk-3 for the GTK file dialog when no portal answers.
+  - Wayland: libwayland-client, libwayland-cursor, libwayland-egl, libxkbcommon, libgbm and libdrm, with EGL for drawing; glib only if `UseGLibMainLoop` is set, which the GUI does not do.
+- **Which one runs:** `encspect-gui --self-check` starts the chosen backend without showing a window and prints one of these:
+  - `Windowing backend: X11.` or `Windowing backend: Wayland.`
+  - `Windowing backend: unknown.` when the backend started but reported no screen within 2.5 seconds.
+  - `Windowing backend: failed to start: <reason>` with exit code 1, when the display is set but the backend cannot start.
+  - `Windowing backend: not started, <reason>` with exit code 0, when the chosen backend's display is missing: no `DISPLAY` for X11, no `WAYLAND_DISPLAY` and no `wayland-0` in `XDG_RUNTIME_DIR` for Wayland. A compositor alone therefore leaves the default X11 not started.
+
+### Making Wayland the default
+
+- It is one constant, `WaylandIsDefault` in `src/Encspect.Gui/PlatformBackend.cs`. Set to true, an unset choice starts Wayland where a compositor is reachable and falls back to X11 otherwise.
+- The CI step and this section assert and describe the default; change them with it.
+
+### File dialogs
+
+- **X11:** the system dialog through the XDG desktop portal, then GTK, then Avalonia's own managed dialog.
+- **Wayland:** the portal, then Avalonia's managed dialog. There is no GTK step.
+- **Portal requirements:** `xdg-desktop-portal` with a GTK, GNOME or KDE backend, and a compositor that offers `xdg-foreign` v2 (`zxdg_exporter_v2`), which lets the dialog attach to the window. Without it the portal path is skipped and the managed dialog appears, which looks like Avalonia's, not like the system's.
 
 ### What differs on Wayland
 
-- **Detail window position:** Wayland does not let a program place its windows. The detail window comes back in the size it had, and the compositor chooses where it appears. It is not centered over the main window, and windows opened with Open in New Window are not cascaded. The saved position is left as it was, so X11 sessions on the same account still find it.
+- **Detail window position:** Wayland does not let a program place its windows. The detail window comes back in the size it had, and the compositor chooses where it appears. It is not centered over the main window, and windows opened with Open in New Window are not cascaded. The saved position is left as it was, so X11 sessions on the same account still find it; a first session on Wayland saves none, and a later X11 session centers the window.
 - **Maximized state:** it is restored, like the size.
 - **Window decorations:** where the compositor does not offer server-side decorations (`xdg-decoration`), the backend has the window draw its own title bar and borders.
 
-### From the backend's API, not run here
+### What was run, and what was not
 
-- **File and folder dialogs:** Avalonia.Wayland builds on Avalonia.FreeDesktop, whose storage provider uses the XDG desktop portal, so a portal service (`xdg-desktop-portal` with a GTK, GNOME or KDE backend) is needed.
-- **Drag and drop, and the clipboard:** the backend implements both over the Wayland data device (`wl_data_device`), including files offered as a `text/uri-list`, which is what dropping files from a file manager and Copy Path use.
-- **Light and dark mode and the accent color:** these are expected to follow the system through the same FreeDesktop portal settings as on X11.
-- **Why not run:** these need a desktop session with a portal service and a file manager. CI uses a headless Weston without them. What was run: the self-check on Weston 13 headless and on Xvfb, the published GUI starting on Weston, and the window position behavior above.
-
+- **Run:** the self-check on Weston 13 headless and on Xvfb, and the published GUI failing to start without its display. The tests for a window that cannot be placed (the saved position survives, size and maximized state return, no cascade) run in the headless GUI tests by overriding the placement capability; they do not run on a real Wayland window, and the compositor's handling of positions (a client cannot set one) comes from the protocol, not from a run here.
+- **Not run:** these need a desktop session with a portal service and a file manager, which CI's headless Weston lacks.
+  - File and folder dialogs, from the backend's API.
+  - Drag and drop and the clipboard over the Wayland data device (`wl_data_device`). Dropping files from a file manager arrives as `text/uri-list`; Copy Path puts plain text on the clipboard.
+  - Light and dark mode and the accent color, expected to follow the system through the same FreeDesktop portal settings as on X11.

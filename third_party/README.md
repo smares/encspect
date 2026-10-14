@@ -20,7 +20,7 @@ The GUI (`src/Encspect.Gui`) uses Avalonia from NuGet, at the exact versions in 
 | Package | Version | What | License |
 |---|---|---|---|
 | Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.1.4 | The UI framework, its desktop platforms and the Fluent theme | MIT |
-| Avalonia.Wayland, NWayland | 12.1.4, 0.11.0 | The experimental native Wayland backend and its protocol bindings (managed code only) | MIT |
+| Avalonia.Wayland, NWayland | 12.1.4, 0.11.0 | The experimental native Wayland backend, opt-in, and its protocol bindings (managed code only) | MIT |
 | Avalonia.Controls.DataGrid | 12.1.2 | The file list | MIT |
 | Avalonia.Native, Avalonia.Win32, Avalonia.X11, Avalonia.FreeDesktop, Avalonia.FreeDesktop.AtSpi, Avalonia.Skia, Avalonia.HarfBuzz, Avalonia.Remote.Protocol | 12.1.4 | Platform backends, drawing and text shaping (pulled in by Avalonia.Desktop) | MIT |
 | Avalonia.BuildServices | 11.3.2 | Avalonia's build-time usage telemetry; it runs during builds only, not in the app, and `AVALONIA_TELEMETRY_OPTOUT=1` turns it off | MIT |
