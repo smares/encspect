@@ -1,0 +1,401 @@
+{
+ "description": "{faac 2.2} --object-type he-aac-v1 -b 32 -o {out} {mono48} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{faac 2.2}",
+   "--object-type",
+   "he-aac-v1",
+   "-b",
+   "32",
+   "-o",
+   "{out}",
+   "{mono48}"
+  ]
+ },
+ "length": 7282,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   null,
+   28
+  ],
+  [
+   "wide",
+   null,
+   8
+  ],
+  [
+   "mdat",
+   null,
+   6208
+  ],
+  [
+   "moov",
+   null,
+   1038
+  ],
+  [
+   "moov/mvhd",
+   null,
+   108
+  ],
+  [
+   "moov/trak",
+   null,
+   629
+  ],
+  [
+   "moov/trak/tkhd",
+   null,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   null,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   null,
+   493
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   null,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   null,
+   33
+  ],
+  [
+   "moov/trak/mdia/minf",
+   null,
+   420
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   null,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   null,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   null,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   null,
+   360
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   null,
+   108
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   null,
+   92
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   null,
+   56
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   null,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   null,
+   172
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   null,
+   20
+  ],
+  [
+   "moov/udta",
+   null,
+   293
+  ],
+  [
+   "moov/udta/meta",
+   null,
+   285
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   null,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   null,
+   240
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   null,
+   44
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   null,
+   36
+  ],
+  [
+   "moov/udta/meta/ilst/----",
+   null,
+   188
+  ],
+  [
+   "moov/udta/meta/ilst/----/mean",
+   null,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/----/name",
+   null,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/----/data",
+   null,
+   132
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "is_vbr": false,
+   "encoder": [
+    "FAAC 2.2.0 (6acbe23)",
+    "Medium"
+   ],
+   "ffprobe_profile": "HE-AAC",
+   "samples": 77824
+  }
+ ],
+ "units": [
+  [
+   44,
+   182
+  ],
+  [
+   226,
+   126
+  ],
+  [
+   352,
+   106
+  ],
+  [
+   458,
+   130
+  ],
+  [
+   588,
+   125
+  ],
+  [
+   713,
+   183
+  ],
+  [
+   896,
+   141
+  ],
+  [
+   1037,
+   214
+  ],
+  [
+   1251,
+   147
+  ],
+  [
+   1398,
+   193
+  ],
+  [
+   1591,
+   161
+  ],
+  [
+   1752,
+   169
+  ],
+  [
+   1921,
+   175
+  ],
+  [
+   2096,
+   158
+  ],
+  [
+   2254,
+   186
+  ],
+  [
+   2440,
+   152
+  ],
+  [
+   2592,
+   211
+  ],
+  [
+   2803,
+   154
+  ],
+  [
+   2957,
+   217
+  ],
+  [
+   3174,
+   153
+  ],
+  [
+   3327,
+   182
+  ],
+  [
+   3509,
+   161
+  ],
+  [
+   3670,
+   165
+  ],
+  [
+   3835,
+   175
+  ],
+  [
+   4010,
+   157
+  ],
+  [
+   4167,
+   186
+  ],
+  [
+   4353,
+   150
+  ],
+  [
+   4503,
+   207
+  ],
+  [
+   4710,
+   153
+  ],
+  [
+   4863,
+   193
+  ],
+  [
+   5056,
+   156
+  ],
+  [
+   5212,
+   179
+  ],
+  [
+   5391,
+   168
+  ],
+  [
+   5559,
+   163
+  ],
+  [
+   5722,
+   199
+  ],
+  [
+   5921,
+   293
+  ],
+  [
+   6214,
+   15
+  ],
+  [
+   6229,
+   15
+  ]
+ ],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "24000 units per second",
+  "MP4/moov/mvhd/Duration": "38912 (1.621 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "38912 (1.621 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "24000 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "38912 (1.621 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "36000 (1.500 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "1040 units of the media's timescale",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "1",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "30984 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "30592 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Sync Extension": "SBR present"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ],
+  [
+   "mp4.duration-mismatch",
+   "tkhd box of track 1"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "mp4box_samples": false,
+  "faad": {
+   "label": "HE AAC",
+   "channels": 2,
+   "rate": 48000
+  }
+ }
+}

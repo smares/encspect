@@ -26,9 +26,10 @@ rewrites the manifests from the committed files without the encoders. Running th
 hand-built ADTS CRC fixtures with fdk-aac's decoder, the one decoder at
 hand that verifies ADTS CRCs, and fails where its verdicts differ from what their manifests imply.
 
-Needs ffmpeg 6.1, faac 1.30, MP4Box (gpac 2.2), faad, git, cmake, make and a C and C++ compiler:
+Needs ffmpeg 6.1, faac 1.30, MP4Box (gpac 2.2), faad, git, cmake, make, autoconf, automake, libtool, meson, ninja
+and a C and C++ compiler:
 
-    apt-get install ffmpeg faac gpac faad cmake
+    apt-get install ffmpeg faac gpac faad cmake autoconf automake libtool meson ninja-build
 """
 
 import json
@@ -40,6 +41,7 @@ import sys
 import tempfile
 
 import exhale_tool
+import faac_tool
 import fdk_tool
 from crosscheck_mp4_fixtures import ffprobe_packets, mp4box_boxes, mp4box_fields, mp4box_sample_sizes
 
@@ -47,6 +49,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "aac"
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 FAAC_VERSION = "FAAC 1.30"
+# The 2.2 front end's tool atom: its version and, from `git describe`, the abbreviated commit (faac_tool.py).
+FAAC_2_2 = "FAAC 2.2.0 (6acbe23)"
 LAVC = "FFmpeg (Lavc60.31.102)"
 FDKAAC = "fdkaac 1.0.0 (libfdk-aac 4.0.1)"
 ASC = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig"
@@ -131,6 +135,47 @@ FIXTURES = [
      {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
     ("faac-adts", ".aac", ["faac", "-o", "{out}", "{in}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.30", "High"), "LC")], {}, [], {"faad": "adts"}),
+    ("faac-1.31.1", ".m4a", ["{faac 1.31.1}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, ("FAAC 1.31.1", "High"), "LC")], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "mdhd box of track 1"]],
+     {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    ("faac-1.31.1-adts", ".aac", ["{faac 1.31.1}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.31.1", "High"), "LC")], {}, [], {"faad": "adts"}),
+    ("faac-1.40", ".m4a", ["{faac 1.40}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, ("FAAC 1.40.0", "High"), "LC")], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "mdhd box of track 1"]],
+     {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    ("faac-1.40-adts", ".aac", ["{faac 1.40}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.40.0", "High"), "LC")], {}, [], {"faad": "adts"}),
+    ("faac-1.50", ".m4a", ["{faac 1.50}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, ("FAAC 1.50.0", "High"), "LC")], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "mdhd box of track 1"]],
+     {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    ("faac-1.50-adts", ".aac", ["{faac 1.50}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.50.0", "High"), "LC")], {}, [], {"faad": "adts"}),
+    ("faac-2.2", ".m4a", ["{faac 2.2}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, (FAAC_2_2, "Low"), "LC")], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]],
+     {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    ("faac-2.2-adts", ".aac", ["{faac 2.2}", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, None, "LC")], {}, [], {"faad": "adts"}),
+    ("faac-2.2-tags", ".m4a", ["{faac 2.2}", "--title", "Two tones", "--artist", "encspect", "--album", "Fixtures", "--year", "2026", "-o", "{out}", "{in}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, (FAAC_2_2, "Low"), "LC")], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]],
+     {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    ("faac-2.2-he", ".m4a", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "48", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC")], {ASC + "/Sync Extension": "SBR present"},
+     [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
+    ("faac-2.2-he-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "48", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [IMPLICIT_SBR], {"skip": {"faad": FAAD_ADTS_RATE}}),
+    ("faac-2.2-he-24k", ".m4a", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC")], {ASC + "/Sync Extension": "SBR present"},
+     [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
+    ("faac-2.2-he-24k-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [IMPLICIT_SBR], {"skip": {"faad": FAAD_ADTS_RATE}}),
+    ("faac-2.2-he-mono", ".m4a", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "32", "-o", "{out}", "{mono48}"],
+     [stream("HE-AAC", 48000, 1, "Mono", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC")], {ASC + "/Sync Extension": "SBR present"},
+     [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 48000}}),
+    ("faac-2.2-he-mono-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "32", "-o", "{out}", "{mono48}"],
+     [stream("HE-AAC", 48000, 1, "Mono", 2048, True, ("FAAC", "Medium"), "HE-AACv2", ffprobe_channels=2)], {STATS + "/SBR": "38 access units (100.0%)"},
+     [["aac.implicit-sbr", "38 of 38 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("ffmpeg-fast", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_coder", "fast", "{out}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "LC")], {}, [], {"faad": "adts"}),
     ("ffmpeg-no-tools", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_tns", "0", "-aac_pns", "0", "-aac_is", "0",
@@ -168,10 +213,10 @@ def check_versions():
         sys.exit(f"{FAAC_VERSION} is required")
 
 
-def write_tone(path, channels):
-    sources = ["-f", "lavfi", "-i", "sine=f=440:d=1.5:r=44100"]
+def write_tone(path, channels, rate=44100):
+    sources = ["-f", "lavfi", "-i", f"sine=f=440:d=1.5:r={rate}"]
     if channels == 2:
-        sources += ["-f", "lavfi", "-i", "sine=f=660:d=1.5:r=44100", "-filter_complex", "amerge"]
+        sources += ["-f", "lavfi", "-i", f"sine=f=660:d=1.5:r={rate}", "-filter_complex", "amerge"]
     subprocess.run(["ffmpeg", "-v", "error", "-y", *sources, "-ac", str(channels), "-c:a", "pcm_s16le", str(path)], check=True)
 
 
@@ -191,7 +236,8 @@ def run(command, values, library):
     resolved = []
     for arg in args:
         match = re.fullmatch(r"\{fixture (.+)\}", arg)
-        resolved.append(str(OUT / match.group(1)) if match else arg.format(**values))
+        faac = re.fullmatch(r"\{faac (.+)\}", arg)
+        resolved.append(str(OUT / match.group(1)) if match else str(values["faacs"][faac.group(1)]) if faac else arg.format(**values))
     environment = None
     if resolved[0] == values["fdkaac"] or env:
         import os
@@ -265,30 +311,43 @@ def main(names):
         rewrite_manifests(names[1:])
         return
     check_versions()
-    fdkaac, library, checker = fdk_tool.build()
-    exhale = exhale_tool.build()
-    check_hand_built_crcs(checker, library)
+    selected = [f for f in FIXTURES if not names or f[0] in names]
+    commands = [" ".join(f[2]) for f in selected]
+    # FAAC's releases and the other encoders are built only for the fixtures that use them.
+    versions = sorted({m for c in commands for m in re.findall(r"\{faac ([^}]+)\}", c)})
+    uses_fdk = any("{fdkaac}" in c for c in commands) or not names
+    uses_exhale = any("{exhale}" in c for c in commands)
+    fdkaac = library = checker = exhale = None
+    if uses_fdk:
+        fdkaac, library, checker = fdk_tool.build()
+        check_hand_built_crcs(checker, library)
+    if uses_exhale:
+        exhale = exhale_tool.build()
+    faacs = {version: faac_tool.build(version) for version in versions}
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as directory:
         temp = pathlib.Path(directory)
         stereo = temp / "tone.wav"
         mono = temp / "mono.wav"
+        mono48 = temp / "mono48.wav"
         write_tone(stereo, 2)
         write_tone(mono, 1)
+        write_tone(mono48, 1, 48000)
         mix = temp / "mix.wav"
         write_mix(mix)
-        for name, extension, command, streams, fields, findings, check in FIXTURES:
-            if names and name not in names:
-                continue
+        for name, extension, command, streams, fields, findings, check in selected:
             path = OUT / (name + extension)
-            values = {"in": str(stereo), "mono": str(mono), "mix": str(mix), "out": str(path), "fdkaac": str(fdkaac), "exhale": str(exhale),
-                      "checker": checker, "library": library}
+            values = {"in": str(stereo), "mono": str(mono), "mono48": str(mono48), "mix": str(mix), "out": str(path), "fdkaac": str(fdkaac),
+                      "exhale": str(exhale), "faacs": faacs, "checker": checker, "library": library}
+            # FAAC refuses to overwrite its output.
+            path.unlink(missing_ok=True)
             run(command, values, library)
             manifest = manifest_for(name, path, command, streams, fields, findings, check, values)
             (OUT / (name + ".expected.json")).write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             print(f"{path.name}: {len(manifest['units'])} access units")
-    shutil.rmtree(fdkaac.parents[1], ignore_errors=True)
-    shutil.rmtree(exhale.parents[1], ignore_errors=True)
+    for tool in (fdkaac and fdkaac.parents[1], exhale and exhale.parents[1], *(binary.parent for binary in faacs.values())):
+        if tool:
+            shutil.rmtree(tool, ignore_errors=True)
 
 
 if __name__ == "__main__":

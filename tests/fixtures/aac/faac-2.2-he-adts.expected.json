@@ -1,0 +1,197 @@
+{
+ "description": "{faac 2.2} --object-type he-aac-v1 -b 48 -o {out} {in} on 1.5 s of a 440/660 Hz tone.",
+ "encoder": {
+  "command": [
+   "{faac 2.2}",
+   "--object-type",
+   "he-aac-v1",
+   "-b",
+   "48",
+   "-o",
+   "{out}",
+   "{in}"
+  ]
+ },
+ "length": 9586,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "is_vbr": true,
+   "encoder": [
+    "FAAC",
+    "Medium"
+   ],
+   "ffprobe_profile": "HE-AAC",
+   "samples": 71680
+  }
+ ],
+ "units": [
+  [
+   0,
+   245
+  ],
+  [
+   245,
+   222
+  ],
+  [
+   467,
+   180
+  ],
+  [
+   647,
+   193
+  ],
+  [
+   840,
+   223
+  ],
+  [
+   1063,
+   228
+  ],
+  [
+   1291,
+   257
+  ],
+  [
+   1548,
+   288
+  ],
+  [
+   1836,
+   268
+  ],
+  [
+   2104,
+   281
+  ],
+  [
+   2385,
+   280
+  ],
+  [
+   2665,
+   334
+  ],
+  [
+   2999,
+   278
+  ],
+  [
+   3277,
+   311
+  ],
+  [
+   3588,
+   300
+  ],
+  [
+   3888,
+   273
+  ],
+  [
+   4161,
+   286
+  ],
+  [
+   4447,
+   304
+  ],
+  [
+   4751,
+   304
+  ],
+  [
+   5055,
+   291
+  ],
+  [
+   5346,
+   304
+  ],
+  [
+   5650,
+   293
+  ],
+  [
+   5943,
+   277
+  ],
+  [
+   6220,
+   288
+  ],
+  [
+   6508,
+   295
+  ],
+  [
+   6803,
+   300
+  ],
+  [
+   7103,
+   293
+  ],
+  [
+   7396,
+   307
+  ],
+  [
+   7703,
+   285
+  ],
+  [
+   7988,
+   268
+  ],
+  [
+   8256,
+   295
+  ],
+  [
+   8551,
+   388
+  ],
+  [
+   8939,
+   581
+  ],
+  [
+   9520,
+   34
+  ],
+  [
+   9554,
+   32
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "35 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "35 of 35 raw data blocks hold SBR data"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}
