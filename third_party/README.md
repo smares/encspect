@@ -15,11 +15,12 @@ The MP4 and AAC fixture scripts build three more encoders from their repositorie
 
 # GUI dependencies
 
-The GUI (`src/Encspect.Gui`) uses Avalonia from NuGet, at the exact versions in `Directory.Packages.props`. Every package it brings in is free and open source; Avalonia's TreeDataGrid, which moved to a commercial license, is not used. The only native libraries the project ships are the ones Avalonia needs (see the plan's non-goals): Skia and HarfBuzz, which it draws and shapes text with, on every platform; ANGLE (`av_libglesv2.dll`), through which it draws with Direct3D, on Windows; and Avalonia.Native (`libAvaloniaNative.dylib`), its macOS backend. Linux builds have no other: the X11 backend is managed code over the system's own libraries. The GUI's `--self-check` loads each of them.
+The GUI (`src/Encspect.Gui`) uses Avalonia from NuGet, at the exact versions in `Directory.Packages.props`. Every package it brings in is free and open source; Avalonia's TreeDataGrid, which moved to a commercial license, is not used. The only native libraries the project ships are the ones Avalonia needs (see the plan's non-goals): Skia and HarfBuzz, which it draws and shapes text with, on every platform; ANGLE (`av_libglesv2.dll`), through which it draws with Direct3D, on Windows; and Avalonia.Native (`libAvaloniaNative.dylib`), its macOS backend. Linux builds have no other: the Wayland and X11 backends are managed code over the system's own libraries. The GUI's `--self-check` loads each of them.
 
 | Package | Version | What | License |
 |---|---|---|---|
 | Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.1.4 | The UI framework, its desktop platforms and the Fluent theme | MIT |
+| Avalonia.Wayland, NWayland | 12.1.4, 0.11.0 | The experimental native Wayland backend, opt-in, and its protocol bindings (managed code only) | MIT |
 | Avalonia.Controls.DataGrid | 12.1.2 | The file list | MIT |
 | Avalonia.Native, Avalonia.Win32, Avalonia.X11, Avalonia.FreeDesktop, Avalonia.FreeDesktop.AtSpi, Avalonia.Skia, Avalonia.HarfBuzz, Avalonia.Remote.Protocol | 12.1.4 | Platform backends, drawing and text shaping (pulled in by Avalonia.Desktop) | MIT |
 | Avalonia.BuildServices | 11.3.2 | Avalonia's build-time usage telemetry; it runs during builds only, not in the app, and `AVALONIA_TELEMETRY_OPTOUT=1` turns it off | MIT |

@@ -71,7 +71,7 @@ jobs:
       # Not uploaded either. A runner has no display to open a window on, so the published GUI runs
       # its self-check: it loads Skia's and HarfBuzz's native libraries and the platform backend's
       # (ANGLE on Windows, Avalonia.Native on macOS) from the single file and analyzes a fixture
-      # through the host, without opening a window.
+      # through the host, without showing a window.
       - name: Publish the self-contained GUI
         run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
 
@@ -82,6 +82,66 @@ jobs:
           grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/gui.txt"
           grep -q 'Platform backend' "$RUNNER_TEMP/gui.txt"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
+
+      # Linux has two windowing backends, both managed code over the system's libraries: X11, the
+      # default (also under Wayland, through XWayland), and Wayland, which ENCSPECT_GUI_BACKEND=wayland
+      # opts in to. Weston's headless backend with the pixman renderer is a compositor without a GPU
+      # or display; the self-check starts the backend without showing a window and names it, and
+      # the step fails if it is not the one asked for. These greps also guard the screen-handle
+      # descriptors ("WaylandOutput", "XRandRMonitorName") that the GUI tells the backends apart by.
+      # Wayland's start-up blocks synchronously, hence the timeouts.
+      - name: Run the published GUI's self-check on Wayland and X11
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston xvfb
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/runtime"
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          weston --backend=headless --renderer=pixman --socket=encspect-wl --idle-time=0 > "$RUNNER_TEMP/weston.log" 2>&1 &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for _ in $(seq 50); do test -S "$XDG_RUNTIME_DIR/encspect-wl" && break; sleep 0.2; done
+          test -S "$XDG_RUNTIME_DIR/encspect-wl" || { cat "$RUNNER_TEMP/weston.log"; exit 1; }
+          gui=publish/gui-${{ matrix.rid }}/encspect-gui
+          fixture=tests/fixtures/mpeg/external-lame-tagged.mp3
+
+          # Wayland is opt-in.
+          env -u DISPLAY WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=wayland timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland.txt"
+          grep -q 'Windowing backend: Wayland\.' "$RUNNER_TEMP/wayland.txt"
+
+          # A session with both a compositor and an X server uses X11 unless Wayland is asked for.
+          env WAYLAND_DISPLAY=encspect-wl timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/both.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/both.txt"
+
+          env WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=wayland timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/both-wayland.txt"
+          grep -q 'Windowing backend: Wayland\.' "$RUNNER_TEMP/both-wayland.txt"
+
+          env WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=x11 timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/forced-x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/forced-x11.txt"
+
+          env -u WAYLAND_DISPLAY timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/x11.txt"
+
+          # A compositor alone does not start Wayland: the self-check reports that X11 has no display, with exit 0.
+          env -u DISPLAY WAYLAND_DISPLAY=encspect-wl timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland-only.txt"
+          grep -q 'Windowing backend: not started, X11 is chosen' "$RUNNER_TEMP/wayland-only.txt"
+          ! grep -q 'Windowing backend: Wayland' "$RUNNER_TEMP/wayland-only.txt"
+
+          # An unknown value warns and chooses automatically.
+          env ENCSPECT_GUI_BACKEND=bogus timeout 120 xvfb-run -a $gui --self-check $fixture > "$RUNNER_TEMP/bogus.err" 2>&1
+          grep -q 'ENCSPECT_GUI_BACKEND=bogus is not recognized; use x11 or wayland' "$RUNNER_TEMP/bogus.err"
+
+          # A forced backend without its display ends with one line and exit code 1, not an abort.
+          status=0
+          env -u DISPLAY -u WAYLAND_DISPLAY ENCSPECT_GUI_BACKEND=wayland timeout 120 $gui 2> "$RUNNER_TEMP/no-wayland.err" || status=$?
+          test "$status" = 1
+          grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-wayland.err"
+          status=0
+          env -u WAYLAND_DISPLAY DISPLAY=:99 ENCSPECT_GUI_BACKEND=x11 timeout 120 $gui 2> "$RUNNER_TEMP/no-x11.err" || status=$?
+          test "$status" = 1
+          grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-x11.err"
 
   fuzz:
     name: fuzz smoke test
@@ -390,3 +450,35 @@ jobs:
 
       - name: Cross-check the DTS fixtures
         run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
+
+  # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
+  # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled, and
+  # only success passes: a skipped job counts as a failure, since none of the jobs above is conditional.
+  # A matrix job reports one result for all its legs, which is not success if any leg failed.
+  all-checks:
+    name: all checks passed
+    if: always()
+    needs:
+      - build-test
+      - fuzz
+      - format
+      - fixtures
+      - mpeg-crosscheck
+      - mp4-crosscheck
+      - ogg-crosscheck
+      - musepack-crosscheck
+      - wavpack-crosscheck
+      - asf-crosscheck
+      - ac3-crosscheck
+      - dts-crosscheck
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every job to succeed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$NEEDS" | jq -e 'all(.[]; .result == "success") | not' > /dev/null; then
+            echo "::error::A job did not succeed."
+            exit 1
+          fi
