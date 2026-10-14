@@ -3,7 +3,7 @@
 own AAC encoder (M4A, ADTS with the fast coder, without its stereo, noise and TNS tools, AAC Main with
 prediction and AAC LTP, fragmented MP4, and MP3 in MP4 with libmp3lame), fdkaac 1.0.0 with libfdk-aac 4.0.1
 built from source (fdk_tool.py; LC, VBR, HE-AAC and HE-AAC v2 with both explicit signaling modes and implicit
-signaling, in MP4 and ADTS, and ADTS with CRCs), FAAC 1.30, exhale 1.2.2 for xHE-AAC (exhale_tool.py) and GPAC's MP4Box 2.2 as a muxer. Each
+signaling, in MP4 and ADTS, and ADTS with CRCs), FAAC 1.30 to 2.2 (faac_tool.py), exhale 1.2.2 for xHE-AAC (exhale_tool.py) and GPAC's MP4Box 2.2 as a muxer. Each
 encodes 1.5 seconds of a 440/660 Hz tone, or for the ffmpeg encoder's tool settings ({mix}), of pink noise with a
 tone, on which the encoder uses its stereo and noise tools.
 
@@ -49,8 +49,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "aac"
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 FAAC_VERSION = "FAAC 1.30"
-# The 2.2 front end's tool atom: its version and, from `git describe`, the abbreviated commit (faac_tool.py).
+# The 2.0 and 2.1 front ends' tool atoms carry no commit, the 2.2 front end's tool atom: its version and, from `git describe`, the abbreviated commit (faac_tool.py).
 FAAC_2_2 = "FAAC 2.2.0 (6acbe23)"
+FAAC_2_0 = "FAAC 2.0.0"
 LAVC = "FFmpeg (Lavc60.31.102)"
 FDKAAC = "fdkaac 1.0.0 (libfdk-aac 4.0.1)"
 ASC = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig"
@@ -63,7 +64,7 @@ STATS = "ADTS/Statistics"
 
 # The speakers of one and two channels: AAC's channel configurations 1 and 2 (ISO/IEC 14496-3 Table
 # 1.19), parametric stereo's output, and MPEG audio's mono and stereo.
-SPEAKERS = {1: ["front center"], 2: ["front left", "front right"]}
+SPEAKERS = {1: ["front center"], 2: ["front left", "front right"], 6: ["front center", "front left", "front right", "back left", "back right", "LFE"]}
 
 
 def stream(codec, rate, channels, mode, frame, vbr, encoder, profile=None, **extra):
@@ -176,6 +177,22 @@ FIXTURES = [
     ("faac-2.2-he-mono-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "32", "-o", "{out}", "{mono48}"],
      [stream("HE-AAC", 48000, 1, "Mono", 2048, True, ("FAAC", "Medium"), "HE-AACv2", ffprobe_channels=2)], {STATS + "/SBR": "38 access units (100.0%)"},
      [["aac.implicit-sbr", "38 of 38 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
+    # 2.0 and 2.1 count their SBR headers like 2.2 but send them again in their last access units, which are flush frames (FaacSbr).
+    ("faac-2.1-he-24k-adts", ".aac", ["{faac 2.1}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "34 access units (100.0%)",
+      STATS + "/SBR/SBR Headers": "5 headers"},
+     [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
+    ("faac-2.0-he-24k", ".m4a", ["{faac 2.0}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (FAAC_2_0, "Medium"), "HE-AAC")], {ASC + "/Sync Extension": "SBR present"},
+     [MOOV_AFTER, ["mp4.duration-mismatch", "mdhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
+    # 2.2 writes the SBR data of each channel element after it, so a 5.1 stream is named; 2.0 and 2.1 write one payload after the whole
+    # frame, typed as a channel pair element, which a 5.1 stream does not have (aac.sbr-without-channel-element), and so do not.
+    ("faac-2.2-he-51-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
+     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [["aac.implicit-sbr", "35 of 35 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
+    ("faac-2.1-he-51-adts", ".aac", ["{faac 2.1}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
+     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, None, "HE-AAC")], {STATS + "/SBR": "34 access units (100.0%)"},
+     [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"], ["aac.sbr-without-channel-element", "SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE, "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element (aac.sbr-without-channel-element), and its trace holds one raw data block."}}),
     ("ffmpeg-fast", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_coder", "fast", "{out}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "LC")], {}, [], {"faad": "adts"}),
     ("ffmpeg-no-tools", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_tns", "0", "-aac_pns", "0", "-aac_is", "0",
@@ -218,6 +235,12 @@ def write_tone(path, channels, rate=44100):
     if channels == 2:
         sources += ["-f", "lavfi", "-i", f"sine=f=660:d=1.5:r={rate}", "-filter_complex", "amerge"]
     subprocess.run(["ffmpeg", "-v", "error", "-y", *sources, "-ac", str(channels), "-c:a", "pcm_s16le", str(path)], check=True)
+
+
+def write_surround(path):
+    """Six tones, one per channel of a 5.1 layout, for 1.5 seconds."""
+    sources = [arg for frequency in (440, 660, 550, 330, 880, 110) for arg in ("-f", "lavfi", "-i", f"sine=f={frequency}:d=1.5:r=44100")]
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *sources, "-filter_complex", "amerge=inputs=6", "-ac", "6", "-c:a", "pcm_s16le", str(path)], check=True)
 
 
 def write_mix(path):
@@ -335,9 +358,11 @@ def main(names):
         write_tone(mono48, 1, 48000)
         mix = temp / "mix.wav"
         write_mix(mix)
+        six = temp / "six.wav"
+        write_surround(six)
         for name, extension, command, streams, fields, findings, check in selected:
             path = OUT / (name + extension)
-            values = {"in": str(stereo), "mono": str(mono), "mono48": str(mono48), "mix": str(mix), "out": str(path), "fdkaac": str(fdkaac),
+            values = {"in": str(stereo), "mono": str(mono), "mono48": str(mono48), "six": str(six), "mix": str(mix), "out": str(path), "fdkaac": str(fdkaac),
                       "exhale": str(exhale), "faacs": faacs, "checker": checker, "library": library}
             # FAAC refuses to overwrite its output.
             path.unlink(missing_ok=True)
