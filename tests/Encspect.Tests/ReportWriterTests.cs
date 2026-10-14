@@ -299,6 +299,22 @@ public class ReportWriterTests
         Assert.Contains("Error: The children could not be built: IndexOutOfRangeException: bug in a deferred builder", text.ToString());
     }
 
+    [Fact]
+    public void ABlockBuilderThatFailsIsWrittenAsErrorNodes()
+    {
+        var root = new Node("File", 0, 10);
+        root.Add(new Node("Packets", 0, 10, null, () => new BlockedChildren([], 3, _ => throw new IndexOutOfRangeException("bug in a block builder"))));
+        var report = new Report("broken.bin", root, []);
+        using var json = new MemoryStream();
+        var text = new StringWriter();
+
+        ReportJsonWriter.Write([report], json);
+        ReportTextWriter.Write(report, text, showOffsets: false);
+
+        Assert.Contains("\"name\": \"Error\"", System.Text.Encoding.UTF8.GetString(json.ToArray()));
+        Assert.Contains("Error: The children could not be built: IndexOutOfRangeException: bug in a block builder", text.ToString());
+    }
+
     private sealed class WriteCountingStream : MemoryStream
     {
         public int Writes { get; private set; }

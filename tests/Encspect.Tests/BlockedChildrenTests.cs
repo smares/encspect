@@ -244,16 +244,36 @@ public class BlockedChildrenTests
         Assert.Equal([(2 * Block, 10), (0, Block), (Block, Block)], calls);
     }
 
+    // A builder that throws shows as error nodes for the entries of its block, as a node whose factory
+    // throws shows as one error node; the other blocks are unaffected, and the block is built again
+    // once it has been collected.
     [Fact]
-    public void ABuilderThatThrowsLeavesTheListUsable()
+    public void ABuilderThatThrowsGivesErrorNodesForItsBlockOnly()
     {
         bool fail = true;
-        var list = new BlockedChildren([], Block + 1, i => fail && i == 5 ? throw new InvalidDataException("bad") : EntryNode(i));
+        var owner = new Node("Frames", 40, 900, null, () => new BlockedChildren([], Block + 1, i => fail && i == 5 ? throw new InvalidDataException("bad") : EntryNode(i)));
 
-        Assert.Throws<InvalidDataException>(() => list[5]);
+        IReadOnlyList<Node> list = owner.Children;
+        Assert.Equal(Block + 1, list.Count);
+        Node[] failed = [.. list.Take(Block)];
+
+        Assert.All(failed, n => Assert.Equal(("Error", 40L, 900L, "The children could not be built: InvalidDataException: bad"), (n.Name, n.Offset, n.Length, n.Value?.ToString())));
+        Assert.All(failed, n => Assert.False(string.IsNullOrEmpty(n.Description)));
+        Assert.Equal(Block, failed.Distinct().Count());
         CheckNode(list[Block], Block);
+
         fail = false;
+        failed = [];
+        ReportRendering.Collect();
         CheckNode(list[5], 5);
+    }
+
+    [Fact]
+    public void ABuilderThatIsCanceledStillThrows()
+    {
+        var list = new BlockedChildren([], 3, i => throw new OperationCanceledException());
+
+        Assert.Throws<OperationCanceledException>(() => list[0]);
     }
 
     [Fact]

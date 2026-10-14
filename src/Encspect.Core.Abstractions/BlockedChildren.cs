@@ -6,6 +6,9 @@ namespace Encspect.Core;
 // their nodes. Readers on several threads get the same nodes while a block lives; after a
 // collection a block is built again from the same records.
 //
+// A builder that throws does not reach the reader: the entries of its block are error nodes (as a
+// node whose factory throws has one), over the bytes of the node that holds the list.
+//
 // Thread safety rests on three rules: a block is published with a compare-and-swap, so two threads
 // that build the same block both succeed and one result is dropped; the hint of the block read last
 // is an immutable record read once per lookup, so an index and its nodes can never come from two
@@ -22,6 +25,9 @@ public sealed class BlockedChildren : IReadOnlyList<Node>
     // The block read last, strongly held, so reading nodes in order does not look up a weak
     // reference each time.
     private Block? _last;
+
+    // The offset and length of the node that holds the list, for the error nodes of a failed block.
+    private (long Offset, long Length) _owner;
 
     // Builds the node of the record at an index. Called once per record of a block, in order, on the
     // thread that reads it; it must not depend on state shared with other builds.
@@ -107,7 +113,7 @@ public sealed class BlockedChildren : IReadOnlyList<Node>
             if (built is null)
             {
                 int start = block * BlockSize;
-                built = _buildBlock(start, Math.Min(BlockSize, _count - start));
+                built = BuildBlock(start, Math.Min(BlockSize, _count - start));
             }
 
             if (Interlocked.CompareExchange(ref _blocks[block], new WeakReference<Node[]>(built), current) == current)
@@ -115,6 +121,27 @@ public sealed class BlockedChildren : IReadOnlyList<Node>
                 Volatile.Write(ref _last, new Block(block, built));
                 return built;
             }
+        }
+    }
+
+    internal void SetOwner(long offset, long length) => _owner = (offset, length);
+
+    private Node[] BuildBlock(int start, int length)
+    {
+        try
+        {
+            return _buildBlock(start, length);
+        }
+        catch (Exception ex) when (Node.IsBuildFailure(ex))
+        {
+            (long offset, long span) = _owner;
+            var failed = new Node[length];
+            for (int i = 0; i < failed.Length; i++)
+            {
+                failed[i] = Node.BuildFailure(offset, span, ex);
+            }
+
+            return failed;
         }
     }
 
