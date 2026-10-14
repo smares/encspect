@@ -17,5 +17,5 @@ internal static class Program
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
+    public static AppBuilder BuildAvaloniaApp() => PlatformBackend.Configure(AppBuilder.Configure<App>(), Environment.GetEnvironmentVariable(PlatformBackend.Variable)).LogToTrace();
 }

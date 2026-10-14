@@ -12,6 +12,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 
 - `tests/Encspect.Tests`: the core, host, parsers and CLI, on xUnit 2.
 - `tests/Encspect.Gui.Tests`: the GUI, on Avalonia's headless platform without a display. These run on xUnit v3, which the headless test support needs. Set `ENCSPECT_SCREENSHOTS` to a folder to have them save screenshots of both windows and of the graphs, in light and dark mode.
+- **GUI backends on Linux:** CI runs the published GUI's `--self-check` under a headless Weston (`weston --backend=headless --renderer=pixman --socket=...`, with `WAYLAND_DISPLAY` set and no `DISPLAY`) and under `xvfb-run`, and checks the `Windowing backend:` line. Locally, `apt-get install weston xvfb` and the step in `.github/workflows/ci.yml` run as they are. Mesa prints EGL warnings there, since the container has no GPU; they do not fail the check.
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 - **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`.
 

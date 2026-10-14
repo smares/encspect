@@ -65,7 +65,9 @@ internal static class SelfCheck
     // through the same assembly takes the same path without starting the backend or opening a
     // window. Windows draws through ANGLE (av_libGLESv2) and falls back to software drawing
     // without it, so its absence is reported but is no failure; macOS has no window at all without
-    // Avalonia.Native. Linux's backend (X11) is managed code over the system's own libraries.
+    // Avalonia.Native. Linux's backends (Wayland and X11) are managed code over the system's own
+    // libraries. Where a display is reachable (DISPLAY or WAYLAND_DISPLAY) the backend is started
+    // without a window and named, so CI can assert which one was chosen.
     private static bool LoadPlatformBackend()
     {
         (string? library, Assembly? assembly, bool isRequired) = OperatingSystem.IsWindows() ? ("av_libGLESv2.dll", typeof(Win32PlatformOptions).Assembly, false)
@@ -74,7 +76,7 @@ internal static class SelfCheck
         if (library is null || assembly is null)
         {
             Console.Out.WriteLine("Platform backend: no native library beyond Skia and HarfBuzz.");
-            return true;
+            return ReportWindowingBackend();
         }
 
         try
@@ -87,6 +89,32 @@ internal static class SelfCheck
         {
             Console.Out.WriteLine($"Platform backend: {library} not loaded: {ex.Message}");
             return !isRequired;
+        }
+    }
+
+    private static bool ReportWindowingBackend()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")) && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
+        {
+            Console.Out.WriteLine("Windowing backend: not started, no DISPLAY or WAYLAND_DISPLAY.");
+            return true;
+        }
+
+        try
+        {
+            Program.BuildAvaloniaApp().SetupWithoutStarting();
+            Console.Out.WriteLine($"Windowing backend: {PlatformBackend.Name()}.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.Out.WriteLine($"Windowing backend: failed to start: {ex.Message}");
+            return false;
         }
     }
 }

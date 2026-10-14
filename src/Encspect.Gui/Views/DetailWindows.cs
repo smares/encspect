@@ -10,7 +10,9 @@ namespace Encspect.Gui.Views;
 // it is open, follows the list's selection; it first opens centered over the main window and then
 // where it was last, also in later sessions. "Open in New Window" adds independent windows, which
 // stay on their file, for comparing two files. None is owned by the main window, so each moves on
-// its own.
+// its own. Where the windowing system does not let a program place its windows (Wayland), only
+// the size is restored and the compositor chooses the position; the saved position is kept as it
+// was, so that another backend on the same account still finds it.
 //
 // Previous and Next follow the list as it fills in, at a cost per added row that does not grow
 // with the list (ListNeighbors). When the list is listed again, a window whose row left the list
@@ -126,7 +128,11 @@ public sealed class DetailWindows
         };
         Place(window, null);
         int step = (_independent.Count + 1) * CascadeStep;
-        window.Position = new PixelPoint(window.Position.X + step, window.Position.Y + step);
+        if (CanPlace)
+        {
+            window.Position = new PixelPoint(window.Position.X + step, window.Position.Y + step);
+        }
+
         _independent.Add(window);
         Load(window, row);
         window.Show();
@@ -143,6 +149,8 @@ public sealed class DetailWindows
 
     // How often a window's row was looked up in the list to find its neighbors.
     internal int NeighborLookups(DetailWindow window) => _neighbors.TryGetValue(window, out ListNeighbors? neighbors) ? neighbors.Lookups : 0;
+
+    private bool CanPlace => !PlatformBackend.IsWayland(_main);
 
     private DetailWindow Create()
     {
@@ -192,7 +200,7 @@ public sealed class DetailWindows
     {
         if (window.WindowState == WindowState.Normal && window.IsVisible)
         {
-            _normalPlacement = new WindowPlacement(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, false);
+            _normalPlacement = PlacementOf(window, false);
         }
     }
 
@@ -200,11 +208,15 @@ public sealed class DetailWindows
     // window. Returns the placement used, or null when centered.
     private WindowPlacement? Place(Window window, WindowPlacement? placement)
     {
-        if (placement is { Width: > 0, Height: > 0 } && _main.Screens.ScreenFromPoint(new PixelPoint(placement.X + 40, placement.Y + 20)) is not null)
+        if (placement is { Width: > 0, Height: > 0 } && (!CanPlace || _main.Screens.ScreenFromPoint(new PixelPoint(placement.X + 40, placement.Y + 20)) is not null))
         {
             window.Width = placement.Width;
             window.Height = placement.Height;
-            window.Position = new PixelPoint(placement.X, placement.Y);
+            if (CanPlace)
+            {
+                window.Position = new PixelPoint(placement.X, placement.Y);
+            }
+
             if (placement.IsMaximized)
             {
                 window.WindowState = WindowState.Maximized;
@@ -213,11 +225,15 @@ public sealed class DetailWindows
             return placement with { IsMaximized = false };
         }
 
-        double scaling = _main.DesktopScaling;
-        Size main = _main.ClientSize;
-        window.Position = new PixelPoint(
-            _main.Position.X + (int)((main.Width - window.Width) * scaling / 2),
-            _main.Position.Y + (int)((main.Height - window.Height) * scaling / 2));
+        if (CanPlace)
+        {
+            double scaling = _main.DesktopScaling;
+            Size main = _main.ClientSize;
+            window.Position = new PixelPoint(
+                _main.Position.X + (int)((main.Width - window.Width) * scaling / 2),
+                _main.Position.Y + (int)((main.Height - window.Height) * scaling / 2));
+        }
+
         return null;
     }
 
@@ -226,9 +242,14 @@ public sealed class DetailWindows
         bool isMaximized = window.WindowState == WindowState.Maximized;
         if (window.WindowState == WindowState.Normal || _normalPlacement is null)
         {
-            return new(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, isMaximized);
+            return PlacementOf(window, isMaximized);
         }
 
         return _normalPlacement with { IsMaximized = isMaximized };
     }
+
+    private WindowPlacement PlacementOf(Window window, bool isMaximized) =>
+        CanPlace
+            ? new(window.Position.X, window.Position.Y, window.ClientSize.Width, window.ClientSize.Height, isMaximized)
+            : new(_settings.DetailWindow?.X ?? 0, _settings.DetailWindow?.Y ?? 0, window.ClientSize.Width, window.ClientSize.Height, isMaximized);
 }

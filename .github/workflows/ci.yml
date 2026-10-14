@@ -83,6 +83,36 @@ jobs:
           grep -q 'Platform backend' "$RUNNER_TEMP/gui.txt"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
 
+      # Linux has two windowing backends, both managed code over the system's libraries: Wayland,
+      # used when a compositor is reachable, and X11. Weston's headless backend with the pixman
+      # renderer is a compositor without a GPU or display; the self-check starts the backend
+      # without a window and names it, and the step fails if it is not the one asked for.
+      - name: Run the published GUI's self-check on Wayland and X11
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston xvfb
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/runtime"
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          weston --backend=headless --renderer=pixman --socket=encspect-wl --idle-time=0 > "$RUNNER_TEMP/weston.log" 2>&1 &
+          trap 'kill %1' EXIT
+          for _ in $(seq 50); do test -S "$XDG_RUNTIME_DIR/encspect-wl" && break; sleep 0.2; done
+          test -S "$XDG_RUNTIME_DIR/encspect-wl" || { cat "$RUNNER_TEMP/weston.log"; exit 1; }
+          gui=publish/gui-${{ matrix.rid }}/encspect-gui
+          fixture=tests/fixtures/mpeg/external-lame-tagged.mp3
+
+          env -u DISPLAY WAYLAND_DISPLAY=encspect-wl $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland.txt"
+          grep -q 'Windowing backend: Wayland\.' "$RUNNER_TEMP/wayland.txt"
+
+          # A session with both a compositor and an X server uses Wayland unless it is switched off.
+          env WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=x11 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/forced-x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/forced-x11.txt"
+
+          env -u WAYLAND_DISPLAY xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/x11.txt"
+
   fuzz:
     name: fuzz smoke test
     runs-on: ubuntu-latest

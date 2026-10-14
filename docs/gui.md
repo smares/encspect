@@ -85,5 +85,31 @@ The Graphs tab, next to the findings, draws the stream's series: the bitrate and
 - Light and dark mode, the accent color and the UI font follow the system.
 - The file dialogs are the system's.
 - On macOS the menus are in the menu bar.
+- Linux runs natively on Wayland when a compositor is reachable (`WAYLAND_DISPLAY`) and on X11 otherwise, which includes XWayland. See "Linux: Wayland and X11".
 - The GUI is built on Avalonia. Its dependencies and their licenses are listed in [third_party/README.md](../third_party/README.md).
 - The graphs are drawn by the GUI itself, without a charting library.
+
+## Linux: Wayland and X11
+
+- **Choice:** the GUI starts on Wayland when a compositor is reachable and otherwise on X11, which also covers XWayland sessions.
+- **Experimental:** Avalonia 12.1 calls its Wayland backend (`Avalonia.Wayland`) experimental. If a window misbehaves on your desktop, force X11.
+- **`ENCSPECT_GUI_BACKEND`:** `x11` forces X11 (through XWayland in a Wayland session), `wayland` forces Wayland and fails to start without a compositor, anything else or unset chooses as above.
+  ```sh
+  ENCSPECT_GUI_BACKEND=x11 encspect-gui
+  ```
+- **Libraries:** both backends are managed code over the system's own libraries (libwayland-client and EGL, or the X11 libraries); the GUI ships no native library for them.
+- **Which one runs:** `encspect-gui --self-check` prints `Windowing backend: Wayland.` or `Windowing backend: X11.` when `WAYLAND_DISPLAY` or `DISPLAY` is set, and says it did not start one otherwise.
+
+### What differs on Wayland
+
+- **Detail window position:** Wayland does not let a program place its windows. The detail window comes back in the size it had, and the compositor chooses where it appears. It is not centered over the main window, and windows opened with Open in New Window are not cascaded. The saved position is left as it was, so X11 sessions on the same account still find it.
+- **Maximized state:** it is restored, like the size.
+- **Window decorations:** where the compositor does not offer server-side decorations (`xdg-decoration`), the backend has the window draw its own title bar and borders.
+
+### From the backend's API, not run here
+
+- **File and folder dialogs:** Avalonia.Wayland builds on Avalonia.FreeDesktop, whose storage provider uses the XDG desktop portal, so a portal service (`xdg-desktop-portal` with a GTK, GNOME or KDE backend) is needed.
+- **Drag and drop, and the clipboard:** the backend implements both over the Wayland data device (`wl_data_device`), including files offered as a `text/uri-list`, which is what dropping files from a file manager and Copy Path use.
+- **Light and dark mode and the accent color:** these are expected to follow the system through the same FreeDesktop portal settings as on X11.
+- **Why not run:** these need a desktop session with a portal service and a file manager. CI uses a headless Weston without them. What was run: the self-check on Weston 13 headless and on Xvfb, the published GUI starting on Weston, and the window position behavior above.
+
