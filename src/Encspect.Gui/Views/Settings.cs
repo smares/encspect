@@ -4,7 +4,9 @@ using System.Text.Json.Serialization;
 namespace Encspect.Gui.Views;
 
 // Where a window was, in screen pixels for the position and device-independent units for the size.
-public sealed record WindowPlacement(int X, int Y, double Width, double Height, bool IsMaximized);
+// The position is null where it was never known, as in a first session on Wayland, which does not let
+// a program place its windows; older settings files hold numbers there.
+public sealed record WindowPlacement(int? X, int? Y, double Width, double Height, bool IsMaximized);
 
 // The GUI's settings, as JSON in the user's application data folder. Settings that cannot be read
 // are ignored, and a failure to write them is not an error worth interrupting anyone for.

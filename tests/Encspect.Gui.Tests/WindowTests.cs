@@ -175,6 +175,87 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    // Wayland does not let a program place its windows: the saved position is not touched, whatever
+    // Position reads, and the size and maximized state come back.
+    [AvaloniaFact]
+    public void Where_windows_cannot_be_placed_the_saved_position_survives_and_size_and_state_return()
+    {
+        string settingsPath = _folder["settings/settings.json"];
+        var settings = Settings.Load(settingsPath);
+        settings.DetailWindow = new WindowPlacement(40, 50, 700, 500, true);
+        MainWindow main = OpenMain(settings);
+        main.DetailWindows.CanPlaceOverride = false;
+
+        DetailWindow window = main.DetailWindows.Open(main.Model.Rows[0]);
+        UiPump.Until(() => true);
+        Assert.Equal(700, window.Width);
+        Assert.Equal(500, window.Height);
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+        Assert.NotEqual(new PixelPoint(40, 50), window.Position);
+        window.Close();
+
+        Assert.Equal(40, Settings.Load(settingsPath).DetailWindow!.X);
+        Assert.Equal(50, Settings.Load(settingsPath).DetailWindow!.Y);
+        Assert.True(Settings.Load(settingsPath).DetailWindow!.IsMaximized);
+
+        // Resized in a later session, the position still stays.
+        DetailWindow again = main.DetailWindows.Open(main.Model.Rows[1]);
+        again.WindowState = WindowState.Normal;
+        again.Width = 640;
+        again.Height = 480;
+        UiPump.Until(() => true);
+        again.Close();
+        WindowPlacement saved = Settings.Load(settingsPath).DetailWindow!;
+        Assert.Equal((40, 50, false), (saved.X, saved.Y, saved.IsMaximized));
+        Assert.Equal(640, saved.Width);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void Where_windows_cannot_be_placed_a_first_session_saves_no_position()
+    {
+        string settingsPath = _folder["settings/settings.json"];
+        MainWindow main = OpenMain(Settings.Load(settingsPath));
+        main.DetailWindows.CanPlaceOverride = false;
+        main.DetailWindows.Open(main.Model.Rows[0]).Close();
+        main.Close();
+
+        WindowPlacement saved = Settings.Load(settingsPath).DetailWindow!;
+        Assert.Null(saved.X);
+        Assert.Null(saved.Y);
+
+        // A session that can place windows centers the window, as there is no position to restore.
+        MainWindow next = OpenMain(Settings.Load(settingsPath));
+        next.Position = new PixelPoint(300, 200);
+        UiPump.Until(() => true);
+        DetailWindow window = next.DetailWindows.Open(next.Model.Rows[0]);
+        UiPump.Until(() => true);
+        Assert.InRange(window.Position.X, 300, 300 + (int)(next.ClientSize.Width * next.DesktopScaling));
+        next.Close();
+    }
+
+    [AvaloniaFact]
+    public void Where_windows_cannot_be_placed_new_windows_are_not_cascaded()
+    {
+        MainWindow main = OpenMain();
+        main.DetailWindows.CanPlaceOverride = false;
+        DetailWindow first = main.DetailWindows.OpenNew(main.Model.Rows[0]);
+        DetailWindow second = main.DetailWindows.OpenNew(main.Model.Rows[1]);
+        UiPump.Until(() => true);
+
+        Assert.Equal(first.Position, second.Position);
+        Assert.Equal(new PixelPoint(0, 0), second.Position);
+        main.Close();
+    }
+
+    [Fact]
+    public void An_old_settings_file_with_a_position_still_loads()
+    {
+        string path = _folder["old.json"];
+        File.WriteAllText(path, "{\"DetailWindow\":{\"X\":7,\"Y\":9,\"Width\":600,\"Height\":400,\"IsMaximized\":false}}");
+        Assert.Equal(new WindowPlacement(7, 9, 600, 400, false), Settings.Load(path).DetailWindow);
+    }
+
     [AvaloniaFact]
     public void The_context_menu_opens_the_selected_file_in_a_new_window()
     {

@@ -12,6 +12,10 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 
 - `tests/Encspect.Tests`: the core, host, parsers and CLI, on xUnit 2.
 - `tests/Encspect.Gui.Tests`: the GUI, on Avalonia's headless platform without a display. These run on xUnit v3, which the headless test support needs. Set `ENCSPECT_SCREENSHOTS` to a folder to have them save screenshots of both windows and of the graphs, in light and dark mode.
+- **GUI backends on Linux:** CI runs the published GUI's `--self-check` under a headless Weston (`weston --backend=headless --renderer=pixman --socket=...`) and under `xvfb-run`, and checks the `Windowing backend:` line. It covers X11 as the default with both displays present, Wayland only with `ENCSPECT_GUI_BACKEND=wayland`, a compositor alone not starting Wayland, and a forced backend without its display exiting with code 1.
+  - Locally: `apt-get install weston xvfb`, publish the GUI for your RID, then run the step from `.github/workflows/ci.yml`.
+  - The step does not run as written: replace `${{ matrix.rid }}` with the RID (`linux-x64`) and export `RUNNER_TEMP` as a short absolute path such as `/tmp/ci`, created beforehand. Unset, `RUNNER_TEMP` makes the socket directory `/runtime`; a long one exceeds the 108-byte limit of a Unix socket path.
+  - Mesa prints EGL warnings there, since the container has no GPU; they do not fail the check.
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 - **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`.
 
