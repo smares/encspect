@@ -1,0 +1,146 @@
+{
+ "length": 32554,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 10604,
+   "index": 0,
+   "samples": 11025,
+   "flags": "34dc1edb",
+   "version": "410",
+   "total": 24000,
+   "crc": "d35eab32",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     7,
+     12
+    ],
+    [
+     46,
+     139,
+     10550
+    ],
+    [
+     10600,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 10604,
+   "length": 11912,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "34dc1edb",
+   "version": "410",
+   "total": 24000,
+   "crc": "c0f5f532",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     10636,
+     7,
+     12
+    ],
+    [
+     10650,
+     139,
+     11858
+    ],
+    [
+     22512,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 22516,
+   "length": 10038,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "34b41edb",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     22548,
+     7,
+     8
+    ],
+    [
+     22558,
+     139,
+     9988
+    ],
+    [
+     32550,
+     47,
+     2
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack correction data",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 32,
+   "average_bitrate": 478.5438,
+   "hybrid": true,
+   "correction": true,
+   "lossless": false,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 32554
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-b8",
+   "-c"
+  ],
+  "input": {
+   "kind": "float",
+   "rate": 44100,
+   "channels": 2,
+   "samples": 24000
+  },
+  "file": "correction file written next to external-hybrid-float-b8-correction.wv"
+ },
+ "findings": [
+  {
+   "code": "wavpack.correction-file",
+   "contains": "correction data only"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

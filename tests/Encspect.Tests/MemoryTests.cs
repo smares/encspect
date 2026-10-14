@@ -394,6 +394,69 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
+    // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
+    // built in blocks of 1,024 when read. The bounds are about twice what linux-x64 measures and below
+    // what keeping a block's sub-blocks or nodes would cost.
+    [Fact]
+    public void ManyWavPackBlocksStayCompact()
+    {
+        const int blocks = 100_000;
+
+        (Report report, long kept, long peak) = Measure("blocks.wv", WavPackTinyBlocks(blocks), WavPackTinyBlocks(100));
+
+        Assert.Equal(blocks * 128L, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / blocks} bytes kept and {peak / blocks} bytes peak per block");
+        Assert.True(kept < blocks * WavPackKeptBound, $"The report keeps {kept / blocks} bytes per block.");
+        Assert.True(peak < blocks * WavPackPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
+        GC.KeepAlive(report);
+    }
+
+    // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
+    [Fact]
+    public void ManyWavPackSubBlocksAreBounded()
+    {
+        byte[] block = WavPackTinyBlocks(1);
+        byte[] data = WavPackBuilder.Join(block, WavPackBuilder.Parts(block).Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 500_000)).Concat(WavPackBuilder.Parts(block).Skip(1)));
+        Bounded("subblocks.wv", data, 60_000_000, "wavpack.version-unsupported", expectFinding: false);
+    }
+
+    // Blocks of 32 bytes that hold nothing, in a file of 64 MB.
+    [Fact]
+    public void ManyEmptyWavPackBlocksAreBounded()
+    {
+        byte[] header = WavPackBuilder.Join(WavPackTinyBlocks(1), []);
+        Assert.Equal(32, header.Length);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(20), 0);
+        byte[] data = [.. Enumerable.Repeat(header, 2_000_000).SelectMany(b => b)];
+        Bounded("empty.wv", data, 100_000_000, "wavpack.no-audio");
+    }
+
+    private const long WavPackKeptBound = 240;
+
+    private const long WavPackPeakBound = 260;
+
+    // Blocks of mono 16-bit audio at 44.1 kHz, 128 samples each, in one set apiece: a header, a
+    // bitstream of 4 bytes and a checksum.
+    private static byte[] WavPackTinyBlocks(int count)
+    {
+        byte[] header = new byte[32];
+        "wvpk"u8.CopyTo(header);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(8), 0x410);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(20), 128);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(24), 1 | 4 | 0x800 | 0x1000 | (9u << 23) | 0x10000000);
+        byte[][] parts = [WavPackBuilder.Sub(0x0A, new byte[4]), WavPackBuilder.Sub(0x2F, new byte[4])];
+        var data = new List<byte>(count * 44);
+        for (int i = 0; i < count; i++)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(12), (uint)(count * 128L));
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(16), (uint)(i * 128L));
+            data.AddRange(WavPackBuilder.Join(header, parts));
+        }
+
+        return [.. data];
+    }
+
     // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
     // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
     // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak

@@ -27,6 +27,7 @@ import lame_win_tool
 import mctoolamed_tool
 import musepack_tool
 import old_lame_tool
+import wavpack_tool
 import xing_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -61,6 +62,7 @@ def sources():
     for archive, digest in aotuv_tool.WINDOWS.values():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
+    yield from wavpack_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
     yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES
 

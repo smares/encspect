@@ -160,6 +160,11 @@ jobs:
           python3 scripts/fixtures/make_musepack_fixtures.py
           python3 scripts/fixtures/make_external_musepack_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built WavPack fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_wavpack_fixtures.py
+          python3 scripts/fixtures/make_external_wavpack_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -305,6 +310,22 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_musepack_fixtures.py
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
+  wavpack-crosscheck:
+    name: WavPack fixtures agree with libwavpack, wvunpack, ffprobe and MediaInfo
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      # wavpack 5.6.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
+      # checked with; libwavpack's block reader is built from the pinned 5.6.0 source with the runner's gcc.
+      - name: Install wavpack, ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wavpack ffmpeg mediainfo build-essential
+
+      - name: Cross-check the WavPack fixtures
+        run: python3 scripts/fixtures/crosscheck_wavpack_fixtures.py
 
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg

@@ -9,6 +9,7 @@ using Encspect.Formats.Ogg;
 using Encspect.Formats.Opus;
 using Encspect.Formats.Speex;
 using Encspect.Formats.Vorbis;
+using Encspect.Formats.WavPack;
 using Encspect.Formats.Wma;
 using Encspect.Tags.Ape;
 using Encspect.Tags.Id3;
@@ -47,8 +48,10 @@ public static class DefaultParsers
     // magic number (100); a stream of version 4 to 6 has none and takes 60. An AC-3 chain at the
     // start of the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its
     // 0x0B; one further in (50) ranks below them all. ASF is certain of the GUID of its Header
-    // Object at the start (100).
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser()];
+    // Object at the start (100). WavPack is certain of a block header that passes libwavpack's checks
+    // and is followed by another one at the start of the data (100), and takes a chain of them
+    // further in (60), below MPEG audio.
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
     // Speex, Vorbis and Opus in Ogg, AC-3 and E-AC-3 in MP4, Windows Media Audio in ASF.

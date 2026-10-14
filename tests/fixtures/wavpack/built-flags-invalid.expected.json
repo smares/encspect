@@ -1,0 +1,157 @@
+{
+ "length": 22848,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 6314,
+   "index": 0,
+   "samples": 12000,
+   "flags": "54bc1805",
+   "version": "410",
+   "total": 24000,
+   "crc": "0cdadd3e",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     67,
+     6
+    ],
+    [
+     100,
+     4,
+     4
+    ],
+    [
+     106,
+     5,
+     6
+    ],
+    [
+     114,
+     101,
+     4
+    ],
+    [
+     120,
+     42,
+     0
+    ],
+    [
+     122,
+     138,
+     6182
+    ],
+    [
+     6308,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 6314,
+   "length": 16534,
+   "index": 12000,
+   "samples": 12000,
+   "flags": "14bc1805",
+   "version": "410",
+   "total": 24000,
+   "crc": "b8fb7623",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6346,
+     66,
+     6
+    ],
+    [
+     6354,
+     67,
+     6
+    ],
+    [
+     6362,
+     4,
+     4
+    ],
+    [
+     6368,
+     5,
+     6
+    ],
+    [
+     6376,
+     42,
+     0
+    ],
+    [
+     6378,
+     138,
+     16460
+    ],
+    [
+     22842,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 335.18940000000003,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 22848
+  }
+ ],
+ "description": "The mono flag and the false stereo flag both set in the first block of a mono file.",
+ "findings": [
+  {
+   "code": "wavpack.flags-invalid",
+   "contains": "both set"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

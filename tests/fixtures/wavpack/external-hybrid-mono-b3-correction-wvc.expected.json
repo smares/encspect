@@ -1,0 +1,236 @@
+{
+ "length": 14546,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 2470,
+   "index": 0,
+   "samples": 10500,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "893ac0be",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     7,
+     6
+    ],
+    [
+     40,
+     139,
+     2422
+    ],
+    [
+     2466,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 2470,
+   "length": 374,
+   "index": 10500,
+   "samples": 3673,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "df81c6ee",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     2502,
+     7,
+     6
+    ],
+    [
+     2510,
+     139,
+     326
+    ],
+    [
+     2840,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 2844,
+   "length": 444,
+   "index": 14173,
+   "samples": 1864,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "40f00450",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     2876,
+     7,
+     6
+    ],
+    [
+     2884,
+     139,
+     396
+    ],
+    [
+     3284,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 3288,
+   "length": 922,
+   "index": 16037,
+   "samples": 753,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "a1f9386e",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     3320,
+     7,
+     6
+    ],
+    [
+     3328,
+     139,
+     874
+    ],
+    [
+     4206,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 4210,
+   "length": 2036,
+   "index": 16790,
+   "samples": 1385,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "60e788bf",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     4242,
+     7,
+     6
+    ],
+    [
+     4250,
+     139,
+     1988
+    ],
+    [
+     6242,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 6246,
+   "length": 8300,
+   "index": 18175,
+   "samples": 5825,
+   "flags": "34bc1a4d",
+   "version": "410",
+   "total": 24000,
+   "crc": "32a146ec",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6278,
+     7,
+     4
+    ],
+    [
+     6284,
+     139,
+     8254
+    ],
+    [
+     14542,
+     47,
+     2
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack correction data",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 213.8262,
+   "hybrid": true,
+   "correction": true,
+   "lossless": false,
+   "sets": 6,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 14546
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-b3",
+   "-c"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 1,
+   "bits": 16,
+   "samples": 24000
+  },
+  "file": "correction file written next to external-hybrid-mono-b3-correction.wv"
+ },
+ "findings": [
+  {
+   "code": "wavpack.correction-file",
+   "contains": "correction data only"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

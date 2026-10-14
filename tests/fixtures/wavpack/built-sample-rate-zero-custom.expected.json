@@ -1,0 +1,117 @@
+{
+ "length": 30568,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 30568,
+   "index": 0,
+   "samples": 12000,
+   "flags": "17bc1831",
+   "version": "410",
+   "total": 12000,
+   "crc": "b8045ae9",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     103,
+     4
+    ],
+    [
+     134,
+     101,
+     4
+    ],
+    [
+     140,
+     42,
+     0
+    ],
+    [
+     142,
+     138,
+     30416
+    ],
+    [
+     30562,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 12000,
+   "duration": 0.272108843537415,
+   "bits_per_sample": 16,
+   "average_bitrate": 897.3468,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 1,
+   "declared": 12000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 30568
+  }
+ ],
+ "description": "The sample rate sub-block of a file of 12,345 Hz set to 0, so the flags' index 15 leaves libwavpack the 44100 Hz it takes then.",
+ "findings": [
+  {
+   "code": "wavpack.sample-rate-zero",
+   "contains": "gives 0 Hz"
+  },
+  {
+   "code": "wavpack.sample-rate-missing",
+   "contains": "44100 Hz"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

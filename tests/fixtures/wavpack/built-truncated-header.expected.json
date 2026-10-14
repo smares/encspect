@@ -1,0 +1,167 @@
+{
+ "length": 24602,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 13498,
+   "index": 0,
+   "samples": 11025,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     101,
+     4
+    ],
+    [
+     134,
+     42,
+     0
+    ],
+    [
+     136,
+     138,
+     13352
+    ],
+    [
+     13492,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13498,
+   "length": 11094,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13530,
+     66,
+     6
+    ],
+    [
+     13538,
+     3,
+     10
+    ],
+    [
+     13550,
+     4,
+     8
+    ],
+    [
+     13560,
+     5,
+     12
+    ],
+    [
+     13574,
+     42,
+     0
+    ],
+    [
+     13576,
+     138,
+     11006
+    ],
+    [
+     24586,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [
+  [
+   24592,
+   10
+  ]
+ ],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 17512,
+   "duration": 0.39709750566893426,
+   "bits_per_sample": 16,
+   "average_bitrate": 494.5082686158063,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 24602
+  }
+ ],
+ "description": "The file cut ten bytes into the third block's header.",
+ "findings": [
+  {
+   "code": "wavpack.block-truncated",
+   "contains": "inside the header"
+  },
+  {
+   "code": "wavpack.total-samples-mismatch",
+   "contains": "holds"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -1,0 +1,298 @@
+{
+ "length": 52016,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 6758,
+   "index": 0,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "3d7ba7a9",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     35,
+     92
+    ],
+    [
+     132,
+     101,
+     4
+    ],
+    [
+     138,
+     42,
+     2
+    ],
+    [
+     142,
+     206,
+     6606
+    ],
+    [
+     6752,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 6758,
+   "length": 6558,
+   "index": 8192,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "55866539",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6790,
+     42,
+     2
+    ],
+    [
+     6794,
+     142,
+     6512
+    ],
+    [
+     13310,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13316,
+   "length": 6410,
+   "index": 16384,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "04da595b",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13348,
+     42,
+     2
+    ],
+    [
+     13352,
+     206,
+     6364
+    ],
+    [
+     19720,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 19726,
+   "length": 6482,
+   "index": 24576,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "fadc0f63",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     19758,
+     42,
+     2
+    ],
+    [
+     19762,
+     206,
+     6436
+    ],
+    [
+     26202,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 26208,
+   "length": 6452,
+   "index": 32768,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "84ad07c3",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     26240,
+     42,
+     2
+    ],
+    [
+     26244,
+     142,
+     6406
+    ],
+    [
+     32654,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 32660,
+   "length": 6488,
+   "index": 40960,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "479dade0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32692,
+     42,
+     2
+    ],
+    [
+     32696,
+     142,
+     6442
+    ],
+    [
+     39142,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 39148,
+   "length": 6734,
+   "index": 49152,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "6f961c23",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     39180,
+     42,
+     2
+    ],
+    [
+     39184,
+     142,
+     6688
+    ],
+    [
+     45876,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 45882,
+   "length": 6134,
+   "index": 57344,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "eba031c0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     45914,
+     42,
+     2
+    ],
+    [
+     45918,
+     142,
+     6088
+    ],
+    [
+     52010,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 2822400,
+   "channels": 2,
+   "samples": 524288,
+   "duration": 0.18575963718820862,
+   "bits_per_sample": 1,
+   "average_bitrate": 2236.0939453125,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 8,
+   "declared": 65536
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 52016
+  }
+ ],
+ "description": "The DSD block of the first block with a mode of 2.",
+ "findings": [
+  {
+   "code": "wavpack.dsd-invalid",
+   "contains": "mode is 2"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}
