@@ -41,7 +41,8 @@ public class FaacSbrLayoutTests
         Assert.NotNull(encoder);
         Assert.Equal("FAAC", encoder.Value?.ToString());
         Assert.Equal("Medium", Child(encoder, "Confidence"));
-        Assert.Contains($"stop frequency {stopFrequency}, repeated every 30 access units", Child(encoder, "Evidence"));
+        string evidence = Child(encoder, "Evidence")!;
+        Assert.Contains($"bs_noise_bands 0 (one noise floor band) and stop frequency {stopFrequency}, none off FAAC's 30-access-unit header period", evidence);
     }
 
     [Fact]
@@ -49,7 +50,7 @@ public class FaacSbrLayoutTests
     {
         Node? encoder = Detect(Tally(Faac20));
         Assert.NotNull(encoder);
-        Assert.DoesNotContain("repeated", Child(encoder, "Evidence"));
+        Assert.DoesNotContain("period", Child(encoder, "Evidence"));
     }
 
     [Fact]
@@ -147,7 +148,11 @@ public class FaacSbrLayoutTests
     [Theory]
     [InlineData(0)]
     [InlineData(2)]
+    [InlineData(19)]
     public void TooFewPayloadsAreNotNamed(int payloads) => Assert.Null(Detect(Tally(Faac22, headers: payloads == 0 ? 0 : 1, payloads: payloads)));
+
+    [Fact]
+    public void TwentyPayloadsAreEnough() => Assert.NotNull(Detect(Tally(Faac22, headers: 1, payloads: 20)));
 
     [Fact]
     public void NoTallyNamesNothing() => Assert.Null(AacEncoder.Detect(null, [], Cover, (_, _, _) => { }));

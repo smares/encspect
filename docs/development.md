@@ -137,7 +137,7 @@ These are built or fetched by helper scripts:
 - Fraunhofer's MP3 Surround encoder: `fhg_tool.py`
 - fdk-aac: `fdk_tool.py`
 - exhale: `exhale_tool.py`
-- FAAC 1.31.1, 1.40, 1.50 and 2.0 to 2.2, each built from its tag's commit (autotools for 1.31.1, meson for the rest): `faac_tool.py`; `check_faac_sbr.py` sweeps FAAC 2.x and fdkaac for the SBR layout rule (about ten minutes, not in CI)
+- FAAC 1.31.1, 1.40, 1.50 and 2.0 to 2.2, each built from its tag's commit (autotools for 1.31.1, meson for the rest): `faac_tool.py`; `check_faac_sbr.py` sweeps FAAC 2.x (mono, stereo and 5.1) and fdkaac for the SBR layout rule (about ten minutes, not in CI)
 - aoTuV releases, plus Rarewares' aoTuV and Lancer builds under Wine: `aotuv_tool.py`
 - libdca 0.0.7 (the source of Ubuntu's libdca-utils, pinned by SHA-256; the cross-check builds against the package): `libdca_source.py`
 - libwavpack 5.6.0, for the block reader the cross-check builds: `wavpack_tool.py`
@@ -163,5 +163,8 @@ The models that compute the expected values are:
 - **xHE-AAC by other encoders:** `check_usac_samples.py` checks `tests/conformance/usac-samples.json` against 13 downloaded files: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite and one exhale file from it. The private repository holds copies as their fallback address.
   - Without `--analyzer`, a UsacConfig reader of its own reads each file's elements and configuration extensions from the DecoderSpecificInfo that MP4Box lists.
   - With `--analyzer`, the analyzer must show the same and name the encoder the manifest lists, so the exhale layout rule is held against files it must not match.
+- **HE-AAC by other encoders:** `check_sbr_samples.py` checks `tests/conformance/sbr-samples.json` against 13 downloaded files from FFmpeg's FATE suite: the MPEG-4 audio SBR and parametric stereo conformance streams (`al_sbr_*`) and Coding Technologies' aacPlus decoder check streams (`CT_DecoderCheck/File1` to `File7`; the `sbr_*` files there are the same bytes). Their only address is the FATE server (`fate-suite.ffmpeg.org`); no copy is kept in the private repository yet.
+  - Without `--analyzer`, ffprobe's profile, sample rate and channels are compared with the manifest.
+  - With `--analyzer`, the analyzer must report the manifest's codec and findings and name no encoder, so the FAAC 2.x SBR layout rule is held against files it must not match.
 - **Vendored tools:** minimp3, mp3guessenc and EncSpot are built from the sources in `third_party` (see its README), so the checks do not depend on a download or a distribution's package version.
 - **Pinned downloads:** everything still downloaded is pinned by its SHA-256 and falls back to the Wayback Machine's copy where one exists (`downloads.py`). The weekly `sources` workflow checks every address (`check_sources.py`), and that FAAC's repositories still serve each release tag at its pinned commit.
