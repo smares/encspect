@@ -62,7 +62,7 @@ public sealed class WmaStandardParser : ICodecParser
         StandardStream stream = null!;
         StandardNodes nodes = null!;
         stream = new StandardStream(parameters, findings, i => nodes.SuperframeNode(i), i => nodes.FrameNode(i));
-        nodes = new StandardNodes(stream);
+        nodes = new StandardNodes(stream.Records);
 
         int index = 0;
         long unread = 0;

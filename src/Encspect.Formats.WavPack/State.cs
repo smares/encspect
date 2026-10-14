@@ -12,6 +12,19 @@ internal readonly record struct ConfigValue(uint Flags, int? ExtraLevel);
 
 internal readonly record struct NewConfigValue(int FileFormat, int QualityFlags, int LayoutTag, int LayoutChannels);
 
+// What nodes are built from once the analysis is over, and nothing else: the entries, the details of
+// the first blocks and the channel count the blocks' configuration is read with. The state, with
+// the source's caches and reader and the findings, is not reachable from a node builder, so a build
+// can neither consume nor keep it. Written only while parsing.
+internal sealed class Records
+{
+    public ChunkedList<Entry> Entries { get; } = new();
+
+    public List<Detail> Details { get; } = [];
+
+    public int? ChannelCount { get; set; }
+}
+
 // The state of one analysis: the entries (blocks and runs of bytes between them) in file order, the
 // details of the first blocks, and the figures worked out as the blocks are read.
 internal sealed class State(Source source, CancellationToken cancellation)
@@ -28,9 +41,11 @@ internal sealed class State(Source source, CancellationToken cancellation)
 
     public CancellationToken Cancellation { get; } = cancellation;
 
-    public ChunkedList<Entry> Entries { get; } = new();
+    public Records Records { get; } = new();
 
-    public List<Detail> Details { get; } = [];
+    public ChunkedList<Entry> Entries => Records.Entries;
+
+    public List<Detail> Details => Records.Details;
 
     public FindingCollector Findings { get; } = new();
 
@@ -92,7 +107,15 @@ internal sealed class State(Source source, CancellationToken cancellation)
 
     public int DsdPower { get; set; } = -1;
 
-    public Located<ChannelInfoValue>? ChannelInfo { get; set; }
+    public Located<ChannelInfoValue>? ChannelInfo
+    {
+        get;
+        set
+        {
+            field = value;
+            Records.ChannelCount = value?.Value.Channels;
+        }
+    }
 
     public Located<ConfigValue>? Config { get; set; }
 

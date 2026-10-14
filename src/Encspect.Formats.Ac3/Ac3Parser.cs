@@ -15,6 +15,9 @@ public sealed class Ac3Parser : IFormatParser
 
     public string Name => "AC-3";
 
+    // Set by a test to check that frame nodes read the bits the analysis kept (see FrameRecords).
+    internal Action<long, int, int>? RecordMismatch { get; init; }
+
     // A chain at the start of the data, after any zero bytes, outranks MPEG audio (90) and ADTS
     // (91), since a chain of AC-3 frames is no MPEG or ADTS chain: their sync words, 0xFFE and
     // 0xFFF, cannot start with 0x0B. One found further in ranks below MPEG audio and Ogg, so a stray
@@ -30,7 +33,7 @@ public sealed class Ac3Parser : IFormatParser
 
     public void Parse(ParseContext context)
     {
-        var analysis = new Ac3Analysis(context);
+        var analysis = new Ac3Analysis(context, RecordMismatch);
         var cache = new BlockCache(context.Reader);
         long position = context.Reader.Start;
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
@@ -117,8 +120,10 @@ public sealed class Ac3Parser : IFormatParser
 
     private static IReadOnlyList<Node> RegionChildren(Ac3Analysis analysis, Ac3Analysis.Region region)
     {
+        int first = region.First;
         int end = region.End ?? analysis.Frames.Count;
-        return new BlockedChildren(region.Leading, end - region.First, i => analysis.FrameNode(region.First + i));
+        FrameRecords records = analysis.Records;
+        return new BlockedChildren(region.Leading, end - first, i => records.FrameNode(first + i));
     }
 
     // The offset of the first sync word in [from, limit) that a chain of frames follows, or -1.

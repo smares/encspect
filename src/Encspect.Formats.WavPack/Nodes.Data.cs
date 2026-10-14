@@ -10,7 +10,7 @@ internal static partial class Nodes
 {
     private const int MaxListedItems = 64;
 
-    private static void DataChildren(State s, Entry e, Detail detail, SubBlock sb, ReadOnlySpan<byte> kept, long at, Node data)
+    private static void DataChildren(Records s, Entry e, Detail detail, SubBlock sb, ReadOnlySpan<byte> kept, long at, Node data)
     {
         BlockHeader h = e.Header;
         bool isMono = h.IsMonoData;
@@ -342,9 +342,9 @@ internal static partial class Nodes
         }
     }
 
-    private static void NewConfig(ReadOnlySpan<byte> kept, int length, BlockHeader h, State s, long at, Node data)
+    private static void NewConfig(ReadOnlySpan<byte> kept, int length, BlockHeader h, Records s, long at, Node data)
     {
-        int channels = s.ChannelInfo?.Value.Channels ?? (h.IsMono ? 1 : 2);
+        int channels = s.ChannelCount ?? (h.IsMono ? 1 : 2);
         if (Decode.NewConfig(kept, channels) is not { } config)
         {
             return;

@@ -71,6 +71,25 @@ internal sealed class StandardTotals
     public long FillerBits { get; set; }
 }
 
+// The records a stream's nodes are built from, and nothing else: the stream's parameters and the
+// lists the walk fills. The stream that wrote them also keeps the frame decoder and the bit
+// reservoir, which change with every superframe and which a node builder must never reach, since it
+// runs again after a collection and on several threads. Written only while the stream is walked.
+internal sealed class StandardRecords(StandardParameters parameters)
+{
+    public StandardParameters Parameters => parameters;
+
+    public ChunkedList<SuperframeRecord> Superframes { get; } = new();
+
+    public ChunkedList<FrameRecord> Frames { get; } = new();
+
+    public ChunkedList<BlockRecord> Blocks { get; } = new();
+
+    public ChunkedList<FramePart> Parts { get; } = new();
+
+    public Dictionary<int, ByteRange[]> Ranges { get; } = [];
+}
+
 // Walks a stream's superframes, decodes the syntax of every frame and keeps the records the nodes are
 // built from: the frames of a Windows Media Audio version 1 or 2 stream, which may start in one
 // superframe and end in the next (the bit reservoir), as FFmpeg's wma_decode_superframe reads them.
@@ -90,6 +109,7 @@ internal sealed class StandardStream
     public StandardStream(StandardParameters parameters, FindingCollector findings, Func<int, Node> superframeNode, Func<int, Node> frameNode)
     {
         Parameters = parameters;
+        Records = new StandardRecords(parameters);
         Findings = findings;
         SuperframeNode = superframeNode;
         FrameNode = frameNode;
@@ -98,21 +118,23 @@ internal sealed class StandardStream
 
     public StandardParameters Parameters { get; }
 
+    public StandardRecords Records { get; }
+
     public FindingCollector Findings { get; }
 
     public Func<int, Node> SuperframeNode { get; }
 
     public Func<int, Node> FrameNode { get; }
 
-    public ChunkedList<SuperframeRecord> Superframes { get; } = new();
+    public ChunkedList<SuperframeRecord> Superframes => Records.Superframes;
 
-    public ChunkedList<FrameRecord> Frames { get; } = new();
+    public ChunkedList<FrameRecord> Frames => Records.Frames;
 
-    public ChunkedList<BlockRecord> Blocks { get; } = new();
+    public ChunkedList<BlockRecord> Blocks => Records.Blocks;
 
-    public ChunkedList<FramePart> Parts { get; } = new();
+    public ChunkedList<FramePart> Parts => Records.Parts;
 
-    public Dictionary<int, ByteRange[]> Ranges { get; } = [];
+    public Dictionary<int, ByteRange[]> Ranges => Records.Ranges;
 
     public StandardTotals Totals { get; } = new();
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -122,19 +123,17 @@ public class Ac3FixtureTests
     public void FrameNodesCoverTheirFrames(string name)
     {
         var mismatches = new System.Collections.Concurrent.ConcurrentBag<string>();
-        Action<long, int, int> record = (offset, kept, read) => mismatches.Add($"{offset}: {kept} bits kept, {read} read");
-        Encspect.Formats.Ac3.FrameSyntax.RecordMismatch += record;
-        try
+        var parser = new Encspect.Formats.Ac3.Ac3Parser
         {
-            Report report = Fixtures.AnalyzeMpeg(name);
-            foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
-            {
-                CheckChildren(frame, frame.Offset);
-            }
-        }
-        finally
+            RecordMismatch = (offset, kept, read) => mismatches.Add($"{offset}: {kept} bits kept, {read} read"),
+        };
+        IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(f => f is Encspect.Formats.Ac3.Ac3Parser ? parser : f);
+        var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs);
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = analyzer.Analyze(Path.GetFileName(name), stream);
+        foreach (Node frame in report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)))
         {
-            Encspect.Formats.Ac3.FrameSyntax.RecordMismatch -= record;
+            CheckChildren(frame, frame.Offset);
         }
 
         Assert.Empty(mismatches);

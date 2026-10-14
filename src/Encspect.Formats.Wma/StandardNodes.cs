@@ -6,21 +6,21 @@ namespace Encspect.Formats.Wma;
 // Builds the nodes of the superframes and frames from the stream's records, when they are read.
 internal sealed class StandardNodes
 {
-    private readonly StandardStream _stream;
+    private readonly StandardRecords _records;
     private readonly PartsMap _map;
 
-    public StandardNodes(StandardStream stream)
+    public StandardNodes(StandardRecords records)
     {
-        _stream = stream;
+        _records = records;
         _map = new PartsMap(Superframe);
     }
 
-    private StandardParameters P => _stream.Parameters;
+    private StandardParameters P => _records.Parameters;
 
     private MappedBytes Superframe(int index)
     {
-        SuperframeRecord record = _stream.Superframes[index];
-        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _stream.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
+        SuperframeRecord record = _records.Superframes[index];
+        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _records.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
         return PartsMap.Mapped(record.Length, ranges, record.Offset);
     }
 
@@ -28,8 +28,8 @@ internal sealed class StandardNodes
     // it and the start of the one that goes on.
     public Node SuperframeNode(int index)
     {
-        SuperframeRecord record = _stream.Superframes[index];
-        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _stream.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
+        SuperframeRecord record = _records.Superframes[index];
+        IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _records.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
         long end = ranges.Count > 0 ? ranges[^1].End : record.Offset + record.Length;
         string value = record.Has(SuperframeRecord.Skipped) ? "not read"
             : record.Has(SuperframeRecord.Continues) ? "middle of a frame"
@@ -45,7 +45,7 @@ internal sealed class StandardNodes
 
     private List<Node> SuperframeChildren(int index)
     {
-        SuperframeRecord record = _stream.Superframes[index];
+        SuperframeRecord record = _records.Superframes[index];
         var nodes = new List<Node>();
         FramePart[] whole = [new FramePart(index, 0, record.Length * 8)];
         Node Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
@@ -85,7 +85,7 @@ internal sealed class StandardNodes
         int first = record.FirstFrame + (record.Has(SuperframeRecord.Straddles) ? 1 : 0);
         for (int i = first; i < record.FirstFrame + record.FrameCount; i++)
         {
-            FrameRecord frame = _stream.Frames[i];
+            FrameRecord frame = _records.Frames[i];
             string value = frame.Status == 0 ? Count(frame.BlockCount, "block", "blocks") : "invalid";
             nodes.Add(Field(frame.StartBit, frame.EndBit, "Frame Data", value, Explain.FrameData, Topics.WmaSuperframes));
         }
@@ -115,7 +115,7 @@ internal sealed class StandardNodes
     // ranges of both.
     public Node FrameNode(int index)
     {
-        FrameRecord frame = _stream.Frames[index];
+        FrameRecord frame = _records.Frames[index];
         List<FramePart> parts = PartsOf(frame);
         (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, frame.StartBit, frame.EndBit);
         string value = frame.Status == 0
@@ -133,8 +133,8 @@ internal sealed class StandardNodes
     // The file offset of the first byte of a frame.
     public long FrameOffset(int index)
     {
-        FrameRecord frame = _stream.Frames[index];
-        SuperframeRecord record = _stream.Superframes[frame.Superframe];
+        FrameRecord frame = _records.Frames[index];
+        SuperframeRecord record = _records.Superframes[frame.Superframe];
         if (record.RangeIndex < 0 && frame.PartCount == 1)
         {
             return record.Offset + (frame.StartBit / 8);
@@ -148,7 +148,7 @@ internal sealed class StandardNodes
         var parts = new List<FramePart>(frame.PartCount);
         for (int i = 0; i < frame.PartCount; i++)
         {
-            parts.Add(_stream.Parts[frame.FirstPart + i]);
+            parts.Add(_records.Parts[frame.FirstPart + i]);
         }
 
         return parts;
@@ -156,11 +156,11 @@ internal sealed class StandardNodes
 
     private List<Node> FrameChildren(int index, List<FramePart> parts)
     {
-        FrameRecord frame = _stream.Frames[index];
+        FrameRecord frame = _records.Frames[index];
         var nodes = new List<Node>();
         for (int i = 0; i < frame.BlockCount; i++)
         {
-            nodes.Add(BlockNode(parts, _stream.Blocks[frame.FirstBlock + i], frame.Status != 0 && i == frame.BlockCount - 1));
+            nodes.Add(BlockNode(parts, _records.Blocks[frame.FirstBlock + i], frame.Status != 0 && i == frame.BlockCount - 1));
         }
 
         return nodes;
