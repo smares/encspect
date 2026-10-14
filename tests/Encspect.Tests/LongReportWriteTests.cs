@@ -4,7 +4,7 @@ namespace Encspect.Tests;
 
 // Long reports written on several threads while a thread forces collections (see ThreadSafetyTests). In
 // the collection that runs alone: a thread that forces collections stalls every other test of the
-// process, and CorruptTagFileTests allows each variant 10 seconds.
+// process, and the Corrupt*FileTests classes allow each variant 10 seconds.
 [Collection("Thread hammers")]
 public class LongReportWriteTests
 {
