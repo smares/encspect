@@ -161,7 +161,35 @@ internal static class Program
             return "a stream's node is not in the tree.";
         }
 
-        return OutsideParent(report.Root) ?? (report.Findings.Any(f => f.Node is null) ? "a finding has no node." : null);
+        return OutsideParent(report.Root) ?? (report.Findings.Any(f => f.Node is null) ? "a finding has no node." : null) ?? ChangesAfterCollection(report);
+    }
+
+    // The nodes of long lists are held weakly and built again after a collection: the report written
+    // before and after one must be the same.
+    private static string? ChangesAfterCollection(Report report)
+    {
+        try
+        {
+            string before = Written(report);
+            for (int i = 0; i < 2; i++)
+            {
+                GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+                GC.WaitForPendingFinalizers();
+            }
+
+            return Written(report) == before ? null : "the report written again after a collection differs.";
+        }
+        catch (Exception ex)
+        {
+            return $"writing the report failed: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}";
+        }
+    }
+
+    private static string Written(Report report)
+    {
+        using var stream = new MemoryStream();
+        ReportJsonWriter.Write([report], stream, ReportFilter.All, explain: true);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream.ToArray()));
     }
 
     private static string? OutsideParent(Node parent)

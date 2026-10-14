@@ -8,40 +8,61 @@ namespace Encspect.Tests;
 // parsers keep no per-call state; reports read on several threads at once build the same nodes.
 public class ParallelAnalysisTests
 {
-    private static List<string> AudioFixtures(Func<string, bool> include) =>
-        Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories)
-            .Where(include)
-            .Order(StringComparer.Ordinal)
-            .ToList();
-
+    // Analyses of the files of a directory on several threads write the same reports as one thread does,
+    // with their descriptions and topics.
     [Theory]
-    [InlineData("mpeg", 300)]
-    [InlineData("ac3", 30)]
-    [InlineData("dts", 30)]
-    public void ParallelAnalysisMatchesSequential(string kind, int least)
+    [MemberData(nameof(ThreadSafetyTests.FixtureDirectories), MemberType = typeof(ThreadSafetyTests))]
+    public void ParallelAnalysisMatchesSequential(string directory)
     {
-        List<string> files = AudioFixtures(p => kind == "mpeg"
-            ? Path.GetExtension(p) is ".mp1" or ".mp2" or ".mp3"
-            : Path.GetFileName(Path.GetDirectoryName(p)) == kind && Path.GetExtension(p) is ".ac3" or ".eac3" or ".dts" or ".mp4");
+        List<string> files = ThreadSafetyTests.FixturesIn(directory);
         var analyzer = Analyzer.CreateDefault();
-        Dictionary<string, string> sequential = files.ToDictionary(f => f, f => Fixtures.ToJson(analyzer.AnalyzeFile(f)));
+        Dictionary<string, string> sequential = files.ToDictionary(f => f, f => ReportRendering.All(analyzer.AnalyzeFile(f)));
 
         var parallel = new ConcurrentDictionary<string, string>();
-        Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount) }, f => parallel[f] = Fixtures.ToJson(analyzer.AnalyzeFile(f)));
+        Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount) },
+            f => parallel[f] = ReportRendering.All(analyzer.AnalyzeFile(f)));
 
-        Assert.True(files.Count > least, $"{files.Count} fixtures");
+        Assert.Equal(files.Count, parallel.Count);
         Assert.DoesNotContain(files, f => parallel[f] != sequential[f]);
     }
 
-    [Fact]
-    public void OneReportWrittenOnSeveralThreadsAtOnce()
+    // One report written on eight threads at once, by the JSON, text and CSV writers mixed, with collections
+    // going on in the background, writes what one thread writes. One fixture of each format and tag.
+    [Theory]
+    [InlineData("mpeg/external-blade-flags.mp3")]
+    [InlineData("layer2/ancillary-not-multichannel.mp2")]
+    [InlineData("tags/ape-131-collision.mp3")]
+    [InlineData("adts/stereo.aac")]
+    [InlineData("aac/ffmpeg-lc.m4a")]
+    [InlineData("aac/fdkaac-he-v2.m4a")]
+    [InlineData("aac/ffmpeg-fragmented.mp4")]
+    [InlineData("ogg/external-ffmpeg-libvorbis.ogg")]
+    [InlineData("ogg/external-ffmpeg-libopus.opus")]
+    [InlineData("ogg/external-speexenc-wb-vbr.spx")]
+    [InlineData("musepack/external-mpc2sv8.mpc")]
+    [InlineData("musepack/external-mpcenc-standard.mpc")]
+    [InlineData("wavpack/external-lossless-16-mono.wv")]
+    [InlineData("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma")]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma")]
+    [InlineData("asf/external-windows-wma92lossless-stereo-44k-16.wma")]
+    [InlineData("asf/external-windows-wmavoice-cbr-mono-16k-16.wma")]
+    [InlineData("ac3/external-ffmpeg-stereo-192k.ac3")]
+    [InlineData("ac3/external-ffmpeg-eac3-5.1-256k.eac3")]
+    [InlineData("ac3/external-ffmpeg-mp4-5.1-448k.mp4")]
+    [InlineData("dts/external-ffmpeg-stereo-44k-256k.dts")]
+    [InlineData("dts/external-ffmpeg-mp4-stereo-22k-192k.mp4")]
+    public void OneReportWrittenOnSeveralThreadsAtOnce(string fixture)
     {
-        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade-flags.mp3"));
-        string expected = Fixtures.ToJson(report);
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, fixture));
+        string[] expected = [.. Enumerable.Range(0, 3).Select(w => ReportRendering.Write(report, w))];
 
-        string[] written = Enumerable.Range(0, 8).AsParallel().WithDegreeOfParallelism(8).Select(_ => Fixtures.ToJson(report)).ToArray();
+        using var collector = new ReportRendering.Collector();
+        string[] written = [.. Enumerable.Range(0, 24).AsParallel().AsOrdered().WithDegreeOfParallelism(8).Select(i => ReportRendering.Write(report, i))];
 
-        Assert.All(written, json => Assert.Equal(expected, json));
+        for (int i = 0; i < written.Length; i++)
+        {
+            Assert.True(written[i] == expected[i % 3], $"{fixture}: writer {i % 3} on thread {i} wrote something else.");
+        }
     }
 
     // A node's children are held weakly and built again when read after a collection, or by a second thread that

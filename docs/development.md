@@ -17,7 +17,8 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - The step does not run as written: replace `${{ matrix.rid }}` with the RID (`linux-x64`) and export `RUNNER_TEMP` as a short absolute path such as `/tmp/ci`, created beforehand. Unset, `RUNNER_TEMP` makes the socket directory `/runtime`; a long one exceeds the 108-byte limit of a Unix socket path.
   - Mesa prints EGL warnings there, since the container has no GPU; they do not fail the check.
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
-- **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`.
+- **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`. Every input's report is also written, collected and written again, and the two must be equal.
+- **Thread safety:** a report builds the nodes of repeated parts when they are read, in blocks of 1,024, holds them weakly and may build them again; the same report may be read on several threads. `BlockedChildren` in `Core.Abstractions` is the one implementation of that list, and `BlockedChildrenTests` tests it alone (block switching, rebuilding after a collection, concurrent builds). No fixture has more than one block, so `LongInputs` builds one input per list implementation past 2,048 entries, and `ThreadSafetyTests` reads them with eight threads and a collector thread running. Further tests analyze every fixture directory on several threads, write every fixture again after a collection, and write one report of each format on several threads with the JSON, text and CSV writers mixed. Together they take about a minute on four cores.
 
 ## CI
 
