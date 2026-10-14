@@ -1,0 +1,8 @@
+{
+  "note": "Balanced by measured duration. The classes of a shard run in parallel, except the non-parallel 'Thread hammers' collection, which runs alone at the end of the shard that has it (rest). MemoryTests ride with the second corrupt shard, which has time to spare.",
+  "shards": [
+    {"name": "corrupt-a", "classes": ["CorruptMpegFileTests", "CorruptLameFileTests", "CorruptOggFileTests", "CorruptTagFileTests"]},
+    {"name": "corrupt-b", "classes": ["CorruptMp4FileTests", "CorruptAdtsFileTests", "CorruptLayerFileTests", "CorruptVbrFileTests", "CorruptDtsFileTests", "MemoryTests"]},
+    {"name": "rest", "classes": null}
+  ]
+}

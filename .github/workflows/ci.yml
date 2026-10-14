@@ -1,41 +1,117 @@
 name: CI
 
+# Pull requests run what the change needs, on four platforms; a push to main, the nightly schedule and a
+# manual run run everything, on six, and the nightly run (and a manual one) also the whole thread-safety
+# corpus and a long fuzz. See "CI" in docs/development.md.
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# A new push to a pull request replaces its running checks. Runs of main are never canceled: each commit
+# and each night keeps its result, which scripts/ci_report.py reads.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Avalonia's build tasks send usage data unless told not to.
 env:
+  # Avalonia's build tasks send usage data unless told not to.
   AVALONIA_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  # The thread-safety tests read the whole corpus, every long input and all three writers only here.
+  ENCSPECT_FULL_THREAD_TESTS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '' }}
+  # Where scripts/fixtures/downloads.py keeps the files it fetched (restored by the jobs that download).
+  ENCSPECT_DOWNLOAD_CACHE: ${{ github.workspace }}/.cache/downloads
 
 jobs:
+  # Decides, from the files a pull request changes, which jobs it needs (scripts/ci/changes.py). Every
+  # job's output is named like the job; the aggregate job accepts a skipped job only when its output is
+  # false. Anything but a pull request, and anything the script cannot place, runs everything.
+  changes:
+    name: what changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      reason: ${{ steps.decide.outputs.reason }}
+      build-matrix: ${{ steps.decide.outputs.build-matrix }}
+      test-matrix: ${{ steps.decide.outputs.test-matrix }}
+      build-test: ${{ steps.decide.outputs.build-test }}
+      unit-tests: ${{ steps.decide.outputs.unit-tests }}
+      shard-guard: ${{ steps.decide.outputs.shard-guard }}
+      fuzz: ${{ steps.decide.outputs.fuzz }}
+      format: ${{ steps.decide.outputs.format }}
+      fixtures: ${{ steps.decide.outputs.fixtures }}
+      mpeg-crosscheck: ${{ steps.decide.outputs.mpeg-crosscheck }}
+      mp4-crosscheck: ${{ steps.decide.outputs.mp4-crosscheck }}
+      ogg-crosscheck: ${{ steps.decide.outputs.ogg-crosscheck }}
+      musepack-crosscheck: ${{ steps.decide.outputs.musepack-crosscheck }}
+      wavpack-crosscheck: ${{ steps.decide.outputs.wavpack-crosscheck }}
+      asf-crosscheck: ${{ steps.decide.outputs.asf-crosscheck }}
+      ac3-crosscheck: ${{ steps.decide.outputs.ac3-crosscheck }}
+      dts-crosscheck: ${{ steps.decide.outputs.dts-crosscheck }}
+    steps:
+      # Two commits deep: on a pull request the checkout is the merge commit, and its first parent is the base.
+      # Only the scripts are needed in the working tree; the diff reads names, not contents.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          filter: blob:none
+          sparse-checkout: scripts
+
+      - name: Decide which jobs run
+        id: decide
+        run: python3 scripts/ci/changes.py
+
+  # The light check a documentation change still gets, and the tests of the scripts the pipeline runs.
+  docs:
+    name: documentation and pipeline scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            /docs/
+            /scripts/
+            /README.md
+            /CLAUDE.md
+          sparse-checkout-cone-mode: false
+
+      - name: Check the links and the indexes of the documentation
+        run: python3 scripts/ci/check_docs.py
+
+      - name: Test the change filter and the verdict
+        run: |
+          python3 scripts/ci/test_changes.py
+          python3 scripts/ci/test_check_results.py
+
   build-test:
     name: build and test (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.build-test == 'true'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: ubuntu-latest, rid: linux-x64 }
-          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
-          - { os: windows-latest, rid: win-x64 }
-          - { os: windows-11-arm, rid: win-arm64 }
-          - { os: macos-latest, rid: osx-arm64 }
-          - { os: macos-15-intel, rid: osx-x64 }
+        include: ${{ fromJSON(needs.changes.outputs.build-matrix) }}
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       - name: Restore
         run: dotnet restore
@@ -43,8 +119,24 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+      # The GUI tests; Encspect.Tests runs in the unit-tests job, in shards.
+      - name: Test the GUI
+        id: gui-tests
+        run: dotnet test tests/Encspect.Gui.Tests --no-build --configuration Release --logger "trx;LogFileName=gui.trx" --results-directory "${{ runner.temp }}/trx"
+
+      - name: Summarize the failed GUI tests
+        if: failure() && steps.gui-tests.outcome == 'failure'
+        shell: bash
+        run: bash scripts/ci/python.sh scripts/ci/summarize.py tests "${{ runner.temp }}/trx" --title "GUI tests on ${{ matrix.os }}" || true
+
+      - name: Keep the failed GUI test results
+        if: failure() && steps.gui-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-gui-${{ matrix.os }}
+          path: ${{ runner.temp }}/trx
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: CLI smoke test
         shell: bash
@@ -143,43 +235,151 @@ jobs:
           test "$status" = 1
           grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-x11.err"
 
-  fuzz:
-    name: fuzz smoke test
-    runs-on: ubuntu-latest
+  # Encspect.Tests in shards (scripts/ci/shards.json), each on every platform of the event, so a platform's
+  # tests take as long as its slowest shard. check_shards.py proves in shard-guard that the shards together
+  # run every test exactly once.
+  unit-tests:
+    name: unit tests (${{ matrix.os }}, ${{ matrix.shard }})
+    needs: changes
+    if: needs.changes.outputs.unit-tests == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.test-matrix) }}
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
-      # A new seed every run; the log prints it, and a failure saves the input as an artifact.
-      - name: Analyze mutated fixtures for five minutes
+      - name: Restore
+        run: dotnet restore tests/Encspect.Tests
+
+      - name: Build
+        run: dotnet build tests/Encspect.Tests --no-restore --configuration Release
+
+      - name: Test the ${{ matrix.shard }} shard
+        id: tests
         shell: bash
-        run: dotnet run --configuration Release --project tests/Encspect.Fuzz -- --seconds 300 --seed $(( (RANDOM << 15) | RANDOM )) --out fuzz-failures
+        env:
+          SHARD_FILTER: ${{ matrix.filter }}
+        run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
+
+      - name: Summarize the failed tests
+        if: failure() && steps.tests.outcome == 'failure'
+        shell: bash
+        run: bash scripts/ci/python.sh scripts/ci/summarize.py tests "${{ runner.temp }}/trx" --title "Unit tests, ${{ matrix.shard }} shard, ${{ matrix.os }}" || true
+
+      - name: Keep the failed test results
+        if: failure() && steps.tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.shard }}
+          path: ${{ runner.temp }}/trx
+          retention-days: 30
+          if-no-files-found: ignore
+
+  shard-guard:
+    name: the shards run every test once
+    needs: changes
+    if: needs.changes.outputs.shard-guard == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
+
+      - name: Build the tests
+        run: dotnet build tests/Encspect.Tests --configuration Release
+
+      # Lists the tests of each shard's filter and of none, and fails unless the shards partition them.
+      - name: Check the shards
+        run: python3 scripts/ci/check_shards.py
+
+  fuzz:
+    name: fuzz smoke test
+    needs: changes
+    if: needs.changes.outputs.fuzz == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
+
+      # A new seed every run; the log prints it, and a failure saves the input as an artifact. Five minutes on
+      # a pull request and on main, half an hour in the nightly run.
+      - name: Analyze mutated fixtures for ${{ github.event_name == 'schedule' && 'half an hour' || 'five minutes' }}
+        env:
+          CI_SUMMARY_FILES: fuzz-failures
+          FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 1800 || 300 }}
+        run: dotnet run --configuration Release --project tests/Encspect.Fuzz -- --seconds "$FUZZ_SECONDS" --seed $(( (RANDOM << 15) | RANDOM )) --out fuzz-failures
 
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: fuzz-failures
           path: fuzz-failures
+          retention-days: 30
 
   format:
     name: formatting
+    needs: changes
+    if: needs.changes.outputs.format == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       - name: Verify whitespace formatting
         run: dotnet format whitespace --folder --verify-no-changes
 
   fixtures:
     name: fixtures are reproducible
+    needs: changes
+    if: needs.changes.outputs.fixtures == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
 
@@ -248,8 +448,24 @@ jobs:
   mpeg-crosscheck:
     name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc, MediaInfo, the ISO streams and mp3PRO samples
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.mpeg-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # minimp3, mp3guessenc and EncSpot are built from third_party with the runner's C and C++ compilers.
       - name: Install ffmpeg, madplay and mpg123
@@ -290,6 +506,10 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -303,8 +523,36 @@ jobs:
   mp4-crosscheck:
     name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC and HE-AAC samples with the manifests
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.mp4-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
+
+      - name: Name the runner image
+        id: image
+        run: echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
+
+      # The faad2 build with the trace patches. Its key holds faad_trace_tool.py, which holds the pinned
+      # commit and the patches, and the runner image, whose compiler built it.
+      - name: Cache the traced faad2 build
+        uses: actions/cache@v4
+        with:
+          path: .cache/tools/faad2-trace
+          key: faad2-trace-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/faad_trace_tool.py') }}
 
       # ffmpeg 6.1, GPAC 2.2 and faad2 2.11 from Ubuntu 24.04, the versions the manifests were checked with.
       - name: Install ffmpeg, gpac and faad
@@ -345,6 +593,10 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -362,8 +614,24 @@ jobs:
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe, speexdec and MediaInfo
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.ogg-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       - name: Install ffmpeg, oggz-tools, vorbis-tools, speex and opus-tools
         run: |
@@ -376,8 +644,24 @@ jobs:
   musepack-crosscheck:
     name: Musepack fixtures agree with mpcdec, ffprobe, libmpcdec and MediaInfo
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.musepack-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
       # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
@@ -398,8 +682,24 @@ jobs:
   wavpack-crosscheck:
     name: WavPack fixtures agree with libwavpack, wvunpack, ffprobe and MediaInfo
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.wavpack-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # wavpack 5.6.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
       # checked with; libwavpack's block reader is built from the pinned 5.6.0 source with the runner's gcc.
@@ -414,8 +714,24 @@ jobs:
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.asf-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked
       # with. The tables of the WMA parser are generated from FFmpeg 6.1.1's source, pinned by its
@@ -434,8 +750,24 @@ jobs:
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg, liba52 and MediaInfo
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.ac3-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1 and liba52 0.7.4 from Ubuntu 24.04; a52_blocks.c is built against liba52.
       - name: Install ffmpeg and liba52
@@ -446,6 +778,10 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       # The skip field insertion check rewrites E-AC-3 frames at the analyzer's block positions.
       - name: Build the CLI
@@ -457,8 +793,24 @@ jobs:
   dts-crosscheck:
     name: DTS fixtures agree with ffprobe, ffmpeg, libdca and MediaInfo
     runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.dts-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
     steps:
       - uses: actions/checkout@v5
+
+      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
+      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
+      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1, libdca 0.0.7 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
       # checked with; dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
@@ -471,14 +823,19 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
 
   # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
-  # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled, and
-  # only success passes: a skipped job counts as a failure, since none of the jobs above is conditional.
+  # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled. Only
+  # success passes, and a job may be skipped only when the changes job decided it is not needed
+  # (scripts/ci/check_results.py): a skip any other way, such as behind a failed dependency, fails.
   # A matrix job reports one result for all its legs, which is not success if any leg failed.
   all-checks:
     name: all checks passed
     if: always()
     needs:
+      - changes
+      - docs
       - build-test
+      - unit-tests
+      - shard-guard
       - fuzz
       - format
       - fixtures
@@ -492,12 +849,11 @@ jobs:
       - dts-crosscheck
     runs-on: ubuntu-24.04
     steps:
-      - name: Require every job to succeed
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/ci
+
+      - name: Require every job to succeed or to be skipped on purpose
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: |
-          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          if echo "$NEEDS" | jq -e 'all(.[]; .result == "success") | not' > /dev/null; then
-            echo "::error::A job did not succeed."
-            exit 1
-          fi
+        run: python3 scripts/ci/check_results.py
