@@ -64,7 +64,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Not covered
 
-- The coded samples: no entropy decoding, no decorrelation, no DSD decoding. A file whose bitstream is damaged but whose blocks are intact shows no finding unless the checksums or the MD5 are checked by a decoder.
-- The MD5 checksum is shown, not verified, since that needs the decoded samples.
-- The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks).
-- Finding the `.wvc` that belongs to a `.wv`.
+- The coded samples (planned: entropy pass, and phase 3's checksum-verifying decoders): no entropy decoding, no decorrelation, no DSD decoding. A file whose bitstream is damaged but whose blocks are intact shows no finding unless the checksums or the MD5 are checked by a decoder.
+- The MD5 checksum is shown, not verified, since that needs the decoded samples (planned in phase 3).
+- The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
+- Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).

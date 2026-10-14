@@ -438,13 +438,52 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | 1 (v1) | MP1/2/3 and tags: all tags, side info, Xing, LAME, VBRI, reference tests |
 | Gate 1 (passed) | Pipeline green everywhere, review findings fixed, abstractions settled |
 | 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV4 to SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core; WavPack, whose hybrid mode is lossy (a lossy .wv file and an optional .wvc correction file), with its lossless mode in the same parser |
+| 2 (lossy), continued | The steps listed under "Phase 2, continued" below, in that order |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
-| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA |
+| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD at header level (raw `.thd`, MP4 mlpa, Matroska), including whether an Atmos layer is present; lossless decoders that verify the stored checksums (WavPack MD5 and DSD, FLAC, ALAC, Monkey's Audio, TTA, WMA Lossless) |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
 | 4 | TAK and OptimFROG at header level only |
-| Later, order not fixed | MP3 scalefactor and Huffman analysis; decoders for waveform and spectrogram, format by format |
+| Later, order not fixed | The items listed under "Later" below |
 
-A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The deeper MP3 pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views. HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the AAC parser reads each raw data block's Huffman-coded data far enough to reach it, without dequantizing or transforming; the same pass gives AAC's coding statistics (window sequences, mid/side and intensity stereo, TNS, noise substitution). For MP3, that depth stays a later phase. Phase 2 began with the Ogg container and Speex (October 2026, see "Phase 2: Ogg, Speex, Vorbis and Opus"); Vorbis and Opus followed on the same container, as codec parsers without changes to it. Musepack SV7 and SV8 followed (see "Phase 2: Musepack"). AC-3 and E-AC-3 followed (see "Phase 2: AC-3 and E-AC-3"), then ASF with WMA (see "Phase 2: ASF and WMA"), WavPack (see "Phase 2: WavPack") and DTS (see "Phase 2: DTS"), which completes the formats of phase 2: the lossless formats of phase 3 come next.
+**Phase 2, continued.** In this order:
+
+1. FAAC 1.31 to 2.2 detection.
+   - FAAC 1.31.1, 1.40 and 1.50 still write the "libfaac <version>" fill element; fixtures confirm only 1.30 today.
+   - FAAC 2.0 removed it (upstream commit 960a0ea, "bitstream: stop embedding the libfaac version string"), so 2.x is named only by the MP4 ©too claim, plus an HE-AAC SBR layout tested as medium-confidence evidence, like exhale's.
+2. Apple's AAC encoder fixtures from macOS runners (afconvert and AudioToolbox).
+   - They cover AAC-LC, HE-AAC, HE-AAC v2, bitrate modes, M4A, ADTS and CAF, and confirm what Apple writes (iTunSMPB, Encoding Params) so it can be named.
+   - ALAC files are encoded at the same time for phase 3.
+3. Dolby Atmos detection in E-AC-3, from the dec3 box's extension fields and the EMDF and JOC data in the frames (ETSI TS 102 366, ETSI TS 103 420).
+4. DTS-HD.
+   - XLL channel set headers: the lossless layer's bit depth, rate and layout.
+   - `.dtshd` files: DTSHDHDR chunks, after FFmpeg's demuxer, with the build version chunk as encoder evidence.
+   - DTS:X detection from checkable sources only.
+5. WMA Voice frames: a lossy speech codec, read like Speex, from FFmpeg's wmavoice.c.
+6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only.
+7. DRM and protection reporting.
+   - A typed per-stream protection field, shown in the CLI summary and the GUI.
+   - ASF's three protection objects.
+   - MP4's schm, tenc, pssh (system IDs named from the DASH-IF registry), senc, FairPlay and Audible entries.
+   - iTunes purchaser items as metadata, not DRM.
+   - Decrypting stays out of scope.
+
+**Later.** The order is not fixed:
+
+- An entropy pass, format by format, MP3 first:
+  - MP3 Layer III scalefactors and Huffman spectral data, and MP2 samples.
+  - DTS core subframes and the core's optional information (DTS coding statistics).
+  - E-AC-3 adaptive hybrid transform, enhanced coupling and reduced-rate audio blocks.
+  - Musepack SV8 frames inside packets.
+  - Vorbis floors and residues, Opus SILK and CELT.
+  - AAC USAC, ER AAC and SBR envelope data.
+- Decoders for waveform and spectrogram, format by format.
+- Small separate items:
+  - WMA Pro frames without the length prefix.
+  - WavPack 1 to 3.
+  - Finding the `.wvc` that belongs to a `.wv` (host access to a companion file).
+  - ASF script command and marker contents.
+
+A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The entropy pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views. HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the AAC parser reads each raw data block's Huffman-coded data far enough to reach it, without dequantizing or transforming; the same pass gives AAC's coding statistics (window sequences, mid/side and intensity stereo, TNS, noise substitution). For the other codecs, and for MP3 first, that depth stays the later entropy pass. Phase 2 began with the Ogg container and Speex (October 2026, see "Phase 2: Ogg, Speex, Vorbis and Opus"); Vorbis and Opus followed on the same container, as codec parsers without changes to it. Musepack SV7 and SV8 followed (see "Phase 2: Musepack"). AC-3 and E-AC-3 followed (see "Phase 2: AC-3 and E-AC-3"), then ASF with WMA (see "Phase 2: ASF and WMA"), WavPack (see "Phase 2: WavPack") and DTS core (see "Phase 2: DTS"). Phase 2 then continues in the order listed under "Phase 2, continued" (FAAC and Apple detection, Dolby Atmos, DTS-HD, WMA Voice, Matroska and WebM, protection reporting) before Gate 2; the lossless formats of phase 3 come after it.
 
 ## CLI and GUI
 

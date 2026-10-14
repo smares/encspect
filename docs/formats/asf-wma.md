@@ -96,6 +96,7 @@ The Encoder node of a stream lists its evidence, each at its bytes, and names th
 
 ## Not yet covered
 
-- The frames of WMA Lossless, and everything inside WMA Voice.
-- Professional frames without the length prefix, and the audio of any codec (no decoder is built).
-- Decrypting protected content, and the contents of script commands and markers beyond their fields.
+- The frames of WMA Lossless (planned in phase 3, with the checksum-verifying decoders), and everything inside WMA Voice (planned: phase 2, read like Speex).
+- Professional frames without the length prefix (planned: later, a separate item), and the audio of any codec (no decoder is built).
+- Decrypting protected content (out of scope); the protection objects are planned for phase 2's protection reporting.
+- The contents of script commands and markers beyond their fields (planned: later, a separate item).
