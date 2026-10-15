@@ -28,8 +28,7 @@ internal enum Issue : byte
     PayloadShort,
     JocReserved,
     ObjectAudioIncomplete,
-    ExtensionWithoutJoc,
-    JocWithoutExtension,
+    EmdfLimit,
 }
 
 // Reads one syncframe field by field: the syncinfo and bit stream information of AC-3 (ATSC
@@ -287,21 +286,15 @@ internal sealed partial class FrameSyntax
             if (dataEnd <= auxStart)
             {
                 _t?.Open(blocksRead ? "Auxiliary Data" : "Unread Data", dataEnd, blocksRead ? Explain.AuxiliaryBits : Explain.UnreadData, Topics.FramesAndBsi);
-                // The bits after the last audio block hold the auxiliary data field, the last auxdatal
-                // bits before auxdatal (5.4.4), and what an encoder leaves before it; MediaInfo searches
-                // them all for a container too.
-                if (blocksRead)
-                {
-                    EmdfRegion(dataEnd, auxStart);
-                }
+                // The bits after the last audio block read hold the auxiliary data field, the last
+                // auxdatal bits before auxdatal (5.4.4), and what an encoder leaves before it; where
+                // the blocks were not read to their end, the audio blocks' remaining bits too, with the
+                // skip fields they hold. MediaInfo searches the whole frame for a container as well.
+                EmdfRegion(dataEnd, auxStart);
 
                 _t?.Close(auxStart, NodeValue.Integer(auxStart - dataEnd, "bits"));
             }
 
-            if (blocksRead)
-            {
-                ObjectAudioSignaling();
-            }
 
             if (blocksRead)
             {
@@ -336,21 +329,6 @@ internal sealed partial class FrameSyntax
         catch (EndOfStreamException)
         {
             _t?.CloseAll(_b.Position);
-        }
-    }
-
-    // Whether the addbsi extension flag and the JOC payload agree (ETSI TS 103 420 8.3.1: the
-    // substream that holds the EMDF container sends the flag). Only a frame whose every audio block
-    // was read has been searched for payloads.
-    private void ObjectAudioSignaling()
-    {
-        if (_r.ExtensionFlag == 1 && !_r.HasJoc)
-        {
-            Report(Issue.ExtensionWithoutJoc, "HasExtensionTypeA", _extensionStart, _extensionEnd, string.Empty);
-        }
-        else if (_r.HasJoc && _r.ExtensionFlag != 1)
-        {
-            Report(Issue.JocWithoutExtension, "Payload", _jocStart, _jocEnd, string.Empty);
         }
     }
 
@@ -533,15 +511,18 @@ internal sealed partial class FrameSyntax
         int start = _b.Position;
         var text = _t is null ? null : new System.Text.StringBuilder(length * 3);
         // E-AC-3 streams with object audio send flag_ec3_extension_type_a and complexity_index_type_a
-        // in the first two bytes (ETSI TS 103 420 8.3), which ffmpeg's decoder reads the same way.
-        bool extension = _eac3 && length >= 2;
+        // as the two bytes of addbsi (ETSI TS 103 420 8.3.1). ffmpeg reads the flag from the first
+        // byte of any length and MediaInfo the two bytes of any length of two or more; an addbsi of
+        // two bytes for some other use cannot be told from the extension.
+        bool extension = _eac3 && length == 2;
         if (extension)
         {
             _t?.Open("Additional Info", start, Explain.Addbsi);
             int reserved = F("Reserved", 7, Explain.ExtensionReserved, v => NodeValue.Hex(v, 2));
+            ReservedIf(reserved != 0);
             _r.ExtensionFlag = F("HasExtensionTypeA", 1, Explain.ExtensionTypeA, BooleanValue, Topics.ObjectAudio);
-            _extensionStart = _lastStart;
-            _extensionEnd = _lastEnd;
+            _r.ExtensionStart = _lastStart;
+            _r.ExtensionEnd = _lastEnd;
             _r.ComplexityIndex = F("Complexity Index Type A", 8, Explain.ComplexityIndex, topic: Topics.ObjectAudio);
             text?.Append(((reserved << 1) | _r.ExtensionFlag).ToString("X2", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
                 .Append(_r.ComplexityIndex.ToString("X2", System.Globalization.CultureInfo.InvariantCulture));

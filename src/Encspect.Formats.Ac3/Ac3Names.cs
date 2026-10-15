@@ -283,11 +283,11 @@ internal static class Ac3Names
     // ETSI TS 102 366 Table H.2.3 for 1 to 7, ETSI TS 103 420 Table 55 for 11 and 14.
     public static string EmdfPayload(int id) => id switch
     {
-        1 => "programme loudness data",
-        2 => "programme information",
+        1 => "program loudness data",
+        2 => "program information",
         3 => "E-AC-3 substream structure",
         4 => "dynamic range compression data for portable devices",
-        5 => "programme language",
+        5 => "program language",
         6 => "external data",
         7 => "headphone rendering data",
         OamdId => "object audio metadata",

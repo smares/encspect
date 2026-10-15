@@ -12,6 +12,12 @@ before any independent one, frame exponent strategies and fewer blocks per frame
 the adaptive hybrid transform and enhanced coupling (read up to there), a reduced sample rate, and
 MP4 files whose dac3 disagrees with the frames and whose dec3 lists a dependent substream.
 
+The object audio fixtures (build_object_audio, with emdf_model.py) add E-AC-3 frames with the extension
+flag in addbsi and EMDF containers carrying OAMD and JOC payloads: joc-atmos in the layout of Dolby's
+own JOC test file, containers after the last block, in the auxiliary data and in skip fields, dec3
+boxes that match, lack, clear or misstate the extension, frames whose audio blocks are not read,
+random bytes that announce nothing, a flag and a payload that disagree, and damaged containers.
+
 Each <name>.expected.json manifest lists what the analyzer must report: the file's length and
 format, every frame and gap (offset and length), the streams with their codec, rate, channels,
 channel mode and layout, samples and whether the bitrate varies, fields by node path, exactly the
@@ -21,6 +27,7 @@ ffprobe, ffmpeg and liba52, with a reason for each check it skips.
 
 import json
 import pathlib
+import random
 import sys
 
 import ac3_model as m
@@ -312,78 +319,127 @@ def build():
 
 
 def build_object_audio():
-    """E-AC-3 with object audio (ETSI TS 103 420): EMDF containers in the auxiliary data and skip
-    fields, the addbsi extension and dec3's extension, and what breaks each."""
+    """E-AC-3 with object audio (ETSI TS 103 420): EMDF containers in skip fields, the unused bits
+    after the last block and the auxiliary data, the addbsi extension and dec3's extension, and what
+    breaks each. joc-atmos follows the layout of Dolby's own JOC test file (DD+ Online Delivery Kit
+    v1.4.1, AVSync_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4): a 5.1 frame whose block 2 holds the
+    container at the start of its skip field."""
     seven_one = [m.FL, m.FC, m.FR, m.SL, m.SR, m.LFE, m.BL, m.BR]
-    five_one_core = lambda: eac3(acmod=7, lfeon=1, words=400, bsmod=0)
+    five_one_core = lambda **options: eac3(acmod=7, lfeon=1, words=400, bsmod=0, **options)
 
     def dependent(tail=None, addbsi=None, skips=None):
         return eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160, tail=tail, addbsi=addbsi, skips=skips)
 
-    def units(count, **options):
-        return (five_one_core() + dependent(**options)) * count
+    def atmos_frame():
+        return eac3(acmod=7, lfeon=1, words=1024, bsmod=0, addbsi=emdf.addbsi(16), skips={2: atmos})
 
-    # 7.1: a 5.1 core and a dependent substream with the rear surround pair, which carries the EMDF
-    # container with the object audio metadata and the JOC payload in its auxiliary data and sends
-    # the extension flag with complexity index 16 (TS 103 420 8.2: the last dependent substream).
-    container = emdf.object_audio(objects=15)
-    data = units(4, tail=container, addbsi=emdf.addbsi(16))
-    fixture("joc-atmos", ".eac3", "Four access units of a 5.1 substream and a dependent substream with the rear surround pair, whose frames hold an EMDF "
-            "container with an OAMD and a JOC payload for 15 objects in their auxiliary data and set the addbsi extension with complexity index 16.",
-            data, frames_of(data), [stream("E-AC-3", 48000, 7, 1, 4 * 1536, layout=seven_one, objects=15)], [],
+    # 5.1 as Dolby writes it: the container (OAMD with 16 objects of which one is the LFE channel, JOC
+    # with 15 objects and the 90 degree phase shifted downmix, protection of 32 and 8 bits) fills the
+    # skip field of block 2, and the frame's addbsi sets the extension with complexity index 16.
+    atmos = emdf.atmos_container()
+    data = atmos_frame() * 4
+    fixture("joc-atmos", ".eac3", "Four 5.1 frames laid out like Dolby's JOC test file: block 2 holds an EMDF container with an OAMD payload of 16 objects "
+            "(one of them the LFE channel) and a JOC payload of 15 objects in its skip field, and the addbsi sets the extension with complexity index 16.",
+            data, frames_of(data), [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15)], [],
             fields={"AC-3/Frame[1]/Bit Stream Information/Additional Info/HasExtensionTypeA": "true",
                     "AC-3/Frame[1]/Bit Stream Information/Additional Info/Complexity Index Type A": "16",
-                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Container Length": f"{len(container) - 4} bytes",
-                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Payload ID": "11 (object audio metadata)",
-                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
-                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
-                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Object Count": "15 objects",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field": f"{len(atmos)} bytes",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Container Length": f"{len(atmos) - 4} bytes",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[0]/Payload ID": "11 (object audio metadata)",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[0]/Object Count": "16 objects",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/Payload Size": "320 bytes",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Protection/Primary Protection Length": "2 (32 bits)",
+                    "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Protection/Secondary Protection Length": "1 (8 bits)",
                     "AC-3/Statistics/Frames With Object Audio": "4 frames",
-                    "AC-3/Statistics/Object Count": "15 objects"},
+                    "AC-3/Statistics/JOC Object Count": "15 objects"},
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False,
+                        "skip": {"skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})
+
+    # The same frames in MP4, with dec3 carrying the extension (TS 103 420 C.3.1).
+    unit = atmos_frame()
+    def mp4_of(name, description, box, findings, units_=4, unit_=unit, fields=None, objects=15, acmod=7, lfeon=1, channels=6):
+        samples = [unit_] * units_
+        entry = mp4.mp4a(2, 48000, mp4.box("dec3", box((len(unit_) * 8 * 48000 // 1536) // 1000)), format=b"ec-3")
+        track = mp4.Track(1, samples, 48000, channels, entry, durations=[1536] * units_)
+        data_, boxes, chunks = mp4.movie([track])
+        fixture(name, ".mp4", description, data_, sample_rows(track, chunks, split=True), [stream("E-AC-3", 48000, acmod, lfeon, units_ * 1536, objects=objects)],
+                findings, fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], fields=fields or {},
+                crosscheck={"ffprobe": True, "decode": True})
+
+    base = [(0, 16, 0, 0, 7, 1, 0, 0)]
+    mp4_of("joc-dec3", "The frames of joc-atmos in MP4 with a dec3 box that sets flag_ec3_extension_type_a and complexity index 16.",
+           lambda r: m.dec3(r, base, extension=(1, 16)), [],
+           fields={"MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/HasExtensionTypeA": "true",
+                   "MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "16"})
+    mp4_of("joc-dec3-absent", "The frames of joc-atmos in MP4 whose dec3 box ends after its substreams.",
+           lambda r: m.dec3(r, base), [("ac3.config-differs", "ends after its substreams")])
+    mp4_of("joc-dec3-clear", "The frames of joc-atmos in MP4 whose dec3 box clears flag_ec3_extension_type_a.",
+           lambda r: m.dec3(r, base, extension=(0, 0)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 0")])
+    mp4_of("joc-dec3-complexity", "The frames of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
+           lambda r: m.dec3(r, base, extension=(1, 12)), [("ac3.config-differs", "gives complexity_index_type_a 12")])
+    mp4_of("joc-dec3-unmatched", "Four 5.1 frames without object audio in MP4 whose dec3 box sets flag_ec3_extension_type_a and has reserved bits set.",
+           lambda r: m.dec3(r, base, extension=(1, 16, 0x55)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 1"), ("ac3.config-reserved", "Reserved bits")],
+           unit_=eac3(acmod=7, lfeon=1, words=1024, bsmod=0), objects=None)
+
+    # Frames whose audio blocks are not read (the adaptive hybrid transform) still carry the flag and the
+    # container, which sits in the bits after block 0, and dec3 agrees with them.
+    aht = eac3(acmod=2, ahte=1, aht_channel=1, words=300, addbsi=emdf.addbsi(4), tail=emdf.object_audio(objects=4, size=24))
+    mp4_of("joc-aht", "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, so their audio blocks are not read, with the extension flag "
+           "and a container for 4 objects after block 0, and a dec3 box that sets the extension with complexity index 4.",
+           lambda r: m.dec3(r, [(0, 16, 0, 0, 2, 0, 0, 0)], extension=(1, 4)), [("ac3.aht-not-read", "adaptive hybrid transform")], unit_=aht, objects=4, acmod=2,
+           lfeon=0, channels=2,
+           fields={"MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "4"})
+    fixtures_aht = FIXTURES["joc-aht.mp4"][1]
+    fixtures_aht["crosscheck"] = {"ffprobe": True, "decode": False,
+                                  "skip": {"decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."}}
+
+    # 7.1: a 5.1 core and a dependent substream with the rear surround pair; the container follows the
+    # dependent substream's last block, and only that substream sets the extension (TS 103 420 8.2).
+    container = emdf.object_audio(objects=15)
+    data = (five_one_core() + dependent(tail=container, addbsi=emdf.addbsi(16))) * 4
+    fixture("joc-after-blocks", ".eac3", "Four access units of a 5.1 substream and a dependent substream with the rear surround pair: the dependent frames hold "
+            "an EMDF container for 15 objects in the bits after their last block and set the addbsi extension.",
+            data, frames_of(data), [stream("E-AC-3", 48000, 7, 1, 4 * 1536, layout=seven_one, objects=15)], [],
+            fields={"AC-3/Frame[1]/Auxiliary Data/EMDF Container/Container Length": f"{len(container) - 4} bytes",
+                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
+                    "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Object Count": "15 objects"},
             crosscheck={"ffprobe": True, "ffprobe_channels": 8, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "ffmpeg decodes only substream 0, so a change to the dependent substream would not show."}})
 
-    # The same in MP4, with dec3 carrying the extension (TS 103 420 C.3.1).
-    unit = five_one_core() + dependent(tail=container, addbsi=emdf.addbsi(16))
-    rate = (len(unit) * 8 * 48000 // 1536) // 1000
+    # The core and the dependent substream both set the extension; one flag per access unit is enough.
+    data = (five_one_core(addbsi=emdf.addbsi(16)) + dependent(tail=container, addbsi=emdf.addbsi(16))) * 4
+    fixture("joc-flag-both", ".eac3", "Four access units whose 5.1 core and dependent frames both set the addbsi extension, with the container in the "
+            "dependent frames: no frame is judged alone.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, layout=seven_one, objects=15)], [],
+            crosscheck={"ffprobe": True, "ffprobe_channels": 8, "decode": True, "skip_insertion": False,
+                        "skip": {"skip_insertion": "ffmpeg decodes only substream 0, so a change to the dependent substream would not show."}})
 
-    def mp4_of(name, description, box, findings, units_=4, unit_=unit, fields=None, objects=15):
-        samples = [unit_] * units_
-        entry = mp4.mp4a(2, 48000, mp4.box("dec3", box), format=b"ec-3")
-        track = mp4.Track(1, samples, 48000, 8, entry, durations=[1536] * units_)
-        data_, boxes, chunks = mp4.movie([track])
-        fixture(name, ".mp4", description, data_, sample_rows(track, chunks, split=True), [stream("E-AC-3", 48000, 7, 1, units_ * 1536, layout=seven_one, objects=objects)],
-                findings, fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], fields=fields or {},
-                crosscheck={"ffprobe": True, "ffprobe_channels": 8, "decode": True})
-
-    base = [(0, 16, 0, 0, 7, 1, 1, 0x002)]
-    mp4_of("joc-dec3", "The access units of joc-atmos in MP4 with a dec3 box that sets flag_ec3_extension_type_a and complexity index 16.",
-           m.dec3(rate, base, extension=(1, 16)), [],
-           fields={"MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/HasExtensionTypeA": "true",
-                   "MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "16"})
-    mp4_of("joc-dec3-absent", "The access units of joc-atmos in MP4 whose dec3 box ends after its substreams.",
-           m.dec3(rate, base), [("ac3.config-differs", "ends after its substreams")])
-    mp4_of("joc-dec3-clear", "The access units of joc-atmos in MP4 whose dec3 box clears flag_ec3_extension_type_a.",
-           m.dec3(rate, base, extension=(0, 0)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 0")])
-    mp4_of("joc-dec3-complexity", "The access units of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
-           m.dec3(rate, base, extension=(1, 12)), [("ac3.config-differs", "gives complexity_index_type_a 12")])
-    plain = five_one_core() + dependent()
-    mp4_of("joc-dec3-unmatched", "Four access units without object audio in MP4 whose dec3 box sets flag_ec3_extension_type_a and has reserved bits set.",
-           m.dec3(rate, base, extension=(1, 16, 0x55)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 1"), ("ac3.config-reserved", "Reserved bits")],
-           unit_=plain, objects=None)
-
-    # The container in a block's skip field.
-    data = eac3(acmod=7, lfeon=1, words=400, bsmod=0, addbsi=emdf.addbsi(16), skips={0: container}) * 4
-    fixture("joc-skip-field", ".eac3", "Four 5.1 frames whose block 0 holds the EMDF container of joc-atmos in its skip field and whose addbsi sets "
-            "the extension.", data, frames_of(data), [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15)], [],
-            fields={"AC-3/Frame[1]/Audio Block[0]/Skip Field/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)"},
+    # Random bytes in the unused bits and a skip field, some starting like a container, announce nothing.
+    rng = random.Random(20261015)
+    frames = []
+    for i in range(30):
+        tail = bytes(rng.randrange(256) for _ in range(90))
+        if i % 3 == 0:
+            tail = b"\x58\x38" + tail[2:]
+        skip = bytes(rng.randrange(256) for _ in range(40))
+        if i % 4 == 0:
+            skip = b"\x58\x38" + skip[2:]
+        frames.append(eac3(acmod=2, words=160, tail=tail, skips={0: skip}))
+    data = b"".join(frames)
+    fixture("emdf-noise", ".eac3", "30 seeded 2/0 frames with random bytes after the last block and in a skip field, a third and a quarter of them starting with "
+            "the EMDF sync word, and no extension flag: no container is found and nothing is reported.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, 30 * 1536)], [],
             crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})
+
+    container = emdf.object_audio(objects=15)
 
     # The container inside the auxiliary data field proper (auxdatae 1, auxdatal): MediaInfo 24.01 searches the
     # frame for a container but parses one only if it starts before that field.
     data = eac3(acmod=7, lfeon=1, words=400, bsmod=0, addbsi=emdf.addbsi(16), aux=container) * 4
-    fixture("joc-auxiliary-data", ".eac3", "Four 5.1 frames whose auxiliary data field (auxdatal, auxdatae 1) holds the EMDF container of joc-atmos "
+    fixture("joc-auxiliary-data", ".eac3", "Four 5.1 frames whose auxiliary data field (auxdatal, auxdatae 1) holds an EMDF container for 15 objects "
             "and whose addbsi sets the extension.", data, frames_of(data), [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15)], [],
             fields={"AC-3/Frame/Auxiliary Data/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
                     "AC-3/Frame/Auxiliary Data Length": f"{len(container) * 8} bits"},
@@ -410,8 +466,8 @@ def build_object_audio():
     data = eac3(acmod=2, words=300, addbsi=emdf.addbsi(16)) * 3 + eac3(acmod=2, words=300, tail=container) * 3
     fixture("joc-flag-mismatch", ".eac3", "Three 2/0 frames that set the addbsi extension without a container, then three with a container and no "
             "addbsi.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 6 * 1536, objects=15)],
-            [("ac3.extension-without-joc", "no EMDF container of the frame holds a joint object coding payload"),
-             ("ac3.joc-without-extension", "does not set flag_ec3_extension_type_a")],
+            [("ac3.extension-without-joc", "no EMDF container in the frames holds a joint object coding payload"),
+             ("ac3.joc-without-extension", "none of the frames sets flag_ec3_extension_type_a")],
             crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "The frames' auxiliary data would move with the rewritten sizes; the check adds nothing for them."}})
 

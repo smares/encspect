@@ -100,6 +100,15 @@ internal sealed class FrameResult
 
     public int OamdObjects { get; set; } = -1;
 
+    // The bits of the extension flag and of the JOC payload in the frame, for the findings that compare them.
+    public int ExtensionStart { get; set; }
+
+    public int ExtensionEnd { get; set; }
+
+    public int JocStart { get; set; }
+
+    public int JocEnd { get; set; }
+
     public void Reset(int blocks)
     {
         Stop = StopReason.None;
@@ -132,5 +141,9 @@ internal sealed class FrameResult
         HasOamd = false;
         JocObjects = -1;
         OamdObjects = -1;
+        ExtensionStart = 0;
+        ExtensionEnd = 0;
+        JocStart = 0;
+        JocEnd = 0;
     }
 }

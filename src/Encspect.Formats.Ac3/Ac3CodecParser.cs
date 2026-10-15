@@ -238,13 +238,13 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 // the complexity index; TS 102 366 F.6 reserves these bytes.
                 Reserved(Read("Reserved", 7, Explain.ConfigExtensionReserved));
                 int flag = Read("HasExtensionTypeA", 1, Explain.ConfigExtensionTypeA, v => NodeValue.Boolean(v != 0));
-                if (flag == 1 && !observed.HasJoc)
+                if (flag == 1 && !observed.HasJoc && !observed.HasExtension)
                 {
-                    Differs("flag_ec3_extension_type_a", 1, "no joint object coding payload");
+                    Differs("flag_ec3_extension_type_a", 1, "no frame that sets the flag or holds a joint object coding payload");
                 }
-                else if (flag == 0 && observed.HasJoc)
+                else if (flag == 0 && (observed.HasJoc || observed.HasExtension))
                 {
-                    Differs("flag_ec3_extension_type_a", 0, "joint object coding payloads");
+                    Differs("flag_ec3_extension_type_a", 0, "frames that set the flag or hold joint object coding payloads");
                 }
 
                 int complexity = Read("Complexity Index Type A", 8, Explain.ConfigComplexityIndex);
@@ -253,10 +253,10 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                     Differs("complexity_index_type_a", complexity, observed.Complexity);
                 }
             }
-            else if (observed.HasJoc)
+            else if (observed.HasJoc || observed.HasExtension)
             {
                 analysis.Findings.AddNow(Severity.Warning, "ac3.config-differs",
-                    "The dec3 box ends after its substreams and so does not give flag_ec3_extension_type_a (ETSI TS 103 420 C.3.1), but the frames hold joint object coding payloads; players that set up their decoder from the box and those that read the frames differ.", box);
+                    "The dec3 box ends after its substreams and so does not give flag_ec3_extension_type_a (ETSI TS 103 420 C.3.1), but the frames set the flag or hold joint object coding payloads; players that set up their decoder from the box and those that read the frames differ.", box);
             }
 
             if (position < data.Length * 8)
@@ -318,6 +318,10 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         // frame that sets the extension flag gives, or -1.
         public bool HasJoc { get; private set; }
 
+        // Whether any frame's additional bit stream information sets the extension flag; unlike the
+        // payloads, it is read in frames whose audio blocks are not.
+        public bool HasExtension { get; private set; }
+
         public int Complexity { get; private set; } = -1;
 
         public void StartSample()
@@ -337,6 +341,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
             HasEac3 |= header.IsEac3;
             HasJoc |= result.HasJoc;
+            HasExtension |= result.ExtensionFlag == 1;
             if (result.ExtensionFlag == 1 && Complexity < 0)
             {
                 Complexity = result.ComplexityIndex;

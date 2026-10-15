@@ -5,7 +5,7 @@ namespace Encspect.Host;
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
 // channel layout and encoder are the first stream's; the duration and samples add up over all streams, and the
-// average bitrate is weighted by their durations. Tags are the file's and those its container
+// average bitrate is weighted by their durations. Whether any stream has object audio, and the most objects one reconstructs. Tags are the file's and those its container
 // holds in its chunks, in tree order.
 public sealed record ReportSummary(
     string Source,
@@ -23,7 +23,9 @@ public sealed record ReportSummary(
     IReadOnlyList<string> Tags,
     int Errors,
     int Warnings,
-    int Infos)
+    int Infos,
+    bool HasObjectAudio = false,
+    int? ObjectCount = null)
 {
     // The layout's common name, such as "5.1", or null.
     public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
@@ -58,7 +60,9 @@ public sealed record ReportSummary(
             TagNames(report.Root),
             report.Findings.Count(f => f.Severity == Severity.Error),
             report.Findings.Count(f => f.Severity == Severity.Warning),
-            report.Findings.Count(f => f.Severity == Severity.Info));
+            report.Findings.Count(f => f.Severity == Severity.Info),
+            streams.Any(s => s.HasObjectAudio),
+            streams.Where(s => s.ObjectCount is not null).Select(s => s.ObjectCount).Max());
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or

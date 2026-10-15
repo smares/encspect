@@ -44,6 +44,24 @@ public class ObjectAudioTests
     }
 
     [Fact]
+    public void TheSummaryAndTheCsvCarryObjectAudio()
+    {
+        ReportSummary atmos = ReportSummary.From(Analyze("joc-atmos.eac3"));
+        Assert.True(atmos.HasObjectAudio);
+        Assert.Equal(15, atmos.ObjectCount);
+        ReportSummary plain = ReportSummary.From(Fixtures.AnalyzeMpeg("ac3/substreams.eac3"));
+        Assert.False(plain.HasObjectAudio);
+        Assert.Null(plain.ObjectCount);
+
+        var writer = new StringWriter();
+        ReportCsvWriter.Write([Analyze("joc-atmos.eac3"), Fixtures.AnalyzeMpeg("ac3/substreams.eac3")], writer);
+        string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.EndsWith(",Object Audio,Object Count", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith(",true,15", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",false,", lines[2], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AdditionalInfoGivesTheExtensionFlagAndTheComplexityIndex()
     {
         Report report = Analyze("joc-atmos.eac3");
@@ -62,19 +80,22 @@ public class ObjectAudioTests
     public void AnEmdfContainerShowsItsFieldsAndPayloads()
     {
         Report report = Analyze("joc-atmos.eac3");
-        const string container = "AC-3/Frame[1]/Auxiliary Data/EMDF Container";
+        const string skip = "AC-3/Frame[1]/Audio Block[2]/Skip Field";
+        const string container = skip + "/EMDF Container";
+        Assert.Equal("393 bytes", Value(report, skip));
         Assert.Equal("0x5838", Value(report, container + "/Sync Word"));
-        Assert.Equal("147 bytes", Value(report, container + "/Container Length"));
+        Assert.Equal("389 bytes", Value(report, container + "/Container Length"));
         Assert.Equal("0", Value(report, container + "/Version"));
         Assert.Equal("0", Value(report, container + "/Key ID"));
         Assert.Equal("11 (object audio metadata)", Value(report, container + "/Payload[0]"));
         Assert.Equal("14 (joint object coding)", Value(report, container + "/Payload[1]"));
-        Assert.Equal("40 bytes", Value(report, container + "/Payload[0]/Payload Size"));
-        Assert.Equal("96 bytes", Value(report, container + "/Payload[1]/Payload Size"));
+        Assert.Equal("53 bytes", Value(report, container + "/Payload[0]/Payload Size"));
+        Assert.Equal("320 bytes", Value(report, container + "/Payload[1]/Payload Size"));
         Assert.Equal("0 (end of payloads)", Value(report, container + "/Payload ID"));
-        Assert.Equal("1 (8 bits)", Value(report, container + "/Protection/Primary Protection Length"));
-        Assert.Equal("0 (none)", Value(report, container + "/Protection/Secondary Protection Length"));
-        Assert.Equal("8 bits", Value(report, container + "/Protection/Primary Protection Bits"));
+        Assert.Equal("2 (32 bits)", Value(report, container + "/Protection/Primary Protection Length"));
+        Assert.Equal("1 (8 bits)", Value(report, container + "/Protection/Secondary Protection Length"));
+        Assert.Equal("32 bits", Value(report, container + "/Protection/Primary Protection Bits"));
+        Assert.Equal("8 bits", Value(report, container + "/Protection/Secondary Protection Bits"));
 
         const string config = container + "/Payload[1]/Payload Configuration";
         Assert.Equal("false", Value(report, config + "/HasSampleOffset"));
@@ -95,15 +116,26 @@ public class ObjectAudioTests
     public void TheJocHeaderAndTheOamdObjectCountAreRead()
     {
         Report report = Analyze("joc-atmos.eac3");
-        const string container = "AC-3/Frame[1]/Auxiliary Data/EMDF Container";
-        Assert.StartsWith("1 (7.X", Value(report, container + "/Payload[1]/JOC Header/Downmix Configuration"), StringComparison.Ordinal);
+        const string container = "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container";
+        Assert.Equal("3 (5.X with 90 degree phase shift)", Value(report, container + "/Payload[1]/JOC Header/Downmix Configuration"));
         Assert.Equal("15 objects", Value(report, container + "/Payload[1]/JOC Header/JOC Object Count"));
         Assert.Equal("0 (none)", Value(report, container + "/Payload[1]/JOC Header/Extension Configuration"));
-        Assert.Equal("3", Value(report, container + "/Payload[1]/JOC Info/Clip Gain X Bits"));
-        Assert.Equal("12", Value(report, container + "/Payload[1]/JOC Info/Clip Gain Y Bits"));
+        Assert.Equal("4", Value(report, container + "/Payload[1]/JOC Info/Clip Gain X Bits"));
+        Assert.Equal("0", Value(report, container + "/Payload[1]/JOC Info/Clip Gain Y Bits"));
         Assert.Equal("1", Value(report, container + "/Payload[1]/JOC Info/Sequence Count"));
         Assert.Equal("0", Value(report, container + "/Payload[0]/OAMD Version"));
+        Assert.Equal("16 objects", Value(report, container + "/Payload[0]/Object Count"));
+    }
+
+    [Fact]
+    public void AContainerAfterTheLastBlockIsFoundInTheUnusedBits()
+    {
+        Report report = Analyze("joc-after-blocks.eac3");
+        const string container = "AC-3/Frame[1]/Auxiliary Data/EMDF Container";
+        Assert.Equal("147 bytes", Value(report, container + "/Container Length"));
+        Assert.Equal("15 objects", Value(report, container + "/Payload[1]/JOC Header/JOC Object Count"));
         Assert.Equal("15 objects", Value(report, container + "/Payload[0]/Object Count"));
+        Assert.Empty(report.Findings);
     }
 
     [Fact]
@@ -115,7 +147,7 @@ public class ObjectAudioTests
         Assert.Equal("2", Value(report, first + "/Key ID Extension"));
         Assert.Equal("true", Value(report, first + "/Payload[0]/Payload Configuration/HasCodecData"));
         Assert.Equal("0x5A", Value(report, first + "/Payload[0]/Payload Configuration/Codec Data"));
-        Assert.Equal("1 (programme loudness data)", Value(report, first + "/Payload[0]/Payload ID"));
+        Assert.Equal("1 (program loudness data)", Value(report, first + "/Payload[0]/Payload ID"));
         Assert.Equal("3 (E-AC-3 substream structure)", Value(report, first + "/Payload[1]/Payload ID"));
         Assert.Equal("31 (extended)", Value(report, first + "/Payload[2]/Payload ID"));
         Assert.Equal("5", Value(report, first + "/Payload[2]/Payload ID Extension"));
@@ -135,16 +167,6 @@ public class ObjectAudioTests
     }
 
     [Fact]
-    public void ASkipFieldMayHoldTheContainer()
-    {
-        Report report = Analyze("joc-skip-field.eac3");
-        const string skip = "AC-3/Frame/Audio Block[0]/Skip Field";
-        Assert.Equal("0x5838", Value(report, skip + "/EMDF Container/Sync Word"));
-        Assert.Equal("14 (joint object coding)", Value(report, skip + "/EMDF Container/Payload[1]/Payload ID"));
-        Assert.True(Analyze("joc-skip-field.eac3").Streams[0].HasObjectAudio);
-    }
-
-    [Fact]
     public void StatisticsCountContainersAndFramesWithObjectAudio()
     {
         Report report = Analyze("joc-atmos.eac3");
@@ -152,7 +174,7 @@ public class ObjectAudioTests
         Assert.Equal("4 containers", Value(report, statistics + "/EMDF Containers"));
         Assert.Equal("4 frames", Value(report, statistics + "/Frames With Object Audio"));
         Assert.Equal("4 frames", Value(report, statistics + "/Frames With Extension Type A"));
-        Assert.Equal("15 objects", Value(report, statistics + "/Object Count"));
+        Assert.Equal("15 objects", Value(report, statistics + "/JOC Object Count"));
         Assert.Equal("16", Value(report, statistics + "/Complexity Index Type A"));
 
         Report mismatch = Analyze("joc-flag-mismatch.eac3");
@@ -205,6 +227,36 @@ public class ObjectAudioTests
 
         Assert.Equal(finding.Node!.Name, node.Name);
         Assert.Equal((finding.Node.Offset, finding.Node.Length), (node.Offset, node.Length));
+    }
+
+    [Fact]
+    public void AFlagInTheCoreAndTheDependentFrameIsJudgedOverTheAccessUnit()
+    {
+        Report both = Analyze("joc-flag-both.eac3");
+        Assert.Empty(both.Findings);
+        Assert.Equal("8 frames", Value(both, "AC-3/Statistics/Frames With Extension Type A"));
+        Assert.Equal("4 frames", Value(both, "AC-3/Statistics/Frames With Object Audio"));
+        Assert.Empty(Analyze("joc-after-blocks.eac3").Findings);
+    }
+
+    [Fact]
+    public void FramesWhoseBlocksAreNotReadStillShowTheirContainerAndAgreeWithDec3()
+    {
+        Report report = Analyze("joc-aht.mp4");
+        Assert.Equal(["ac3.aht-not-read"], report.Findings.Select(f => f.Code));
+        Node statistics = Assert.Single(report.Streams).Nodes[0].Children.Single(c => c.Name == "Statistics");
+        Assert.Equal("4 containers", statistics.Children.Single(c => c.Name == "EMDF Containers").Value?.ToString());
+        Assert.Equal("4 frames", statistics.Children.Single(c => c.Name == "Frames With Object Audio").Value?.ToString());
+        Assert.Equal(4, Assert.Single(report.Streams).ObjectCount);
+    }
+
+    [Fact]
+    public void RandomBytesAndLoneSyncWordsAreNoContainers()
+    {
+        Report report = Analyze("emdf-noise.eac3");
+        Assert.Empty(report.Findings);
+        Assert.False(Assert.Single(report.Streams).HasObjectAudio);
+        Assert.Null(Value(report, "AC-3/Statistics/EMDF Containers"));
     }
 
     [Fact]

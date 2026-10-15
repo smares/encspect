@@ -1,39 +1,23 @@
 {
- "description": "The access units of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
- "length": 5061,
+ "description": "The frames of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
+ "length": 8772,
  "format": "MP4",
  "frames": [
   [
-   581,
-   800
+   580,
+   2048
   ],
   [
-   1381,
-   320
+   2628,
+   2048
   ],
   [
-   1701,
-   800
+   4676,
+   2048
   ],
   [
-   2501,
-   320
-  ],
-  [
-   2821,
-   800
-  ],
-  [
-   3621,
-   320
-  ],
-  [
-   3941,
-   800
-  ],
-  [
-   4741,
-   320
+   6724,
+   2048
   ]
  ],
  "gaps": [],
@@ -41,17 +25,15 @@
   {
    "codec": "E-AC-3",
    "sample_rate": 48000,
-   "channels": 8,
+   "channels": 6,
    "channel_mode": "3/2 (left, center, right, left surround, right surround)",
    "channel_layout": [
     "front left",
     "front center",
     "front right",
-    "side left",
-    "side right",
-    "LFE",
     "back left",
-    "back right"
+    "back right",
+    "LFE"
    ],
    "samples": 6144,
    "is_vbr": false,
@@ -68,7 +50,6 @@
  ],
  "crosscheck": {
   "ffprobe": true,
-  "ffprobe_channels": 8,
   "decode": true
  },
  "boxes": [
@@ -80,7 +61,7 @@
   [
    "moov",
    28,
-   545
+   544
   ],
   [
    "moov/mvhd",
@@ -90,7 +71,7 @@
   [
    "moov/trak",
    144,
-   429
+   428
   ],
   [
    "moov/trak/tkhd",
@@ -100,7 +81,7 @@
   [
    "moov/trak/mdia",
    244,
-   329
+   328
   ],
   [
    "moov/trak/mdia/mdhd",
@@ -115,7 +96,7 @@
   [
    "moov/trak/mdia/minf",
    329,
-   244
+   243
   ],
   [
    "moov/trak/mdia/minf/smhd",
@@ -140,113 +121,81 @@
   [
    "moov/trak/mdia/minf/stbl",
    389,
-   184
+   183
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd",
    397,
-   68
+   67
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/ec-3",
    413,
-   52
+   51
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/ec-3/dec3",
    449,
-   16
+   15
   ],
   [
    "moov/trak/mdia/minf/stbl/stts",
-   465,
+   464,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsc",
-   489,
+   488,
    28
   ],
   [
    "moov/trak/mdia/minf/stbl/stsz",
-   517,
+   516,
    36
   ],
   [
    "moov/trak/mdia/minf/stbl/stco",
-   553,
+   552,
    20
   ],
   [
    "mdat",
-   573,
-   4488
+   572,
+   8200
   ]
  ],
  "block_ends": {
-  "581": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
+  "580": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "1381": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
+  "2628": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "1701": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
+  "4676": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "2501": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
-  ],
-  "2821": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
-  ],
-  "3621": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
-  ],
-  "3941": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
-  ],
-  "4741": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
+  "6724": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ]
  }
 }

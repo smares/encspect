@@ -33,8 +33,9 @@ def variable_bits(b, value, n):
 
 
 def payload_config(b, offset=None, duration=None, group=None, codecdata=None, discard=0, aligned=1, create=0, remove=0, priority=0, proc=0):
-    """emdf_payload_config of H.2.1.3. The default is TS 103 420 Table 56: no duration, a group ID,
-    codec data, the payload kept, frame aligned, priority 0."""
+    """emdf_payload_config of H.2.1.3. The default is TS 103 420 Table 56 as Dolby's own file writes it:
+    no duration, no codec data (the table lists codecdatae as 1, H.2.2.3.7 and the file as 0), the
+    payload kept, frame aligned, priority 0; container() adds a group ID."""
     b.put(offset is not None, 1)
     if offset is not None:
         b.put(offset, 11).put(0, 1)
@@ -68,10 +69,11 @@ def joc_payload(objects=15, dmx=1, ext=0, clip=(3, 12), sequence=1, size=96, hea
     return data + bytes(max(0, size - len(data)))
 
 
-def oamd_payload(objects=15, version=0, size=40):
+def oamd_payload(objects=15, version=0, size=40, lfe=False):
     """oa_md_version_bits and object_count_bits (objects = object_count), then a program_assignment
-    of dynamic objects only without an LFE channel (5.5.3: b_dyn_object_only_program 1, b_lfe_present
-    0), so the objects are all dynamic ones; zero filler to size bytes."""
+    of dynamic objects only (5.5.3: b_dyn_object_only_program 1, b_lfe_present lfe); with an LFE
+    channel one of the objects is that channel, as in Dolby's own file (16 objects, 15 dynamic);
+    zero filler to size bytes."""
     b = Bits()
     b.put(min(version, 3), 2)
     if version >= 3:
@@ -80,7 +82,7 @@ def oamd_payload(objects=15, version=0, size=40):
         b.put(31, 5).put(objects - 1 - 31, 7)
     else:
         b.put(objects - 1, 5)
-    b.put(1, 1).put(0, 1)
+    b.put(1, 1).put(1 if lfe else 0, 1)
     data = b.align().bytes()
     return data + bytes(max(0, size - len(data)))
 
@@ -129,6 +131,13 @@ def container(payloads, version=0, key=0, protection=(1, 0), protection_value=0x
 def object_audio(objects=15, dmx=1, size=96, **options):
     """What an E-AC-3 stream with object audio carries: an OAMD and a JOC payload in one container."""
     return container([(OAMD, oamd_payload(objects)), (JOC, joc_payload(objects, dmx, size=size))], **options)
+
+
+def atmos_container():
+    """The container of Dolby's JOC test file (DD+ Online Delivery Kit v1.4.1): an OAMD payload of 53 bytes
+    for 16 objects with an LFE channel, a JOC payload of 320 bytes for 15 objects with the 90 degree
+    phase shifted 5.X downmix (joc_dmx_config_idx 3), clip gain bits 4 and 0, protection of 32 and 8 bits."""
+    return container([(OAMD, oamd_payload(16, size=53, lfe=True)), (JOC, joc_payload(15, dmx=3, clip=(4, 0), size=320))], protection=(2, 1))
 
 
 def addbsi(complexity, flag=1):

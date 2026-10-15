@@ -381,7 +381,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             Add("Frames With Extension Type A", NodeValue.Integer(ExtensionFrames, "frames", "frame"), Explain.StatExtensionFrames, Topics.ObjectAudio);
             if (MaxObjects > 0)
             {
-                Add("Object Count", Range(MinObjects, MaxObjects, "objects", "object"), Explain.StatObjectCount, Topics.ObjectAudio);
+                Add("JOC Object Count", Range(MinObjects, MaxObjects, "objects", "object"), Explain.StatObjectCount, Topics.ObjectAudio);
             }
 
             if (MaxComplexity >= 0)

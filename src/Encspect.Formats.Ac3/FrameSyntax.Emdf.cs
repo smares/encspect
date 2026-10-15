@@ -22,11 +22,11 @@ internal sealed partial class FrameSyntax
     // Thrown where a finding has been reported already and the container cannot be read on.
     private sealed class EmdfStop : Exception;
 
+    // The analyzer reads at most this many variable_bits groups and payloads; H.2 sets no limit.
+    private sealed class EmdfLimit(string message) : Exception(message);
+
+    private int _lastGroups;
     private int _emdfBound;
-    private int _jocStart;
-    private int _jocEnd;
-    private int _extensionStart;
-    private int _extensionEnd;
 
     private static byte[] BuildCandidates(int pattern)
     {
@@ -39,12 +39,13 @@ internal sealed partial class FrameSyntax
         return table;
     }
 
-    // Looks for containers in the bits [start, end) of the frame, which a skip field or the
-    // auxiliary data holds, and reads each as it is found. A container is taken where it starts the
-    // region, or follows another, on its sync word alone, so a damaged one is reported; further in
-    // it must also name a length that fits and a version of 0, since the sync word's 16 bits occur
-    // by chance in data. What the analysis found is kept in the record (where each starts), so
-    // building nodes reads the same containers.
+    // Looks for containers in the bits [start, end) of the frame, which a skip field, the auxiliary
+    // data or the bits no audio block read hold, and reads each as it is found. A candidate must pass
+    // EmdfTest, a dry run of the structure as MediaInfo's Ac3_EMDF_Test makes it, since the sync
+    // word's 16 bits occur by chance in data. A frame whose additional bit stream information sets
+    // the extension flag announces a container, so one that starts the region, or follows another, is
+    // read on its sync word alone and its damage reported. What the analysis found is kept in the
+    // record (where each starts), so building nodes reads the same containers.
     private void EmdfRegion(int start, int end)
     {
         if (end - start < MinEmdfBits)
@@ -52,25 +53,25 @@ internal sealed partial class FrameSyntax
             return;
         }
 
-        int next = FindEmdf(start, start, end);
+        int next = FindEmdf(start, end);
         int more = _b.Derived(1, next >= 0 ? 1 : 0);
         for (int count = 0; more != 0 && count < MaxEmdfContainers; count++)
         {
             int at = start + _b.Derived(16, Math.Max(0, next - start));
             int stop = EmdfContainer(at, end);
-            next = FindEmdf(stop, start, end);
+            next = FindEmdf(stop, end);
             more = _b.Derived(1, count + 1 < MaxEmdfContainers && next >= 0 ? 1 : 0);
         }
     }
 
-    private int FindEmdf(int from, int regionStart, int end)
+    private int FindEmdf(int from, int end)
     {
         if (_b.IsBuildingNodes || end - from < MinEmdfBits)
         {
             return -1;
         }
 
-        if (_b.Peek(from, 16) == EmdfSync)
+        if (_r.ExtensionFlag == 1 && _b.Peek(from, 16) == EmdfSync)
         {
             return from;
         }
@@ -83,8 +84,7 @@ internal sealed partial class FrameSyntax
                 return -1;
             }
 
-            int length = _b.Peek(at + 16, 16);
-            if (at + 32 + (length * 8) <= end && _b.Peek(at + 32, 2) == 0)
+            if (EmdfTest(at, end))
             {
                 return at;
             }
@@ -93,6 +93,154 @@ internal sealed partial class FrameSyntax
         }
 
         return -1;
+    }
+
+    // Whether a container that starts at a sync word is well formed: its length fits, its version
+    // is 0, the payloads reach the end marker inside the length, the protection length is defined,
+    // and the fields end in the last byte with zero padding (ETSI TS 102 366 H.2).
+    private bool EmdfTest(int at, int end)
+    {
+        int pos = at + 16;
+        int limit = end;
+
+        int Take(int width)
+        {
+            if (pos + width > limit)
+            {
+                throw new EndOfStreamException();
+            }
+
+            int value = _b.Peek(pos, width);
+            pos += width;
+            return value;
+        }
+
+        void Skip(long width)
+        {
+            if (width < 0 || pos + width > limit)
+            {
+                throw new EndOfStreamException();
+            }
+
+            pos += (int)width;
+        }
+
+        int Variable(int n)
+        {
+            long total = 0;
+            for (int group = 1; ; group++)
+            {
+                total += Take(n);
+                if (Take(1) == 0)
+                {
+                    return (int)Math.Min(total, int.MaxValue);
+                }
+
+                if (group == 4)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                total = (total << n) + (1L << n);
+            }
+        }
+
+        try
+        {
+            int length = Take(16);
+            int body = pos;
+            if (body + (length * 8L) > end)
+            {
+                return false;
+            }
+
+            limit = body + (length * 8);
+            if (Take(2) != 0)
+            {
+                return false;
+            }
+
+            if (Take(3) == 7)
+            {
+                Variable(3);
+            }
+
+            for (int payload = 0; ; payload++)
+            {
+                if (payload >= MaxEmdfPayloads)
+                {
+                    return false;
+                }
+
+                int id = Take(5);
+                if (id == 0)
+                {
+                    break;
+                }
+
+                if (id == 0x1F)
+                {
+                    Variable(5);
+                }
+
+                bool hasOffset = Take(1) != 0;
+                if (hasOffset)
+                {
+                    Skip(12);
+                }
+
+                if (Take(1) != 0)
+                {
+                    Variable(11);
+                }
+
+                if (Take(1) != 0)
+                {
+                    Variable(2);
+                }
+
+                if (Take(1) != 0)
+                {
+                    Skip(8);
+                }
+
+                if (Take(1) == 0)
+                {
+                    bool aligned = false;
+                    if (!hasOffset)
+                    {
+                        aligned = Take(1) != 0;
+                        if (aligned)
+                        {
+                            Skip(2);
+                        }
+                    }
+
+                    if (hasOffset || aligned)
+                    {
+                        Skip(7);
+                    }
+                }
+
+                Skip(Variable(8) * 8L);
+            }
+
+            int primary = Take(2);
+            int secondary = Take(2);
+            if (primary == 0)
+            {
+                return false;
+            }
+
+            Skip(ProtectionBits(primary));
+            Skip(secondary == 0 ? 0 : ProtectionBits(secondary));
+            int padding = (8 - ((pos - body) & 7)) & 7;
+            return padding == 0 || Take(padding) == 0;
+        }
+        catch (EndOfStreamException)
+        {
+            return false;
+        }
     }
 
     private void Need(int width)
@@ -119,6 +267,7 @@ internal sealed partial class FrameSyntax
         long total = 0;
         for (int group = 1; ; group++)
         {
+            _lastGroups = group;
             Need(n + 1);
             total += _b.Read(n);
             if (_b.Read(1) == 0)
@@ -128,7 +277,7 @@ internal sealed partial class FrameSyntax
 
             if (group == 4)
             {
-                throw new InvalidDataException("variable_bits asks for a fifth group");
+                throw new EmdfLimit("a variable_bits field asks for a fifth group, where the analyzer reads four");
             }
 
             total = (total << n) + (1L << n);
@@ -208,7 +357,7 @@ internal sealed partial class FrameSyntax
 
             if (!ended)
             {
-                throw new InvalidDataException("no end marker");
+                throw new EmdfLimit($"the container holds more than the {MaxEmdfPayloads} payloads the analyzer reads");
             }
 
             EmdfProtection();
@@ -249,9 +398,9 @@ internal sealed partial class FrameSyntax
         {
             stop = Math.Min(declaredEnd, end);
         }
-        catch (InvalidDataException exception)
+        catch (EmdfLimit limit)
         {
-            Report(Issue.EmdfReserved, "EMDF Container", at, Math.Min(declaredEnd, end), exception.Message + " (H.2.1.2)");
+            Report(Issue.EmdfLimit, "EMDF Container", at, Math.Min(declaredEnd, end), limit.Message);
             stop = Math.Min(declaredEnd, end);
         }
 
@@ -314,8 +463,8 @@ internal sealed partial class FrameSyntax
         {
             hasJoc = true;
             _r.HasJoc = true;
-            _jocStart = start;
-            _jocEnd = endBit;
+            _r.JocStart = start;
+            _r.JocEnd = endBit;
             Joc(start, payloadStart, endBit);
         }
         else if (id == Ac3Names.OamdId)
@@ -348,6 +497,10 @@ internal sealed partial class FrameSyntax
         if (EFlag("HasDuration", Explain.EmdfDuratione))
         {
             VariableBits("Duration", 11, Explain.EmdfDuration, v => NodeValue.Integer(v, "samples", "sample"));
+            if (_lastGroups > 2)
+            {
+                Report(Issue.EmdfReserved, "Duration", _lastStart, _lastEnd, "duration has more than the two groups of 11 bits that H.2.2.3.4 allows");
+            }
         }
 
         if (EFlag("HasGroupId", Explain.EmdfGroupide))

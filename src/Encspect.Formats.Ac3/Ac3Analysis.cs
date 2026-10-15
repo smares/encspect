@@ -26,6 +26,7 @@ internal sealed class Ac3Analysis
     private int _frameIndex;
     private long _frameOffset;
     private int _frameLength;
+    private AccessUnit _unit = new();
 
     public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null)
     {
@@ -125,6 +126,12 @@ internal sealed class Ac3Analysis
                     : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
         }
 
+        if (!header.IsDependent)
+        {
+            FinishUnit();
+        }
+
+        _unit.Add(offset, result);
         Program? program = Assign(region, index, header, result);
         program?.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch);
     }
@@ -179,8 +186,7 @@ internal sealed class Ac3Analysis
         Issue.PayloadShort => "ac3.object-payload-short",
         Issue.JocReserved => "ac3.joc-reserved",
         Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
-        Issue.ExtensionWithoutJoc => "ac3.extension-without-joc",
-        Issue.JocWithoutExtension => "ac3.joc-without-extension",
+        Issue.EmdfLimit => "ac3.emdf-limit",
         _ => "ac3.auxiliary-length",
     };
 
@@ -275,18 +281,68 @@ internal sealed class Ac3Analysis
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"An EMDF container has only one of the two payloads of object audio: {detail}; ETSI TS 103 420 8.2 carries the JOC and the OAMD payload together. First in {at} ({Times(count)}).");
                 break;
-            case Issue.ExtensionWithoutJoc:
-                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
-                    $"The additional bit stream information sets flag_ec3_extension_type_a, but no EMDF container of the frame holds a joint object coding payload. First in {at} ({Times(count)}).");
-                break;
-            case Issue.JocWithoutExtension:
-                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
-                    $"The frame holds a joint object coding payload, but its additional bit stream information does not set flag_ec3_extension_type_a (ETSI TS 103 420 8.3.1). First in {at} ({Times(count)}).");
+            case Issue.EmdfLimit:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"An EMDF container goes beyond what the analyzer reads: {detail}, so the rest of the container is not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.AuxiliaryLength:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"{detail} (A/52 5.4.4.2). First in {at} ({Times(count)}).");
                 break;
+        }
+    }
+
+    // The extension flag and the JOC payload are judged over an access unit, an independent frame and
+    // the dependent frames after it: ETSI TS 103 420 8.3.1 puts the flag in the substream that holds the
+    // container, and ffmpeg reads it from either. A unit whose frames were not all read to their end
+    // may hold a container in the bits that were not.
+    private void FinishUnit()
+    {
+        AccessUnit unit = _unit;
+        _unit = new();
+        if (unit.ExtensionOffset >= 0 && unit.JocOffset < 0 && unit.AllRead)
+        {
+            Findings.Add(Severity.Warning, "ac3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
+                $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x{unit.ExtensionOffset:X}.");
+        }
+        else if (unit.JocOffset >= 0 && unit.ExtensionOffset < 0)
+        {
+            Findings.Add(Severity.Warning, "ac3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
+                $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at 0x{unit.JocOffset:X}.");
+        }
+    }
+
+    private static string Units(int count) => count == 1 ? "1 access unit (an independent frame and its dependent frames)" : $"{count} access units (independent frames and their dependent frames)";
+
+    private sealed class AccessUnit
+    {
+        public long ExtensionOffset { get; private set; } = -1;
+
+        public int ExtensionStart { get; private set; }
+
+        public int ExtensionEnd { get; private set; }
+
+        public long JocOffset { get; private set; } = -1;
+
+        public int JocStart { get; private set; }
+
+        public int JocEnd { get; private set; }
+
+        public bool AllRead { get; private set; } = true;
+
+        public void Add(long offset, FrameResult result)
+        {
+            if (result.ExtensionFlag == 1 && ExtensionOffset < 0)
+            {
+                (ExtensionOffset, ExtensionStart, ExtensionEnd) = (offset, result.ExtensionStart, result.ExtensionEnd);
+            }
+
+            if (result.HasJoc && JocOffset < 0)
+            {
+                (JocOffset, JocStart, JocEnd) = (offset, result.JocStart, result.JocEnd);
+            }
+
+            AllRead &= result.Stop == StopReason.None;
         }
     }
 
@@ -356,6 +412,7 @@ internal sealed class Ac3Analysis
     // region it spans.
     public void Finish(IReadOnlyList<EncoderClaim> claims)
     {
+        FinishUnit();
         List<Program> programs = [.. _finished, .. _programs.Values];
         programs.Sort((a, b) => a.FirstFrame.CompareTo(b.FirstFrame));
         bool several = programs.Select(p => p.Key.Id).Distinct().Count() > 1 || programs.Any(p => p.Key.IsEac3);

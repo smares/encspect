@@ -1,39 +1,23 @@
 {
- "description": "Four access units without object audio in MP4 whose dec3 box sets flag_ec3_extension_type_a and has reserved bits set.",
- "length": 5061,
+ "description": "Four 5.1 frames without object audio in MP4 whose dec3 box sets flag_ec3_extension_type_a and has reserved bits set.",
+ "length": 8772,
  "format": "MP4",
  "frames": [
   [
-   581,
-   800
+   580,
+   2048
   ],
   [
-   1381,
-   320
+   2628,
+   2048
   ],
   [
-   1701,
-   800
+   4676,
+   2048
   ],
   [
-   2501,
-   320
-  ],
-  [
-   2821,
-   800
-  ],
-  [
-   3621,
-   320
-  ],
-  [
-   3941,
-   800
-  ],
-  [
-   4741,
-   320
+   6724,
+   2048
   ]
  ],
  "gaps": [],
@@ -41,17 +25,15 @@
   {
    "codec": "E-AC-3",
    "sample_rate": 48000,
-   "channels": 8,
+   "channels": 6,
    "channel_mode": "3/2 (left, center, right, left surround, right surround)",
    "channel_layout": [
     "front left",
     "front center",
     "front right",
-    "side left",
-    "side right",
-    "LFE",
     "back left",
-    "back right"
+    "back right",
+    "LFE"
    ],
    "samples": 6144,
    "is_vbr": false
@@ -70,7 +52,6 @@
  ],
  "crosscheck": {
   "ffprobe": true,
-  "ffprobe_channels": 8,
   "decode": true
  },
  "boxes": [
@@ -82,7 +63,7 @@
   [
    "moov",
    28,
-   545
+   544
   ],
   [
    "moov/mvhd",
@@ -92,7 +73,7 @@
   [
    "moov/trak",
    144,
-   429
+   428
   ],
   [
    "moov/trak/tkhd",
@@ -102,7 +83,7 @@
   [
    "moov/trak/mdia",
    244,
-   329
+   328
   ],
   [
    "moov/trak/mdia/mdhd",
@@ -117,7 +98,7 @@
   [
    "moov/trak/mdia/minf",
    329,
-   244
+   243
   ],
   [
    "moov/trak/mdia/minf/smhd",
@@ -142,51 +123,51 @@
   [
    "moov/trak/mdia/minf/stbl",
    389,
-   184
+   183
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd",
    397,
-   68
+   67
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/ec-3",
    413,
-   52
+   51
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/ec-3/dec3",
    449,
-   16
+   15
   ],
   [
    "moov/trak/mdia/minf/stbl/stts",
-   465,
+   464,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsc",
-   489,
+   488,
    28
   ],
   [
    "moov/trak/mdia/minf/stbl/stsz",
-   517,
+   516,
    36
   ],
   [
    "moov/trak/mdia/minf/stbl/stco",
-   553,
+   552,
    20
   ],
   [
    "mdat",
-   573,
-   4488
+   572,
+   8200
   ]
  ],
  "block_ends": {
-  "581": [
+  "580": [
    474,
    477,
    480,
@@ -194,15 +175,7 @@
    486,
    489
   ],
-  "1381": [
-   238,
-   241,
-   244,
-   247,
-   250,
-   253
-  ],
-  "1701": [
+  "2628": [
    474,
    477,
    480,
@@ -210,15 +183,7 @@
    486,
    489
   ],
-  "2501": [
-   238,
-   241,
-   244,
-   247,
-   250,
-   253
-  ],
-  "2821": [
+  "4676": [
    474,
    477,
    480,
@@ -226,29 +191,13 @@
    486,
    489
   ],
-  "3621": [
-   238,
-   241,
-   244,
-   247,
-   250,
-   253
-  ],
-  "3941": [
+  "6724": [
    474,
    477,
    480,
    483,
    486,
    489
-  ],
-  "4741": [
-   238,
-   241,
-   244,
-   247,
-   250,
-   253
   ]
  }
 }

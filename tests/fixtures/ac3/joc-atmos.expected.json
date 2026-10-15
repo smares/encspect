@@ -1,39 +1,23 @@
 {
- "description": "Four access units of a 5.1 substream and a dependent substream with the rear surround pair, whose frames hold an EMDF container with an OAMD and a JOC payload for 15 objects in their auxiliary data and set the addbsi extension with complexity index 16.",
- "length": 4480,
+ "description": "Four 5.1 frames laid out like Dolby's JOC test file: block 2 holds an EMDF container with an OAMD payload of 16 objects (one of them the LFE channel) and a JOC payload of 15 objects in its skip field, and the addbsi sets the extension with complexity index 16.",
+ "length": 8192,
  "format": "AC-3",
  "frames": [
   [
    0,
-   800
+   2048
   ],
   [
-   800,
-   320
+   2048,
+   2048
   ],
   [
-   1120,
-   800
+   4096,
+   2048
   ],
   [
-   1920,
-   320
-  ],
-  [
-   2240,
-   800
-  ],
-  [
-   3040,
-   320
-  ],
-  [
-   3360,
-   800
-  ],
-  [
-   4160,
-   320
+   6144,
+   2048
   ]
  ],
  "gaps": [],
@@ -41,17 +25,15 @@
   {
    "codec": "E-AC-3",
    "sample_rate": 48000,
-   "channels": 8,
+   "channels": 6,
    "channel_mode": "3/2 (left, center, right, left surround, right surround)",
    "channel_layout": [
     "front left",
     "front center",
     "front right",
-    "side left",
-    "side right",
-    "LFE",
     "back left",
-    "back right"
+    "back right",
+    "LFE"
    ],
    "samples": 6144,
    "is_vbr": false,
@@ -62,88 +44,59 @@
  "fields": {
   "AC-3/Frame[1]/Bit Stream Information/Additional Info/HasExtensionTypeA": "true",
   "AC-3/Frame[1]/Bit Stream Information/Additional Info/Complexity Index Type A": "16",
-  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Container Length": "147 bytes",
-  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Payload ID": "11 (object audio metadata)",
-  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
-  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
-  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Object Count": "15 objects",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field": "393 bytes",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Container Length": "389 bytes",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[0]/Payload ID": "11 (object audio metadata)",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[0]/Object Count": "16 objects",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/Payload Size": "320 bytes",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Protection/Primary Protection Length": "2 (32 bits)",
+  "AC-3/Frame[1]/Audio Block[2]/Skip Field/EMDF Container/Protection/Secondary Protection Length": "1 (8 bits)",
   "AC-3/Statistics/Frames With Object Audio": "4 frames",
-  "AC-3/Statistics/Object Count": "15 objects"
+  "AC-3/Statistics/JOC Object Count": "15 objects"
  },
  "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "ffprobe_channels": 8,
   "decode": true,
   "skip_insertion": false,
   "skip": {
-   "skip_insertion": "ffmpeg decodes only substream 0, so a change to the dependent substream would not show."
+   "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."
   }
  },
  "block_ends": {
   "0": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "800": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
+  "2048": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "1120": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
+  "4096": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ],
-  "1920": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
-  ],
-  "2240": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
-  ],
-  "3040": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
-  ],
-  "3360": [
-   474,
-   477,
-   480,
-   483,
-   486,
-   489
-  ],
-  "4160": [
-   260,
-   263,
-   266,
-   269,
-   272,
-   275
+  "6144": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
   ]
  }
 }

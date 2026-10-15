@@ -238,7 +238,7 @@
                   "length": 3600
                 },
                 {
-                  "name": "Object Count",
+                  "name": "JOC Object Count",
                   "value": 15,
                   "unit": "objects",
                   "offset": 0,
@@ -6903,7 +6903,7 @@
       {
         "severity": "Warning",
         "code": "ac3.extension-without-joc",
-        "message": "The additional bit stream information sets flag_ec3_extension_type_a, but no EMDF container of the frame holds a joint object coding payload. First in the frame at 0x0 (3 times).",
+        "message": "3 access units (independent frames and their dependent frames): the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x0.",
         "offset": 8,
         "length": 1,
         "path": [
@@ -6918,7 +6918,7 @@
       {
         "severity": "Warning",
         "code": "ac3.joc-without-extension",
-        "message": "The frame holds a joint object coding payload, but its additional bit stream information does not set flag_ec3_extension_type_a (ETSI TS 103 420 8.3.1). First in the frame at 0x708 (3 times).",
+        "message": "3 access units (independent frames and their dependent frames): a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at 0x708.",
         "offset": 1880,
         "length": 101,
         "path": [
