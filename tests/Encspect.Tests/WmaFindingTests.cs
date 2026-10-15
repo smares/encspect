@@ -34,6 +34,7 @@ public class WmaFindingTests
         }),
         ["wma.codec-data-size"] = () => Standard(FFmpeg, 0x0161, s => s.Data = s.Data[..7]),
         ["wma.writer-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("Windows Media Format SDK 12", new Node("Claim", 0, 1), "test layout", ClaimRole.Writer) { Confidence = Confidence.Medium, IsLayout = true }, new EncoderClaim("Foo Muxer 1.0", new Node("Claim", 0, 1), "test claim", ClaimRole.Writer)]),
+        ["wma.writer-other-format"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim", ClaimRole.Writer)]),
         ["wma.encoder-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim", ClaimRole.Encoder)]),
         ["wma.format-unsupported"] = () => Standard(FFmpeg, 0x0161, s => s.Format = s.Format with { BlockAlign = 0 }),
         ["wma.frame-filler"] = () => Standard("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, _ => { }),

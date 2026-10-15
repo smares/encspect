@@ -348,7 +348,8 @@ public sealed partial class Mp4Parser
         f.U16(node, "Language", Explain.TextLanguage);
         string text = Latin1OrUtf8(f.Bytes(node, "Text", Math.Min(length, f.Remaining), Explain.Text, b => Latin1OrUtf8(b)));
         node.Value = text;
-        // No specification at hand defines either as the encoder, so they are the writer's.
+        // ©swr is the "name and version number of the software (or hardware) that generated this movie" (QuickTime File Format, user data
+        // atoms), and no Apple specification defines ©too (ffmpeg writes its muxer version there): both are the writer's.
         if (header.Type is "©swr" or "©too" && text.Length > 0)
         {
             state.Context.AddEncoderClaim(new EncoderClaim(text, node, $"QuickTime {header.Type} atom", ClaimRole.Writer));

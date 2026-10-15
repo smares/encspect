@@ -35,19 +35,20 @@ import ogg_model as m
 OUT = hand.OUT
 
 LIBVORBIS = {"name": "libvorbis 1.3.7", "confidence": "High"}
-# What the analyzer names: the encoder, from the vendor string (libopusenc writes libopus' version into it), and the writer, from the
-# ENCODER field and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor, which names no encoder.
+# What the analyzer names: the encoder, from the vendor string (libopusenc writes libopus' version into it) or an ENCODER field that is a
+# libavcodec encoder ID (ffmpeg writes "Lavc60.31.102 libvorbis" there when it encodes), and the writer, from the ENCODER field of an
+# application (opusenc) and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor.
 FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
 OPUSENC = {"name": "libopus 1.4", "confidence": "Medium", "writer": {"name": "opusenc 0.2", "confidence": "Low"}}
-FFMPEG_LIBVORBIS = {"writer": FFMPEG_WRITER}
-FFMPEG_VORBIS = {"writer": FFMPEG_WRITER}
-FFMPEG_LIBOPUS = {"writer": FFMPEG_WRITER}
+FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
+FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
+FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 AOTUV_B57 = {"name": "aoTuV b5.7 (20090301)", "confidence": "High"}
 AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
 AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
 AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
 LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
-FFMPEG_OPUS = {"writer": FFMPEG_WRITER}
+FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, seconds, arguments, detected encoder, expected findings)
 FIXTURES = {

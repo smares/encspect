@@ -127,7 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
-  - `encoder` and `encoderConfidence` name the software that turned the audio into the stream; `writer` and `writerConfidence` the software that put it into the file (the muxer, the container writer, a tagger). They are resolved apart, each from its own evidence, and either is left out where nothing names one. A writer that differs from the encoder is not a conflict.
+  - `encoder` and `encoderConfidence` name the software that turned the audio into the stream; `writer` and `writerConfidence` the software that put it into the file (the muxer, the container writer, a tagger). They are resolved apart, each from its own evidence, and either is left out where nothing names one. A writer that differs from the encoder is not a conflict. `encoder` holds only encoder-role evidence: what ASF files, MP4's ©too and APEv2 Encoder items state moved to `writer` (the encoder of an ffmpeg-made Ogg file still comes from its `Lavc…` ID).
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
   - `hasObjectAudio` is `true` for a stream whose data carry object audio that was parsed (E-AC-3 with joint object coding); DTS:X is reported through the profile and the `HasDtsX` statistics, not through this flag, and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.
@@ -150,7 +150,7 @@ The CSV row of a file has:
 - the duration and samples of all streams together;
 - their average bitrate, weighted by duration;
 - the first stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
-- the first encoder named and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named and its confidence (`Writer`, `Writer Confidence`);
+- the first encoder named and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named and its confidence (`Writer`, `Writer Confidence`, the two columns after the encoder's);
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known.

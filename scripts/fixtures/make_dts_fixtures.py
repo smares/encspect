@@ -315,10 +315,12 @@ def build_damage():
 
     # Claims of one role that name different software are a finding; a TSSE frame that is ffmpeg's muxer version names the writer.
     tag3 = id3v2("dtsenc 1.0", "other 2.0", "Lavf60.16.100")
-    data = tag3 + body + ape
+    ape3 = ape_tag(("Title", "Hand-built"), ("Encoder", "LAME 3.100"))
+    data = tag3 + body + ape3
+    ape = ape3
     fixture("tags-claims-differ", ".dts", "An ID3v2 tag with three TSSE frames, five stereo core frames and an APEv2 tag. Two TSSE frames name different encoders, "
-            "the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names other software as the writer.", data, rows(parts, len(tag3)),
-            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [("id3v2.frame-duplicate", "3 TSSE frames"), ("dts.encoder-claim", "other 2.0"), ("dts.writer-claim", "APE Encoder item")],
+            "the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names LAME, which writes MPEG audio and not DTS, as the writer.", data, rows(parts, len(tag3)),
+            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [("id3v2.frame-duplicate", "3 TSSE frames"), ("dts.encoder-claim", "other 2.0"), ("dts.writer-claim-differs", "APE Encoder item"), ("dts.writer-other-format", "which writes MPEG audio, not DTS")],
             fields={"DTS/Encoder": "dtsenc 1.0", "DTS/Writer": "FFmpeg (Lavf60.16.100)"},
             regions=[["ID3v2", 0, len(tag3)], ["DTS", len(tag3), len(body)], ["APE", len(tag3) + len(body), len(ape)]],
             crosscheck=cc(libdca=False, ffprobe_packets=[[len(tag3) + 512 * i, 512] for i in range(4)] + [[len(tag3) + 4 * 512, 512 + len(ape)]],

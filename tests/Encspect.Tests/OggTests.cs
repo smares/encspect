@@ -160,7 +160,7 @@ public class OggTests
         Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,\"5.1 (front left, front center, front right, back left, back right, LFE)\",libvorbis 1.3.7,High,,,Vorbis Comment,0,0,0,false,", lines[1]);
         Assert.StartsWith("external-opusenc-cvbr.opus,Ogg,1,Opus,1.500,72000,", lines[2], StringComparison.Ordinal);
         Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",libopus 1.4,Medium,opusenc 0.2,Low,Vorbis Comment,0,0,0,false,", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",,,FFmpeg (Lavf60.16.100),Low,Vorbis Comment,0,0,0,false,", lines[3], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",FFmpeg (Lavc60.31.102 opus),Medium,FFmpeg (Lavf60.16.100),Low,Vorbis Comment,0,0,0,false,", lines[3], StringComparison.Ordinal);
         Node head = reports[1].Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Name == "Opus Head");
         Assert.Equal("44100 Hz", head.Children.Single(c => c.Name == "Input Sample Rate").Value?.ToString());
         Assert.False(reports[2].Streams.Single().IsVbr);

@@ -301,9 +301,9 @@ def xhe_layouts():
          "confidence.", False, None, ("exhale", "Medium"), []),
         ("xhe-aac-fill-element", "xHE-AAC with exhale's layout but for a fill element after the channel pair element, as Fraunhofer's "
          "demonstration files and libxaac write: no encoder is named.", True, None, None, []),
-        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names other software: the stream's evidence "
-         "names exhale as the encoder and the tool atom names the writer, two facts that do not conflict.", False, "hand-built", ("exhale", "Medium"),
-         []),
+        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names FAAC: the stream's evidence "
+         "names exhale as the encoder and the tool atom names the writer, two facts that do not conflict, but FAAC writes AAC, not xHE-AAC.", False, "FAAC 1.30", ("exhale", "Medium"),
+         [["aac.writer-other-format", "which writes AAC, not xHE-AAC (USAC)"]]),
     ]:
         config = usac_layout_config(fill_element)
         samples = [bytes([0x80 if i % 10 == 0 else 0x00]) + bytes((i * 13) % 50 + 20) for i in range(30)]
@@ -313,7 +313,7 @@ def xhe_layouts():
         elements = ASC + "/UsacConfig/UsacDecoderConfig"
         out.append((name, data, {
             "description": description, "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder, writer=("hand-built", "Low") if tool else None)],
+            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder, writer=(tool, "Low") if tool else None)],
             "units": unit_list(offsets[0], samples, 10),
             "fields": {elements: f"{3 if fill_element else 2} elements", elements + "/Element[0]/Extension Element Type": "3 (audio pre-roll)",
                        elements + "/Element[1]": "CPE", ASC + "/UsacConfig/UsacConfigExtension/Extension Type": "2 (loudness info)"},

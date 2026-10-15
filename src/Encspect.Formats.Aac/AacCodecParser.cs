@@ -131,7 +131,10 @@ public sealed class AacCodecParser : ICodecParser
 
         Node? writer = WriterDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, topic: ClaimRoles.TopicOf(name)),
             (claim, text, name) => findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            AacEncoder.WriterName);
+            AacEncoder.WriterName,
+            format: config is { IsUsac: true }
+                ? new WriterDetection.StreamFormat(KnownWriters.Usac, "xHE-AAC (USAC)", (claim, message, node) => findings.Add(Severity.Info, "aac.writer-other-format", node, _ => message))
+                : new WriterDetection.StreamFormat(KnownWriters.Aac, "AAC", (claim, message, node) => findings.Add(Severity.Info, "aac.writer-other-format", node, _ => message)));
         if (writer is not null)
         {
             leading.Add(writer);

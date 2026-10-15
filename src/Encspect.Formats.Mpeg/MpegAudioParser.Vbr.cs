@@ -398,8 +398,9 @@ public sealed partial class MpegAudioParser
     }
 
     // The writer a region's claims and its LAME tags name: ffmpeg's mp3 muxer fills the encoder field of the LAME tag it writes with
-    // "Lavc" and the version of its codec library when libavcodec encoded, and with "Lavf" and its own version when it only
-    // muxed, so either names the writer. Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with them.
+    // the stream's "encoder" metadata (mp3enc.c:247-257): "Lavc" and the version of its codec library when libavcodec encoded, which
+    // names the encoder (HeaderEncoder), and "Lavf" with its own version when there is none, which names the muxer. Tags of the
+    // claims' kind (ID3v2 TSSE, APE) are weighed with them.
     private static Node? DetectWriter(StreamState state, RegionState region, IReadOnlyList<EncoderClaim> claims)
     {
         ChunkedList<Entry> frames = state.Build.Frames;
@@ -414,7 +415,7 @@ public sealed partial class MpegAudioParser
             }
 
             var header = new HeaderFrame(i, frames[i], ReadVbrHeader(state.Build, frames[i]));
-            if (header.Vbr is { HasLameTag: true, IsVbri: false } && IsFfmpeg(header.Vbr.LameEncoder.TrimEnd(' ')))
+            if (header.Vbr is { HasLameTag: true, IsVbri: false } && ClaimRoles.IsMuxerVersion(header.Vbr.LameEncoder.TrimEnd(' ')))
             {
                 all.Add(new EncoderClaim(header.Vbr.LameEncoder.TrimEnd(' '), header.TagNode, "LAME tag", ClaimRole.Writer));
             }
@@ -428,7 +429,8 @@ public sealed partial class MpegAudioParser
         long offset = region.AudioStart;
         long length = region.AudioEnd - offset;
         return WriterDetection.Detect(all, (name, value, description) => new Node(name, offset, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.Add(Severity.Info, "mpeg.writer-other-format", node, _ => message)));
     }
 
     // The encoder named by the stream's own evidence, without its VBR headers.

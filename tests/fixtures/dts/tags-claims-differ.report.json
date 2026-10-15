@@ -4412,7 +4412,7 @@
                 },
                 {
                   "name": "Encoder",
-                  "value": "Hand-built",
+                  "value": "LAME 3.100",
                   "offset": 2707,
                   "length": 26,
                   "children": [
@@ -4450,7 +4450,7 @@
                     },
                     {
                       "name": "Value",
-                      "value": "Hand-built",
+                      "value": "LAME 3.100",
                       "offset": 2723,
                       "length": 10
                     }
@@ -4642,8 +4642,21 @@
       },
       {
         "severity": "Info",
-        "code": "dts.writer-claim",
-        "message": "The APE Encoder item names \"Hand-built\", but the ID3v2 TSSE frame names \"FFmpeg (Lavf60.16.100)\"; other software may have rewritten the file, and kept one of them.",
+        "code": "dts.writer-claim-differs",
+        "message": "The APE Encoder item names \"LAME 3.100\", but the ID3v2 TSSE frame names \"FFmpeg (Lavf60.16.100)\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 2707,
+        "length": 26,
+        "path": [
+          2,
+          1,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "dts.writer-other-format",
+        "message": "The APE Encoder item names \"LAME 3.100\", which writes MPEG audio, not DTS.",
         "offset": 2707,
         "length": 26,
         "path": [

@@ -110,7 +110,8 @@ internal static class Adif
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            AacEncoder.WriterName);
+            AacEncoder.WriterName,
+            format: new WriterDetection.StreamFormat(KnownWriters.Aac, "AAC", (claim, message, node) => findings.Add(Severity.Info, "aac.writer-other-format", node, _ => message)));
         if (writer is not null)
         {
             leading.Add(writer);

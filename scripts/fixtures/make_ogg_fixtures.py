@@ -326,6 +326,19 @@ def comment_edge_cases():
     f.write()
 
 
+def writer_claims_differ():
+    # Three ENCODER fields that name different software, the last LAME, which writes MPEG audio: the writer is the first, and the second is a finding of its own role.
+    f = Fixture("writer-claims-differ")
+    packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Foo Muxer 1.0", b"ENCODER=Bar Tool 2.0", b"ENCODER=LAME 3.100"])
+    pages = m.pages_for(0x00C0FFEF, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFEF, pages)
+    f.finding("speex.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
+    f.finding("speex.writer-other-format", "which writes MPEG audio, not Speex")
+    f.write()
+
+
 def comment_empty():
     f = Fixture("comment-empty")
     packets, granules = speex_packets(0, cbr(5, 1), vendor=b"")
@@ -757,7 +770,7 @@ def eos_inside_packet():
 
 FIXTURES = [
     narrowband, wideband, ultra_wideband, frames_and_stereo, multiplexed, chained, packet_spanning_pages, lacing_255,
-    comment_edge_cases, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
+    comment_edge_cases, writer_claims_differ, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
     eos_inside_packet,

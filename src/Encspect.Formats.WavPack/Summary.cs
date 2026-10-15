@@ -177,7 +177,8 @@ internal static partial class Summary
     // In a method of its own, so the lambdas that keep the state alive do not share a closure with the ones that outlive the analysis.
     private static Node? Writer(State s, IReadOnlyList<EncoderClaim> claims, long start, long end) =>
         WriterDetection.Detect(claims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+            (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => s.Findings.Add(Severity.Info, "wavpack.writer-other-format", node, _ => message)));
 
     // A target the encoder floored to its lowest is only a limit, which is text rather than a number.
     internal static NodeValue TargetValue(double value, int decimals, string unit, bool isAtMost) =>

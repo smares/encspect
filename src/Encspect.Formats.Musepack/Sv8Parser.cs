@@ -956,7 +956,8 @@ internal static class Sv8Parser
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => state.Findings.Add(Severity.Info, "musepack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+            (claim, text, name) => state.Findings.Add(Severity.Info, "musepack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Musepack, "Musepack", (claim, message, other) => state.Findings.Add(Severity.Info, "musepack.writer-other-format", other, _ => message)));
         if (writer is not null)
         {
             state.Leading.Add(writer);

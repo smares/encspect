@@ -23,8 +23,14 @@ public static class WriterDetection
     // familyOf says which software a text names where it knows better than ClaimRoles.FamilyOf.
     // With isEvidenceAtSource, each Evidence node covers the bytes of its claim's node, which the Writer node must
     // contain; otherwise it covers what cover gives every node.
+    // A stream's format for KnownWriters: format is the kind it passes to KnownWriters and formatLabel the name the finding gives it;
+    // otherFormat gets each claim that names software known to write another kind of stream, with the finding's message and the
+    // node to point at (the claim's Evidence node where the Writer node has one, else the claim's own node).
+    public sealed record StreamFormat(string Kind, string Label, Action<EncoderClaim, string, Node> OtherFormat);
+
     public static Node? Detect(IEnumerable<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover,
-        Action<EncoderClaim, string, string> differs, Func<string, string>? nameOf = null, bool isEvidenceAtSource = false, Func<string, string>? familyOf = null)
+        Action<EncoderClaim, string, string> differs, Func<string, string>? nameOf = null, bool isEvidenceAtSource = false, Func<string, string>? familyOf = null,
+        StreamFormat? format = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(cover);
@@ -43,6 +49,7 @@ public static class WriterDetection
             return null;
         }
 
+        var evidenceOf = new Dictionary<EncoderClaim, Node>();
         EncoderClaim winner = candidates[0];
         nameOf ??= text => ClaimRoles.WriterName(text);
         string name = nameOf(winner.Text);
@@ -63,11 +70,30 @@ public static class WriterDetection
             }
         }
 
+        if (format is not null)
+        {
+            foreach (EncoderClaim claim in candidates)
+            {
+                if (KnownWriters.WritesInstead(claim.Text, format.Kind) is { } writes)
+                {
+                    string subject = claim.IsLayout ? $"The {Subject(claim)} points to" : $"The {claim.Description} names";
+                    format.OtherFormat(claim, $"{subject} \"{Quoted(claim)}\", which writes {writes}, not {format.Label}.", evidenceOf.GetValueOrDefault(claim) ?? claim.Source);
+                }
+            }
+        }
+
         return writer;
 
-        Node EvidenceNode(EncoderClaim claim) => isEvidenceAtSource
-            ? new Node("Evidence", claim.Source.Offset, claim.Source.Length, Evidence(claim)) { Description = EvidenceDescription }
-            : cover("Evidence", Evidence(claim), EvidenceDescription);
+        string Quoted(EncoderClaim claim) => claim.Text.Trim();
+
+        Node EvidenceNode(EncoderClaim claim)
+        {
+            Node node = isEvidenceAtSource
+                ? new Node("Evidence", claim.Source.Offset, claim.Source.Length, Evidence(claim)) { Description = EvidenceDescription }
+                : cover("Evidence", Evidence(claim), EvidenceDescription);
+            evidenceOf[claim] = node;
+            return node;
+        }
     }
 
     private static string Evidence(EncoderClaim claim) => claim.IsLayout

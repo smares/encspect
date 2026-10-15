@@ -34,9 +34,10 @@ SPEEXENC = "speexenc"
 FFMPEG = "ffmpeg"
 
 SPEEXENC_NAME = {"name": "speexenc 1.2.1", "confidence": "High"}
-# ffmpeg writes "Lavf60.16.100" as the vendor and "Lavc60.31.102 libspeex" as the ENCODER field, which name the writer; the header's
-# version names libspeex, whatever program encodes.
-FFMPEG_NAME = {"name": "libspeex 1.2.1", "confidence": "Low", "writer": {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}}
+# ffmpeg writes "Lavf60.16.100" as the vendor, which names the writer, and "Lavc60.31.102 libspeex" as the ENCODER field when it encodes,
+# which is a libavcodec encoder ID and names the encoder; the header's version names libspeex, whatever program encodes.
+FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
+FFMPEG_NAME = {"name": "FFmpeg (Lavc60.31.102 libspeex)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, arguments, detected encoder, expected findings)
 FIXTURES = {
@@ -62,7 +63,7 @@ FIXTURES = {
     "external-ffmpeg-libspeex-frames": ("ffmpeg", 16000, 1, ["-c:a", "libspeex", "-frames_per_packet", "3", "-metadata", "title=ffmpeg title"],
                                         FFMPEG_NAME, []),
     # ffmpeg rewrites the granule positions of a stream it copies without the encoder's lookahead.
-    "external-ffmpeg-remux": ("remux", 16000, 1, ["-c", "copy"], FFMPEG_NAME,
+    "external-ffmpeg-remux": ("remux", 16000, 1, ["-c", "copy"], {"name": "libspeex 1.2.1", "confidence": "Low", "writer": FFMPEG_WRITER},
                               [("speex.delay-unusual", "an encoder delay of 0 samples")]),
     # Two files joined end to end: speexenc's narrowband stream, then ffmpeg's wideband one.
     "external-chained": ("join", 0, 0, [], [SPEEXENC_NAME, FFMPEG_NAME], []),

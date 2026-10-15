@@ -734,7 +734,8 @@ public sealed class RawAacParser : IFormatParser
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => state.Findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            AacEncoder.WriterName);
+            AacEncoder.WriterName,
+            format: new WriterDetection.StreamFormat(KnownWriters.Aac, "AAC", (claim, message, node) => state.Findings.Add(Severity.Info, "aac.writer-other-format", node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);

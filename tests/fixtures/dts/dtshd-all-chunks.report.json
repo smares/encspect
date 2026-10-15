@@ -589,7 +589,7 @@
               "length": 2944,
               "children": [
                 {
-                  "name": "Writer",
+                  "name": "Encoder",
                   "value": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)",
                   "offset": 348,
                   "length": 2944,
@@ -602,7 +602,7 @@
                     },
                     {
                       "name": "Evidence",
-                      "value": "BUILDVER chunk (the DTS-HD encoder version identification of A/103 Annex E.2.14) at 0xD1C names \"DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)\"",
+                      "value": "BUILDVER chunk (\"DTS-HD Encoder Version Identification\", ATSC A/103:2014 Table E.1 and E.2.14) at 0xD1C names \"DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)\"",
                       "offset": 348,
                       "length": 2944
                     }
@@ -9822,8 +9822,8 @@
         "duration": 0.042666666666666665,
         "averageBitrate": 552,
         "isVbr": true,
-        "writer": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)",
-        "writerConfidence": "Low",
+        "encoder": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)",
+        "encoderConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

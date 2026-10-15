@@ -12,14 +12,15 @@ public sealed partial class SpeexParser
 
     private sealed partial class StreamState
     {
-        // The encoder, from the comment's vendor string and the header's version string, which
-        // libspeex's speex_init_header writes whatever program encodes: speexenc writes "Encoded with
-        // Speex" and the library version as the vendor. ffmpeg writes its own version ("Lavf60.16.100") as
-        // the vendor and, where it encoded, "Lavc60.31.102 libspeex" as the ENCODER field, which are
-        // the writer's (AddWriter); the header's version then names libspeex alone.
+        // The encoder, from the comment's vendor string, an ENCODER field that is a libavcodec encoder ID and the header's version
+        // string, which libspeex's speex_init_header writes whatever program encodes: speexenc writes "Encoded with Speex" and the
+        // library version as the vendor. ffmpeg writes its own version ("Lavf60.16.100") as the vendor, which names the writer
+        // (AddWriter), and, where it encoded, "Lavc60.31.102 libspeex" as the ENCODER field; a remux writes "Lavf" there too.
         private Node? AddEncoder()
         {
-            EncoderClaim? vendor = ClaimRoles.Encoders(CommentClaims()).FirstOrDefault(c => c.Source.Name == "Vendor");
+            List<EncoderClaim> encoders = [.. ClaimRoles.Encoders(CommentClaims())];
+            EncoderClaim? vendor = encoders.FirstOrDefault(c => c.Source.Name == "Vendor");
+            EncoderClaim? field = encoders.FirstOrDefault(c => c.Source.Name != "Vendor");
             Node? versionNode = _headerNode?.Children.FirstOrDefault(c => c.Name == "Speex Version");
             string? library = _header?.Version is { Length: > 0 } text ? text : null;
 
@@ -37,6 +38,16 @@ public sealed partial class SpeexParser
                     evidence.Add(Evidence(versionNode, version == library
                         ? $"Speex header version \"{library}\", which libspeex writes, agrees"
                         : $"Speex header version \"{library}\" differs from the vendor string's"));
+                }
+            }
+            else if (field is not null && field.Text.Contains("libspeex", StringComparison.Ordinal))
+            {
+                name = $"FFmpeg ({field.Text})";
+                confidence = Confidence.Medium;
+                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes with libspeex"));
+                if (versionNode is not null && library is not null)
+                {
+                    evidence.Add(Evidence(versionNode, $"Speex header version \"{library}\", which libspeex writes"));
                 }
             }
             else if (library is not null && versionNode is not null)
@@ -82,7 +93,8 @@ public sealed partial class SpeexParser
 
             Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
                 (claim, text, name) => _findings.Add(Severity.Info, "speex.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-                isEvidenceAtSource: true);
+                isEvidenceAtSource: true,
+                format: new WriterDetection.StreamFormat(KnownWriters.Speex, "Speex", (claim, message, node) => _findings.Add(Severity.Info, "speex.writer-other-format", node, _ => message)));
             return writer is null ? null : _parent.Add(writer);
         }
 

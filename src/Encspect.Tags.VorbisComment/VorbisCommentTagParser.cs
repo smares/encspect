@@ -174,9 +174,11 @@ public sealed class VorbisCommentTagParser : ITagParser
             }
             else if (name.Equals("ENCODER", StringComparison.OrdinalIgnoreCase) && value.Length > 0)
             {
-                // The field names of section 5.2.2 ("TITLE", "VERSION", "ALBUM" and so on) include no ENCODER, so the specification
-                // gives it to no role: ffmpeg writes the version of its own libraries into it, and the claim is the writer's.
-                _claims.Add(new EncoderClaim(value, comment, "Vorbis comment ENCODER field", ClaimRole.Writer));
+                // The field names of section 5.2.2 of the Vorbis I specification ("TITLE", "VERSION", "ALBUM" and so on) include no
+                // ENCODER, so that specification gives it to no role and the claim is the writer's (RFC 7845 section 5.2 has Opus
+                // applications use it "to identify themselves"). ffmpeg writes its libavcodec encoder ID into it when it encodes
+                // (oggenc.c:281), which names the encoder.
+                _claims.Add(new EncoderClaim(value, comment, "Vorbis comment ENCODER field", ClaimRoles.Of(ClaimRole.Writer, value)));
             }
 
             return comment;

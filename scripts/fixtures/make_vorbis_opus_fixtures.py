@@ -226,6 +226,16 @@ def vorbis_mono():
     f.write()
 
 
+def vorbis_writer_claims_differ():
+    # Two ENCODER fields that name different software: the writer is the first, and the second is a finding of its own role.
+    blocks = switching(24)
+    packets, granules = vorbis_stream(1, 44100, blocks, comments=[b"ENCODER=Foo Muxer 1.0", b"ENCODER=Bar Tool 2.0", b"ENCODER=LAME 3.100"])
+    f = single("vorbis-writer-claims-differ", packets, granules, vorbis_cuts(len(blocks)), codec="Vorbis")
+    f.finding("vorbis.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
+    f.finding("vorbis.writer-other-format", "which writes MPEG audio, not Vorbis")
+    f.write()
+
+
 def vorbis_stereo():
     # Two channels coupled by one square polar step, all three bitrate hints equal, and packets of
     # varying sizes, two of which span pages.
@@ -769,6 +779,21 @@ def opus_packets_corrupt():
     f.write()
 
 
+def opus_writer_claims_differ():
+    # Two ENCODER fields that name different software: the writer is the first, and the second is a finding of its own role.
+    f = Fixture("opus-writer-claims-differ", ".opus")
+    audio = [v.opus_packet(28, 1, [25]) for _ in range(10)]
+    serial = 0x0F0F0500
+    packets, granules = opus_stream(v.opus_head(2), audio, tags=v.opus_tags(VENDOR, [b"ENCODER=Foo Muxer 1.0", b"ENCODER=Bar Tool 2.0", b"ENCODER=LAME 3.100"]))
+    pages = pages_for(serial, packets, granules, opus_cuts(len(audio)))
+    for p in pages:
+        f.w.write(p)
+    f.stream(serial, pages, codec="Opus")
+    f.finding("opus.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
+    f.finding("opus.writer-other-format", "which writes MPEG audio, not Opus")
+    f.write()
+
+
 def opus_tags_variants():
     # Link 1: binary data after the comments, which RFC 7845 asks tools to keep; link 2: a comment
     # header of "OpusTags" alone; link 3: no comment header at all.
@@ -804,10 +829,10 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
-    opus_packets_corrupt, opus_tags_variants,
+    opus_packets_corrupt, opus_writer_claims_differ, opus_tags_variants,
 ]
 
 

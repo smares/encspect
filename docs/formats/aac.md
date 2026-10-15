@@ -29,7 +29,7 @@ The encoder and the writer are two fields of a stream, each with its own confide
 
 - **Encoder:** the stream's own evidence and the claims of the encoder role (an ID3v2 TSSE frame in a stream's file).
 - **Version:** a writer claim of the same name that goes on from the encoder's name completes a version-less encoder (`ClaimRoles.CompleteVersion`, shared by every format parser); it never creates an encoder or raises a confidence.
-- **Writer:** the MP4 tool atom (©too) and QuickTime's ©swr, which no specification at hand defines as the encoder; an APEv2 Encoder item; ffmpeg's muxer version ("Lavf60.16.100"); and the layouts of Apple's file writer. Two claims that name different software are an information finding (`aac.writer-claim-differs`).
+- **Writer:** QuickTime's ©swr ("name and version number of the software that generated this movie"); the MP4 tool atom (©too), which no Apple specification defines; an APEv2 Encoder item; ffmpeg's muxer version ("Lavf60.16.100"); and the layouts of Apple's file writer. Two claims that name different software are an information finding (`aac.writer-claim-differs`), and software known to write another format (exhale or FAAC on the wrong codec, LAME) is `aac.writer-other-format`.
 
 Encoder:
 

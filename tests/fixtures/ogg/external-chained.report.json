@@ -5452,19 +5452,25 @@
                 },
                 {
                   "name": "Encoder",
-                  "value": "libspeex 1.2.1",
+                  "value": "FFmpeg (Lavc60.31.102 libspeex)",
                   "offset": 3195,
-                  "length": 20,
+                  "length": 155,
                   "children": [
                     {
                       "name": "Confidence",
-                      "value": "Low",
+                      "value": "Medium",
                       "offset": 3195,
-                      "length": 20
+                      "length": 155
                     },
                     {
                       "name": "Evidence",
-                      "value": "Speex header version \"1.2.1\", which libspeex writes whatever program encodes",
+                      "value": "Vorbis comment ENCODER field \"Lavc60.31.102 libspeex\", which ffmpeg writes when it encodes with libspeex",
+                      "offset": 3316,
+                      "length": 34
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Speex header version \"1.2.1\", which libspeex writes",
                       "offset": 3195,
                       "length": 20
                     }
@@ -5487,12 +5493,6 @@
                       "value": "Vorbis comment vendor string at 0xCE3 names \"Lavf60.16.100\"",
                       "offset": 3299,
                       "length": 13
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Vorbis comment ENCODER field at 0xCF4 names \"Lavc60.31.102 libspeex\"",
-                      "offset": 3316,
-                      "length": 34
                     }
                   ]
                 },
@@ -16083,8 +16083,8 @@
         "duration": 1.4910625,
         "averageBitrate": 28,
         "isVbr": false,
-        "encoder": "libspeex 1.2.1",
-        "encoderConfidence": "Low",
+        "encoder": "FFmpeg (Lavc60.31.102 libspeex)",
+        "encoderConfidence": "Medium",
         "writer": "FFmpeg (Lavf60.16.100)",
         "writerConfidence": "Low",
         "series": [

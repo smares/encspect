@@ -18,7 +18,7 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 
 ## BUILDVER and the encoder
 
-- Table E.1 lists BUILDVER as the DTS-HD encoder version identification, and E.2.14 describes its text as "compiler information". The standard does not say whether the text names the encoder or the tool that wrote the file around the encoder's stream, so it goes to the writer, where a field the sources leave open goes: the DTS parser names the writer as written, with low confidence, with the chunk as evidence (`dts.writer-claim` for a second claim that names other software). The encoder is not named from it.
+- Table E.1 lists BUILDVER as the DTS-HD encoder version identification, and E.2.14 describes its text as "compiler information". ATSC A/103:2014 names the chunk "DTS-HD Encoder Version Identification" in Table E.1, so it goes to the encoder: the DTS parser names the encoder as written, with low confidence, with the chunk as evidence (`dts.encoder-claim` for a second claim that names other software). The text may still name the authoring tool, which is why the confidence stays low.
 - FFmpeg ignores the chunk, MediaInfo reads the string and does not report it.
 
 ## Metadata against the stream

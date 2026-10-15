@@ -3795,7 +3795,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion 2.112 and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have. The writer states IsVBR false (at 0x65D)",
+                          "value": "ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion 2.112 and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have, with the Language List, Extended Stream Properties, Metadata, Padding and Stream Bitrate Properties objects, which both Microsoft writers write. The writer states IsVBR false (at 0x65D)",
                           "offset": 1641,
                           "length": 80564
                         },

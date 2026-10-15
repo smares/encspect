@@ -6,17 +6,27 @@ namespace Encspect.Core;
 // software family a text names, and the Encoder and Writer nodes' name and confidence.
 public static partial class ClaimRoles
 {
-    // The version text of ffmpeg's muxer ("Lavf60.16.100"), which libavformat writes into whichever tag its
-    // output format has, whatever encoded the audio.
-    [GeneratedRegex(@"^\s*Lavf\d", RegexOptions.CultureInvariant)]
+    // The version text of ffmpeg's muxer ("Lavf60.16.100", or a bare "Lavf"), which libavformat writes into whichever tag
+    // its output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as
+    // the vendor string, movenc.c:4202 into ©too).
+    [GeneratedRegex(@"^\s*Lavf(?![A-Za-z])", RegexOptions.CultureInvariant)]
     private static partial Regex MuxerVersion();
+
+    // The libavcodec identification of an encoder ("Lavc60.31.102 libvorbis"): fftools/ffmpeg_enc.c set_encoder_id sets the
+    // stream's "encoder" metadata to "Lavc<version> <codec>" only when ffmpeg encodes, mp3enc.c:247-257 copies it into the
+    // LAME tag ("Lavf" when there is none) and oggenc.c writes it as the ENCODER comment. It names an encoder in whichever field.
+    [GeneratedRegex(@"^\s*Lavc\d", RegexOptions.CultureInvariant)]
+    private static partial Regex EncoderId();
 
     // Whether the text is a muxer's version and so names the writer, not the encoder, in whichever field it stands.
     public static bool IsMuxerVersion(string text) => MuxerVersion().IsMatch(text);
 
-    // The role of a claim whose field the specification gives to role: a muxer's version text goes to the
-    // writer in any field.
-    public static ClaimRole Of(ClaimRole role, string text) => IsMuxerVersion(text) ? ClaimRole.Writer : role;
+    // Whether the text is a libavcodec encoder ID and so names the encoder in whichever field it stands.
+    public static bool IsEncoderId(string text) => EncoderId().IsMatch(text);
+
+    // The role of a claim whose field the specification gives to role: a muxer's version text goes to the writer and a
+    // libavcodec encoder ID to the encoder, in any field.
+    public static ClaimRole Of(ClaimRole role, string text) => IsMuxerVersion(text) ? ClaimRole.Writer : IsEncoderId(text) ? ClaimRole.Encoder : role;
 
     // The IDs of the background articles on detecting the encoder and the writer.
     public const string EncoderTopic = "encoder-detection";
@@ -48,7 +58,7 @@ public static partial class ClaimRoles
     public static string WriterName(string text, int maxLength = 64)
     {
         text = text.Trim();
-        if (IsMuxerVersion(text) || text.StartsWith("Lavc", StringComparison.Ordinal))
+        if (IsMuxerVersion(text) || IsEncoderId(text))
         {
             return $"FFmpeg ({(text.Length > maxLength ? text[..maxLength] : text)})";
         }
@@ -56,34 +66,47 @@ public static partial class ClaimRoles
         return text.Length > maxLength ? text[..maxLength] : text;
     }
 
-    // The version a writer claim carries, for an encoder the stream's own evidence named without one (FAAC 2.x's layout names "FAAC"; the
-    // front end's tool atom reads "FAAC 2.2.0 (6acbe23)"). Only a writer claim of the same family whose name starts with the
-    // encoder's name and goes on may complete it, so a remux by MP4Box or ffmpeg lends its version to no encoder, and a writer claim
-    // never creates an encoder or raises its confidence. The encoder takes the claim's name and the evidence says where it came from.
+    // The version a writer claim carries, for an encoder the stream's own evidence named without one (FAAC 2.x's layout names "FAAC";
+    // the front end's tool atom reads "FAAC 2.2.0 (6acbe23)"). Only a name without a digit is completed, and only by a writer
+    // claim of the same family that is no muxer's version and whose name is the encoder's, then white space and a version that starts
+    // with a digit, so a remux by MP4Box or ffmpeg lends nothing, "FAAC" is not "FAAC-based tool" and "LAME 3.100" is not extended.
+    // Of several such claims the strongest counts, and if the strongest differ in name nothing is completed. A writer claim never
+    // creates an encoder or raises its confidence; the evidence says where the version came from.
     public static void CompleteVersion(Node? encoder, IEnumerable<EncoderClaim> claims, Func<string, string>? nameOf = null)
     {
-        if (encoder?.Value?.ToString() is not { Length: > 0 } named)
+        if (encoder?.Value?.ToString() is not { Length: > 0 } named || named.Any(char.IsDigit))
         {
             return;
         }
 
         string family = FamilyOf(named);
-        foreach (EncoderClaim claim in Writers(claims).OrderByDescending(c => c.Confidence))
+        nameOf ??= t => WriterName(t);
+        var candidates = Writers(claims)
+            .Where(c => !IsMuxerVersion(c.Text) && FamilyOf(c.Text) == family)
+            .Select(c => (Claim: c, Name: nameOf(c.Text)))
+            .Where(x => x.Name.Length > named.Length && x.Name.StartsWith(named, StringComparison.OrdinalIgnoreCase)
+                && char.IsWhiteSpace(x.Name[named.Length]) && x.Name.AsSpan(named.Length).TrimStart().Length > 0 && char.IsDigit(x.Name.AsSpan(named.Length).TrimStart()[0]))
+            .ToList();
+        if (candidates.Count == 0)
         {
-            string name = (nameOf ?? (t => WriterName(t)))(claim.Text);
-            if (name.Length > named.Length && name.StartsWith(named, StringComparison.OrdinalIgnoreCase) && !char.IsLetter(name[named.Length])
-                && FamilyOf(claim.Text) == family)
-            {
-                encoder.Value = name;
-                encoder.Add(new Node("Evidence", encoder.Offset, encoder.Length,
-                    $"The version comes from the {claim.Description} at 0x{claim.Source.Offset:X}, which names \"{claim.Text.Trim()}\" as the writer: software of the same name")
-                {
-                    Description = WriterDetection.EvidenceDescription,
-                    Ranges = encoder.Ranges,
-                });
-                return;
-            }
+            return;
         }
+
+        Confidence strongest = candidates.Max(x => x.Claim.Confidence);
+        var top = candidates.Where(x => x.Claim.Confidence == strongest).ToList();
+        if (top.Select(x => x.Name).Distinct(StringComparer.Ordinal).Count() != 1)
+        {
+            return;
+        }
+
+        (EncoderClaim claim, string name) = top.OrderBy(x => x.Claim.Source.Offset).First();
+        encoder.Value = name;
+        encoder.Add(new Node("Evidence", encoder.Offset, encoder.Length,
+            $"The version comes from the {claim.Description} at 0x{claim.Source.Offset:X}, which names \"{claim.Text.Trim()}\" as the writer: software of the same name")
+        {
+            Description = WriterDetection.EvidenceDescription,
+            Ranges = encoder.Ranges,
+        });
     }
 
     private static readonly (string Family, string[] Markers)[] Families =

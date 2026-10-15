@@ -602,6 +602,10 @@
      "Modes/Mode 0 (short block)": "33 packets (34.7%)",
      "Modes/Mode 1 (long block)": "62 packets (65.3%)"
     },
+    "encoder": {
+     "name": "FFmpeg (Lavc60.31.102 libvorbis)",
+     "confidence": "Medium"
+    },
     "writer": {
      "name": "FFmpeg (Lavf60.16.100)",
      "confidence": "Low"
@@ -623,6 +627,8 @@
    "average_bitrate": 41.69846282173499,
    "is_vbr": true,
    "channel_mode": "Stereo",
+   "encoder": "FFmpeg (Lavc60.31.102 libvorbis)",
+   "encoder_confidence": "Medium",
    "writer": "FFmpeg (Lavf60.16.100)",
    "writer_confidence": "Low"
   }

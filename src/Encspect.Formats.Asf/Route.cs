@@ -184,11 +184,12 @@ public sealed partial class AsfParser
     // The writer of the file, from the way it lays out the header. The Windows Media Format SDK's writer and
     // Media Foundation's ASF sink each stamp a version attribute of their own (WMFSDKVersion,
     // MediaFoundationVersion), and the SDK's files alone carry a Codec List Object and a Compatibility Object
-    // (the files the project encoded with them, tests/fixtures/asf, wmvcore 12.0.26100). The other objects the
-    // layout was once said to need (Language List, Extended Stream Properties, Metadata, Padding, Stream
-    // Bitrate Properties) are in the files of both writers, so they tell nothing apart and are not required. The
-    // objects are the specification's, but that a writer chooses them is a habit, not a rule, so the evidence
-    // is medium. It names the writer, which drives whatever codec it was asked for; a name the file states
+    // (the files the project encoded with them, tests/fixtures/asf, wmvcore 12.0.26100). What tells the writers apart
+    // is that attribute and those two objects. A Language List, Extended Stream Properties, a Metadata Object, a Padding
+    // Object and Stream Bitrate Properties are in the files of both writers (all 31 fixtures), so they tell nothing apart;
+    // Media Foundation's rule still requires them, so that its medium confidence does not rest on one attribute and two
+    // absences. The objects are the specification's, but that a writer chooses them is a habit, not a rule, so the
+    // evidence is medium. It names the writer, which drives whatever codec it was asked for; a name the file states
     // (WMFSDKVersion) is a low claim by itself.
     private static void AddWriterEvidence(State state)
     {
@@ -199,6 +200,9 @@ public sealed partial class AsfParser
 
         bool codecList = state.HeaderGuids.Contains(AsfGuids.CodecList);
         bool compatibility = state.HeaderGuids.Contains(AsfGuids.Compatibility);
+        bool bothWrite = state.HeaderGuids.Contains(AsfGuids.LanguageList) && state.HeaderGuids.Contains(AsfGuids.ExtendedStreamProperties)
+            && state.HeaderGuids.Contains(AsfGuids.Metadata) && state.HeaderGuids.Contains(AsfGuids.Padding)
+            && state.HeaderGuids.Contains(AsfGuids.StreamBitrateProperties);
 
         if (state.SdkVersion is { } version && compatibility && codecList)
         {
@@ -210,10 +214,10 @@ public sealed partial class AsfParser
                 IsLayout = true,
             });
         }
-        else if (state.MediaFoundationVersion is { } foundation && state.SdkVersion is null && !codecList && !compatibility)
+        else if (state.MediaFoundationVersion is { } foundation && state.SdkVersion is null && !codecList && !compatibility && bothWrite)
         {
             state.Context.AddEncoderClaim(new EncoderClaim($"Media Foundation {foundation}", state.MediaFoundationVersionNode ?? extension,
-                $"ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion {foundation} and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have{WriterSettings(state)}",
+                $"ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion {foundation} and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have, with the Language List, Extended Stream Properties, Metadata, Padding and Stream Bitrate Properties objects, which both Microsoft writers write{WriterSettings(state)}",
                 ClaimRole.Writer)
             {
                 Confidence = Confidence.Medium,

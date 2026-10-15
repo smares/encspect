@@ -1,6 +1,6 @@
 {
- "description": "exhale's layout of the UsacConfig with a tool atom that names other software: the stream's evidence names exhale as the encoder and the tool atom names the writer, two facts that do not conflict.",
- "length": 2169,
+ "description": "exhale's layout of the UsacConfig with a tool atom that names FAAC: the stream's evidence names exhale as the encoder and the tool atom names the writer, two facts that do not conflict, but FAAC writes AAC, not xHE-AAC.",
+ "length": 2168,
  "format": "MP4",
  "boxes": [
   [
@@ -11,7 +11,7 @@
   [
    "moov",
    24,
-   802
+   801
   ],
   [
    "moov/mvhd",
@@ -111,12 +111,12 @@
   [
    "moov/udta",
    731,
-   95
+   94
   ],
   [
    "moov/udta/meta",
    739,
-   87
+   86
   ],
   [
    "moov/udta/meta/hdlr",
@@ -126,21 +126,21 @@
   [
    "moov/udta/meta/ilst",
    784,
-   42
+   41
   ],
   [
    "moov/udta/meta/ilst/©too",
    792,
-   34
+   33
   ],
   [
    "moov/udta/meta/ilst/©too/data",
    800,
-   26
+   25
   ],
   [
    "mdat",
-   826,
+   825,
    1343
   ]
  ],
@@ -161,130 +161,130 @@
     "Medium"
    ],
    "writer": [
-    "hand-built",
+    "FAAC 1.30",
     "Low"
    ]
   }
  ],
  "units": [
   [
-   834,
+   833,
    21
   ],
   [
-   855,
+   854,
    34
   ],
   [
-   889,
+   888,
    47
   ],
   [
-   936,
+   935,
    60
   ],
   [
-   996,
+   995,
    23
   ],
   [
-   1019,
+   1018,
    36
   ],
   [
-   1055,
+   1054,
    49
   ],
   [
-   1104,
+   1103,
    62
   ],
   [
-   1166,
+   1165,
    25
   ],
   [
-   1191,
+   1190,
    38
   ],
   [
-   1229,
+   1228,
    51
   ],
   [
-   1280,
+   1279,
    64
   ],
   [
-   1344,
+   1343,
    27
   ],
   [
-   1371,
+   1370,
    40
   ],
   [
-   1411,
+   1410,
    53
   ],
   [
-   1464,
+   1463,
    66
   ],
   [
-   1530,
+   1529,
    29
   ],
   [
-   1559,
+   1558,
    42
   ],
   [
-   1601,
+   1600,
    55
   ],
   [
-   1656,
+   1655,
    68
   ],
   [
-   1724,
+   1723,
    31
   ],
   [
-   1755,
+   1754,
    44
   ],
   [
-   1799,
+   1798,
    57
   ],
   [
-   1856,
+   1855,
    70
   ],
   [
-   1926,
+   1925,
    33
   ],
   [
-   1959,
+   1958,
    46
   ],
   [
-   2005,
+   2004,
    59
   ],
   [
-   2064,
+   2063,
    22
   ],
   [
-   2086,
+   2085,
    35
   ],
   [
-   2121,
+   2120,
    48
   ]
  ],
@@ -298,6 +298,10 @@
   [
    "aac.usac-frames-not-analyzed",
    "usacIndependencyFlag"
+  ],
+  [
+   "aac.writer-other-format",
+   "which writes AAC, not xHE-AAC (USAC)"
   ]
  ],
  "crosscheck": {

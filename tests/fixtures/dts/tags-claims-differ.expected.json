@@ -1,5 +1,5 @@
 {
- "description": "An ID3v2 tag with three TSSE frames, five stereo core frames and an APEv2 tag. Two TSSE frames name different encoders, the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names other software as the writer.",
+ "description": "An ID3v2 tag with three TSSE frames, five stereo core frames and an APEv2 tag. Two TSSE frames name different encoders, the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names LAME, which writes MPEG audio and not DTS, as the writer.",
  "length": 2765,
  "format": "DTS",
  "frames": [
@@ -53,8 +53,12 @@
    "other 2.0"
   ],
   [
-   "dts.writer-claim",
+   "dts.writer-claim-differs",
    "APE Encoder item"
+  ],
+  [
+   "dts.writer-other-format",
+   "which writes MPEG audio, not DTS"
   ]
  ],
  "crosscheck": {

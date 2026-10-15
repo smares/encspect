@@ -308,7 +308,8 @@ internal sealed class DtsAnalysis
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text, name) => Findings.Add(Severity.Info, "dts.writer-claim", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+            (claim, text, name) => Findings.Add(Severity.Info, "dts.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Dts, "DTS", (claim, message, node) => Findings.Add(Severity.Info, "dts.writer-other-format", () => node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);

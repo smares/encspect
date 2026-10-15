@@ -54,7 +54,9 @@ internal static partial class WmaEncoder
 
         Node? writer = WriterDetection.Detect(context.EncoderClaims, Cover,
             (claim, text, name) => findings.Add(Severity.Info, "wma.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            familyOf: FamilyOf);
+            familyOf: FamilyOf,
+            format: new WriterDetection.StreamFormat(KnownWriters.WindowsMedia, "Windows Media Audio",
+                (claim, message, node) => findings.Add(Severity.Info, "wma.writer-other-format", node, _ => message)));
         if (writer is not null)
         {
             stream.Add(writer);

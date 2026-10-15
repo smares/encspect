@@ -21,4 +21,4 @@
 
   The complete list is in the [plan](../PLAN.md#tag-detection-and-false-positives).
 - Containers hand the ID3v2 tags they hold to the same parser, such as an MP4 file's ID32 box.
-- A TSSE frame (TSS in ID3v2.2) is a claim of the encoder role: the specification defines it as the used audio encoder and its settings (ID3v2.4 frames section 4.2.5). The text of ffmpeg's muxer ("Lavf60.16.100"), which ffmpeg writes into it whatever encoded the audio, is a claim of the writer role. Either is low confidence, since the software that wrote the tag fills it in.
+- A TSSE frame (TSS in ID3v2.2) is a claim of the encoder role: the specification defines it as the used audio encoder and its settings (ID3v2.3 section 4.2.1, ID3v2.4 frames section 4.2.5). The text of ffmpeg's muxer ("Lavf60.16.100"), which ffmpeg writes into it whatever encoded the audio, is a claim of the writer role, and its libavcodec encoder ID ("Lavc…") one of the encoder role. Either is low confidence, since the software that wrote the tag fills it in.

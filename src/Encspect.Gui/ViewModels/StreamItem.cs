@@ -4,7 +4,7 @@ using Encspect.Core;
 namespace Encspect.Gui.ViewModels;
 
 // One stream of the report in a line: "MPEG-1 Layer III · 44.1 kHz · Joint stereo · stereo (front
-// left, front right) · 3:25 · 192 kbps VBR · LAME 3.100 (high) · written by Lavf60.16.100 (low)".
+// left, front right) · 3:25 · 192 kbps VBR · LAME 3.100 (high) · written by FFmpeg (Lavf60.16.100) (low)".
 public sealed class StreamItem(StreamInfo stream)
 {
     public StreamInfo Stream { get; } = stream;
