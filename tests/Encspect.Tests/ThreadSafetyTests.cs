@@ -7,8 +7,8 @@ namespace Encspect.Tests;
 // Reports build the nodes of repeated parts when they are read, in blocks, from compact records, hold
 // them weakly and build them again after a collection; two threads reading one block may both build
 // it. These tests read reports the ways that could go wrong: on several threads, with collections in
-// between, and past more than one block, which no committed fixture is.
-[Collection("Thread hammers")]
+// between, and past more than one block, which no committed fixture is. They force no collections from
+// other threads, so they run beside the other tests.
 public class ThreadSafetyTests
 {
     internal const int BlockSize = 1024;

@@ -22,17 +22,82 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - Lists of children past one block are `BlockedChildren` in `Core.Abstractions`: blocks of 1,024 built when first read and held weakly, built again after a collection. `ChunkedList` and `ByteStore` hold the records and kept bytes they are built from.
   - `BlockedChildrenTests` tests the list alone: block switching, rebuilding after a collection, concurrent builds, a builder that throws (error nodes for its block).
   - No fixture has more than one block, so `LongInputs` builds one input per list implementation past 2,048 entries: MPEG audio, ADTS, ADIF, AC-3 and E-AC-3 (raw and in MP4), DTS (raw and in MP4), Ogg, Speex, Vorbis, Opus, ASF, WavPack, Musepack, MP4.
-  - `LongListReadTests` reads every long list with eight threads while a collector thread forces collections, and compares each node with a private report of the same file. `LongReportWriteTests` writes each long report on four threads with the three writers mixed, and again after a collection.
-  - `ThreadSafetyTests` and `ParallelAnalysisTests` analyze every fixture directory on several threads, write every fixture again after a collection, and write one report of each format on several threads.
+  - `LongListReadTests` (the hammer) reads every long list with eight threads while a collector thread forces collections, and compares each node with a private report of the same file. It is the test that catches a list reading its hint of the block read last twice: planting that in `BlockedChildren.BlockOf` fails it and `BlockedChildrenTests` every time.
+  - `LongReportWriteTests` writes a long report on several threads while a collector thread runs. `LongReportRebuildTests` writes it again after a collection.
+  - `ThreadSafetyTests` and `ParallelAnalysisMatchTests` rebuild every fixture's report after a collection and compare parallel with sequential analysis of each fixture directory. `ParallelAnalysisTests` writes one report of each format on several threads.
   - `InputReleaseTests` analyzes every fixture and long input from a stream held only weakly, and requires a collection to free it while the report lives: a node builder must not capture a parse's state, reader or decoder.
-  - These tests and the others that force collections share the `Thread hammers` collection, which runs alone; together they take about a minute on four cores.
+  - **Isolation:** a collector thread stalls every other test of the process, so the tests that run one (`LongListReadTests`, `LongReportWriteTests`, `ParallelAnalysisTests`) and the block list tests (`BlockedChildrenTests`) share the `Thread hammers` collection, which runs alone. The others run beside the rest.
+  - **Pull request and nightly:** `ThreadTestScope` decides how much they read.
+    - The fixture-wide tests (`ThreadSafetyTests.RebuiltAfterCollectionMatches`, `ParallelAnalysisMatchTests`) read the whole corpus in every mode. A sample of it dropped three DTS files that had exposed a race.
+    - On a pull request `LongReportWriteTests` writes with the JSON writer on three threads over the inputs in `ThreadTestScope.PullRequestLongInputs`: one per list implementation, with DTS and one AC-3 family input (E-AC-3) among them. The AC-3 input itself, with 450,000 nodes, is left to the nightly run. `LongReportRebuildTests` rebuilds the same inputs, the AC-3 one included. `ParallelAnalysisTests` writes each report 6 times on 4 threads.
+    - `ENCSPECT_FULL_THREAD_TESTS=1`, set by the nightly run and by a manual run, writes every long input with all three writers on four threads and 24 times on eight threads.
+    - The hammer, the block list tests and `InputReleaseTests` run in full every time.
   - On a mismatch between two writes, `ReportRendering` writes both again as text and names the first differing line.
   - Only the two public mutable static arrays (`Sv7Parser.SampleRates`, `SpeexHeader.ModeNames`) became read-only; the internal `static readonly` tables stay arrays.
 
 ## CI
 
-- The final job of `.github/workflows/ci.yml`, `all checks passed` (job ID `all-checks`), succeeds only when every other job succeeded. The repository ruleset requires that one check and no other, so it never lists job names.
-- A new CI job must be added to the `needs` list of `all-checks`; `CiWorkflowTests` fails when a job is missing from it.
+`.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.
+
+- The final job, `all checks passed` (job ID `all-checks`), succeeds only when every other job succeeded or was skipped on purpose (see the path filter below). The repository ruleset requires that one check and no other, so it never lists job names.
+- A new CI job must be added to the `needs` list of `all-checks`; `CiWorkflowTests` fails when a job is missing from it. A job that the path filter can skip also needs `needs: changes`, `if: needs.changes.outputs.<job ID> == 'true'` and an output of that name in the `changes` job; `CiWorkflowTests` checks all three.
+
+### What runs when
+
+| | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
+|---|---|---|---|
+| Jobs | those the change needs (path filter) | all | all |
+| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | same as main |
+| Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
+| Fuzzing | 300 s | 300 s | 1,800 s |
+| Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
+
+- The platform lists and the sharded test matrix are computed by `scripts/ci/changes.py` from the event.
+- `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow and unchanged.
+
+### Jobs and shards
+
+- `build-test` (per platform): restore, build the whole solution with warnings as errors, the GUI tests, the CLI smoke test, the self-contained CLI and GUI publish with their self-checks, and on Linux the Wayland and X11 self-checks.
+- `unit-tests` (per platform and shard): `Encspect.Tests` split by test class, so a platform's tests take as long as its slowest shard. `scripts/ci/shards.json` lists the classes of each shard but the last, which runs every test no other shard lists, so a new class lands in a shard by itself. `scripts/ci/shards.py filter <name>` prints a shard's `dotnet test --filter`.
+  - `corrupt-a`: the damaged-input classes (`Corrupt*FileTests`) for the MPEG, LAME-written, Ogg and tag fixtures.
+  - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header and DTS fixtures, and `MemoryTests`.
+  - `rest`: every other test, among them the `Thread hammers` collection, which runs alone at the end of the shard.
+  - Locally, about three minutes each, against ten for the whole project in one process. Move a class between shards by editing `shards.json` when one shard's job takes clearly longer than the others'; `check_shards.py` stays green whatever the split.
+- `shard-guard`: `scripts/ci/check_shards.py` lists the tests that `dotnet test --list-tests` reports under each shard's filter and under none, and fails unless every listed entry is in exactly one shard. The list has one entry per theory row it can enumerate and one for a theory it cannot (such as `UsacLayoutTests.NotExhale`), so a shard may run more tests than it lists (the `rest` shard listed 5,288 and ran 5,306). Run it locally after building the tests in Release.
+- `fuzz`, `format`, `fixtures` (the hand-built fixtures are reproducible) and one cross-check job per format family, as before.
+- `docs`: links and indexes of the documentation (`scripts/ci/check_docs.py`) and the Python tests of the pipeline scripts. It runs on every change, so a documentation-only pull request still gets a check.
+
+### Path filter
+
+- The first job, `changes`, runs `scripts/ci/changes.py`, which diffs the pull request's merge commit against its base and publishes one output per job, named like the job.
+- A change under `.github/` or `scripts/ci/` runs every job and accepts no skip. A plain shell step of the `changes` job decides that (not `changes.py`, which would judge its own change), `pipeline` is its output, and `all-checks` repeats the rule in a `jq` step before it runs `check_results.py`.
+- A cross-check job runs when its parser projects, its fixture folders, its scripts (and the scripts they import) or its manifests changed. Any change under `src/Encspect.Formats.*` or `src/Encspect.Tags.*` also runs the MPEG and MP4 jobs, which run the analyzer over downloaded samples (the ISO conformance streams, mp3PRO, xHE-AAC and HE-AAC) that any parser's detection could start claiming. A deleted or renamed file under `scripts/` runs everything, since what imported it cannot be told, and an imported helper counts by name even when its file is gone. A change to `src/Encspect.Core.Abstractions`, `src/Encspect.Host`, `src/Encspect.Cli`, `downloads.py`, `mediainfo_tool.py`, `channel_layouts.py`, `.github/workflows/**`, `scripts/ci/**` or the build props runs every job.
+- The .NET jobs (`build-test`, `unit-tests`, `shard-guard`, `fuzz`, `format`) run for any change under `src`, `tests` and the build files; the `fixtures` job for any change under `scripts/fixtures`, the fixture and manifest folders, and what its scripts read (`src/Encspect.Formats.Aac`, which `check_aac_tables.py` compares with fdk-aac).
+- Documentation only (`docs/**`, `README.md`, `CLAUDE.md`, other Markdown outside `src` and `tests`) runs nothing but `docs`. A topic article under `src/Encspect.Host/Topics` is code: `DescriptionTests` reads it.
+- A path no area knows runs everything: a new project or file under `src` (`src/Directory.Build.props` too), a new folder under `tests`, a new fixture folder, a data file or subfolder of `scripts/fixtures` that no area lists, a new `crosscheck_*.py`. A change that cannot be read runs everything. Pushes to main, the schedule and manual runs never skip a job.
+- `scripts/ci/check_results.py` is the verdict of `all-checks`: a job may be skipped only when the `changes` job published `false` for it; a skip behind a failed dependency fails the check. When a new job reads files the filter does not know, add them to `AREAS` in `changes.py`; `scripts/ci/test_changes.py` covers the rules.
+
+### Caches
+
+- NuGet packages: only the `build-test` job has a cache, `actions/cache/restore` on every run and `actions/cache/save` only on pushes to main, the schedule and manual runs, so a pull request adds no entry. One entry per platform and architecture, keyed on `Directory.Packages.props` and the project files.
+  - Measured on Linux x64 after a restore and the two self-contained publishes: `build-test` leaves 1.5 GB in `~/.nuget/packages` (377 MB of `.nupkg`, mostly the SkiaSharp native assets of every platform, which restore fetches whatever the platform), about 0.8 GB compressed. `unit-tests` restores only `Encspect.Tests` and leaves 78 MB (20 MB of `.nupkg`), which downloads faster than a cache restores, so it has no cache. `Encspect.Cli` and `Encspect.Fuzz` have no package references, so the fuzz and cross-check jobs have none either, and `format` restores nothing.
+  - Six entries of about 0.8 GB are 4 to 5 GB of the repository's 10 GB cache budget while one package set is current, and up to twice that for the week after a package changes until the old keys age out (7 days without use). If the download caches or the faad2 build start to be evicted, delete the NuGet cache steps of `build-test`: restoring 0.8 GB takes about as long as downloading 0.4 GB from nuget.org.
+- Pinned downloads (source archives, samples): `ENCSPECT_DOWNLOAD_CACHE` (`.cache/downloads`) is read and written by `downloads.fetch`.
+  - Entries are named by their SHA-256 and checked against it on every use, so a changed pin downloads the new file and a cache entry can never serve another one.
+  - **A file only the private repository served is never cached.** The Actions cache of a public repository can be restored by a pull request from a fork, so `fetch` remembers a file only when a public address served it. `mpc.zip`, and any sample whose public addresses are gone, are fetched from the private repository on every run.
+  - **Pull requests from forks** do not get the files the private repository served (they cannot read the secret, and the cache holds none), so their MPEG and MP4 cross-checks depend on ISO's server, the Wayback Machine and FFmpeg's FATE server being up. That is accepted.
+  - The ISO conformance, mp3PRO, xHE-AAC and HE-AAC samples no longer have caches of their own (the `iso-13818-4-audio-*`, `mp3pro-samples-*`, `usac-samples-*` and `sbr-samples-*` caches are retired; they may hold files the private repository served and age out 7 days after their last use): those held whatever address served them. They live in the download cache, under the same rule.
+  - A file is touched when it is used or stored, and each job deletes files unused for 30 days before it runs, so a pin that changed does not ride along from week to week.
+  - The key holds the job, the ISO week and the manifests under `tests/conformance`: a job saves one entry a week, not one per commit, and a manifest change refreshes it at once. A new tool pin in a script is downloaded on every run until the next week's entry, and restored entries from earlier weeks still serve every file whose pin did not change.
+- The traced faad2 build of the MP4 cross-check (`.cache/tools/faad2-trace`): keyed on `faad_trace_tool.py`, which holds the pinned commit and the patches, and the runner image.
+- The other tools the cross-checks build (minimp3, mp3guessenc, EncSpot, mctoolamed, libwavpack's block reader, libmpcdec, libdca, liba52's block reader) compile in seconds from the downloads and are not cached themselves.
+
+### When a job fails
+
+- The `fuzz`, `format`, `fixtures`, `shard-guard` and cross-check jobs run their steps through `scripts/ci/step-shell.sh`. When a step fails, it writes the lines that name a problem and the last lines of the step's output to the job's step summary, and the first of them as annotations. The fuzz job lists the inputs it saved.
+- The test jobs write the failed tests with the first lines of their messages to the step summary from the TRX files, and upload the TRX files as the artifact `test-results-<platform>-<shard>` (`test-results-gui-<platform>` for the GUI tests) with a retention of 30 days. The fuzz inputs are the artifact `fuzz-failures`.
+- `python3 scripts/ci_report.py` lists the runs on main (pushes, the nightly schedule, manual runs; every workflow) of the last 14 days (`--days`, `--since 2026-10-01`), and for each red one the failed jobs and steps and the failing tests. It uses only the standard library and the public API: without a token the tests come from the annotations; with `GITHUB_TOKEN` (or `GH_TOKEN`) set, from the job logs. A canceled run is listed as CANCELED, apart from the red ones, and counts as not green: it is a commit or a night without a verdict. Exit code 1 means a run is red or canceled. `CLAUDE.md` asks for it at the start of a working session.
+
 
 ## Fixtures and cross-checks
 
@@ -94,7 +159,7 @@ Every cross-check script also compares each fixture's golden report with MediaIn
   - ffmpeg decodes each packet with CRC checking. For the damaged fixtures it decodes each frame alone and must give the error the manifest names (`decode_errors`), which confirms the analyzer's finding with an independent reader: a deficit sample count, 20 blocks, a subband sample buffer overflow, 3 primary channels for 2/0, a subband activity count, a reserved FixedBit, a user defined arrangement, a missing XCh sync word, an invalid EXSS header checksum, an asset descriptor or sizes that run over, and a core frame size under 96 bytes.
   - libdca (`dca_frames.c`, built against the package's headers) must find the manifest's frames in all four forms, with the sampling frequency, channels and nominal bitrate, and decode each without an error.
   - MediaInfo 24.01 is compared with the golden report, as above.
-- Damaged input: `CorruptTagFileTests` truncates, changes and prefixes every DTS fixture; `DtsTests` holds the fields of a frame in the 16-bit big endian form to their order; the fuzzer's finds (`tests/fixtures/fuzz/dts-*.bin`) are regression inputs of `FuzzRegressionTests`. They found nodes outside their group (a component cut shorter than its sync word, a component beyond its asset, fields past a group's end), a finding whose node was not in the tree, a 14-bit frame cut inside its last word and a size of 1 byte in an XXCH channel set header.
+- Damaged input: `CorruptDtsFileTests` truncates, changes and prefixes every DTS fixture; `DtsTests` holds the fields of a frame in the 16-bit big endian form to their order; the fuzzer's finds (`tests/fixtures/fuzz/dts-*.bin`) are regression inputs of `FuzzRegressionTests`. They found nodes outside their group (a component cut shorter than its sync word, a component beyond its asset, fields past a group's end), a finding whose node was not in the tree, a 14-bit frame cut inside its last word and a size of 1 byte in an XXCH channel set header.
 - Where the tools differ from the analyzer and the specification:
   - ffmpeg's decoder lets a damaged core frame pass when only padding is damaged (a frame cut short or an FSIZE that is too large, with CPF 0): a core frame has no check of its own. The two fixtures say so (`decode_note`).
   - ffmpeg takes a sync word as a frame only when the bits after it are those of a normal frame (FTYPE 1, SHORT 31), so its packets miss a frame with another deficit sample count, and its decoder rejects one (dca_core.c, 'Deficit samples are not supported'), termination frames among them.

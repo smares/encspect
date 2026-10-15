@@ -14,6 +14,8 @@ copies still work.
 
 import hashlib
 import os
+import pathlib
+import shutil
 import subprocess
 import sys
 
@@ -65,10 +67,40 @@ def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+CACHE_VARIABLE = "ENCSPECT_DOWNLOAD_CACHE"
+
+
+def cached(digest):
+    """The file with SHA-256 digest in the download cache named by ENCSPECT_DOWNLOAD_CACHE (CI keeps it
+    between runs), or None. The cache is addressed by content and every copy is checked against its
+    name, so it can never serve a file other than the pinned one, whatever a pin was changed to."""
+    directory = os.environ.get(CACHE_VARIABLE)
+    if not directory:
+        return None
+    entry = pathlib.Path(directory) / digest
+    if entry.is_file() and sha256(entry) == digest:
+        os.utime(entry)  # CI drops what nobody has used for a month
+        return entry
+    return None
+
+
+def remember(path, digest):
+    """Keeps a file that a public address served. Never call it for a file the private repository served: CI
+    keeps this cache in the public Actions cache, which a pull request from a fork can restore."""
+    directory = os.environ.get(CACHE_VARIABLE)
+    if directory:
+        pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, pathlib.Path(directory) / digest)
+
+
 def fetch(addresses, digest, path):
-    """Makes path hold the file with SHA-256 digest: keeps it if it already does, else downloads it
-    from the first address that serves it, saying so when that is not the first."""
+    """Makes path hold the file with SHA-256 digest: keeps it if it already does, else copies it from the
+    download cache, else downloads it from the first address that serves it, saying so when that is not
+    the first."""
     if path.exists() and sha256(path) == digest:
+        return
+    if (entry := cached(digest)) is not None:
+        shutil.copyfile(entry, path)
         return
     failures = []
     for address in addresses:
@@ -76,6 +108,8 @@ def fetch(addresses, digest, path):
         if error is None and sha256(path) == digest:
             if failures:
                 print(f"{path.name}: fetched from {address} after {'; '.join(failures)}", file=sys.stderr)
+            if not address.startswith(PRIVATE):
+                remember(path, digest)
             return
         failures.append(f"{address} has SHA-256 {sha256(path)}" if error is None else f"{address}: {error}")
         path.unlink(missing_ok=True)
