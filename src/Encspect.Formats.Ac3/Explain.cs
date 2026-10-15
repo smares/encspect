@@ -14,6 +14,7 @@ internal static class Topics
     public const string Crc = "crc";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
+    public const string ObjectAudio = "eac3-object-audio";
 }
 
 // What each AC-3 and E-AC-3 node is, in the words the report shows next to it, citing ATSC
@@ -290,4 +291,59 @@ internal static class Explain
     public const string Encoder = "The encoder the file's tags or container name; the AC-3 bit stream carries no encoder name.";
     public const string Confidence = "How sure the encoder detection is: high, medium or low.";
     public const string Evidence = "What names the encoder, and where it was found.";
+
+    public const string ExtensionReserved = "The 7 bits before flag_ec3_extension_type_a in the first byte of the additional bit stream information (ETSI TS 103 420 8.3.1).";
+    public const string ExtensionTypeA = "flag_ec3_extension_type_a: whether the E-AC-3 extension for object audio (joint object coding) is present in this substream (ETSI TS 103 420 8.3.2.1).";
+    public const string ComplexityIndex = "complexity_index_type_a: the decoding complexity of the extension, the number of bed, ISF and dynamic objects the object audio metadata names, at most 16 (ETSI TS 103 420 8.3.2.2).";
+
+    public const string EmdfContainer = "An EMDF container: a sync word and length, a version and key, payloads each with an ID, configuration and size, and protection data (ETSI TS 102 366 Annex H.2).";
+    public const string EmdfSync = "syncword: 0x5838, which starts an EMDF container (ETSI TS 102 366 H.2.2.1.1).";
+    public const string EmdfContainerLength = "emdf_container_length: the length in bytes of the container that follows the length field; bits after the last field up to the byte boundary are 0 (ETSI TS 102 366 H.2.2.1.2).";
+    public const string EmdfVersion = "emdf_version: the syntax version of the container; Annex H defines 0 (ETSI TS 102 366 H.2.2.2.2).";
+    public const string EmdfKeyId = "key_id: which authentication key the protection bits were calculated with; the values are implementation dependent (ETSI TS 102 366 H.2.2.2.3).";
+    public const string EmdfPayload = "One payload of the container: its ID, configuration, size and bytes (ETSI TS 102 366 H.2.1.2).";
+    public const string EmdfPayloadId = "emdf_payload_id: what kind of payload follows; 0 ends the payloads. ETSI TS 102 366 Table H.2.3 names 1 to 7, ETSI TS 103 420 Table 55 names 11 (object audio metadata) and 14 (joint object coding).";
+    public const string EmdfPayloadSize = "emdf_payload_size: the payload's length in bytes, not counting the size field and the payload configuration (ETSI TS 102 366 H.2.2.2.5).";
+    public const string EmdfPayloadData = "The payload's bytes, which are not read: only the payloads of object audio are.";
+    public const string EmdfPayloadConfig = "emdf_payload_config: when the payload applies, how it groups with others and what a transcoder does with it (ETSI TS 102 366 H.2.1.3).";
+    public const string EmdfSmploffste = "smploffste: whether the payload applies from a sample offset into the frame (ETSI TS 102 366 H.2.2.3.1).";
+    public const string EmdfSmploffst = "smploffst: the offset in samples from the frame's start to the first sample the payload applies to (ETSI TS 102 366 H.2.2.3.2).";
+    public const string EmdfConfigReserved = "A reserved bit of the payload configuration (ETSI TS 102 366 H.2.1.3).";
+    public const string EmdfDuratione = "duratione: whether the payload gives how many samples it applies to; without it, to the end of the frame (ETSI TS 102 366 H.2.2.3.3).";
+    public const string EmdfDuration = "duration: the number of samples the payload applies to (ETSI TS 102 366 H.2.2.3.4).";
+    public const string EmdfGroupide = "groupide: whether the payload names a group (ETSI TS 102 366 H.2.2.3.5).";
+    public const string EmdfGroupId = "groupid: payloads of one container with the same group ID belong together (ETSI TS 102 366 H.2.2.3.6).";
+    public const string EmdfCodecdatae = "codecdatae: whether codec-specific data follows; for Annex H payloads it is 0 (ETSI TS 102 366 H.2.2.3.7).";
+    public const string EmdfCodecData = "The 8 reserved bits that codec-specific data takes in the payload configuration (ETSI TS 102 366 H.2.1.3).";
+    public const string EmdfDiscard = "discard_unknown_payload: whether a transcoder drops the payload if it does not know its ID (ETSI TS 102 366 H.2.2.3.8).";
+    public const string EmdfFrameAligned = "payload_frame_aligned: whether the payload must be applied to the audio of this frame (ETSI TS 102 366 H.2.2.3.11).";
+    public const string EmdfCreateDuplicate = "create_duplicate: whether a transcoder repeats the payload in every output frame of the same period (ETSI TS 102 366 H.2.2.3.9).";
+    public const string EmdfRemoveDuplicate = "remove_duplicate: whether a transcoder keeps the payload once per output frame when frames are longer (ETSI TS 102 366 H.2.2.3.10).";
+    public const string EmdfPriority = "priority: 0 is the highest priority of the payloads of the container, higher values are dropped first when a transcoder cannot keep all (ETSI TS 102 366 H.2.2.3.12).";
+    public const string EmdfProcAllowed = "proc_allowed: what processing a transcoder may apply and still keep the payload (ETSI TS 102 366 H.2.2.3.13, Table H.2.4).";
+    public const string EmdfProtection = "emdf_protection: the lengths and bits that let a decoder check the container (ETSI TS 102 366 H.2.1.4).";
+    public const string EmdfProtectionPrimary = "protection_length_primary: the length of the primary protection bits, 8, 32 or 128; 0 is reserved (ETSI TS 102 366 H.2.2.4.1).";
+    public const string EmdfProtectionSecondary = "protection_length_secondary: the length of the secondary protection bits, 0, 8, 32 or 128 (ETSI TS 102 366 H.2.2.4.2).";
+    public const string EmdfProtectionBits = "Protection bits, whose calculation the specification leaves to the implementation (ETSI TS 102 366 H.2.2.4.3, H.2.2.4.4); they are not checked.";
+    public const string EmdfPadding = "The bits that fill the container's last byte; they are 0 (ETSI TS 102 366 H.2.2.1.2).";
+
+    public const string JocHeader = "joc_header: the downmix configuration, the number of objects and the extension configuration of the joint object coding payload (ETSI TS 103 420 6.2.2).";
+    public const string JocDmxConfig = "joc_dmx_config_idx: the channel configuration of the downmix the objects are reconstructed from; 5 to 7 are reserved (ETSI TS 103 420 6.3.2.2, Table 47).";
+    public const string JocObjectCount = "joc_num_objects_bits: one less than joc_num_objects, the objects the joint object coding reconstructs from the downmix, at most 16 (ETSI TS 103 420 6.3.2.4).";
+    public const string JocExtConfig = "joc_ext_config_idx: the type of extension data after the joint object coding data; all values above 0 are reserved (ETSI TS 103 420 6.3.2.5, Table 49).";
+    public const string JocInfo = "The first fields of joc_info: the clip gain and the frame sequence counter (ETSI TS 103 420 6.2.3). The per-object parameters after them are not read.";
+    public const string JocClipGain = "joc_clipgain_x_bits and joc_clipgain_y_bits: together the clip gain, 1 + y / 32 * 2^(x - 4), between 1 and 8.75 (ETSI TS 103 420 6.3.3.2).";
+    public const string JocSeqCount = "joc_seq_count_bits: a frame counter for splice detection that counts up to 1023 and restarts at 1; 0 marks the first frame or one after a splice (ETSI TS 103 420 6.3.3.3).";
+    public const string OamdVersion = "oa_md_version_bits: the version of the object audio metadata syntax (ETSI TS 103 420 5.6.0.1).";
+    public const string OamdObjectCount = "object_count_bits: one less than object_count, the total number of objects in the bit stream (ETSI TS 103 420 5.6.0.2).";
+
+    public const string StatEmdfContainers = "EMDF containers found in the auxiliary data and skip fields of the frames read (ETSI TS 102 366 Annex H).";
+    public const string StatObjectAudioFrames = "Frames with a joint object coding payload in an EMDF container (ETSI TS 103 420 8.2).";
+    public const string StatExtensionFrames = "Frames whose additional bit stream information sets flag_ec3_extension_type_a (ETSI TS 103 420 8.3).";
+    public const string StatObjectCount = "The number of objects joint object coding reconstructs, joc_num_objects (ETSI TS 103 420 6.3.2.4); a range where frames differ.";
+    public const string StatComplexityIndex = "complexity_index_type_a of the frames that set the extension flag (ETSI TS 103 420 8.3.2.2); a range where frames differ.";
+
+    public const string ConfigExtensionReserved = "The 7 bits before flag_ec3_extension_type_a in the EC3SpecificBox (ETSI TS 103 420 C.3.1); ETSI TS 102 366 F.6 reserves them as 0.";
+    public const string ConfigExtensionTypeA = "flag_ec3_extension_type_a: whether the track carries the E-AC-3 extension for object audio (joint object coding) (ETSI TS 103 420 C.3.2.2).";
+    public const string ConfigComplexityIndex = "complexity_index_type_a: the decoding complexity of the extension, the number of bed, ISF and dynamic objects, at most 16 (ETSI TS 103 420 C.3.2.3).";
 }

@@ -171,6 +171,16 @@ internal sealed class Ac3Analysis
         Issue.EnhancedCoupling => "ac3.enhanced-coupling-not-read",
         Issue.MixDataOverrun => "ac3.mix-data-overrun",
         Issue.ChannelMapCount => "ac3.channel-map-count",
+        Issue.EmdfTruncated => "ac3.emdf-truncated",
+        Issue.EmdfLength => "ac3.emdf-length",
+        Issue.EmdfPayloadSize => "ac3.emdf-payload-size",
+        Issue.EmdfReserved => "ac3.emdf-reserved",
+        Issue.EmdfVersion => "ac3.emdf-version-not-read",
+        Issue.PayloadShort => "ac3.object-payload-short",
+        Issue.JocReserved => "ac3.joc-reserved",
+        Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
+        Issue.ExtensionWithoutJoc => "ac3.extension-without-joc",
+        Issue.JocWithoutExtension => "ac3.joc-without-extension",
         _ => "ac3.auxiliary-length",
     };
 
@@ -232,6 +242,46 @@ internal sealed class Ac3Analysis
             case Issue.ChannelMapCount:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"In a dependent substream {detail} (A/52 Annex E 2.3.1.8 requires them to match). First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfTruncated:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container is cut short: {detail} (ETSI TS 102 366 H.2.2.1.2). First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfLength:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container does not end where emdf_container_length says: {detail} (ETSI TS 102 366 H.2.2.1.2). First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfPayloadSize:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF payload runs past its container: {detail} (ETSI TS 102 366 H.2.2.2.5). The rest of the container is not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfReserved:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container holds what ETSI TS 102 366 Annex H does not allow: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfVersion:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"An EMDF container has a version Annex H does not define ({detail}), so its payloads are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.PayloadShort:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An object audio payload is too short for its first fields: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.JocReserved:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"A joint object coding header holds a reserved or out-of-range value: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.ObjectAudioIncomplete:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container has only one of the two payloads of object audio: {detail}; ETSI TS 103 420 8.2 carries the JOC and the OAMD payload together. First in {at} ({Times(count)}).");
+                break;
+            case Issue.ExtensionWithoutJoc:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"The additional bit stream information sets flag_ec3_extension_type_a, but no EMDF container of the frame holds a joint object coding payload. First in {at} ({Times(count)}).");
+                break;
+            case Issue.JocWithoutExtension:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"The frame holds a joint object coding payload, but its additional bit stream information does not set flag_ec3_extension_type_a (ETSI TS 103 420 8.3.1). First in {at} ({Times(count)}).");
                 break;
             case Issue.AuxiliaryLength:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
@@ -364,6 +414,8 @@ internal sealed class Ac3Analysis
             Duration = program.Figures.Duration,
             AverageBitrate = program.Figures.AverageBitrate,
             IsVbr = program.IsVbr,
+            HasObjectAudio = program.HasObjectAudio,
+            ObjectCount = program.ObjectCount,
             Encoder = encoder?.Value?.ToString(),
             EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
             Series = program.Figures.Series(bitrate, Cancellation),

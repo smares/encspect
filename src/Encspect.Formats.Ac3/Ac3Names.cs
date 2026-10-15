@@ -279,4 +279,42 @@ internal static class Ac3Names
     public static string TimeCode1(int value) => $"{value >> 9:D2}:{(value >> 3) & 0x3F:D2}:{(value & 7) * 8:D2}";
 
     public static string TimeCode2(int value) => $"+{value >> 11} s, frame {(value >> 6) & 0x1F}, {value & 0x3F}/64";
+
+    // ETSI TS 102 366 Table H.2.3 for 1 to 7, ETSI TS 103 420 Table 55 for 11 and 14.
+    public static string EmdfPayload(int id) => id switch
+    {
+        1 => "programme loudness data",
+        2 => "programme information",
+        3 => "E-AC-3 substream structure",
+        4 => "dynamic range compression data for portable devices",
+        5 => "programme language",
+        6 => "external data",
+        7 => "headphone rendering data",
+        OamdId => "object audio metadata",
+        JocId => "joint object coding",
+        _ => "not defined by the specifications read",
+    };
+
+    public const int OamdId = 11;
+    public const int JocId = 14;
+
+    // ETSI TS 102 366 Table H.2.4.
+    public static string EmdfProcessing(int value) => value switch
+    {
+        0 => "kept only if nothing is processed",
+        1 => "kept after sample rate conversion",
+        2 => "kept after sample rate conversion, mixing in sounds, changed informational metadata or a changed channel configuration",
+        _ => "kept whatever is done",
+    };
+
+    // ETSI TS 103 420 Table 47.
+    public static string JocDownmix(int value) => value switch
+    {
+        0 => "5.X: left, right, center, left surround, right surround",
+        1 => "7.X: left, right, center, left surround, right surround, left back, right back",
+        2 => "5.X + 2: left, right, center, left surround, right surround, top front left, top front right",
+        3 => "5.X with 90 degree phase shift",
+        4 => "5.X + 2 with 90 degree phase shift",
+        _ => "reserved",
+    };
 }

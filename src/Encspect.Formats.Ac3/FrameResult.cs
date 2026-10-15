@@ -82,6 +82,24 @@ internal sealed class FrameResult
 
     public bool HasChannelMap { get; set; }
 
+    // Object audio (ETSI TS 103 420): the addbsi extension of the bit stream information (8.3), with
+    // flag_ec3_extension_type_a as 0 or 1, or -1 where the frame has no such addbsi, and
+    // complexity_index_type_a or -1; the EMDF containers found in the frame, whether they hold a
+    // JOC and an OAMD payload, and the object counts those give (-1 where not read).
+    public int ExtensionFlag { get; set; } = -1;
+
+    public int ComplexityIndex { get; set; } = -1;
+
+    public int EmdfContainers { get; set; }
+
+    public bool HasJoc { get; set; }
+
+    public bool HasOamd { get; set; }
+
+    public int JocObjects { get; set; } = -1;
+
+    public int OamdObjects { get; set; } = -1;
+
     public void Reset(int blocks)
     {
         Stop = StopReason.None;
@@ -107,5 +125,12 @@ internal sealed class FrameResult
         DolbySurroundMode = -1;
         ChannelMap = 0;
         HasChannelMap = false;
+        ExtensionFlag = -1;
+        ComplexityIndex = -1;
+        EmdfContainers = 0;
+        HasJoc = false;
+        HasOamd = false;
+        JocObjects = -1;
+        OamdObjects = -1;
     }
 }

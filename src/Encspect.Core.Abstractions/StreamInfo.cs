@@ -51,6 +51,15 @@ public sealed record StreamInfo
 
     public bool IsVbr { get; init; }
 
+    // True where the stream's data carry object-based audio: for E-AC-3, joint object coding (JOC)
+    // side information in an EMDF container (ETSI TS 103 420), the layer Dolby Atmos adds to a
+    // channel-based stream. A stream that only signals it, as a container's configuration may, is not.
+    public bool HasObjectAudio { get; init; }
+
+    // The number of objects the object audio reconstructs, or null where it is not known or the
+    // stream has no object audio.
+    public int? ObjectCount { get; init; }
+
     public string? Encoder { get; init; }
 
     public Confidence? EncoderConfidence { get; init; }

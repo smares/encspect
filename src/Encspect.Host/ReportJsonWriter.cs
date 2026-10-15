@@ -185,6 +185,16 @@ public static class ReportJsonWriter
         }
 
         writer.WriteBoolean("isVbr", stream.IsVbr);
+        if (stream.HasObjectAudio)
+        {
+            writer.WriteBoolean("hasObjectAudio", true);
+        }
+
+        if (stream.ObjectCount is { } objects)
+        {
+            writer.WriteNumber("objectCount", objects);
+        }
+
         if (stream.Encoder is not null)
         {
             writer.WriteString("encoder", stream.Encoder);

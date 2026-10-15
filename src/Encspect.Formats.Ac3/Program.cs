@@ -68,6 +68,26 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     private long AuxiliaryBits { get; set; }
 
+    private int EmdfContainers { get; set; }
+
+    private int JocFrames { get; set; }
+
+    private int ExtensionFrames { get; set; }
+
+    private int MinObjects { get; set; } = int.MaxValue;
+
+    private int MaxObjects { get; set; }
+
+    private int MinComplexity { get; set; } = int.MaxValue;
+
+    private int MaxComplexity { get; set; } = -1;
+
+    // Whether the frames carry joint object coding, and the objects it reconstructs (the most any
+    // frame gives), or null where no frame says.
+    public bool HasObjectAudio => JocFrames > 0;
+
+    public int? ObjectCount => MaxObjects > 0 ? MaxObjects : null;
+
     private readonly long[] _strategies = new long[4];
 
     public void Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError)
@@ -97,6 +117,24 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             }
 
             CompressionFrames += result.HasCompression ? 1 : 0;
+        }
+
+        EmdfContainers += result.EmdfContainers;
+        if (result.HasJoc)
+        {
+            JocFrames++;
+            if (result.JocObjects > 0)
+            {
+                MinObjects = Math.Min(MinObjects, result.JocObjects);
+                MaxObjects = Math.Max(MaxObjects, result.JocObjects);
+            }
+        }
+
+        if (result.ExtensionFlag == 1)
+        {
+            ExtensionFrames++;
+            MinComplexity = Math.Min(MinComplexity, result.ComplexityIndex);
+            MaxComplexity = Math.Max(MaxComplexity, result.ComplexityIndex);
         }
 
         CrcErrors += crcError ? 1 : 0;
@@ -336,8 +374,27 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             Add("Auxiliary Data", NodeValue.Integer(AuxiliaryBits, "bits"), Explain.StatAuxiliary);
         }
 
+        if (EmdfContainers > 0 || ExtensionFrames > 0)
+        {
+            Add("EMDF Containers", NodeValue.Integer(EmdfContainers, "containers", "container"), Explain.StatEmdfContainers, Topics.ObjectAudio);
+            Add("Frames With Object Audio", NodeValue.Integer(JocFrames, "frames", "frame"), Explain.StatObjectAudioFrames, Topics.ObjectAudio);
+            Add("Frames With Extension Type A", NodeValue.Integer(ExtensionFrames, "frames", "frame"), Explain.StatExtensionFrames, Topics.ObjectAudio);
+            if (MaxObjects > 0)
+            {
+                Add("Object Count", Range(MinObjects, MaxObjects, "objects", "object"), Explain.StatObjectCount, Topics.ObjectAudio);
+            }
+
+            if (MaxComplexity >= 0)
+            {
+                Add("Complexity Index Type A", Range(MinComplexity, MaxComplexity, null, null), Explain.StatComplexityIndex, Topics.ObjectAudio);
+            }
+        }
+
         return statistics;
     }
+
+    private static NodeValue Range(int low, int high, string? unit, string? singular) =>
+        low == high ? (unit is null ? NodeValue.Integer(low) : NodeValue.Integer(low, unit, singular!)) : $"{low} to {high}{(unit is null ? string.Empty : " " + unit)}";
 
     private enum Token
     {

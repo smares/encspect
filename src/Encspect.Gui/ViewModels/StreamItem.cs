@@ -53,6 +53,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add(Format.Bitrate(bitrate, Stream.IsVbr));
             }
 
+            if (Stream.HasObjectAudio)
+            {
+                parts.Add(Stream.ObjectCount is { } objects ? $"object audio ({Format.Count(objects, "object", "objects")})" : "object audio");
+            }
+
             if (Stream.Encoder is { } encoder)
             {
                 parts.Add(Format.Encoder(encoder, Stream.EncoderConfidence));

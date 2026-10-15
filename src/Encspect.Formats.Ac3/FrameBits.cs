@@ -155,6 +155,33 @@ internal sealed class FrameBits
     // while building nodes.
     public int Peek(int start, int width) => IsBuildingNodes ? 0 : Take(_source, start, width, _limit);
 
+    // The first bit in [from, to) where a 16-bit pattern starts, or -1; while building nodes there
+    // are no source bits, so -1. Every byte of the range is tested against the bytes that can lie
+    // inside the pattern at some alignment, so only a rare byte is checked bit by bit.
+    public int FindPattern16(int from, int to, int pattern, ReadOnlySpan<byte> candidates)
+    {
+        if (IsBuildingNodes)
+        {
+            return -1;
+        }
+
+        to = Math.Min(to, _limit);
+        for (int j = from >> 3; j <= (to - 1) >> 3 && j < _source.Length; j++)
+        {
+            byte mask = candidates[_source[j]];
+            for (int k = 0; mask != 0 && k < 8; k++, mask >>= 1)
+            {
+                int start = ((j - 1) * 8) + k;
+                if ((mask & 1) != 0 && start >= from && start + 16 <= to && Take(_source, start, 16, _limit) == pattern)
+                {
+                    return start;
+                }
+            }
+        }
+
+        return -1;
+    }
+
     private void Keep(int width, int value)
     {
         if (_keptBits + width > MaxKeptBytes * 8)

@@ -232,6 +232,33 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 }
             }
 
+            if (data.Length * 8 - position >= 16)
+            {
+                // ETSI TS 103 420 C.3.1: after the substreams, reserved bits, the extension flag and
+                // the complexity index; TS 102 366 F.6 reserves these bytes.
+                Reserved(Read("Reserved", 7, Explain.ConfigExtensionReserved));
+                int flag = Read("HasExtensionTypeA", 1, Explain.ConfigExtensionTypeA, v => NodeValue.Boolean(v != 0));
+                if (flag == 1 && !observed.HasJoc)
+                {
+                    Differs("flag_ec3_extension_type_a", 1, "no joint object coding payload");
+                }
+                else if (flag == 0 && observed.HasJoc)
+                {
+                    Differs("flag_ec3_extension_type_a", 0, "joint object coding payloads");
+                }
+
+                int complexity = Read("Complexity Index Type A", 8, Explain.ConfigComplexityIndex);
+                if (flag == 1 && observed.Complexity >= 0 && complexity != observed.Complexity)
+                {
+                    Differs("complexity_index_type_a", complexity, observed.Complexity);
+                }
+            }
+            else if (observed.HasJoc)
+            {
+                analysis.Findings.AddNow(Severity.Warning, "ac3.config-differs",
+                    "The dec3 box ends after its substreams and so does not give flag_ec3_extension_type_a (ETSI TS 103 420 C.3.1), but the frames hold joint object coding payloads; players that set up their decoder from the box and those that read the frames differ.", box);
+            }
+
             if (position < data.Length * 8)
             {
                 box.Add(Node.FromBits("Reserved", data, position, data.Length * 8, NodeValue.Integer(data.Length * 8 - position, "bits"), description: Explain.ConfigTrailing));
@@ -287,6 +314,12 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
         public int MaxDataRate { get; private set; }
 
+        // Whether any frame holds a joint object coding payload, and the complexity index the first
+        // frame that sets the extension flag gives, or -1.
+        public bool HasJoc { get; private set; }
+
+        public int Complexity { get; private set; } = -1;
+
         public void StartSample()
         {
             Flush();
@@ -303,6 +336,12 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
             }
 
             HasEac3 |= header.IsEac3;
+            HasJoc |= result.HasJoc;
+            if (result.ExtensionFlag == 1 && Complexity < 0)
+            {
+                Complexity = result.ComplexityIndex;
+            }
+
             _sampleBits += length * 8L;
             _sampleRate = header.SampleRate;
             if (header.IsDependent)
