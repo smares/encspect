@@ -1,0 +1,365 @@
+{
+ "description": "A frame type table that gives type 15 the slot 21 and type 16 the slot 22, which no code reaches; the stream uses types 0 to 15.",
+ "format": "ASF",
+ "length": 1388,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   1058
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 1000,
+   "block_align": 120,
+   "bits": 16,
+   "codec_data": "100004000000000000000000000000000000950400000012524db927e00000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   168,
+   1
+  ],
+  [
+   548,
+   168,
+   1
+  ],
+  [
+   716,
+   168,
+   1
+  ],
+  [
+   884,
+   168,
+   1
+  ],
+  [
+   1052,
+   168,
+   1
+  ],
+  [
+   1220,
+   168,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   4,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   4,
+   1,
+   5,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   5,
+   1,
+   6,
+   0,
+   8,
+   120,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   120,
+   0,
+   [
+    [
+     411,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   120,
+   120,
+   [
+    [
+     579,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   120,
+   240,
+   [
+    [
+     747,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   120,
+   360,
+   [
+    [
+     915,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   120,
+   480,
+   [
+    [
+     1083,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   120,
+   600,
+   [
+    [
+     1251,
+     120
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1388,
+  "packets": 6,
+  "play_duration": 7200000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 168,
+  "max_packet": 168,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.voice-frame-type-unreachable",
+   "contains": "type 16"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": "ok"
+ },
+ "voice": {
+  "superframes": [
+   {
+    "types": [
+     4,
+     11,
+     10
+    ],
+    "samples": 480,
+    "bits": 430,
+    "additional": 0
+   },
+   {
+    "types": [
+     13,
+     12,
+     3
+    ],
+    "samples": 480,
+    "bits": 508,
+    "additional": 0
+   },
+   {
+    "types": [
+     6,
+     0,
+     1
+    ],
+    "samples": 480,
+    "bits": 236,
+    "additional": 0
+   },
+   {
+    "types": [
+     15,
+     14,
+     5
+    ],
+    "samples": 480,
+    "bits": 664,
+    "additional": 0
+   },
+   {
+    "types": [
+     2,
+     8,
+     9
+    ],
+    "samples": 480,
+    "bits": 298,
+    "additional": 0
+   },
+   {
+    "types": [
+     7,
+     11,
+     4
+    ],
+    "samples": 480,
+    "bits": 486,
+    "additional": 0
+   },
+   {
+    "types": [
+     9,
+     1,
+     7
+    ],
+    "samples": 480,
+    "bits": 363,
+    "additional": 0
+   },
+   {
+    "types": [
+     0,
+     5,
+     14
+    ],
+    "samples": 480,
+    "bits": 409,
+    "additional": 0
+   },
+   {
+    "types": [
+     8,
+     12,
+     13
+    ],
+    "samples": 480,
+    "bits": 500,
+    "additional": 0
+   },
+   {
+    "types": [
+     3,
+     2,
+     10
+    ],
+    "samples": 480,
+    "bits": 330,
+    "additional": 0
+   },
+   {
+    "types": [
+     6,
+     15,
+     2
+    ],
+    "samples": 480,
+    "bits": 524,
+    "additional": 0
+   },
+   {
+    "types": [
+     13,
+     11,
+     1
+    ],
+    "samples": 480,
+    "bits": 421,
+    "additional": 0
+   }
+  ],
+  "decoded_samples": 5760
+ }
+}

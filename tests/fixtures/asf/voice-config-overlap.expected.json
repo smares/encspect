@@ -1,0 +1,396 @@
+{
+ "description": "A frame type table that puts four types in group 0, so that the fourth takes the first slot of group 1, which type 4 then overwrites; the stream uses the other 16 types.",
+ "format": "ASF",
+ "length": 1556,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   1226
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 1000,
+   "block_align": 120,
+   "bits": 16,
+   "codec_data": "1000040000000000000000000000000000009504000000024a49b724a00000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   168,
+   1
+  ],
+  [
+   548,
+   168,
+   1
+  ],
+  [
+   716,
+   168,
+   1
+  ],
+  [
+   884,
+   168,
+   1
+  ],
+  [
+   1052,
+   168,
+   1
+  ],
+  [
+   1220,
+   168,
+   1
+  ],
+  [
+   1388,
+   168,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   4,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   4,
+   1,
+   5,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   5,
+   1,
+   6,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   6,
+   1,
+   7,
+   0,
+   8,
+   120,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   120,
+   0,
+   [
+    [
+     411,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   120,
+   102,
+   [
+    [
+     579,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   120,
+   205,
+   [
+    [
+     747,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   120,
+   308,
+   [
+    [
+     915,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   120,
+   411,
+   [
+    [
+     1083,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   120,
+   514,
+   [
+    [
+     1251,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   7,
+   120,
+   617,
+   [
+    [
+     1419,
+     120
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1556,
+  "packets": 7,
+  "play_duration": 7200000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 168,
+  "max_packet": 168,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.voice-frame-type-overlap",
+   "contains": "four frame types in group 0"
+  },
+  {
+   "code": "wma.voice-frame-type-unreachable",
+   "contains": "type 3"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": "ok"
+ },
+ "voice": {
+  "superframes": [
+   {
+    "types": [
+     5,
+     12,
+     11
+    ],
+    "samples": 480,
+    "bits": 472,
+    "additional": 0
+   },
+   {
+    "types": [
+     14,
+     13,
+     4
+    ],
+    "samples": 480,
+    "bits": 596,
+    "additional": 0
+   },
+   {
+    "types": [
+     7,
+     0,
+     1
+    ],
+    "samples": 480,
+    "bits": 272,
+    "additional": 0
+   },
+   {
+    "types": [
+     16,
+     15,
+     6
+    ],
+    "samples": 480,
+    "bits": 766,
+    "additional": 0
+   },
+   {
+    "types": [
+     2,
+     9,
+     10
+    ],
+    "samples": 480,
+    "bits": 338,
+    "additional": 0
+   },
+   {
+    "types": [
+     8,
+     12,
+     5
+    ],
+    "samples": 480,
+    "bits": 416,
+    "additional": 0
+   },
+   {
+    "types": [
+     10,
+     1,
+     8
+    ],
+    "samples": 480,
+    "bits": 289,
+    "additional": 0
+   },
+   {
+    "types": [
+     0,
+     6,
+     15
+    ],
+    "samples": 480,
+    "bits": 465,
+    "additional": 0
+   },
+   {
+    "types": [
+     9,
+     13,
+     14
+    ],
+    "samples": 480,
+    "bits": 580,
+    "additional": 0
+   },
+   {
+    "types": [
+     4,
+     2,
+     11
+    ],
+    "samples": 480,
+    "bits": 368,
+    "additional": 0
+   },
+   {
+    "types": [
+     7,
+     16,
+     2
+    ],
+    "samples": 480,
+    "bits": 606,
+    "additional": 0
+   },
+   {
+    "types": [
+     14,
+     12,
+     1
+    ],
+    "samples": 480,
+    "bits": 473,
+    "additional": 0
+   }
+  ],
+  "decoded_samples": 5760
+ }
+}

@@ -1,0 +1,167 @@
+{
+ "description": "A frame type table that puts five frame types in the first group of codes, which FFmpeg's decoder rejects.",
+ "format": "ASF",
+ "length": 884,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   554
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 1000,
+   "block_align": 120,
+   "bits": 16,
+   "codec_data": "100004000000000000000000000000000000950400000000494936e4800000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   168,
+   1
+  ],
+  [
+   548,
+   168,
+   1
+  ],
+  [
+   716,
+   168,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   120,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   120,
+   0,
+   [
+    [
+     411,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   120,
+   120,
+   [
+    [
+     579,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   120,
+   240,
+   [
+    [
+     747,
+     120
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 884,
+  "packets": 3,
+  "play_duration": 3600000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 168,
+  "max_packet": 168,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.voice-frame-type-table",
+   "contains": "type 4 in group 0"
+  },
+  {
+   "code": "wma.voice-not-read",
+   "contains": "rejects the stream's configuration"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "ffprobe opens the decoder to read the stream and fails with the decoder's message.",
+  "decode": "error",
+  "messages": [
+   "Invalid VBM tree"
+  ]
+ }
+}
