@@ -1,0 +1,158 @@
+{
+ "description": "afconvert -f adts -d aacp -s 0 -b 32000 pcm/st44h.wav {out} on the deterministic signal of wma_signals.py (pcm/st44h.wav).",
+ "encoder": {
+  "command": [
+   "afconvert",
+   "-f",
+   "adts",
+   "-d",
+   "aacp",
+   "-s",
+   "0",
+   "-b",
+   "32000",
+   "pcm/st44h.wav",
+   "{out}"
+  ]
+ },
+ "length": 4977,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "is_vbr": false,
+   "encoder": [
+    "Apple AudioToolbox",
+    "Low"
+   ],
+   "ffprobe_profile": "HE-AACv2",
+   "samples": 51200
+  }
+ ],
+ "units": [
+  [
+   0,
+   134
+  ],
+  [
+   134,
+   316
+  ],
+  [
+   450,
+   152
+  ],
+  [
+   602,
+   152
+  ],
+  [
+   754,
+   247
+  ],
+  [
+   1001,
+   401
+  ],
+  [
+   1402,
+   324
+  ],
+  [
+   1726,
+   136
+  ],
+  [
+   1862,
+   111
+  ],
+  [
+   1973,
+   354
+  ],
+  [
+   2327,
+   183
+  ],
+  [
+   2510,
+   139
+  ],
+  [
+   2649,
+   105
+  ],
+  [
+   2754,
+   345
+  ],
+  [
+   3099,
+   235
+  ],
+  [
+   3334,
+   156
+  ],
+  [
+   3490,
+   102
+  ],
+  [
+   3592,
+   113
+  ],
+  [
+   3705,
+   368
+  ],
+  [
+   4073,
+   196
+  ],
+  [
+   4269,
+   140
+  ],
+  [
+   4409,
+   112
+  ],
+  [
+   4521,
+   332
+  ],
+  [
+   4853,
+   94
+  ],
+  [
+   4947,
+   30
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "25 of 25 raw data blocks hold SBR data, and 25 carry the parametric stereo extension"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}

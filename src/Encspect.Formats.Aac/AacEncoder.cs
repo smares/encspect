@@ -32,6 +32,18 @@ namespace Encspect.Formats.Aac;
 // ISO/IEC 23003-3 conformance streams checked have a fill element and no pre-roll element. The
 // layout names exhale with medium confidence, without a version, which an agreeing claim supplies.
 //
+// Apple's AAC encoder (AudioToolbox, as afconvert, iTunes and QuickTime use it) writes no text into the
+// stream. Its file writer lays files out in a way of its own: an M4A, MP4 or 3GP track whose DecoderConfigDescriptor
+// has its reserved stream type bit clear, with an sbtd box or a free box that pads the audio data to a page (the MP4
+// parser), and ADTS headers with the original/copy bit set and a buffer fullness of 0. They are claims that name
+// "Apple AudioToolbox", the writer, with low confidence, because afconvert's -d 0 gives the layout to packets it only
+// copied, such as an fdkaac stream (macOS 15.7, run 4): an ADTS target always gets Apple's headers, whatever the source,
+// and an M4A or MP4 target always gets the padding and, from an ADTS source, the stream type byte (an M4A source keeps its
+// own). With an sbtd box in
+// the sample entry, which records the PCM source of an encode and which no copy had, the MP4 claim names the encoder at
+// medium confidence. A signature in the stream (ffmpeg's, FAAC's) wins over a claim, and a name some software wrote
+// (a tool atom) outranks a layout of equal confidence.
+//
 // FAAC 1.30, 1.31.1, 1.40 and 1.50 sign their streams with text (FaacVersion). FAAC 2.0, 2.1 and 2.2
 // write none, and their HE-AAC encoder lays out its SBR data in ways of its own (FaacSbr): the layout
 // names FAAC with medium confidence, without a version, which an agreeing claim supplies. 2.2 writes
@@ -53,7 +65,7 @@ internal static partial class AacEncoder
         ("exhale", ["exhale"]),
         ("Nero", ["nero"]),
         ("qaac", ["qaac"]),
-        ("iTunes", ["itunes"]),
+        ("Apple", ["apple", "audiotoolbox", "itunes"]),
     ];
 
     private static readonly Dictionary<string, Regex> MarkerPatterns = Families.SelectMany(f => f.Markers).ToDictionary(m => m, m =>
@@ -76,11 +88,12 @@ internal static partial class AacEncoder
     public sealed record Signature(string Text, Node Unit, int Index);
 
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a
-    // claim that names another encoder than the stream's evidence.
+    // claim that names another encoder than the evidence that won, with a phrase that says what that was.
     public static Node? Detect(Signature? signature, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs,
         UsacLayout? usac = null, CodingTally? tally = null)
     {
         Node? encoder = null;
+        EncoderClaim? winner = null;
         bool versionless = false;
         if (signature is not null && LavcVersion().IsMatch(signature.Text))
         {
@@ -122,7 +135,9 @@ internal static partial class AacEncoder
             versionless = true;
         }
 
-        foreach (EncoderClaim claim in claims)
+        // A stronger claim outranks a weaker one, and a name some software wrote outranks a layout of equal confidence: the
+        // layout may only be a copy's wrapper.
+        foreach (EncoderClaim claim in claims.OrderByDescending(c => c.Confidence).ThenBy(c => c.IsLayout))
         {
             string text = claim.Text.Trim();
             if (text.Length == 0)
@@ -131,7 +146,9 @@ internal static partial class AacEncoder
             }
 
             HashSet<string> claimed = FamiliesOf(text);
-            string evidence = $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
+            string evidence = claim.IsLayout
+                ? $"{claim.Description} (at 0x{claim.Source.Offset:X})"
+                : $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
             if (encoder is null)
             {
                 // ffmpeg's muxer writes its own version whatever encoded the stream.
@@ -141,7 +158,8 @@ internal static partial class AacEncoder
                 }
 
                 encoder = cover("Encoder", ClaimedName(text), Explain.Encoder);
-                encoder.Add(cover("Confidence", "Low", Explain.Confidence));
+                winner = claim;
+                encoder.Add(cover("Confidence", claim.Confidence.ToString(), Explain.Confidence));
                 encoder.Add(cover("Evidence", evidence, Explain.Evidence));
                 continue;
             }
@@ -159,7 +177,7 @@ internal static partial class AacEncoder
             }
             else
             {
-                differs(claim, text, encoder.Value!.ToString());
+                differs(claim, text, Phrase(winner, encoder.Value!.ToString()));
             }
         }
 
@@ -198,6 +216,33 @@ internal static partial class AacEncoder
             [{ Type: 2, Length: >= 7 and <= 9, SingleLoudnessMeasurement: true }] => true,
             _ => false,
         };
+    }
+
+    // What won, as "but ..." in a finding: the stream, or the claim that named the encoder. The name is the Encoder node's value, quoted for both.
+    private static string Phrase(EncoderClaim? winner, string name) => winner is null
+        ? $"the stream points to \"{name}\""
+        : winner.IsLayout ? $"the {Subject(winner)} points to \"{name}\"" : $"the {winner.Description} names \"{name}\"";
+
+    // A layout claim's description reads "what it is: the traces", and its subject is the part before the colon.
+    private static string Subject(EncoderClaim claim)
+    {
+        int colon = claim.Description.IndexOf(':', StringComparison.Ordinal);
+        return colon > 0 ? claim.Description[..colon] : claim.Description;
+    }
+
+    // The finding for a claim that names another encoder than the winner (the phrase Detect gives). A name some software wrote is a claim;
+    // a layout is the traces of the writer that laid the file out, which also writes them around packets it only copied.
+    public static string Disagreement(EncoderClaim claim, string text, string winner, string cause)
+    {
+        if (!claim.IsLayout)
+        {
+            return $"The {claim.Description} names \"{text}\", but {winner}; {cause}";
+        }
+
+        // An sbtd box records the PCM source of an encode, and no copy had one; a layout without it is the writer's, which also lays it around copies.
+        return claim.Confidence >= Confidence.Medium
+            ? $"The {Subject(claim)} points to \"{text}\", but {winner}; the sbtd box records the source of an encode, so other software may have replaced the stream in the file."
+            : $"The {Subject(claim)} points to \"{text}\", but {winner}; the writer also lays out streams it only copied in the same way, and other software may have rewritten the file.";
     }
 
     private static HashSet<string> FamiliesOf(string text)

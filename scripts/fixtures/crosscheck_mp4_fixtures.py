@@ -115,6 +115,31 @@ def mp4box_boxes(path):
     return rows
 
 
+# Boxes MP4Box skips without listing: Apple's sbtd box inside an audio sample entry (an unknown box there). The manifests
+# list them, with the size the file states, and the comparison with MP4Box's list leaves them out.
+UNLISTED_BOXES = {"sbtd"}
+
+
+def with_unlisted(path, rows):
+    """MP4Box's rows with the unlisted boxes added after the esds box of the sample entry that holds them, sized by the file."""
+    data = pathlib.Path(path).read_bytes()
+    out = list(rows)
+    # only inside the sample description box, not in the media data
+    stsd = data.find(b"stsd")
+    if stsd < 4:
+        return out
+    stsd_end = stsd - 4 + int.from_bytes(data[stsd - 4:stsd], "big")
+    for kind in UNLISTED_BOXES:
+        at = data.find(kind.encode("ascii"), stsd, stsd_end)
+        while 4 <= at < stsd_end:
+            size = int.from_bytes(data[at - 4:at], "big")
+            index = next((i for i, (p, _) in enumerate(out) if p.endswith("/esds")), None)
+            if index is not None and size >= 8:
+                out.insert(index + 1, (out[index][0].rsplit("/", 1)[0] + "/" + kind, size))
+            at = data.find(kind.encode("ascii"), at + 1, stsd_end)
+    return out
+
+
 def mp4box_fields(path):
     """Fields of the first movie, track and media header, edit, audio sample entry and decoder configuration that MP4Box reads, as the
     analyzer's node paths and the values it must show for them."""
@@ -580,7 +605,8 @@ def main():
                 boxes = mp4box_boxes(path)
                 # MP4Box reads one data atom per iTunes item, so it does not list an item's further ones (cover art with several images).
                 expected = [(b[0], b[2]) for i, b in enumerate(manifest["boxes"])
-                            if not (re.search(r"/ilst/[^/]+/data$", b[0]) and i > 0 and manifest["boxes"][i - 1][0] == b[0])]
+                            if not (re.search(r"/ilst/[^/]+/data$", b[0]) and i > 0 and manifest["boxes"][i - 1][0] == b[0])
+                            and b[0].rsplit("/", 1)[-1] not in UNLISTED_BOXES]
                 if boxes != expected:
                     if boxes is None:
                         problems.append("MP4Box cannot read the file")

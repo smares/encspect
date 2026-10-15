@@ -1,0 +1,76 @@
+{
+ "description": "afconvert -v -f m4af -d alac pcm/st44q24.wav encoded/alac-m4a-st44q24.m4a on 0.5 s of the quiet signal of wma_signals.py.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d alac pcm/st44q24.wav encoded/alac-m4a-st44q24.m4a",
+  "file_type": "m4af",
+  "format_id": "alac",
+  "codec": "Apple Lossless",
+  "strategy": "lossless",
+  "options": "",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 2,
+   "sample_rate": 44100,
+   "format_id": "alac",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/alac-m4a-st44q24.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     2 ch,  44100 Hz, alac (0x00000003) from 24-bit source, 4096 frames/packet",
+    "                no channel layout.",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 95354",
+    "audio packets: 6",
+    "bit rate: 1368851 bits per second",
+    "packet size upper bound: 18226",
+    "maximum packet size: 18226",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 22050 valid frames + 0 priming + 2526 remainder = 24576",
+    "source bit depth: I24",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "st44q24",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 24,
+  "seconds": 0.5,
+  "signal": "quiet",
+  "generator": "wma_signals.py",
+  "channel_mask": null,
+  "channel_layout_tag": null,
+  "info_tags": null,
+  "sha256": "65db8a12003ba099dcba803bbac90b5b997be362af2d6d6f912065447ab5b390"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 99450,
+ "sha256": "b654014a1bc4c29784e07a0f0ec5f35800bfef97b08296d66c41f9e625401e99",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}

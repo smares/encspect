@@ -43,6 +43,7 @@ internal static class BoxNames
         "csgp" => "Compact Sample to Group",
         "esds" => "Elementary Stream Descriptor",
         "btrt" => "Bitrate",
+        "sbtd" => "Source Bit Depth",
         "dac3" => "AC-3 Specific",
         "dec3" => "E-AC-3 Specific",
         "ddts" => "DTS Specific",

@@ -1,0 +1,92 @@
+{
+ "description": "afconvert -v -f m4af -d aac -s 0 -b 128000 --soundcheck-generate pcm/st44.wav encoded/lc-m4a-soundcheck-st44.m4a on 0.5 s of the tones signal of wma_signals.py.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d aac -s 0 -b 128000 --soundcheck-generate pcm/st44.wav encoded/lc-m4a-soundcheck-st44.m4a",
+  "file_type": "m4af",
+  "format_id": "aac",
+  "codec": "AAC LC",
+  "strategy": "cbr",
+  "options": "-s 0 -b 128000 --soundcheck-generate",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 2,
+   "sample_rate": 44100,
+   "format_id": "aac",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/lc-m4a-soundcheck-st44.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "                no channel layout.",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 8877",
+    "audio packets: 24",
+    "bit rate: 127433 bits per second",
+    "packet size upper bound: 536",
+    "maximum packet size: 536",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 22050 valid frames + 2112 priming + 414 remainder = 24576",
+    "source bit depth: I16",
+    "format list:",
+    "[ 0] format:\t  2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "Loudness Info:",
+    "    sound check info                 :",
+    "        sc ave perceived power coeff     : \"1906 2479\"",
+    "        sc max perceived power coeff     : \"2642 3594\"",
+    "        sc peak amplitude msec           : \"0 372\"",
+    "        sc max perceived power msec      : \"395 163\"",
+    "        sc peak amplitude                : \"20747 20767\"",
+    "    main loudness parameters         :",
+    "        aa itu true peak                 : -2.03125",
+    "        aa itu sample peak               : -3.96875",
+    "        aa itu loudness                  : -11",
+    "        aa ebu max momentary loudness    : -9.75",
+    "sound check volume normalization gain: -5.00 dB",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "st44",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 0.5,
+  "signal": "tones",
+  "generator": "wma_signals.py",
+  "channel_mask": null,
+  "channel_layout_tag": null,
+  "info_tags": null,
+  "sha256": "9ac267147a57725bd9616bd7532b9c167914426672b4b0c2cb53f4962ea99ed8"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 12973,
+ "sha256": "cf18fbb08bedb2252441e1a278e73c3b7543153b43d424960598c962653a7f33",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}

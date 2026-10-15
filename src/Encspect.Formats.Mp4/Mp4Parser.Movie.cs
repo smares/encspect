@@ -58,6 +58,9 @@ public sealed partial class Mp4Parser
             case "esds":
                 ElementaryStreamDescriptor(state, node, f);
                 return true;
+            case "sbtd":
+                SourceBitDepth(state, node, f);
+                return true;
             case "dac3" or "dec3" or "ddts":
                 CodecSpecificBox(state, node, f);
                 return true;
@@ -127,6 +130,23 @@ public sealed partial class Mp4Parser
                 }
 
                 return false;
+        }
+    }
+
+    // A box afconvert's M4A files carry in the audio sample entry: four bytes that are zero in every file seen, then the
+    // bit depth of the source as text ("I16": 16-bit integers), which afinfo prints as "source bit depth". Not in ISO/IEC
+    // 14496-12 or 14496-14, so it is read as the files show it (macOS 15, afconvert).
+    private static void SourceBitDepth(State state, Node node, BoxFields f)
+    {
+        FullBox(node, f);
+        if (f.Remaining > 0 && f.Remaining <= 16)
+        {
+            node.Value = Latin1OrUtf8(f.Bytes(node, "Source Bit Depth", f.Remaining, Explain.SourceBitDepth, b => Latin1OrUtf8(b)));
+        }
+
+        if (state.CurrentEntry is { } entry)
+        {
+            entry.SourceBitDepthNode ??= node;
         }
     }
 
