@@ -211,6 +211,10 @@ internal sealed class DtsAnalysis
                 Findings.Add(Severity.Warning, "dts.substream-misaligned", Field, count =>
                     $"An extension substream starts {detail} ; a decoder that follows FFmpeg looks for it on the boundary only, so the stream plays as its core. First in {at} ({Times(count)}).");
                 break;
+            case Issue.LosslessInconsistent:
+                Findings.Add(Severity.Warning, "dts.lossless-inconsistent", Field, count =>
+                    $"The lossless extension contradicts itself: {detail}. First in {at} ({Times(count)}).");
+                break;
             case Issue.CodingModeAuxiliary:
                 Findings.Add(Severity.Info, "dts.coding-mode-auxiliary", Field, count =>
                     $"An asset has coding mode 3, auxiliary, which 7.5.3.4 reserves for the future; its data is not read. First in {at} ({Times(count)}).");

@@ -1,7 +1,7 @@
 ---
 id: dts-extension-substream
 title: DTS extension substreams
-related: dts-core-frames, dts-core-extensions, dts-channel-arrangements, crc, bitrate-modes
+related: dts-core-frames, dts-core-extensions, dts-channel-arrangements, dts-lossless-extension, dtshd-file, crc, bitrate-modes
 references: ETSI TS 102 114 V1.6.1 (2019-08), 7.2 to 7.5, Annex E; FFmpeg 6.1.1 libavcodec/dca_exss.c and dca_parser.c
 ---
 
@@ -17,4 +17,4 @@ references: ETSI TS 102 114 V1.6.1 (2019-08), 7.2 to 7.5, Annex E; FFmpeg 6.1.1 
 
 The descriptor's sizes give where each component starts, and each begins with its own sync word. A stream of substreams alone, without a core, is possible.
 
-**What you see.** The substream header, each asset and its components, and the profile: XLL makes DTS-HD Master Audio, LBR DTS Express, XBR, XXCH or X96 DTS-HD High Resolution Audio (names from FFmpeg, not the specification). The components are checked by their sync words and the headers' CRCs; their audio data is not decoded. In MP4, the ddts box states the construction.
+**What you see.** The substream header, each asset and its components, and the profile: XLL makes DTS-HD Master Audio (with a DTS:X word after its band data, DTS-HD Master Audio + DTS:X), LBR DTS Express, XBR, XXCH or X96 DTS-HD High Resolution Audio (names from FFmpeg, not the specification). The components are checked by their sync words and the headers' CRCs; XLL's channel sets and navigation index are read (see `dts-lossless-extension`); the audio data is not decoded. In MP4, the ddts box states the construction.

@@ -56,7 +56,9 @@ internal sealed class UnitFacts
         {
             int mask = HasCore ? Tables.CoreSubstreamCore : 0;
             mask |= Extension switch { CoreExtension.Xch => Tables.CoreSubstreamXch, CoreExtension.X96 => Tables.CoreSubstreamX96, CoreExtension.Xxch => Tables.CoreSubstreamXxch, _ => 0 };
-            return mask | (Substreams.FirstOrDefault()?.Assets.FirstOrDefault()?.Components ?? 0);
+            AssetFacts? first = Substreams.FirstOrDefault()?.Assets.FirstOrDefault();
+            mask |= first?.Components ?? 0;
+            return first?.XllExtension switch { XllExtension.X => mask | Tables.FlagDtsX, XllExtension.XImax => mask | Tables.FlagDtsXImax, _ => mask };
         }
     }
 
@@ -119,6 +121,9 @@ internal sealed class AssetFacts
 
     public int MaxSampleRate { get; set; }
 
+    // bOne2OneMapChannels2Speakers (7.5.3.2): each channel is a loudspeaker feed.
+    public bool IsOneToOne { get; set; }
+
     // The loudspeaker activity mask where the asset has one, else 0.
     public int SpeakerMask { get; set; }
 
@@ -129,6 +134,17 @@ internal sealed class AssetFacts
 
     // XLL's common header: samples per frame of the first frequency band, or 0.
     public int XllSamples { get; set; }
+
+    // The channel sets of the lossless component whose sub-header CRC16 holds and whose fields fit it (8.3.2), in order.
+    public List<XllSetFacts> XllSets { get; } = [];
+
+    // Every channel set sub-header of the component was read and passed its checks, so the figures of XllSets describe the whole
+    // lossless layer.
+    public bool IsXllComplete { get; set; }
+
+    // The extension data after the band data of the lossless frame, as FFmpeg's dca_xll.c finds it: the sync word of DTS:X or of
+    // DTS:X IMAX, or None.
+    public XllExtension XllExtension { get; set; }
 
     // LBR's decoder initialization: its sample rate, speaker mask and bit rate, or 0.
     public int LbrSampleRate { get; set; }
@@ -141,4 +157,14 @@ internal sealed class AssetFacts
 
     // The sizes of the asset's components in bytes, by their bit in Table 7-15.
     public Dictionary<int, int> ComponentSizes { get; set; } = [];
+}
+
+// One channel set of the lossless extension (8.3.2, Table 8-4).
+internal sealed record XllSetFacts(int Channels, int Resolution, int StorageWidth, int SampleRate, int FrequencyBands, uint ChannelMask, bool HasChannelMask, bool IsPrimary);
+
+internal enum XllExtension : byte
+{
+    None,
+    X,
+    XImax,
 }

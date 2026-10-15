@@ -101,7 +101,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     public string Codec => Profile.Name(_profileUnion);
 
     // The bits per sample the stream states: the source PCM resolution of the core, else the asset's.
-    public int? BitsPerSample => _resolutions.Count == 1 && _resolutions.First() > 0 ? _resolutions.First() : _firstAsset?.BitResolution is > 0 and var bits ? bits : null;
+    public int? BitsPerSample => Lossless is { } lossless ? lossless.Max(s => s.Resolution) : _resolutions.Count == 1 && _resolutions.First() > 0 ? _resolutions.First() : _firstAsset?.BitResolution is > 0 and var bits ? bits : null;
+
+    // The channel sets of the first asset's lossless extension, when every sub-header was read and its CRC16 holds: the figures of the
+    // lossless layer, which is what a decoder delivers.
+    private IReadOnlyList<XllSetFacts>? Lossless => _firstAsset is { IsXllComplete: true, XllSets.Count: > 0 } asset ? asset.XllSets : null;
 
     public string? ChannelMode => key.HasCore ? Tables.ArrangementShort(key.Amode) : null;
 
@@ -158,6 +162,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
                 _extensionRate = Math.Max(_extensionRate, StreamKey.RateOf(asset));
             }
 
+            if (facts.Substreams[0].Assets.FirstOrDefault() is { IsXllComplete: true } lossless)
+            {
+                _extensionRate = Math.Max(_extensionRate, lossless.XllSets.Max(s => s.SampleRate));
+            }
+
             AssetFacts? asset0 = facts.Substreams[0].Assets.FirstOrDefault();
             if (asset0 is not null && _firstAsset is null)
             {
@@ -184,6 +193,20 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     private IReadOnlyList<Speaker> LayoutOf(UnitFacts facts)
     {
         AssetFacts? asset = facts.Substreams.SelectMany(s => s.Assets).FirstOrDefault();
+        if (asset is { IsXllComplete: true, XllSets.Count: > 0 } && asset.XllSets.All(s => s.HasChannelMask))
+        {
+            uint mask = 0;
+            foreach (XllSetFacts set in asset.XllSets)
+            {
+                mask |= set.ChannelMask;
+            }
+
+            if (mask != 0)
+            {
+                return Layouts.Speakers(Layouts.SpeakerMask(mask));
+            }
+        }
+
         if (asset is { HasSpeakerMask: true, SpeakerMask: not 0 })
         {
             return Layouts.Speakers(Layouts.Mask(asset.SpeakerMask));
@@ -276,6 +299,15 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         Add("Frames Failing a CRC", Counted(CrcErrors), Explain.StatCrcErrors, Topics.Crc);
         Add("Coding Components", ComponentsText(), Explain.StatComponents, Topics.ExtensionSubstream);
+        if (Lossless is { } sets)
+        {
+            Add("Lossless Channel Sets", NodeValue.Integer(sets.Count, "channel sets", "channel set"), Explain.StatLosslessSets, Topics.Lossless);
+            Add("Lossless Channels", NodeValue.Integer(sets.Sum(s => s.Channels), "channels", "channel"), Explain.StatLosslessChannels, Topics.Lossless);
+            Add("Lossless Sampling Frequency", NodeValue.Integer(sets.Max(s => s.SampleRate), "Hz"), Explain.StatLosslessRate, Topics.Lossless);
+            Add("Lossless Source PCM Resolution", NodeValue.Integer(sets.Max(s => s.Resolution), "bits", "bit"), Explain.StatLosslessResolution, Topics.Lossless);
+            Add("Lossless Storage Bit Width", NodeValue.Integer(sets.Max(s => s.StorageWidth), "bits", "bit"), Explain.StatLosslessWidth, Topics.Lossless);
+        }
+
         if (_firstAsset is not null)
         {
             Add("Audio Assets", NodeValue.Integer(_assets, "assets", "asset"), Explain.StatAssets, Topics.ExtensionSubstream);
@@ -283,6 +315,12 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         Add("HasExtensionSubstream", NodeValue.Boolean(SubstreamFrames > 0), Explain.HasExtensionSubstream, Topics.ExtensionSubstream);
         Add("IsLossless", NodeValue.Boolean(HasLossless), Explain.IsLossless, Topics.ExtensionSubstream);
+        if (HasLossless)
+        {
+            Add("HasDtsX", NodeValue.Boolean((_profileUnion & Tables.FlagDtsX) != 0), Explain.HasDtsX, Topics.Lossless);
+            Add("HasDtsXImax", NodeValue.Boolean((_profileUnion & Tables.FlagDtsXImax) != 0), Explain.HasDtsXImax, Topics.Lossless);
+        }
+
         Node profile = Add("Profile", Codec, Explain.Profile, Topics.ExtensionSubstream);
         profile.Add(cover("Evidence", ProfileEvidence(), NodeKind.Detail, Explain.Evidence, null));
         return statistics;
@@ -304,6 +342,12 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         if ((_profileUnion & Tables.ExtensionXll) != 0)
         {
+            if ((_profileUnion & (Tables.FlagDtsX | Tables.FlagDtsXImax)) != 0)
+            {
+                return "the first asset of the extension substream has the lossless component (XLL, mask 0x200), whose frame has the sync word of DTS:X data"
+                    + ((_profileUnion & Tables.FlagDtsXImax) != 0 ? " in the form FFmpeg reads as IMAX" : string.Empty) + " after its band data";
+            }
+
             return "the first asset of the extension substream has the lossless component (XLL, mask 0x200)";
         }
 
@@ -352,7 +396,7 @@ internal static class Profile
 
         if ((components & Tables.ExtensionXll) != 0)
         {
-            return "DTS-HD Master Audio";
+            return (components & Tables.FlagDtsXImax) != 0 ? "DTS-HD Master Audio + DTS:X IMAX" : (components & Tables.FlagDtsX) != 0 ? "DTS-HD Master Audio + DTS:X" : "DTS-HD Master Audio";
         }
 
         if ((components & (Tables.ExtensionXbr | Tables.ExtensionXxch | Tables.ExtensionX96)) != 0)
