@@ -80,6 +80,22 @@ def analyzer_samples(path):
     return report["streams"][0]["samples"] if report and report["streams"] else None
 
 
+def analyzer_statistic(path, name):
+    """A statistic of the Voice stream in the golden report."""
+    report = golden_report(path)
+    voice = next((n for n in nodes_of(report["root"]) if n["name"] == "Windows Media Audio Voice"), None) if report else None
+    stats = next((c for c in voice["children"] if c["name"] == "Statistics"), None) if voice else None
+    return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
+
+
+def check_voice_frames(path, problems):
+    """ffprobe -count_frames decodes the stream: each superframe it decodes is a frame, so the count is the analyzer's superframes."""
+    code, data = ffprobe_json(path, "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames")
+    counted = int(data["streams"][0].get("nb_read_frames", 0)) if code == 0 and data.get("streams") else None
+    if counted != analyzer_statistic(path, "Superframes"):
+        problems.append(f"ffprobe decodes {counted} frames, the analyzer's golden report has {analyzer_statistic(path, 'Superframes')} superframes")
+
+
 def check_voice_decode(name, manifest, path, problems):
     """ffmpeg's decoder against the manifest and the analyzer's report, for a hand-built Voice fixture."""
     crosscheck = manifest["crosscheck"]
@@ -87,6 +103,8 @@ def check_voice_decode(name, manifest, path, problems):
     code, pcm, errors = decode(path, level="warning")
     samples = len(pcm) // 2
     analyzed = analyzer_samples(path)
+    if mode != "error" and "samples_differ" not in crosscheck:
+        check_voice_frames(path, problems)
     if mode == "ok":
         if errors:
             problems.append(f"ffmpeg decoding: {errors.splitlines()[0]}")
@@ -300,8 +318,10 @@ def check_windows(name, provenance, path, problems):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")
-        elif stream["codec_name"] == "wmavoice" and analyzer_samples(path) != len(pcm) // 2:
-            problems.append(f"the analyzer's golden report has {analyzer_samples(path)} samples, ffmpeg decodes {len(pcm) // 2}")
+        elif stream["codec_name"] == "wmavoice":
+            if analyzer_samples(path) != len(pcm) // 2:
+                problems.append(f"the analyzer's golden report has {analyzer_samples(path)} samples, ffmpeg decodes {len(pcm) // 2}")
+            check_voice_frames(path, problems)
     check_mediainfo(name, path, stream, problems, golden_report(path))
 
 

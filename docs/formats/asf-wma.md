@@ -123,6 +123,7 @@ The Encoder node of a stream lists its evidence, each at its bytes, and names th
 - A layout names the writing software, not the encoding stage: the Windows Media Format SDK and Media Foundation both write the file around whatever codec they drive. That is why a writer version alone stays Low and the layout is Medium, never High.
 - What the writer says about its settings is added to that evidence, as its statement and not as something read from the audio: the Codec List Object's name and description ("Windows Media Audio 9.2", "VBR Quality 75, 44 kHz, stereo 1-pass VBR") and the IsVBR attribute. The stream's `isVbr` follows IsVBR. Media Foundation's files carry IsVBR but no Codec List.
 - Not used as evidence: `WMFSDKNeeded` and `DeviceConformanceTemplate`, which the SDK writes with fixed values.
+- Voice has no trait of its own: its 46 bytes of codec data and its frames name no encoder, so it is named by the container's layout and claims only.
 
 ## Observed in Microsoft's files
 

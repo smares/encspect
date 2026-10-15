@@ -63,6 +63,11 @@ def tool_problems(path, sample):
         problems.append(f"ffprobe finds {probe['codec_name']} at {probe['sample_rate']} Hz with {probe['channels']} channels, the manifest {sample['rate']} and {sample['channels']}")
     if int(probe["bit_rate"]) != expected["bit_rate"] or int(probe["extradata_size"]) != 46:
         problems.append(f"ffprobe's bit rate is {probe['bit_rate']} and its extradata {probe['extradata_size']} bytes, the manifest {expected['bit_rate']} and 46")
+    # ffprobe -count_frames decodes the stream: each superframe it decodes is a frame.
+    counted = json.loads(subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames", "-of", "json", str(path)],
+                                        capture_output=True, text=True, check=True).stdout)["streams"][0]["nb_read_frames"]
+    if int(counted) != sample["superframes"]:
+        problems.append(f"ffprobe decodes {counted} frames, the manifest {sample['superframes']} superframes")
     samples, errors = decode(path)
     if samples != sample["ffmpeg_samples"]:
         problems.append(f"ffmpeg decodes {samples} samples, the manifest {sample['ffmpeg_samples']}")
