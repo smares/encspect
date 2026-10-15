@@ -46,7 +46,9 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         region.End = analysis.Frames.Count;
         int count = region.End.Value;
         FrameRecords records = analysis.Records;
-        region.Node = parent.Add(new Node(observed.HasEac3 ? "E-AC-3" : "AC-3", parent.Offset, parent.Length, NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
+        bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
+        region.Node = parent.Add(new Node(observed.HasEac3 || (encrypted && id == Eac3) ? "E-AC-3" : "AC-3", parent.Offset, parent.Length,
+            encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
             () => new BlockedChildren(region.Leading, count, i => records.FrameNode(i)))
         {
             Kind = NodeKind.Stream,

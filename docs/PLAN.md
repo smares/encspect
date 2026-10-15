@@ -537,12 +537,14 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - Fixtures: 28 hand-built files (`make_voice_fixtures.py`, `voice_model.py`; also media objects of other sizes, errors that drop the rest of a media object, packets that change the residual flag, and a cache that overflows), which ffmpeg decodes to the analyzer's sample counts, also the damaged ones; the six Windows files (two of tones, four of a speech-like signal); and 11 real files from the FFmpeg sample archive checked in CI by SHA-256 (`check_wmavoice_samples.py`, `tests/conformance/wmavoice-samples.json`).
    - Articles: `wma-voice` (extended), `wma-voice-superframes` and `wma-voice-frames`. See docs/formats/asf-wma.md.
 6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only.
-7. DRM and protection reporting.
-   - A typed per-stream protection field, shown in the CLI summary and the GUI.
-   - ASF's three protection objects.
-   - MP4's schm, tenc, pssh (system IDs named from the DASH-IF registry), senc, FairPlay and Audible entries.
-   - iTunes purchaser items as metadata, not DRM.
-   - Decrypting stays out of scope.
+7. DRM and protection reporting. Done (October 2026).
+   - `StreamInfo.Protection` (`StreamProtection`: the scheme, whether the samples are encrypted, the DRM systems the file names) and `IsProtected`, which a container sets on the stream a codec parser reported (`UpdateStream`) or on one it builds; `CodecConfiguration.AreSamplesEncrypted` tells a codec parser that the container hands it a configuration and no packets, since ciphertext is no valid coding. JSON `isProtected` and `protection`, the CSV columns `Is Protected`, `Protection Scheme` and `DRM Systems`, the GUI's stream line and Protection column (summary cache format 4). See docs/cli.md and docs/gui.md.
+   - ASF: the Content Encryption, Extended Content Encryption, Advanced Content Encryption and Digital Signature Objects (sections 3.14, 3.15, 4.13, 3.16, with 10.7 for the one system ID) and the Encrypted Content Flag (3.3) protect streams as the specification says: the first two cover the file, the Advanced Content Encryption Object the streams its records name (0 is the file), the flag its stream, the signature nothing. An encrypted stream is described from its WAVEFORMATEX by the WMA parsers, which read no packet. See docs/formats/asf-wma.md.
+   - MP4: `sinf` (`frma`, `schm`, `schi` with `tenc`), `pssh` with the systems named from DASH-IF's registry (`dashif_systems.py` pins the page and compares the table), `senc`, `saiz`, `saio`, `seig` sample groups, the entries `enca`, `encv`, FairPlay's `drms` and `drmi` and Audible's `aavd` with `adrm`, from sources that can be checked (MP4 registration authority, FFmpeg's `mov.c`, GPAC, VLC, MediaInfo, GStreamer). A track is encrypted when its scheme is not Common Encryption, its `tenc` protects by default or a `seig` group protects samples; its samples never reach a codec parser (AAC, AC-3, E-AC-3 and DTS read the sample entry's configuration, others get a stream built from the entry), and a protected track whose samples are in the clear is read as any other. See docs/formats/mp4.md.
+   - iTunes purchaser items (apID, purd, ownr and the store IDs) are metadata items of the iTunes tag, never protection.
+   - Fixtures: 31 hand-built MP4 and 13 ASF ones, 13 MP4 files from ffmpeg's and MP4Box's encryption, cross-checked with ffprobe and MediaInfo (docs/development.md, "Protection fixtures").
+   - Decrypting stays out of scope: no key is used, no license acquired.
+   - Matroska's ContentEncryption (RFC 9559) is not mapped yet, as Matroska is built on another branch: once both are merged, its ContentEncryption elements (ContentEncAlgo, ContentEncKeyID, AES settings) set `StreamInfo.Protection` on the track's stream in the same way (the scheme from ContentEncAlgo and ContentEncAESSettings, `IsEncrypted` true for a track whose frames are encrypted).
 
 **Later.** The order is not fixed:
 

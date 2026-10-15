@@ -206,6 +206,7 @@ internal static partial class Explain
     public const string EncryptedObjectRecord = "An object, such as a stream, that this record's protection applies to (section 4.13).";
     public const string EncryptedObjectIdType = "What the object ID is: 1 means an ASF stream number (section 4.13).";
     public const string EncryptedObjectIdLength = "The number of bytes of the object ID (section 4.13).";
+    public const string EncryptedObjectStreamNumber = "The number of the ASF stream the record covers; 0 means the whole file (section 4.13).";
     public const string EncryptedObjectId = "The ID of the object; for type 1 a stream number, where 0 means the whole file (section 4.13).";
 
     public const string PaddingObject = "The Padding Object: dummy bytes that let the header grow or shrink without moving the data; players ignore it (section 3.17).";

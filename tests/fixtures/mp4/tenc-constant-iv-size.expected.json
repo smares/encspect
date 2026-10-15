@@ -1,0 +1,307 @@
+{
+ "description": "A tenc box whose constant IV is 12 bytes long, where 8 and 16 are valid.",
+ "length": 11159,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   788
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   672
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   572
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   487
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   427
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   199
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   183
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   93
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   53
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   596,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   620,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   648,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   788,
+   28
+  ],
+  [
+   "mdat",
+   816,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   824,
+   300
+  ],
+  [
+   1124,
+   337
+  ],
+  [
+   1461,
+   374
+  ],
+  [
+   1835,
+   321
+  ],
+  [
+   2156,
+   358
+  ],
+  [
+   2514,
+   305
+  ],
+  [
+   2819,
+   342
+  ],
+  [
+   3161,
+   379
+  ],
+  [
+   3540,
+   326
+  ],
+  [
+   3866,
+   363
+  ],
+  [
+   4229,
+   310
+  ],
+  [
+   4539,
+   347
+  ],
+  [
+   4886,
+   384
+  ],
+  [
+   5270,
+   331
+  ],
+  [
+   5601,
+   368
+  ],
+  [
+   5969,
+   315
+  ],
+  [
+   6284,
+   352
+  ],
+  [
+   6636,
+   389
+  ],
+  [
+   7025,
+   336
+  ],
+  [
+   7361,
+   373
+  ],
+  [
+   7734,
+   320
+  ],
+  [
+   8054,
+   357
+  ],
+  [
+   8411,
+   304
+  ],
+  [
+   8715,
+   341
+  ],
+  [
+   9056,
+   378
+  ],
+  [
+   9434,
+   325
+  ],
+  [
+   9759,
+   362
+  ],
+  [
+   10121,
+   309
+  ],
+  [
+   10430,
+   346
+  ],
+  [
+   10776,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.tenc-constant-iv",
+   "constant initialization vector of 12 bytes"
+  ],
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

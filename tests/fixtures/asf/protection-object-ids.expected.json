@@ -1,0 +1,244 @@
+{
+ "description": "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2: neither names a stream, so the record covers none, and the Encrypted Content Flag alone protects the stream.",
+ "format": "ASF",
+ "length": 1428,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   354
+  ],
+  [
+   "Data Object",
+   354,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   106
+  ],
+  [
+   "Header Extension Object",
+   240,
+   114
+  ]
+ ],
+ "extension_objects": [
+  [
+   "Advanced Content Encryption Object",
+   286,
+   68
+  ]
+ ],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": true,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 743,
+   "bits": 16,
+   "codec_data": "00000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   404,
+   512,
+   4
+  ],
+  [
+   916,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   4,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   5,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   6,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     435,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     552,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     669,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   100,
+   75,
+   [
+    [
+     786,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   100,
+   100,
+   [
+    [
+     947,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   100,
+   125,
+   [
+    [
+     1064,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1428,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.content-encrypted",
+   "contains": "network devices"
+  },
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "is encrypted"
+  },
+  {
+   "code": "asf.encrypted-object-id-type",
+   "contains": "0x0002"
+  },
+  {
+   "code": "asf.encrypted-object-id-length",
+   "contains": "4 bytes"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ },
+ "protection": [
+  {
+   "scheme": "encrypted content flag",
+   "is_encrypted": true,
+   "systems": []
+  }
+ ]
+}

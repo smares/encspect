@@ -130,6 +130,7 @@ A JSON report (schema version 1) is an object:
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
   - `hasObjectAudio` is `true` for a stream whose data carry object audio that was parsed (E-AC-3 with joint object coding); DTS:X is reported through the profile and the `HasDtsX` statistics, not through this flag, and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.
+  - `isProtected` is `true` for a stream that its container protects, with `protection` (both are left out otherwise): `scheme` names it ("Common Encryption, AES-CTR (cenc)", "FairPlay (iTunes, drms)", "Microsoft Digital Rights Management version 1"), `isEncrypted` says whether its samples are encrypted, so that the analyzer read no frames of them (false where the scheme covers samples that are in the clear, as a clear lead-in does), and `systems` lists the DRM systems the file names, from the DASH-IF registry for MP4's pssh boxes and from the specification for ASF's Advanced Content Encryption Object; a system the table does not list is its ID. Nothing is decrypted, and no key or license is read.
   - `multilingualChannels` counts the MPEG-2 multilingual channels a stream carries besides its layout.
   - `series` are numbers for graphs, per frame (`axis` `frameOffset`, `x` the frame's byte offset) and per second of audio (`seconds`, `x` the start of each second). MPEG gives the bitrate and, for Layer III, the bit reservoir fill, both ways.
 - **Detection:** `detection`, present only when other formats also match or the analysis was forced, has:
@@ -152,7 +153,8 @@ The CSV row of a file has:
 - the first encoder named and its confidence;
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
-- `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known.
+- `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;
+- `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `.
 
 ## Exit codes
 

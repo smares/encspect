@@ -485,3 +485,72 @@ def movie(tracks, before=(), after=(), movie_timescale=1000, moov_first=True, wi
     mdat_start = next(offset for path, offset, size in boxes if path == "mdat") + (16 if large_mdat else 8)
     data, boxes = write(build(mdat_start))
     return data + trailer, boxes, [[mdat_start + o for o in offs] for offs in relative]
+
+
+# --- Protection: sinf, Common Encryption, FairPlay and Audible ----------------------------------------
+
+
+def frma(original):
+    return box("frma", original)
+
+
+def schm(scheme, version=0x10000, uri=None):
+    """ISO/IEC 14496-12 8.12.5: the scheme type, its version and, with flag 1, a URI."""
+    return fullbox("schm", 0, 1 if uri else 0, scheme + u32(version) + (uri + b"\0" if uri else b""))
+
+
+def tenc(is_protected=1, iv_size=8, kid=bytes(range(0x10, 0x20)), version=0, crypt=0, skip=0, constant_iv=None):
+    """ISO/IEC 23001-7's track encryption box: a reserved byte, version 0's second reserved byte or version 1's
+    crypt and skip blocks, then the default IsProtected, per-sample IV size and KID, and a constant IV where
+    protected samples carry none of their own (GPAC's tenc_box_read and FFmpeg's mov_read_tenc read the same)."""
+    body = u8(0) + (u8(0) if version == 0 else u8((crypt << 4) | skip)) + u8(is_protected) + u8(iv_size) + kid
+    if constant_iv is not None:
+        body += u8(len(constant_iv)) + constant_iv
+    return fullbox("tenc", version, 0, body)
+
+
+def schi(*children):
+    return box("schi", b"", *children)
+
+
+def sinf(*children):
+    return box("sinf", b"", *children)
+
+
+def pssh(system_id, data=b"", kids=None):
+    """ISO/IEC 23001-7's protection system specific header: version 1 lists the key IDs the data covers."""
+    body = bytes.fromhex(system_id.replace("-", ""))
+    if kids is not None:
+        body += u32(len(kids)) + b"".join(kids)
+    return fullbox("pssh", 0 if kids is None else 1, 0, body + u32(len(data)) + data)
+
+
+def senc(count, entries=b"", subsamples=False):
+    return fullbox("senc", 0, 2 if subsamples else 0, u32(count) + entries)
+
+
+def saiz(default_size, count, sizes=b"", aux_type=None):
+    head = (aux_type + u32(0)) if aux_type else b""
+    return fullbox("saiz", 0, 1 if aux_type else 0, head + u8(default_size) + u32(count) + sizes)
+
+
+def saio(offsets, version=0, aux_type=None):
+    head = (aux_type + u32(0)) if aux_type else b""
+    pack = u64 if version else u32
+    return fullbox("saio", version, 1 if aux_type else 0, head + u32(len(offsets)) + b"".join(pack(o) for o in offsets))
+
+
+def seig_entry(is_protected, iv_size, kid, crypt=0, skip=0, constant_iv=None):
+    body = u8(0) + u8((crypt << 4) | skip) + u8(is_protected) + u8(iv_size) + kid
+    if constant_iv is not None:
+        body += u8(len(constant_iv)) + constant_iv
+    return body
+
+
+def sgpd_seig(entries):
+    """A sample group description of grouping type seig (version 1, each entry with its length)."""
+    return fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(len(entries)) + b"".join(u32(len(e)) + e for e in entries))
+
+
+def sbgp_seig(runs):
+    return fullbox("sbgp", 0, 0, b"seig" + u32(len(runs)) + b"".join(u32(c) + u32(i) for c, i in runs))

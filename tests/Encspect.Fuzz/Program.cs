@@ -41,6 +41,13 @@ internal static class Program
         [0x64, 0x58, 0x20, 0x25], [0x58, 0x64, 0x25, 0x20], [0x5A, 0x5A, 0x5A, 0x5A], [0x1D, 0x95, 0xF2, 0x62], [0x47, 0x00, 0x4A, 0x03],
         [0x65, 0x5E, 0x31, 0x5E], [0x0A, 0x80, 0x19, 0x21], [0x41, 0xA2, 0x95, 0x47], [0x02, 0xB0, 0x92, 0x61], "ddts"u8.ToArray(), "dtsc"u8.ToArray(),
         "dtsh"u8.ToArray(), "dtsl"u8.ToArray(), "dtse"u8.ToArray(),
+        "sinf"u8.ToArray(), "frma"u8.ToArray(), "schm"u8.ToArray(), "schi"u8.ToArray(), "tenc"u8.ToArray(), "pssh"u8.ToArray(), "senc"u8.ToArray(), "saiz"u8.ToArray(),
+        "saio"u8.ToArray(), "sgpd"u8.ToArray(), "sbgp"u8.ToArray(), "seig"u8.ToArray(), "enca"u8.ToArray(), "encv"u8.ToArray(), "drms"u8.ToArray(), "drmi"u8.ToArray(),
+        "aavd"u8.ToArray(), "adrm"u8.ToArray(), "cenc"u8.ToArray(), "cbcs"u8.ToArray(), "cens"u8.ToArray(), "cbc1"u8.ToArray(), "itun"u8.ToArray(), "iviv"u8.ToArray(),
+        Convert.FromHexString("edef8ba979d64acea3c827dcd51d21ed"), Convert.FromHexString("9a04f079984042" + "86ab92e65be0885f95"),
+        new Guid("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E").ToByteArray(), new Guid("298AE614-2622-4C17-B935-DAE07EE9289C").ToByteArray(),
+        new Guid("2211B3FC-BD23-11D2-B4B7-00A0C955FC6E").ToByteArray(), new Guid("43058533-6981-49E6-9B74-AD12CB86D58C").ToByteArray(),
+        new Guid("7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D").ToByteArray(), [0x01, 0x00, 0x02, 0x00],
     ];
 
     private static readonly uint[] Sizes = [0, 1, 0x7F, 0x80, 0x7F7F7F7F, 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 10, 128];

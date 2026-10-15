@@ -1,0 +1,312 @@
+{
+ "description": "A saio box that declares 5,000 offsets and holds two.",
+ "length": 11170,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   799
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   659
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   559
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   474
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   414
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   775,
+   28
+  ],
+  [
+   "moov/saio",
+   803,
+   24
+  ],
+  [
+   "mdat",
+   827,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   835,
+   300
+  ],
+  [
+   1135,
+   337
+  ],
+  [
+   1472,
+   374
+  ],
+  [
+   1846,
+   321
+  ],
+  [
+   2167,
+   358
+  ],
+  [
+   2525,
+   305
+  ],
+  [
+   2830,
+   342
+  ],
+  [
+   3172,
+   379
+  ],
+  [
+   3551,
+   326
+  ],
+  [
+   3877,
+   363
+  ],
+  [
+   4240,
+   310
+  ],
+  [
+   4550,
+   347
+  ],
+  [
+   4897,
+   384
+  ],
+  [
+   5281,
+   331
+  ],
+  [
+   5612,
+   368
+  ],
+  [
+   5980,
+   315
+  ],
+  [
+   6295,
+   352
+  ],
+  [
+   6647,
+   389
+  ],
+  [
+   7036,
+   336
+  ],
+  [
+   7372,
+   373
+  ],
+  [
+   7745,
+   320
+  ],
+  [
+   8065,
+   357
+  ],
+  [
+   8422,
+   304
+  ],
+  [
+   8726,
+   341
+  ],
+  [
+   9067,
+   378
+  ],
+  [
+   9445,
+   325
+  ],
+  [
+   9770,
+   362
+  ],
+  [
+   10132,
+   309
+  ],
+  [
+   10441,
+   346
+  ],
+  [
+   10787,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.entries-exceed-box",
+   "declares 5000 offsets, but holds room for 2"
+  ],
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

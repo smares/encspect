@@ -25,6 +25,13 @@ For every manifest in tests/fixtures/asf:
   the container states (the statistic "Nominal Bitrate"), and its SamplingCount the container's duration
   times the rate, which the analyzer's samples equal within a hundredth of a second.
 
+- the protection objects, on every hand-built fixture (those without any are the negative control): ffmpeg's ASF demuxer (asfdec_f.c) warns "DRM
+  protected stream detected" for a Content Encryption Object and "Ext DRM protected stream detected" for an Extended Content Encryption Object, and
+  never for the Advanced one, which it does not read; it exports the Content Encryption Object's protection type, key ID and license URL as the tags
+  ASF_Protection_Type, ASF_Key_ID and ASF_License_URL, which equal the analyzer's nodes; MediaInfo reports the Encryption field "Encrypted" of an audio
+  track exactly where its Stream Properties Object sets the Encrypted Content Flag, whatever the encryption objects say. The analyzer's protected
+  streams are those of the golden report, which the tests hold to the manifest's "protection".
+
 Fixtures whose manifest says ffprobe does not apply say why; every skipped check prints its reason.
 Disagreements fail the run (exit status 1).
 
@@ -137,8 +144,54 @@ def check_voice_decode(name, manifest, path, problems):
         problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
 
 
+def check_protection(name, manifest, path, problems):
+    """What ffmpeg and MediaInfo report of the protection objects and the Encrypted Content Flag, against the manifest's objects and the golden report."""
+    objects = [o[0] for o in manifest["header_objects"]]
+    result = run(["ffprobe", "-v", "warning", "-show_format", "-of", "json", str(path)], text=True)
+    for message, object_name in (("Ext DRM protected stream detected", "Extended Content Encryption Object"), ("DRM protected stream detected", "Content Encryption Object")):
+        heard = any(line.endswith(message + ", decoding will likely fail!") for line in result.stderr.splitlines())
+        # The first message is a part of the second's text only in its tail ("Ext DRM ..." ends with "DRM protected stream detected ...").
+        if message == "DRM protected stream detected":
+            heard = any("] DRM protected stream detected" in line for line in result.stderr.splitlines())
+        if heard != (object_name in objects):
+            problems.append(f"ffprobe {'warns' if heard else 'does not warn'} {message!r}, the manifest {'lacks' if heard else 'has'} the {object_name}")
+    try:
+        tags = json.loads(result.stdout).get("format", {}).get("tags", {}) if result.stdout.strip() else {}
+    except json.JSONDecodeError:
+        skip(name, "ffprobe's ASF_ tags", "ffprobe fails on the damaged file")
+        tags = None
+    report = golden_report(path)
+    encryption = next((n for n in nodes_of(report["root"]) if n["name"] == "Content Encryption Object"), None) if report else None
+    exported = {k: v for k, v in (tags or {}).items() if k.startswith("ASF_")}
+    if tags is None:
+        pass
+    elif encryption is None:
+        if exported:
+            problems.append(f"ffprobe exports {sorted(exported)} without a Content Encryption Object")
+    else:
+        for tag, field in (("ASF_Protection_Type", "Protection Type"), ("ASF_Key_ID", "Key ID"), ("ASF_License_URL", "License URL")):
+            wanted = next((c.get("value") for c in encryption["children"] if c["name"] == field), None)
+            if exported.get(tag) != wanted:
+                problems.append(f"ffprobe's {tag} is {exported.get(tag)!r}, the analyzer's {field} {wanted!r}")
+    if tool("mediainfo"):
+        try:
+            tracks = json.loads(run(["mediainfo", "--Output=JSON", str(path)], text=True).stdout)["media"]["track"]
+        except (json.JSONDecodeError, KeyError):
+            skip(name, "MediaInfo's Encryption field", "MediaInfo's output for the damaged file is not JSON")
+            return
+        audio = [t for t in tracks if t["@type"] == "Audio"]
+        flagged = [s["encrypted"] for s in manifest["streams"] if "tag" in s]
+        if len(audio) == len(flagged):
+            for track, flag in zip(audio, flagged):
+                if (track.get("Encryption") == "Encrypted") != flag:
+                    problems.append(f"MediaInfo's Encryption is {track.get('Encryption')!r} for a stream whose flag is {flag}")
+        else:
+            problems.append(f"MediaInfo finds {len(audio)} audio tracks, the manifest {len(flagged)}")
+
+
 def check_hand_built(name, manifest, path, problems):
     crosscheck = manifest.get("crosscheck", {})
+    check_protection(name, manifest, path, problems)
     if "voice" in manifest or crosscheck.get("decode"):
         check_voice_decode(name, manifest, path, problems)
     if not crosscheck.get("ffprobe"):

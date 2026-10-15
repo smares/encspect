@@ -1,0 +1,382 @@
+{
+ "description": "A fragmented MP4 of cenc-protected AAC: moov with an empty enca track and a pssh box, then two moof and mdat pairs whose track fragments carry saiz, saio and senc boxes (cenc auxiliary information with 8-byte IVs) next to their track runs. The track header states no duration, so the stream has none.",
+ "length": 8221,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   713
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   507
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   407
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   322
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   262
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   599,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   615,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   635,
+   16
+  ],
+  [
+   "moov/mvex",
+   651,
+   40
+  ],
+  [
+   "moov/mvex/trex",
+   659,
+   32
+  ],
+  [
+   "moov/pssh",
+   691,
+   50
+  ],
+  [
+   "moof",
+   741,
+   277
+  ],
+  [
+   "moof/mfhd",
+   749,
+   16
+  ],
+  [
+   "moof/traf",
+   765,
+   253
+  ],
+  [
+   "moof/traf/tfhd",
+   773,
+   16
+  ],
+  [
+   "moof/traf/tfdt",
+   789,
+   20
+  ],
+  [
+   "moof/traf/saiz",
+   809,
+   25
+  ],
+  [
+   "moof/traf/saio",
+   834,
+   28
+  ],
+  [
+   "moof/traf/senc",
+   862,
+   96
+  ],
+  [
+   "moof/traf/trun",
+   958,
+   60
+  ],
+  [
+   "mdat",
+   1018,
+   3413
+  ],
+  [
+   "moof",
+   4431,
+   277
+  ],
+  [
+   "moof/mfhd",
+   4439,
+   16
+  ],
+  [
+   "moof/traf",
+   4455,
+   253
+  ],
+  [
+   "moof/traf/tfhd",
+   4463,
+   16
+  ],
+  [
+   "moof/traf/tfdt",
+   4479,
+   20
+  ],
+  [
+   "moof/traf/saiz",
+   4499,
+   25
+  ],
+  [
+   "moof/traf/saio",
+   4524,
+   28
+  ],
+  [
+   "moof/traf/senc",
+   4552,
+   96
+  ],
+  [
+   "moof/traf/trun",
+   4648,
+   60
+  ],
+  [
+   "mdat",
+   4708,
+   3513
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 0,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": [
+     "Widevine Content Protection"
+    ]
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   1026,
+   300
+  ],
+  [
+   1326,
+   337
+  ],
+  [
+   1663,
+   374
+  ],
+  [
+   2037,
+   321
+  ],
+  [
+   2358,
+   358
+  ],
+  [
+   2716,
+   305
+  ],
+  [
+   3021,
+   342
+  ],
+  [
+   3363,
+   379
+  ],
+  [
+   3742,
+   326
+  ],
+  [
+   4068,
+   363
+  ],
+  [
+   4716,
+   310
+  ],
+  [
+   5026,
+   347
+  ],
+  [
+   5373,
+   384
+  ],
+  [
+   5757,
+   331
+  ],
+  [
+   6088,
+   368
+  ],
+  [
+   6456,
+   315
+  ],
+  [
+   6771,
+   352
+  ],
+  [
+   7123,
+   389
+  ],
+  [
+   7512,
+   336
+  ],
+  [
+   7848,
+   373
+  ]
+ ],
+ "fields": {
+  "MP4/moof/traf/senc": "10 samples",
+  "MP4/moof/traf/saiz": "10 samples",
+  "MP4/moof/traf/saiz/Default Sample Info Size": "8 bytes",
+  "MP4/moof/traf/senc/UsesSubsampleEncryption": "false",
+  "MP4/moov/pssh": "Widevine Content Protection"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": true,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
+   "mediainfo_duration": "a fragmented file's track header states no duration"
+  }
+ }
+}

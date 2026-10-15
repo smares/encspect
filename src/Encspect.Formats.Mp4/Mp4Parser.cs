@@ -404,7 +404,15 @@ public sealed partial class Mp4Parser : IFormatParser
             state.Fragments++;
         }
 
+        bool outerSinf = state.InSinf;
+        if (header.Type == "sinf" && state.CurrentEntry is { } protectedEntry)
+        {
+            state.InSinf = true;
+            protectedEntry.Protection ??= new EntryProtection(node);
+        }
+
         ReadChildren(state, node, f.Position, header.End, depth + 1);
+        state.InSinf = outerSinf;
         CheckChildren(state, node, header.Type);
         if (header.Type == "trak")
         {

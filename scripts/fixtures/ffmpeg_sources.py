@@ -21,6 +21,9 @@ repository and extracts the files the WMA and ASF work is written from:
   dca_sample_rate_tab.h, dcadata.c, dcadata.h and dcadec.c: the DTS core, extension substream and DTS-HD decoder and parser the DTS
   cross-check explains ffprobe's and ffmpeg's readings with; dcaenc.c and dcaenc.h, the encoder that writes the FFmpeg fixtures.
 - libavformat/dtsdec.c, dtshddec.c and isom.c: the raw DTS probe, the DTS-HD file reader and the MP4 object type table (0xA9 for DTS).
+- libavformat/mov.c, isom.h, movenccenc.c and libavutil/encryption_info.h: the MP4 demuxer's reading of the protection boxes (frma, schm, tenc,
+  pssh, senc, saiz, saio, and the adrm box of Audible's files, mov_read_adrm) and the Common Encryption writer that makes the project's encrypted
+  fixtures; the encryption info header says what the pattern's crypt and skip block counts are (16-byte blocks).
 
 The release is the one Ubuntu 24.04's ffmpeg 6.1.1 is built from, which the cross-checks run.
 """

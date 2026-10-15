@@ -1,0 +1,311 @@
+{
+ "description": "AAC LC protected with cbcs, AES-CBC with a pattern and no IV per sample: tenc gives a 16-byte constant IV, as cbcs files usually do.",
+ "length": 11163,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   792
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   676
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   576
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   491
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   431
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   203
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   187
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   97
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   57
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   49
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   600,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   624,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   652,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   792,
+   28
+  ],
+  [
+   "mdat",
+   820,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CBC with pattern (cbcs)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   828,
+   300
+  ],
+  [
+   1128,
+   337
+  ],
+  [
+   1465,
+   374
+  ],
+  [
+   1839,
+   321
+  ],
+  [
+   2160,
+   358
+  ],
+  [
+   2518,
+   305
+  ],
+  [
+   2823,
+   342
+  ],
+  [
+   3165,
+   379
+  ],
+  [
+   3544,
+   326
+  ],
+  [
+   3870,
+   363
+  ],
+  [
+   4233,
+   310
+  ],
+  [
+   4543,
+   347
+  ],
+  [
+   4890,
+   384
+  ],
+  [
+   5274,
+   331
+  ],
+  [
+   5605,
+   368
+  ],
+  [
+   5973,
+   315
+  ],
+  [
+   6288,
+   352
+  ],
+  [
+   6640,
+   389
+  ],
+  [
+   7029,
+   336
+  ],
+  [
+   7365,
+   373
+  ],
+  [
+   7738,
+   320
+  ],
+  [
+   8058,
+   357
+  ],
+  [
+   8415,
+   304
+  ],
+  [
+   8719,
+   341
+  ],
+  [
+   9060,
+   378
+  ],
+  [
+   9438,
+   325
+  ],
+  [
+   9763,
+   362
+  ],
+  [
+   10125,
+   309
+  ],
+  [
+   10434,
+   346
+  ],
+  [
+   10780,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc": "protected by default",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm/Scheme Type": "cbcs",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Crypt Byte Block": "1 block",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Skip Byte Block": "9 blocks",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Per Sample IV Size": "0 bytes",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Constant IV Size": "16 bytes",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Constant IV": "404142434445464748494a4b4c4d4e4f"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": true,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads clear AAC only and rejects the encrypted sample entry."
+  }
+ }
+}

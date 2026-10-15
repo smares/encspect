@@ -1,0 +1,287 @@
+{
+ "description": "An adrm box of 40 bytes in an aavd entry, where FFmpeg's reader takes 88: its fields are not read.",
+ "length": 11114,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   743
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   627
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   527
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   442
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   382
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   154
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/aavd",
+   413,
+   138
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/aavd/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/aavd/adrm",
+   503,
+   48
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   551,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   575,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   603,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   743,
+   28
+  ],
+  [
+   "mdat",
+   771,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Audible (aavd)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   779,
+   300
+  ],
+  [
+   1079,
+   337
+  ],
+  [
+   1416,
+   374
+  ],
+  [
+   1790,
+   321
+  ],
+  [
+   2111,
+   358
+  ],
+  [
+   2469,
+   305
+  ],
+  [
+   2774,
+   342
+  ],
+  [
+   3116,
+   379
+  ],
+  [
+   3495,
+   326
+  ],
+  [
+   3821,
+   363
+  ],
+  [
+   4184,
+   310
+  ],
+  [
+   4494,
+   347
+  ],
+  [
+   4841,
+   384
+  ],
+  [
+   5225,
+   331
+  ],
+  [
+   5556,
+   368
+  ],
+  [
+   5924,
+   315
+  ],
+  [
+   6239,
+   352
+  ],
+  [
+   6591,
+   389
+  ],
+  [
+   6980,
+   336
+  ],
+  [
+   7316,
+   373
+  ],
+  [
+   7689,
+   320
+  ],
+  [
+   8009,
+   357
+  ],
+  [
+   8366,
+   304
+  ],
+  [
+   8670,
+   341
+  ],
+  [
+   9011,
+   378
+  ],
+  [
+   9389,
+   325
+  ],
+  [
+   9714,
+   362
+  ],
+  [
+   10076,
+   309
+  ],
+  [
+   10385,
+   346
+  ],
+  [
+   10731,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.adrm-short",
+   "fewer than the 88"
+  ],
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": null
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

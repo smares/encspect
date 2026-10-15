@@ -1,0 +1,283 @@
+{
+ "description": "An enca sample entry without a sinf box: the scheme and the original format are not stated, so the track's coding is unknown; it is a stream of the sample entry's kind, and its samples are not analyzed.",
+ "length": 11066,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   695
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   579
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   479
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   394
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   334
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   695,
+   28
+  ],
+  [
+   "mdat",
+   723,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "encrypted audio",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [],
+   "samples": 30720,
+   "is_vbr": false,
+   "protection": {
+    "scheme": "protection scheme not stated",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   731,
+   300
+  ],
+  [
+   1031,
+   337
+  ],
+  [
+   1368,
+   374
+  ],
+  [
+   1742,
+   321
+  ],
+  [
+   2063,
+   358
+  ],
+  [
+   2421,
+   305
+  ],
+  [
+   2726,
+   342
+  ],
+  [
+   3068,
+   379
+  ],
+  [
+   3447,
+   326
+  ],
+  [
+   3773,
+   363
+  ],
+  [
+   4136,
+   310
+  ],
+  [
+   4446,
+   347
+  ],
+  [
+   4793,
+   384
+  ],
+  [
+   5177,
+   331
+  ],
+  [
+   5508,
+   368
+  ],
+  [
+   5876,
+   315
+  ],
+  [
+   6191,
+   352
+  ],
+  [
+   6543,
+   389
+  ],
+  [
+   6932,
+   336
+  ],
+  [
+   7268,
+   373
+  ],
+  [
+   7641,
+   320
+  ],
+  [
+   7961,
+   357
+  ],
+  [
+   8318,
+   304
+  ],
+  [
+   8622,
+   341
+  ],
+  [
+   8963,
+   378
+  ],
+  [
+   9341,
+   325
+  ],
+  [
+   9666,
+   362
+  ],
+  [
+   10028,
+   309
+  ],
+  [
+   10337,
+   346
+  ],
+  [
+   10683,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.protected-entry-no-sinf",
+   "has no sinf box"
+  ],
+  [
+   "mp4.codec-not-analyzed",
+   "protected enca"
+  ],
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

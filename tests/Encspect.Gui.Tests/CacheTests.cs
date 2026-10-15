@@ -52,6 +52,31 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(15, read.Summary.JocObjectCount);
     }
 
+    [Fact]
+    public void Protection_survives_the_cache()
+    {
+        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "mp4", "cenc-aac.m4a"), "protected.m4a");
+        FileSummary summary = Summarize(file);
+        Assert.True(summary.Summary.IsProtected);
+        Assert.Equal(["Common Encryption, AES-CTR (cenc)"], summary.Summary.ProtectionSchemes);
+        Assert.Equal(["Widevine Content Protection", "Microsoft PlayReady", "01234567-89ab-cdef-0123-456789abcdef"], summary.Summary.DrmSystems);
+        using (SummaryCache cache = Cache())
+        {
+            cache.Put(file, FileFingerprint.Read(file)!, summary);
+        }
+
+        using SummaryCache later = Cache();
+        FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
+        AssertSame(summary, read);
+        Assert.True(read!.Summary.IsProtected);
+    }
+
+    [Fact]
+    public void The_format_version_is_the_one_that_added_protection()
+    {
+        Assert.True(SummaryCache.FormatVersion >= 4);
+    }
+
     [Theory]
     [InlineData("size")]
     [InlineData("time")]
@@ -459,7 +484,10 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(expected.Problem, actual.Problem);
         Assert.Equal(expected.Summary.Tags, actual.Summary.Tags);
         Assert.Equal(expected.Summary.ChannelLayout, actual.Summary.ChannelLayout);
-        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null }, actual.Summary with { Tags = [], ChannelLayout = null });
+        Assert.Equal(expected.Summary.ProtectionSchemes, actual.Summary.ProtectionSchemes);
+        Assert.Equal(expected.Summary.DrmSystems, actual.Summary.DrmSystems);
+        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] },
+            actual.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] });
     }
 
     private static FileId? IdOf(string path)

@@ -21,6 +21,18 @@ Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c
 - **Metadata** as the container's own tags, in the tree: text, bytes, booleans, numbers and GUIDs, a `WM/Picture` decoded, and an `ID3` byte array handed to the ID3v2 parser.
 - **Media objects** of each audio stream are put together from their payloads, also when they span packets, and go to the codec parser by the stream's format tag.
 
+## ASF: protection
+
+Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, the CSV and the GUI. Nothing is decrypted and no license is fetched.
+
+- **Content Encryption Object (3.14):** Microsoft Digital Rights Manager version 1. The secret data, protection type, key ID and license URL are read; a protection type other than "DRM" is a finding (`asf.protection-type`).
+- **Extended Content Encryption Object (3.15):** the Windows Media Rights Manager 7. Its data is read as a size and bytes, since the specification gives it no structure.
+- **Advanced Content Encryption Object (4.13):** Windows Media DRM for network devices. Each record's system ID is named from section 10.7, which lists one (`7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D`), its version, the objects it covers and its data. An object record of type 1 names an ASF stream (0 is the whole file); another type (`asf.encrypted-object-id-type`) or a length other than 2 (`asf.encrypted-object-id-length`) is a finding, and a record may name a stream the file does not have (`asf.encrypted-object-unknown-stream`).
+- **Digital Signature Object (3.16):** the signature type (2 is the only value defined; others are `asf.signature-type`) and data. It signs the header and protects nothing, so a file with only a signature is not protected, and the signature is not verified.
+- **Streams:** a stream is protected when its Encrypted Content Flag is set (3.3), when a Content Encryption Object or an Extended Content Encryption Object is present (they cover the file), or when an Advanced Content Encryption record names it or 0. The scheme is that of the first object in file order that covers it (the flag alone is "encrypted content flag"), and the systems are the Advanced records' system names.
+- **Encrypted media objects** are never handed to a codec parser. The codec parser (WMA versions 1 and 2, Professional, Lossless, Voice) describes the stream from its WAVEFORMATEX and codec-specific data without packets, and shows "frames not read: encrypted"; the container's play duration and the format's nominal bitrate give the duration and bitrate. An info finding says so (`asf.codec-not-analyzed`).
+- **Not covered:** the encrypted payload extension (Encryption Sample ID) is named but its data is not read; DRM license acquisition and any decryption.
+
 ## Tags and tag detection
 
 - ASF has its own metadata, so no ID3 or APE tag is looked for inside it.
@@ -149,5 +161,5 @@ The Encoder node of a stream lists its evidence, each at its bytes, and names th
 
 - The frames of WMA Lossless (planned in phase 3, with the checksum-verifying decoders).
 - Professional frames without the length prefix (planned: later, a separate item), and the audio of any codec (no decoder is built).
-- Decrypting protected content (out of scope); the protection objects are planned for phase 2's protection reporting.
+- Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 - The contents of script commands and markers beyond their fields (planned: later, a separate item).

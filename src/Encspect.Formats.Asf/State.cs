@@ -232,9 +232,28 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
     public DataFigures? Figures { get; set; }
 
-    public bool HasContentEncryption { get; set; }
+    // The protection the header's encryption objects describe: the Content Encryption Object and the Extended Content Encryption Object
+    // cover the whole file, each record of the Advanced Content Encryption Object the streams it names (0 is the whole file). The Digital
+    // Signature Object protects nothing.
+    public List<ProtectionObject> Protections { get; } = [];
 
     public Node? TagNode { get; set; }
 
     public StreamEntry? Stream(int number) => StreamsByNumber.GetValueOrDefault(number);
+}
+
+// What an encryption object (or one record of the Advanced Content Encryption Object) says: the scheme, the object's node, the names of the
+// systems it lists and the streams it covers (IsWholeFile for the objects that name none).
+internal sealed record ProtectionObject(string Scheme, Node Node, IReadOnlyList<string> Systems, IReadOnlyList<(int Number, Node Node)> Streams, bool IsWholeFile = false)
+{
+    public bool Covers(int stream) => IsWholeFile || Streams.Any(s => s.Number == 0 || s.Number == stream);
+}
+
+// The schemes of the protection objects, in the project's wording.
+internal static class ProtectionSchemes
+{
+    public const string DrmVersion1 = "Microsoft Digital Rights Management version 1";
+    public const string RightsManager7 = "Windows Media Rights Manager 7";
+    public const string AdvancedEncryption = "advanced content encryption";
+    public const string StreamFlag = "encrypted content flag";
 }

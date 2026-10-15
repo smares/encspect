@@ -42,6 +42,9 @@ internal static class AsfGuids
     public static readonly Guid TimecodeIndexParameters = new("F55E496D-9797-4B5D-8C8B-604DFE9BFB24");
     public static readonly Guid AdvancedContentEncryption = new("43058533-6981-49E6-9B74-AD12CB86D58C");
 
+    // Section 10.7: the one System ID of the Advanced Content Encryption Object the specification lists.
+    public static readonly Guid EncryptionSystemNetworkDevices = new("7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D");
+
     // The Compatibility Object (section 4.12), which the Windows Media Format SDK's writer puts in every file of the project's fixtures. The
     // text of revision 01.20.03 prints the Header Object's GUID for it in section 10.3, a misprint: 26 bytes with
     // profile 2 and mode 1, as section 4.12 sets them, carry this GUID in all the SDK's files, and MediaInfoLib
@@ -123,6 +126,11 @@ internal static class AsfGuids
         [AdvancedContentEncryption] = "Advanced Content Encryption Object",
     };
 
+    private static readonly Dictionary<Guid, string> EncryptionSystemNames = new()
+    {
+        [EncryptionSystemNetworkDevices] = "Windows Media DRM for network devices",
+    };
+
     private static readonly Dictionary<Guid, string> StreamTypeNames = new()
     {
         [AudioMedia] = "Audio",
@@ -155,6 +163,8 @@ internal static class AsfGuids
     public static string Text(Guid guid) => guid.ToString("D").ToUpperInvariant();
 
     public static string? ObjectName(Guid guid) => ObjectNames.GetValueOrDefault(guid);
+
+    public static string? EncryptionSystemName(Guid guid) => EncryptionSystemNames.GetValueOrDefault(guid);
 
     public static string? StreamTypeName(Guid guid) => StreamTypeNames.GetValueOrDefault(guid);
 

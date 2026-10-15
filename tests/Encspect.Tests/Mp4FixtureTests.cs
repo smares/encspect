@@ -55,6 +55,7 @@ public class Mp4FixtureTests
             }
 
             Assert.All(stream.NodePaths, path => Assert.NotNull(path));
+            CheckProtection(expected, stream);
         }
 
         // Units without an offset (MP4Box lists only sizes) are compared by size.
@@ -80,6 +81,22 @@ public class Mp4FixtureTests
 
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // A stream the manifest gives no "protection" is not protected; the others have the scheme, the encryption and the systems it lists.
+    private static void CheckProtection(JsonElement expected, StreamInfo stream)
+    {
+        if (!expected.TryGetProperty("protection", out JsonElement protection))
+        {
+            Assert.Null(stream.Protection);
+            Assert.False(stream.IsProtected);
+            return;
+        }
+
+        Assert.True(stream.IsProtected);
+        Assert.Equal(protection.GetProperty("scheme").GetString(), stream.Protection!.Scheme);
+        Assert.Equal(protection.GetProperty("is_encrypted").GetBoolean(), stream.Protection.IsEncrypted);
+        Assert.Equal(protection.GetProperty("systems").EnumerateArray().Select(s => s.GetString()), stream.Protection.Systems);
     }
 
     [Theory]

@@ -120,6 +120,7 @@ public sealed partial class Mp4Parser
         state.CurrentEntry = entry;
         ReadChildren(state, node, f.Position, header.End, depth + 1);
         state.CurrentEntry = outer;
+        CheckProtectedEntry(state, entry);
     }
 
     private static string FormatName(string format) => format switch
@@ -138,6 +139,10 @@ public sealed partial class Mp4Parser
         "samr" => "AMR",
         "sawb" => "AMR-WB",
         "enca" => "encrypted audio",
+        "encv" => "encrypted video",
+        "drms" => "FairPlay protected audio",
+        "drmi" => "FairPlay protected video",
+        "aavd" => "Audible protected audio",
         "mha1" or "mhm1" => "MPEG-H 3D Audio",
         _ => "other",
     };
@@ -543,6 +548,12 @@ public sealed partial class Mp4Parser
                 node.Add(entry);
                 state.Track?.Rolls.Add((grouping, distance, entry));
             }
+            else if (grouping == "seig" && length > 0)
+            {
+                var entry = new Node("Entry", at, Math.Min(length, f.Remaining)) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
+                SampleEncryptionGroupEntry(state, entry, f, Math.Min(length, f.Remaining));
+                node.Add(entry);
+            }
             else if (length > 0)
             {
                 f.Bytes(node, "Entry", Math.Min(length, f.Remaining), Explain.GroupDescription);
@@ -566,10 +577,11 @@ public sealed partial class Mp4Parser
     };
 
     // 8.9.2: runs of samples and the group description each belongs to.
-    private static void SampleToGroup(Node node, BoxFields f)
+    private static void SampleToGroup(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
-        node.Value = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        node.Value = grouping;
         if (version == 1)
         {
             f.U32(node, "Grouping Type Parameter", Explain.GroupingTypeParameter);
@@ -589,5 +601,9 @@ public sealed partial class Mp4Parser
         }
 
         MoreEntries(node, count, start + (MaxListedEntries * 8L), Math.Min(f.End, start + (count * 8L)));
+        if (grouping == "seig" && state.Track is { } track)
+        {
+            CountEncryptionGroups(state, track, new BoxFields(f.Reader, start, f.End), count);
+        }
     }
 }

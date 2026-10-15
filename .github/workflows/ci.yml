@@ -421,6 +421,9 @@ jobs:
       - name: Regenerate the hand-built MP4 and raw AAC fixtures
         run: python3 scripts/fixtures/make_mp4_fixtures.py
 
+      - name: Regenerate the hand-built fixtures of protected MP4 tracks
+        run: python3 scripts/fixtures/make_protection_fixtures.py
+
       # The parser's and the model's Huffman and band tables agree and are complete prefix codes.
       - name: Check the AAC tables
         run: python3 scripts/fixtures/check_aac_tables.py
@@ -588,6 +591,17 @@ jobs:
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
+
+      # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
+      - name: Recompute the manifests of the encrypted MP4 fixtures
+        run: |
+          python3 scripts/fixtures/make_external_protection_fixtures.py --manifests-only
+          git status --porcelain -- tests/fixtures
+          test -z "$(git status --porcelain -- tests/fixtures)"
+
+      # DASH-IF's registry of DRM system IDs, held by its SHA-256, and the table that names the pssh boxes' systems.
+      - name: Check the table of DRM systems against DASH-IF's registry
+        run: python3 scripts/fixtures/dashif_systems.py .cache/dashif
 
       # Fraunhofer's, the ISO conformance streams' and one more exhale file, which the exhale layout
       # rule is checked against; fetched and checked against their SHA-256 rather than committed.

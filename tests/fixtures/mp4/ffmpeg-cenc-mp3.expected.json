@@ -1,0 +1,523 @@
+{
+ "description": "ffmpeg -v error -y -i {in} -c:a libmp3lame -b:a 128k -encryption_scheme cenc-aes-ctr -encryption_key 000102030405060708090a0b0c0d0e0f -encryption_kid 101112131415161718191a1b1c1d1e1f {out} on 1.5 s of a 440/660 Hz tone, with the test key and key ID of this script.",
+ "encoder": {
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-i",
+   "{in}",
+   "-c:a",
+   "libmp3lame",
+   "-b:a",
+   "128k",
+   "-encryption_scheme",
+   "cenc-aes-ctr",
+   "-encryption_key",
+   "000102030405060708090a0b0c0d0e0f",
+   "-encryption_kid",
+   "101112131415161718191a1b1c1d1e1f",
+   "{out}"
+  ]
+ },
+ "length": 26263,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   null,
+   28
+  ],
+  [
+   "free",
+   null,
+   8
+  ],
+  [
+   "mdat",
+   null,
+   24667
+  ],
+  [
+   "moov",
+   null,
+   1560
+  ],
+  [
+   "moov/mvhd",
+   null,
+   108
+  ],
+  [
+   "moov/trak",
+   null,
+   1346
+  ],
+  [
+   "moov/trak/tkhd",
+   null,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   null,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   null,
+   1210
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   null,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   null,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   null,
+   1125
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   null,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   null,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   null,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   null,
+   1065
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   null,
+   196
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   null,
+   180
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   null,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   null,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   null,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   null,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   null,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   null,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/btrt",
+   null,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   null,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   null,
+   256
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   null,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/senc",
+   null,
+   488
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/saio",
+   null,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/saiz",
+   null,
+   17
+  ],
+  [
+   "moov/udta",
+   null,
+   98
+  ],
+  [
+   "moov/udta/meta",
+   null,
+   90
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   null,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   null,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   null,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   null,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "MPEG-1 Audio",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [],
+   "samples": 67255,
+   "is_vbr": false,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   null,
+   417
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   417
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   417
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ],
+  [
+   null,
+   418
+  ]
+ ],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "44100 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "67255 (1.525 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "1500 (1.500 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "1105 units of the media's timescale",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "129353 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "129353 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm/Scheme Type": "cenc",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default KID": "10111213-1415-1617-1819-1a1b1c1d1e1f",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default IsProtected": "true",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Per Sample IV Size": "8 bytes"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ],
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "mp4box_samples": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": true,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads clear AAC only and rejects the encrypted sample entry.",
+   "ffprobe": "ffmpeg's parser for the coding merges the random-looking samples into packets of its own, or the coding has none; MP4Box lists the samples instead."
+  }
+ }
+}

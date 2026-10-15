@@ -73,6 +73,17 @@ public sealed partial class Mp4Parser
 
         // The sample entry whose boxes are being read, which its esds box describes.
         public SampleEntry? CurrentEntry { get; set; }
+
+        // Whether the box being read lies in a sinf box (a frma box in QuickTime's wave box is no protection).
+        public bool InSinf { get; set; }
+
+        // The DRM systems the file's pssh boxes name, in file order; the senc boxes counted; and the tracks (0 where a box
+        // names none) that a sample group of Common Encryption protects samples of.
+        public List<string> Systems { get; } = [];
+
+        public int SampleEncryptionBoxes { get; set; }
+
+        public HashSet<uint> SampleGroupProtectedTracks { get; } = [];
     }
 
     private sealed class Track(Node box)
@@ -124,6 +135,18 @@ public sealed partial class Mp4Parser
         public ChunkedList<FragmentSample> FragmentSamples { get; } = new();
 
         public Node? FirstFragment { get; set; }
+
+        // The seig sample group descriptions of the track's sample table (whether each protects its samples) and what its seig sample-to-group box
+        // maps: the samples of groups that protect and groups that do not, and whether every run could be placed against a description.
+        public List<bool> EncryptionGroups { get; } = [];
+
+        public long GroupedProtected { get; set; }
+
+        public long GroupedClear { get; set; }
+
+        public bool HasUnplacedGroups { get; set; }
+
+        public bool HasEncryptionRuns { get; set; }
     }
 
     // One sample description of a track's stsd box: its format, the fields of an audio sample entry
@@ -133,6 +156,13 @@ public sealed partial class Mp4Parser
         public string Format => format;
 
         public Node Node => node;
+
+        // The protection scheme information of a protected entry.
+        public EntryProtection? Protection { get; set; }
+
+        // The coding the samples have once decrypted: the original format a protected entry names, and for Audible's
+        // aavd, whose layout is that of mp4a (GStreamer's qtdemux reads it so), mp4a.
+        public string EffectiveFormat => Protection?.OriginalFormat ?? (format == "aavd" ? "mp4a" : format);
 
         public int Channels { get; set; }
 
@@ -162,6 +192,26 @@ public sealed partial class Mp4Parser
 
         public string? LayoutBox { get; set; }
     }
+
+    // What a sinf box says: its node, the original format, the scheme and the track encryption defaults.
+    private sealed class EntryProtection(Node sinf)
+    {
+        public Node SinfNode => sinf;
+
+        public string? OriginalFormat { get; set; }
+
+        public Node? OriginalFormatNode { get; set; }
+
+        public string? SchemeType { get; set; }
+
+        public uint? SchemeVersion { get; set; }
+
+        public Node? SchemeNode { get; set; }
+
+        public TrackEncryptionInfo? Encryption { get; set; }
+    }
+
+    private sealed record TrackEncryptionInfo(int IsProtected, int IvSize, Node Node);
 
     private sealed record Edit(ulong SegmentDuration, long MediaTime, double Rate, Node Node);
 

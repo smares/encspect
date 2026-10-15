@@ -76,8 +76,31 @@ public sealed partial class Mp4Parser
                 IsoChannelLayout(state, node, f);
                 return true;
             case "frma":
-                node.Value = f.FourCc(node, "Format", Explain.OriginalFormat);
+                OriginalFormat(state, node, f);
                 return true;
+            case "schm":
+                SchemeType(state, node, f);
+                return true;
+            case "tenc":
+                TrackEncryption(state, node, f);
+                return true;
+            case "pssh":
+                ProtectionSystemSpecificHeader(state, node, f);
+                return true;
+            case "senc":
+                SampleEncryption(state, node, f);
+                return true;
+            case "saiz":
+                SampleAuxiliaryInformationSizes(state, node, f);
+                return true;
+            case "saio":
+                SampleAuxiliaryInformationOffsets(state, node, f);
+                return true;
+            case "adrm" when state.CurrentEntry is { Format: "aavd" }:
+                AudibleDrm(state, node, f);
+                return true;
+            case "user" or "key " or "iviv" or "priv" when state.InSinf:
+                return FairPlayBox(state, node, f);
             case "stts":
                 TimeToSample(state, node, f);
                 return true;
@@ -103,7 +126,7 @@ public sealed partial class Mp4Parser
                 SampleGroupDescription(state, node, f);
                 return true;
             case "sbgp":
-                SampleToGroup(node, f);
+                SampleToGroup(state, node, f);
                 return true;
             case "meta":
                 Meta(state, node, header, f, depth);
