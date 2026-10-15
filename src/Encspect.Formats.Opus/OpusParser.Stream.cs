@@ -1,3 +1,4 @@
+using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Formats.Opus;
@@ -73,6 +74,10 @@ public sealed partial class OpusParser
         private readonly FindingCollector _findings = new();
         private Records _records = new(1);
 
+        // A container that holds the identification header apart (CodecContext.Configuration, Matroska's CodecPrivate) hands it over as the
+        // first packet and has no comment header and no Ogg pages (RFC 7845 sections 3 and 5.2 describe the Ogg encapsulation).
+        private readonly bool _isContained = context.Configuration is not null;
+
         private OpusHead? _head;
         private Node? _headNode;
         private Node? _comment;
@@ -124,7 +129,7 @@ public sealed partial class OpusParser
             {
                 AddHead(packet);
             }
-            else if (index == 1)
+            else if (index == 1 && !_isContained)
             {
                 if (packet.Span.StartsWith("OpusTags"u8))
                 {
@@ -149,6 +154,11 @@ public sealed partial class OpusParser
         // header ending its last page, and both on pages of granule position 0.
         private void CheckHeaderPage(MappedBytes packet, string header, bool requireEnd)
         {
+            if (_isContained)
+            {
+                return;
+            }
+
             if (packet.EndPosition is { } position && position != 0 && packet.EndPositionField is { } field)
             {
                 _findings.Add(Severity.Warning, "opus.header-granule", field, _ =>
@@ -197,6 +207,13 @@ public sealed partial class OpusParser
         // RFC 7845, section 5.1 and 5.1.1.
         private void CheckHead(OpusHead head)
         {
+            // Matroska's CodecDelay is the pre-skip in nanoseconds (the Matroska codec mapping, A_OPUS): 48,000 samples a second.
+            if (context.Configuration?.Delay is { } delay && Math.Abs((delay * Rate) - head.PreSkip) >= 0.5)
+            {
+                _findings.Add(Severity.Warning, "opus.container-delay-differs", Field("Pre-skip"), _ =>
+                    $"The container states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
+            }
+
             if ((head.Version & 0xF0) != 0)
             {
                 _findings.Add(Severity.Warning, "opus.version", Field("Version"), _ =>
@@ -534,7 +551,7 @@ public sealed partial class OpusParser
         private void CheckPackets()
         {
             Node anchor = _headNode ?? _parent;
-            if (_seen < 2)
+            if (_seen < 2 && !_isContained)
             {
                 _findings.Add(Severity.Warning, "opus.tags-missing", anchor, _ =>
                     "The stream ends after its identification header, without the comment header RFC 7845 requires (section 3).");

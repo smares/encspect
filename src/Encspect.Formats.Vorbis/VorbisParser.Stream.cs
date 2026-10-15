@@ -87,6 +87,10 @@ public sealed partial class VorbisParser
         private readonly Records _records = new();
         private readonly long[] _modeCounts = new long[64];
 
+        // A container that holds the headers apart (CodecContext.Configuration, Matroska's CodecPrivate) and hands them over as the first
+        // packets has no Ogg pages, so nothing is said of where they lie on a page.
+        private readonly bool _isContained = context.Configuration is not null;
+
         private Identification? _identification;
         private Node? _identificationNode;
         private SetupResult? _setup;
@@ -205,7 +209,7 @@ public sealed partial class VorbisParser
             _records.Blocksize1 = id.Blocksize1;
 
             // Section A.2: the identification header is alone on the first page.
-            if (packet.EndPosition is null)
+            if (!_isContained && packet.EndPosition is null)
             {
                 _findings.Add(Severity.Warning, "vorbis.page-layout", _identificationNode, _ =>
                     "The identification header shares its page with other packets, where the Vorbis I specification puts it on a page of its own (section A.2).");
@@ -322,7 +326,7 @@ public sealed partial class VorbisParser
             }
 
             // Section A.2: the setup header ends its page, so the first audio packet starts a new one.
-            if (packet.EndPosition is null)
+            if (!_isContained && packet.EndPosition is null)
             {
                 _findings.Add(Severity.Warning, "vorbis.page-layout", _setup.Node, _ =>
                     "The setup header does not end its page, where the Vorbis I specification starts the audio on a fresh page (section A.2).");
