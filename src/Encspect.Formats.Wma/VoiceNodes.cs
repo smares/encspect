@@ -98,7 +98,7 @@ internal sealed class VoiceNodes
             // No header: the reading goes on from the bits an earlier superframe ended inside of, if there are any.
             if (record.HeaderEnd > 0)
             {
-                Add(0, record.HeaderEnd, "Unread Bits", NodeValue.Integer(record.HeaderEnd, "bits"), VoiceExplain.PacketUnreadCarried);
+                Add(0, record.HeaderEnd, "Unread Bits", NodeValue.Integer(record.HeaderEnd, "bits"), record.Has(VoicePacketRecord.SkipKept) ? VoiceExplain.PacketUnreadSkipKept : VoiceExplain.PacketUnreadCarried);
             }
         }
         else
@@ -107,7 +107,7 @@ internal sealed class VoiceNodes
             Add(4, 5, "Has Residual LSPs", NodeValue.Boolean(record.Has(VoicePacketRecord.ResidualLsps)), VoiceExplain.PacketResidual, Topics.WmaVoiceFrames);
             if (record.Has(VoicePacketRecord.BadHeader))
             {
-                Unread();
+                Unread(VoiceExplain.PacketUnreadHeader);
                 return nodes;
             }
 
@@ -212,11 +212,11 @@ internal sealed class VoiceNodes
         return nodes;
 
         // What the reading did not take: after a superframe that failed, or in a packet whose count states no more superframes.
-        void Unread()
+        void Unread(string description = VoiceExplain.PacketUnread)
         {
             if (covered < total)
             {
-                Add(covered, total, "Unread Bits", NodeValue.Integer(total - covered, "bits"), VoiceExplain.PacketUnread);
+                Add(covered, total, "Unread Bits", NodeValue.Integer(total - covered, "bits"), description);
             }
         }
     }
@@ -342,7 +342,7 @@ internal sealed class VoiceNodes
     // gets no node for what it would have read there.
     // A superframe read partly from the cache's old bytes keeps the fields of those bits, with a value and no bytes.
     private Node? PlaceField(List<FramePart> parts, int used, bool readsCache, int start, int end, string name, NodeValue? value, string description, string? topic) =>
-        start >= used && !readsCache ? null : _map.Field(parts, Math.Min(start, used), Math.Min(Math.Max(start, end), used), name, value, description, topic);
+        start >= used ? (readsCache ? _map.Marker(parts, used, name, value, description, topic) : null) : _map.Field(parts, start, Math.Min(Math.Max(start, end), used), name, value, description, topic);
 
     private Node FrameNode(List<FramePart> parts, int used, bool readsCache, VoiceFrameRecord frame, bool residual)
     {

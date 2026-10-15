@@ -2672,6 +2672,13 @@
                           "length": 2290
                         },
                         {
+                          "name": "Bits After the Last Superframe",
+                          "value": 2765,
+                          "unit": "bits",
+                          "offset": 330,
+                          "length": 2290
+                        },
+                        {
                           "name": "Skipped Spillover Bits",
                           "value": 412,
                           "unit": "bits",
@@ -5960,15 +5967,13 @@
                           "kind": "Frame",
                           "value": "invalid: music",
                           "offset": 2257,
-                          "length": 1,
+                          "length": 0,
                           "children": [
                             {
                               "name": "Is Speech",
                               "value": false,
                               "offset": 2257,
-                              "length": 1,
-                              "bitOffset": 3,
-                              "bitLength": 0
+                              "length": 0
                             }
                           ]
                         }

@@ -226,6 +226,11 @@ internal sealed class VoiceStream
             record.Flags |= VoicePacketRecord.Headerless;
             Totals.HeaderlessPackets++;
             position = carry > 0 ? carry : _skipNext;
+            if (carry == 0 && position > 0)
+            {
+                record.Flags |= VoicePacketRecord.SkipKept;
+            }
+
             _skipNext = 0;
             record.HeaderEnd = position;
             _cacheBits = 0;
@@ -492,13 +497,15 @@ internal sealed class VoiceStream
                 _cache[_cacheWritten >> 3] &= (byte)(0xFF << (8 - (_cacheWritten & 7)));
             }
 
-            VoiceStatus status = ReadCached(Packets.Count - 1, 0, 0, atEnd: true);
+            long before = Totals.TailBitsAtEnd;
+            ReadCached(Packets.Count - 1, 0, 0, atEnd: true);
             _cacheBits = 0;
 
-            // A start the cache refused was not read from the file: its bits are bits no superframe took.
-            if (status == VoiceStatus.Ok && !_tailCopied)
+            // A start the cache refused was not read from the file: its bits are bits no superframe took, whatever the reading made of
+            // the cache's old bytes (and what a failed reading added is replaced by them).
+            if (!_tailCopied)
             {
-                Totals.TailBitsAtEnd += _tailBits;
+                Totals.TailBitsAtEnd = before + _tailBits;
             }
         }
     }

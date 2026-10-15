@@ -3,8 +3,8 @@ using Encspect.Formats.Wma;
 
 namespace Encspect.Tests;
 
-// The nodes, statistics and series of Windows Media Audio Voice streams, read from the two files the Windows Media Format
-// SDK's writer wrote: what the codec data, the packets, the superframes and the frames report, and that the nodes tile the
+// The nodes, statistics and series of Windows Media Audio Voice streams, read from the files the Windows Media Format
+// SDK's writer wrote and the hand-built ones: what the codec data, the packets, the superframes and the frames report, and that the nodes tile the
 // bits they describe. The findings are asserted in WmaFindingTests.
 public class WmaVoiceTests
 {
@@ -216,20 +216,6 @@ public class WmaVoiceTests
         Assert.False(stream.IsVbr);
     }
 
-    public static TheoryData<string> AllVoiceFixtures
-    {
-        get
-        {
-            var data = new TheoryData<string>();
-            foreach (string manifest in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "voice-*.expected.json").Order(StringComparer.Ordinal))
-            {
-                data.Add($"asf/{Path.GetFileName(manifest)[..^".expected.json".Length]}.asf");
-            }
-
-            return data;
-        }
-    }
-
     // The hand-built fixtures and the Windows files of Voice.
     public static TheoryData<string> VoiceStreams
     {
@@ -312,28 +298,46 @@ public class WmaVoiceTests
         }
 
         // A superframe read in part from the decoder's cache keeps the fields it read there as values with no bytes, and only there: at
-        // the end of its last bit that was read from the file. The blocks of a silence frame read nothing, their gain is the frame's own field.
+        // the end of its last bit that was read from the file, or, with no bit from the file, all at the one bit where the packet shows
+        // the bits that were not read. The blocks of a silence frame (type 0) read nothing: their gain is the frame's own field.
+        var unreadStarts = new HashSet<long>();
+        foreach (Node packet in Child(voice, "Packets").Children)
+        {
+            foreach (Node unread in packet.Children.Where(c => c.Name == "Unread Bits"))
+            {
+                unreadStarts.Add(Bits(unread).Start);
+            }
+        }
+
         foreach (Node superframe in Child(voice, "Superframes").Children)
         {
-            var all = new List<Node>();
-            var stack = new Stack<Node>(superframe.Children);
+            var all = new List<(Node Node, Node? Frame)>();
+            var stack = new Stack<(Node, Node?)>(superframe.Children.Select(c => (c, (Node?)null)));
             while (stack.Count > 0)
             {
-                Node node = stack.Pop();
-                all.Add(node);
+                (Node node, Node? frame) = stack.Pop();
+                all.Add((node, frame));
                 foreach (Node child in node.Children)
                 {
-                    stack.Push(child);
+                    stack.Push((child, node.Name == "Frame" ? node : frame));
                 }
             }
 
-            // A superframe with no bit from the file has only its byte to compare with: the field is within it.
-            bool hasBits = all.Any(n => Bits(n).End > Bits(n).Start);
-            long fileEnd = hasBits ? all.Where(n => Bits(n).End > Bits(n).Start).Max(n => Bits(n).End) : Bits(superframe).Start;
-            foreach (Node node in all.Where(n => Bits(n).End == Bits(n).Start && n.Ranges is null && !n.Name.StartsWith("Block", StringComparison.Ordinal)))
+            static bool IsSilenceBlock(Node node, Node? frame) =>
+                node.Name.StartsWith("Block", StringComparison.Ordinal) && frame is not null && frame.Value!.ToString()!.StartsWith("Type 0:", StringComparison.Ordinal);
+
+            Node[] empty = [.. all.Where(a => Bits(a.Node).End == Bits(a.Node).Start && a.Node.Ranges is null && !IsSilenceBlock(a.Node, a.Frame)).Select(a => a.Node)];
+            bool hasBits = all.Any(a => Bits(a.Node).End > Bits(a.Node).Start);
+            if (hasBits)
             {
-                long at = Bits(node).Start;
-                Assert.True(hasBits ? at == fileEnd : at >= fileEnd && at < fileEnd + 8, $"{node.Name} is empty at bit {at}, not at the end of the superframe's bits ({fileEnd})");
+                long fileEnd = all.Where(a => Bits(a.Node).End > Bits(a.Node).Start).Max(a => Bits(a.Node).End);
+                Assert.All(empty, n => Assert.True(Bits(n).Start == (fileEnd / 8 * 8), $"{n.Name} is empty at bit {Bits(n).Start}, not at the end of the superframe's bits ({fileEnd})"));
+            }
+            else if (empty.Length > 0)
+            {
+                long at = Bits(empty[0]).Start;
+                Assert.All(empty, n => Assert.Equal(at, Bits(n).Start));
+                Assert.Contains(unreadStarts, u => u / 8 == at / 8);
             }
         }
     }
@@ -393,8 +397,10 @@ public class WmaVoiceTests
         Node voice = VoiceStream(Fixtures.AnalyzeMpeg("asf/external-windows-wmavoice-cbr-mono-8k-8-speech.wma"));
         Node last = Child(voice, "Superframes").Children[^1];
         Node tail = Child(voice, "Packets").Children[^1].Children.Single(c => c.Name == "Unread Bits");
-        Assert.Equal(Bits(tail).Start, Bits(last.Children[0]).Start);
-        Assert.All(last.Children, c => Assert.Equal(Bits(tail).Start, Bits(c).Start));
+        // No bytes of its own: a node of length 0 at the byte where its start lies.
+        Assert.Equal(0, last.Length);
+        Assert.Equal(tail.Offset, last.Offset);
+        Assert.All(last.Children, c => Assert.Equal((last.Offset, 0L), (c.Offset, c.Length)));
         Assert.Equal(2266, Integer(Child(voice, "Statistics"), "Bits After the Last Superframe"));
     }
 

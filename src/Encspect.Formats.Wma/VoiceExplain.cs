@@ -38,10 +38,12 @@ internal static class VoiceExplain
     public const string PacketUnread = "Bits of the packet that the reading did not take: after the last superframe the header counts, or after a superframe that failed, which makes a decoder drop the rest of the media object.";
     public const string PacketUnreadResync = "Bits in front of the packet's own superframes that a decoder's resync skips, a few more than the spillover, after a spillover that did not finish its superframe.";
     public const string PacketUnreadCarried = "Bits at the start of a block with no header that the reading of the superframe before went on into, which a decoder skips.";
-    public const string PacketUnreadCache = "Bits that a decoder's cache did not take, as they did not fit in it or lay past the packet. The decoder reads the bytes the cache held before in their place.";
+    public const string PacketUnreadSkipKept = "Bits at the start of a media object with no header that a decoder skips because an earlier packet header it rejected left them to skip (wmavoice.c: skip_bits_next); no superframe read them.";
+    public const string PacketUnreadHeader = "Bits after a packet header that runs past the packet: a decoder rejects the header and drops the rest of the media object.";
+    public const string PacketUnreadCache = "Bits that a decoder's cache did not take, as they did not fit in it or the spillover ran past the packet. The decoder reads the bytes the cache held before in their place.";
 
     public const string Superframe = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe).";
-    public const string SuperframeFromCache = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe). Part of its bits were not copied from the file into the decoder's cache, and a decoder reads the bytes the cache held before in their place: the fields read there have a value and no bytes.";
+    public const string SuperframeFromCache = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe). Some or all of its bits were not copied from the file into the decoder's cache, and a decoder reads the bytes the cache held before in their place: the fields read there have a value and no bytes.";
     public const string SpeechFlag = "The first bit of a superframe: set for speech, which the codec reads; clear for music, Windows Media Audio Professional data that FFmpeg's decoder does not support (wmavoice.c: synth_superframe).";
     public const string HasSampleCount = "A flag that the superframe states how many samples it holds. Without it, it holds 480.";
     public const string SampleCount = "How many samples the superframe holds, at most 480 (wmavoice.c: synth_superframe). The comment there says it is usually used to prevent blanks at track boundaries.";

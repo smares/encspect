@@ -153,6 +153,10 @@ internal struct VoicePacketRecord
     // The bits that begin the superframe the packet ends in did not fit the cache and were not copied into it.
     public const ushort TailRefused = 512;
 
+    // The block has no header and starts after bits that a decoder skips because a rejected header left them to skip (skip_bits_next),
+    // not because the reading of a superframe went on into it.
+    public const ushort SkipKept = 1024;
+
     public readonly bool Has(ushort flag) => (Flags & flag) != 0;
 }
 
