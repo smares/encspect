@@ -28,6 +28,74 @@ public class DetailViewModelTests
     }
 
     [Fact]
+    public void A_file_that_two_formats_match_offers_the_other()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames.eac3"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.True(model.HasDetectionText);
+        Assert.Equal("Also matches:", model.DetectionText);
+        AlternativeItem alternative = Assert.Single(model.Alternatives);
+        Assert.Equal("AAC", alternative.Format);
+        Assert.Contains("class 50", alternative.Evidence, StringComparison.Ordinal);
+        Assert.Null(model.ForcedFormat);
+    }
+
+    [Fact]
+    public void A_plain_file_has_nothing_to_offer()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.False(model.HasDetectionText);
+        Assert.Empty(model.Alternatives);
+        Assert.Contains("MPEG Audio", model.FormatNames);
+    }
+
+    [Fact]
+    public void Analyzing_as_a_format_runs_that_parser_and_stays_until_another_file_is_loaded()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        string path = Fixtures.Mpeg("external-lame-cbr128-joint.mp3");
+        Task load = model.LoadAsync(path);
+        ui.Until(() => load.IsCompleted);
+
+        Task forced = model.AnalyzeAsAsync("AAC");
+        ui.Until(() => forced.IsCompleted);
+
+        Assert.Equal("AAC", model.ForcedFormat);
+        Assert.Equal("AAC", model.Report!.Root.Value);
+        Assert.Equal("Analyzed as AAC on request; detection would take MPEG Audio.", model.DetectionText);
+        Assert.Equal("MPEG Audio", Assert.Single(model.Alternatives).Format);
+        Assert.Contains(model.Findings, f => f.Code == "format.forced");
+        Assert.DoesNotContain(model.Findings, f => f.Code == "parse.failed");
+
+        Task reload = model.ReloadAsync();
+        ui.Until(() => reload.IsCompleted);
+        Assert.Equal("AAC", model.Report!.Root.Value);
+
+        Task back = model.AnalyzeAsAsync(null);
+        ui.Until(() => back.IsCompleted);
+        Assert.Null(model.ForcedFormat);
+        Assert.Equal("MPEG Audio", model.Report!.Root.Value);
+        Assert.False(model.HasDetectionText);
+
+        Task again = model.AnalyzeAsAsync("ogg");
+        ui.Until(() => again.IsCompleted);
+        Task other = model.LoadAsync(Fixtures.Mpeg("external-lame-vbr-v2.mp3"));
+        ui.Until(() => other.IsCompleted);
+        Assert.Null(model.ForcedFormat);
+        Assert.Equal("MPEG Audio", model.Report!.Root.Value);
+    }
+
+    [Fact]
     public void Every_load_analyzes_the_file_again()
     {
         var ui = new TestDispatcher();

@@ -33,6 +33,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _isGraphsShown;
     private string? _exportError;
     private string? _folderError;
+    private string? _forcedFormat;
     private bool _isTopicOpen;
     private Topic? _shownTopic;
 
@@ -97,6 +98,30 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     }
 
     public bool HasReport => _report is not null;
+
+    // The names of the formats the file can be analyzed as (Analyzer.FormatNames).
+    public IReadOnlyList<string> FormatNames => _analyzer.FormatNames;
+
+    // The format the file is analyzed as on the user's request, or null where detection chooses.
+    // Loading another file clears it; refreshing the file keeps it.
+    public string? ForcedFormat => _forcedFormat;
+
+    // The formats whose evidence is real besides the one analyzed (FormatDetection.Alternatives),
+    // each of which the file can be analyzed as. Where the analysis is forced, they include the
+    // format detection would have chosen.
+    public IReadOnlyList<AlternativeItem> Alternatives => _report?.Detection is { } detection ? [.. detection.Alternatives.Select(a => new AlternativeItem(a))] : [];
+
+    // What the header says about how the format was chosen, when it is not the plain case: other
+    // formats that match (the choices follow it), or an analysis the user forced.
+    public string? DetectionText => _report?.Detection switch
+    {
+        { IsForced: true, Detected: { } detected } detection => $"Analyzed as {detection.Format} on request; detection would take {detected}.",
+        { IsForced: true } detection => $"Analyzed as {detection.Format} on request; detection finds no format.",
+        { Alternatives.Count: > 0 } => "Also matches:",
+        _ => null,
+    };
+
+    public bool HasDetectionText => DetectionText is not null;
 
     public StructureTree? Tree
     {
@@ -331,7 +356,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     // Analyzes the file on a background thread; a folder that could not be listed shows why. The
     // task ends once the result is shown, or at once when another load replaced this one.
-    public Task LoadAsync(string path, string? folderError = null) => Load(path, folderError, keep: null);
+    public Task LoadAsync(string path, string? folderError = null) => Load(path, folderError, keep: null, forced: null);
 
     // Analyzes the file shown again, as it is on disk now, and selects the node at the place the
     // selected one was (its child indexes), or the root when the new tree has none there.
@@ -348,10 +373,29 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             keep.Insert(0, row.ChildIndex);
         }
 
-        return Load(path, _folderError, keep);
+        return Load(path, _folderError, keep, _forcedFormat);
     }
 
-    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep)
+    // Analyzes the file shown again as the given format (the name of one of FormatNames), or by
+    // detection for null, and selects the node at the place the selected one was. The choice stays
+    // until another file is loaded.
+    public Task AnalyzeAsAsync(string? format)
+    {
+        if (_path is not { } path)
+        {
+            return Task.CompletedTask;
+        }
+
+        var keep = new List<int>();
+        for (TreeRow? row = _selectedNode; row?.Parent is not null; row = row.Parent)
+        {
+            keep.Insert(0, row.ChildIndex);
+        }
+
+        return Load(path, _folderError, keep, format);
+    }
+
+    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep, string? forced)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -362,6 +406,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         _path = path;
         _folderError = folderError;
+        _forcedFormat = forced;
+        Raise(nameof(ForcedFormat));
         Raise(nameof(Path));
         Raise(nameof(Title));
         Raise(nameof(Folder));
@@ -379,7 +425,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 Progress = Math.Clamp((double)read / length, 0, 1);
             }
         }));
-        var options = new AnalysisOptions { CancellationToken = cancellation.Token, BytesRead = bytesRead };
+        var options = new AnalysisOptions { CancellationToken = cancellation.Token, BytesRead = bytesRead, ForcedFormat = forced };
 
         Task.Run(() =>
         {
@@ -609,6 +655,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Raise(nameof(StreamsText));
         Graphs.Load(report);
         Raise(nameof(HasNoGraphs));
+        RaiseDetection();
         SelectedNode = keep is { Count: > 0 } && Tree.Reveal(keep) is { } kept ? kept : Tree.Root;
     }
 
@@ -625,6 +672,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Streams = [];
         Graphs.Clear();
         Raise(nameof(HasNoGraphs));
+        RaiseDetection();
         RaiseCounts();
         ExportError = null;
         IsLoading = false;
@@ -658,6 +706,13 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
 
         return node;
+    }
+
+    private void RaiseDetection()
+    {
+        Raise(nameof(Alternatives));
+        Raise(nameof(DetectionText));
+        Raise(nameof(HasDetectionText));
     }
 
     private void RaiseCounts()
