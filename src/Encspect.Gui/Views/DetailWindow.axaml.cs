@@ -43,6 +43,7 @@ public partial class DetailWindow : Window
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
         model.PropertyChanged += OnModelChanged;
+        AnalyzeAsButton.Flyout = CreateFormatMenu();
 
         // The menu shows in macOS's menu bar; elsewhere the window has no menu bar, which would
         // only repeat its buttons, and the menu's shortcuts still work.
@@ -143,6 +144,7 @@ public partial class DetailWindow : Window
         Shortcuts.Submenu(
             "File",
             Shortcuts.Item(this, "Export Report…", Shortcuts.WithCommand(Key.S), () => _ = ExportAsync()),
+            Shortcuts.Submenu("Analyze As", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Close", Shortcuts.WithCommand(Key.W), Close)),
         Shortcuts.Submenu(
@@ -152,6 +154,38 @@ public partial class DetailWindow : Window
         Shortcuts.WindowMenu(this),
         Shortcuts.Submenu("Help", Shortcuts.Item(this, "Topics", null, () => Model.ShowTopic(null))),
     ];
+
+    // The "Analyze as…" menu: detection, then every format, with the one in use checked.
+    private MenuFlyout CreateFormatMenu()
+    {
+        var flyout = new MenuFlyout();
+        flyout.Opening += (_, _) =>
+        {
+            flyout.Items.Clear();
+            flyout.Items.Add(FormatItem("Detect automatically", null, Model.ForcedFormat is null));
+            flyout.Items.Add(new Separator());
+            foreach (string name in Model.FormatNames)
+            {
+                flyout.Items.Add(FormatItem(name, name, Model.ForcedFormat == name));
+            }
+        };
+        return flyout;
+
+        MenuItem FormatItem(string header, string? format, bool isChecked)
+        {
+            var item = new MenuItem { Header = header, ToggleType = MenuItemToggleType.Radio, IsChecked = isChecked, GroupName = "format" };
+            item.Click += (_, _) => _ = Model.AnalyzeAsAsync(format);
+            return item;
+        }
+    }
+
+    private void OnAlternative(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AlternativeItem item })
+        {
+            _ = Model.AnalyzeAsAsync(item.Format);
+        }
+    }
 
     private void OnFindingsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = false;
 

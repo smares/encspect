@@ -40,24 +40,11 @@ public static class DefaultParsers
 
     private static readonly MpegAudioParser Mpeg = new();
 
-    // The host takes the format that sniffs most confident, and the first of equals. MP4 is certain
-    // of an ftyp box (100) and sure of a run of top-level boxes (95), above MPEG audio's 90 for a
-    // chain of frames anywhere in its first MiB, which an MP4's mdat may hold; an ADTS chain at the
-    // start of the data (91) outranks MPEG audio too, one further in (50, with eight frames or
-    // frames to the end of the data) does not. MPEG audio ranks a protected chain further in whose
-    // first three CRCs all fail 30. Ogg is certain
-    // of a chain of pages from the start (100), which no MP4 or ADTS file starts with, and takes one
-    // further in (60) only where nothing more certain claims the file. Musepack is certain of its
-    // magic number (100); a stream of version 4 to 6 has none and takes 60. An AC-3 chain at the
-    // start of the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its
-    // 0x0B; one further in (50, or 55 when three of its first 16 frames pass their CRCs, which
-    // outranks the ADTS and MPEG chains that other formats' bytes inside its frames make) ranks
-    // below them all. ASF is certain of the GUID of its Header
-    // Object at the start (100). WavPack is certain of a block header that passes libwavpack's checks
-    // and is followed by another one at the start of the data (100), and takes a chain of them
-    // further in (60), below MPEG audio. A DTS chain at the start of the data (93) outranks AC-3's
-    // 92: no chain is both, since the sync words differ; one further in (50) ranks below them all,
-    // as AC-3's does (see DtsParser.Sniff).
+    // The host takes the format whose sniff has the best evidence: the highest class, then the
+    // earliest start of the matched structure, then the most checksum-verified frames, then the most
+    // consistent frames (SniffResult.Compare; plan, "Format detection"). The order of this list only
+    // breaks a tie in all four, which the report names as format.ambiguous, so no format depends on
+    // its place here.
     public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,

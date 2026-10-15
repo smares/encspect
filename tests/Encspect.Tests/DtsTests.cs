@@ -8,7 +8,7 @@ namespace Encspect.Tests;
 // the junk in front of its own, and the four forms of the core stream reading to the same fields.
 public class DtsTests
 {
-    private static int Sniff(byte[] data) => new DtsParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data)), "dts"));
+    private static int Sniff(byte[] data) => new DtsParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data)), "dts")).Class;
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", name));
 
@@ -28,7 +28,7 @@ public class DtsTests
             }
 
             using FileStream stream = File.OpenRead(path);
-            Assert.True(parser.Sniff(new SniffContext(new ByteReader(stream))) == 0, path);
+            Assert.True(parser.Sniff(new SniffContext(new ByteReader(stream))).Class == 0, path);
             checkedFiles++;
         }
 

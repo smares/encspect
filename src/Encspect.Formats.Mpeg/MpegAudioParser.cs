@@ -13,8 +13,6 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 {
     private const int SniffLimit = 1 << 20;
 
-    private const int IncredibleFreeFormatScore = 30;
-
     // Free-format frames are found from the next matching header; 640 kbps at 32000 Hz is the
     // largest frame LAME writes, and this leaves room for Layer I.
     private const int MaxFreeFormatLength = 8192;
@@ -23,16 +21,23 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     public string Id => "mpeg-audio";
 
-    public int Sniff(SniffContext context)
+    // A chain of frames anywhere in the first MiB is class 90, with where it starts and how many of its
+    // frames are whole and pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4; unprotected frames
+    // have none). Another format's frames can hold a protected header at a fixed offset (an AC-3 frame of
+    // 768 bytes holds the bytes of a protected MPEG-2.5 Layer I header of 768 bytes), which chains from
+    // frame to frame: a protected chain further in than the start of the data none of whose frames passes
+    // its CRC is class 30, like a free-format chain that is not credible, which is also what data with a
+    // header-like word at a fixed period makes. Both rank below every other format's chain, not out: the
+    // stream may be genuine, but the format that owns the data should win. Junk passes a CRC once in
+    // 65,536 frames.
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         var blocks = new BlockReader(reader);
         // Zero bytes before the audio are common padding and cheap to skip.
         long start = ZeroRunEnd(blocks, reader.Start, reader.End);
         long limit = Math.Min(reader.End, start + SniffLimit);
-        // A free-format chain that is not credible ranks below every other format's chain, not out: it may be genuine, but it is also what
-        // data with a header-like word at a fixed period makes, and the format that owns that data should win.
-        bool found = false;
+        SniffResult? incredible = null;
         for (long from = reader.Start; from < limit;)
         {
             long position = FindStreamStart(blocks, from, limit, reader.End, out int freeLength);
@@ -41,43 +46,48 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 break;
             }
 
-            found = true;
             blocks.TryReadUInt32(position, out uint raw);
             var header = new MpegHeader(raw);
-            if (header.IsFreeFormat ? IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End)
-                : position == start || !HasOnlyBrokenCrcs(blocks, position, header, reader.End))
+            (int frames, int verified, long chainEnd) = CountChain(blocks, position, header, freeLength, reader.End);
+            bool credible = header.IsFreeFormat
+                ? IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End)
+                : position == start || !header.IsProtected || verified > 0;
+            if (credible)
             {
-                return 90;
+                return new SniffResult(90, position, frames, verified, End: chainEnd);
             }
 
+            incredible ??= new SniffResult(SniffResult.WeakClass, position, frames, verified, header.IsFreeFormat ? "free format" : "protected, no CRC holds", chainEnd);
             from = position + 1;
         }
 
-        return found ? IncredibleFreeFormatScore : 0;
+        return incredible ?? SniffResult.None;
     }
 
-    // Another format's frames can hold a protected header at a fixed offset (an AC-3 frame of 768 bytes holds the bytes of a protected MPEG-2.5
-    // Layer I header of 768 bytes), which chains from frame to frame. A protected chain further in, whose first three frames that fit in the data
-    // all fail the CRC their header gives (ISO/IEC 11172-3 2.4.1.4), is therefore no more than a stray header-like word; junk passes a CRC once in
-    // 65,536 frames. A chain at the start, or one whose frames are not protected, is unchanged.
-    private static bool HasOnlyBrokenCrcs(BlockReader blocks, long position, MpegHeader first, long end)
+    // The whole frames of the chain at position, at most SniffResult.MaxFrames, how many of them hold
+    // their CRC, and where the last one ends.
+    private static (int Frames, int Verified, long End) CountChain(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
     {
-        if (!first.IsProtected)
-        {
-            return false;
-        }
-
+        int frames = 0;
+        int verified = 0;
         long next = position;
         MpegHeader header = first;
-        for (int count = 0; count < 3 && next + header.FrameLength(0) <= end; count++)
+        while (frames < SniffResult.MaxFrames)
         {
-            if (header.IsProtected && FrameCrcHolds(blocks, next, header, header.FrameLength(0)))
+            int length = header.FrameLength(freeLength);
+            if (next + length > end)
             {
-                return false;
+                break;
             }
 
-            next += header.FrameLength(0);
-            if (!blocks.TryReadUInt32(next, out uint raw) || new MpegHeader(raw) is not { IsValid: true } following)
+            frames++;
+            if (header.IsProtected && FrameCrcHolds(blocks, next, header, length))
+            {
+                verified++;
+            }
+
+            next += length;
+            if (!blocks.TryReadUInt32(next, out uint raw) || new MpegHeader(raw) is not { IsValid: true } following || !following.IsSameStream(first))
             {
                 break;
             }
@@ -85,7 +95,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             header = following;
         }
 
-        return true;
+        return (frames, verified, next);
     }
 
     public void Parse(ParseContext context)

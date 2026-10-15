@@ -8,7 +8,10 @@ namespace Encspect.Host;
 // Schema version 1: per report schemaVersion, tool, source, root, streams and findings. A node has
 // name, kind (unless Detail), value as a JSON string, number or boolean, unit, offset, length,
 // bitOffset and bitLength, ranges (for bytes that are not contiguous), and children; a finding has
-// severity, code, message, offset, length, path and count.
+// severity, code, message, offset, length, path and count. A report whose format is not the
+// plain detected one (other formats match, or the analysis was forced) also has detection, with
+// the format that ran, its evidence, whether it was forced, the format detection would have chosen
+// then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note).
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -101,6 +104,11 @@ public static class ReportJsonWriter
 
         writer.WriteEndArray();
 
+        if (report.Detection is { } detection)
+        {
+            WriteDetection(writer, detection);
+        }
+
         writer.WriteStartArray("findings");
         foreach (Finding finding in report.Findings)
         {
@@ -124,6 +132,45 @@ public static class ReportJsonWriter
         }
 
         writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static void WriteDetection(Utf8JsonWriter writer, FormatDetection detection)
+    {
+        writer.WriteStartObject("detection");
+        writer.WriteString("format", detection.Format);
+        WriteEvidence(writer, "evidence", detection.Evidence);
+        writer.WriteBoolean("isForced", detection.IsForced);
+        if (detection.IsForced)
+        {
+            writer.WriteString("detected", detection.Detected);
+        }
+
+        writer.WriteStartArray("alternatives");
+        foreach (FormatCandidate candidate in detection.Alternatives)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("format", candidate.Format);
+            WriteEvidence(writer, "evidence", candidate.Evidence);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static void WriteEvidence(Utf8JsonWriter writer, string name, SniffResult evidence)
+    {
+        writer.WriteStartObject(name);
+        writer.WriteNumber("class", evidence.Class);
+        writer.WriteNumber("offset", evidence.Offset);
+        writer.WriteNumber("frames", evidence.Frames);
+        writer.WriteNumber("verifiedFrames", evidence.VerifiedFrames);
+        if (evidence.Note is { } note)
+        {
+            writer.WriteString("note", note);
+        }
+
         writer.WriteEndObject();
     }
 

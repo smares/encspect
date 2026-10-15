@@ -40,6 +40,7 @@ Phase 2, the lossy formats, is done. Next: the lossless formats, among them the 
 ```sh
 dotnet build -c Release
 dotnet run -c Release --project src/Encspect.Cli -- song.mp3
+dotnet run -c Release --project src/Encspect.Cli -- --as aac damaged.bin   # skip format detection
 dotnet run -c Release --project src/Encspect.Gui
 ```
 

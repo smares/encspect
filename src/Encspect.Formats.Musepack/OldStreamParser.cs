@@ -79,18 +79,18 @@ internal static class OldStreamParser
 
     // How sure it is that the data is such a stream: a header of version 4 to 6 whose units end
     // where the encoders end them; surer with three units or more (MusepackParser.Sniff).
-    public static int Sniff(ByteReader reader)
+    public static SniffResult Sniff(ByteReader reader)
     {
         if (reader.Length < MinimumBytes || reader.Length % 4 != 0)
         {
-            return 0;
+            return SniffResult.None;
         }
 
         var words = new WordStream(reader, reader.Start, reader.End);
         OldHeader header = OldHeader.Read(words);
         if (header.Version is < 4 or > 6 || header.Frames == 0 || header.BlockSize is < 1 or > MaxBlockSize)
         {
-            return 0;
+            return SniffResult.None;
         }
 
         long bit = header.DataBit;
@@ -103,7 +103,7 @@ internal static class OldStreamParser
 
             if (bit + 20 > words.BitLength)
             {
-                return 0;
+                return SniffResult.None;
             }
 
             bit += 20 + words.Read(bit, 20) + (header.KeepsLastFrame && i == header.Units - 1 ? 11 : 0);
@@ -112,7 +112,7 @@ internal static class OldStreamParser
         bool ends = header.KeepsLastFrame
             ? bit <= words.BitLength && (words.Layout.WordEnd(bit) == reader.End || EndsWithZeroWord(words, bit))
             : bit >= words.BitLength && bit < words.BitLength + 32;
-        return !ends ? 0 : header.Units >= 3 ? 95 : 60;
+        return !ends ? SniffResult.None : new SniffResult(header.Units >= 3 ? 95 : 60, reader.Start, (int)Math.Min(header.Units, SniffResult.MaxFrames));
     }
 
     // Whether the stream ends on a word boundary at bit and one word of zeros follows it, the last of

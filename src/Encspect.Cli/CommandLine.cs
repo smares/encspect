@@ -43,6 +43,11 @@ internal static class CommandLine
         Selection:
           --only-format <names> Analyze only files of these formats, comma-separated, by the
                                 start of the format's name (mpeg: MPEG Audio). Others are skipped.
+                                Not with --as.
+          --as <format>         Skip format detection and analyze every file as this format, by the
+                                start of its name or a name it goes by (ac3, mp3, m4a), for a file
+                                detection misses or gets wrong. The report says it was forced and
+                                what detection would have chosen.
 
         Exit code:
           --fail-on <severity>  Exit with 1 when a finding of this severity or worse is found:
@@ -70,6 +75,8 @@ internal static class CommandLine
         bool explain = false;
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
+        string? forcedFormat = null;
+        var analyzer = Analyzer.CreateDefault();
         Severity? failOn = null;
         var paths = new List<string>();
         bool optionsEnded = false;
@@ -149,14 +156,31 @@ internal static class CommandLine
 
                     foreach (string name in List(names))
                     {
-                        if (!KnownFormats.Any(known => Normalize(known).StartsWith(Normalize(name), StringComparison.Ordinal)))
+                        IReadOnlyList<string> found = analyzer.MatchFormats(name);
+                        if (found.Count == 0)
                         {
-                            return Fail(stderr, $"Unknown format: {name}. Formats: {string.Join(", ", KnownFormats)}.");
+                            return Fail(stderr, IsPath(name) ? $"--only-format needs a list of formats before the files and folders; {name} is a path." : $"Unknown format: {name}. Formats: {string.Join(", ", KnownFormats)}.");
                         }
 
-                        formats.Add(Normalize(name));
+                        formats.AddRange(found);
                     }
 
+                    break;
+                case "--as":
+                    if (Value(arg) is not { } wanted)
+                    {
+                        return Fail(stderr, "--as needs a format.");
+                    }
+
+                    IReadOnlyList<string> matches = analyzer.MatchFormats(wanted);
+                    if (matches.Count != 1)
+                    {
+                        return Fail(stderr, matches.Count == 0
+                            ? IsPath(wanted) ? $"--as needs a format before the files and folders; {wanted} is a path." : $"Unknown format: {wanted}. Formats: {string.Join(", ", KnownFormats)}."
+                            : $"Ambiguous format: {wanted} starts {string.Join(", ", matches)}. Name one of them.");
+                    }
+
+                    forcedFormat = matches[0];
                     break;
                 case "--fail-on":
                     failOn = Value(arg)?.ToLowerInvariant() switch
@@ -205,6 +229,11 @@ internal static class CommandLine
             return Fail(stderr, "Name at least one file or folder.");
         }
 
+        if (forcedFormat is not null && formats.Count > 0)
+        {
+            return Fail(stderr, "--as and --only-format cannot be combined: --only-format selects files by the format detection finds, and --as skips detection.");
+        }
+
         Output chosenOutput = output ?? Output.Text;
         if (offsets && chosenOutput != Output.Text)
         {
@@ -221,7 +250,6 @@ internal static class CommandLine
             return Fail(stderr, "--explain is for the text tree and JSON; CSV has one summary row per file.");
         }
 
-        var analyzer = Analyzer.CreateDefault();
         var filter = new ReportFilter(hidden);
         bool unreadable = false;
         Severity? worst = null;
@@ -311,12 +339,12 @@ internal static class CommandLine
                 // What is not a regular file has no format to match and is reported, like a file
                 // that cannot be read.
                 if (formats.Count > 0 && FileReports.NotRegular(input.Path) is null
-                    && !(analyzer.DetectFormat(input.Path) is { } format && formats.Any(Normalize(format).StartsWith)))
+                    && !(analyzer.DetectFormat(input.Path) is { } format && formats.Contains(format)))
                 {
                     return null;
                 }
 
-                return analyzer.AnalyzeFile(input.Path);
+                return analyzer.AnalyzeFile(input.Path, forcedFormat is null ? null : new AnalysisOptions { ForcedFormat = forcedFormat });
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -379,8 +407,8 @@ internal static class CommandLine
 
     private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
 
-    private static IEnumerable<string> List(string value) => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    // A value that is an existing file or folder is the path the option swallowed because its own value was left out.
+    private static bool IsPath(string value) => File.Exists(value) || Directory.Exists(value);
 
-    // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg".
-    private static string Normalize(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+    private static IEnumerable<string> List(string value) => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

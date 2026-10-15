@@ -36,11 +36,11 @@ public class AnalyzerTagTests
 
         public IReadOnlyList<Node>? Embedded { get; private set; }
 
-        public int Sniff(SniffContext context)
+        public SniffResult Sniff(SniffContext context)
         {
             ByteReader reader = context.Reader;
             Seen = (reader.Start, reader.End, reader.Position);
-            return confidence;
+            return new(confidence, reader.Start);
         }
 
         public void Parse(ParseContext context)

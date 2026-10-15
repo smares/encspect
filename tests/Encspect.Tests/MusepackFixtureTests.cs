@@ -128,7 +128,7 @@ public class MusepackFixtureTests
             var reader = new ByteReader(stream);
             if (reader.Length >= 4 && !reader.MatchesAt(0, "MP+"u8) && !reader.MatchesAt(0, "MPCK"u8))
             {
-                Assert.True(parser.Sniff(new SniffContext(reader)) == 0, path);
+                Assert.True(parser.Sniff(new SniffContext(reader)).Class == 0, path);
             }
         }
     }
@@ -144,7 +144,7 @@ public class MusepackFixtureTests
     public void CutSv6StreamsParseWithoutTheSniff(string name, int cut, int whole)
     {
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
-        Assert.Equal(0, new Encspect.Formats.Musepack.MusepackParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data[..^cut])))));
+        Assert.Equal(0, new Encspect.Formats.Musepack.MusepackParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data[..^cut])))).Class);
         Report report = new Encspect.Host.Analyzer([new ForcedMusepack()]).Analyze("cut.mpc", new MemoryStream(data[..^cut]));
 
         Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
@@ -168,7 +168,7 @@ public class MusepackFixtureTests
 
         public string Name => _parser.Name;
 
-        public int Sniff(SniffContext context) => 100;
+        public SniffResult Sniff(SniffContext context) => new(100);
 
         public void Parse(ParseContext context) => _parser.Parse(context);
     }

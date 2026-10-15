@@ -18,21 +18,49 @@ public sealed class DtsParser : IFormatParser
 
     public string Name => "DTS";
 
-    // A chain at the start of the data, after any zero bytes, takes 93, above AC-3's 92, ADTS's 91 and MPEG audio's 90: the sync words
+    // A chain at the start of the data, after any zero bytes, is class 93, above AC-3's 92, ADTS's 91 and MPEG audio's 90: the sync words
     // of these formats differ in their first bytes (0x7F, 0xFE, 0x1F, 0xFF with a second byte that is not 0xFx, 0x64 and 0x58, against 0x0B,
-    // and 0xFF with 0xFx), so no chain is two formats' at once. One found further in takes 50, as AC-3's does, below MPEG audio, ADTS
+    // and 0xFF with 0xFx), so no chain is two formats' at once. One found further in is class 50, as AC-3's is, below MPEG audio, ADTS
     // (91 at the start of the data), Ogg's 60, Musepack's 60 and WavPack's 60, so a DTS stream in the junk of another format does not take
     // its file; MPEG audio does not take DTS data with junk in front, since it asks a free-format chain for frames that hold what their
     // headers promise and, in Layers I and II, a CRC that holds. A DTS chain is a four-byte sync word, a header that must be valid and
     // two more frames of the same form and sampling frequency at the offsets the sizes give, which junk or another format's data does not
-    // make. It stays below every container's 95 and 100.
-    public int Sniff(SniffContext context)
+    // make. It stays below every container's 95 and 100. The units counted are those of the chain; an extension substream that starts a
+    // unit has passed the CRC of its header (7.5.2), which a chain demands of it, and counts as verified.
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
         long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
-        return found < 0 ? 0 : found == start ? 93 : 50;
+        if (found < 0)
+        {
+            return SniffResult.None;
+        }
+
+        (int units, int verified, long chainEnd) = CountChain(cache, found, reader.End);
+        return new SniffResult(found == start ? 93 : 50, found, units, verified, End: chainEnd);
+    }
+
+    private static (int Units, int Verified, long End) CountChain(BlockCache cache, long position, long end)
+    {
+        int units = 0;
+        int verified = 0;
+        UnitInfo? previous = null;
+        while (units < SniffResult.MaxFrames && Framing.UnitAt(cache, position, end, true) is { } unit && position + unit.Length <= end
+            && (previous is not { } before || unit.First.Continues(before.First)))
+        {
+            units++;
+            if (!unit.First.IsCore)
+            {
+                verified++;
+            }
+
+            previous = unit;
+            position += unit.Length;
+        }
+
+        return (units, verified, position);
     }
 
     public void Parse(ParseContext context)

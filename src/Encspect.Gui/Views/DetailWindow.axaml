@@ -14,6 +14,22 @@
           <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
           <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap"
                      ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, object audio with its object count where the stream carries it, and the encoder with how sure the analysis is." />
+          <StackPanel Name="DetectionRow" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasDetectionText}">
+            <TextBlock Name="DetectionText" Text="{Binding DetectionText}" Classes="secondary" VerticalAlignment="Center"
+                       ToolTip.Tip="Besides the format the analysis ran, other formats have real evidence in the data: a chain of frames, or frames that pass their checksum. Choose one to analyze the file as that format." />
+            <ItemsControl Name="AlternativeChoices" ItemsSource="{Binding Alternatives}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="6" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:AlternativeItem">
+                  <Button Content="{Binding Format}" Classes="chip" Click="OnAlternative" ToolTip.Tip="{Binding Evidence}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
@@ -29,6 +45,8 @@
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
           </Button>
           <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
+          <Button Name="AnalyzeAsButton" Content="Analyze as…" IsEnabled="{Binding HasReport}"
+                  ToolTip.Tip="Analyze the file as a format of your choice, for a file whose format is not detected or is detected wrongly." />
           <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" />
         </StackPanel>
       </Grid>
