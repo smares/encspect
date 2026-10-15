@@ -27,15 +27,20 @@ internal sealed class Ac3Analysis
     private long _frameOffset;
     private int _frameLength;
 
-    public Ac3Analysis(AnalysisContext context)
+    public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null)
     {
         _context = context;
+        Records = new FrameRecords(Frames, Store, recordMismatch);
         _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)) };
     }
 
     public ChunkedList<Frame> Frames { get; } = new();
 
     public ByteStore Store { get; } = new();
+
+    // What frame nodes are built from, apart from the analysis, whose syntax and bit reader change
+    // with every frame.
+    public FrameRecords Records { get; }
 
     public List<Region> Regions { get; } = [];
 
@@ -364,59 +369,6 @@ internal sealed class Ac3Analysis
             Series = program.Figures.Series(bitrate, Cancellation),
         });
     }
-
-    // A frame's node, with its fields built from the record when first read.
-    public Node FrameNode(int index)
-    {
-        Frame frame = Frames[index];
-        if (frame.IsGap)
-        {
-            return new Node("Gap", frame.Offset, frame.Store, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap };
-        }
-
-        ByteStore store = Store;
-        (SyncFrame header, int length, int prefix) = Prefix(store, frame);
-        return new Node("Frame", frame.Offset, length, header.Summary(header.FrameLength), () => FrameChildren(store, frame, header, length, prefix))
-        {
-            Kind = NodeKind.Frame,
-            Description = header.IsEac3 ? Explain.Eac3Frame : Explain.Ac3Frame,
-            Topic = Topics.FramesAndBsi,
-        };
-    }
-
-    // The header and length a record's prefix holds, or the kept bits give, and the prefix's size.
-    private static (SyncFrame Header, int Length, int Prefix) Prefix(ByteStore store, Frame frame)
-    {
-        int at = 0;
-        int length = 0;
-        if (frame.IsShortened)
-        {
-            length = BinaryPrimitives.ReadUInt16BigEndian(store.Span(frame.Store, 2));
-            at = 2;
-        }
-
-        var header = new SyncFrame(BinaryPrimitives.ReadUInt64BigEndian(store.Span(frame.Store, at + SyncFrame.Length)[at..]));
-        if (!frame.IsHeaderKept)
-        {
-            at += SyncFrame.Length;
-        }
-
-        return (header, frame.IsShortened ? length : header.FrameLength, at);
-    }
-
-    private static List<Node> FrameChildren(ByteStore store, Frame frame, SyncFrame header, int length, int prefix)
-    {
-        byte[] record = store.Span(frame.Store + (uint)prefix, (frame.KeptBits + 7) >> 3).ToArray();
-        var syntax = new FrameSyntax(FrameBits.ForNodes());
-        return syntax.Nodes(record, frame.KeptBits, frame.Offset, length, header, Verdict(frame.Crc1, frame.IsShortened), Verdict(frame.Crc2, frame.IsShortened));
-    }
-
-    private static string Verdict(CrcState state, bool truncated) => state switch
-    {
-        CrcState.Verified => "verified",
-        CrcState.Mismatch => "mismatch",
-        _ => truncated ? "not checked: the frame is cut short" : "not checked",
-    };
 
     internal enum CrcState
     {

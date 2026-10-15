@@ -29,13 +29,8 @@ internal static class Adif
     {
         var leading = new List<Node>();
         var blocks = new ChunkedList<Block>();
-        BlockLog? log = null;
-        var region = parent.Add(new Node("ADIF", reader.Start, reader.Length, null, () => Children(leading, blocks, log))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.Adif,
-            Topic = Topics.Adts,
-        });
+        var kept = new KeptBlocks();
+        Node region = parent.Add(RegionNode(reader.Start, reader.Length, leading, blocks, kept));
         Header? header;
         try
         {
@@ -76,7 +71,9 @@ internal static class Adif
         }
 
         var findings = new FindingCollector();
-        log = new BlockLog(new StreamSetup(config), findings);
+        var log = new BlockLog(new StreamSetup(config), findings);
+        kept.Store = log.Store;
+        kept.Setup = log.Setup;
         (string Text, int Index, long Offset)? signature = null;
         long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature);
         if (position < reader.End)
@@ -95,12 +92,12 @@ internal static class Adif
             figures.Add(blocks[i].Offset, blocks[i].Length, config.OutputFrameLength);
         }
 
-        Node FirstBlock() => blocks.Count > 0 ? BlockNode(blocks, 0, null) : region;
+        Node FirstBlock() => blocks.Count > 0 ? BlockNode(blocks, 0, null, null) : region;
         log.ReportSignaling(config, FirstBlock(), "ADIF");
         Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
             new(name, region.Offset, region.Length, value) { Kind = kind, Description = description, Topic = topic };
         Node? encoder = AacEncoder.Detect(
-            signature is { } found ? new AacEncoder.Signature(found.Text, BlockNode(blocks, found.Index, null), found.Index) : null,
+            signature is { } found ? new AacEncoder.Signature(found.Text, BlockNode(blocks, found.Index, null, null), found.Index) : null,
             claims,
             (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
@@ -186,14 +183,30 @@ internal static class Adif
         return position;
     }
 
-    private static IReadOnlyList<Node> Children(List<Node> leading, ChunkedList<Block> blocks, BlockLog? log) =>
-        new BlockedChildren(leading, blocks.Count, i => BlockNode(blocks, i, log));
+    // Built in a method of its own so that the node's factory captures these arguments and not the
+    // locals of Parse, whose block reader, findings and reader would stay alive with the report, and
+    // with them the input.
+    private static Node RegionNode(long offset, long length, List<Node> leading, ChunkedList<Block> blocks, KeptBlocks kept) =>
+        new("ADIF", offset, length, null, () => new BlockedChildren(leading, blocks.Count, i => BlockNode(blocks, i, kept.Store, kept.Setup)))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Adif,
+            Topic = Topics.Adts,
+        };
 
-    private static Node BlockNode(ChunkedList<Block> blocks, int index, BlockLog? log)
+    // What the blocks' nodes are rebuilt from, set once the blocks are read.
+    private sealed class KeptBlocks
+    {
+        public UnitStore? Store { get; set; }
+
+        public StreamSetup? Setup { get; set; }
+    }
+
+    private static Node BlockNode(ChunkedList<Block> blocks, int index, UnitStore? store, StreamSetup? setup)
     {
         Block block = blocks[index];
         return new Node("Raw Data Block", block.Offset, block.Length, BlockLog.ElementList(block.Elements),
-            log is null ? null : () => BlockLog.Nodes(log.Store, log.Setup, block.Skeleton, new UnitBytes(block.Offset, block.Length, null)))
+            store is null || setup is null ? null : () => BlockLog.Nodes(store, setup, block.Skeleton, new UnitBytes(block.Offset, block.Length, null)))
         {
             Kind = NodeKind.Frame,
             Description = Explain.RawDataBlock,

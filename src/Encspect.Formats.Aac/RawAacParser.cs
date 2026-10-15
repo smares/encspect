@@ -65,7 +65,8 @@ public sealed class RawAacParser : IFormatParser
     {
         var region = new Region(state.Frames.Count);
         state.Regions.Add(region);
-        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(state, region))
+        Records records = state.Records;
+        region.Node = parent.Add(new Node("ADTS", start, end - start, null, () => RegionChildren(records, region))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Adts,
@@ -470,34 +471,35 @@ public sealed class RawAacParser : IFormatParser
         return position;
     }
 
-    private static IReadOnlyList<Node> RegionChildren(State state, Region region)
+    private static IReadOnlyList<Node> RegionChildren(Records records, Region region)
     {
-        int end = region.End ?? state.Frames.Count;
-        return new BlockedChildren(region.Leading, end - region.First, i => FrameNode(state, region.First + i));
+        int first = region.First;
+        int end = region.End ?? records.Frames.Count;
+        return new BlockedChildren(region.Leading, end - first, i => FrameNode(records, first + i));
     }
 
-    private static Node FrameNode(State state, int index)
+    private static Node FrameNode(Records records, int index)
     {
-        Frame frame = state.Frames[index];
+        Frame frame = records.Frames[index];
         if (frame.IsGap)
         {
             return new Node("Gap", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes")) { Description = Explain.Gap };
         }
 
         var header = new AdtsHeader(frame.Header);
-        return new Node("Frame", frame.Offset, frame.Length, header.Summary(frame.Length), () => FrameChildren(state, index, frame, header))
+        return new Node("Frame", frame.Offset, frame.Length, header.Summary(frame.Length), () => FrameChildren(records, index, frame, header))
         {
             Kind = NodeKind.Frame,
             Description = Explain.AdtsFrame,
         };
     }
 
-    private static List<Node> FrameChildren(State state, int index, Frame frame, AdtsHeader header)
+    private static List<Node> FrameChildren(Records records, int index, Frame frame, AdtsHeader header)
     {
         var nodes = new List<Node>();
         long offset = frame.Offset;
         nodes.AddRange(header.Nodes(offset).Where(n => n.End <= frame.Offset + frame.Length));
-        state.Details.TryGetValue(index, out FrameDetails? details);
+        records.Details.TryGetValue(index, out FrameDetails? details);
         if (details is not null)
         {
             for (int i = 0; i < details.Positions.Length; i++)
@@ -519,7 +521,7 @@ public sealed class RawAacParser : IFormatParser
         }
 
         Block[] blocks = details?.Blocks ?? [new Block(headerLength, -1, frame.Elements, frame.Skeleton, -1, CrcState.None)];
-        BlockLog log = state.LogAt(index);
+        (StreamSetup setup, UnitStore store) = records.UnitsAt(index);
         foreach (Block block in blocks)
         {
             // Each block's own entry: the store may start a block's entry in a new chunk.
@@ -535,8 +537,8 @@ public sealed class RawAacParser : IFormatParser
             Node node = new("Raw Data Block", start, length, BlockLog.ElementList(block.Elements)) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
             if (position >= 0)
             {
-                UnitStore.Entry entry = log.Store.Read(position);
-                List<Node> elements = BlockLog.Nodes(log.Store, log.Setup, position, unit);
+                UnitStore.Entry entry = store.Read(position);
+                List<Node> elements = BlockLog.Nodes(store, setup, position, unit);
                 foreach (Node child in elements)
                 {
                     node.Add(child);
@@ -597,7 +599,7 @@ public sealed class RawAacParser : IFormatParser
             {
                 if (start < 0 && previous is { } before && !current.IsSameStream(before))
                 {
-                    Node node = FrameNode(state, i);
+                    Node node = FrameNode(state.Records, i);
                     state.Findings.AddNow(Severity.Info, "aac.stream-changed",
                         $"The ADTS stream changes at 0x{node.Offset:X} from {Describe(before)} to {Describe(current)}.", WithoutChildren(node));
                 }
@@ -660,7 +662,7 @@ public sealed class RawAacParser : IFormatParser
             frames++;
         }
 
-        Node FirstFrame() => WithoutChildren(FrameNode(state, start));
+        Node FirstFrame() => WithoutChildren(FrameNode(state.Records, start));
         if (vbr > 0 && vbr < frames)
         {
             state.Findings.AddNow(Severity.Info, "aac.buffer-fullness-mixed",
@@ -686,7 +688,7 @@ public sealed class RawAacParser : IFormatParser
 
         Node? encoder = AacEncoder.Detect(
             state.Signature is { } signature && signature.Index >= start && signature.Index < end
-                ? new AacEncoder.Signature(signature.Text, WithoutChildren(FrameNode(state, signature.Index)), signature.Index - start)
+                ? new AacEncoder.Signature(signature.Text, WithoutChildren(FrameNode(state.Records, signature.Index)), signature.Index - start)
                 : null,
             claims,
             (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
@@ -781,17 +783,42 @@ public sealed class RawAacParser : IFormatParser
         public IReadOnlyList<Speaker>? PceLayout { get; set; }
     }
 
+    // What frame nodes are built from once the parse is over, and nothing else: the frames, their
+    // details and, per run of frames with one fixed header, the setup and store their blocks were
+    // kept in. The parse's block cache (and the reader it reads), findings and block readers stay
+    // with State, which node factories must not capture (hoist `state.Records` into a local first):
+    // a report that holds State keeps the input stream alive and a build could consume its readers.
+    private sealed class Records
+    {
+        private readonly List<(int First, StreamSetup Setup, UnitStore Store)> _units = [];
+
+        public ChunkedList<Frame> Frames { get; } = new();
+
+        public Dictionary<int, FrameDetails> Details { get; } = [];
+
+        public void AddUnits(int first, StreamSetup setup, UnitStore store) => _units.Add((first, setup, store));
+
+        public (StreamSetup Setup, UnitStore Store) UnitsAt(int index)
+        {
+            int at = _units.FindLastIndex(l => l.First <= index);
+            (int _, StreamSetup setup, UnitStore store) = _units[Math.Max(at, 0)];
+            return (setup, store);
+        }
+    }
+
     private sealed class State(BlockCache cache, CancellationToken cancellation)
     {
         public BlockCache Cache => cache;
 
+        public Records Records { get; } = new();
+
         public CancellationToken Cancellation => cancellation;
 
-        public ChunkedList<Frame> Frames { get; } = new();
+        public ChunkedList<Frame> Frames => Records.Frames;
 
         public List<Region> Regions { get; } = [];
 
-        public Dictionary<int, FrameDetails> Details { get; } = [];
+        public Dictionary<int, FrameDetails> Details => Records.Details;
 
         public FindingCollector Findings { get; } = new();
 
@@ -805,7 +832,9 @@ public sealed class RawAacParser : IFormatParser
         {
             if (Logs.Count == 0 || !Logs[^1].Header.IsSameStream(header))
             {
-                Logs.Add((index, header, new BlockLog(new StreamSetup(header.Config), Findings)));
+                var log = new BlockLog(new StreamSetup(header.Config), Findings);
+                Logs.Add((index, header, log));
+                Records.AddUnits(index, log.Setup, log.Store);
             }
 
             return Logs[^1].Log;

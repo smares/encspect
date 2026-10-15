@@ -414,6 +414,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         _wasCanceled = run.Cancellation.IsCancellationRequested;
         _reselectPath = null;
+
+        // Whatever a worker queued whose drain was not posted (or has not run yet) is applied before
+        // the rows still waiting are marked canceled.
+        DrainResults(run);
         foreach (FileRow row in Rows)
         {
             row.MarkCanceled();
@@ -530,24 +534,16 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         _post(() =>
         {
-            Volatile.Write(ref run.IsApplyPosted, 0);
+            // A full fence, not a plain store: on x86 a store can wait in the store buffer while the
+            // dequeue below finds the queue empty, and a worker that enqueued meanwhile would still
+            // see the flag set, post nothing and strand its result.
+            Interlocked.Exchange(ref run.IsApplyPosted, 0);
             if (_run != run)
             {
                 return;
             }
 
-            bool isApplied = false;
-            while (run.Results.TryDequeue(out (FileRow Row, FileSummary Summary, bool IsCached) result))
-            {
-                result.Row.Apply(result.Summary, result.IsCached);
-                if (result.Row.IsListed)
-                {
-                    _analyzed++;
-                }
-
-                isApplied = true;
-            }
-
+            bool isApplied = DrainResults(run);
             if (isApplied && _sinceSort.Elapsed >= SortInterval && _sinceSort.Elapsed >= SortCostFactor * _sortCost)
             {
                 SortAgain();
@@ -555,6 +551,24 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
             RaiseProgress();
         });
+    }
+
+    // Applies the results that have come in, on the UI thread.
+    private bool DrainResults(Run run)
+    {
+        bool isApplied = false;
+        while (run.Results.TryDequeue(out (FileRow Row, FileSummary Summary, bool IsCached) result))
+        {
+            result.Row.Apply(result.Summary, result.IsCached);
+            if (result.Row.IsListed)
+            {
+                _analyzed++;
+            }
+
+            isApplied = true;
+        }
+
+        return isApplied;
     }
 
     private void RaiseProgress()

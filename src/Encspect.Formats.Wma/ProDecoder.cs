@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Wma;
 
 // Reads the syntax of a Windows Media Audio Professional frame as FFmpeg's wmaprodec.c does

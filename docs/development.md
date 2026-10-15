@@ -17,7 +17,17 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - The step does not run as written: replace `${{ matrix.rid }}` with the RID (`linux-x64`) and export `RUNNER_TEMP` as a short absolute path such as `/tmp/ci`, created beforehand. Unset, `RUNNER_TEMP` makes the socket directory `/runtime`; a long one exceeds the 108-byte limit of a Unix socket path.
   - Mesa prints EGL warnings there, since the container has no GPU; they do not fail the check.
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
-- **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`.
+- **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`. Every input's report is also written, collected and written again, and the two must be equal.
+- **Thread safety:** a report builds the nodes of repeated parts when they are read and may build them again, and the same report may be read on several threads.
+  - Lists of children past one block are `BlockedChildren` in `Core.Abstractions`: blocks of 1,024 built when first read and held weakly, built again after a collection. `ChunkedList` and `ByteStore` hold the records and kept bytes they are built from.
+  - `BlockedChildrenTests` tests the list alone: block switching, rebuilding after a collection, concurrent builds, a builder that throws (error nodes for its block).
+  - No fixture has more than one block, so `LongInputs` builds one input per list implementation past 2,048 entries: MPEG audio, ADTS, ADIF, AC-3 and E-AC-3 (raw and in MP4), DTS (raw and in MP4), Ogg, Speex, Vorbis, Opus, ASF, WavPack, Musepack, MP4.
+  - `LongListReadTests` reads every long list with eight threads while a collector thread forces collections, and compares each node with a private report of the same file. `LongReportWriteTests` writes each long report on four threads with the three writers mixed, and again after a collection.
+  - `ThreadSafetyTests` and `ParallelAnalysisTests` analyze every fixture directory on several threads, write every fixture again after a collection, and write one report of each format on several threads.
+  - `InputReleaseTests` analyzes every fixture and long input from a stream held only weakly, and requires a collection to free it while the report lives: a node builder must not capture a parse's state, reader or decoder.
+  - These tests and the others that force collections share the `Thread hammers` collection, which runs alone; together they take about a minute on four cores.
+  - On a mismatch between two writes, `ReportRendering` writes both again as text and names the first differing line.
+  - Only the two public mutable static arrays (`Sv7Parser.SampleRates`, `SpeexHeader.ModeNames`) became read-only; the internal `static readonly` tables stay arrays.
 
 ## CI
 

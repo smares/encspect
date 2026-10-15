@@ -115,7 +115,7 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         (string Text, int Index)? signature = log.Blocks is { Tally.FirstText: { } text } blocks ? (text, blocks.Tally.FirstTextBlock) : log.Signature;
-        Node? signatureNode = signature is { } found ? UnitNode(log, found.Index, withChildren: false) : null;
+        Node? signatureNode = signature is { } found ? UnitNode(log.Records, found.Index, withChildren: false) : null;
         Node? encoder = AacEncoder.Detect(
             signature is { } named ? new AacEncoder.Signature(named.Text, signatureNode!, named.Index) : null,
             context.EncoderClaims,
@@ -154,7 +154,8 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         leading.Add(statistics);
-        var children = new BlockedChildren(leading, log.Units.Count, i => UnitNode(log, i, withChildren: true));
+        UnitRecords records = log.Records;
+        var children = new BlockedChildren(leading, records.Units.Count, i => UnitNode(records, i, withChildren: true));
         Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, NodeValue.Integer(log.Units.Count, "access units", "access unit"), () => children)
         {
             Kind = NodeKind.Stream,
@@ -187,7 +188,7 @@ public sealed class AacCodecParser : ICodecParser
         });
     }
 
-    private static Node UnitNode(UnitLog log, int index, bool withChildren)
+    private static Node UnitNode(UnitRecords log, int index, bool withChildren)
     {
         Unit unit = log.Units[index];
         IReadOnlyList<ByteRange>? ranges = (unit.Flags & IsSplit) != 0 ? log.Splits[index] : null;
@@ -219,7 +220,7 @@ public sealed class AacCodecParser : ICodecParser
         };
     }
 
-    private static List<Node> UnitChildren(UnitLog log, int index, Unit unit, IReadOnlyList<ByteRange>? ranges)
+    private static List<Node> UnitChildren(UnitRecords log, int index, Unit unit, IReadOnlyList<ByteRange>? ranges)
     {
         var bytes = new UnitBytes(unit.Offset, unit.Length, ranges);
         if ((unit.Flags & IsUsac) != 0)
@@ -229,13 +230,13 @@ public sealed class AacCodecParser : ICodecParser
 
         if ((unit.Flags & IsRead) != 0)
         {
-            List<Node> nodes = BlockLog.Nodes(log.Blocks!.Store, log.Blocks.Setup, unit.Skeleton, bytes);
+            List<Node> nodes = BlockLog.Nodes(log.Store!, log.Setup!, unit.Skeleton, bytes);
             long end = nodes.Count > 0 ? nodes.Max(n => n.End) - unit.Offset : 0;
             // A block read to its END owns the rest of its unit as trailing bytes, however long the
             // unit, since the aac.unit-trailing-bytes finding points to that node.
             if ((unit.Flags & HasTrailingBytes) != 0)
             {
-                nodes.Add(TrailingNode(bytes, UnitStore.BlockBits(log.Blocks.Store.Read(unit.Skeleton)), unit.Length));
+                nodes.Add(TrailingNode(bytes, UnitStore.BlockBits(log.Store!.Read(unit.Skeleton)), unit.Length));
             }
             else if (unit.Length > BlockLog.MaxBlockBytes && end < unit.Length)
             {
@@ -264,6 +265,24 @@ public sealed class AacCodecParser : ICodecParser
     private static Node TrailingNode(UnitBytes bytes, int blockEnd, int length) =>
         bytes.Bits("Trailing Bytes", blockEnd, length * 8, NodeValue.Integer(length - (blockEnd / 8), "bytes"), Explain.TrailingUnitBytes);
 
+    // The records an access unit's node is built from, and nothing else: node factories capture this
+    // and not the UnitLog, whose block reader and findings would stay alive with the report, and with
+    // them the input.
+    private sealed class UnitRecords(StreamSetup? setup, UnitStore? store)
+    {
+        public StreamSetup? Setup => setup;
+
+        public UnitStore? Store => store;
+
+        public ChunkedList<Unit> Units { get; } = new();
+
+        public Dictionary<int, IReadOnlyList<ByteRange>> Splits { get; } = [];
+
+        public Dictionary<int, FirstElement> Payloads { get; } = [];
+
+        public Dictionary<int, string> Texts { get; } = [];
+    }
+
     // What the access units of a stream come to while they are read: a 32-byte record each, the
     // coding statistics and what their nodes are rebuilt from (BlockLog); split units, and for the
     // types whose first element alone is read their fill and data stream elements and texts, which
@@ -281,17 +300,22 @@ public sealed class AacCodecParser : ICodecParser
             {
                 Blocks = new BlockLog(new StreamSetup(config), findings);
             }
+
+            Records = new UnitRecords(Blocks?.Setup, Blocks?.Store);
         }
 
-        public ChunkedList<Unit> Units { get; } = new();
+        // What the access units' nodes are built from; the log keeps the rest.
+        public UnitRecords Records { get; }
+
+        public ChunkedList<Unit> Units => Records.Units;
 
         public BlockLog? Blocks { get; }
 
-        public Dictionary<int, IReadOnlyList<ByteRange>> Splits { get; } = [];
+        public Dictionary<int, IReadOnlyList<ByteRange>> Splits => Records.Splits;
 
-        public Dictionary<int, FirstElement> Payloads { get; } = [];
+        public Dictionary<int, FirstElement> Payloads => Records.Payloads;
 
-        public Dictionary<int, string> Texts { get; } = [];
+        public Dictionary<int, string> Texts => Records.Texts;
 
         // Per element ID, and at 8 the access units whose first element could not be read.
         public long[] ElementCounts { get; } = new long[9];

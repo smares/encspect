@@ -160,7 +160,7 @@ internal sealed partial class FrameSyntax
 
     // Called where building a frame's nodes read another number of the record's bits than the
     // analysis kept (frame offset, kept, read): the two readings went apart. A check for tests.
-    internal static Action<long, int, int>? RecordMismatch { get; set; }
+    internal Action<long, int, int>? RecordMismatch { get; init; }
 
     // Builds the nodes of a frame from its record. crc1, crc2: the verdicts of its CRCs.
     public List<Node> Nodes(byte[] record, int keptBits, long offset, int length, SyncFrame header, string crc1, string crc2)
