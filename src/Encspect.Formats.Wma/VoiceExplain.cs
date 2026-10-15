@@ -35,7 +35,7 @@ internal static class VoiceExplain
     public const string PacketSuperframeStart = "The first bits of a superframe that goes on in the next packet.";
     public const string PacketUnfinished = "The first bits of a superframe that no packet finishes: the stream ends, a media object with no header drops it, or the superframe needs more bits than there are.";
     public const string PacketPadding = "Bits that a superframe's reading did not use, between its end and the end of the span the packets give it. A decoder ignores them.";
-    public const string PacketUnread = "Bits of the packet that the reading did not take: after a superframe that failed, which makes a decoder drop the rest of the media object, after the last superframe the header counts, or in front of the packet's own superframes where a decoder's resync skips a few bits more than the spillover.";
+    public const string PacketUnread = "Bits of the packet that the reading did not take: after a superframe that failed, which makes a decoder drop the rest of the media object, after the last superframe the header counts, or in front of the packet's own superframes where a decoder's resync skips a few bits more than the spillover, or the spillover bits that a decoder's cache did not take or that ran past the packet.";
 
     public const string Superframe = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe).";
     public const string SpeechFlag = "The first bit of a superframe: set for speech, which the codec reads; clear for music, Windows Media Audio Professional data that FFmpeg's decoder does not support (wmavoice.c: synth_superframe).";

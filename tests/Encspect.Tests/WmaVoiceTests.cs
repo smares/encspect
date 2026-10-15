@@ -281,7 +281,47 @@ public class WmaVoiceTests
             {
                 (long start, long end) = Bits(child);
                 // The blocks of a silence frame read nothing: their gain is the frame's own field.
-                Assert.True(end > start || child.Ranges is not null || child.Name.StartsWith("Block", StringComparison.Ordinal), $"{child.Name} at bit {start} is empty");
+                // A superframe read in part from the decoder's cache keeps the fields it read there as values with no bytes.
+                Assert.True(end > start || child.Ranges is not null || child.Name.StartsWith("Block", StringComparison.Ordinal) || name.Contains("cache-overflow", StringComparison.Ordinal), $"{child.Name} at bit {start} is empty");
+                pending.Push(child);
+            }
+        }
+    }
+
+    // No bit that a superframe's nodes lie on is one the packets show as unread, skipped or padding: the bytes of a superframe are bits
+    // the decoder read from the file, and what it read from its cache's old bytes in place of refused bits has no bytes.
+    [Theory]
+    [MemberData(nameof(AllVoiceFixtures))]
+    public void ASuperframesBytesAreBitsTheDecoderRead(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        if (Find(report.Root, "Windows Media Audio Voice") is not { } voice || voice.Children.All(c => c.Name != "Packets"))
+        {
+            return;
+        }
+
+        var notRead = new List<(long Start, long End)>();
+        foreach (Node packet in Child(voice, "Packets").Children)
+        {
+            foreach (Node child in packet.Children.Where(c => c.Name is "Unread Bits" or "Skipped Spillover" or "Padding"))
+            {
+                notRead.Add(Bits(child));
+            }
+        }
+
+        // The superframe nodes themselves cover whole bytes; their fields lie on exact bits.
+        var pending = new Stack<Node>(Child(voice, "Superframes").Children.SelectMany(s => s.Children));
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            (long start, long end) = Bits(node);
+            if (node.Ranges is null && end > start)
+            {
+                Assert.DoesNotContain(notRead, r => start < r.End && r.Start < end);
+            }
+
+            foreach (Node child in node.Children)
+            {
                 pending.Push(child);
             }
         }
@@ -337,7 +377,7 @@ public class WmaVoiceTests
         double bytes = Integer(statistics, "Packet Bytes");
         Assert.Equal(bytes * 8 / stream.Duration / 1000, stream.AverageBitrate!.Value, 6);
         Assert.Equal(stream.AverageBitrate.Value, Child(statistics, "Average Bitrate").Value!.AsDouble()!.Value, 6);
-        Assert.True(Child(statistics, "Superframe Bitrate").Value!.AsDouble() < Child(statistics, "Average Bitrate").Value!.AsDouble());
+        Assert.True(Child(statistics, "Average Superframe Bitrate").Value!.AsDouble() < Child(statistics, "Average Bitrate").Value!.AsDouble());
     }
 
     // Every node the Voice parser builds is shown by a fixture: the files of the Windows writer and the hand-built ones.
@@ -369,7 +409,7 @@ public class WmaVoiceTests
             "Superframe Start", "Unfinished Superframe", "Unread Bits",
             "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
             "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
-            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Superframe Bitrate", "Nominal Bitrate",
+            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
             "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
             "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
             "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",

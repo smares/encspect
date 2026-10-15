@@ -59,7 +59,7 @@ public class VoiceFixtureTests
         Node statistics = Child(node, "Statistics");
 
         // The statistic is rounded to a tenth of a kilobit per second.
-        Assert.Equal(bits, Child(statistics, "Superframe Bitrate").Value!.AsDouble()!.Value * stream.Duration * 1000, 50 * stream.Duration + 1);
+        Assert.Equal(bits, Child(statistics, "Average Superframe Bitrate").Value!.AsDouble()!.Value * stream.Duration * 1000, 50 * stream.Duration + 1);
         Assert.Equal(Child(statistics, "Packet Bytes").Value!.AsInteger()!.Value * 8, Math.Round((stream.AverageBitrate ?? 0) * stream.Duration * 1000));
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
 

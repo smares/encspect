@@ -119,16 +119,33 @@ internal sealed class VoiceNodes
         int at = record.HeaderEnd;
         if (record.Has(VoicePacketRecord.CompletesPrevious))
         {
+            // The spillover bits are the end of the superframe if the cache took them; else a decoder reads the cache's old bytes in their place.
             VoiceSuperframeRecord first = _records.Superframes[record.FirstSuperframe];
-            int used = first.PartCount > 1 ? _records.Parts[first.FirstPart + 1].BitCount : 0;
-            if (used > 0)
+            int used = 0;
+            for (int part = 0; part < first.PartCount; part++)
             {
-                Add(at, at + used, "Superframe End", NodeValue.Integer(used, "bits"), VoiceExplain.PacketSuperframeEnd, Topics.WmaVoiceSuperframes);
+                FramePart p = _records.Parts[first.FirstPart + part];
+                used += p.Superframe == index ? p.BitCount : 0;
             }
 
-            if (record.Spillover > used)
+            if (record.Has(VoicePacketRecord.SpilloverRefused))
             {
-                Add(at + used, at + record.Spillover, "Padding", NodeValue.Integer(record.Spillover - used, "bits"), VoiceExplain.PacketPadding);
+                if (record.Spillover > 0)
+                {
+                    Add(at, at + record.Spillover, "Unread Bits", NodeValue.Integer(record.Spillover, "bits"), VoiceExplain.PacketUnread);
+                }
+            }
+            else
+            {
+                if (used > 0)
+                {
+                    Add(at, at + used, "Superframe End", NodeValue.Integer(used, "bits"), VoiceExplain.PacketSuperframeEnd, Topics.WmaVoiceSuperframes);
+                }
+
+                if (record.Spillover > used)
+                {
+                    Add(at + used, at + record.Spillover, "Padding", NodeValue.Integer(record.Spillover - used, "bits"), VoiceExplain.PacketPadding);
+                }
             }
         }
         else if (record.Has(VoicePacketRecord.SpilloverDropped) && record.Spillover > 0)
@@ -163,9 +180,24 @@ internal sealed class VoiceNodes
             if (_records.TailOwners.TryGetValue(index, out int owner))
             {
                 VoiceSuperframeRecord superframe = _records.Superframes[owner];
-                used = Math.Min(record.TailBits, _records.Parts[superframe.FirstPart].BitCount);
+                used = 0;
+                for (int part = 0; part < superframe.PartCount; part++)
+                {
+                    FramePart p = _records.Parts[superframe.FirstPart + part];
+                    used += p.Superframe == index ? p.BitCount : 0;
+                }
+
                 finished = superframe.Status == 0 || superframe.PartCount > 1;
                 name = finished ? "Superframe Start" : "Unfinished Superframe";
+            }
+
+            // A start the cache refused was not copied, and what a decoder read in its place is not these bits.
+            if (record.Has(VoicePacketRecord.TailRefused))
+            {
+                Gap(record.TailStart);
+                Add(record.TailStart, record.TailStart + record.TailBits, "Unread Bits", NodeValue.Integer(record.TailBits, "bits"), VoiceExplain.PacketUnread);
+                Unread();
+                return nodes;
             }
 
             Gap(record.TailStart);
@@ -241,8 +273,9 @@ internal sealed class VoiceNodes
         VoiceParameters p = P;
         var nodes = new List<Node>();
         int used = parts.Sum(part => part.BitCount);
+        bool readsCache = record.Has(VoiceSuperframeRecord.ReadsCache);
         Node? Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
-            PlaceField(parts, used, start, end, name, value, description, topic);
+            PlaceField(parts, used, readsCache, start, end, name, value, description, topic);
 
         void Put(Node? node)
         {
@@ -283,9 +316,9 @@ internal sealed class VoiceNodes
         for (int i = 0; i < record.FrameCount; i++)
         {
             VoiceFrameRecord frame = _records.Frames[record.FirstFrame + i];
-            if (frame.StartBit < used)
+            if (frame.StartBit < used || readsCache)
             {
-                nodes.Add(FrameNode(parts, used, frame, residual));
+                nodes.Add(FrameNode(parts, used, readsCache, frame, residual));
             }
 
             last = frame.EndBit;
@@ -307,18 +340,19 @@ internal sealed class VoiceNodes
 
     // A field of the bits the parts hold, or none where the field starts past them: a superframe that needs more bits than it has
     // gets no node for what it would have read there.
-    private Node? PlaceField(List<FramePart> parts, int used, int start, int end, string name, NodeValue? value, string description, string? topic) =>
-        start >= used ? null : _map.Field(parts, start, Math.Min(Math.Max(start, end), used), name, value, description, topic);
+    // A superframe read partly from the cache's old bytes keeps the fields of those bits, with a value and no bytes.
+    private Node? PlaceField(List<FramePart> parts, int used, bool readsCache, int start, int end, string name, NodeValue? value, string description, string? topic) =>
+        start >= used && !readsCache ? null : _map.Field(parts, Math.Min(start, used), Math.Min(Math.Max(start, end), used), name, value, description, topic);
 
-    private Node FrameNode(List<FramePart> parts, int used, VoiceFrameRecord frame, bool residual)
+    private Node FrameNode(List<FramePart> parts, int used, bool readsCache, VoiceFrameRecord frame, bool residual)
     {
         VoiceParameters p = P;
         byte[] descriptor = VoiceTables.FrameDescriptors[frame.Type];
-        Node node = PlaceField(parts, used, frame.StartBit, frame.EndBit, "Frame", NodeValue.Text($"Type {frame.Type}: {VoiceNames.Frame(frame.Type)}"), VoiceExplain.Frame, Topics.WmaVoiceFrames)!;
+        Node node = PlaceField(parts, used, readsCache, frame.StartBit, frame.EndBit, "Frame", NodeValue.Text($"Type {frame.Type}: {VoiceNames.Frame(frame.Type)}"), VoiceExplain.Frame, Topics.WmaVoiceFrames)!;
 
         void Add(Node parent, int start, int end, string name, NodeValue? value, string description, string? topic = null)
         {
-            if (PlaceField(parts, used, start, end, name, value, description, topic) is { } child)
+            if (PlaceField(parts, used, readsCache, start, end, name, value, description, topic) is { } child)
             {
                 parent.Add(child);
             }
@@ -352,7 +386,7 @@ internal sealed class VoiceNodes
         }
 
         int blocks = descriptor[0];
-        if (PlaceField(parts, used, at, frame.EndBit, "Blocks", NodeValue.Integer(blocks, "blocks", "block"), VoiceExplain.Blocks, Topics.WmaVoiceFrames) is { } blockList)
+        if (PlaceField(parts, used, readsCache, at, frame.EndBit, "Blocks", NodeValue.Integer(blocks, "blocks", "block"), VoiceExplain.Blocks, Topics.WmaVoiceFrames) is { } blockList)
         {
             for (int n = 0; n < blocks; n++)
             {

@@ -88,6 +88,9 @@ internal struct VoiceSuperframeRecord
     // It is the one that began in the last packet and is read at the end of the stream, with no bits after the packet's.
     public const byte AtEnd = 16;
 
+    // Some bits it was read from were not copied from the file: a decoder's cache refused them and the cache's old bytes are read.
+    public const byte ReadsCache = 32;
+
     public readonly bool Has(byte flag) => (Flags & flag) != 0;
 }
 
@@ -115,35 +118,42 @@ internal struct VoicePacketRecord
     public int TailStart;
     public int TailBits;
     public byte Sequence;
-    public byte Flags;
+    public ushort Flags;
 
     // The block holds no packet header: the bytes before a media object's whole blocks, or a media object shorter than a block. A
     // decoder reads them as the rest of a packet.
-    public const byte Headerless = 1;
+    public const ushort Headerless = 1;
 
     // The header runs past the packet.
-    public const byte BadHeader = 2;
+    public const ushort BadHeader = 2;
 
     // The packet's header sets the residual LSPs flag.
-    public const byte ResidualLsps = 4;
+    public const ushort ResidualLsps = 4;
 
     // The first superframe of the packet is the one that began in the packet before.
-    public const byte CompletesPrevious = 8;
+    public const ushort CompletesPrevious = 8;
 
     // A superframe failed, so the rest of the media object is not read.
-    public const byte Failed = 16;
+    public const ushort Failed = 16;
 
     // The packet states spillover bits and no superframe begins before them.
-    public const byte SpilloverDropped = 32;
+    public const ushort SpilloverDropped = 32;
 
     // Its sequence number does not follow the one before.
-    public const byte SequenceBreak = 64;
+    public const ushort SequenceBreak = 64;
 
     // Not read: an error before it in the media object dropped what was left of the object, or an earlier superframe's reading went
     // through it.
-    public const byte Dropped = 128;
+    public const ushort Dropped = 128;
 
-    public readonly bool Has(byte flag) => (Flags & flag) != 0;
+    // The spillover bits were not copied into the cache (they did not fit, or lie past the block): the superframe it finished was read
+    // from the cache's old bytes in their place.
+    public const ushort SpilloverRefused = 256;
+
+    // The bits that begin the superframe the packet ends in did not fit the cache and were not copied into it.
+    public const ushort TailRefused = 512;
+
+    public readonly bool Has(ushort flag) => (Flags & flag) != 0;
 }
 
 // Figures counted while the packets are read.

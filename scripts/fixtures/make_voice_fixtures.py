@@ -552,6 +552,29 @@ fixture("voice-object-start-in-lead", "Blocks of 120 bytes: the first packet cou
         {"ffprobe": True, "decode": "clean", "messages": [], "ffmpeg": {"samples": 2880, "superframes": 6}})
 
 
+def skip_kept():
+    # A packet ends in the start of the first superframe. The next media object has a block whose spillover (942 bits) runs past it, so
+    # that the superframe's reading ends 3 bits into the next block's bytes, and a block whose header runs out of bits; a decoder rejects
+    # the header and drops the object but keeps the 3 bits to skip. The media object after it starts with 3 zero bits, then the second
+    # superframe, which a decoder skips them to find.
+    config, built, _ = exact_setup()
+    align = config.align
+    header = lambda count, spill: v.BitWriter().write(1, 4).write(1, 1).write(count, 6).write(spill, config.spillover_bits)
+    first = header(1, 0).append(built[0][0]).to_bytes(align)
+    spilling = header(3, 942).to_bytes(align)
+    rejected = bytes([0x0F]) + bytes([0xFF]) * (align - 1)
+    lead = v.BitWriter().write(0, 3).append(built[1][0]).to_bytes((3 + len(built[1][0]) + 7) // 8)
+    counts_none = header(0, 0).to_bytes(align)
+    return asf_objects(config, [first, spilling + rejected, lead, counts_none], 2 * 480 / config.rate, 2)
+
+
+fixture("voice-object-skip-kept", "Blocks of 120 bytes: a packet ends in the start of a superframe; the next media object has a block whose spillover runs 3 bits past the block, and a block whose header runs out of bits; the media object after it begins with 3 zero bits and the second superframe. A decoder rejects the header and drops the object but keeps the 3 bits to skip, which it skips at the start of the next object.",
+        skip_kept,
+        [finding("wma.voice-packet-header", "past the packet"), finding("wma.packet-short", "fewer bytes than the block alignment"), finding("wma.voice-music", "first bit is clear"),
+         finding("wma.voice-packet-sequence", "follow the packet before"), finding("wma.voice-cache-overflow", "does not fit the 256 bytes"), finding("wma.voice-superframe-padding", "553 bits")],
+        {"ffprobe": True, "decode": "errors", "messages": ["WMAPro-in-WMAVoice"], "ffmpeg": {"samples": 960, "superframes": 2}})
+
+
 def cache_overflow():
     # Superframes that are followed by zero bits a decoder ignores, so that the span of two of them is more than the 256 bytes its cache
     # holds: for one the start fits (291 bits) and the 2,017 spillover bits added to it do not, though the superframe needs more than
@@ -563,7 +586,7 @@ def cache_overflow():
 
 fixture("voice-cache-overflow", "Voice blocks of 400 bytes in which two superframes are followed by zero bits, so that the part of one in its packet is more than the 256 bytes of a decoder's cache and the part of another with its spillover bits is: a decoder copies none of the bits that do not fit and reads what the cache held before.",
         cache_overflow,
-        [finding("wma.voice-superframe-padding", "1800 bits"), finding("wma.voice-cache-overflow", "does not fit the 256 bytes"), finding("wma.voice-music", "first bit is clear"),
+        [finding("wma.voice-cache-overflow", "does not fit the 256 bytes"), finding("wma.voice-music", "first bit is clear"),
          finding("wma.voice-spillover-after-music", "lost to a superframe of music")],
         {"ffprobe": True, "decode": "errors", "messages": ["WMAPro-in-WMAVoice"], "ffmpeg": {"samples": 5280, "superframes": 11}})
 

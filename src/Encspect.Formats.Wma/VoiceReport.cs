@@ -100,7 +100,7 @@ internal static class VoiceReport
         if (duration > 0)
         {
             Add("Average Bitrate", NodeValue.Decimal(t.UsedBytes * 8.0 / duration / 1000, 1, "kbps"), ProExplain.StatAverageBitrate);
-            Add("Superframe Bitrate", NodeValue.Decimal(t.SuperframeBits / duration / 1000, 1, "kbps"), VoiceExplain.StatSuperframeBitrate);
+            Add("Average Superframe Bitrate", NodeValue.Decimal(t.SuperframeBits / duration / 1000, 1, "kbps"), VoiceExplain.StatSuperframeBitrate);
         }
 
         if (nominal > 0)

@@ -17,6 +17,8 @@ internal sealed class VoiceStream
     private readonly VoiceDecoder _decoder;
     private VoiceState _state = new();
 
+    // Every bit copied into it is taken to be stored. FFmpeg's put_bits keeps up to 63 bits (32 on other platforms) in a register until
+    // flush_put_bits, so after a dropped tail a refused copy reads bytes that never held them there; that depends on the build and is not copied.
     // wmavoice.c: sframe_cache, the buffer the start of a superframe is kept in until the next packet finishes it. Bytes that a
     // copy did not write are those an earlier superframe left (or zero), and a decoder reads them.
     private readonly byte[] _cache = new byte[VoiceParameters.CacheBytes];
@@ -31,6 +33,9 @@ internal sealed class VoiceStream
     private int _cachePacket;
     private int _cacheStart;
     private int _tailBits;
+
+    // The start of the superframe was copied into the cache, and so is in it; else the cache holds what was there before.
+    private bool _tailCopied;
 
     private readonly CancellationToken _cancellation;
     private bool _haveSequence;
@@ -118,7 +123,7 @@ internal sealed class VoiceStream
         _carry = 0;
         _dropped = false;
         int start = 0;
-        if (lead != 0 || length == 0)
+        if (lead != 0)
         {
             int index = Packets.Count;
             if (length < align)
@@ -160,14 +165,14 @@ internal sealed class VoiceStream
         int total = length * 8;
         var record = new VoicePacketRecord
         {
-            Offset = length == 0 ? media.FileStart : media.OffsetOf(start),
+            Offset = media.OffsetOf(start),
             Length = length,
             RangeIndex = -1,
             FirstSuperframe = Superframes.Count,
             TailStart = total,
         };
 
-        IReadOnlyList<ByteRange> ranges = length == 0 ? [] : media.FileRanges(start, start + length);
+        IReadOnlyList<ByteRange> ranges = media.FileRanges(start, start + length);
         if (ranges.Count > 1)
         {
             Ranges[index] = [.. ranges];
@@ -205,7 +210,6 @@ internal sealed class VoiceStream
         int position;
         if (isWhole && carry == 0)
         {
-            _skipNext = 0;
             HeaderResult result = ReadHeader(index, data, bits, total, media.Length - start, ref record, out position);
             if (result != HeaderResult.Read)
             {
@@ -285,13 +289,15 @@ internal sealed class VoiceStream
                 _tailBits = left;
                 _cacheBits = left;
                 _cacheWritten = 0;
-                if (left <= VoiceParameters.CacheBytes * 8)
+                _tailCopied = left <= VoiceParameters.CacheBytes * 8;
+                if (_tailCopied)
                 {
                     Bits.Copy(data, position, _cache, 0, left);
                     _cacheWritten = left;
                 }
                 else
                 {
+                    record.Flags |= VoicePacketRecord.TailRefused;
                     CacheOverflow(index);
                 }
             }
@@ -371,6 +377,9 @@ internal sealed class VoiceStream
         record.HeaderEnd = bits.Position;
         position = bits.Position;
         _pending = stated;
+
+        // wmavoice.c clears skip_bits_next only after the header was read: a header it rejects leaves the bits to skip for the next call.
+        _skipNext = 0;
         bool lostToMusic = _lostToMusic;
         _lostToMusic = false;
 
@@ -383,6 +392,7 @@ internal sealed class VoiceStream
             // block and fit the cache whole, else it takes none.
             int give = Math.Min(spillover, (objectBytes * 8) - position);
             bool copied = left >= give && give <= (VoiceParameters.CacheBytes * 8) - _cacheWritten;
+            int written = _cacheWritten;
             if (copied)
             {
                 Bits.Copy(data, position, _cache, _cacheWritten, give);
@@ -390,6 +400,7 @@ internal sealed class VoiceStream
             }
             else
             {
+                record.Flags |= VoicePacketRecord.SpilloverRefused;
                 CacheOverflow(index);
             }
 
@@ -409,7 +420,7 @@ internal sealed class VoiceStream
                     $"{(count == 1 ? "A packet sets" : $"{count} packets set")} the flag for residual LSPs differently from the packet before, and the superframe that goes on into {(count == 1 ? "it is" : "them is")} read with the later flag, as FFmpeg's decoder reads it.");
             }
 
-            VoiceStatus status = ReadCached(index, position, shown, atEnd: false);
+            VoiceStatus status = ReadCached(index, position, copied ? shown : 0, written, atEnd: false);
             int end = position + give;
             if (status == VoiceStatus.Ok)
             {
@@ -481,7 +492,7 @@ internal sealed class VoiceStream
                 _cache[_cacheWritten >> 3] &= (byte)(0xFF << (8 - (_cacheWritten & 7)));
             }
 
-            ReadCached(Packets.Count - 1, 0, 0, atEnd: true);
+            ReadCached(Packets.Count - 1, 0, 0, 0, atEnd: true);
             _cacheBits = 0;
         }
     }
@@ -500,7 +511,7 @@ internal sealed class VoiceStream
 
     // The superframe begun in an earlier packet: its bits are the cache, the tail that packet ended in and the spillover bits of this
     // one. A decoder reads the cache whatever it holds, and so does this.
-    private VoiceStatus ReadCached(int packet, int spilloverStart, int shown, bool atEnd)
+    private VoiceStatus ReadCached(int packet, int spilloverStart, int shown, int written, bool atEnd)
     {
         int total = _cacheBits;
         _cacheBits = 0;
@@ -517,11 +528,35 @@ internal sealed class VoiceStream
         Span<VoiceFrameRecord> frames = stackalloc VoiceFrameRecord[VoiceParameters.FramesPerSuperframe];
         VoiceStatus status = _decoder.Read(bits, _residual, ref _state, ref record, frames);
         int used = Math.Max(0, Math.Min(record.Bits, total));
-        int fromTail = Math.Min(used, _tailBits);
-        FramePart[] parts = used <= _tailBits || shown <= 0
-            ? [new FramePart(_cachePacket, _cacheStart, fromTail)]
-            : [new FramePart(_cachePacket, _cacheStart, fromTail), new FramePart(packet, spilloverStart, Math.Min(used - _tailBits, shown))];
-        Add(ref record, frames, status, parts, leftover: status == VoiceStatus.Ok ? total - record.Bits : 0, atEnd);
+
+        // Only the bits that were copied into the cache come from the file: the start of the superframe at the cache's first bit if it
+        // was copied, and the spillover bits after it if they were. Any other bit the reading used is one the cache held before.
+        var parts = new List<FramePart>(2);
+        int fromTail = _tailCopied ? Math.Min(used, _tailBits) : 0;
+        if (fromTail > 0)
+        {
+            parts.Add(new FramePart(_cachePacket, _cacheStart, fromTail));
+        }
+
+        int spillAt = _tailCopied ? _tailBits : 0;
+        int fromSpill = shown > 0 && used > spillAt && (fromTail == spillAt || !_tailCopied) ? Math.Min(used - spillAt, shown) : 0;
+        if (fromSpill > 0)
+        {
+            parts.Add(new FramePart(packet, spilloverStart, fromSpill));
+        }
+
+        if (parts.Count == 0)
+        {
+            parts.Add(new FramePart(_tailCopied ? _cachePacket : packet, _tailCopied ? _cacheStart : spilloverStart, 0));
+        }
+
+        int fromFile = fromTail + fromSpill;
+        if (used > fromFile)
+        {
+            record.Flags |= VoiceSuperframeRecord.ReadsCache;
+        }
+
+        Add(ref record, frames, status, [.. parts], leftover: status == VoiceStatus.Ok && used == fromFile ? Math.Max(0, (_tailCopied ? _tailBits : 0) + shown - record.Bits) : 0, atEnd);
         return status;
     }
 
@@ -613,7 +648,7 @@ internal sealed class VoiceStream
         bool cached = record.Has(VoiceSuperframeRecord.StartsEarlier);
         string After(int count) => count != 1
             ? "each, and with one that lies in a packet the rest of its media object"
-            : (count == 1 ? "it" : "them") + (atEnd ? string.Empty : cached ? " and goes on with the packet's own superframes" : " and the rest of its media object");
+            : "it" + (atEnd ? string.Empty : cached ? " and goes on with the packet's own superframes" : " and the rest of its media object");
         switch (status)
         {
             case VoiceStatus.Music:
