@@ -17,8 +17,8 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 - In DTS, VERNUM is a revision field and names no encoder.
 - In WavPack, libwavpack 5.0's [config block](wavpack-blocks) and checksums (medium).
 - In ASF, [metadata](asf-metadata) such as WMFSDKVersion and the header's layout tell Microsoft's writers apart (medium); in WMA, ffmpeg's 'N' filler bytes count high.
-- An ID3v2 TSSE frame, an APE Encoder item or an MP4 [©too item](itunes-metadata), which whatever software wrote the tag fills in. Alone, it names an encoder with low confidence; for AC-3 and DTS it is the only evidence.
-- The BUILDVER chunk of a [.dtshd file](dtshd-file), a string the standard lists as the encoder's version identification and calls compiler information; low confidence, since it may name the tool that wrote the file as well.
+- An ID3v2 TSSE frame, an APE Encoder item or an MP4 [©too item](itunes-metadata), filled in by whatever software wrote the tag: low confidence alone, and the only evidence for AC-3 and DTS.
+- The BUILDVER chunk of a [.dtshd file](dtshd-file), which the standard calls the encoder's version identification (compiler information): low, since it may name the authoring tool.
 
 **Confidence.** High means the encoder signed the file in a way that checks out; medium, specific but weaker evidence; low, only habits or text other software may have written.
 
