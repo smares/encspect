@@ -38,7 +38,7 @@ permissions:
 jobs:
   sources:
     name: every download address serves its pinned file
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5

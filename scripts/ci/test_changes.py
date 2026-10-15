@@ -155,7 +155,19 @@ class ChangesTests(unittest.TestCase):
     def test_platforms(self):
         self.assertEqual(len(changes.platforms("pull_request")), 4)
         self.assertEqual(len(changes.platforms("push")), 6)
-        self.assertEqual(len(changes.platforms("schedule")), 6)
+        self.assertEqual(len(changes.platforms("schedule")), 7)
+        self.assertEqual(len(changes.platforms("workflow_dispatch")), 7)
+
+    def test_only_the_nightly_and_manual_runs_have_the_ubuntu_latest_leg(self):
+        def labels(event):
+            return [p["os"] for p in changes.platforms(event)]
+        for event in ("pull_request", "push"):
+            self.assertNotIn("ubuntu-latest", labels(event), event)
+            self.assertIn("ubuntu-24.04", labels(event), event)
+        for event in ("schedule", "workflow_dispatch"):
+            self.assertEqual(labels(event).count("ubuntu-latest"), 1, event)
+            self.assertIn("ubuntu-24.04", labels(event), event)
+        self.assertEqual(len({p["os"] for p in changes.platforms("schedule")}), 7)
 
 
 if __name__ == "__main__":
