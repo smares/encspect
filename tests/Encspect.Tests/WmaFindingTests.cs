@@ -53,7 +53,41 @@ public class WmaFindingTests
         ["wma.superframe-long"] = () => Standard(FFmpeg, 0x0161, s => s.Objects[0] = [.. s.Objects[0], .. new byte[20]]),
         ["wma.superframe-short"] = () => Standard(FFmpeg, 0x0161, s => s.Objects[0] = s.Objects[0][..^10]),
         ["wma.variable-blocks-disabled"] = () => Standard(FFmpeg, 0x0161, s => BinaryPrimitives.WriteUInt16LittleEndian(s.Data.AsSpan(4), 0x000D)),
-        ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, _ => { }),
+        ["wma.voice-block-alignment"] = () => VoiceRun(s => s.Format = s.Format with { BlockAlign = 0 }),
+        ["wma.voice-cache-overflow"] = () => VoiceRun(s =>
+        {
+            // A packet of 400 bytes that states one superframe and holds nothing else: its tail is more than the 256 bytes of FFmpeg's cache.
+            s.Format = s.Format with { BlockAlign = 400 };
+            s.Objects = [new byte[400]];
+            SetBits(s.Objects[0], 5, 6, 1);
+        }),
+        ["wma.voice-channels"] = () => VoiceRun(s => s.Format = s.Format with { Channels = 2 }),
+        ["wma.voice-denoise-strength"] = () => VoiceRun(s => SetBits(s.Data, (18 * 8) + 2, 4, 12)),
+        ["wma.voice-frame-type"] = () => VoiceRun(s => SetBits(s.Objects[0], 72, 14, 0x3FFF)),
+        ["wma.voice-frame-type-overlap"] = () => VoiceRun(s => s.Data = VoiceTable(s.Data, [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5])),
+        ["wma.voice-frame-type-table"] = () => VoiceRun(s => s.Data = VoiceTable(s.Data, [0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4])),
+        ["wma.voice-frame-type-unreachable"] = () => VoiceRun(s => s.Data = VoiceTable(s.Data, [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 7, 7])),
+        ["wma.voice-lsp-flag-changes"] = () => VoiceRun(s => SetBits(s.Objects[1], 4, 1, 0)),
+        ["wma.voice-music"] = () => VoiceRun(s => SetBits(s.Objects[0], 22, 1, 0)),
+        ["wma.voice-not-read"] = () => VoiceRun(s => s.Format = s.Format with { BlockAlign = 0 }),
+        ["wma.voice-packet-header"] = () => VoiceRun(s =>
+        {
+            // Blocks of 2 bytes whose count says that another 6-bit value follows, with no room for it.
+            s.Format = s.Format with { BlockAlign = 2 };
+            s.Objects = [[0x07, 0xE0]];
+        }),
+        ["wma.voice-packet-sequence"] = () => VoiceRun(s => SetBits(s.Objects[2], 0, 4, 9)),
+        ["wma.voice-sample-count"] = () => VoiceRun(s =>
+        {
+            SetBits(s.Objects[0], 23, 1, 1);
+            SetBits(s.Objects[0], 24, 12, 4000);
+        }),
+        ["wma.voice-sample-rate"] = () => VoiceRun(s => s.Format = s.Format with { SampleRate = 100 }),
+        ["wma.voice-spillover-after-music"] = () => VoiceRun(s => SetBits(s.Objects[0], 22, 1, 0)),
+        ["wma.voice-spillover-orphan"] = () => VoiceRun(s => SetBits(s.Objects[0], 11, 11, 5)),
+        ["wma.voice-superframe-overrun"] = () => VoiceRun(s => SetBits(s.Objects[1], 11, 11, 100)),
+        ["wma.voice-superframe-padding"] = () => VoiceRun(s => SetBits(s.Objects[1], 11, 11, 330)),
+        ["wma.voice-unfinished"] = () => VoiceRun(s => s.Objects = s.Objects.Take(1).ToList()),
     };
 
     public static TheoryData<string> Codes => [.. Runs.Keys.Order(StringComparer.Ordinal)];
@@ -65,6 +99,43 @@ public class WmaFindingTests
         IReadOnlyList<Finding> findings = Runs[code]();
         Assert.Contains(findings, f => f.Code == code);
         Assert.DoesNotContain(findings, f => f.Code == "parse.failed");
+    }
+
+    // A Voice media object shorter than the block alignment is the rest of a packet with no header, and so are the bytes before the whole
+    // blocks of a longer one (a decoder cuts blocks from the end); a media object of two blocks is read as two packets.
+    [Fact]
+    public void VoiceMediaObjectsOfOtherSizesAreCutIntoBlocks()
+    {
+        Assert.Contains(VoiceRun(s => s.Objects[3] = s.Objects[3][..50]), f => f.Code == "wma.packet-short" && f.Message.Contains("block alignment of 187", StringComparison.Ordinal));
+        Assert.Contains(VoiceRun(s => s.Objects[3] = [.. s.Objects[3], .. new byte[20]]), f => f.Code == "wma.packet-long" && f.Message.Contains("20 bytes before its whole blocks", StringComparison.Ordinal));
+
+        Stream pair = Load(Voice, 0x000A);
+        var packets = new List<MappedBytes> { new MappedBytes(pair.Objects[0].Concat(pair.Objects[1]).ToArray(), 200) };
+        var parent = new Node("Stream", 0, 1_000_000);
+        var context = new CodecContext(parent, packets, CancellationToken.None, null, null, Configuration(pair, parent));
+        new WmaVoiceParser().Parse(context);
+        Assert.Equal(2, parent.Children.Single(c => c.Name == "Windows Media Audio Voice").Children.Single(c => c.Name == "Packets").Children.Count);
+        Assert.DoesNotContain(context.Findings, f => f.Code is "wma.packet-short" or "wma.packet-long");
+    }
+
+    // Four superframes of 87 bits fill a block of 46 bytes after its header of 20 bits, and the header counts a fifth: a decoder reads the
+    // four, finds the packet used up and goes on with the next, so that no superframe is reported as running past the packet.
+    [Fact]
+    public void ASuperframeThatEndsWithItsBlockLeavesNoOverrun()
+    {
+        IReadOnlyList<Finding> findings = VoiceRun(s =>
+        {
+            var body = new VoiceBitWriter();
+            for (int i = 0; i < 4; i++)
+            {
+                body.Append(VoiceBuilder.Superframe());
+            }
+
+            s.Format = s.Format with { BlockAlign = 46 };
+            s.Objects = [VoiceBuilder.Packet(46, 0, true, 5, 0, body), VoiceBuilder.Packet(46, 1, true, 0, 0, new VoiceBitWriter())];
+        });
+
+        Assert.DoesNotContain(findings, f => f.Code is "wma.voice-superframe-overrun" or "parse.failed");
     }
 
     // The standard decoder's other findings: a Pro stream that is Lossless-like in its header, and the codec data of the
@@ -149,6 +220,49 @@ public class WmaFindingTests
         }
 
         return null;
+    }
+
+    // A damaged copy of the 8 kHz Voice fixture: 14 packets of 187 bytes, each with a 22-bit header (sequence number, residual LSPs flag,
+    // superframe count, 11 bits of spillover) and then, from bit 22 of the first, a superframe (speech bit, sample count flag, 48 bits of
+    // residual LSPs, and the first frame's type code from bit 72).
+    private static IReadOnlyList<Finding> VoiceRun(Action<Stream> change)
+    {
+        Stream s = Load(Voice, 0x000A);
+        s.Objects = [.. s.Objects.Select(o => (byte[])o.Clone())];
+        s.Data = (byte[])s.Data.Clone();
+        change(s);
+        return Run(new WmaVoiceParser(), s.Objects, s);
+    }
+
+    // The codec data with the groups of its frame type table, 3 bits for each of the 17 frame types, from byte 22.
+    private static byte[] VoiceTable(byte[] data, int[] groups)
+    {
+        byte[] copy = (byte[])data.Clone();
+        Array.Clear(copy, 22, 24);
+        for (int i = 0; i < groups.Length; i++)
+        {
+            SetBits(copy, (22 * 8) + (i * 3), 3, (uint)groups[i]);
+        }
+
+        return copy;
+    }
+
+    // The count bits at the bit position of the data, most significant first, set to the value.
+    internal static void SetBits(byte[] data, int position, int count, uint value)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            int at = position + i;
+            byte mask = (byte)(0x80 >> (at % 8));
+            if (((value >> (count - 1 - i)) & 1) != 0)
+            {
+                data[at / 8] |= mask;
+            }
+            else
+            {
+                data[at / 8] &= (byte)~mask;
+            }
+        }
     }
 
     private static byte[] With(byte[] data, Action<byte[]> change)

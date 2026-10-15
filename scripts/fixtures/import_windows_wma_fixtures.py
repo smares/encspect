@@ -102,6 +102,8 @@ def actual_name(entry, data):
     name = "-".join(parts)
     if entry["mode"] == "cbr" and entry.get("encoderPath", "wmf-sdk") == "wmf-sdk" and tag != 0x000A:
         name += "-sdk"
+    if entry.get("signal") not in (None, "tones", "quiet"):
+        name += "-" + entry["signal"]
     if entry.get("title"):
         name += "-tagged"
     return name, {"format_tag": tag, "channels": channels, "rate": rate, "bytes_per_second": average, "bits": bits}
@@ -214,6 +216,8 @@ def main():
                 "frames": entry["frames"],
                 "type": entry["inputType"],
                 "generator": "wma_signals.py",
+                # The PCM file the run wrote with wma_signals.py's arguments: the generator makes the same bytes again.
+                **({"pcm_sha256": hashlib.sha256((artifact / entry["pcm"]).read_bytes()).hexdigest()} if entry.get("pcm") and (artifact / entry["pcm"]).exists() else {}),
             },
             "runner": {
                 "image_os": environment.get("runnerImageOS"),

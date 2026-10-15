@@ -1,0 +1,164 @@
+{
+ "description": "Blocks of 120 bytes: the first packet counts three superframes and holds two, which fill it, and 10 bytes in front of the next block hold the first bits of the third. A decoder takes the 10 bytes for the rest of the first packet, where the third counted superframe begins, and the spillover of the block finishes it.",
+ "format": "ASF",
+ "length": 914,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   584
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 1000,
+   "block_align": 120,
+   "bits": 16,
+   "codec_data": "1000040000000000000000000000000000009504000024005292a6eb800000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   178,
+   1
+  ],
+  [
+   558,
+   178,
+   1
+  ],
+  [
+   736,
+   178,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   120,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   130,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   120,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   120,
+   0,
+   [
+    [
+     411,
+     120
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   130,
+   120,
+   [
+    [
+     589,
+     130
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   120,
+   240,
+   [
+    [
+     767,
+     120
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 914,
+  "packets": 3,
+  "play_duration": 3600000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 178,
+  "max_packet": 178,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.packet-long",
+   "contains": "10 bytes before its whole blocks"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": "clean",
+  "messages": [],
+  "ffmpeg": {
+   "samples": 2880,
+   "superframes": 6
+  }
+ }
+}

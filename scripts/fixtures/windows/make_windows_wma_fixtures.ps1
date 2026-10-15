@@ -113,6 +113,13 @@ $plan = @(
     @{ Name = 'wma92lossless-5.1-48k-24';    Codec = $lossless; Vbr = $true; Channels = 6; Rates = @(48000, 44100); Bits = 24; Quality = 100; Seconds = 0.5; Signal = 'quiet' }
     @{ Name = 'wmavoice-cbr-mono-8k-5'; Optional = $true;      Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000, 16000); Bitrate = 5000;  Seconds = 3; Signal = 'tones' }
     @{ Name = 'wmavoice-cbr-mono-16k-20'; Optional = $true;    Codec = $voice; Vbr = $false; Channels = 1; Rates = @(16000, 22050); Bitrate = 20000; Seconds = 3; Signal = 'tones' }
+    # A signal with voiced and unvoiced speech and pauses (wma_signals.py, "speech"), so that the speech coder uses the frame types the
+    # tones never reach (silence, the hardcoded codebook, pitch-adaptive window pulses); the SDK offers the formats of 4, 5 and 8 kbit/s at 8 kHz
+    # and 16 kbit/s at 16 kHz, or the closest, and the importer names each file after what its header says and the signal.
+    @{ Name = 'wmavoice-cbr-mono-8k-4-speech'; Optional = $true;  Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000); Bitrate = 4000;  Seconds = 6; Signal = 'speech' }
+    @{ Name = 'wmavoice-cbr-mono-8k-5-speech'; Optional = $true;  Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000, 16000); Bitrate = 5000;  Seconds = 6; Signal = 'speech' }
+    @{ Name = 'wmavoice-cbr-mono-8k-8-speech'; Optional = $true;  Codec = $voice; Vbr = $false; Channels = 1; Rates = @(8000); Bitrate = 8000;  Seconds = 6; Signal = 'speech' }
+    @{ Name = 'wmavoice-cbr-mono-16k-16-speech'; Optional = $true; Codec = $voice; Vbr = $false; Channels = 1; Rates = @(16000, 22050); Bitrate = 16000; Seconds = 6; Signal = 'speech' }
     # Constant bitrate through the SDK's writer, which differs in its header from Media Foundation's; optional,
     # since whether the SDK lists constant bitrate formats for these codecs is what the run finds out.
     @{ Name = 'wma92-cbr-stereo-44k-128-sdk'; Optional = $true;     Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 128000; Seconds = 3; Signal = 'tones' }

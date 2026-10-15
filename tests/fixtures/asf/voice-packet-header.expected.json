@@ -1,0 +1,164 @@
+{
+ "description": "Blocks of 2 bytes whose header counts superframes in a 6-bit value of 63 with no room for the value that must follow.",
+ "format": "ASF",
+ "length": 530,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   200
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 1000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": "1000040000000000000000000000000000009504000024005292a6eb800000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   50,
+   1
+  ],
+  [
+   430,
+   50,
+   1
+  ],
+  [
+   480,
+   50,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   2,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   2,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   2,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   2,
+   0,
+   [
+    [
+     411,
+     2
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   2,
+   166,
+   [
+    [
+     461,
+     2
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   2,
+   333,
+   [
+    [
+     511,
+     2
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 530,
+  "packets": 3,
+  "play_duration": 5000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 50,
+  "max_packet": 50,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.voice-packet-header",
+   "contains": "run past the packet"
+  },
+  {
+   "code": "wma.voice-packet-sequence",
+   "contains": "follow the packet before"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": "errors",
+  "messages": []
+ }
+}
