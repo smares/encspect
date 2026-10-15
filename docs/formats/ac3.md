@@ -20,23 +20,33 @@ From the audio coding mode and the LFE flag. E-AC-3's dependent substreams add t
 
 Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream: ETSI TS 103 420 carries it as joint object coding (JOC) side information and object audio metadata (OAMD) in an EMDF container, announced by an extension flag.
 
-- **Extension flag (frames):** an E-AC-3 frame whose additional bit stream information (addbsi) has two or more bytes shows `HasExtensionTypeA` (flag_ec3_extension_type_a, the last bit of the first byte) and `Complexity Index Type A` (complexity_index_type_a, the second byte) with the seven reserved bits before the flag (TS 103 420 8.3; ffmpeg's `eac3dec.c` reads the same bits).
-- **Extension flag (dec3):** after the last independent substream's entry, the dec3 box has seven reserved bits, the flag and the complexity index (TS 103 420 C.3.1); a box that ends there shows none. ETSI TS 102 366 V1.4.1 F.6 only reserves those bytes, and no later version exists.
-- **EMDF containers (TS 102 366 Annex H):** found by their sync word 0x5838 in the bits after the last audio block (the unused bits and the auxiliary data field) and in the skip fields. The first container of a field is taken on its sync word, a later one only if its length fits and its version is 0. Per container: length, version, key ID, each payload with its ID, configuration and size, the end marker, the protection lengths and the padding to the byte boundary. Payload 11 is OAMD and 14 is JOC (TS 103 420 Table 55); 1 to 7 are named after TS 102 366 Table H.2.3.
-- **JOC header:** the downmix configuration, the number of objects (joc_num_objects), the extension configuration, the clip gain and the sequence count (TS 103 420 6.2.2, 6.2.3). **OAMD:** the version and the object count (5.5.2).
-- **Stream:** `hasObjectAudio` and `objectCount` in the JSON stream (the GUI's stream line shows them too) are true and joc_num_objects where a frame holds a JOC payload. They are left out of the JSON otherwise. The statistics add the containers, the frames with object audio and with the flag, the objects and the complexity index.
+- **Extension flag (frames):**
+  - An E-AC-3 frame whose additional bit stream information (addbsi) is exactly two bytes shows `HasExtensionTypeA` (flag_ec3_extension_type_a, the last bit of the first byte), `Complexity Index Type A` (complexity_index_type_a, the second byte) and the seven reserved bits before the flag, with a finding if they are not 0 (TS 103 420 8.3.1).
+  - Other lengths show the bytes only. ffmpeg's `eac3dec.c` reads the flag from the first byte of an addbsi of any length, even one byte, and sets the profile "Dolby Digital Plus + Dolby Atmos" from it; MediaInfo needs two bytes or more, and Encspect requires two, as 8.3.1 lists. A two-byte addbsi that carries something else cannot be told from the extension.
+- **Extension flag (dec3):** after the last independent substream's entry, the dec3 box has seven reserved bits, the flag and the complexity index (TS 103 420 C.3.1); a box that ends there shows none. ETSI TS 102 366 V1.4.1 F.6 only reserves those bytes, and no later version exists. The box is compared with the frames' addbsi fields, which are read in every frame, and with the payloads.
+- **EMDF containers (TS 102 366 Annex H):**
+  - Found by their sync word 0x5838 in the skip fields, in the bits after the last audio block read (the unused bits and the auxiliary data field) and, for a frame whose audio blocks are not read to their end (adaptive hybrid transform, enhanced coupling, a reduced sample rate), in all the bits after where reading stopped. A skip field is read before its block's mantissas, so the skip fields of the blocks read are never part of the unread bits.
+  - A candidate must pass a dry run of the structure, as MediaInfo's `Ac3_EMDF_Test` makes it: the length fits, the version is 0, the payloads reach the end marker inside the length, protection_length_primary is not 0, and the fields end in the last byte with zero padding. Random bytes that contain the sync word are no container.
+  - A frame whose addbsi sets the flag announces a container, so one that starts a field, or follows another, is read on its sync word alone and its damage is reported.
+  - Per container: length, version, key ID, each payload with its ID, configuration and size, the end marker, the protection lengths and the padding. Payload 11 is OAMD and 14 is JOC (TS 103 420 Table 55); 1 to 7 are named after TS 102 366 Table H.2.3.
+- **JOC header:** the downmix configuration, the number of objects (joc_num_objects), the extension configuration, the clip gain and the sequence count (TS 103 420 6.2.2, 6.2.3). **OAMD:** the version and the object count (5.5.2), which is not the JOC count: Dolby's own file has 16 objects in the OAMD payload, one of them the LFE channel, and 15 in the JOC header.
+- **Stream:** `hasObjectAudio` and `objectCount` (joc_num_objects) in the JSON stream, the GUI's stream line, the summary row, the CSV (`Object Audio` and `Object Count`) and the GUI's summary cache are set where a frame holds a JOC payload. The JSON leaves them out otherwise. The statistics add the containers, the frames with object audio and with the flag, the JOC object count and the complexity index.
 - **Findings:**
   - `ac3.emdf-truncated`, `ac3.emdf-length`, `ac3.emdf-payload-size`: a container longer than its field, fields that end before or after emdf_container_length, a payload that runs past its container.
-  - `ac3.emdf-reserved`, `ac3.emdf-version-not-read`: a reserved protection length, padding that is not 0, a version Annex H does not define (its payloads are not read).
+  - `ac3.emdf-reserved`, `ac3.emdf-version-not-read`, `ac3.emdf-limit`: a reserved protection length, padding that is not 0, a duration with more than the two groups H.2.2.3.4 allows; a version Annex H does not define (its payloads are not read); a container beyond what the analyzer reads (a fifth variable_bits group or more than 32 payloads, limits of the analyzer, not of the specification).
   - `ac3.object-payload-short`, `ac3.joc-reserved`, `ac3.object-audio-incomplete`: a payload too short for its first fields, a reserved or out-of-range JOC header value, one of the two payloads missing.
-  - `ac3.extension-without-joc`, `ac3.joc-without-extension`: a frame whose flag and JOC payload disagree.
-  - `ac3.config-differs`: a dec3 box whose flag or complexity index disagrees with the frames, or that has no extension where the frames carry JOC.
+  - `ac3.extension-without-joc`, `ac3.joc-without-extension`: judged over an access unit (an independent frame and its dependent frames), since TS 103 420 8.3.1 puts the flag in the substream that holds the container and ffmpeg reads it from either; the first only when every frame of the unit was read to its end.
+  - `ac3.config-differs`: a dec3 box whose flag or complexity index disagrees with the frames, or that has no extension where the frames set the flag or carry JOC.
+- **Verified against a real file:** Dolby's DD+ Online Delivery Kit v1.4.1 serves JOC test files (`check_eac3_samples.py` downloads two of them in CI, with two AHT files from the FFmpeg archive, and checks the analyzer, ffprobe and MediaInfo against `tests/conformance/eac3-samples.json`). They show:
+  - the container at the start of a skip field, in block 2 of each frame, filling it exactly;
+  - emdf_container_length counting the bytes after the length field (389 in a 393-byte skip field);
+  - the payload list ending with a bare 5-bit ID 0;
+  - codecdatae 0, protection lengths 2 and 1, JOC with the downmix configuration 3, the complexity index 16, and a program of dynamic objects with an LFE channel.
+  - `joc-atmos` is laid out like them. The other placements (after the last block, in the auxiliary data field) follow H.1 and are hand-built; MediaInfo 24.01 parses a container before the auxiliary data field only.
 - **Interpretations:**
-  - emdf_container_length counts the bytes after the length field, as MediaInfo's `Ac3_EMDF_Test` does.
-  - The syntax tables end the payloads at an ID of 0 without a configuration or size, although H.2.2.2.4 says an ID of 0 comes with zero fields.
-  - TS 103 420 Table 56 lists codecdatae as 1, and H.2.2.3.7 and MediaInfo take 0; both are read.
-- **Where a real encoder puts the container** is not verified here: no Dolby Atmos E-AC-3 file with terms that allow downloading it for testing was found. MediaInfo 24.01 finds a container before the auxiliary data field only, so the main fixtures put it there.
-- **ffmpeg 6.1** reads only the flag in the frames (profile "Dolby Digital Plus + Dolby Atmos"); its mov demuxer and muxer read and write neither dec3's extension nor the payloads.
+  - The syntax tables end the payloads at an ID of 0 without a configuration or size, although H.2.2.2.4 says an ID of 0 comes with zero fields; Dolby's file follows the tables.
+  - TS 103 420 Table 56 lists codecdatae as 1; H.2.2.3.7, MediaInfo and Dolby's file take 0. Both are read.
+- **ffmpeg 6.1** reads only the flag in the frames; its mov demuxer and muxer read and write neither dec3's extension nor the payloads.
 
 ## Not yet covered
 

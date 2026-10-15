@@ -126,6 +126,10 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("scripts/fixtures/make_ac3_fixtures.py"), {"fixtures", "ac3-crosscheck"})
         self.assertEqual(run("scripts/fixtures/crosscheck_ac3_fixtures.py"), {"fixtures", "ac3-crosscheck"})
         self.assertIn("ac3-crosscheck", run("tests/fixtures/ac3/joc-atmos.eac3"))
+        manifest = run("tests/conformance/eac3-samples.json")
+        self.assertIn("ac3-crosscheck", manifest)
+        self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "dts-crosscheck"})
+        self.assertEqual(run("scripts/fixtures/check_eac3_samples.py"), {"fixtures", "ac3-crosscheck"})
 
     def test_platforms(self):
         self.assertEqual(len(changes.platforms("pull_request")), 4)

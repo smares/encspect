@@ -59,7 +59,7 @@ Only the other files are analyzed.
 - **Position:** it opens centered over the main window the first time, and where it was after that, also in later sessions (`settings.json` in the user's application data folder, under `Encspect`).
 - **Analysis:** the detail window always analyzes the file again.
 - **Contents:**
-  - the streams at the top, each with its channel layout and speakers;
+  - the streams at the top, each with its channel layout and speakers, and the object audio and number of objects of a stream that has them;
   - the structure tree, whose rows are made only as they are shown and whose children are read only when expanded, so a stream of 100,000 frames opens at once;
   - a hex view read from the file as it scrolls. Selecting a node marks its bytes, all its ranges where they are not contiguous, and, for a field of a few bits, the bits themselves, also in the bit strip below.
 - **Explanations:**

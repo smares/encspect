@@ -116,7 +116,8 @@ The CSV row of a file has:
 - the first stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
 - the first encoder named and its confidence;
 - the tags, including those a container holds in its chunks;
-- the number of errors, warnings and infos.
+- the number of errors, warnings and infos;
+- `Object Audio`, `true` where a stream carries object-based audio (E-AC-3 with joint object coding), and `Object Count`, the most objects a stream reconstructs, empty where it is not known.
 
 ## Exit codes
 

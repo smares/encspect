@@ -60,7 +60,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `build-test` (per platform): restore, build the whole solution with warnings as errors, the GUI tests, the CLI smoke test, the self-contained CLI and GUI publish with their self-checks, and on Linux the Wayland and X11 self-checks.
 - `unit-tests` (per platform and shard): `Encspect.Tests` split by test class, so a platform's tests take as long as its slowest shard. `scripts/ci/shards.json` lists the classes of each shard but the last, which runs every test no other shard lists, so a new class lands in a shard by itself. `scripts/ci/shards.py filter <name>` prints a shard's `dotnet test --filter`.
   - `corrupt-a`: the damaged-input classes (`Corrupt*FileTests`) for the MPEG, LAME-written, Ogg and tag fixtures.
-  - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header and DTS fixtures, and `MemoryTests`.
+  - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header DTS and AC-3 fixtures, and `MemoryTests`.
   - `rest`: every other test, among them the `Thread hammers` collection, which runs alone at the end of the shard.
   - Locally, about three minutes each, against ten for the whole project in one process. Move a class between shards by editing `shards.json` when one shard's job takes clearly longer than the others'; `check_shards.py` stays green whatever the split.
 - `shard-guard`: `scripts/ci/check_shards.py` lists the tests that `dotnet test --list-tests` reports under each shard's filter and under none, and fails unless every listed entry is in exactly one shard. The list has one entry per theory row it can enumerate and one for a theory it cannot (such as `UsacLayoutTests.NotExhale`), so a shard may run more tests than it lists (the `rest` shard listed 5,288 and ran 5,306). Run it locally after building the tests in Release.
@@ -253,6 +253,7 @@ The models that compute the expected values are:
 ## Conformance streams and downloads
 
 - **MPEG-2 conformance:** `conformance_mpeg_audio.py` checks `tests/conformance/mpeg2-audio.json` against the ISO/IEC 13818-4 audio conformance streams. It downloads them, since they may not be redistributed.
+- **E-AC-3 object audio:** `check_eac3_samples.py` checks `tests/conformance/eac3-samples.json` against two of Dolby's JOC test files (DD+ Online Delivery Kit v1.4.1, copyrighted and for testing playback products, so downloaded and never committed) and two AHT files from the FFmpeg sample archive, with ffprobe, MediaInfo and the analyzer.
 - **mp3PRO:** `check_mp3pro_samples.py` checks `tests/conformance/mp3pro-samples.json` against three mp3PRO files from the FFmpeg sample archive, downloaded for the same reason.
 - **xHE-AAC by other encoders:** `check_usac_samples.py` checks `tests/conformance/usac-samples.json` against 13 downloaded files: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite and one exhale file from it. The private repository holds copies as their fallback address.
   - Without `--analyzer`, a UsacConfig reader of its own reads each file's elements and configuration extensions from the DecoderSpecificInfo that MP4Box lists.

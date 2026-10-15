@@ -159,17 +159,51 @@ def mediainfo_complexity(report):
     return " / ".join(str(p) for p in parts) or None
 
 
-def mediainfo_dynamic_objects(report):
-    """The object count of the last frame that holds an OAMD payload, which MediaInfo reads as
-    NumberOfDynamicObjects after its program_assignment of dynamic objects only."""
+def mediainfo_dynamic_objects(data, report):
+    """What MediaInfo 24.01 reports as NumberOfDynamicObjects: the object count of the last OAMD
+    payload, read as File_Ac3.cpp does (object_audio_metadata_payload, program_assignment): a
+    program of dynamic objects only has that many less one for an LFE channel; otherwise the count
+    program_assignment gives, 0 without one. data holds the file; the report's node offsets are in it."""
     last = None
     for frame in frame_nodes(report):
         for payload in find(frame, "Payload"):
             if str(payload.get("value", "")).startswith("11 "):
                 count = next((c for c in payload.get("children", []) if c["name"] == "Object Count"), None)
                 if count is not None:
-                    last = objects_of(count)
-    return last
+                    last = count
+    if last is None:
+        return None
+    position = last["offset"] * 8 + last.get("bitOffset", 0)
+
+    def read(width):
+        nonlocal position
+        skip = position % 8
+        span = (skip + width + 7) // 8
+        chunk = int.from_bytes(data[position // 8:position // 8 + span], "big")
+        position += width
+        return (chunk >> (span * 8 - skip - width)) & ((1 << width) - 1)
+
+    bits = read(5)
+    if bits == 0x1F:
+        bits += read(7)
+    objects = bits + 1
+    if read(1):
+        return objects - read(1)
+    mask = read(4)
+    if mask & 1:
+        read(1)
+        beds = read(3) + 2 if read(1) else 1
+        for _ in range(beds):
+            if not read(1):
+                read(10) if read(1) else read(17)
+    if mask & 2:
+        read(3)
+    if mask & 4:
+        dynamic = read(5)
+        if dynamic == 0x1F:
+            dynamic += read(7)
+        return dynamic + 1
+    return 0
 
 
 def check_ffprobe(path, data, manifest, problems):
@@ -415,7 +449,7 @@ def mediainfo_frames(report):
     return [n for n in mi.walk(report["root"]) if n.get("kind") == "Frame"]
 
 
-def check_object_audio(audio, report, stream, features, tally):
+def check_object_audio(path, audio, report, stream, features, tally):
     """MediaInfo's JOC reading against the analyzer's object audio, see the module's notes."""
     joc = "JOC" in features
     tally.compare("joint object coding", joc, bool(stream.get("hasObjectAudio")))
@@ -424,7 +458,7 @@ def check_object_audio(audio, report, stream, features, tally):
     tally.compare("commercial name", audio.get("Format_Commercial_IfAny"), "Dolby Digital Plus with Dolby Atmos" if joc else "Dolby Digital Plus")
     extra = audio.get("extra", {})
     tally.compare("complexity index", extra.get("ComplexityIndex"), mediainfo_complexity(report) if joc else None)
-    objects = mediainfo_dynamic_objects(report)
+    objects = mediainfo_dynamic_objects(path.read_bytes(), report)
     tally.compare("dynamic objects", extra.get("NumberOfDynamicObjects"), None if not joc or objects is None else str(objects))
 
 
@@ -445,7 +479,7 @@ def check_mediainfo(path, tally):
     dependent = [f for f in frames if mi.value(f, "Bit Stream Information", "Stream Type") == "1 (dependent)"]
     features = (audio.get("Format_AdditionalFeatures") or "").split()
     tally.compare("dependent substreams", " ".join(t for t in features if t != "JOC") or None, "Dep" if dependent else None)
-    check_object_audio(audio, report, stream, features, tally)
+    check_object_audio(path, audio, report, stream, features, tally)
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
     tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
