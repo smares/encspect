@@ -130,7 +130,7 @@ jobs:
       # step). Pull requests add no entry; docs/development.md has the numbers.
       - name: Restore the NuGet packages
         id: nuget
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
@@ -154,7 +154,7 @@ jobs:
 
       - name: Keep the failed GUI test results
         if: failure() && steps.gui-tests.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-gui-${{ matrix.os }}
           path: ${{ runner.temp }}/trx
@@ -264,7 +264,7 @@ jobs:
 
       - name: Save the NuGet packages
         if: github.event_name != 'pull_request' && steps.nuget.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
@@ -306,7 +306,7 @@ jobs:
 
       - name: Keep the failed test results
         if: failure() && steps.tests.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.shard }}
           path: ${{ runner.temp }}/trx
@@ -360,7 +360,7 @@ jobs:
           FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 1800 || 300 }}
         run: dotnet run --configuration Release --project tests/Encspect.Fuzz -- --seconds "$FUZZ_SECONDS" --seed $(( (RANDOM << 15) | RANDOM )) --out fuzz-failures
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: fuzz-failures
@@ -483,7 +483,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -554,7 +554,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -572,7 +572,7 @@ jobs:
       # The faad2 build with the trace patches. Its key holds faad_trace_tool.py, which holds the pinned
       # commit and the patches, and the runner image, whose compiler built it.
       - name: Cache the traced faad2 build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/tools/faad2-trace
           key: faad2-trace-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/faad_trace_tool.py') }}
@@ -641,7 +641,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -683,7 +683,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -733,7 +733,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -777,7 +777,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -825,7 +825,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -876,7 +876,7 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}

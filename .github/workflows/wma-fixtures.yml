@@ -45,7 +45,7 @@ jobs:
           cat wma-out/encodes.json
           python scripts/fixtures/windows/verify_windows_wma.py wma-out
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: wma-fixtures-windows-2025
