@@ -95,3 +95,13 @@ public class CorruptDtsFileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The fixtures in tests/fixtures/ac3, among them the EMDF containers and object audio payloads.
+public class CorruptAc3FileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("ac3/", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}

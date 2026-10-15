@@ -144,8 +144,22 @@ def exponents(bits, end, absolute=15, strategy=3, gain_range=True):
         bits.put(0, 2)
 
 
-def finish(bits, words, crc1):
-    """Pads the frame with zero bits to its last word (auxdatae, crcrsv or encinfo 0) and sets the CRCs."""
+def finish(bits, words, crc1, aux=None, tail=None):
+    """Pads the frame with zero bits to its last word (auxdatae, crcrsv or encinfo 0) and sets the CRCs.
+    aux (bytes) is the auxiliary data field: auxdatal and auxdatae (A/52 5.4.4) follow it, and the
+    zero padding comes before it."""
+    if tail is not None:
+        # Bytes right after the last audio block, in bits no field claims; auxdatae stays 0.
+        for byte in tail:
+            bits.put(byte, 8)
+    if aux is not None:
+        assert bits.count <= words * 16 - 32 - len(aux) * 8, (bits.count, words * 16, len(aux))
+        bits.put(0, words * 16 - 32 - len(aux) * 8 - bits.count)
+        for byte in aux:
+            bits.put(byte, 8)
+        bits.put(len(aux) * 8, 14).put(1, 1).put(0, 1).put(0, 16)
+        frame = bits.bytes()
+        return fix_crc2(frame)
     assert bits.count <= words * 16 - 16, (bits.count, words * 16)
     bits.put(0, words * 16 - 16 - bits.count)
     bits.put(0, 16)
@@ -237,7 +251,7 @@ def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnor
 
 
 def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, fscod2=0, bsid=16, dialnorm=27, chanmap=None, bsmod=None, words=256,
-               expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None):
+               expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None, addbsi=None, aux=None, skips=None, tail=None):
     nf = NFCHANS[acmod]
     blocks = 6 if fscod == 3 else [1, 2, 3, 6][numblkscod]
     b = Bits()
@@ -265,11 +279,15 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
             b.put(0, 1)
     if strmtyp == 0 and blocks != 6:
         b.put(1, 1)
-    b.put(0, 1)
+    b.put(addbsi is not None, 1)
+    if addbsi is not None:
+        b.put(len(addbsi) - 1, 6)
+        for byte in addbsi:
+            b.put(byte, 8)
     # audfrm (Annex E 2.2.3): frame-wide SNR offsets of 0, no optional syntax.
     if blocks == 6:
         b.put(expstre, 1).put(ahte, 1)
-    b.put(0, 2).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1)
+    b.put(0, 2).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(skips is not None, 1).put(0, 1)
     if acmod > 1:
         b.put(cplinu, 1)
         for _ in range(1, blocks):
@@ -367,19 +385,29 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
                 b.put(0, 3).put(0, 3)
             else:
                 b.put(0, 1)
+        if skips is not None:
+            # skiple, and skipl bytes of skip field (A/52 5.4.3.58 to 5.4.3.60).
+            piece = skips.get(block)
+            b.put(piece is not None, 1)
+            if piece is not None:
+                b.put(len(piece), 9)
+                for byte in piece:
+                    b.put(byte, 8)
         if ahte and aht_channel:
             break
         if ends is not None:
             ends.append(b.count)
-    return finish(b, words, crc1=False)
+    return finish(b, words, crc1=False, aux=aux, tail=tail)
 
 
 def silent_dac3(fscod, bsid, bsmod, acmod, lfeon, bit_rate_code, reserved=0):
     return Bits().put(fscod, 2).put(bsid, 5).put(bsmod, 3).put(acmod, 3).put(lfeon, 1).put(bit_rate_code, 5).put(reserved, 5).bytes()
 
 
-def dec3(data_rate, substreams):
-    """substreams: (fscod, bsid, asvc, bsmod, acmod, lfeon, num_dep_sub, chan_loc) per independent substream."""
+def dec3(data_rate, substreams, extension=None):
+    """substreams: (fscod, bsid, asvc, bsmod, acmod, lfeon, num_dep_sub, chan_loc) per independent substream.
+    extension: (flag_ec3_extension_type_a, complexity_index_type_a[, reserved]) after the substreams, as ETSI
+    TS 103 420 C.3.1 appends them."""
     b = Bits().put(data_rate, 13).put(len(substreams) - 1, 3)
     for fscod, bsid, asvc, bsmod, acmod, lfeon, dependents, chan_loc in substreams:
         b.put(fscod, 2).put(bsid, 5).put(0, 1).put(asvc, 1).put(bsmod, 3).put(acmod, 3).put(lfeon, 1).put(0, 3).put(dependents, 4)
@@ -387,4 +415,6 @@ def dec3(data_rate, substreams):
             b.put(chan_loc, 9)
         else:
             b.put(0, 1)
+    if extension is not None:
+        b.put(extension[2] if len(extension) > 2 else 0, 7).put(extension[0], 1).put(extension[1], 8)
     return b.align().bytes()

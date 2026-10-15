@@ -46,10 +46,13 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "dts"), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
-            .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
+        foreach (string family in new[] { "dts", "ac3" })
         {
-            yield return $"dts/{Path.GetFileName(path)}";
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
+                .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
+            {
+                yield return $"{family}/{Path.GetFileName(path)}";
+            }
         }
     }
 

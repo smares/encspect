@@ -1,0 +1,91 @@
+{
+ "description": "Four 5.1 frames whose auxiliary data field (auxdatal, auxdatae 1) holds the EMDF container of joc-atmos and whose addbsi sets the extension.",
+ "length": 3200,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   800
+  ],
+  [
+   800,
+   800
+  ],
+  [
+   1600,
+   800
+  ],
+  [
+   2400,
+   800
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 6144,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "object_count": 15
+  }
+ ],
+ "fields": {
+  "AC-3/Frame/Auxiliary Data/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
+  "AC-3/Frame/Auxiliary Data Length": "1208 bits"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The frames' auxiliary data would move with the rewritten sizes; the check adds nothing for them."
+  }
+ },
+ "block_ends": {
+  "0": [
+   496,
+   499,
+   502,
+   505,
+   508,
+   511
+  ],
+  "800": [
+   496,
+   499,
+   502,
+   505,
+   508,
+   511
+  ],
+  "1600": [
+   496,
+   499,
+   502,
+   505,
+   508,
+   511
+  ],
+  "2400": [
+   496,
+   499,
+   502,
+   505,
+   508,
+   511
+  ]
+ }
+}

@@ -1,0 +1,149 @@
+{
+ "description": "Four access units of a 5.1 substream and a dependent substream with the rear surround pair, whose frames hold an EMDF container with an OAMD and a JOC payload for 15 objects in their auxiliary data and set the addbsi extension with complexity index 16.",
+ "length": 4480,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   800
+  ],
+  [
+   800,
+   320
+  ],
+  [
+   1120,
+   800
+  ],
+  [
+   1920,
+   320
+  ],
+  [
+   2240,
+   800
+  ],
+  [
+   3040,
+   320
+  ],
+  [
+   3360,
+   800
+  ],
+  [
+   4160,
+   320
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "side left",
+    "side right",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 6144,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "object_count": 15
+  }
+ ],
+ "fields": {
+  "AC-3/Frame[1]/Bit Stream Information/Additional Info/HasExtensionTypeA": "true",
+  "AC-3/Frame[1]/Bit Stream Information/Additional Info/Complexity Index Type A": "16",
+  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Container Length": "147 bytes",
+  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Payload ID": "11 (object audio metadata)",
+  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/Payload ID": "14 (joint object coding)",
+  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[1]/JOC Header/JOC Object Count": "15 objects",
+  "AC-3/Frame[1]/Auxiliary Data/EMDF Container/Payload[0]/Object Count": "15 objects",
+  "AC-3/Statistics/Frames With Object Audio": "4 frames",
+  "AC-3/Statistics/Object Count": "15 objects"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_channels": 8,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "ffmpeg decodes only substream 0, so a change to the dependent substream would not show."
+  }
+ },
+ "block_ends": {
+  "0": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "800": [
+   260,
+   263,
+   266,
+   269,
+   272,
+   275
+  ],
+  "1120": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "1920": [
+   260,
+   263,
+   266,
+   269,
+   272,
+   275
+  ],
+  "2240": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "3040": [
+   260,
+   263,
+   266,
+   269,
+   272,
+   275
+  ],
+  "3360": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "4160": [
+   260,
+   263,
+   266,
+   269,
+   272,
+   275
+  ]
+ }
+}
