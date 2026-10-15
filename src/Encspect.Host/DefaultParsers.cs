@@ -48,7 +48,7 @@ public static class DefaultParsers
     // further in (60) only where nothing more certain claims the file. Musepack is certain of its
     // magic number (100); a stream of version 4 to 6 has none and takes 60. An AC-3 chain at the
     // start of the data (92) outranks MPEG audio and ADTS, whose sync words cannot start with its
-    // 0x0B; one further in (50) ranks below them all. ASF is certain of the GUID of its Header
+    // 0x0B; one further in (50, or 55 when the CRCs of its first three frames hold, which outranks a bare ADTS chain's 50 inside its frames) ranks below them all. ASF is certain of the GUID of its Header
     // Object at the start (100). WavPack is certain of a block header that passes libwavpack's checks
     // and is followed by another one at the start of the data (100), and takes a chain of them
     // further in (60), below MPEG audio. A DTS chain at the start of the data (93) outranks AC-3's 92: no

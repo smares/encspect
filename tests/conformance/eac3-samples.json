@@ -1,5 +1,5 @@
 {
- "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and two E-AC-3 files with the adaptive hybrid transform from the FFmpeg sample archive. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it.",
+ "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and three E-AC-3 files from the FFmpeg sample archive: two with the adaptive hybrid transform and one with 352 bytes of junk in front. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it.",
  "sources": {
   "dolby": {
    "page": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/MP4_Muxed_Streams.html",
@@ -87,6 +87,23 @@
     "ac3.dmixmod-reserved"
    ],
    "note": "dialnorm is 0 in every frame, which A/52 5.4.2.8 reserves (MediaInfo reads it as -31 dB too); dmixmod is 3"
+  },
+  {
+   "file": "csi_miami_stereo_128_spx.eac3",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/AC3/eac3/csi_miami_stereo_128_spx.eac3",
+   "sha256": "f96b45fa4d249522cd83dea009cd528ce552ec9d947e03cdecab44652bc86ecb",
+   "size": 333664,
+   "format": "AC-3",
+   "codec": "E-AC-3",
+   "object_audio": false,
+   "findings": [
+    "ac3.leading-junk"
+   ],
+   "info_findings": [
+    "ac3.aht-not-read"
+   ],
+   "note": "352 bytes of junk precede the first frame, and the E-AC-3 headers' own bytes (from offset 6 of each frame) read as an ADTS header whose chain of three frames exists at several places, so the file is E-AC-3 only because its chain of CRC-checked frames outranks that ADTS chain (ffprobe's packet count includes the junk, so no frame count is listed)"
   }
  ]
 }

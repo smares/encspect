@@ -5,6 +5,7 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 ## What is read
 
 - **Frames:** sync on a chain of frames, with resync after damage.
+- **Detection:** a chain at the start of the data (after zero bytes) ranks 92. One after junk ranks 55 when the CRCs of its first three frames hold, otherwise 50, so a file with junk in front stays AC-3 or E-AC-3 where ADTS-looking bytes inside its frames chain too (they rank 50).
 - **CRCs:** crc1 and crc2.
 - **Bit stream information:** every field.
 - **Audio blocks:** every block up to its mantissas. The parser steps over the mantissas by running the bit allocation itself; liba52 confirms where every block of the AC-3 fixtures ends.

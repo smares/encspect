@@ -21,14 +21,42 @@ public sealed class Ac3Parser : IFormatParser
     // A chain at the start of the data, after any zero bytes, outranks MPEG audio (90) and ADTS
     // (91), since a chain of AC-3 frames is no MPEG or ADTS chain: their sync words, 0xFFE and
     // 0xFFF, cannot start with 0x0B. One found further in ranks below MPEG audio and Ogg, so a stray
-    // run inside another format's junk never takes the file.
+    // run inside another format's junk never takes the file. A chain further in whose first three
+    // frames all pass the CRC that covers the whole frame (A/52 7.10.1) is not a stray run: junk
+    // passes 16 bits per frame by chance once in 2^48, where an ADTS chain of three frames is 28 or
+    // so bits of header, which an E-AC-3 frame's own header bytes can repeat. It ranks 55, above
+    // that ADTS chain's 50 and still below MPEG audio, Ogg, Musepack and WavPack.
     public int Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
         long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
-        return found < 0 ? 0 : found == start ? 92 : 50;
+        return found < 0 ? 0 : found == start ? 92 : CrcsHold(cache, found, reader.End) ? 55 : 50;
+    }
+
+    // Whether the first ChainLength frames of the chain at position are whole and pass their CRC.
+    private static bool CrcsHold(BlockCache cache, long position, long end)
+    {
+        var buffer = new byte[Ac3Analysis.MaxFrame];
+        for (int count = 0; count < ChainLength; count++)
+        {
+            if (HeaderAt(cache, position, end) is not { } header || position + header.FrameLength > end)
+            {
+                return false;
+            }
+
+            int length = header.FrameLength;
+            cache.Read(position, buffer.AsSpan(0, length));
+            if (Crc16.Compute(buffer.AsSpan(2, length - 2)) != 0)
+            {
+                return false;
+            }
+
+            position += length;
+        }
+
+        return true;
     }
 
     public void Parse(ParseContext context)

@@ -180,6 +180,27 @@ def build():
             crosscheck={"ffprobe": False, "decode": True, "liba52": True,
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it."}})
 
+    # Leading junk, then E-AC-3 frames whose unused tail holds what looks like an ADTS header of the
+    # frame's own length: the headers chain from frame to frame, as the bytes of a real E-AC-3 header
+    # do in csi_miami_stereo_128_spx.eac3. The chain of CRC-checked E-AC-3 frames is the stronger
+    # evidence, so the file is E-AC-3, not AAC.
+    adts = bytes.fromhex("FFF14C80401FFC")
+    frames = []
+    for _ in range(8):
+        frame = bytearray(eac3(acmod=2, words=256))
+        assert not any(frame[300:307])
+        frame[300:307] = adts
+        frames.append(bytes(m.fix_crc2(frame)))
+    junk = bytes((i * 37 + 11) % 251 for i in range(100))
+    assert b"\xFF" not in junk
+    data = junk + b"".join(frames)
+    fixture("junk-adts-in-frames", ".eac3", "100 bytes of junk, then eight 2/0 E-AC-3 frames of 512 bytes, each with the bytes of an ADTS header of 512 bytes at its offset 300.",
+            data, frames_of(data, 100), [stream("E-AC-3", 48000, 2, 0, 8 * 1536)], [("ac3.leading-junk", "100 bytes before the first frame")],
+            gaps=[(0, 100)], read=False,
+            crosscheck={"ffprobe": False, "decode": True, "liba52": False,
+                        "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it.",
+                                 "liba52": "liba52 does not decode E-AC-3."}})
+
     # A frame whose second half is missing: the next frame's sync word starts inside it.
     frame = ac3()
     data = frame * 2 + frame[:400] + frame * 3
