@@ -56,6 +56,36 @@ public static partial class ClaimRoles
         return text.Length > maxLength ? text[..maxLength] : text;
     }
 
+    // The version a writer claim carries, for an encoder the stream's own evidence named without one (FAAC 2.x's layout names "FAAC"; the
+    // front end's tool atom reads "FAAC 2.2.0 (6acbe23)"). Only a writer claim of the same family whose name starts with the
+    // encoder's name and goes on may complete it, so a remux by MP4Box or ffmpeg lends its version to no encoder, and a writer claim
+    // never creates an encoder or raises its confidence. The encoder takes the claim's name and the evidence says where it came from.
+    public static void CompleteVersion(Node? encoder, IEnumerable<EncoderClaim> claims, Func<string, string>? nameOf = null)
+    {
+        if (encoder?.Value?.ToString() is not { Length: > 0 } named)
+        {
+            return;
+        }
+
+        string family = FamilyOf(named);
+        foreach (EncoderClaim claim in Writers(claims).OrderByDescending(c => c.Confidence))
+        {
+            string name = (nameOf ?? (t => WriterName(t)))(claim.Text);
+            if (name.Length > named.Length && name.StartsWith(named, StringComparison.OrdinalIgnoreCase) && !char.IsLetter(name[named.Length])
+                && FamilyOf(claim.Text) == family)
+            {
+                encoder.Value = name;
+                encoder.Add(new Node("Evidence", encoder.Offset, encoder.Length,
+                    $"The version comes from the {claim.Description} at 0x{claim.Source.Offset:X}, which names \"{claim.Text.Trim()}\" as the writer: software of the same name")
+                {
+                    Description = WriterDetection.EvidenceDescription,
+                    Ranges = encoder.Ranges,
+                });
+                return;
+            }
+        }
+    }
+
     private static readonly (string Family, string[] Markers)[] Families =
     [
         ("FFmpeg", ["ffmpeg", "lavf", "lavc", "libav"]),

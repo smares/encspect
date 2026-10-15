@@ -43,6 +43,8 @@ internal static partial class Summary
             s.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
+
         StreamInfo? info = Statistics(s, Cover, stream, encoder, writer);
         if (info is not null)
         {

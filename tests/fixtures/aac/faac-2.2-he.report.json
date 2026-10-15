@@ -133,7 +133,7 @@
                       "children": [
                         {
                           "name": "Encoder",
-                          "value": "FAAC",
+                          "value": "FAAC 2.2.0 (6acbe23)",
                           "offset": 44,
                           "length": 9341,
                           "children": [
@@ -146,6 +146,12 @@
                             {
                               "name": "Evidence",
                               "value": "The 2 SBR headers and 35 SBR payloads have the layout FAAC 2.x writes: headers that send bs_header_extra_1 and not bs_header_extra_2, with start frequency 15, crossover band 0, bs_noise_bands 0 (one noise floor band) and stop frequency 12, none off FAAC's 30-access-unit header period, and data that codes every envelope and noise floor across frequency, with no coupling, sinusoids or extended data",
+                              "offset": 44,
+                              "length": 9341
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "The version comes from the MP4 ©too atom (encoding tool) at 0x27C1, which names \"FAAC 2.2.0 (6acbe23)\" as the writer: software of the same name",
                               "offset": 44,
                               "length": 9341
                             }
@@ -19242,7 +19248,7 @@
         "duration": 1.6253968253968254,
         "averageBitrate": 45.975234375,
         "isVbr": false,
-        "encoder": "FAAC",
+        "encoder": "FAAC 2.2.0 (6acbe23)",
         "encoderConfidence": "Medium",
         "writer": "FAAC 2.2.0 (6acbe23)",
         "writerConfidence": "Low",

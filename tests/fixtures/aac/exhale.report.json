@@ -2363,7 +2363,7 @@
                       "children": [
                         {
                           "name": "Encoder",
-                          "value": "exhale",
+                          "value": "exhale 1.2.2",
                           "offset": 1147,
                           "length": 4330,
                           "children": [
@@ -2376,6 +2376,12 @@
                             {
                               "name": "Evidence",
                               "value": "The UsacConfig at 0x23D has the layout exhale writes: an audio pre-roll element first, then only channel elements without time-warped MDCT and no fill element, and one loudness info extension of 9 bytes with one measurement",
+                              "offset": 1147,
+                              "length": 4330
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "The version comes from the MP4 ©too atom (encoding tool) at 0x44C, which names \"exhale 1.2.2\" as the writer: software of the same name",
                               "offset": 1147,
                               "length": 4330
                             }
@@ -3610,7 +3616,7 @@
         "duration": 1.509297052154195,
         "averageBitrate": 22.951081730769232,
         "isVbr": false,
-        "encoder": "exhale",
+        "encoder": "exhale 1.2.2",
         "encoderConfidence": "Medium",
         "writer": "exhale 1.2.2",
         "writerConfidence": "Low",

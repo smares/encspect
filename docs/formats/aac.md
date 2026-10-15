@@ -28,6 +28,7 @@ The channel configuration, a program config element, or parametric stereo.
 The encoder and the writer are two fields of a stream, each with its own confidence and evidence (the "Encoder detection and confidence" and "Writer detection" topics of the GUI and `--explain` explain both); a writer that differs from the encoder is no conflict.
 
 - **Encoder:** the stream's own evidence and the claims of the encoder role (an ID3v2 TSSE frame in a stream's file).
+- **Version:** a writer claim of the same name that goes on from the encoder's name completes a version-less encoder (`ClaimRoles.CompleteVersion`, shared by every format parser); it never creates an encoder or raises a confidence.
 - **Writer:** the MP4 tool atom (©too) and QuickTime's ©swr, which no specification at hand defines as the encoder; an APEv2 Encoder item; ffmpeg's muxer version ("Lavf60.16.100"); and the layouts of Apple's file writer. Two claims that name different software are an information finding (`aac.writer-claim-differs`).
 
 Encoder:
@@ -38,7 +39,7 @@ Encoder:
   - 1.31.1 writes "libfaac 1.31.1", while 1.40 and 1.50 write their build's project version, "libfaac 1.40.0" and "libfaac 1.50.0", so the encoder is named "FAAC 1.40.0" and "FAAC 1.50.0".
 - FAAC 2.0 and later, which dropped that text (upstream commit 960a0ea), in two ways:
   - The MP4 tool atom (©too) of the front end, "FAAC 2.2.0 (6acbe23)", names the writer with low confidence, and the encoder is then not named.
-  - The SBR layout of its HE-AAC encoder names "FAAC" with medium confidence, without a version; the ©too claim names the writer, "FAAC 2.2.0 (6acbe23)", apart from it. The layout, from `libfaac/sbr_bitstream.c` and `sbr.c` (`SbrInit`, `SbrUpdate`):
+  - The SBR layout of its HE-AAC encoder names "FAAC" with medium confidence, without a version; the ©too claim names the writer, "FAAC 2.2.0 (6acbe23)", apart from it, and since it starts with the encoder's name the encoder takes its version: "FAAC 2.2.0 (6acbe23)" (medium, the layout's confidence), with the version's source in the evidence. A writer of another name lends none. The layout, from `libfaac/sbr_bitstream.c` and `sbr.c` (`SbrInit`, `SbrUpdate`):
     - every SBR header sends bs_header_extra_1 and not bs_header_extra_2, with bs_noise_bands 0, bs_start_freq 15 and bs_xover_band 0;
     - 2.2 adds bs_freq_scale 1 to 3 (by bitrate per channel), bs_alter_scale 0, bs_amp_res 1 and a bs_stop_freq of 10 to 13 by sample rate (13 at 32 kHz, 12 at 44.1 kHz, 11 at 48 kHz, 10 above), and repeats the header every 30 access units;
     - 2.0 and 2.1 add bs_freq_scale 0 with a bs_stop_freq of 10. They count access units the same way, but send the header again in the last access units of some files, the flush frames: the decision to send it is made in `SbrEncode`, which flush frames skip (2.0 never calls `doHEAACFrame` when no samples are left, 2.1's `SbrContextProcessFrame` returns before `SbrEncode`), so a stale "send" stays while the frame count, advanced on every write, goes on. Their header spacing is therefore not held to the period;

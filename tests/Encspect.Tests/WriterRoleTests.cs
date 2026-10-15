@@ -140,6 +140,60 @@ public partial class WriterRoleTests
         Assert.Equal((null, null), ClaimRoles.Resolved(null));
     }
 
+    // ---- the version a writer of the same name supplies
+
+    private static Node EncoderNode(string name) => Cover("Encoder", name, "d");
+
+    [Fact]
+    public void AWriterOfTheSameNameCompletesTheEncodersVersion()
+    {
+        Node encoder = EncoderNode("FAAC");
+        encoder.Add(Cover("Confidence", "Medium", "d"));
+        ClaimRoles.CompleteVersion(encoder, [new EncoderClaim("FAAC 2.2.0 (6acbe23)", At("©too"), "MP4 ©too atom", ClaimRole.Writer)]);
+        Assert.Equal("FAAC 2.2.0 (6acbe23)", encoder.Value?.ToString());
+        Assert.Equal("Medium", encoder.Children.Single(c => c.Name == "Confidence").Value?.ToString());
+        Assert.Contains("MP4 ©too atom", encoder.Children.Single(c => c.Name == "Evidence").Value!.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("FFmpeg (Lavc60.31.102)", "Lavf60.16.100")]
+    [InlineData("FAAC", "GPAC-2.2.1-rev2.2.1")]
+    [InlineData("FAAC 1.30", "FAAC 1.30")]
+    [InlineData("Apple AAC encoder (AudioToolbox)", "Apple AudioToolbox")]
+    [InlineData("FAAC", "FAACX 2.0")]
+    public void AWriterOfAnotherNameOrWithoutMoreLendsNoVersion(string encoderName, string writerText)
+    {
+        Node encoder = EncoderNode(encoderName);
+        ClaimRoles.CompleteVersion(encoder, [new EncoderClaim(writerText, At(), "claim", ClaimRole.Writer)]);
+        Assert.Equal(encoderName, encoder.Value?.ToString());
+        Assert.Empty(encoder.Children);
+    }
+
+    [Fact]
+    public void AnEncoderClaimIsNoWriterAndAWriterAloneCreatesNoEncoder()
+    {
+        Node encoder = EncoderNode("FAAC");
+        ClaimRoles.CompleteVersion(encoder, [new EncoderClaim("FAAC 2.2.0", At(), "TSSE", ClaimRole.Encoder)]);
+        Assert.Equal("FAAC", encoder.Value?.ToString());
+        ClaimRoles.CompleteVersion(null, [new EncoderClaim("FAAC 2.2.0", At(), "©too", ClaimRole.Writer)]);
+
+        StreamInfo stream = Assert.Single(Analyze("faac.m4a", Fixture("aac/faac-2.2.m4a")).Streams);
+        Assert.Null(stream.Encoder);
+        Assert.Equal("FAAC 2.2.0 (6acbe23)", stream.Writer);
+    }
+
+    [Fact]
+    public void FaacTwoPointXHeAacTakesTheVersionFromItsToolAtom()
+    {
+        StreamInfo stream = Assert.Single(Analyze("faac.m4a", Fixture("aac/faac-2.2-he.m4a")).Streams);
+        Assert.Equal(("FAAC 2.2.0 (6acbe23)", Confidence.Medium), (stream.Encoder, stream.EncoderConfidence));
+        Assert.Equal(("FAAC 2.2.0 (6acbe23)", Confidence.Low), (stream.Writer, stream.WriterConfidence));
+
+        // a remux by ffmpeg's muxer lends no version
+        StreamInfo ffmpeg = Assert.Single(Analyze("ffmpeg.m4a", Fixture("aac/ffmpeg-lc.m4a")).Streams);
+        Assert.Equal("FFmpeg (Lavc60.31.102)", ffmpeg.Encoder);
+    }
+
     // ---- the tags, where the specification puts them
 
     [Fact]

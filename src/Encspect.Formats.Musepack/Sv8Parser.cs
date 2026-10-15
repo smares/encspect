@@ -962,6 +962,8 @@ internal static class Sv8Parser
             state.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims);
+
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("Audio Packets", NodeValue.Integer(figures.Units, "packets", "packet"), Explain.StatPackets));
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));

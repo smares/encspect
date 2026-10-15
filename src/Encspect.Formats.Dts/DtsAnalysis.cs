@@ -314,6 +314,8 @@ internal sealed class DtsAnalysis
             first.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims);
+
         stream.Figures.DeliveredRate = stream.DeliveredRate;
         Node statistics = stream.Statistics(Cover, out Node bitrate);
         if (named)

@@ -380,6 +380,7 @@ public sealed partial class SpeexParser
             long samples = HasTime ? Math.Clamp(_coded - Math.Max(0, _firstDelay ?? 0) - trim, 0, _coded) : 0;
             Node? encoder = AddEncoder();
             Node? writer = AddWriter();
+            ClaimRoles.CompleteVersion(encoder, CommentClaims());
             Node? distribution = AddStatistics(samples, trim);
             Node? packets = AddPackets();
 

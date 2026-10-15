@@ -137,6 +137,8 @@ public sealed class AacCodecParser : ICodecParser
             leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, context.EncoderClaims, AacEncoder.WriterName);
+
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, description, kind), "Access Unit", "Access Units", out Node bitrate);
         if (log.HasElements)
         {

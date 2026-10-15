@@ -740,6 +740,8 @@ public sealed class RawAacParser : IFormatParser
             first.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims, AacEncoder.WriterName);
+
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Frame", "Frames", out Node bitrate);
         CodingStatistics.Add(statistics, found.Tally, found.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         first.Leading.Add(statistics);

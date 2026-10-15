@@ -506,6 +506,7 @@ public sealed partial class OpusParser
 
             Node? encoder = AddEncoder();
             Node? writer = AddWriter();
+            ClaimRoles.CompleteVersion(encoder, CommentClaims());
             Node? anchor = AddStatistics(samples, trim);
             Node? packets = AddPackets();
 

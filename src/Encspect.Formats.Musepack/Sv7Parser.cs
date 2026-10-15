@@ -634,6 +634,8 @@ internal static class Sv7Parser
             state.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims);
+
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
         statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * FrameSamples, "samples", "sample"), Explain.CodedSamples));

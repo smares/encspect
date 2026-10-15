@@ -38,7 +38,7 @@ public sealed class CacheTests : IDisposable
     {
         string file = _folder.Copy(Path.Combine(Fixtures.Directory, "aac", "faac-2.2-he.m4a"), "faac.m4a");
         FileSummary summary = Summarize(file);
-        Assert.Equal(("FAAC", Encspect.Core.Confidence.Medium, "FAAC 2.2.0 (6acbe23)", Encspect.Core.Confidence.Low),
+        Assert.Equal(("FAAC 2.2.0 (6acbe23)", Encspect.Core.Confidence.Medium, "FAAC 2.2.0 (6acbe23)", Encspect.Core.Confidence.Low),
             (summary.Summary.Encoder, summary.Summary.EncoderConfidence, summary.Summary.Writer, summary.Summary.WriterConfidence));
         using (SummaryCache cache = Cache())
         {

@@ -533,6 +533,7 @@ public sealed partial class VorbisParser
             long samples = HasTime ? Math.Clamp(_decoded - startTrim - trim, 0, _decoded) : 0;
             Node? encoder = AddEncoder();
             Node? writer = AddWriter();
+            ClaimRoles.CompleteVersion(encoder, CommentClaims());
             Node? anchor = AddStatistics(samples, startTrim, trim);
             Node? packets = AddPackets();
 

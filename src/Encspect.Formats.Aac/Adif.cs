@@ -116,6 +116,8 @@ internal static class Adif
             leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims, AacEncoder.WriterName);
+
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Block", "Blocks", out Node bitrate);
         CodingStatistics.Add(statistics, log.Tally, log.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         leading.Add(statistics);

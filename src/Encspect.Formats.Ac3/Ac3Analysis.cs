@@ -457,6 +457,8 @@ internal sealed class Ac3Analysis
             first.Leading.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, claims);
+
         Node statistics = program.Statistics(Cover, out Node bitrate);
         if (named)
         {

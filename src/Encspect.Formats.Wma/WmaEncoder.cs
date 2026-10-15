@@ -60,6 +60,7 @@ internal static partial class WmaEncoder
             stream.Add(writer);
         }
 
+        ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         return new Detected(encoderName, encoderConfidence, writerName, writerConfidence);
