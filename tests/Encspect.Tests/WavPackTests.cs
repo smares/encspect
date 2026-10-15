@@ -19,7 +19,7 @@ public class WavPackTests
 
     private static Report AnalyzeFixture(string name) => Analyze(Fixture(name), name);
 
-    private static int Sniff(byte[] data) => Parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
+    private static int Sniff(byte[] data) => Parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data)))).Class;
 
     private static Node Stream(Report report) => report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
 
@@ -72,7 +72,7 @@ public class WavPackTests
 
             using FileStream stream = File.OpenRead(path);
             var reader = new ByteReader(stream);
-            Assert.True(Parser.Sniff(new SniffContext(reader)) == 0, path);
+            Assert.True(Parser.Sniff(new SniffContext(reader)).Class == 0, path);
         }
     }
 

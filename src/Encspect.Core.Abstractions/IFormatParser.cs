@@ -7,10 +7,12 @@ public interface IFormatParser
 {
     string Name { get; }
 
-    // Returns a confidence from 0 (not this format) to 100 (certain). The host resets the
+    // Returns the evidence for this format: SniffResult.None (class 0) when the data is not this
+    // format, otherwise its class, where the matched structure starts and how many consistent and
+    // checksum-verified frames were found. The host ranks the parsers' results. It resets the
     // reader position afterward, so implementations may move it freely. The extension hint may
     // only break ties between formats without a signature, never make a parser accept.
-    int Sniff(SniffContext context);
+    SniffResult Sniff(SniffContext context);
 
     // For a container that states its own size (RIFF, FORM, a run of top-level MP4 boxes): the file
     // offset where it ends by its own account, which may lie past the end of a truncated file. The

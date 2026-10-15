@@ -16,15 +16,16 @@ public sealed class WavPackParser : IFormatParser
     public string Name => "WavPack";
 
     // A header at the start of the data that is followed by another one, or by the end of the data,
-    // is certain; one followed by bytes that are none, or by a block the data cuts short, is likely
-    // (a cut stream, or damage); a chain of blocks further in ranks below MPEG audio, which a stream
-    // that starts with garbage may also hold.
-    public int Sniff(SniffContext context)
+    // is certain (class 100); one followed by bytes that are none, or by a block the data cuts short,
+    // is likely (80 and 90: a cut stream, or damage); a chain of blocks further in is class 60, below
+    // MPEG audio, which a stream that starts with garbage may also hold. The blocks have no checksum
+    // of the whole block that the sniff computes, so none counts as verified.
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         if (reader.Length < BlockHeader.Length)
         {
-            return 0;
+            return SniffResult.None;
         }
 
         var source = new Source(reader);
@@ -33,18 +34,19 @@ public sealed class WavPackParser : IFormatParser
             long end = reader.Start + header.BlockSize;
             if (end == reader.End || end == context.FirstEmbeddedTag)
             {
-                return 100;
+                return new SniffResult(100, reader.Start, 1);
             }
 
             if (end < reader.End)
             {
-                return source.TryHeader(end, out _) ? 100 : 80;
+                return source.TryHeader(end, out _) ? new SniffResult(100, reader.Start, 2) : new SniffResult(80, reader.Start, 1);
             }
 
-            return 90;
+            return new SniffResult(90, reader.Start, 1);
         }
 
-        return source.FindChain(reader.Start + 1, Math.Min(reader.End, reader.Start + SearchLimit)) >= 0 ? 60 : 0;
+        long found = source.FindChain(reader.Start + 1, Math.Min(reader.End, reader.Start + SearchLimit));
+        return found >= 0 ? new SniffResult(60, found, 2) : SniffResult.None;
     }
 
     // Where the blocks that follow one another from the start end. A block states its own size, so a

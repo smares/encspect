@@ -16,6 +16,10 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - Locally: `apt-get install weston xvfb`, publish the GUI for your RID, then run the step from `.github/workflows/ci.yml`.
   - The step does not run as written: replace `${{ matrix.rid }}` with the RID (`linux-x64`) and export `RUNNER_TEMP` as a short absolute path such as `/tmp/ci`, created beforehand. Unset, `RUNNER_TEMP` makes the socket directory `/runtime`; a long one exceeds the 108-byte limit of a Unix socket path.
   - Mesa prints EGL warnings there, since the container has no GPU; they do not fail the check.
+- **Format detection:**
+  - `DetectionOrderTests` runs every fixture, as it is and with 352 and 1,000 seeded random bytes in front, through detection (tags and sniffs only) with the parser list in five shuffled orders, and fails if the choice changes: the choice must come from the evidence, not the list order.
+  - `FormatDetectionTests` covers the ranking, ties, alternatives and forcing a format with scripted parsers, and forces every format on every fixture to check that no parser fails (`parse.failed`) on input that is not its own.
+  - `Ac3SniffTests` checks the evidence the AC-3, ADTS and MPEG audio sniffs report where they compete.
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 - **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`. Every input's report is also written, collected and written again, and the two must be equal.
 - **Thread safety:** a report builds the nodes of repeated parts when they are read and may build them again, and the same report may be read on several threads.

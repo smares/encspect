@@ -13,12 +13,12 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 
 ## Detection
 
-- Sniffing gives 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data.
-- A chain with a CRC (protection bit 0) further in than the start of the data scores 30, not 90, when none of its first three frames has the CRC its header gives: another format's frames can hold such a header at a fixed offset (AC-3's 768-byte frames hold a protected MPEG-2.5 Layer I header of 768 bytes). Chains at the start and unprotected chains score 90.
-- A free-format chain is only a header repeating at one distance, which other formats' data can make too. It scores 90 only when it is credible, and 30 otherwise, below DTS's 50 and every other format's chain:
+- Sniffing gives class 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data. It reports where the chain starts, its frames (up to 16) and how many of them pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4).
+- A chain with a CRC (protection bit 0) further in than the start of the data is class 30, not 90, when none of its frames has the CRC its header gives: another format's frames can hold such a header at a fixed offset (AC-3's 768-byte frames hold a protected MPEG-2.5 Layer I header of 768 bytes). Chains at the start and unprotected chains are class 90.
+- A free-format chain is only a header repeating at one distance, which other formats' data can make too. It is class 90 only when it is credible, and 30 otherwise, below DTS's 50 and every other format's chain:
   - its first three frames that fit in the data must be well-formed (audio data or side information that fits the frame, no forbidden Layer I allocation 15);
   - in Layers I and II, one of them must also be protected and have the CRC its header and bit allocation give, as an all-zero frame is valid there.
-- The score only ranks formats. Parsing does not depend on it: a free-format stream without a CRC, or with damaged CRCs, is read as MPEG audio when it is the only candidate or the parser is forced.
+- The class only ranks formats. Parsing does not depend on it: a free-format stream without a CRC, or with damaged CRCs, is read as MPEG audio when it is the only candidate or the parser is forced.
 
 ## Statistics
 

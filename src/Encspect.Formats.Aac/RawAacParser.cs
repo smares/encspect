@@ -20,15 +20,19 @@ public sealed class RawAacParser : IFormatParser
 
     public string Name => "AAC";
 
-    // MPEG audio returns 90 wherever its chain starts. An ADTS chain at the start of the data, after
-    // any zero bytes, outranks it by one, so a file that is ADTS from the start is never taken for
-    // MPEG; one found further in, as in junk inside an MP3, ranks below it.
-    public int Sniff(SniffContext context)
+    // An ADTS chain at the start of the data, after any zero bytes, is class 91, one above MPEG audio's
+    // 90, so a file that is ADTS from the start is never taken for MPEG; one found further in, as in
+    // junk inside an MP3, is class 50, below it, and needs eight consistent frames or frames to the end
+    // of the data, since other formats' frames repeat ADTS-looking header bytes in chains of three
+    // (E-AC-3's among them). ADTS's layer bits are 00, which no MPEG audio header has, so neither takes
+    // the other's headers. ADTS frames have a CRC only when the header says so and it takes the frame's
+    // elements to check, which the sniff does not read: no frame is counted as verified.
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         if (reader.MatchesAt(reader.Start, "ADIF"u8))
         {
-            return Adif.Plausible(reader) ? 91 : 0;
+            return Adif.Plausible(reader) ? new SniffResult(91, reader.Start, 1, Note: "ADIF header") : SniffResult.None;
         }
 
         var cache = new BlockCache(reader);
@@ -36,10 +40,26 @@ public sealed class RawAacParser : IFormatParser
         long limit = Math.Min(reader.End, start + SniffLimit);
         if (FindChain(cache, start, Math.Min(limit, start + 1), reader.End) == start)
         {
-            return 91;
+            return new SniffResult(91, start, CountChain(cache, start, reader.End));
         }
 
-        return FindChain(cache, start, limit, reader.End, FurtherChainLength) < 0 ? 0 : 50;
+        long found = FindChain(cache, start, limit, reader.End, FurtherChainLength);
+        return found < 0 ? SniffResult.None : new SniffResult(50, found, CountChain(cache, found, reader.End));
+    }
+
+    // The frames of the chain at position that follow one another with the same fixed header, at most SniffResult.MaxFrames.
+    private static int CountChain(BlockCache cache, long position, long end)
+    {
+        AdtsHeader? first = null;
+        int frames = 0;
+        while (frames < SniffResult.MaxFrames && HeaderAt(cache, position, end) is { } header && (first is not { } stream || header.IsSameStream(stream)))
+        {
+            first ??= header;
+            frames++;
+            position += header.FrameLength;
+        }
+
+        return frames;
     }
 
     public void Parse(ParseContext context) => ParseInto(context.Reader, context.Root, context, context.EncoderClaims, context.EmbeddedTags);

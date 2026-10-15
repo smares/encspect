@@ -21,7 +21,10 @@ public sealed partial class OggParser : IFormatParser
 
     public string Name => "Ogg";
 
-    public int Sniff(SniffContext context)
+    // A chain of pages from the start of the data is certain (class 100); one found within the first
+    // 64 KiB is class 60, below MPEG audio. A chain is a page that passes its CRC (verified) and the
+    // start of another page or the end of the data after it (Pages.StartsChain).
+    public SniffResult Sniff(SniffContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -29,11 +32,18 @@ public sealed partial class OggParser : IFormatParser
         var window = new PageWindow(reader);
         if (Pages.StartsChain(window, reader.Start, reader.End))
         {
-            return 100;
+            return Chain(100, window, reader.Start, reader.End);
         }
 
         long limit = Math.Min(reader.End, reader.Start + SniffLimit);
-        return Pages.FindChain(window, reader.Start + 1, limit, reader.End, context.CancellationToken) >= 0 ? 60 : 0;
+        long found = Pages.FindChain(window, reader.Start + 1, limit, reader.End, context.CancellationToken);
+        return found >= 0 ? Chain(60, window, found, reader.End) : SniffResult.None;
+    }
+
+    private static SniffResult Chain(int sniffClass, PageWindow window, long offset, long end)
+    {
+        Pages.Probe(window, offset, end, out PageHeader first);
+        return new SniffResult(sniffClass, offset, offset + first.Length == end ? 1 : 2, 1);
     }
 
     // Ogg states no size of its own, but every page states its own length, so a chain of pages from

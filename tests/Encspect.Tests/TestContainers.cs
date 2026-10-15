@@ -19,8 +19,8 @@ internal sealed class ChunkedContainer(bool declaresEnd = true, IReadOnlyDiction
 
     public string Name => "Test chunks";
 
-    public int Sniff(SniffContext context) =>
-        context.Reader.MatchesAt(context.Reader.Start, "RIFF"u8) || context.Reader.MatchesAt(context.Reader.Start, "FORM"u8) ? 100 : 0;
+    public SniffResult Sniff(SniffContext context) =>
+        context.Reader.MatchesAt(context.Reader.Start, "RIFF"u8) || context.Reader.MatchesAt(context.Reader.Start, "FORM"u8) ? new(100, context.Reader.Start) : SniffResult.None;
 
     public long? DeclaredEnd(SniffContext context)
     {
@@ -131,7 +131,7 @@ internal sealed class PagedContainer(string codec = PacketCodec.CodecId, bool co
 {
     public string Name => "Test pages";
 
-    public int Sniff(SniffContext context) => context.Reader.MatchesAt(context.Reader.Start, "PAGE"u8) ? 100 : 0;
+    public SniffResult Sniff(SniffContext context) => context.Reader.MatchesAt(context.Reader.Start, "PAGE"u8) ? new(100, context.Reader.Start) : SniffResult.None;
 
     public void Parse(ParseContext context)
     {

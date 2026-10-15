@@ -12,7 +12,7 @@ public class Ac3SniffTests
 {
     private static SniffContext Context(byte[] data) => new(new ByteReader(new MemoryStream(data)), "eac3");
 
-    private static int Sniff(byte[] data) => new Ac3Parser().Sniff(Context(data));
+    private static int Sniff(byte[] data) => new Ac3Parser().Sniff(Context(data)).Class;
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
 
@@ -29,63 +29,84 @@ public class Ac3SniffTests
 
     private static byte[] AdtsFrames(int count) => [.. Enumerable.Range(0, count).SelectMany(_ => AdtsFrame(20))];
 
-    private static int SniffAdts(byte[] data) => new RawAacParser().Sniff(Context(data));
+    private static int SniffAdts(byte[] data) => new RawAacParser().Sniff(Context(data)).Class;
+
+    private static SniffResult Evidence(byte[] data) => new Ac3Parser().Sniff(Context(data));
 
     [Fact]
-    public void AChainAtTheStartTakes92()
+    public void AChainAtTheStartIsClass92()
     {
-        Assert.Equal(92, Sniff(Fixture("ac3/junk-adts-in-frames.eac3")[100..]));
+        SniffResult result = Evidence(Fixture("ac3/junk-adts-in-frames.eac3")[100..]);
+        Assert.Equal(92, result.Class);
+        Assert.Equal(0, result.Offset);
+        Assert.Equal(8, result.Frames);
     }
 
-    // Three passing frames are no stray run: they rank above a bare ADTS chain, still below MPEG audio.
+    // A chain further in is class 50 whatever its CRCs; they count as verified frames, and where the chain starts is the evidence the host
+    // ranks it by.
     [Fact]
-    public void AChainFurtherInWhoseCrcsHoldTakes55()
+    public void AChainFurtherInIsClass50WithItsStartAndItsVerifiedFrames()
     {
-        Assert.Equal(55, Sniff(Fixture("ac3/junk-adts-in-frames.eac3")));
-        Assert.Equal(55, Sniff([.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")]));
+        SniffResult result = Evidence(Fixture("ac3/junk-adts-in-frames.eac3"));
+        Assert.Equal(50, result.Class);
+        Assert.Equal(100, result.Offset);
+        Assert.Equal(8, result.Frames);
+        Assert.Equal(result.Frames, result.VerifiedFrames);
+
+        SniffResult junked = Evidence([.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")]);
+        Assert.Equal((50, 30L), (junked.Class, junked.Offset));
+        Assert.True(junked.VerifiedFrames >= 3);
     }
 
-    // Bit errors in the first frames of the real file (offsets 652 and 1164 are in its second and third frames) leave three passing
-    // frames of the first 16; only too few passing frames rank 50.
+    // Bit errors in the frames of the real file (offsets 652 and 1164 are in its second and third frames) lower the verified count by one each
+    // and leave the chain.
     [Fact]
-    public void AFrameWithADamagedCrcDoesNotLowerAChainThatHasThreePassingFramesOfTheFirst16()
+    public void AFrameWithADamagedCrcIsNotCountedAsVerified()
     {
         byte[] data = Fixture("ac3/junk-adts-in-frames.eac3");
+        int verified = Evidence(data).VerifiedFrames;
         data[100 + 20] ^= 0x01;
         data[100 + 512 + 20] ^= 0x01;
-        Assert.Equal(55, Sniff(data));
+        SniffResult result = Evidence(data);
+        Assert.Equal(50, result.Class);
+        Assert.Equal(verified - 2, result.VerifiedFrames);
+        Assert.Equal(8, result.Frames);
     }
 
     [Fact]
-    public void AChainWithTooFewPassingFramesTakes50()
+    public void ADamagedChainCountsOnlyTheFramesThatPass()
     {
         byte[] frames = Fixture("ac3/junk-adts-in-frames.eac3");
-        byte[] twoPassing = [.. frames[..(100 + (512 * 4))]];
+        byte[] damaged = [.. frames[..(100 + (512 * 4))]];
         for (int frame = 0; frame < 2; frame++)
         {
-            twoPassing[100 + (512 * frame) + 20] ^= 0x01;
+            damaged[100 + (512 * frame) + 20] ^= 0x01;
         }
 
-        Assert.Equal(50, Sniff(twoPassing));
-        Assert.Equal(50, Sniff([.. Junk(30), .. Fixture("ac3/crc-damaged.ac3")[..(768 * 3)]]));
+        SniffResult result = Evidence(damaged);
+        Assert.Equal((50, 4, 2), (result.Class, result.Frames, result.VerifiedFrames));
+        SniffResult damagedFile = Evidence([.. Junk(30), .. Fixture("ac3/crc-damaged.ac3")[..(768 * 3)]]);
+        Assert.Equal((3, 2), (damagedFile.Frames, damagedFile.VerifiedFrames));
     }
 
     [Fact]
     public void AnAc3FrameNeedsCrc1AsWellAsCrc2()
     {
         byte[] data = [.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")];
+        int verified = Evidence(data).VerifiedFrames;
         for (int frame = 0; frame < 8; frame++)
         {
             data[30 + (768 * frame) + 40] ^= 0x10;
         }
 
-        Assert.Equal(50, Sniff(data));
+        Assert.Equal(verified - 8, Evidence(data).VerifiedFrames);
     }
 
     [Fact]
-    public void AChainThatTheDataEndsInsideTakes50()
+    public void AChainThatTheDataEndsInsideCountsItsWholeFramesAsVerified()
     {
-        Assert.Equal(50, Sniff([.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")[..((768 * 2) + 400)]]));
+        SniffResult result = Evidence([.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")[..((768 * 2) + 400)]]);
+        Assert.Equal((50, 3, 2), (result.Class, result.Frames, result.VerifiedFrames));
     }
 
     // The E-AC-3 frames hold bytes that chain as ADTS headers, but the file is E-AC-3.
@@ -96,12 +117,18 @@ public class Ac3SniffTests
     }
 
     // The fixture keeps meaning what it says: its look-alike headers chain eight frames to the end of the data, which the ADTS sniff still takes
-    // for a chain further in (50) and which only the CRC-checked E-AC-3 chain (55) outranks. The real file's frames chain three headers at
-    // most, which the ADTS sniff now rejects (see the manifest of the real samples).
+    // for a chain further in (class 50, as the AC-3 chain is). The host ranks the AC-3 chain first because it starts earlier and its frames pass
+    // their CRCs. The real file's frames chain three headers at most, which the ADTS sniff now rejects (see the manifest of the real samples).
     [Fact]
-    public void TheAdtsLookingBytesRankBelowTheEac3Chain()
+    public void TheAdtsLookingBytesRankBelowTheEac3ChainByWhereTheyStart()
     {
-        Assert.Equal(50, SniffAdts(Fixture("ac3/junk-adts-in-frames.eac3")));
+        byte[] data = Fixture("ac3/junk-adts-in-frames.eac3");
+        SniffResult adts = new RawAacParser().Sniff(Context(data));
+        SniffResult ac3 = Evidence(data);
+        Assert.Equal(50, adts.Class);
+        Assert.Equal(ac3.Class, adts.Class);
+        Assert.True(adts.Offset > ac3.Offset);
+        Assert.True(SniffResult.Compare(ac3, adts) < 0);
     }
 
     [Fact]
@@ -120,10 +147,11 @@ public class Ac3SniffTests
     public void AMpegLookingChainWithBrokenCrcsInsideAc3FramesRanks30()
     {
         byte[] data = Fixture("ac3/junk-mpeg-in-frames.ac3");
-        Assert.Equal(30, new MpegAudioParser().Sniff(Context(data)));
-        Assert.Equal(55, Sniff(data));
+        SniffResult mpeg = new MpegAudioParser().Sniff(Context(data));
+        Assert.Equal((30, 0), (mpeg.Class, mpeg.VerifiedFrames));
+        Assert.Equal(50, Sniff(data));
         Assert.Equal("AC-3", FormatOf(data));
-        Assert.Equal(30, new MpegAudioParser().Sniff(Context([.. Junk(352), .. Fixture("ac3/junk-mpeg-in-frames.ac3")[100..]])));
+        Assert.Equal(30, new MpegAudioParser().Sniff(Context([.. Junk(352), .. Fixture("ac3/junk-mpeg-in-frames.ac3")[100..]])).Class);
     }
 
     // A protected stream with junk in front stays MPEG audio, as does one whose first frames are damaged and a chain at the start.
@@ -132,7 +160,7 @@ public class Ac3SniffTests
     {
         byte[] mp3 = Fixture("mpeg/external-lame-crc.mp3");
         var parser = new MpegAudioParser();
-        Assert.Equal(90, parser.Sniff(Context(mp3)));
-        Assert.Equal(90, parser.Sniff(Context([.. Junk(30).Select(b => (byte)(b & 0x7F)), .. mp3])));
+        Assert.Equal(90, parser.Sniff(Context(mp3)).Class);
+        Assert.Equal(90, parser.Sniff(Context([.. Junk(30).Select(b => (byte)(b & 0x7F)), .. mp3])).Class);
     }
 }

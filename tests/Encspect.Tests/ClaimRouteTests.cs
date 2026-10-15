@@ -17,7 +17,7 @@ public class ClaimRouteTests
 
         public string Name => "container";
 
-        public int Sniff(SniffContext context) => 100;
+        public SniffResult Sniff(SniffContext context) => new(100);
 
         public void Parse(ParseContext context)
         {
