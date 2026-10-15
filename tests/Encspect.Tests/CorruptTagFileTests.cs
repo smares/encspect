@@ -105,3 +105,13 @@ public class CorruptAc3FileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The fixtures in tests/fixtures/matroska.
+public class CorruptMatroskaFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("matroska/", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}

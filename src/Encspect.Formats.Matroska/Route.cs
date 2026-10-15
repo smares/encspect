@@ -26,6 +26,13 @@ internal sealed partial class FileReader
             RouteAudio(segment, track, label);
         }
 
+        // WRITER CLAIMS (not implemented here): the Segment's MuxingApp and WritingApp (segment.MuxingApp, segment.WritingApp and their
+        // nodes, collected in Collect.cs) name the program that wrote the container and the one that produced it ("Lavf60.16.100",
+        // "libebml v1.4.5 + libmatroska v1.7.1" / "mkvmerge v81.0"). They are claims about the writer, not the encoder of the audio. When the
+        // encoder/writer split lands (branch feature/encoder-writer: ClaimRole.Writer and StreamInfo.Writer), add one writer claim per
+        // element here, after the streams are routed, with the element's node as evidence, and attach it to every audio stream of the Segment.
+        // The audio encoder stays decided by the codec parsers.
+
         // The audio tracks of a Segment play together, so a summary of the file does not add their durations up.
         List<StreamInfo> added = [.. _context.Streams.Skip(streamsBefore)];
         if (added.Count > 1)

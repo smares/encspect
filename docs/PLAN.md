@@ -394,15 +394,15 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 
 | Class | Evidence |
 |---|---|
-| 100 | DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
+| 100 | Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
 | 95 | MP4's run of top-level boxes that holds moov, mdat or moof; Musepack versions 4 to 6 with three units or more |
 | 93 | DTS chain at the start |
 | 92 | AC-3 chain at the start |
 | 91 | ADTS chain at the start, ADIF header |
-| 90 | MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
-| 80 | WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
-| 70 | `DTSHDHDR` at the start with a first chunk whose size is invalid |
-| 60 | Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
+| 90 | Matroska EBML header (DocType matroska or webm) with no Segment after it; MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
+| 80 | Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
+| 70 | EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
+| 60 | Matroska run of top-level elements, or a Cluster with a Timestamp, at the start; Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
 | 50 | AC-3, ADTS (with eight frames or frames to the end of the data) and DTS chain further in |
 | 30 | MPEG audio chain that is not credible: a free-format chain whose frames do not hold what their headers promise, or a protected chain further in than the start of the data none of whose frames passes its CRC |
 
@@ -536,7 +536,14 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - Statistics and series: superframes, frames, samples (equal to the samples ffmpeg decodes, for every fixture and real file), bitrates, the frames by type, codebook and number of blocks. About 175 bytes are kept per superframe; at most 524,288 superframes and 262,144 packets are described. The average bitrate counts the packets' bytes, as for the other codecs; the superframes' bits are the average superframe bitrate.
    - Fixtures: 28 hand-built files (`make_voice_fixtures.py`, `voice_model.py`; also media objects of other sizes, errors that drop the rest of a media object, packets that change the residual flag, and a cache that overflows), which ffmpeg decodes to the analyzer's sample counts, also the damaged ones; the six Windows files (two of tones, four of a speech-like signal); and 11 real files from the FFmpeg sample archive checked in CI by SHA-256 (`check_wmavoice_samples.py`, `tests/conformance/wmavoice-samples.json`).
    - Articles: `wma-voice` (extended), `wma-voice-superframes` and `wma-voice-frames`. See docs/formats/asf-wma.md.
-6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only.
+6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only. Done (October 2026).
+   - One parser, "Matroska" (`src/Encspect.Formats.Matroska`), reported as WebM when the DocType is `webm`. The element table (`Elements.cs`, 263 elements) is generated from the pinned RFCs (`matroska_specs.py`, `matroska_tables.py --check`). Read: the EBML header, Segment, SeekHead, Info, Tracks with every TrackEntry, ContentEncodings, Cues, Chapters, Attachments, Tags, Void and CRC-32 (verified), unknown-size Segments and Clusters, all four lacing modes, and unknown or misplaced elements.
+   - Routes: AAC, AC-3, E-AC-3, DTS, Vorbis and Opus by codec ID through `ParseStream` or `ParsePackets`, with header stripping undone first; the codec's stream is merged as MP4's is and compared with the TrackEntry. MPEG audio is counted at container level (its parser reads a contiguous payload). Codec IDs without a parser (FLAC, ALAC, TrueHD, TTA, WavPack, PCM and others) give an Info finding and belong to phase 3. Compressed or encrypted frames are reported, never decoded, except zlib and header stripping for the codecs that read opaque data.
+   - Memory: Cluster contents are compact records (about 120 bytes per block, up to 6,000,000), and elements outside Clusters are nodes up to 250,000; `MemoryTests` hold both.
+   - Parallel audio tracks: `StreamInfo.IsParallel` marks streams that play at the same time, and the summary and CSV count the longest once instead of adding up the durations.
+   - Writer claims are not implemented: MuxingApp and WritingApp name the container's writer, not the audio encoder, and wait for the encoder/writer split (`ClaimRole.Writer`, `StreamInfo.Writer`). The place is marked in `Route.cs`.
+   - Fixtures: 54 hand-built files (`make_matroska_fixtures.py`, with the independent `matroska_model.py`) and 40 from ffmpeg and mkvmerge, checked by `crosscheck_matroska_fixtures.py` against mkvinfo, ffprobe, ffmpeg and MediaInfo in the `matroska-crosscheck` job. See docs/formats/matroska.md.
+   - Articles: `ebml`, `matroska-container`, `matroska-lacing`, `matroska-tracks` and `matroska-timestamps`.
 7. DRM and protection reporting.
    - A typed per-stream protection field, shown in the CLI summary and the GUI.
    - ASF's three protection objects.

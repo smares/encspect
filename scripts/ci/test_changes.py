@@ -49,6 +49,13 @@ class ChangesTests(unittest.TestCase):
     def test_cross_check_script_runs_only_its_job(self):
         self.assertEqual(run("scripts/fixtures/crosscheck_asf_fixtures.py"), {"asf-crosscheck", "fixtures"})
 
+    def test_the_matroska_parser_its_codec_parsers_scripts_and_fixtures_belong_to_the_matroska_job(self):
+        for path in ("src/Encspect.Formats.Matroska/Tree.cs", "src/Encspect.Formats.Opus/OpusParser.cs", "tests/fixtures/matroska/webm.webm",
+                     "scripts/fixtures/matroska_tables.py", "scripts/fixtures/make_matroska_fixtures.py"):
+            self.assertIn("matroska-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_matroska_fixtures.py"), {"matroska-crosscheck", "fixtures"})
+        self.assertNotIn("matroska-crosscheck", run("src/Encspect.Formats.Musepack/MusepackParser.cs"))
+
     def test_a_module_a_cross_check_imports_runs_it(self):
         got = run("scripts/fixtures/wma_signals.py")
         self.assertIn("asf-crosscheck", got)

@@ -424,6 +424,40 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("blocks.wma", data, 120_000_000, "wma.records-limit");
     }
 
+    // A Matroska file keeps a compact record per block and per frame inside Clusters (the nodes are built when read).
+    [Fact]
+    public void ManyMatroskaBlocksStayCompact()
+    {
+        const int blocks = 400_000;
+        byte[] data = MatroskaBuilder.OpusBlocks(blocks, blocksPerCluster: 1000);
+
+        (Report report, long kept, long peak) = Measure("blocks.mka", data, data[..4096]);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        output.WriteLine($"{kept / blocks} bytes kept and {peak / blocks} bytes peak per block");
+        Assert.True(kept < blocks * MatroskaKeptBound, $"The report keeps {kept / blocks} bytes per block.");
+        Assert.True(peak < blocks * MatroskaPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
+        GC.KeepAlive(report);
+    }
+
+    private const long MatroskaKeptBound = 250;
+    private const long MatroskaPeakBound = 300;
+
+    // More blocks than the records are kept for, and as many elements outside Clusters as the budget allows.
+    [Fact]
+    public void MatroskaRecordsAndElementsPastTheirLimitsStayBounded()
+    {
+        // Once, not four times as Measure does: the cap's records are about 120 bytes per block.
+        Report report = Analyzer.CreateDefault().Analyze("records.mka", new MemoryStream(MatroskaBuilder.OpusBlocks(6_100_000, blocksPerCluster: 100_000)));
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        long live = GC.GetTotalMemory(forceFullCollection: true);
+        output.WriteLine($"records.mka: {live / 1_000_000} MB live");
+        Assert.True(live < 1_200_000_000, $"The live heap is {live / 1_000_000} MB.");
+        GC.KeepAlive(report);
+        Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 400_000_000, "matroska.too-many-elements");
+    }
+
     // PCM payloads, which no codec parser takes: the container's own records.
     [Fact]
     public void ManyAsfPcmPayloadsStayCompact()
