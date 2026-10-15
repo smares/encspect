@@ -58,24 +58,29 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 | | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
-| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main, and Linux x64 on `ubuntu-latest` (see below) |
+| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main |
 | Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
 
 ### Runner images
 
-- **Every Linux job is pinned to `ubuntu-24.04`** (Linux arm64 to `ubuntu-24.04-arm`): `changes`, `docs`, `shard-guard`, `fuzz`, `format`, `fixtures`, the cross-check jobs, `all-checks`, the Linux x64 leg of `build-test` and `unit-tests`, and `sources.yml`. `windows-latest`, `macos-latest` and the other platform entries keep their labels; `wma-fixtures.yml` and `apple-aac-fixtures.yml` name their images already.
-- **Why:** `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19 (actions/runner-images#14748). A silent move would change the tools the jobs depend on:
-  - the `fixtures` job regenerates the hand-built fixtures with Python and must reproduce them byte for byte;
-  - the cross-check tool versions come from Ubuntu 24.04's packages: ffmpeg 6.1.1 (6.1.1-3ubuntu5), MediaInfo 24.01, liba52 and libdca. The golden reports and the encoder strings in the fixtures name them.
-- **Early-warning leg:** the nightly run and a manual run add a seventh platform to `build-test` and `unit-tests`, Linux x64 on `ubuntu-latest` (`UBUNTU_LATEST_PLATFORM` in `scripts/ci/changes.py`). Pull requests and pushes to main do not have it.
-  - It is the signal to move the pin: once `ubuntu-latest` is Ubuntu 26, a green leg says the build and the tests pass there. Moving the pin then also means regenerating the fixtures and cross-check versions that come from Ubuntu 24.04's packages.
-  - A failing leg fails `build-test` or `unit-tests`, so `all-checks` and the nightly run are red, and `python3 scripts/ci_report.py` lists the leg by its job name (`build and test (ubuntu-latest)`, `unit tests (ubuntu-latest, <shard>)`). Nightly failures are reported, not blocking.
-- `CiWorkflowTests` fails when any workflow names `ubuntu-latest`, so an unpinned label cannot slip back in; `test_changes.py` checks the platform lists per event.
+- **No job uses `ubuntu-latest`.** Every Linux job names its image, so the move of the label to Ubuntu 26.04 (a gradual rollout, actions/runner-images#14748) changes nothing silently. `windows-latest`, `macos-latest` and the other platform entries keep their labels; `wma-fixtures.yml` and `apple-aac-fixtures.yml` name their images already.
+- **`ubuntu-26.04`** (Linux arm64: `ubuntu-26.04-arm`) runs every job but the cross-checks: `changes`, `docs`, `shard-guard`, `fuzz`, `format`, `fixtures`, `all-checks`, the Linux legs of `build-test` and `unit-tests`, and `sources.yml`.
+  - They use the .NET SDK, Python and, in `build-test`, `weston` (14.0.2) and `xvfb` (21.1.22), which the Ubuntu 26.04 archive has for amd64 and arm64.
+  - `fixtures` regenerates the hand-built fixtures in full and, for the encoder-written ones, runs the generators with `--manifests-only`, so it uses no encoder from a package. Its fixtures regenerate without a difference on Python 3.14 (Ubuntu 26.04 ships 3.14.4 with zlib 1.3.1).
+  - The first runs on 26.04 also exercise its coreutils, which probably differ from 24.04's. The image's `coreutils` package (9.5-1ubuntu2+0.0.0~ubuntu25 in the runner-images inventory) is built from Ubuntu's `coreutils-from` source, whose default is uutils' Rust implementation; the inventory does not say which one the image selects. The steps in question are `timeout`, `env -u` and `seq` in `build-test`, and the file handling of the unit tests (`mkfifo`, `chmod -R`, `rm -rf` with names that are not UTF-8).
+  - The memory-test flake history above was measured on `ubuntu-24.04-arm`, so the arm64 leg on 26.04 is a new measurement.
+- **`ubuntu-24.04`** runs the cross-check jobs, whose results depend on Ubuntu's packaged tool versions: ffmpeg 6.1.1 (6.1.1-3ubuntu5), MediaInfo 24.01, liba52, libdca and the other tools that the golden reports and the encoder strings in the fixtures name. They move in a separate step, which also regenerates what those versions wrote.
+- **No early-warning leg:** the nightly and manual runs have the same six platforms as a push to main. The leg on `ubuntu-latest` only covered `build-test` and `unit-tests` on 24.04, which duplicated the pinned legs, and never the cross-checks. After the rollout it would repeat the `ubuntu-26.04` leg; the pins are updated deliberately at the next move.
+- `CiWorkflowTests` fails when:
+  - any workflow or `changes.py` names `ubuntu-latest`, or `changes.py` names `ubuntu-24.04`, or lacks the `ubuntu-26.04` and `ubuntu-26.04-arm` platform entries;
+  - any `runs-on` line of any workflow that names Ubuntu (quotes, brackets and comments ignored) is not `ubuntu-24.04` or `ubuntu-26.04`, or `sources.yml` is not on `ubuntu-26.04`;
+  - a job of `ci.yml` has other than one `runs-on` line, a cross-check job is not on `ubuntu-24.04`, `build-test` or `unit-tests` does not use the platform matrix, or any other job is not on `ubuntu-26.04`.
+- `test_changes.py` checks the platform lists per event.
 
 - The platform lists and the sharded test matrix are computed by `scripts/ci/changes.py` from the event.
-- `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow and unchanged.
+- `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow.
 
 ### Jobs and shards
 

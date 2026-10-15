@@ -100,26 +100,49 @@ public sealed class CiWorkflowTests
         Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
     }
 
-    // Every Linux job runs on ubuntu-24.04, so tool versions (ffmpeg, MediaInfo, Python) stay those the golden reports
-    // were made with. The only moving label is the nightly early-warning leg, which changes.py adds to the matrix.
+    // No job rides the moving ubuntu-latest label. The jobs whose results do not depend on Ubuntu's packaged tools run on
+    // ubuntu-26.04; the cross-check jobs stay on ubuntu-24.04 until the golden reports and encoder strings that
+    // their tool versions wrote are regenerated on 26.04.
     [Fact]
-    public void NoWorkflowUsesTheMovingUbuntuLabelExceptThroughTheNightlyLeg()
+    public void NoWorkflowUsesTheMovingUbuntuLabelAndTheCrossChecksStayOnTheirPinnedImage()
     {
         string root = FindRepositoryRoot();
         foreach (string workflow in Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml"))
         {
-            Assert.DoesNotContain("ubuntu-latest", File.ReadAllText(workflow), StringComparison.Ordinal);
+            string name = Path.GetFileName(workflow);
+            string text = File.ReadAllText(workflow);
+            Assert.False(text.Contains("ubuntu-latest", StringComparison.Ordinal), $"{name} names ubuntu-latest");
+            foreach (Match line in Regex.Matches(text, @"(?m)^\s*runs-on:(.*)$"))
+            {
+                if (!line.Groups[1].Value.Contains("ubuntu", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string label = Regex.Replace(line.Groups[1].Value, @"\s+#.*$", "").Trim().Trim('[', ']', ' ').Trim('"', '\'');
+                Assert.True(label is "ubuntu-24.04" or "ubuntu-26.04", $"{name}: runs-on: {label} is not ubuntu-24.04 or ubuntu-26.04");
+                if (name == "sources.yml")
+                {
+                    Assert.True(label == "ubuntu-26.04", $"{name}: runs-on: {label}, not ubuntu-26.04");
+                }
+            }
         }
 
         string changes = File.ReadAllText(Path.Combine(root, "scripts", "ci", "changes.py"));
-        Assert.Equal(1, Regex.Count(changes, @"\{""os"": ""ubuntu-latest"""));
-        Assert.Contains("NIGHTLY_PLATFORMS = FULL_PLATFORMS + [UBUNTU_LATEST_PLATFORM]", changes, StringComparison.Ordinal);
-        Assert.Contains("NIGHTLY_PLATFORMS if event in (\"schedule\", \"workflow_dispatch\")", changes, StringComparison.Ordinal);
+        Assert.DoesNotContain("ubuntu-latest", changes, StringComparison.Ordinal);
+        Assert.DoesNotContain("ubuntu-24.04", changes, StringComparison.Ordinal);
+        Assert.Contains(@"{""os"": ""ubuntu-26.04"", ""rid"": ""linux-x64""}", changes, StringComparison.Ordinal);
+        Assert.Contains(@"{""os"": ""ubuntu-26.04-arm"", ""rid"": ""linux-arm64""}", changes, StringComparison.Ordinal);
 
-        string ci = File.ReadAllText(Path.Combine(root, ".github", "workflows", "ci.yml"));
-        Assert.Equal(2, Regex.Count(ci, @"(?m)^    runs-on: \$\{\{ matrix\.os \}\}"));
-        Assert.All(Regex.Matches(ci, @"(?m)^\s*runs-on:\s*(\S.*?)\s*$").Select(m => m.Groups[1].Value),
-            label => Assert.True(label is "ubuntu-24.04" or "${{ matrix.os }}", $"runs-on: {label} is not pinned"));
+        foreach ((string id, string[] lines) in ReadJobs())
+        {
+            string[] runsOn = [.. lines.Where(l => l.StartsWith("    runs-on: ", StringComparison.Ordinal))];
+            Assert.True(runsOn.Length == 1, $"{id} has {runsOn.Length} runs-on lines");
+            string label = runsOn[0]["    runs-on: ".Length..].Trim();
+            string expected = id is "build-test" or "unit-tests" ? "${{ matrix.os }}"
+                : id.EndsWith("-crosscheck", StringComparison.Ordinal) ? "ubuntu-24.04" : "ubuntu-26.04";
+            Assert.True(label == expected, $"{id} runs on {label}, not {expected}");
+        }
     }
 
     // A step that may fail without failing the job would be a check nobody reads.
