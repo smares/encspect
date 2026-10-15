@@ -69,8 +69,8 @@ AREAS = {
     "asf-crosscheck": {
         "projects": ["Encspect.Formats.Asf", "Encspect.Formats.Wma"],
         "fixtures": ["asf"],
-        "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py"],
-        "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/windows/**"],
+        "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py", "check_wmavoice_samples.py"],
+        "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/make_voice*", "scripts/fixtures/windows/**", "tests/conformance/wmavoice-samples.json"],
     },
     "ac3-crosscheck": {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],

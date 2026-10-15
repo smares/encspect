@@ -1,0 +1,482 @@
+{
+ "description": "Real Windows Media Audio Voice files from the FFmpeg sample archive: ten ASF files of Microsoft's \"Windows Media 9 Speech Codec\" samples (A-codecs/WMSP: 4, 8 and 16 kbit/s, progressive and streaming muxes, one cut to a length, one with a broken end, one whose superframes hold music) and an ASF video file with a Voice track (A-codecs/WMA9/WMAVoice). None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe, ffmpeg and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it. \"samples_differ\" says why the samples ffmpeg decodes are not the analyzer's.",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/A-codecs/WMSP/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "filedown-prog_CBR-7K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/filedown-prog_CBR-7K.wma",
+   "sha256": "6de7870a544bb0bdfac53307410503168f7a7c4f9d2acf7dd3c1f70ad50d7e27",
+   "size": 13651,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 150,
+   "lsps": 10,
+   "superframes": 276,
+   "frames": 828,
+   "samples": 132007,
+   "ffmpeg_samples": 132007,
+   "frame_types": {
+    "0": 86,
+    "1": 113,
+    "2": 341,
+    "3": 46,
+    "4": 95,
+    "5": 63,
+    "6": 14,
+    "7": 1,
+    "11": 48,
+    "12": 21
+   },
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "bit_rate": 4000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "4000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  },
+  {
+   "file": "streaming_CBR-7K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/streaming_CBR-7K.wma",
+   "sha256": "049a5a4c758b07b874af9a8a2473ff2a3cc8234f79e387dfd6daf6780a58c6d5",
+   "size": 13651,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 150,
+   "lsps": 10,
+   "superframes": 276,
+   "frames": 828,
+   "samples": 132007,
+   "ffmpeg_samples": 132007,
+   "frame_types": {
+    "0": 86,
+    "1": 113,
+    "2": 341,
+    "3": 46,
+    "4": 95,
+    "5": 63,
+    "6": 14,
+    "7": 1,
+    "11": 48,
+    "12": 21
+   },
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "bit_rate": 4000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "4000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  },
+  {
+   "file": "webserv-prog_CBR-7K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/webserv-prog_CBR-7K.wma",
+   "sha256": "92c43c18d4e5906d4834626a5354041855c0de6315b817b5968b9c8656d30379",
+   "size": 13651,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 150,
+   "lsps": 10,
+   "superframes": 276,
+   "frames": 828,
+   "samples": 132007,
+   "ffmpeg_samples": 132007,
+   "frame_types": {
+    "0": 86,
+    "1": 113,
+    "2": 341,
+    "3": 46,
+    "4": 95,
+    "5": 63,
+    "6": 14,
+    "7": 1,
+    "11": 48,
+    "12": 21
+   },
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "bit_rate": 4000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "4000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  },
+  {
+   "file": "streaming_CBR-11K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/streaming_CBR-11K.wma",
+   "sha256": "cf0eb21fb98a5b07bb4db6f46c23224c3c8ed48e361b8baab0b3bdf901715dc6",
+   "size": 22706,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 300,
+   "lsps": 10,
+   "superframes": 276,
+   "frames": 828,
+   "samples": 132007,
+   "ffmpeg_samples": 132007,
+   "frame_types": {
+    "0": 86,
+    "1": 95,
+    "11": 47,
+    "12": 207,
+    "13": 252,
+    "15": 87,
+    "16": 54
+   },
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "bit_rate": 8000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "8000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  },
+  {
+   "file": "webserv-prog_CBR-11K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/webserv-prog_CBR-11K.wma",
+   "sha256": "10dfcc42543308402834be6f6514b43570e19418313122b482524682ef1ee441",
+   "size": 22706,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 300,
+   "lsps": 10,
+   "superframes": 276,
+   "frames": 828,
+   "samples": 132007,
+   "ffmpeg_samples": 132007,
+   "frame_types": {
+    "0": 86,
+    "1": 95,
+    "11": 47,
+    "12": 207,
+    "13": 252,
+    "15": 87,
+    "16": 54
+   },
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "bit_rate": 8000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "8000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  },
+  {
+   "file": "streaming_CBR-19K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/streaming_CBR-19K.wma",
+   "sha256": "8c27217adb15e65da49502ddd0b7188b71011fd4cc23b548d8576e4fa80764e1",
+   "size": 41006,
+   "archived": false,
+   "container": "ASF",
+   "rate": 16000,
+   "channels": 1,
+   "block_align": 600,
+   "lsps": 16,
+   "superframes": 550,
+   "frames": 1650,
+   "samples": 263953,
+   "ffmpeg_samples": 263953,
+   "frame_types": {
+    "0": 327,
+    "1": 64,
+    "11": 8,
+    "12": 36,
+    "13": 1215
+   },
+   "findings": [],
+   "info_findings": [
+    "wma.voice-superframe-padding"
+   ],
+   "ffprobe": {
+    "bit_rate": 16000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "16000",
+    "Channels": "1",
+    "SamplingRate": "16000"
+   }
+  },
+  {
+   "file": "webserv-prog_CBR-19K.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/webserv-prog_CBR-19K.wma",
+   "sha256": "2a89ecd99a10cc986aabf6aad63b2a3590953b6936dc392515da2acf3d119588",
+   "size": 41006,
+   "archived": false,
+   "container": "ASF",
+   "rate": 16000,
+   "channels": 1,
+   "block_align": 600,
+   "lsps": 16,
+   "superframes": 550,
+   "frames": 1650,
+   "samples": 263953,
+   "ffmpeg_samples": 263953,
+   "frame_types": {
+    "0": 327,
+    "1": 64,
+    "11": 8,
+    "12": 36,
+    "13": 1215
+   },
+   "findings": [],
+   "info_findings": [
+    "wma.voice-superframe-padding"
+   ],
+   "ffprobe": {
+    "bit_rate": 16000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "16000",
+    "Channels": "1",
+    "SamplingRate": "16000"
+   }
+  },
+  {
+   "file": "streaming_CBR-19K-timecomp.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/streaming_CBR-19K-timecomp.wma",
+   "sha256": "5ab898e8672e188935b0b7e9df972a865074d35f942fee4e5a43b913f8a11911",
+   "size": 36589,
+   "archived": false,
+   "container": "ASF",
+   "rate": 16000,
+   "channels": 1,
+   "block_align": 600,
+   "lsps": 16,
+   "superframes": 485,
+   "frames": 1455,
+   "samples": 232739,
+   "ffmpeg_samples": 232800,
+   "frame_types": {
+    "0": 268,
+    "1": 58,
+    "11": 12,
+    "12": 38,
+    "13": 1079
+   },
+   "findings": [],
+   "info_findings": [
+    "wma.voice-cache-overflow",
+    "wma.voice-superframe-padding"
+   ],
+   "ffprobe": {
+    "bit_rate": 16000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "16000",
+    "Channels": "1",
+    "SamplingRate": "16000"
+   },
+   "samples_differ": "The last packet ends with 2,291 bits that begin the last superframe, more than the 256 bytes FFmpeg's decoder keeps (SFRAME_CACHE_MAXSIZE), so it reads stale cache bytes there and decodes a whole superframe of 480 samples where the file states 419 for it; the analyzer's samples are the container's duration (14.546 s) to the sample."
+  },
+  {
+   "file": "wma9audio-notworkmplayer.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/wma9audio-notworkmplayer.wma",
+   "sha256": "2b787ea6619ab3d6ffbcd1a58d445a4f1fc05b17c4d64c84d5ed21a205950290",
+   "size": 172032,
+   "archived": false,
+   "container": "ASF",
+   "rate": 16000,
+   "channels": 1,
+   "block_align": 600,
+   "lsps": 16,
+   "superframes": 2639,
+   "frames": 7917,
+   "samples": 1266720,
+   "ffmpeg_samples": 1266720,
+   "frame_types": {
+    "0": 1180,
+    "1": 917,
+    "11": 823,
+    "12": 739,
+    "13": 4258
+   },
+   "findings": [
+    "asf.file-size",
+    "asf.object-incomplete",
+    "asf.object-truncated",
+    "asf.packet-count",
+    "asf.packet-length",
+    "asf.packet-truncated"
+   ],
+   "info_findings": [
+    "wma.voice-unfinished"
+   ],
+   "ffprobe": {
+    "bit_rate": 16000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "16000",
+    "Channels": "1",
+    "SamplingRate": "16000"
+   },
+   "sampling_count_differs": "The file's header states a play duration that its data does not reach (the analyzer reports asf.file-size, asf.packet-count and others), and MediaInfo's sampling count is that duration times the rate; the analyzer's samples are those of the superframes, which ffmpeg decodes to the same number."
+  },
+  {
+   "file": "wmav_8.wma",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMSP/wmav_8.wma",
+   "sha256": "42d5466de2fc43a289aeda7b8df5c7e28d03e504f0b9010efdb3b30b66229ae1",
+   "size": 18694,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 300,
+   "lsps": 10,
+   "superframes": 125,
+   "frames": 375,
+   "samples": 59835,
+   "ffmpeg_samples": 59835,
+   "frame_types": {
+    "8": 36,
+    "11": 208,
+    "12": 109,
+    "13": 19,
+    "16": 3
+   },
+   "findings": [
+    "wma.voice-spillover-orphan"
+   ],
+   "info_findings": [
+    "wma.voice-music"
+   ],
+   "ffprobe": {
+    "bit_rate": 8000
+   },
+   "ffmpeg_errors": [
+    "Not yet implemented in FFmpeg"
+   ],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "8000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   },
+   "sampling_count_differs": "The container states 14.4 s, and about half of the superframes hold music, which FFmpeg's decoder does not support and no sample counts; the analyzer's samples are those of the speech superframes, which ffmpeg decodes to the same number."
+  },
+  {
+   "file": "wmv3-wmaspeeech.wmv",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMA9/WMAVoice/wmv3-wmaspeeech.wmv",
+   "sha256": "1bde2de6b9070c25842ad02998d774771f8140547637eb335e96b204d9941d40",
+   "size": 43895,
+   "archived": false,
+   "container": "ASF",
+   "rate": 8000,
+   "channels": 1,
+   "block_align": 187,
+   "lsps": 10,
+   "superframes": 166,
+   "frames": 498,
+   "samples": 79467,
+   "ffmpeg_samples": 79467,
+   "frame_types": {
+    "0": 29,
+    "1": 49,
+    "2": 86,
+    "3": 67,
+    "4": 164,
+    "5": 27,
+    "6": 17,
+    "7": 16,
+    "11": 27,
+    "12": 5,
+    "13": 4,
+    "15": 7
+   },
+   "findings": [],
+   "info_findings": [
+    "asf.stream-not-analyzed"
+   ],
+   "ffprobe": {
+    "bit_rate": 5000
+   },
+   "ffmpeg_errors": [],
+   "mediainfo": {
+    "Format": "WMA",
+    "Format_Profile": "Voice",
+    "CodecID": "A",
+    "BitRate": "5000",
+    "Channels": "1",
+    "SamplingRate": "8000"
+   }
+  }
+ ]
+}

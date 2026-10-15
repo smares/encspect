@@ -20,6 +20,7 @@ import check_eac3_samples
 import check_mp3pro_samples
 import check_sbr_samples
 import check_usac_samples
+import check_wmavoice_samples
 import conformance_mpeg_audio
 import downloads
 import dts_specs
@@ -58,6 +59,9 @@ def sources():
     sbr = json.loads((ROOT / "tests" / "conformance" / "sbr-samples.json").read_text(encoding="utf-8"))
     for sample in sbr["samples"]:
         yield sample["file"], sample["sha256"], check_sbr_samples.addresses(sample)
+    wmavoice = json.loads((ROOT / "tests" / "conformance" / "wmavoice-samples.json").read_text(encoding="utf-8"))
+    for sample in wmavoice["samples"]:
+        yield sample["file"], sample["sha256"], check_wmavoice_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
