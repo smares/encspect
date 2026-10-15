@@ -43,7 +43,7 @@ AREAS = {
     },
     "mp4-crosscheck": {
         "projects": ["Encspect.Formats.Mp4", "Encspect.Formats.Aac"],
-        "fixtures": ["mp4", "adts", "aac"],
+        "fixtures": ["mp4", "adts", "aac", "apple", "alac"],
         "scripts": ["crosscheck_mp4_fixtures.py", "check_usac_samples.py", "check_sbr_samples.py", "check_aac_tables.py"],
         "globs": ["scripts/fixtures/make_mp4*", "scripts/fixtures/aac_*", "scripts/fixtures/make_*aac*",
                   "tests/conformance/usac-samples.json", "tests/conformance/sbr-samples.json"],
@@ -107,7 +107,8 @@ DOCS = ["docs/**", "LICENSE", "**/*.md"]
 FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scripts/fixtures/import_*.py", "scripts/fixtures/*_specs.py",
                 "scripts/fixtures/*_model.py", "scripts/fixtures/*_signal*.py", "scripts/fixtures/*_sources.py", "scripts/fixtures/*_source.py",
                 "scripts/fixtures/check_sources.py", "scripts/fixtures/check_restricted_encoders.py", "scripts/fixtures/check_faac_sbr.py",
-                "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py"]
+                "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
+                "scripts/fixtures/macos/**"]
 
 CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
 ALL_JOBS = CI_JOBS_DOTNET + ["fixtures"] + list(AREAS)
@@ -222,7 +223,8 @@ def unknown_path(path):
         return False
     if path.startswith(FIXTURE_SCRIPTS + "/"):
         top_level_script = path.count("/") == 2 and path.endswith(".py")
-        return not top_level_script and not any(matches(path, spec["globs"]) for spec in AREAS.values())
+        return (not top_level_script and not any(matches(path, spec["globs"]) for spec in AREAS.values())
+                and not matches(path, FIXTURE_ONLY))
     return False
 
 
