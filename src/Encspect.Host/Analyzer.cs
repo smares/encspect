@@ -59,22 +59,66 @@ public sealed class Analyzer
     // The format parsers a name stands for, by the start of their names, ignoring case and spaces
     // ("mpeg" is MPEG Audio): the one whose name it is exactly, or else every one whose name starts
     // with it. One entry is a usable name for AnalysisOptions.ForcedFormat; none is an unknown name,
-    // several an ambiguous one.
+    // several an ambiguous one. Hyphens and underscores do not count ("ac3" is AC-3), and the names of
+    // the codecs and file extensions a format reads ("mp3", "m4a", "eac3", "opus") stand for it.
     public IReadOnlyList<string> MatchFormats(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
 
         string wanted = NormalizeFormat(name);
+        if (wanted.Length == 0)
+        {
+            return [];
+        }
+
         List<string> names = _formatParsers.Select(p => p.Name).ToList();
         List<string> exact = names.Where(n => NormalizeFormat(n) == wanted).ToList();
-        return wanted.Length == 0 ? [] : exact.Count > 0 ? exact : names.Where(n => NormalizeFormat(n).StartsWith(wanted, StringComparison.Ordinal)).ToList();
+        if (exact.Count > 0)
+        {
+            return exact;
+        }
+
+        if (Aliases.TryGetValue(wanted, out string? target) && names.Contains(target))
+        {
+            return [target];
+        }
+
+        return names.Where(n => NormalizeFormat(n).StartsWith(wanted, StringComparison.Ordinal)).ToList();
     }
 
-    // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg".
-    public static string NormalizeFormat(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+    // Other names a format goes by: the codec or the file extension. Used only where a name is not
+    // a format's own or the start of it.
+    private static readonly Dictionary<string, string> Aliases = new()
+    {
+        ["mp1"] = "MPEG Audio",
+        ["mp2"] = "MPEG Audio",
+        ["mp3"] = "MPEG Audio",
+        ["m4a"] = "MP4",
+        ["m4b"] = "MP4",
+        ["mov"] = "MP4",
+        ["3gp"] = "MP4",
+        ["adts"] = "AAC",
+        ["adif"] = "AAC",
+        ["eac3"] = "AC-3",
+        ["ec3"] = "AC-3",
+        ["vorbis"] = "Ogg",
+        ["opus"] = "Ogg",
+        ["speex"] = "Ogg",
+        ["spx"] = "Ogg",
+        ["oga"] = "Ogg",
+        ["wma"] = "ASF",
+        ["mpc"] = "Musepack",
+        ["wv"] = "WavPack",
+        ["dtshd"] = "DTS",
+    };
+
+    // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3".
+    public static string NormalizeFormat(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).Replace("-", string.Empty, StringComparison.Ordinal)
+        .Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
     // The format parser that would analyze the file, or null: the same tag scan and sniffing as
-    // Analyze, without parsing the data, so a batch can skip files of other formats cheaply.
+    // Analyze, without parsing the data, so a batch can skip files of other formats cheaply. It
+    // says what detection finds, so AnalysisOptions.ForcedFormat is ignored.
     public string? DetectFormat(string path, AnalysisOptions? options = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
@@ -107,7 +151,8 @@ public sealed class Analyzer
 
     // Parsers are trusted to report damage as findings, but a parser bug must not end a batch: an
     // exception from any parser becomes a parse.failed error. Only cancellation, and running out of
-    // memory, escape.
+    // memory, escape. Throws ArgumentException (paramName "options") when options.ForcedFormat names no
+    // format or several.
     public Report Analyze(string source, Stream stream, AnalysisOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -137,8 +182,9 @@ public sealed class Analyzer
         if (reader.Length == 0)
         {
             findings.Add(new Finding(Severity.Warning, "file.empty", "The file is empty.", root) { Path = [] });
+            FormatDetection? emptyDetection = forced is null ? null : ForcedWithoutData(forced, "the file is empty", findings, root);
             options.BytesRead?.Report(0);
-            return new Report(source, root, findings);
+            return new Report(source, root, findings, detection: emptyDetection);
         }
 
         var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
@@ -181,6 +227,7 @@ public sealed class Analyzer
         else
         {
             findings.Add(new Finding(Severity.Warning, "layout.tags-only", "The file holds only tags; no bytes are left for audio data.", root));
+            detection = forced is null ? null : ForcedWithoutData(forced, "the file holds only tags", findings, root);
         }
 
         root.SortChildrenByOffset();
@@ -632,7 +679,7 @@ public sealed class Analyzer
     // The end the format declares for itself (IFormatParser.DeclaredEnd), asked of the parser that
     // sniffs best on everything after the leading tags, before the trailing tags are looked for;
     // null when it declares none, or an end that does not lie after the leading tags. A forced parser
-    // is asked instead of the best. An end past the end of the file still makes every trailing
+    // is asked instead of the best only where it matches the data. An end past the end of the file still makes every trailing
     // candidate part of the container: its size says so, and the format parser reports the
     // truncation.
     private Container? FindContainer(ByteReader reader, long dataStart, string? extension, List<Failure> failures, IFormatParser? forced)
@@ -643,7 +690,11 @@ public sealed class Analyzer
         }
 
         var context = new SniffContext(reader.Slice(dataStart, reader.Length - dataStart), extension);
-        if ((forced ?? FindParser(context, failures)) is not { } parser)
+
+        // The forced parser's declared end counts only where its own sniff matches the data: forcing a
+        // format that is not there must not make the file's tags the data of a container that is not.
+        IFormatParser? chosen = forced is not null && SniffSafely(forced, context, failures).IsMatch ? forced : FindParser(context, failures);
+        if (chosen is not { } parser)
         {
             return null;
         }
@@ -743,12 +794,23 @@ public sealed class Analyzer
         }
     }
 
+    // The record of a forced format where there is no audio data to run it on.
+    private static FormatDetection ForcedWithoutData(IFormatParser forced, string why, List<Finding> findings, Node root)
+    {
+        findings.Add(new Finding(Severity.Info, "format.forced", $"Analyzed as {forced.Name} as requested; {why}, so there is no data to run it on.", root) { Path = [] });
+        return new FormatDetection(forced.Name, SniffResult.None, [], true, null);
+    }
+
+    // A chain of this many consistent frames, pages or boxes is real evidence for a format besides the
+    // chosen one even with no checksum that holds.
+    public const int AlternativeFrames = 8;
+
     private IFormatParser ForcedParser(string name)
     {
         IReadOnlyList<string> matches = MatchFormats(name);
         if (matches.Count != 1)
         {
-            throw new ArgumentException(matches.Count == 0 ? $"Unknown format: {name}." : $"Ambiguous format {name}: {string.Join(", ", matches)}.", nameof(name));
+            throw new ArgumentException(matches.Count == 0 ? $"Unknown format: {name}." : $"Ambiguous format {name}: {string.Join(", ", matches)}.", "options");
         }
 
         return _formatParsers.First(p => p.Name == matches[0]);
@@ -812,12 +874,13 @@ public sealed class Analyzer
     // What the report says about how the parser was chosen, with the findings that go with it, or
     // null in the plain case: no other format has real evidence, and the analysis is not forced.
     //
-    // The best candidate is the one the host's ranking puts first (SniffResult.Compare); a candidate
-    // that ties with it on all of that is ambiguous, and the first in the list wins. Alternatives are
-    // the other candidates whose evidence is real, measured against the best: the same class, a
-    // frame that passes a checksum, or a chain of FormatDetection.AlternativeFrames frames. A
-    // candidate that starts inside the data a container declares for itself is that container's
-    // payload (an AC-3 stream in an MP4 file's samples), not another reading of the file.
+    // The best candidate is the one the host's ranking puts first (SniffResult); a candidate that
+    // ties with it on all of that is ambiguous, and the first in the list wins. Alternatives are
+    // the other candidates whose evidence is real, measured against the best: the same class, or
+    // above SniffResult.WeakClass a frame that passes a checksum or a chain of AlternativeFrames
+    // frames. A candidate that starts inside the frames the best chain counted, or inside the data
+    // a container declares for itself (an AC-3 stream in an MP4 file's samples), is made of the
+    // best format's bytes and not another reading of the file.
     private static FormatDetection? Describe(List<Ranked> ranked, IFormatParser parser, bool isForced, List<Finding> findings, Node root, SniffContext sniff,
         List<Failure> failures)
     {
@@ -825,7 +888,7 @@ public sealed class Analyzer
         long? bestEnd = best is null || ranked.Count == 1 ? null : DeclaredEndOf(best.Parser, sniff, failures);
         sniff.Reader.Position = sniff.Reader.Start;
         List<FormatCandidate> alternatives = ranked
-            .Where(c => c.Parser != parser && best is not null && (c == best || (!IsPayload(c, best, bestEnd) && IsAlternative(c.Result, best.Result))))
+            .Where(c => c.Parser != parser && best is not null && (c == best || (!IsInside(c, best, bestEnd) && IsAlternative(c.Result, best.Result))))
             .Select(c => new FormatCandidate(c.Parser.Name, c.Result))
             .ToList();
         SniffResult own = ranked.FirstOrDefault(c => c.Parser == parser)?.Result ?? SniffResult.None;
@@ -850,19 +913,21 @@ public sealed class Analyzer
         return isForced || alternatives.Count > 0 ? new FormatDetection(parser.Name, own, alternatives, isForced, isForced ? best?.Parser.Name : null) : null;
     }
 
-    private static bool IsPayload(Ranked candidate, Ranked container, long? containerEnd) =>
-        containerEnd is { } end && candidate.Result.Offset >= container.Result.Offset && candidate.Result.Offset < end;
+    private static bool IsInside(Ranked candidate, Ranked best, long? declaredEnd) =>
+        candidate.Result.Offset >= best.Result.Offset && candidate.Result.Offset < Math.Max(best.Result.Extent, declaredEnd ?? 0);
 
     private static bool IsAlternative(SniffResult candidate, SniffResult best) =>
         candidate.Class == best.Class
-        || (candidate.Class > SniffResult.WeakClass && (candidate.VerifiedFrames > 0 || candidate.Frames >= FormatDetection.AlternativeFrames));
+        || (candidate.Class > SniffResult.WeakClass && (candidate.VerifiedFrames > 0 || candidate.Frames >= AlternativeFrames));
 
     private IFormatParser? FindParser(SniffContext context, List<Failure> failures) => Rank(context, failures).FirstOrDefault()?.Parser;
 
-    // Every format that matches, best first: by class, then the earlier start of the matched
-    // structure, then more checksum-verified frames, then more consistent frames (SniffResult.Compare).
-    // Candidates that tie on all of it stay in the host's list order, so the sniffs of the parsers are
-    // what decides, and the order of the list only breaks a tie the evidence cannot.
+    // Every format that matches, the winner first and then the others by class, the earlier start of
+    // the matched structure, more checksum-verified frames and more consistent frames. The winner is
+    // the first of those, unless a candidate of the same class that overlaps it has more verified
+    // frames (SniffResult.Best). Candidates that tie on all of it stay in the host's list order, so the
+    // sniffs of the parsers are what decides, and the order of the list only breaks a tie the evidence
+    // cannot.
     private List<Ranked> Rank(SniffContext context, List<Failure> failures)
     {
         ByteReader reader = context.Reader;
@@ -873,21 +938,7 @@ public sealed class Analyzer
             IFormatParser parser = _formatParsers[order];
             reader.Position = reader.Start;
 
-            SniffResult result;
-            try
-            {
-                result = parser.Sniff(context);
-            }
-            catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
-            {
-                result = SniffResult.None;
-            }
-            catch (Exception ex) when (IsParserBug(ex))
-            {
-                AddFailure(failures, new Failure(parser.Name, "sniffing the data", ex));
-                result = SniffResult.None;
-            }
-
+            SniffResult result = SniffSafely(parser, context, failures);
             if (result.IsMatch)
             {
                 matches.Add(new Ranked(parser, order, result));
@@ -895,7 +946,38 @@ public sealed class Analyzer
         }
 
         reader.Position = reader.Start;
-        return [.. matches.OrderBy(m => m.Result, Comparer<SniffResult>.Create(SniffResult.Compare)).ThenBy(m => m.Order)];
+        List<Ranked> sorted = [.. matches.OrderBy(m => m.Result, Comparer<SniffResult>.Create(SniffResult.CompareByStart)).ThenBy(m => m.Order)];
+        if (sorted.Count > 1)
+        {
+            int best = SniffResult.Best(sorted.Select(m => m.Result).ToList());
+            sorted.Insert(0, sorted[best]);
+            sorted.RemoveAt(best + 1);
+        }
+
+        return sorted;
+    }
+
+    // A parser's sniff; a parser that throws is a rejected candidate, and a bug is a failure.
+    private static SniffResult SniffSafely(IFormatParser parser, SniffContext context, List<Failure> failures)
+    {
+        context.Reader.Position = context.Reader.Start;
+        try
+        {
+            return parser.Sniff(context);
+        }
+        catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
+        {
+            return SniffResult.None;
+        }
+        catch (Exception ex) when (IsParserBug(ex))
+        {
+            AddFailure(failures, new Failure(parser.Name, "sniffing the data", ex));
+            return SniffResult.None;
+        }
+        finally
+        {
+            context.Reader.Position = context.Reader.Start;
+        }
     }
 
     // ID3v1 belongs in the last 128 bytes; other orders occur in the wild, so they are findings,

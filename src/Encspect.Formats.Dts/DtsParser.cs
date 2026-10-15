@@ -38,16 +38,17 @@ public sealed class DtsParser : IFormatParser
             return SniffResult.None;
         }
 
-        (int units, int verified) = CountChain(cache, found, reader.End);
-        return new SniffResult(found == start ? 93 : 50, found, units, verified);
+        (int units, int verified, long chainEnd) = CountChain(cache, found, reader.End);
+        return new SniffResult(found == start ? 93 : 50, found, units, verified, End: chainEnd);
     }
 
-    private static (int Units, int Verified) CountChain(BlockCache cache, long position, long end)
+    private static (int Units, int Verified, long End) CountChain(BlockCache cache, long position, long end)
     {
         int units = 0;
         int verified = 0;
         UnitInfo? previous = null;
-        while (units < SniffResult.MaxFrames && Framing.UnitAt(cache, position, end, true) is { } unit && (previous is not { } before || unit.First.Continues(before.First)))
+        while (units < SniffResult.MaxFrames && Framing.UnitAt(cache, position, end, true) is { } unit && position + unit.Length <= end
+            && (previous is not { } before || unit.First.Continues(before.First)))
         {
             units++;
             if (!unit.First.IsCore)
@@ -59,7 +60,7 @@ public sealed class DtsParser : IFormatParser
             position += unit.Length;
         }
 
-        return (units, verified);
+        return (units, verified, position);
     }
 
     public void Parse(ParseContext context)

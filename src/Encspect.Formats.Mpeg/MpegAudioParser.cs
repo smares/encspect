@@ -48,25 +48,25 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
             blocks.TryReadUInt32(position, out uint raw);
             var header = new MpegHeader(raw);
-            (int frames, int verified) = CountChain(blocks, position, header, freeLength, reader.End);
+            (int frames, int verified, long chainEnd) = CountChain(blocks, position, header, freeLength, reader.End);
             bool credible = header.IsFreeFormat
                 ? IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End)
                 : position == start || !header.IsProtected || verified > 0;
             if (credible)
             {
-                return new SniffResult(90, position, frames, verified);
+                return new SniffResult(90, position, frames, verified, End: chainEnd);
             }
 
-            incredible ??= new SniffResult(SniffResult.WeakClass, position, frames, verified, header.IsFreeFormat ? "free format" : "protected, no CRC holds");
+            incredible ??= new SniffResult(SniffResult.WeakClass, position, frames, verified, header.IsFreeFormat ? "free format" : "protected, no CRC holds", chainEnd);
             from = position + 1;
         }
 
         return incredible ?? SniffResult.None;
     }
 
-    // The frames of the chain at position, at most SniffResult.MaxFrames, and how many of them are whole
-    // and hold their CRC.
-    private static (int Frames, int Verified) CountChain(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
+    // The whole frames of the chain at position, at most SniffResult.MaxFrames, how many of them hold
+    // their CRC, and where the last one ends.
+    private static (int Frames, int Verified, long End) CountChain(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
     {
         int frames = 0;
         int verified = 0;
@@ -74,13 +74,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         MpegHeader header = first;
         while (frames < SniffResult.MaxFrames)
         {
-            frames++;
             int length = header.FrameLength(freeLength);
             if (next + length > end)
             {
                 break;
             }
 
+            frames++;
             if (header.IsProtected && FrameCrcHolds(blocks, next, header, length))
             {
                 verified++;
@@ -95,7 +95,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             header = following;
         }
 
-        return (frames, verified);
+        return (frames, verified, next);
     }
 
     public void Parse(ParseContext context)

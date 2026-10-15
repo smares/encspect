@@ -42,7 +42,7 @@ public class DetectionOrderTests
         Assert.True(problems.Count == 0, $"{name}:\n" + string.Join("\n", problems));
     }
 
-    private static string? Detect(IReadOnlyList<IFormatParser> parsers, byte[] data, string extension) =>
+    internal static string? Detect(IReadOnlyList<IFormatParser> parsers, byte[] data, string extension) =>
         new Analyzer(DefaultParsers.Tags, parsers, DefaultParsers.Codecs).DetectFormat("input" + extension, new MemoryStream(data));
 
     private static byte[] Junk(int length)

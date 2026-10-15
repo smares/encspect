@@ -40,26 +40,28 @@ public sealed class RawAacParser : IFormatParser
         long limit = Math.Min(reader.End, start + SniffLimit);
         if (FindChain(cache, start, Math.Min(limit, start + 1), reader.End) == start)
         {
-            return new SniffResult(91, start, CountChain(cache, start, reader.End));
+            return Chain(91, cache, start, reader.End);
         }
 
         long found = FindChain(cache, start, limit, reader.End, FurtherChainLength);
-        return found < 0 ? SniffResult.None : new SniffResult(50, found, CountChain(cache, found, reader.End));
+        return found < 0 ? SniffResult.None : Chain(50, cache, found, reader.End);
     }
 
-    // The frames of the chain at position that follow one another with the same fixed header, at most SniffResult.MaxFrames.
-    private static int CountChain(BlockCache cache, long position, long end)
+    // The whole frames of the chain at position that follow one another with the same fixed header, at most SniffResult.MaxFrames.
+    private static SniffResult Chain(int sniffClass, BlockCache cache, long position, long end)
     {
+        long start = position;
         AdtsHeader? first = null;
         int frames = 0;
-        while (frames < SniffResult.MaxFrames && HeaderAt(cache, position, end) is { } header && (first is not { } stream || header.IsSameStream(stream)))
+        while (frames < SniffResult.MaxFrames && HeaderAt(cache, position, end) is { } header && (first is not { } stream || header.IsSameStream(stream))
+            && position + header.FrameLength <= end)
         {
             first ??= header;
             frames++;
             position += header.FrameLength;
         }
 
-        return frames;
+        return new SniffResult(sniffClass, start, frames, End: position);
     }
 
     public void Parse(ParseContext context) => ParseInto(context.Reader, context.Root, context, context.EncoderClaims, context.EmbeddedTags);

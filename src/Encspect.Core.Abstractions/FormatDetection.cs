@@ -10,12 +10,5 @@ public sealed record FormatCandidate(string Format, SniffResult Evidence);
 // does not match. When the analysis is forced, Detected is the format detection would have chosen,
 // or null if it would have found none, and Alternatives are the others that matched.
 //
-// A candidate is an alternative when its evidence is real, not a stray header-like match: it has
-// the same class as the chosen format, or, above SniffResult.WeakClass, at least one frame that
-// passes a checksum, or a chain of at least AlternativeFrames consistent frames. A candidate that
-// starts inside the data a container declares for itself (IFormatParser.DeclaredEnd) is that
-// container's payload and not listed.
-public sealed record FormatDetection(string? Format, SniffResult Evidence, IReadOnlyList<FormatCandidate> Alternatives, bool IsForced = false, string? Detected = null)
-{
-    public const int AlternativeFrames = 8;
-}
+// Which candidates are alternatives is the host's policy (plan, "Format detection").
+public sealed record FormatDetection(string? Format, SniffResult Evidence, IReadOnlyList<FormatCandidate> Alternatives, bool IsForced = false, string? Detected = null);

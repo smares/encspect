@@ -21,12 +21,14 @@ public sealed class Ac3Parser : IFormatParser
     // A chain at the start of the data, after any zero bytes, is class 92, above MPEG audio (90) and
     // ADTS (91), since a chain of AC-3 frames is no MPEG or ADTS chain: their sync words, 0xFFE and
     // 0xFFF, cannot start with 0x0B. One found further in is class 50, below MPEG audio and Ogg, so a
-    // stray run inside another format's junk never takes the file. Against the ADTS and MPEG chains that
-    // AC-3 frames' own bytes make further in, the host's ranking decides: the AC-3 chain starts earlier,
-    // and its frames pass their CRCs. Those are counted over the first 16 frames of the chain (crc1 over
-    // the first 5/8 and crc2 over the whole frame in AC-3, the one CRC over the whole frame in E-AC-3;
-    // A/52 7.10.1 and Annex E 3.2): junk passes a frame about once in 2^16 (E-AC-3) or 2^32, and a bit
-    // error or two in the first frames does not lower the count much.
+    // stray run inside another format's junk never takes the file. Against the ADTS and MPEG chains
+    // that AC-3 frames' own bytes make further in, the host's ranking decides (SniffResult): the AC-3
+    // chain usually starts first; where the start of the file is cut off and a look-alike in the
+    // partial first frame starts before the first whole frame, the two overlap, and the chain whose
+    // frames pass their CRCs wins. The CRCs are counted over the first 16 frames of the chain (crc1
+    // over the first 5/8 and crc2 over the whole frame in AC-3, the one CRC over the whole frame in
+    // E-AC-3; A/52 7.10.1 and Annex E 3.2): junk passes a frame about once in 2^16 (E-AC-3) or 2^32,
+    // and a bit error or two in the first frames does not lower the count much.
     public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
@@ -38,13 +40,13 @@ public sealed class Ac3Parser : IFormatParser
             return SniffResult.None;
         }
 
-        (int frames, int verified) = CountChain(cache, found, reader.End);
-        return new SniffResult(found == start ? 92 : 50, found, frames, verified);
+        (int frames, int verified, long chainEnd) = CountChain(cache, found, reader.End);
+        return new SniffResult(found == start ? 92 : 50, found, frames, verified, End: chainEnd);
     }
 
-    // The frames that follow the one at position in the same stream, at most SniffResult.MaxFrames, and how many of them are whole and pass
-    // their CRCs.
-    private static (int Frames, int Verified) CountChain(BlockCache cache, long position, long end)
+    // The whole frames that follow the one at position in the same stream, at most SniffResult.MaxFrames, how many of them pass their CRCs,
+    // and where the last one ends.
+    private static (int Frames, int Verified, long End) CountChain(BlockCache cache, long position, long end)
     {
         var buffer = new byte[Ac3Analysis.MaxFrame];
         int frames = 0;
@@ -57,12 +59,13 @@ public sealed class Ac3Parser : IFormatParser
                 break;
             }
 
-            frames++;
             int length = header.FrameLength;
             if (position + length > end)
             {
                 break;
             }
+
+            frames++;
 
             cache.Read(position, buffer.AsSpan(0, length));
             bool holds = Crc16.Compute(buffer.AsSpan(2, length - 2)) == 0;
@@ -81,7 +84,7 @@ public sealed class Ac3Parser : IFormatParser
             position += length;
         }
 
-        return (frames, verified);
+        return (frames, verified, position);
     }
 
     public void Parse(ParseContext context)

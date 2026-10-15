@@ -430,6 +430,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "cut-frame": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
     "truncated": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
     "junk-adts-in-frames": dict.fromkeys(["samples", "duration", "stream size"], LEADING_JUNK),
+    "junk-adts-in-frames-cut": dict.fromkeys(["samples", "duration", "stream size"], LEADING_JUNK),
     "dependent-first": dict.fromkeys(["channels", "channel layout", "bitrate", "samples", "duration", "stream size"], DEPENDENT_FIRST),
     "derived-ffmpeg-eac3-mono-48k-spx-delta": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "substreams": dict.fromkeys(["samples", "duration", "stream size"], FIRST_FRAME_RATE),

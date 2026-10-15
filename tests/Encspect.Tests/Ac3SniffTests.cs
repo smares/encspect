@@ -103,10 +103,30 @@ public class Ac3SniffTests
     }
 
     [Fact]
-    public void AChainThatTheDataEndsInsideCountsItsWholeFramesAsVerified()
+    public void AChainThatTheDataEndsInsideCountsOnlyItsWholeFrames()
     {
         SniffResult result = Evidence([.. Junk(30), .. Fixture("ac3/bsi-fields.ac3")[..((768 * 2) + 400)]]);
-        Assert.Equal((50, 3, 2), (result.Class, result.Frames, result.VerifiedFrames));
+        Assert.Equal((50, 2, 2), (result.Class, result.Frames, result.VerifiedFrames));
+    }
+
+    // Cut off the start of the file, the first frame is partial and the ADTS look-alike in it (at its offset 300) starts before the first
+    // whole frame. The two chains overlap, and the one whose frames pass their CRCs is the file's, wherever each starts.
+    [Theory]
+    [InlineData(101)]
+    [InlineData(110)]
+    [InlineData(128)]
+    public void ACutFileStaysAc3BecauseItsFramesPassTheirCrcsNotBecauseItStartsFirst(int cut)
+    {
+        byte[] data = Fixture("ac3/junk-adts-in-frames.eac3")[cut..];
+        SniffResult ac3 = Evidence(data);
+        SniffResult adts = new RawAacParser().Sniff(Context(data));
+
+        Assert.Equal((50, 50), (ac3.Class, adts.Class));
+        Assert.True(adts.Offset < ac3.Offset);
+        Assert.True(ac3.Overlaps(adts));
+        Assert.Equal((7, 0), (ac3.VerifiedFrames, adts.VerifiedFrames));
+        Assert.True(SniffResult.Compare(ac3, adts) < 0);
+        Assert.Equal("AC-3", FormatOf(data));
     }
 
     // The E-AC-3 frames hold bytes that chain as ADTS headers, but the file is E-AC-3.

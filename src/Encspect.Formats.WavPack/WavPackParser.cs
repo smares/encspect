@@ -34,19 +34,19 @@ public sealed class WavPackParser : IFormatParser
             long end = reader.Start + header.BlockSize;
             if (end == reader.End || end == context.FirstEmbeddedTag)
             {
-                return new SniffResult(100, reader.Start, 1);
+                return new SniffResult(100, reader.Start, 1, End: Math.Min(end, reader.End));
             }
 
             if (end < reader.End)
             {
-                return source.TryHeader(end, out _) ? new SniffResult(100, reader.Start, 2) : new SniffResult(80, reader.Start, 1);
+                return source.TryHeader(end, out BlockHeader next) ? new SniffResult(100, reader.Start, 2, End: Math.Min(end + next.BlockSize, reader.End)) : new SniffResult(80, reader.Start, 1, End: end);
             }
 
-            return new SniffResult(90, reader.Start, 1);
+            return new SniffResult(90, reader.Start, 1, End: reader.End);
         }
 
         long found = source.FindChain(reader.Start + 1, Math.Min(reader.End, reader.Start + SearchLimit));
-        return found >= 0 ? new SniffResult(60, found, 2) : SniffResult.None;
+        return found >= 0 ? new SniffResult(60, found, 2, End: reader.End) : SniffResult.None;
     }
 
     // Where the blocks that follow one another from the start end. A block states its own size, so a

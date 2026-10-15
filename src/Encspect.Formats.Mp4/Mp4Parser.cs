@@ -39,25 +39,26 @@ public sealed partial class Mp4Parser : IFormatParser
         {
             if (ReadHeader(reader, position, reader.End) is not { } header || !TopLevel.Contains(header.Type))
             {
-                return sawMedia ? new SniffResult(95, reader.Start, boxes) : SniffResult.None;
+                return sawMedia ? new SniffResult(95, reader.Start, boxes, End: position) : SniffResult.None;
             }
 
             if (count == 0 && header.Type == "ftyp")
             {
-                return header.Size >= 16 ? new SniffResult(100, reader.Start, 1) : SniffResult.None;
+                return header.Size >= 16 ? new SniffResult(100, reader.Start, 1, End: Math.Min(header.End, reader.End)) : SniffResult.None;
             }
 
             sawMedia |= header.Type is "moov" or "mdat" or "moof";
             boxes++;
             if (header.Size == 0 || header.End >= reader.End)
             {
+                position = reader.End;
                 break;
             }
 
             position = header.End;
         }
 
-        return sawMedia ? new SniffResult(95, reader.Start, boxes) : SniffResult.None;
+        return sawMedia ? new SniffResult(95, reader.Start, boxes, End: position) : SniffResult.None;
     }
 
     // The end of the run of top-level boxes, which may lie past the end of a truncated file; null

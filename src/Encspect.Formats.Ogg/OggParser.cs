@@ -42,8 +42,15 @@ public sealed partial class OggParser : IFormatParser
 
     private static SniffResult Chain(int sniffClass, PageWindow window, long offset, long end)
     {
-        Pages.Probe(window, offset, end, out PageHeader first);
-        return new SniffResult(sniffClass, offset, offset + first.Length == end ? 1 : 2, 1);
+        long position = offset;
+        int pages = 0;
+        while (pages < SniffResult.MaxFrames && Pages.Probe(window, position, end, out PageHeader header) == PageProbe.Fits && header.Length <= end - position)
+        {
+            pages++;
+            position += header.Length;
+        }
+
+        return new SniffResult(sniffClass, offset, pages, 1, End: position);
     }
 
     // Ogg states no size of its own, but every page states its own length, so a chain of pages from
