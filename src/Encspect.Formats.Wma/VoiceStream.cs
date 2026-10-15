@@ -17,8 +17,9 @@ internal sealed class VoiceStream
     private readonly VoiceDecoder _decoder;
     private VoiceState _state = new();
 
-    // Every bit copied into it is taken to be stored. FFmpeg's put_bits keeps up to 63 bits (32 on other platforms) in a register until
-    // flush_put_bits, so after a dropped tail a refused copy reads bytes that never held them there; that depends on the build and is not copied.
+    // Every bit copied into it is taken to be stored. FFmpeg's put_bits keeps bits in a register until flush_put_bits (up to 63 on x86-64,
+    // where BitBuf is 64 bits, else up to 31), so after a dropped tail a refused copy reads bytes that never held them there; the size of
+    // that gap depends on the build and it is not copied.
     // wmavoice.c: sframe_cache, the buffer the start of a superframe is kept in until the next packet finishes it. Bytes that a
     // copy did not write are those an earlier superframe left (or zero), and a decoder reads them.
     private readonly byte[] _cache = new byte[VoiceParameters.CacheBytes];
@@ -392,7 +393,6 @@ internal sealed class VoiceStream
             // block and fit the cache whole, else it takes none.
             int give = Math.Min(spillover, (objectBytes * 8) - position);
             bool copied = left >= give && give <= (VoiceParameters.CacheBytes * 8) - _cacheWritten;
-            int written = _cacheWritten;
             if (copied)
             {
                 Bits.Copy(data, position, _cache, _cacheWritten, give);
@@ -420,7 +420,7 @@ internal sealed class VoiceStream
                     $"{(count == 1 ? "A packet sets" : $"{count} packets set")} the flag for residual LSPs differently from the packet before, and the superframe that goes on into {(count == 1 ? "it is" : "them is")} read with the later flag, as FFmpeg's decoder reads it.");
             }
 
-            VoiceStatus status = ReadCached(index, position, copied ? shown : 0, written, atEnd: false);
+            VoiceStatus status = ReadCached(index, position, copied ? shown : 0, atEnd: false);
             int end = position + give;
             if (status == VoiceStatus.Ok)
             {
@@ -492,8 +492,14 @@ internal sealed class VoiceStream
                 _cache[_cacheWritten >> 3] &= (byte)(0xFF << (8 - (_cacheWritten & 7)));
             }
 
-            ReadCached(Packets.Count - 1, 0, 0, 0, atEnd: true);
+            VoiceStatus status = ReadCached(Packets.Count - 1, 0, 0, atEnd: true);
             _cacheBits = 0;
+
+            // A start the cache refused was not read from the file: its bits are bits no superframe took.
+            if (status == VoiceStatus.Ok && !_tailCopied)
+            {
+                Totals.TailBitsAtEnd += _tailBits;
+            }
         }
     }
 
@@ -511,7 +517,7 @@ internal sealed class VoiceStream
 
     // The superframe begun in an earlier packet: its bits are the cache, the tail that packet ended in and the spillover bits of this
     // one. A decoder reads the cache whatever it holds, and so does this.
-    private VoiceStatus ReadCached(int packet, int spilloverStart, int shown, int written, bool atEnd)
+    private VoiceStatus ReadCached(int packet, int spilloverStart, int shown, bool atEnd)
     {
         int total = _cacheBits;
         _cacheBits = 0;
@@ -547,7 +553,8 @@ internal sealed class VoiceStream
 
         if (parts.Count == 0)
         {
-            parts.Add(new FramePart(_tailCopied ? _cachePacket : packet, _tailCopied ? _cacheStart : spilloverStart, 0));
+            // Where the superframe's reading began: in its own packet if the start was copied or the stream ends, else in the spillover.
+            parts.Add(atEnd || _tailCopied ? new FramePart(_cachePacket, _cacheStart, 0) : new FramePart(packet, spilloverStart, 0));
         }
 
         int fromFile = fromTail + fromSpill;

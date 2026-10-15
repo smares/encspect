@@ -13,6 +13,6 @@ references: FFmpeg 6.1.1 libavcodec/wmavoice.c
 
 **What the analyzer reads.** The codec data, each packet's header and spillover, each superframe's header, and each frame's type, pitch and block sizes. The excitation is read only to find where a frame ends: no gains, pulse positions or LSP values are reported, and no audio is built.
 
-**In Encspect's test files.** Two files from the Windows Media Format SDK's writer (wmvcore 12.0.26100; Voice 9 at 5 kbit/s and 8 kHz, and at 16 kbit/s and 16 kHz) set the residual LSPs flag in every packet and state no sample count. The analyzer does not use this.
+**In Encspect's test files.** Six files from the Windows Media Format SDK's writer (wmvcore 12.0.26100; Voice 9: tones at 5 kbit/s and 8 kHz and at 16 kbit/s and 16 kHz, and a speech-like signal at 4, 5 and 8 kbit/s and 8 kHz and at 16 kbit/s and 16 kHz) set the residual LSPs flag in every packet and state no sample count. The analyzer does not use this.
 
 **Where it is specified.** Microsoft has published no specification the project could check; FFmpeg's decoder is the reference.

@@ -11,7 +11,7 @@ public class WmaVoiceTests
     private const string Eight = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
     private const string Sixteen = "asf/external-windows-wmavoice-cbr-mono-16k-16.wma";
 
-    // The two files of tones and the four of a speech-like signal (silence and hardcoded codebook frames among them) from the same writer.
+    // The two files of tones and the four of a speech-like signal from the same writer (frames of the hardcoded codebook among them, none of silence).
     public static TheoryData<string> Files => new()
     {
         Eight, Sixteen,
@@ -230,6 +230,26 @@ public class WmaVoiceTests
         }
     }
 
+    // The hand-built fixtures and the Windows files of Voice.
+    public static TheoryData<string> VoiceStreams
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            foreach (string manifest in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "voice-*.expected.json").Order(StringComparer.Ordinal))
+            {
+                data.Add($"asf/{Path.GetFileName(manifest)[..^".expected.json".Length]}.asf");
+            }
+
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "external-windows-wmavoice-*.wma").Order(StringComparer.Ordinal))
+            {
+                data.Add($"asf/{Path.GetFileName(path)}");
+            }
+
+            return data;
+        }
+    }
+
     private static Node? Find(Node node, string name)
     {
         if (node.Name == name)
@@ -251,7 +271,7 @@ public class WmaVoiceTests
     // The packets that were read are tiled by their children to the last bit, whatever the stream does, and no node of a packet or a
     // superframe is empty: a superframe that needs more bits than it has gets no node for what it would have read past them.
     [Theory]
-    [MemberData(nameof(AllVoiceFixtures))]
+    [MemberData(nameof(VoiceStreams))]
     public void EveryVoiceFixtureTilesItsPacketsAndHasNoEmptyNodes(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -279,17 +299,41 @@ public class WmaVoiceTests
             Assert.Equal(packet.End * 8, at);
         }
 
-        var pending = new Stack<Node>([Child(voice, "Packets"), Child(voice, "Superframes")]);
+        var pending = new Stack<Node>(Child(voice, "Packets").Children);
         while (pending.Count > 0)
         {
             Node node = pending.Pop();
             foreach (Node child in node.Children)
             {
                 (long start, long end) = Bits(child);
-                // The blocks of a silence frame read nothing: their gain is the frame's own field.
-                // A superframe read in part from the decoder's cache keeps the fields it read there as values with no bytes.
-                Assert.True(end > start || child.Ranges is not null || child.Name.StartsWith("Block", StringComparison.Ordinal) || name.Contains("cache-overflow", StringComparison.Ordinal), $"{child.Name} at bit {start} is empty");
+                Assert.True(end > start || child.Ranges is not null, $"{child.Name} at bit {start} is empty");
                 pending.Push(child);
+            }
+        }
+
+        // A superframe read in part from the decoder's cache keeps the fields it read there as values with no bytes, and only there: at
+        // the end of its last bit that was read from the file. The blocks of a silence frame read nothing, their gain is the frame's own field.
+        foreach (Node superframe in Child(voice, "Superframes").Children)
+        {
+            var all = new List<Node>();
+            var stack = new Stack<Node>(superframe.Children);
+            while (stack.Count > 0)
+            {
+                Node node = stack.Pop();
+                all.Add(node);
+                foreach (Node child in node.Children)
+                {
+                    stack.Push(child);
+                }
+            }
+
+            // A superframe with no bit from the file has only its byte to compare with: the field is within it.
+            bool hasBits = all.Any(n => Bits(n).End > Bits(n).Start);
+            long fileEnd = hasBits ? all.Where(n => Bits(n).End > Bits(n).Start).Max(n => Bits(n).End) : Bits(superframe).Start;
+            foreach (Node node in all.Where(n => Bits(n).End == Bits(n).Start && n.Ranges is null && !n.Name.StartsWith("Block", StringComparison.Ordinal)))
+            {
+                long at = Bits(node).Start;
+                Assert.True(hasBits ? at == fileEnd : at >= fileEnd && at < fileEnd + 8, $"{node.Name} is empty at bit {at}, not at the end of the superframe's bits ({fileEnd})");
             }
         }
     }
@@ -297,7 +341,7 @@ public class WmaVoiceTests
     // No bit that a superframe's nodes lie on is one the packets show as unread, skipped or padding: the bytes of a superframe are bits
     // the decoder read from the file, and what it read from its cache's old bytes in place of refused bits has no bytes.
     [Theory]
-    [MemberData(nameof(AllVoiceFixtures))]
+    [MemberData(nameof(VoiceStreams))]
     public void ASuperframesBytesAreBitsTheDecoderRead(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -325,12 +369,33 @@ public class WmaVoiceTests
             {
                 Assert.DoesNotContain(notRead, r => start < r.End && r.Start < end);
             }
+            else if (node.Ranges is not null)
+            {
+                // A field across two packets has the bytes of each; none of them may lie wholly on bits that were not read.
+                foreach (ByteRange range in node.Ranges)
+                {
+                    Assert.DoesNotContain(notRead, r => r.Start <= range.Offset * 8 && range.End * 8 <= r.End);
+                }
+            }
 
             foreach (Node child in node.Children)
             {
                 pending.Push(child);
             }
         }
+    }
+
+    // The last superframe of the 8 kHz file at 8 kbit/s starts in a tail that FFmpeg's cache refuses, and is read at the end of the stream
+    // from the cache's old bytes: its fields have no bytes, and lie where its start is, not at the header of the packet.
+    [Fact]
+    public void ASuperframeReadAtTheEndFromTheCacheLiesAtItsStart()
+    {
+        Node voice = VoiceStream(Fixtures.AnalyzeMpeg("asf/external-windows-wmavoice-cbr-mono-8k-8-speech.wma"));
+        Node last = Child(voice, "Superframes").Children[^1];
+        Node tail = Child(voice, "Packets").Children[^1].Children.Single(c => c.Name == "Unread Bits");
+        Assert.Equal(Bits(tail).Start, Bits(last.Children[0]).Start);
+        Assert.All(last.Children, c => Assert.Equal(Bits(tail).Start, Bits(c).Start));
+        Assert.Equal(2266, Integer(Child(voice, "Statistics"), "Bits After the Last Superframe"));
     }
 
     // An error in a superframe that lies in a packet drops the rest of the media object, as FFmpeg's decoder does (libavcodec drops what is

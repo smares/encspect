@@ -35,9 +35,13 @@ internal static class VoiceExplain
     public const string PacketSuperframeStart = "The first bits of a superframe that goes on in the next packet.";
     public const string PacketUnfinished = "The first bits of a superframe that no packet finishes: the stream ends, a media object with no header drops it, or the superframe needs more bits than there are.";
     public const string PacketPadding = "Bits that a superframe's reading did not use, between its end and the end of the span the packets give it. A decoder ignores them.";
-    public const string PacketUnread = "Bits of the packet that the reading did not take: after a superframe that failed, which makes a decoder drop the rest of the media object, after the last superframe the header counts, or in front of the packet's own superframes where a decoder's resync skips a few bits more than the spillover, or the spillover bits that a decoder's cache did not take or that ran past the packet.";
+    public const string PacketUnread = "Bits of the packet that the reading did not take: after the last superframe the header counts, or after a superframe that failed, which makes a decoder drop the rest of the media object.";
+    public const string PacketUnreadResync = "Bits in front of the packet's own superframes that a decoder's resync skips, a few more than the spillover, after a spillover that did not finish its superframe.";
+    public const string PacketUnreadCarried = "Bits at the start of a block with no header that the reading of the superframe before went on into, which a decoder skips.";
+    public const string PacketUnreadCache = "Bits that a decoder's cache did not take, as they did not fit in it or lay past the packet. The decoder reads the bytes the cache held before in their place.";
 
     public const string Superframe = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe).";
+    public const string SuperframeFromCache = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe). Part of its bits were not copied from the file into the decoder's cache, and a decoder reads the bytes the cache held before in their place: the fields read there have a value and no bytes.";
     public const string SpeechFlag = "The first bit of a superframe: set for speech, which the codec reads; clear for music, Windows Media Audio Professional data that FFmpeg's decoder does not support (wmavoice.c: synth_superframe).";
     public const string HasSampleCount = "A flag that the superframe states how many samples it holds. Without it, it holds 480.";
     public const string SampleCount = "How many samples the superframe holds, at most 480 (wmavoice.c: synth_superframe). The comment there says it is usually used to prevent blanks at track boundaries.";
@@ -61,7 +65,7 @@ internal static class VoiceExplain
     public const string StatFrames = "How many frames the superframes hold.";
     public const string StatSamples = "The samples a decoder outputs: the samples the superframes state, 480 for each unless the header says fewer.";
     public const string StatDuration = "The time those samples last.";
-    public const string StatSuperframeBitrate = "The bits of the superframes over the time their samples last; the packets' headers and the bits no superframe uses are not counted.";
+    public const string StatSuperframeBitrate = "The bits the superframes took over the time their samples last, also those a decoder reads from its cache's old bytes; the packets' headers and the bits no superframe uses are not counted.";
     public const string StatSmallestSuperframe = "The fewest bytes a superframe takes.";
     public const string StatLargestSuperframe = "The most bytes a superframe takes.";
     public const string StatMinimumSuperframeBitrate = "The bitrate of the smallest superframe.";
@@ -72,7 +76,7 @@ internal static class VoiceExplain
     public const string StatResidual = "Superframes that send one set of LSPs for their three frames.";
     public const string StatAdditionalData = "Superframes that carry additional data, which a decoder skips.";
     public const string StatIgnoredBits = "Bits that the reading of a superframe did not use, between its end and the end of the span the packets give it.";
-    public const string StatEndPadding = "Bits after the last superframe that the last packet's end holds.";
+    public const string StatEndPadding = "Bits at the end of the last packet that no superframe took from the file: padding after the last superframe, or the start of a superframe that did not fit a decoder's cache.";
     public const string StatSkippedSpillover = "Spillover bits that no superframe start belonged to.";
     public const string StatLspCount = "The line spectral pairs of each frame, from the flags.";
     public const string StatSpilloverBits = "The width of the spillover field in a packet's header.";

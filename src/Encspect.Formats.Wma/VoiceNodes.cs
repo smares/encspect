@@ -84,7 +84,7 @@ internal sealed class VoiceNodes
         {
             if (upTo > covered && covered < total)
             {
-                Add(covered, upTo, "Unread Bits", NodeValue.Integer(Math.Min(upTo, total) - covered, "bits"), VoiceExplain.PacketUnread);
+                Add(covered, upTo, "Unread Bits", NodeValue.Integer(Math.Min(upTo, total) - covered, "bits"), VoiceExplain.PacketUnreadResync);
             }
         }
 
@@ -98,7 +98,7 @@ internal sealed class VoiceNodes
             // No header: the reading goes on from the bits an earlier superframe ended inside of, if there are any.
             if (record.HeaderEnd > 0)
             {
-                Add(0, record.HeaderEnd, "Unread Bits", NodeValue.Integer(record.HeaderEnd, "bits"), VoiceExplain.PacketUnread);
+                Add(0, record.HeaderEnd, "Unread Bits", NodeValue.Integer(record.HeaderEnd, "bits"), VoiceExplain.PacketUnreadCarried);
             }
         }
         else
@@ -132,7 +132,7 @@ internal sealed class VoiceNodes
             {
                 if (record.Spillover > 0)
                 {
-                    Add(at, at + record.Spillover, "Unread Bits", NodeValue.Integer(record.Spillover, "bits"), VoiceExplain.PacketUnread);
+                    Add(at, at + record.Spillover, "Unread Bits", NodeValue.Integer(record.Spillover, "bits"), VoiceExplain.PacketUnreadCache);
                 }
             }
             else
@@ -195,7 +195,7 @@ internal sealed class VoiceNodes
             if (record.Has(VoicePacketRecord.TailRefused))
             {
                 Gap(record.TailStart);
-                Add(record.TailStart, record.TailStart + record.TailBits, "Unread Bits", NodeValue.Integer(record.TailBits, "bits"), VoiceExplain.PacketUnread);
+                Add(record.TailStart, record.TailStart + record.TailBits, "Unread Bits", NodeValue.Integer(record.TailBits, "bits"), VoiceExplain.PacketUnreadCache);
                 Unread();
                 return nodes;
             }
@@ -235,7 +235,7 @@ internal sealed class VoiceNodes
         {
             Kind = NodeKind.Frame,
             Ranges = ranges,
-            Description = VoiceExplain.Superframe,
+            Description = record.Has(VoiceSuperframeRecord.ReadsCache) ? VoiceExplain.SuperframeFromCache : VoiceExplain.Superframe,
             Topic = Topics.WmaVoiceSuperframes,
         };
     }

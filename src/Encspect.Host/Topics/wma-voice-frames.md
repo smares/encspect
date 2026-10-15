@@ -15,4 +15,4 @@ references: FFmpeg 6.1.1 libavcodec/wmavoice.c (frame_descs, synth_frame, synth_
 
 **What you see in a file.** Each frame's type, pitch and block sizes, with statistics of the types. The analyzer reads the excitation only to find where a frame ends and does not report it.
 
-**In Encspect's test files.** In the two files from the Windows Media Format SDK's writer, the 8 kHz file uses types 2 to 7, which send a pitch per frame, except two frames (types 12 and 15), and the 16 kHz file types 11 to 13, which send a pitch per block, except one frame of type 1. The analyzer does not use this.
+**In Encspect's test files.** In the six files from the Windows Media Format SDK's writer, the 8 kHz tone file uses types 2 to 7 (a pitch per frame) except two frames, and the 16 kHz one types 11 to 13 (a pitch per block) except one frame of type 1. The speech files at 4 and 5 kbit/s use types 2 to 7 too; those at 8 and 16 kbit/s use only pitch per block types besides type 1, the hardcoded codebook, which is 29 to 38% of the frames of the four. No file has a frame of type 0. The analyzer does not use this.
