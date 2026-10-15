@@ -13,6 +13,8 @@ runner's python3 (3.9 or later):
   files are CAFs with an explicit channel layout tag (MPEG_5_1_A and MPEG_5_1_D); the stereo files with a name ending
   in "h" run 1 s, for HE-AAC's 2,048-sample frames; one stereo file carries a
   LIST/INFO chunk, to see whether afconvert passes it on as iTunes-style metadata.
+- "signals" also writes the win-* sources of window_signals.py (8 s each, 44.1 kHz, mono and stereo: speech, music with
+  sharp attacks, noise, tones, sweeps, transients, wide and narrow stereo), for the window shape question.
 - "manifest" turns the tab-separated record of every afconvert run into <out>/manifest.json, with
   the size and SHA-256 of each output and of each source.
 """
@@ -25,6 +27,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import wma_signals  # noqa: E402
+import window_signals  # noqa: E402  (next to this file: sys.path[0] is its folder)
 
 SECONDS = 0.5  # enough for 20 ADTS frames of AAC-LC at 44.1 and 48 kHz (21 and 23, with the encoder delay); HE-AAC frames hold 2,048 samples, so its sources run longer
 HE_SECONDS = 1.0
@@ -125,6 +128,17 @@ def signals(out):
             "generator": "wma_signals.py", "channel_mask": extras.get("mask"),
             "channel_layout_tag": extras.get("caf_layout"), "info_tags": dict(extras["info"]) if "info" in extras else None,
             "bytes": len(content), "sha256": sha256(path),
+        })
+    # The longer, varied sources of the window shape question, named win-<name>; the sources above stay as they were.
+    for name in window_signals.NAMES:
+        data, channels = window_signals.source(name)
+        path = pcm / f"win-{name}.wav"
+        content = wav(channels, window_signals.RATE, 16, data)
+        path.write_bytes(content)
+        records.append({
+            "name": f"win-{name}", "file": f"pcm/{path.name}", "channels": channels, "rate": window_signals.RATE, "bits": 16,
+            "seconds": window_signals.SECONDS, "signal": name, "generator": "window_signals.py", "seed": window_signals.SEED,
+            "channel_mask": None, "channel_layout_tag": None, "info_tags": None, "bytes": len(content), "sha256": sha256(path),
         })
     foreign = out / "foreign"
     foreign.mkdir(parents=True, exist_ok=True)
