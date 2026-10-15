@@ -117,6 +117,20 @@ internal static class Sv7Parser
         return !bands.Overrun && !bands.Invalid;
     }
 
+    // Whether the header the data starts with is one an encoder writes: a whole header of stream version 7, a frame count,
+    // a max band from 1 to 31 and a last frame of at most a frame's samples (the checks HeaderFindings warns about; libmpcdec
+    // refuses the stream otherwise). "MP+" alone is three bytes any data can start with.
+    public static bool IsConsistent(ByteReader reader)
+    {
+        if (reader.Length < HeaderBytes)
+        {
+            return false;
+        }
+
+        Sv7Header h = Sv7Header.Read(new WordStream(reader, reader.Start, reader.End));
+        return h.Version == 7 && h.Frames > 0 && h.MaxBand is > 0 and < 32 && h.LastSamples <= FrameSamples;
+    }
+
     public static void Parse(ByteReader reader, Node parent, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
     {
         long start = reader.Start;

@@ -47,10 +47,10 @@ public sealed partial class AsfParser : IFormatParser
     // The Header Object's GUID at the start is certain: 128 bits that no other file starts with.
     // The Header Object must be first in every ASF file (section 2.2), and FFmpeg's probe accepts
     // the GUID alone.
-    public int Sniff(SniffContext context)
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
-        return reader.Length >= ObjectHeaderSize && StartsWithHeader(reader) ? 100 : 0;
+        return reader.Length >= ObjectHeaderSize && StartsWithHeader(reader) ? new SniffResult(100, reader.Start, 1) : SniffResult.None;
     }
 
     // The end of the file by its own account: the File Properties Object's File Size, which the

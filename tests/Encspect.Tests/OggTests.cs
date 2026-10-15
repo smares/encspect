@@ -14,7 +14,7 @@ public class OggTests
 
     private static string OggFixture(string name) => Path.Combine(Fixtures.FixtureDirectory, "ogg", name);
 
-    private static int Sniff(byte[] data) => new OggParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
+    private static int Sniff(byte[] data) => new OggParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data)))).Class;
 
     [Fact]
     public void SniffingNeedsAChainOfPagesThatPassTheirCrc()

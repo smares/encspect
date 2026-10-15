@@ -1,0 +1,71 @@
+{
+ "description": "The file junk-adts-in-frames with its first 110 bytes cut off: the partial first frame holds the ADTS look-alike, which starts before the seven whole E-AC-3 frames.",
+ "length": 4086,
+ "format": "AC-3",
+ "frames": [
+  [
+   502,
+   512
+  ],
+  [
+   1014,
+   512
+  ],
+  [
+   1526,
+   512
+  ],
+  [
+   2038,
+   512
+  ],
+  [
+   2550,
+   512
+  ],
+  [
+   3062,
+   512
+  ],
+  [
+   3574,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   0,
+   502
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 10752,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.leading-junk",
+   "502 bytes before the first frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "liba52": false,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the leading bytes into the packets around it.",
+   "liba52": "liba52 does not decode E-AC-3."
+  }
+ }
+}

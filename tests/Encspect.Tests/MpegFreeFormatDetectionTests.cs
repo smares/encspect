@@ -10,7 +10,7 @@ public class MpegFreeFormatDetectionTests
 {
     private static byte[] Bytes(string directory, string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, directory, name));
 
-    private static int Sniff(byte[] data) => new MpegAudioParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data)), "mpeg"));
+    private static int Sniff(byte[] data) => new MpegAudioParser().Sniff(new SniffContext(new ByteReader(new MemoryStream(data)), "mpeg")).Class;
 
     public static TheoryData<string, string, int, string, int> Streams() => new()
     {

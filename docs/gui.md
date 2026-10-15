@@ -67,6 +67,11 @@ Only the other files are analyzed.
   - The panel under the hex view shows that for the selected node, with a "Learn more" link to a background article on the concept behind it, such as mid/side stereo or the bit reservoir.
   - Articles open in a side pane, closed by default, whose links lead to related articles. Topics (F1) opens it on the selected node's article, or on the list of all of them.
   - The column headers of the file list, the streams line and the graphs' choices explain what they show too.
+- **Format:**
+  - Where other formats also match with real evidence, the header says "Also matches:" and offers one button per format (its tooltip gives the evidence). Choosing one analyzes the file again as that format.
+  - "Analyze as…" in the header lists every format, and "Detect automatically", for a file whose format is not detected or detected wrongly. On macOS the same list is File, Analyze As.
+  - A forced analysis says so in the header, with the format detection would have chosen. The choice stays while the window shows the file, through a refresh, and is dropped when another file is shown.
+  - Forced analyses happen only in the detail window, which never uses the summary cache, so a forced result never reaches the file list or the cache.
 - **Findings:** can be filtered by severity. Selecting a finding selects its node.
 - **Export:** Cmd or Ctrl+S writes the report as text with offsets or as JSON, as `--offsets` and `--json` would.
 

@@ -26,33 +26,39 @@ public sealed partial class Mp4Parser : IFormatParser
 
     public string Name => "MP4";
 
-    public int Sniff(SniffContext context)
+    // An ftyp box at the start is certain (class 100); a run of top-level boxes that holds moov, mdat
+    // or moof is sure (95). The boxes counted are those the run was followed through. Boxes have no
+    // checksum.
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         long position = reader.Start;
         bool sawMedia = false;
+        int boxes = 0;
         for (int count = 0; count < 8 && position + 8 <= reader.End; count++)
         {
             if (ReadHeader(reader, position, reader.End) is not { } header || !TopLevel.Contains(header.Type))
             {
-                return sawMedia ? 95 : 0;
+                return sawMedia ? new SniffResult(95, reader.Start, boxes, End: position) : SniffResult.None;
             }
 
             if (count == 0 && header.Type == "ftyp")
             {
-                return header.Size >= 16 ? 100 : 0;
+                return header.Size >= 16 ? new SniffResult(100, reader.Start, 1, End: Math.Min(header.End, reader.End)) : SniffResult.None;
             }
 
             sawMedia |= header.Type is "moov" or "mdat" or "moof";
+            boxes++;
             if (header.Size == 0 || header.End >= reader.End)
             {
+                position = reader.End;
                 break;
             }
 
             position = header.End;
         }
 
-        return sawMedia ? 95 : 0;
+        return sawMedia ? new SniffResult(95, reader.Start, boxes, End: position) : SniffResult.None;
     }
 
     // The end of the run of top-level boxes, which may lie past the end of a truncated file; null

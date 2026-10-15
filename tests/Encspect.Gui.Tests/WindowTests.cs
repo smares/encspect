@@ -415,6 +415,38 @@ public sealed class WindowTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void The_detail_window_offers_the_formats_a_file_also_matches_and_analyzes_as_a_chosen_one()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames-cut.eac3"));
+        UiPump.Until(() => load.IsCompleted);
+        UiPump.Until(() => true);
+
+        Assert.True(window.DetectionRow.IsVisible);
+        Assert.Equal("Also matches:", window.DetectionText.Text);
+        Button chip = window.AlternativeChoices.GetVisualDescendants().OfType<Button>().Single();
+        Assert.Equal("AAC", chip.Content);
+
+        chip.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        UiPump.Until(() => window.Model.ForcedFormat == "AAC" && window.Model.Report is { Detection.IsForced: true });
+        Assert.Equal("AAC", window.Model.Report!.Root.Value);
+        Assert.StartsWith("Analyzed as AAC as requested", window.DetectionText.Text, StringComparison.Ordinal);
+        Assert.Equal("AC-3", window.AlternativeChoices.GetVisualDescendants().OfType<Button>().Single().Content);
+
+        // The menu lists detection and every format, and a choice analyzes the file as it.
+        var menu = Assert.IsType<Avalonia.Controls.MenuFlyout>(window.AnalyzeAsButton.Flyout);
+        menu.ShowAt(window.AnalyzeAsButton);
+        string[] headers = [.. menu.Items.OfType<MenuItem>().Select(i => (string)i.Header!)];
+        Assert.Equal(["Detect automatically", .. window.Model.FormatNames], headers);
+        MenuItem dts = menu.Items.OfType<MenuItem>().Single(i => (string?)i.Header == "DTS");
+        dts.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        UiPump.Until(() => window.Model.ForcedFormat == "DTS" && window.Model.Report is { Detection.Format: "DTS" });
+        menu.Hide();
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void The_hex_view_scrolls_to_the_selected_bytes()
     {
         var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };

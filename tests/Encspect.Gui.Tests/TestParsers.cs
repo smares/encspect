@@ -18,7 +18,7 @@ internal sealed class BlockingParser : IFormatParser
 
     public int Canceled => Volatile.Read(ref _canceled);
 
-    public int Sniff(SniffContext context) => context.Reader.Length >= 5 && context.Reader.MatchesAt(context.Reader.Start, "BLOCK"u8) ? 100 : 0;
+    public SniffResult Sniff(SniffContext context) => context.Reader.Length >= 5 && context.Reader.MatchesAt(context.Reader.Start, "BLOCK"u8) ? new(100, context.Reader.Start) : SniffResult.None;
 
     public void Parse(ParseContext context)
     {
@@ -48,7 +48,7 @@ internal sealed class ThrowingParser : IFormatParser
 
     public string Name => "Throwing";
 
-    public int Sniff(SniffContext context) => context.Reader.Length >= 4 && context.Reader.MatchesAt(context.Reader.Start, "BOOM"u8) ? 100 : 0;
+    public SniffResult Sniff(SniffContext context) => context.Reader.Length >= 4 && context.Reader.MatchesAt(context.Reader.Start, "BOOM"u8) ? new(100, context.Reader.Start) : SniffResult.None;
 
     public void Parse(ParseContext context) => throw new OutOfMemoryException(Message);
 
@@ -66,7 +66,7 @@ internal sealed class CountingParser(IFormatParser inner) : IFormatParser
     // The lengths of the files parsed.
     public IReadOnlyCollection<long> Lengths => _lengths;
 
-    public int Sniff(SniffContext context) => inner.Sniff(context);
+    public SniffResult Sniff(SniffContext context) => inner.Sniff(context);
 
     public long? DeclaredEnd(SniffContext context) => inner.DeclaredEnd(context);
 

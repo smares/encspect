@@ -21,7 +21,7 @@ public class AnalyzerTests
 
         public int ParseCalls { get; private set; }
 
-        public int Sniff(SniffContext context) => _sniff(context.Reader);
+        public SniffResult Sniff(SniffContext context) => new(_sniff(context.Reader), context.Reader.Start);
 
         public void Parse(ParseContext context)
         {
@@ -368,7 +368,7 @@ public class AnalyzerTests
     {
         public string Name => "context";
 
-        public int Sniff(SniffContext context) => sniff(context);
+        public SniffResult Sniff(SniffContext context) => new(sniff(context), context.Reader.Start);
 
         public void Parse(ParseContext context) => parse?.Invoke(context);
     }

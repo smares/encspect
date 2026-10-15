@@ -183,7 +183,7 @@ def build():
     # Leading junk, then E-AC-3 frames whose unused tail holds what looks like an ADTS header of the
     # frame's own length: the headers chain from frame to frame, as the bytes of a real E-AC-3 header
     # do in csi_miami_stereo_128_spx.eac3. The chain of CRC-checked E-AC-3 frames is the stronger
-    # evidence, so the file is E-AC-3, not AAC.
+    # evidence (it starts first and its frames pass their CRCs), so the file is E-AC-3, not AAC.
     adts = bytes.fromhex("FFF14C80401FFC")
     frames = []
     for _ in range(8):
@@ -194,6 +194,7 @@ def build():
     junk = bytes((i * 37 + 11) % 251 for i in range(100))
     assert b"\xFF" not in junk
     data = junk + b"".join(frames)
+    data_adts = data
     fixture("junk-adts-in-frames", ".eac3", "100 bytes of junk, then eight 2/0 E-AC-3 frames of 512 bytes, each with the bytes of an ADTS header of 512 bytes at its offset 300.",
             data, frames_of(data, 100), [stream("E-AC-3", 48000, 2, 0, 8 * 1536)], [("ac3.leading-junk", "100 bytes before the first frame")],
             gaps=[(0, 100)], read=False,
@@ -201,10 +202,21 @@ def build():
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it.",
                                  "liba52": "liba52 does not decode E-AC-3."}})
 
+    # The same file with its first 110 bytes cut off: the junk and the start of the first frame are gone, so the ADTS look-alike in that
+    # partial frame (at offset 290) starts before the first whole frame (at 502). Both chains are class 50 and overlap; the AC-3 chain
+    # wins because its seven frames pass their CRCs and the look-alike's do not exist.
+    cut = data_adts[110:]
+    fixture("junk-adts-in-frames-cut", ".eac3", "The file junk-adts-in-frames with its first 110 bytes cut off: the partial first frame holds the ADTS look-alike, which starts before the seven whole E-AC-3 frames.",
+            cut, frames_of(cut, 502), [stream("E-AC-3", 48000, 2, 0, 7 * 1536)], [("ac3.leading-junk", "502 bytes before the first frame")],
+            gaps=[(0, 502)], read=False,
+            crosscheck={"ffprobe": False, "decode": True, "liba52": False,
+                        "skip": {"ffprobe": "ffmpeg's parser counts the leading bytes into the packets around it.",
+                                 "liba52": "liba52 does not decode E-AC-3."}})
+
     # The same with an MPEG header: AC-3 frames of 768 bytes whose unused tail holds the bytes of a
     # CRC-protected MPEG-2.5 Layer I header of 768 bytes, which chain from frame to frame as in
     # monsters_inc_2.0_192.ac3 with junk in front. Their CRCs do not hold, so MPEG audio ranks the
-    # chain 30 and the CRC-checked AC-3 chain 55 wins.
+    # chain 30 and the AC-3 chain, class 50, wins.
     mpeg = bytes.fromhex("FFE6C5BA")
     frames = []
     for _ in range(8):

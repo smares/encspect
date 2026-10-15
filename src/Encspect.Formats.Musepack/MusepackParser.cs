@@ -11,21 +11,22 @@ public sealed class MusepackParser : IFormatParser
 {
     public string Name => "Musepack";
 
-    // A magic number is certain. A stream of version 4 to 6 has none, so it needs its units to end
+    // A magic number is certain, as long as the header after "MP+" is one an encoder writes
+    // (Sv7Parser.IsConsistent); "MP+" at the start of other data ranks 60. A stream of version 4 to 6 has none, so it needs its units to end
     // where the encoders end them (OldStreamParser.Sniff). With three units or more, starting at the
     // first byte, that outranks MPEG audio (90), which also takes one or two frames that end at the
     // end of the data anywhere in it; with fewer it ranks below.
-    public int Sniff(SniffContext context)
+    public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         if (reader.MatchesAt(reader.Start, "MPCK"u8))
         {
-            return Sv8Parser.Sniff(reader) ? 100 : 0;
+            return Sv8Parser.Sniff(reader) ? new SniffResult(100, reader.Start, 1, Note: "MPCK") : SniffResult.None;
         }
 
         if (reader.MatchesAt(reader.Start, "MP+"u8))
         {
-            return 100;
+            return Sv7Parser.IsConsistent(reader) ? new SniffResult(100, reader.Start, 1, Note: "MP+") : new SniffResult(60, reader.Start, 1, Note: "MP+, inconsistent header");
         }
 
         // The parser reads up to the first tag inside the data, so the frames must end there.
