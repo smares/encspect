@@ -33,6 +33,11 @@ public sealed partial class VorbisParser
 
     // The fields section 4.3.1 reads before the floors: the packet type, the mode and, in a long
     // block, the window flags; then the rest, which this analyzer does not decode.
+    // Bytes a container changed (header stripping, inflating) are not the bytes of the file: every part maps to the whole range.
+    private static MappedBytes Mapped(int bytes, ByteRange[] ranges) => ranges.Sum(r => r.Length) == bytes
+        ? new MappedBytes(new byte[bytes], ranges)
+        : MappedBytes.Opaque(new byte[bytes], ranges[0].Offset, ranges[^1].End);
+
     private static List<Node> PacketFields(Records records, int index)
     {
         PacketRecord packet = records.Packets[index];
@@ -43,7 +48,7 @@ public sealed partial class VorbisParser
         }
 
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
-        var at = new BitPlace(records.OffsetOf(index), ranges is null ? null : new MappedBytes(new byte[packet.Length], ranges));
+        var at = new BitPlace(records.OffsetOf(index), ranges is null ? null : Mapped(packet.Length, ranges));
         bool notAudio = (packet.Flags & PacketFlags.NotAudio) != 0;
         nodes.Add(at.Node("Packet Type", 0, 1, notAudio ? "1 (not audio)" : "0 (audio)", Explain.AudioPacketType));
         long position = 1;

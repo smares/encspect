@@ -57,9 +57,9 @@ internal sealed partial class FileReader
         }
 
         (Decoder? frames, Decoder? priv, string? problem, bool isEncrypted) = Decoders(track);
-        if (problem is null && (frames is not null || priv is not null) && codec is not null and not ("aac" or "vorbis" or "opus"))
+        if (problem is null && (frames is not null || priv is not null) && codec is not null and not ("vorbis" or "opus"))
         {
-            // The AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
+            // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
             problem = $"stores its frames with {(track.Encodings.Any(e => e.CompressionAlgorithm == 0) ? "zlib compression" : "header stripping")}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
         }
@@ -117,9 +117,17 @@ internal sealed partial class FileReader
 
         string prefix = _segments.Count > 1 ? $"Segment {segment.Number} " : string.Empty;
 
-        // The headers handed over as packets (Vorbis, Opus) lie in the CodecPrivate, before the first frame in the Tracks element.
-        long first = headers.Count > 0 ? Math.Min(headers[0].FileStart, statistics.FirstOffset) : statistics.FirstOffset;
-        var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, statistics.LastEnd - first), NodeValue.Integer(statistics.Frames, "frames", "frame"))
+        // The headers handed over as packets (Vorbis, Opus) lie in the CodecPrivate, which comes before the first frame in a well-ordered
+        // file and may come after the last in a damaged one.
+        long first = statistics.FirstOffset;
+        long last = statistics.LastEnd;
+        foreach (MappedBytes header in headers)
+        {
+            first = Math.Min(first, header.FileStart);
+            last = Math.Max(last, header.FileEnd);
+        }
+
+        var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, last - first), NodeValue.Integer(statistics.Frames, "frames", "frame"))
         {
             Description = Explain.TrackFrames,
             Topic = Topics.Tracks,

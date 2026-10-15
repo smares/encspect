@@ -19,6 +19,11 @@ public sealed partial class OpusParser
         };
     }
 
+    // Bytes a container changed (header stripping, inflating) are not the bytes of the file: every part maps to the whole range.
+    private static MappedBytes Mapped(int bytes, ByteRange[] ranges) => ranges.Sum(r => r.Length) == bytes
+        ? new MappedBytes(new byte[bytes], ranges)
+        : MappedBytes.Opaque(new byte[bytes], ranges[0].Offset, ranges[^1].End);
+
     private static string Summary(Records records, int index, int bytes)
     {
         PartRecord first = records.Part(index, 0);
@@ -36,7 +41,7 @@ public sealed partial class OpusParser
     {
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
         int bytes = records.LengthOf(index);
-        var at = new Place(records.OffsetOf(index), ranges is null ? null : new MappedBytes(new byte[bytes], ranges));
+        var at = new Place(records.OffsetOf(index), ranges is null ? null : Mapped(bytes, ranges));
         if (records.StreamCount == 1)
         {
             return PartFields(records, records.Part(index, 0), at, 0);

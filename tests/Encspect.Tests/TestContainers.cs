@@ -363,6 +363,7 @@ internal static class TestFiles
         foreach (Node child in parent.Children)
         {
             Assert.True(parent.Offset <= child.Offset && child.End <= parent.End, $"{child.Name} lies outside {parent.Name}");
+            Assert.False(child.Name == "Error" && child.Value?.ToString()?.StartsWith("The children could not be built", StringComparison.Ordinal) == true, $"{parent.Name}: {child.Value}");
             foreach (ByteRange range in RangesOf(child).Where(r => r.Length > 0))
             {
                 Assert.Contains(RangesOf(parent), p => p.Offset <= range.Offset && range.End <= p.End);
