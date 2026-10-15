@@ -1143,6 +1143,7 @@ public sealed partial class AsfParser
                 r.Dword("System Version", Explain.EncryptionSystemVersion);
                 ushort objects = r.Word("Encrypted Object Record Count", Explain.EncryptedObjectRecordCount);
                 var streams = new List<(int Number, Node Node)>();
+                var pending = new List<(ushort Type, ushort Length, Node Node)>();
                 for (int j = 0; j < objects; j++)
                 {
                     if (++recordNodes > MaxListEntries)
@@ -1166,18 +1167,14 @@ public sealed partial class AsfParser
                     ushort idType = o.Word("Encrypted Object ID Type", Explain.EncryptedObjectIdType);
                     ushort idLength = o.Word("Encrypted Object ID Length", Explain.EncryptedObjectIdLength, "bytes");
                     Node idTypeNode = objectRecord.Children[^2];
-                    if (idType == 1 && idLength == 2)
+                    bool isStream = idType == 1 && idLength == 2;
+                    if (isStream)
                     {
-                        ushort number = o.Word("Encrypted Object ID", Explain.EncryptedObjectStreamNumber);
-                        streams.Add((number, objectRecord.Children[^1]));
+                        streams.Add((o.Word("Encrypted Object ID", Explain.EncryptedObjectStreamNumber), objectRecord.Children[^1]));
                     }
                     else
                     {
                         o.Bytes("Encrypted Object ID", idLength, Explain.EncryptedObjectId);
-                        state.Findings.AddNow(idType == 1 ? Severity.Warning : Severity.Info, idType == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
-                            idType == 1
-                                ? $"An Encrypted Object Record gives a stream number in {idLength} bytes; section 4.13 sets the length to 2 for type 1."
-                                : $"An Encrypted Object Record has the ID type 0x{idType:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
                     }
 
                     var shownRecord = new Node("Encrypted Object Record", recordAt, r.Position - recordAt) { Description = Explain.EncryptedObjectRecord };
@@ -1187,6 +1184,10 @@ public sealed partial class AsfParser
                     }
 
                     entry.Add(shownRecord);
+                    if (!isStream)
+                    {
+                        pending.Add((idType, idLength, idTypeNode));
+                    }
                 }
 
                 if (stopped)
@@ -1203,6 +1204,14 @@ public sealed partial class AsfParser
                 }
 
                 node.Add(shown);
+                foreach ((ushort type, ushort length, Node idTypeNode) in pending)
+                {
+                    state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
+                        type == 1
+                            ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 sets the length to 2 for type 1."
+                            : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
+                }
+
                 state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, shown, [AsfGuids.EncryptionSystemName(system) ?? AsfGuids.Text(system)], streams));
             }
         });
