@@ -678,13 +678,28 @@ public class MemoryTests(ITestOutputHelper output)
     // analysis, that read as 47 MB negative (ubuntu CI, and here in half of the runs) or, on
     // macOS, as 4 MB too much. Two readings in a row see the same leftovers.
     //
+    // A single pair is still one observation of a heap the process shares with the runner: on
+    // ubuntu-24.04-arm one pair read 321 bytes per packet for a stream that keeps 69 (a parser
+    // that is deterministic, whose peak read the usual 109 in the same run), and consecutive
+    // readings here differ by tens of megabytes while the analysis of the first test after a big
+    // one is still holding what its frame held (the ASF tests). So the pair is taken twice, in two
+    // separate analyses, and kept is the smaller difference: noise inflates one pair, a real
+    // regression inflates both. A planted per-packet allocation in the SV8 record path fails the
+    // tests with it (docs/development.md, "Memory tests").
+    //
     // Peak: while the analysis runs, a sampler thread forces a blocking full collection every few
     // milliseconds and reads the heap that survived it from the collector's record of that
     // collection. Reading the heap's size afterwards also counts what the analysis allocated
     // since, which on a busy machine, where the sampler waits to run again, tripled the peak
     // (macOS on x64, 125 bytes per Opus packet where linux-x64 measures 41). It is taken from the
     // heap before the analysis, so those leftovers can only lower it, never fail a test. The forced
-    // collections slow the analysis down, so the files stay small.
+    // collections slow the analysis down, so the files stay small. The sampler may not get to read
+    // the heap once the analysis has built its report, which a short analysis on a loaded machine
+    // finishes first: UnknownSv8PacketsStayCompact, whose bound is on the growth of the peak from 1
+    // to 4 million packets, read 992 bytes for the first (macOS on x64) where the second read 3.5
+    // MB, and failed with 1.17 bytes per further packet. The heap with the report alive, after the
+    // analysis, is the least the analysis held at its end, so it counts as a reading too (the
+    // smaller of the two pairs' readings).
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
@@ -693,12 +708,27 @@ public class MemoryTests(ITestOutputHelper output)
         long peak = before;
         long withReport = SampledAnalysis(analyzer, name, data, ref peak);
         long withoutReport = Live();
+        long secondWithReport = AnalysisWithReport(analyzer, name, data);
+        long secondWithoutReport = Live();
         Report report = analyzer.Analyze(name, new MemoryStream(data));
         GC.KeepAlive(data);
-        return (report, withReport - withoutReport, Volatile.Read(ref peak) - before);
+        long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
+        long atEnd = Math.Min(withReport, secondWithReport);
+        return (report, kept, Math.Max(Volatile.Read(ref peak), atEnd) - before);
     }
 
     // The live heap with the report of an analysis alive; the report is dropped on return.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static long AnalysisWithReport(Analyzer analyzer, string name, byte[] data)
+    {
+        Report report = analyzer.Analyze(name, new MemoryStream(data));
+        long live = Live();
+        GC.KeepAlive(report);
+        return live;
+    }
+
+    // The live heap with the report of an analysis alive, read while a sampler thread forces
+    // collections during it; the report is dropped on return.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, ref long peak)
     {

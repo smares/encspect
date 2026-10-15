@@ -20,6 +20,13 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - `DetectionOrderTests` runs every fixture, as it is and with 352 and 1,000 seeded random bytes in front, through detection (tags and sniffs only) with the parser list in five shuffled orders, and fails if the choice changes: the choice must come from the evidence, not the list order.
   - `FormatDetectionTests` covers the ranking, ties, alternatives and forcing a format with scripted parsers, and forces every format on every fixture to check that no parser fails (`parse.failed`) on input that is not its own.
   - `Ac3SniffTests` checks the evidence the AC-3, ADTS and MPEG audio sniffs report where they compete.
+- **Memory tests** (`MemoryTests`, `[Collection]` with `DisableParallelization`): a long stream per format is analyzed in memory, and the bytes per frame, packet or page the report keeps (kept) and the live heap at most (peak) are bounded. The bounds are about twice what linux-x64 measures and below what keeping a record's bytes or node would cost.
+  - **Isolation:** the tests run one at a time, after every parallel class of their shard (checked from the `.trx` of a `corrupt-b` run: no other test overlaps them). Concurrent tests are not the cause of a failure.
+  - **Kept** is the difference of two readings of the live heap taken one after the other, with the report alive and dropped, never against the heap before the analysis (the process holds dead arrays of earlier tests). It is taken in two separate analyses, and the smaller difference counts: a reading that is off for one analysis inflates one pair, a regression inflates both.
+    - Failure: `LongEmptySv8PacketsStayCompact` read 321 bytes per packet on ubuntu-24.04-arm for a stream that keeps 69, with the peak at the usual 109 and the parser deterministic. One reading of the heap with the report alive was about 50 MB too high. The mechanism on that runner was not reproduced; the simulation (a 50 MB array held while that one reading is taken) gives 331 bytes per packet with one pair and 69 with two.
+  - **Peak** is the largest heap a sampler thread reads from the collector's record of its forced full collections during the analysis, and the heap with the report alive after it (the smaller of the two analyses' readings), so a sampler that does not get to run late in a short analysis cannot leave the peak at zero.
+    - Failure: `UnknownSv8PacketsStayCompact` bounds the growth of the peak from 1 to 4 million packets. On macOS on x64 the 1 million packet analysis was over before the sampler read the heap with the report built, its peak was 992 bytes against 3.5 MB for 4 million, and the growth read 1.17 bytes per further packet (bound 1). Delaying the sampler's first collection by 1.2 s reproduces it (`0 and 3672576 bytes peak: 1.22 per further packet`); with the end reading it reads `3455880 and 3455752`.
+  - **Checking a change to the measurement:** plant a per-packet allocation that the report keeps, such as a `byte[1]` added to a list on the SV8 parse state for every packet. `LongEmptySv8PacketsStayCompact` then reads 111 bytes per packet (bound 90) and `UnknownSv8PacketsStayCompact` 40 bytes per further packet (bound 1).
 - **Golden reports** (`*.report.json`) are compared on every test run. After an intended output change, rerun the tests with `ENCSPECT_UPDATE_GOLDEN=1` and review the diff.
 - **Fuzzing:** `tests/Encspect.Fuzz` mutates the fixtures. Inputs it once failed on are kept in `tests/fixtures/fuzz`. Every input's report is also written, collected and written again, and the two must be equal.
 - **Thread safety:** a report builds the nodes of repeated parts when they are read and may build them again, and the same report may be read on several threads.
@@ -51,13 +58,29 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 | | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
-| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | same as main |
+| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main |
 | Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
 
+### Runner images
+
+- **No job uses `ubuntu-latest`.** Every Linux job names its image, so the move of the label to Ubuntu 26.04 (a gradual rollout, actions/runner-images#14748) changes nothing silently. `windows-latest`, `macos-latest` and the other platform entries keep their labels; `wma-fixtures.yml` and `apple-aac-fixtures.yml` name their images already.
+- **`ubuntu-26.04`** (Linux arm64: `ubuntu-26.04-arm`) runs every job but the cross-checks: `changes`, `docs`, `shard-guard`, `fuzz`, `format`, `fixtures`, `all-checks`, the Linux legs of `build-test` and `unit-tests`, and `sources.yml`.
+  - They use the .NET SDK, Python and, in `build-test`, `weston` (14.0.2) and `xvfb` (21.1.22), which the Ubuntu 26.04 archive has for amd64 and arm64.
+  - `fixtures` regenerates the hand-built fixtures in full and, for the encoder-written ones, runs the generators with `--manifests-only`, so it uses no encoder from a package. Its fixtures regenerate without a difference on Python 3.14 (Ubuntu 26.04 ships 3.14.4 with zlib 1.3.1).
+  - The first runs on 26.04 also exercise its coreutils, which probably differ from 24.04's. The image's `coreutils` package (9.5-1ubuntu2+0.0.0~ubuntu25 in the runner-images inventory) is built from Ubuntu's `coreutils-from` source, whose default is uutils' Rust implementation; the inventory does not say which one the image selects. The steps in question are `timeout`, `env -u` and `seq` in `build-test`, and the file handling of the unit tests (`mkfifo`, `chmod -R`, `rm -rf` with names that are not UTF-8).
+  - The memory-test flake history above was measured on `ubuntu-24.04-arm`, so the arm64 leg on 26.04 is a new measurement.
+- **`ubuntu-24.04`** runs the cross-check jobs, whose results depend on Ubuntu's packaged tool versions: ffmpeg 6.1.1 (6.1.1-3ubuntu5), MediaInfo 24.01, liba52, libdca and the other tools that the golden reports and the encoder strings in the fixtures name. They move in a separate step, which also regenerates what those versions wrote.
+- **No early-warning leg:** the nightly and manual runs have the same six platforms as a push to main. The leg on `ubuntu-latest` only covered `build-test` and `unit-tests` on 24.04, which duplicated the pinned legs, and never the cross-checks. After the rollout it would repeat the `ubuntu-26.04` leg; the pins are updated deliberately at the next move.
+- `CiWorkflowTests` fails when:
+  - any workflow or `changes.py` names `ubuntu-latest`, or `changes.py` names `ubuntu-24.04`, or lacks the `ubuntu-26.04` and `ubuntu-26.04-arm` platform entries;
+  - any `runs-on` line of any workflow that names Ubuntu (quotes, brackets and comments ignored) is not `ubuntu-24.04` or `ubuntu-26.04`, or `sources.yml` is not on `ubuntu-26.04`;
+  - a job of `ci.yml` has other than one `runs-on` line, a cross-check job is not on `ubuntu-24.04`, `build-test` or `unit-tests` does not use the platform matrix, or any other job is not on `ubuntu-26.04`.
+- `test_changes.py` checks the platform lists per event.
+
 - The platform lists and the sharded test matrix are computed by `scripts/ci/changes.py` from the event.
-- `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow and unchanged.
+- `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow.
 
 ### Jobs and shards
 

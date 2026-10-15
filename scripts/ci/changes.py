@@ -114,13 +114,13 @@ CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
 ALL_JOBS = CI_JOBS_DOTNET + ["fixtures"] + list(AREAS)
 
 PULL_REQUEST_PLATFORMS = [
-    {"os": "ubuntu-latest", "rid": "linux-x64"},
+    {"os": "ubuntu-26.04", "rid": "linux-x64"},
     {"os": "windows-latest", "rid": "win-x64"},
     {"os": "macos-latest", "rid": "osx-arm64"},
     {"os": "windows-11-arm", "rid": "win-arm64"},
 ]
 FULL_PLATFORMS = PULL_REQUEST_PLATFORMS + [
-    {"os": "ubuntu-24.04-arm", "rid": "linux-arm64"},
+    {"os": "ubuntu-26.04-arm", "rid": "linux-arm64"},
     {"os": "macos-15-intel", "rid": "osx-x64"},
 ]
 

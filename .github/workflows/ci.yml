@@ -1,8 +1,10 @@
 name: CI
 
 # Pull requests run what the change needs, on four platforms; a push to main, the nightly schedule and a
-# manual run run everything, on six, and the nightly run (and a manual one) also write every long input with
-# all three writers on more threads, and fuzz for half an hour. See "CI" in docs/development.md.
+# manual run run everything, on six. The nightly run and a manual one also write every long input with all
+# three writers on more threads, and fuzz for half an hour. Every Linux job is pinned: the cross-check jobs,
+# whose tools' versions the golden reports name, to ubuntu-24.04, every other job to ubuntu-26.04. See "CI" in
+# docs/development.md.
 on:
   push:
     branches: [main]
@@ -37,7 +39,7 @@ jobs:
   # false. Anything but a pull request, and anything the script cannot place, runs everything.
   changes:
     name: what changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       reason: ${{ steps.decide.outputs.reason }}
@@ -88,7 +90,7 @@ jobs:
   # The light check a documentation change still gets, and the tests of the scripts the pipeline runs.
   docs:
     name: documentation and pipeline scripts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -317,7 +319,7 @@ jobs:
     name: the shards run every test once
     needs: changes
     if: needs.changes.outputs.shard-guard == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     defaults:
       run:
@@ -340,7 +342,7 @@ jobs:
     name: fuzz smoke test
     needs: changes
     if: needs.changes.outputs.fuzz == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     defaults:
       run:
@@ -371,7 +373,7 @@ jobs:
     name: formatting
     needs: changes
     if: needs.changes.outputs.format == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     defaults:
       run:
@@ -390,7 +392,7 @@ jobs:
     name: fixtures are reproducible
     needs: changes
     if: needs.changes.outputs.fixtures == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     defaults:
       run:
@@ -968,7 +970,7 @@ jobs:
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v5
         with:

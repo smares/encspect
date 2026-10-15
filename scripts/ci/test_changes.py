@@ -168,6 +168,17 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(len(changes.platforms("pull_request")), 4)
         self.assertEqual(len(changes.platforms("push")), 6)
         self.assertEqual(len(changes.platforms("schedule")), 6)
+        self.assertEqual(len(changes.platforms("workflow_dispatch")), 6)
+
+    def test_the_linux_platforms_use_the_pinned_ubuntu_26_04_images(self):
+        def labels(event):
+            return [p["os"] for p in changes.platforms(event)]
+        for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
+            self.assertIn("ubuntu-26.04", labels(event), event)
+            self.assertFalse([label for label in labels(event) if label.startswith("ubuntu-") and "26.04" not in label], event)
+        for event in ("push", "schedule", "workflow_dispatch"):
+            self.assertIn("ubuntu-26.04-arm", labels(event), event)
+            self.assertEqual(len(set(labels(event))), 6, event)
 
 
 if __name__ == "__main__":
