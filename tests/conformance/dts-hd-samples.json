@@ -1,0 +1,127 @@
+{
+ "description": "Real DTS-HD Master Audio files from the FFmpeg sample archive: a 7.1 stream of two channel sets (a primary 5.1 set and a set of the rear pair), a 96 kHz 5.0 stream and a 16-bit stereo stream, each a core frame with an extension substream whose first asset has a lossless (XLL) component, cut by the archive (the first two at 5 MiB) or ending inside a frame. The archive allows downloading and states no license for redistribution, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report (the first stream of the analyzer's report; the 16-bit file's last, truncated frame starts a second stream of the core alone), the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"). No real DTS:X or .dtshd file could be found at a public address (the FFmpeg archive has neither), so those are hand-built only.",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/A-codecs/DTS/dts/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "Master Audio 7.1.dts",
+   "url": "https://samples.ffmpeg.org/A-codecs/DTS/dts/Master%20Audio%207.1.dts",
+   "sha256": "08b6289cceedadfd2e9e7be833e60bb8afd751564cf5e6543fecbc6a3a22f8d9",
+   "size": 5242880,
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 8,
+   "layout": [
+    "front center",
+    "front left",
+    "front right",
+    "LFE",
+    "back left",
+    "back right",
+    "side left",
+    "side right"
+   ],
+   "bits_per_sample": 24,
+   "storage_width": 24,
+   "channel_sets": 2,
+   "has_dts_x": false,
+   "findings": [
+    "dts.frame-truncated"
+   ],
+   "info_findings": [],
+   "ffprobe": {
+    "profile": "DTS-HD MA",
+    "channel_layout": "7.1",
+    "bits_per_raw_sample": 24
+   },
+   "mediainfo": {
+    "Channels": "8",
+    "SamplingRate": "48000",
+    "BitDepth": "24",
+    "Compression_Mode": "Lossless",
+    "Format_Commercial": "DTS-HD Master Audio"
+   },
+   "source": "ffmpeg",
+   "format": "DTS"
+  },
+  {
+   "file": "Master Audio 5.0 96khz.dts",
+   "url": "https://samples.ffmpeg.org/A-codecs/DTS/dts/Master%20Audio%205.0%2096khz.dts",
+   "sha256": "3702d95a38cba3414968724e7bacb13440b81e79c6be753dc53c2a35813cdb39",
+   "size": 5242880,
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 96000,
+   "channels": 5,
+   "layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "bits_per_sample": 24,
+   "storage_width": 24,
+   "channel_sets": 1,
+   "has_dts_x": false,
+   "findings": [
+    "dts.frame-truncated"
+   ],
+   "info_findings": [],
+   "ffprobe": {
+    "profile": "DTS-HD MA",
+    "channel_layout": "5.0(side)",
+    "bits_per_raw_sample": 24
+   },
+   "mediainfo": {
+    "Channels": "5",
+    "SamplingRate": "96000",
+    "BitDepth": "24",
+    "Compression_Mode": "Lossless",
+    "Format_Commercial": "DTS-HD Master Audio"
+   },
+   "source": "ffmpeg",
+   "format": "DTS"
+  },
+  {
+   "file": "Master Audio 2.0 16bit.dts",
+   "url": "https://samples.ffmpeg.org/A-codecs/DTS/dts/Master%20Audio%202.0%2016bit.dts",
+   "sha256": "34845219924fedc4c633a97c614f464f25011857d11b6ad1919e0c02f1abb3ce",
+   "size": 26114649,
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "bits_per_sample": 16,
+   "storage_width": 16,
+   "channel_sets": 1,
+   "has_dts_x": false,
+   "findings": [
+    "dts.frame-truncated"
+   ],
+   "info_findings": [
+    "dts.stream-changed"
+   ],
+   "ffprobe": {
+    "profile": "DTS-HD MA",
+    "channel_layout": "stereo",
+    "bits_per_raw_sample": 16
+   },
+   "mediainfo": {
+    "Channels": "2",
+    "SamplingRate": "48000",
+    "BitDepth": "16",
+    "Compression_Mode": "Lossless",
+    "Format_Commercial": "DTS-HD Master Audio"
+   },
+   "source": "ffmpeg",
+   "format": "DTS"
+  }
+ ]
+}

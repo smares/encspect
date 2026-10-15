@@ -111,6 +111,15 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
     return result
 
 
+LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+
+
+def cc_lossless(**extra):
+    """The crosscheck of a lossless stream: ffprobe names its profile and rate from the decoded XLL frames, and lists no bit rate."""
+    skip = {"ffprobe_bitrate": LOSSLESS_BITRATE, **extra.pop("skip", {})}
+    return cc(ffprobe_bitrate=False, skip=skip, **extra)
+
+
 CUT_NOTE = ("ffmpeg decodes the damaged frame without an error: the frame's silent subframes take a few dozen of its bytes, the rest is padding that no decoder reads, "
             "and a core frame without CRC words (CPF 0) has no other check of its own")
 PROFILE_STUB = ("ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the "
@@ -195,7 +204,7 @@ def build_substreams():
     data = b"".join(parts)
     fixture("exss-lossless", ".dts", "Four units of a stereo core frame and an extension substream whose asset has a core and a lossless (XLL) component.", data, rows(parts),
             [stream("DTS-HD Master Audio", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL sub-header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
+            crosscheck=cc_lossless())
     parts = [unit([dict(components=["xbr", "x96", "xxch"], channels=2, mask=0x02, component_options={"xxch": {"core_mask": 0x06}})]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-high-resolution", ".dts", "Four units of a core frame and an extension substream with XBR, X96 and XXCH components.", data, rows(parts),
@@ -342,7 +351,7 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-bad-crc", ".dts", "Four units whose extension substream header CRC is wrong.", data, rows(parts),
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.crc-mismatch", "CRC")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid EXSS header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum')"}))
+            crosscheck=cc_lossless(decode=False, decode_error="Invalid EXSS header checksum", skip={"decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"}))
     broken = dict(asset, bad_sync=["xll"])
     parts = [unit([broken]) for _ in range(4)]
     data = b"".join(parts)
@@ -361,7 +370,7 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-wide-header", ".dts", "Four units whose extension substream uses the wide header form (12-bit header size, 20-bit sizes).", data, rows(parts),
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL sub-header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
+            crosscheck=cc_lossless())
     aux = dict(mode=3, sizes={"aux": 32}, data_pad=32, channels=2, mask=0x02)
     parts = [unit([aux]) for _ in range(4)]
     data = b"".join(parts)
@@ -392,7 +401,7 @@ def build_substream_damage():
     fixture("exss-overrun", ".dts", "Three units and a fourth whose extension substream declares 2,000 bytes but the file ends 150 bytes into it.", data,
             [[i * len(whole), len(whole)] for i in range(3)] + [[3 * len(whole), len(data) - 3 * len(whole)]],
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.frame-truncated", "The last frame")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_errors={**{str(i * len(whole)): "Invalid XLL sub-header checksum" for i in range(3)}, str(3 * len(whole)): "Packet too short for EXSS frame"}, skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB + ", and the cut substream is 'too short for EXSS frame' (dca_exss.c)"}))
+            crosscheck=cc_lossless(decode=False, decode_errors={**{str(i * len(whole)): None for i in range(3)}, str(3 * len(whole)): "Packet too short for EXSS frame"}, skip={"decode": "the last packet is cut inside its extension substream, which ffmpeg rejects (dca_exss.c: 'Packet too short for EXSS frame'); the packets before it decode"}))
     return build_mp4()
 
 
@@ -485,7 +494,7 @@ def build_review():
     parts = [part + bytes(-len(part) % 4) for part in parts]
     fixture("exss-padded", ".dts", "Three units of a core frame of 1,001 bytes, three null bytes, a lossless extension substream and the null bytes that align the next sync word.", b"".join(parts), rows(parts),
             [stream(name, 48000, STEREO, "2/0", 3 * 512, vbr=True)], [],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL sub-header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
+            crosscheck=cc_lossless())
     parts = [m.core_frame(size=1001) + m.exss([dict(five)]) for _ in range(3)]
     fixture("exss-misaligned", ".dts", "Three units of a core frame of 1,001 bytes followed at once by an extension substream, whose sync word is then not on a 32-bit boundary.", b"".join(parts), rows(parts),
             [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.substream-misaligned", "3 bytes before the boundary")],
@@ -536,12 +545,11 @@ def build_review():
     parts = [unit([dict(components=["lbr", "xll"], channels=2, mask=0x02)]) for _ in range(3)]
     fixture("exss-lbr-and-xll", ".dts", "Three units of a core frame and an extension substream whose asset has both a low bit rate (LBR) and a lossless (XLL) component.", b"".join(parts), rows(parts),
             [stream("DTS Express", 48000, STEREO, "2/0", 3 * 512, vbr=True)], [],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL sub-header checksum", skip={"ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c) and its decoder names LBR first (dcadec.c), then sets the profile itself (dca_lbr.c), which the stub components do not allow", "decode": XLL_STUB}))
+            crosscheck=cc_lossless(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c), so ffprobe reads DTS-HD MA where the analyzer names the stream by LBR first, as ffmpeg's decoder does (dcadec.c), which the stub LBR component does not allow it to confirm"}))
     parts = [unit([dict(five, max_rate=96000)]) for _ in range(3)]
     fixture("exss-lossless-96k", ".dts", "Three units of a 48 kHz core frame and an extension substream whose lossless asset names 96 kHz as its highest sampling frequency.", b"".join(parts), rows(parts),
             [stream(name, 96000, STEREO, "2/0", 3 * 1024, vbr=True)], [], fields={"DTS/Statistics/Sampling Frequency": "48000 Hz", "DTS/Statistics/Extension Sampling Frequency": "96000 Hz"},
-            crosscheck=cc(ffprobe_profile=False, ffprobe_rate=48000, decode=False, decode_error="Invalid XLL sub-header checksum",
-                          skip={"ffprobe_profile": PROFILE_STUB, "ffprobe_rate": "ffmpeg's parser takes the rate of a core with an extension substream from the core (dca_parser.c); its decoder sets the 96 kHz of the lossless extension (dca_xll.c) only after it has decoded it, which the stub does not allow", "decode": XLL_STUB}))
+            crosscheck=cc_lossless())
 
     # RATE 31, which 5.6 uses for lossless streams; termination frames in every form.
     parts = run(4, "16be", 512, rate=31)
@@ -584,6 +592,10 @@ def build_review():
 
 def main():
     build()
+    import dts_lossless_fixtures
+    api = dict(fixture=fixture, rows=rows, cc=cc, stream=stream)
+    dts_lossless_fixtures.build(api)
+    dts_lossless_fixtures.build_dtshd(api)
     OUT.mkdir(parents=True, exist_ok=True)
     for name, (data, manifest) in FIXTURES.items():
         (OUT / name).write_bytes(data)

@@ -52,8 +52,10 @@ FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "dts"
 CHECKS = ("ffprobe", "ffprobe_profile", "ffprobe_bitrate", "ffprobe_packets", "decode", "libdca")
 
 # ffmpeg's profile names (libavcodec/profiles.c, ff_dca_profiles) for the analyzer's codec names, which are written out in full.
+# The DTS:X profiles are dca_xll.c's AV_PROFILE_DTS_HD_MA_X and AV_PROFILE_DTS_HD_MA_X_IMAX.
 PROFILES = {"DTS": "DTS", "DTS-ES": "DTS-ES", "DTS 96/24": "DTS 96/24", "DTS-HD Master Audio": "DTS-HD MA",
-            "DTS-HD High Resolution Audio": "DTS-HD HRA", "DTS Express": "DTS Express"}
+            "DTS-HD High Resolution Audio": "DTS-HD HRA", "DTS Express": "DTS Express",
+            "DTS-HD Master Audio + DTS:X": "DTS-HD MA + DTS:X", "DTS-HD Master Audio + DTS:X IMAX": "DTS-HD MA + DTS:X IMAX"}
 
 # libdca's channel counts by arrangement code (dca.h), without the LFE flag.
 LIBDCA_CHANNELS = {0: 1, 1: 2, 2: 2, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 6}
@@ -67,6 +69,12 @@ def nominal_bitrate(report):
         return None
     number = mi.leading_number(text)
     return None if number is None else round(number * 1000)
+
+
+def statistic(report, name):
+    """The value of the named node of the golden report's first statistics, or None."""
+    statistics = next((n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics"), None)
+    return mi.value(statistics, name) if statistics else None
 
 
 def core_rate(report, fallback):
@@ -91,7 +99,8 @@ def normalized(speakers):
 def ffprobe(path, manifest):
     raw = path.suffix == ".dts"
     out = subprocess.run(["ffprobe", "-v", "error", *(["-f", "dts"] if raw else []), "-select_streams", "a", "-show_entries",
-                          "stream=codec_name,profile,sample_rate,channels,channel_layout,bit_rate:packet=pos,size", "-of", "json", str(path)],
+                          "stream=codec_name,profile,sample_rate,channels,channel_layout,bit_rate,bits_per_raw_sample:stream_tags=:packet=pos,size:format=format_name,duration:format_tags=fileinfo",
+                          "-of", "json", str(path)],
                          capture_output=True, text=True, check=True).stdout
     return json.loads(out)
 
@@ -113,6 +122,11 @@ def check_ffprobe(path, manifest, report, problems):
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
     if "ffprobe_channels" not in check and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
+    storage = statistic(report, "Lossless Storage Bit Width")
+    if check.get("decode") and check.get("ffprobe_profile", True) and expected["codec"].startswith("DTS-HD Master Audio") and storage is not None:
+        # dca_xll.c: avctx->bits_per_raw_sample = the channel sets' storage bit width.
+        if int(actual.get("bits_per_raw_sample") or 0) != mi.leading_number(storage):
+            problems.append(f"ffprobe's bits per raw sample {actual.get('bits_per_raw_sample')}, the golden report's storage bit width {storage}")
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
     expected_packets = check.get("ffprobe_packets", manifest["frames"])
     if expected_packets is not False and packets != expected_packets:
@@ -128,10 +142,10 @@ def check_ffprobe(path, manifest, report, problems):
             problems.append(f"ffprobe's bitrate {actual.get('bit_rate')}, the first frame's RATE gives {nominal}")
 
 
-def decode_stderr(data, work):
+def decode_stderr(data, work, level="error"):
     piece = work / "piece.dts"
     piece.write_bytes(data)
-    result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", "dts", "-i", str(piece), "-f", "null", "-"], capture_output=True, text=True)
+    result = subprocess.run(["ffmpeg", "-v", level, "-err_detect", "crccheck", "-f", "dts", "-i", str(piece), "-f", "null", "-"], capture_output=True, text=True)
     return result.stderr.strip()
 
 
@@ -164,7 +178,7 @@ def check_decode_errors(path, manifest, problems, work):
         length = value[0] if isinstance(value, list) else next(l for o, l in manifest["frames"] if o == int(key))
         expectations[int(key)] = (length, value[1] if isinstance(value, list) else value)
     for offset, (length, wanted) in sorted(expectations.items()):
-        errors = decode_stderr(data[offset:offset + length], work)
+        errors = decode_stderr(data[offset:offset + length], work, check.get("decode_log", "error"))
         first = errors.splitlines()[0] if errors else None
         if wanted is None and first is not None or wanted is not None and (first is None or wanted not in errors):
             problems.append(f"ffmpeg's error for the frame at {offset} is {first!r}, the manifest names {wanted!r}")
@@ -231,9 +245,9 @@ MEDIAINFO_READS_OTHERWISE = {
     "exss-sizes-overrun": dict.fromkeys(MIXED, CORE_ONLY.format(why="it cuts the asset at the end of the substream, 40 bytes of the 160 its size gives, and finds only the core "
                                                                     "component in them; the analyzer reports dts.substream-overrun and names the stream from the descriptor")),
     "exss-two-assets": dict.fromkeys(
-        ["format", "commercial name", "sampling rate", "channels", "bit depth", "bitrate", "samples per frame", "bitrate mode"],
+        ["format", "commercial name", "channels", "bitrate", "bitrate mode"],
         "MediaInfo reads each asset descriptor's static fields in turn and never skips to the next descriptor by its size (File_Dts.cpp, AssetDescriptor loop, "
-        "AssetDescriptFsize is only shown), so the second asset's fields are read from the first one's dynamic fields: 127 channels at 16 kHz"),
+        "AssetDescriptFsize is only shown), so the second asset's fields are read from the first one's dynamic fields (127 channels; the lossless component's channel sets, which MediaInfo reads in the first asset, give the sampling frequency, bit depth and samples per frame their right values)"),
     "rate-code": {"bitrate": "MediaInfo gives no bitrate where RATE is not one of the 25 codes of Table 5-7, 29 for open or Unknown (File_Dts.cpp, Streams_Fill_Core: bit_rate<25)"},
     "reserved-values": dict.fromkeys(
         ["commercial name", "channels", "channel layout", "bit depth"],
@@ -274,12 +288,21 @@ MEDIAINFO_READS_OTHERWISE["xbr-bad-crc"] = dict.fromkeys(MIXED, CORE_ONLY.format
 MEDIAINFO_READS_OTHERWISE["exss-misaligned"] = dict.fromkeys(MIXED, "MediaInfo looks for the extension substream right after the core frame, not where 32-bit alignment puts it, and reads this one (" + MEASURED + "), where the analyzer and FFmpeg's decoder (dcadec.c) do not")
 for fixture_name in ("le16-exss-high-resolution", "xbr-bad-crc"):
     MEDIAINFO_READS_OTHERWISE[fixture_name].pop("bitrate mode")
+MEDIAINFO_READS_OTHERWISE["xll-future-version"] = dict.fromkeys(
+    MIXED, "MediaInfo's XLL() returns at once for a lossless extension whose version is not 0 (File_Dts.cpp: Version=Begin>>12, if (Version) return), so it finds no lossless "
+           "extension and reports the core: the format of the core, its bitrate, constant")
+MEDIAINFO_READS_OTHERWISE["xll-lt-rt"] = {"channel layout": "MediaInfo reads the channel mask of a lossless channel set only where each channel feeds a loudspeaker (File_Dts.cpp, XLL(): "
+                                                          "One2OneMapChannels2Speakers), so it gives an Lt/Rt asset no channel layout (measured with MediaInfo 24.01)"}
+MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
+    ["commercial name", "IMAX feature"], "FFmpeg's dca_xll.c takes 0xF14000D0 and 0xF14000D1 for DTS:X IMAX (it ignores the lowest bit), MediaInfo's Extensions2 only 0xF14000D0, and reads "
+                                         "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}
 
 # MediaInfo's commercial names (File_Dts.cpp, Streams_Fill) for the analyzer's codec names.
-COMMERCIAL = {"DTS": "DTS", "DTS-ES": "DTS-ES Discrete", "DTS 96/24": "DTS 96/24", "DTS Express": "DTS Express"}
+COMMERCIAL = {"DTS": "DTS", "DTS-ES": "DTS-ES Discrete", "DTS 96/24": "DTS 96/24", "DTS Express": "DTS Express",
+              "DTS-HD Master Audio + DTS:X": "DTS-HD MA + DTS:X", "DTS-HD Master Audio + DTS:X IMAX": "DTS-HD MA + IMAX Enhanced"}
 
 
 def frames_of(report):
@@ -295,6 +318,9 @@ def check_mediainfo(path, tally):
     report = mi.golden(path)
     info = mi.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
+    if not report["streams"]:
+        tally.skip("everything", "the file holds no audio stream")
+        return tally.problems
     stream = report["streams"][0]
     tally.compare("format", audio.get("Format"), "DTS LBR" if stream["codec"] == "DTS Express" else "DTS")
     if not audio:
@@ -314,13 +340,22 @@ def check_mediainfo(path, tally):
     extension = mi.leading_number(mi.value(statistics, "Extension Sampling Frequency"))
     tally.compare("sampling rate", audio.get("SamplingRate"), str(extension or stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
-    tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
+    layout = (audio.get("ChannelLayout") or "")
+    # File_Dts.cpp, Streams_Fill: the DTS:X and IMAX cases add " Objects" to the layout.
+    has_x = statistic(report, "HasDtsX") is True or statistic(report, "HasDtsXImax") is True
+    tally.compare("objects in the channel layout", str(layout.endswith(" Objects")), str(has_x))
+    tally.compare("channel layout", mi.speakers(layout.removesuffix(" Objects")), mi.normalized(stream["channelLayout"]))
     tally.compare("bit depth", audio.get("BitDepth"), str(stream.get("bitsPerSample")))
+    if stream["codec"].startswith("DTS-HD Master Audio"):
+        # File_Dts.cpp, Streams_Fill: the features "XLL", then "X" and "IMAX" (Extensions2 sets X for both words, IMAX for 0xF14000D0 alone).
+        features = (audio.get("Format_AdditionalFeatures") or "").split()
+        tally.compare("DTS:X feature", str("X" in features), str(has_x))
+        tally.compare("IMAX feature", str("IMAX" in features), str(statistic(report, "HasDtsXImax") is True))
     exss = mi.child(first, "Extension Substream")
     blocks = mi.leading_number(mi.value(core, "Frame Header", "Sample Blocks")) if core is not None else None
     rate = mi.leading_number(mi.value(core, "Frame Header", "Sampling Frequency")) if core is not None else stream["sampleRate"]
     samples = (blocks or 16) * 32
-    lossless = stream["codec"] == "DTS-HD Master Audio"
+    lossless = stream["codec"].startswith("DTS-HD Master Audio")
     # File_Dts.cpp, BitRate_Get: the core's frame bytes in the file over its samples (none where an LBR component stands in for the core),
     # plus the extension substream's bytes over its samples (WithHD); a lossless stream has no bitrate, and is variable.
     expected = None
@@ -328,12 +363,64 @@ def check_mediainfo(path, tally):
         extended = stream["codec"] in ("DTS-HD High Resolution Audio", "DTS Express")
         expected = 0 if stream["codec"] == "DTS Express" or core is None else core["length"] * 8 * rate / samples
         expected += exss["length"] * 8 * stream["sampleRate"] / samples if extended and exss is not None else 0
-    tally.compare("bitrate", audio.get("BitRate"), None if expected is None else str(round(expected)))
+    if path.suffix == ".dtshd":
+        tally.skip("bitrate", "MediaInfo gives a .dtshd file's bit rate from the stream chunk's size over the duration (measured with MediaInfo 24.01: 2,944 bytes in 43 ms are 547,721 bit/s); "
+                              "its nominal and maximum bit rates are compared with the chunks")
+    else:
+        tally.compare("bitrate", audio.get("BitRate"), None if expected is None else str(round(expected)))
     if core is not None:
         tally.compare("samples per frame", audio.get("SamplesPerFrame"), str(round(samples * (extension or rate) / rate)))
     tally.compare("bitrate mode", audio.get("BitRate_Mode"), "VBR" if lossless else "CBR")
     tally.skip("duration, samples and stream size", "MediaInfo derives them from the file size and the first frame's bitrate (File_Dts.cpp, Streams_Finish)")
     return tally.problems
+
+
+def chunk(report, chunk_id):
+    return next((c for c in report["root"]["children"] if c["name"] == chunk_id), None)
+
+
+def check_dtshd(path, manifest, report, problems, tally):
+    """The container: ffprobe's demuxer (dtshddec.c) and MediaInfo (File_Dts.cpp, FileHeader_Parse and Header_Begin) must read the chunks as the golden
+    report does: the format, FILEINFO's text, the length AUPR-HDR gives, and MediaInfo's frame and sample counts, nominal and maximum bit rates, stream size
+    and time code."""
+    probe = ffprobe(path, manifest) if manifest["crosscheck"].get("ffprobe") else {}
+    if "format" in probe and probe["format"].get("format_name") != "dtshd":
+        problems.append(f"ffprobe's format is {probe['format'].get('format_name')}, expected dtshd")
+    info = chunk(report, "FILEINFO")
+    fileinfo = probe.get("format", {}).get("tags", {}).get("fileinfo")
+    if info is not None and probe and fileinfo != mi.value(info, "Text"):
+        problems.append(f"ffprobe's fileinfo tag is {fileinfo!r}, FILEINFO's text {mi.value(info, 'Text')!r}")
+    presentation = chunk(report, "AUPR-HDR")
+    audio_info = mi.read(path, full=True)
+    audio = audio_info["Audio"][0] if audio_info and audio_info["Audio"] else {}
+    if presentation is None or not audio:
+        return
+    number = lambda *names: mi.leading_number(mi.value(presentation, *names))
+    frames, per_frame, rate, original, delay = number("Frames"), number("Samples per Frame"), number("Maximum Sampling Frequency"), number("Original Samples"), number("Codec Delay")
+    if probe.get("streams"):
+        # dtshddec.c: st->duration = Num_Frames_Total * Samples_Per_Frame_At_Max_Fs, in the time base 1/sample rate.
+        if rate and int(probe["streams"][0].get("sample_rate", 0)) == rate:
+            seconds = float(probe["format"].get("duration", 0))
+            if abs(seconds - frames * per_frame / rate) > 0.0005:
+                problems.append(f"ffprobe's duration {seconds} s, AUPR-HDR's frames and samples per frame make {frames * per_frame / rate}")
+    # File_Dts.cpp: FrameCount is Num_Frames_Total, SamplingCount the original samples (plus the codec delay where it is a frame or more).
+    tally.compare("container frame count", audio.get("FrameCount"), str(frames))
+    tally.compare("container sampling count", audio.get("SamplingCount"), str(original + (delay if delay >= per_frame else 0)))
+    core, extension = chunk(report, "CORESSMD"), chunk(report, "EXTSS_MD")
+    header = chunk(report, "DTSHDHDR")
+    nominal = (mi.leading_number(mi.value(core, "Bit Rate")) if core else 0) + (mi.leading_number(mi.value(extension, "Average Bit Rate")) if extension else 0)
+    tally.compare("container nominal bitrate", audio.get("BitRate_Nominal"), str(nominal * 1000) if nominal else None)
+    peak = mi.leading_number(mi.value(extension, "Peak Bit Rate")) if extension else None
+    tally.compare("container maximum bitrate", audio.get("BitRate_Maximum"), str(((mi.leading_number(mi.value(core, "Bit Rate")) if core else 0) + peak) * 1000) if peak else None)
+    stream_chunk = chunk(report, "STRMDATA")
+    if stream_chunk is not None:
+        tally.compare("container stream size", audio.get("StreamSize"), str(mi.leading_number(mi.value(stream_chunk, "Chunk Size"))))
+    code = mi.value(header, "Time Code") if header else None
+    if code and audio.get("extra", {}).get("TimeCode"):
+        hours, minutes, seconds, samples = code.replace(" and ", ":").replace(" samples", "").split(":")
+        tally.compare("container time code", audio["extra"]["TimeCode"], f"{hours}:{minutes}:{seconds}:00+{samples}samples")
+    else:
+        tally.skip("container time code", "MediaInfo reports no time code where DTSHDHDR's frame rate is 0 or reserved, or the header is missing")
 
 
 def main():
@@ -364,6 +451,10 @@ def main():
             if check.get("libdca"):
                 check_libdca(tool, path, manifest, report, problems)
             problems += check_mediainfo(path, tally)
+            if path.suffix == ".dtshd":
+                before = len(tally.problems)
+                check_dtshd(path, manifest, report, problems, tally)
+                problems += tally.problems[before:]
             checked += 1
             for problem in problems:
                 print(f"{path.name}: {problem}")

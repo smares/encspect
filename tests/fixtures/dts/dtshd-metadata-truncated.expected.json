@@ -1,0 +1,29 @@
+{
+ "description": "A .dtshd file that ends inside its CORESSMD chunk, before any audio.",
+ "length": 56,
+ "format": "DTS-HD",
+ "frames": [],
+ "gaps": [],
+ "streams": [],
+ "fields": {},
+ "findings": [
+  [
+   "dtshd.chunk-truncated",
+   "CORESSMD chunk"
+  ],
+  [
+   "dtshd.no-stream-data",
+   "no STRMDATA"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk in the cut file (dtshddec.c: end of file before the stream data)",
+   "decode": "no stream",
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}

@@ -71,7 +71,8 @@ def text(value):
 # analyzer names them; "M" is mono, and "Ls"/"Rs" are the surround pair, at the sides where a back
 # pair ("Lb"/"Rb") is present as well.
 SPEAKERS = {"L": "front left", "R": "front right", "C": "front center", "M": "front center", "LFE": "LFE", "Ls": "side left",
-            "Rs": "side right", "Lb": "back left", "Rb": "back right", "Cb": "back center", "Cs": "back center", "S": "back center"}
+            "Rs": "side right", "Lb": "back left", "Rb": "back right", "Cb": "back center", "Cs": "back center", "S": "back center",
+            "Lss": "side left", "Rss": "side right"}
 
 
 def speakers(layout):

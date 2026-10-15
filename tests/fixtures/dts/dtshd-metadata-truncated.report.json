@@ -1,0 +1,213 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "dtshd-metadata-truncated.dtshd",
+    "root": {
+      "name": "File",
+      "value": "DTS-HD",
+      "offset": 0,
+      "length": 56,
+      "children": [
+        {
+          "name": "DTSHDHDR",
+          "value": 16,
+          "unit": "bytes",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 16,
+              "unit": "bytes",
+              "offset": 8,
+              "length": 8
+            },
+            {
+              "name": "Version",
+              "value": 1,
+              "offset": 16,
+              "length": 4
+            },
+            {
+              "name": "Time Code",
+              "value": "01:00:00 and 1234 samples",
+              "offset": 20,
+              "length": 5,
+              "children": [
+                {
+                  "name": "Reference Clock Code",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 20,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Time Stamp",
+                  "value": 172801234,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Time Code Frame Rate",
+              "value": "2 (24 frames per second)",
+              "offset": 25,
+              "length": 1
+            },
+            {
+              "name": "Stream Metadata",
+              "value": 25,
+              "offset": 26,
+              "length": 2,
+              "children": [
+                {
+                  "name": "IsVbr",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasPeakBitrateSmoothing",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasNavigationTable",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasCoreSubstream",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasExtensionSubstream",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                }
+              ]
+            },
+            {
+              "name": "Audio Presentations",
+              "value": 1,
+              "unit": "presentations",
+              "offset": 28,
+              "length": 1
+            },
+            {
+              "name": "Extension Substreams",
+              "value": 1,
+              "unit": "extension substreams",
+              "offset": 29,
+              "length": 1
+            },
+            {
+              "name": "Padding",
+              "value": 2,
+              "unit": "bytes",
+              "offset": 30,
+              "length": 2
+            }
+          ]
+        },
+        {
+          "name": "CORESSMD",
+          "value": 12,
+          "unit": "bytes",
+          "offset": 32,
+          "length": 24,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 12,
+              "unit": "bytes",
+              "offset": 40,
+              "length": 8
+            },
+            {
+              "name": "Maximum Sampling Frequency",
+              "value": 48000,
+              "unit": "Hz",
+              "offset": 48,
+              "length": 3
+            },
+            {
+              "name": "Bit Rate",
+              "value": 384,
+              "unit": "kbps",
+              "offset": 51,
+              "length": 2
+            },
+            {
+              "name": "Channel Mask",
+              "value": 3,
+              "offset": 53,
+              "length": 2,
+              "children": [
+                {
+                  "name": "Speakers",
+                  "value": "front center, front left, front right",
+                  "offset": 53,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Padding",
+              "value": 1,
+              "unit": "bytes",
+              "offset": 55,
+              "length": 1
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "dtshd.no-stream-data",
+        "message": "The file has no STRMDATA chunk, so it holds no audio.",
+        "offset": 0,
+        "length": 56,
+        "path": [],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "dtshd.chunk-truncated",
+        "message": "The CORESSMD chunk at 0x20 has a size of 12 bytes, but the file has 8 after its header.",
+        "offset": 32,
+        "length": 24,
+        "path": [
+          1
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

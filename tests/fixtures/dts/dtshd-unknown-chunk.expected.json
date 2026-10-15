@@ -1,0 +1,55 @@
+{
+ "description": "A .dtshd file with a chunk of an ID the standard does not define between the header and STRMDATA.",
+ "length": 3024,
+ "format": "DTS-HD",
+ "frames": [
+  [
+   80,
+   736
+  ],
+  [
+   816,
+   736
+  ],
+  [
+   1552,
+   736
+  ],
+  [
+   2288,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}

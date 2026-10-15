@@ -1,0 +1,66 @@
+{
+ "description": "A .dtshd file whose STRMDATA chunk states a size 100 bytes short of the stream, so the end of the last unit is read as a chunk.",
+ "length": 2992,
+ "format": "DTS-HD",
+ "frames": [
+  [
+   48,
+   736
+  ],
+  [
+   784,
+   736
+  ],
+  [
+   1520,
+   736
+  ],
+  [
+   2256,
+   636
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dtshd.chunk-header",
+   "are not a chunk header"
+  ],
+  [
+   "dts.frame-truncated",
+   "The last frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "libdca": "libdca reads raw DTS only.",
+   "ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')",
+   "decode": "no container"
+  }
+ }
+}

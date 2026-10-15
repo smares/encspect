@@ -1,0 +1,25 @@
+{
+ "description": "A .dtshd file with a header and metadata, but no STRMDATA chunk.",
+ "length": 72,
+ "format": "DTS-HD",
+ "frames": [],
+ "gaps": [],
+ "streams": [],
+ "fields": {},
+ "findings": [
+  [
+   "dtshd.no-stream-data",
+   "no STRMDATA"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk (dtshddec.c: end of file)",
+   "decode": "no stream",
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}
