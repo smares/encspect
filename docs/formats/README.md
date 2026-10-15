@@ -16,7 +16,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | DTS (core, XCh, X96, XXCH and DTS-HD extension substreams, raw and in MP4) | [dts.md](dts.md) |
 | DTS-HD files (`.dtshd`: the chunks around a DTS stream) | [dtshd.md](dtshd.md) |
 | WavPack (lossless, hybrid and DSD, with correction files) | [wavpack.md](wavpack.md) |
-| ASF and WMA (versions 1 and 2, Professional; Lossless and Voice at header level) | [asf-wma.md](asf-wma.md) |
+| ASF and WMA (versions 1 and 2, Professional and Voice; Lossless at header level) | [asf-wma.md](asf-wma.md) |
 
 ## Common to every format
 
