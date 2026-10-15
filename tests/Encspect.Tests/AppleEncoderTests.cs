@@ -6,11 +6,12 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Apple's AAC encoder is named from the way its files are written (AacEncoder, Mp4Parser.AddAppleEvidence): the files afconvert wrote
+// Apple's AudioToolbox is named from the way its files are written (AacEncoder, Mp4Parser.AppleEvidence), with low confidence, since the writer
+// lays the same layout around packets it only copied: the files afconvert wrote
 // on the macOS 15.7 runners are in tests/fixtures/aac (apple-*, with manifests and golden reports) and tests/fixtures/apple (the rest), and here each piece of the evidence is taken away in turn.
 public class AppleEncoderTests
 {
-    private const string Apple = "Apple AAC encoder (AudioToolbox)";
+    private const string Apple = "Apple AudioToolbox";
 
     private static byte[] Read(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
 
@@ -39,12 +40,12 @@ public class AppleEncoderTests
     }
 
     [Fact]
-    public void M4aLayoutNamesAppleWithMediumConfidence()
+    public void M4aLayoutNamesAppleWithLowConfidence()
     {
         Report report = Analyze("apple.m4a", Read("aac/apple-lc-m4a-cbr-st44.m4a"));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(Apple, stream.Encoder);
-        Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
+        Assert.Equal(Confidence.Low, stream.EncoderConfidence);
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class AppleEncoderTests
     public void EveryContainerAndProfileIsNamed(string name)
     {
         StreamInfo stream = Assert.Single(Analyze(name, Read(name)).Streams);
-        Assert.Equal((Apple, Confidence.Medium), (stream.Encoder, stream.EncoderConfidence));
+        Assert.Equal((Apple, Confidence.Low), (stream.Encoder, stream.EncoderConfidence));
     }
 
     [Theory]
@@ -208,24 +209,25 @@ public class AppleEncoderTests
         Assert.Single(report.Streams);
     }
 
-    // iTunes uses Apple's encoder, so its tool atom agrees with the layout and is no disagreement.
+    // iTunes uses Apple's encoder, so its tool atom agrees with the layout and is no disagreement; the tool atom's name is the one shown.
     [Fact]
     public void AnITunesToolClaimAgreesWithTheLayout()
     {
         var unit = new Node("unit", 0, 1);
-        var layout = new EncoderClaim(Apple, unit, "MP4 layout of Apple's AudioToolbox file writer: x") { Confidence = Confidence.Medium };
+        var layout = new EncoderClaim(Apple, unit, "MP4 layout of Apple's AudioToolbox file writer: x") { IsLayout = true };
         var tool = new EncoderClaim("iTunes 12.13.2.3", unit, "MP4 ©too atom (encoding tool)");
         var differing = new List<string>();
         Node? encoder = Encspect.Formats.Aac.AacEncoder.Detect(null, [tool, layout], (name, value, description) => new Node(name, 0, 1, value) { Description = description },
             (claim, text, name) => differing.Add(text));
         Assert.Empty(differing);
-        Assert.Equal(Apple, encoder?.Value?.ToString());
+        Assert.Equal("iTunes 12.13.2.3", encoder?.Value?.ToString());
         Assert.Equal(2, encoder!.Children.Count(c => c.Name == "Evidence"));
 
         encoder = Encspect.Formats.Aac.AacEncoder.Detect(null, [new EncoderClaim("FAAC 1.40.0", unit, "MP4 ©too atom (encoding tool)"), layout],
             (name, value, description) => new Node(name, 0, 1, value) { Description = description }, (claim, text, name) => differing.Add(text));
-        Assert.Equal(["FAAC 1.40.0"], differing);
-        Assert.Equal(Apple, encoder?.Value?.ToString());
+        // a name some software wrote outranks the writer's layout, which then disagrees
+        Assert.Equal([Apple], differing);
+        Assert.Equal("FAAC 1.40.0", encoder?.Value?.ToString());
     }
 
     // iTunSMPB's total counts the whole track; only Apple Lossless's writer leaves the padding off the last packet's duration.
@@ -329,11 +331,54 @@ public class AppleEncoderTests
     [Fact]
     public void ALayoutThatDisagreesWithTheStreamIsWordedAsALayout()
     {
-        var layout = new EncoderClaim(Apple, new Node("unit", 0, 1), "MP4 layout of Apple's AudioToolbox file writer: a DecoderConfigDescriptor whose stream type byte is 0x14") { Confidence = Confidence.Medium };
+        var layout = new EncoderClaim(Apple, new Node("unit", 0, 1), "MP4 layout of Apple's AudioToolbox file writer: a DecoderConfigDescriptor whose stream type byte is 0x14") { IsLayout = true };
         Assert.Equal(
-            "The MP4 layout of Apple's AudioToolbox file writer points to \"Apple AAC encoder (AudioToolbox)\", but the stream points to FFmpeg (Lavc60.31.102); the file may have been rewritten by other software around the stream.",
+            "The MP4 layout of Apple's AudioToolbox file writer points to \"Apple AudioToolbox\", but the stream points to FFmpeg (Lavc60.31.102); the writer lays out streams it only copied in the same way, and other software may have rewritten the file.",
             Encspect.Formats.Aac.AacEncoder.Disagreement(layout, Apple, "FFmpeg (Lavc60.31.102)", "unused"));
         var tool = new EncoderClaim("FAAC 1.40.0", new Node("unit", 0, 1), "MP4 ©too atom (encoding tool)");
         Assert.StartsWith("The MP4 ©too atom (encoding tool) names \"FAAC 1.40.0\"", Encspect.Formats.Aac.AacEncoder.Disagreement(tool, "FAAC 1.40.0", "Apple", "cause"), StringComparison.Ordinal);
+    }
+
+    // afconvert -d 0 copies packets. The writer lays its layout around a copy of a stream with no esds of its own (an ADTS source), so
+    // such a copy of an fdkaac stream is named Apple, with low confidence and wording that says the layout is the writer's. A signature in
+    // the stream wins, and the layout is then an information finding. An M4A source keeps its own esds (stream type byte 0x15), so
+    // its copy shows no layout.
+    [Theory]
+    [InlineData("apple/apple-passthru-m4a-from-fdkaac-he-adts.m4a")]
+    [InlineData("apple/apple-passthru-adts-from-fdkaac-m4a.aac")]
+    [InlineData("apple/apple-intel-passthru-m4a-from-fdkaac-he-adts.m4a")]
+    [InlineData("apple/apple-intel-passthru-adts-from-fdkaac-m4a.aac")]
+    public void CopiedStreamsWithoutASignatureAreNamedAfterTheWriterWithLowConfidence(string name)
+    {
+        Report report = Analyze(name, Read(name));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal((Apple, Confidence.Low), (stream.Encoder, stream.EncoderConfidence));
+    }
+
+    [Theory]
+    [InlineData("apple/apple-passthru-m4a-from-fdkaac-m4a.m4a")]
+    [InlineData("apple/apple-intel-passthru-m4a-from-fdkaac-m4a.m4a")]
+    public void ACopyOfAnM4aKeepsItsEsdsAndShowsNoLayout(string name)
+    {
+        Assert.Null(Assert.Single(Analyze(name, Read(name)).Streams).Encoder);
+    }
+
+    [Theory]
+    [InlineData("apple/apple-passthru-m4a-from-ffmpeg-adts.m4a", "FFmpeg (Lavc60.31.102)")]
+    [InlineData("apple/apple-intel-passthru-m4a-from-ffmpeg-adts.m4a", "FFmpeg (Lavc60.31.102)")]
+    [InlineData("apple/apple-passthru-m4a-from-faac-m4a.m4a", "FAAC 1.40.0")]
+    [InlineData("apple/apple-intel-passthru-m4a-from-faac-m4a.m4a", "FAAC 1.40.0")]
+    public void ASignatureInTheStreamBeatsTheWritersLayout(string name, string encoder)
+    {
+        Report report = Analyze(name, Read(name));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal((encoder, Confidence.High), (stream.Encoder, stream.EncoderConfidence));
+        Finding differing = report.Findings.FirstOrDefault(f => f.Code == "aac.encoder-claim-differs")!;
+        if (name.Contains("ffmpeg-adts", StringComparison.Ordinal))
+        {
+            Assert.NotNull(differing);
+            Assert.Equal(Severity.Info, differing.Severity);
+            Assert.Contains("the writer lays out streams it only copied in the same way", differing.Message, StringComparison.Ordinal);
+        }
     }
 }

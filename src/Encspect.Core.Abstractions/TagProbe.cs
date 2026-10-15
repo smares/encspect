@@ -18,6 +18,10 @@ public sealed record Evidence(string Description, long Offset, long Length);
 public sealed record EncoderClaim(string Text, Node Source, string Description)
 {
     public Confidence Confidence { get; init; } = Confidence.Low;
+
+    // Whether the claim comes from the way a file is laid out and not from a name some software wrote, so it names the writer of the layout,
+    // which need not be the encoder; the text is then the name of that writer.
+    public bool IsLayout { get; init; }
 }
 
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature

@@ -58,7 +58,7 @@ ASC = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDe
 MOOV_AFTER = ["mp4.moov-after-mdat", "not optimized for streaming"]
 IMPLICIT_SBR = ["aac.implicit-sbr", "35 of 35 raw data blocks hold SBR data"]
 IMPLICIT_PS = ["aac.implicit-sbr", "36 of 36 raw data blocks hold SBR data, and 36 carry the parametric stereo extension"]
-APPLE = "Apple AAC encoder (AudioToolbox)"
+APPLE = "Apple AudioToolbox"
 STREAM_TYPE = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Stream Type"
 GAPLESS = "MP4/moov/trak/Gapless/"
 FAAD_ADTS_RATE = "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
@@ -224,19 +224,19 @@ FIXTURES = [
     # Apple's AudioToolbox, through afconvert on the macOS 15.7 runners (import_macos_aac_fixtures.py, scripts/fixtures/macos): macOS only, so
     # the files are committed once and these entries only write the manifests (--manifests-only); "pcm/..." is a source file of wma_signals.py.
     ("apple-aace-m4a-cbr-mono44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aace", "-s", "0", "-b", "32000", "pcm/mono44.wav", "{out}"],
-     [stream("ER AAC ELD", 44100, 1, "Mono", 512, False, (APPLE, "Medium"), "ELD")],
+     [stream("ER AAC ELD", 44100, 1, "Mono", 512, False, (APPLE, "Low"), "ELD")],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "328 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "150 samples"},
      [], {"skip": {"faad": "faad2 reads AAC LD and ELD in no MP4 file here; ffmpeg decodes them.", "faad_trace": "faad2 does not decode the file."}}),
     ("apple-aacl-m4a-cbr-mono44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aacl", "-s", "0", "-b", "32000", "pcm/mono44.wav", "{out}"],
-     [stream("ER AAC LD", 44100, 1, "Mono", 512, False, (APPLE, "Medium"), "LD")],
+     [stream("ER AAC LD", 44100, 1, "Mono", 512, False, (APPLE, "Low"), "LD")],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "584 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "406 samples"},
      [], {"skip": {"faad": "faad2 reads AAC LD and ELD in no MP4 file here; ffmpeg decodes them.", "faad_trace": "faad2 does not decode the file."}}),
     ("apple-he-m4a-cbr-mono44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aach", "-s", "0", "-b", "32000", "pcm/mono44h.wav", "{out}"],
-     [stream("HE-AAC", 44100, 1, "Mono", 2048, False, (APPLE, "Medium"), "HE-AAC", ffprobe_channels=2)],
+     [stream("HE-AAC", 44100, 1, "Mono", 2048, False, (APPLE, "Low"), "HE-AAC", ffprobe_channels=2)],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "2112 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "1438 samples", ASC + "/Sync Extension": "SBR present"},
      [], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("apple-he-m4a-cbr-st44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aach", "-s", "0", "-b", "64000", "pcm/st44h.wav", "{out}"],
-     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (APPLE, "Medium"), "HE-AAC")],
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (APPLE, "Low"), "HE-AAC")],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "2112 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "1438 samples", ASC + "/Sync Extension": "SBR present"},
      [], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("apple-hev2-adts-cbr-st44", ".aac", ["afconvert", "-f", "adts", "-d", "aacp", "-s", "0", "-b", "32000", "pcm/st44h.wav", "{out}"],
@@ -244,7 +244,7 @@ FIXTURES = [
      {},
      [["aac.implicit-sbr", "25 of 25 raw data blocks hold SBR data, and 25 carry the parametric stereo extension"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("apple-hev2-m4a-cbr-st44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aacp", "-s", "0", "-b", "32000", "pcm/st44h.wav", "{out}"],
-     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, (APPLE, "Medium"), "HE-AACv2")],
+     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, (APPLE, "Low"), "HE-AACv2")],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "2112 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "1438 samples", ASC + "/Sync Extension": "SBR and PS present"},
      [], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("apple-lc-adts-cbr-st44", ".aac", ["afconvert", "-f", "adts", "-d", "aac", "-s", "0", "-b", "128000", "pcm/st44.wav", "{out}"],
@@ -252,7 +252,7 @@ FIXTURES = [
      {},
      [], {"faad": "adts"}),
     ("apple-lc-m4a-cbr-st44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aac", "-s", "0", "-b", "128000", "pcm/st44.wav", "{out}"],
-     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, (APPLE, "Medium"), "LC")],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, False, (APPLE, "Low"), "LC")],
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "2112 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "414 samples"},
      [], {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
 ]

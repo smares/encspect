@@ -20,7 +20,7 @@
           "children": [
             {
               "name": "Encoder",
-              "value": "Apple AAC encoder (AudioToolbox)",
+              "value": "Apple AudioToolbox",
               "offset": 0,
               "length": 9045,
               "children": [
@@ -32,7 +32,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "ADTS headers: all 24 frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0, as Apple's AudioToolbox writes them at 0x0 names \"Apple AAC encoder (AudioToolbox)\"",
+                  "value": "ADTS headers as Apple's AudioToolbox writes them, also around packets it copied: all 24 frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0 (at 0x0)",
                   "offset": 0,
                   "length": 9045
                 }
@@ -25256,7 +25256,7 @@
         "duration": 0.5572789115646258,
         "averageBitrate": 129.84521484375,
         "isVbr": false,
-        "encoder": "Apple AAC encoder (AudioToolbox)",
+        "encoder": "Apple AudioToolbox",
         "encoderConfidence": "Low",
         "series": [
           {

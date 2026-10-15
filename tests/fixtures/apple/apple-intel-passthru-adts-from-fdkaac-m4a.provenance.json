@@ -1,0 +1,69 @@
+{
+ "description": "afconvert -v -f adts -d 0 foreign/fdkaac-m4a.m4a encoded/passthru-adts-from-fdkaac-m4a.aac: the packets of tests/fixtures/aac/fdkaac-lc.m4a copied (-d 0), not encoded.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f adts -d 0 foreign/fdkaac-m4a.m4a encoded/passthru-adts-from-fdkaac-m4a.aac",
+  "file_type": "adts",
+  "format_id": "0",
+  "codec": "0",
+  "strategy": "copy",
+  "options": "",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 2,
+   "sample_rate": 44100,
+   "format_id": "aac",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/passthru-adts-from-fdkaac-m4a.aac",
+    "File type ID:   adts",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "estimated duration: 1.364505 sec",
+    "audio bytes: 25361",
+    "audio packets: 67",
+    "bit rate: 130412 bits per second",
+    "packet size upper bound: 1536",
+    "maximum packet size: 418",
+    "audio data file offset: 0",
+    "optimized",
+    "format list:",
+    "[ 0] format:\t  2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "fdkaac-m4a",
+  "from": "tests/fixtures/aac/fdkaac-lc.m4a",
+  "sha256": "8cb8e41437d9f1292d1c2c7edf1d3a44579887b63231b71211848c691010e52f"
+ },
+ "runner": {
+  "image": "macos15 20260824.0482.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin iad01-dz249-4b52e29a-7bb1-468d-bb5b-b03aa43f78a5-FA25DC75570C.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64 x86_64",
+  "hardware": [
+   "Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz",
+   "Macmini6,2",
+   "x86_64",
+   "sysctl: unknown oid 'hw.optional.arm64'"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 25361,
+ "sha256": "b083bec3e33cf2d5ca8d91f34de8961d7d60f290cc584ed54892c19fbfe3c737",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}

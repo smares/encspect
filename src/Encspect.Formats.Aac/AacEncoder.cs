@@ -33,10 +33,13 @@ namespace Encspect.Formats.Aac;
 // layout names exhale with medium confidence, without a version, which an agreeing claim supplies.
 //
 // Apple's AAC encoder (AudioToolbox, as afconvert, iTunes and QuickTime use it) writes no text into the
-// stream. Its files show it in the way they are written: an M4A, MP4 or 3GP track whose DecoderConfigDescriptor
-// has its reserved stream type bit clear, with an sbtd box or a free box that pads the audio data to a page
-// (the MP4 parser makes that a claim of medium confidence), and ADTS headers with the original/copy bit set and a
-// buffer fullness of 0 (a claim of low confidence here). Neither is in the stream, so a remux drops them.
+// stream. Its file writer lays files out in a way of its own: an M4A, MP4 or 3GP track whose DecoderConfigDescriptor
+// has its reserved stream type bit clear, with an sbtd box or a free box that pads the audio data to a page (the MP4
+// parser), and ADTS headers with the original/copy bit set and a buffer fullness of 0. Both are claims of low confidence
+// that name "Apple AudioToolbox": afconvert's -d 0 gives the layout to packets it only copied, such as an fdkaac stream
+// (macOS 15.7, run 4: an ADTS source gets it in M4A and ADTS, an M4A source keeps its own esds), so the layout names the
+// writer, and the encoder only unless the stream was copied. A signature in the stream (ffmpeg's, FAAC's) wins over it,
+// and a name some software wrote (a tool atom) outranks it.
 //
 // FAAC 1.30, 1.31.1, 1.40 and 1.50 sign their streams with text (FaacVersion). FAAC 2.0, 2.1 and 2.2
 // write none, and their HE-AAC encoder lays out its SBR data in ways of its own (FaacSbr): the layout
@@ -59,7 +62,7 @@ internal static partial class AacEncoder
         ("exhale", ["exhale"]),
         ("Nero", ["nero"]),
         ("qaac", ["qaac"]),
-        ("Apple", ["apple aac", "audiotoolbox", "itunes"]),
+        ("Apple", ["apple", "audiotoolbox", "itunes"]),
     ];
 
     private static readonly Dictionary<string, Regex> MarkerPatterns = Families.SelectMany(f => f.Markers).ToDictionary(m => m, m =>
@@ -129,7 +132,8 @@ internal static partial class AacEncoder
         }
 
         // A claim a container made from the way it lays out its own structure outranks one that repeats a name.
-        foreach (EncoderClaim claim in claims.OrderByDescending(c => c.Confidence))
+        // and a name some software wrote outranks a layout of equal confidence: the layout may only be a copy's wrapper.
+        foreach (EncoderClaim claim in claims.OrderByDescending(c => c.Confidence).ThenBy(c => c.IsLayout))
         {
             string text = claim.Text.Trim();
             if (text.Length == 0)
@@ -138,9 +142,9 @@ internal static partial class AacEncoder
             }
 
             HashSet<string> claimed = FamiliesOf(text);
-            string evidence = claim.Confidence == Confidence.Low
-                ? $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\""
-                : $"{claim.Description} (at 0x{claim.Source.Offset:X})";
+            string evidence = claim.IsLayout
+                ? $"{claim.Description} (at 0x{claim.Source.Offset:X})"
+                : $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
             if (encoder is null)
             {
                 // ffmpeg's muxer writes its own version whatever encoded the stream.
@@ -213,14 +217,14 @@ internal static partial class AacEncoder
     // layout, whose description reads "what it is: the traces".
     public static string Disagreement(EncoderClaim claim, string text, string name, string lowCause)
     {
-        if (claim.Confidence == Confidence.Low)
+        if (!claim.IsLayout)
         {
             return $"The {claim.Description} names \"{text}\", but the stream points to {name}; {lowCause}";
         }
 
         int colon = claim.Description.IndexOf(':', StringComparison.Ordinal);
         string subject = colon > 0 ? claim.Description[..colon] : claim.Description;
-        return $"The {subject} points to \"{text}\", but the stream points to {name}; the file may have been rewritten by other software around the stream.";
+        return $"The {subject} points to \"{text}\", but the stream points to {name}; the writer lays out streams it only copied in the same way, and other software may have rewritten the file.";
     }
 
     private static HashSet<string> FamiliesOf(string text)

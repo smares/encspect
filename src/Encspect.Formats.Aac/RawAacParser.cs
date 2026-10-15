@@ -677,8 +677,11 @@ public sealed class RawAacParser : IFormatParser
         // Apple's ADTS writer: see IsAppleHeader. A habit of one writer, so a claim of low confidence.
         if (frames >= AppleMinimumFrames && appleHeaders == frames)
         {
-            claims = [.. claims, new EncoderClaim("Apple AAC encoder (AudioToolbox)", FirstFrame(),
-                $"ADTS headers: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0, as Apple's AudioToolbox writes them")];
+            claims = [.. claims, new EncoderClaim("Apple AudioToolbox", FirstFrame(),
+                $"ADTS headers as Apple's AudioToolbox writes them, also around packets it copied: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0")
+            {
+                IsLayout = true,
+            }];
         }
 
         Node? encoder = AacEncoder.Detect(

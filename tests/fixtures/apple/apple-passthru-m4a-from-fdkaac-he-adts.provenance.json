@@ -1,0 +1,72 @@
+{
+ "description": "afconvert -v -f m4af -d 0 foreign/fdkaac-he-adts.aac encoded/passthru-m4a-from-fdkaac-he-adts.m4a: the packets of tests/fixtures/aac/fdkaac-he-adts.aac copied (-d 0), not encoded.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d 0 foreign/fdkaac-he-adts.aac encoded/passthru-m4a-from-fdkaac-he-adts.m4a",
+  "file_type": "m4af",
+  "format_id": "0",
+  "codec": "0",
+  "strategy": "copy",
+  "options": "",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 2,
+   "sample_rate": 22050,
+   "format_id": "aac",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/passthru-m4a-from-fdkaac-he-adts.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     2 ch,  22050 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "                no channel layout.",
+    "estimated duration: 1.529615 sec",
+    "audio bytes: 9508",
+    "audio packets: 35",
+    "bit rate: 46797 bits per second",
+    "packet size upper bound: 349",
+    "maximum packet size: 349",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 33728 valid frames + 2112 priming + 0 remainder = 35840",
+    "format list:",
+    "[ 0] format:\t  2 ch,  44100 Hz, aach (0x00000000) 0 bits/channel, 0 bytes/packet, 2048 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "[ 1] format:\t  2 ch,  22050 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "fdkaac-he-adts",
+  "from": "tests/fixtures/aac/fdkaac-he-adts.aac",
+  "sha256": "5cf2b7d3fbe90014f6aae829e23a40954038de982841696624f411e930753c87"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin iad20-eo1211-38006ec2-f1e3-44ab-b374-d6b6c61390b9-9A374C98282D.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 13604,
+ "sha256": "5fbdeaa61064c8e951442db85eff966f6c4c3278732a81a1b2634985ffbf8071",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}
