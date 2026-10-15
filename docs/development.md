@@ -114,7 +114,7 @@ Every format has three kinds of fixture:
 | MP4 and AAC | `tests/fixtures/mp4`, `adts`, `aac` | `make_mp4_fixtures.py`, `aac_block_fixtures.py`; `make_external_aac_fixtures.py`; `import_macos_aac_fixtures.py` (Apple's encoder, below) | ffprobe, MP4Box, faad, a tracing faad2 build, ffmpeg decoding, MediaInfo (`crosscheck_mp4_fixtures.py`); `check_aac_tables.py` for the Huffman and band tables; TagLib# for iTunes metadata |
 | Ogg, Speex, Vorbis, Opus | `tests/fixtures/ogg` | `make_ogg_fixtures.py`, `make_vorbis_opus_fixtures.py`; `make_external_ogg_fixtures.py`, `make_external_vorbis_opus_fixtures.py` | oggz, ogginfo, vorbiscomment, opusinfo, ffprobe, speexdec, oggdec, opusdec, MediaInfo (`crosscheck_ogg_fixtures.py`) |
 | Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine, MediaInfo (`crosscheck_musepack_fixtures.py`) |
-| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe, ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`) |
+| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe (including the Atmos profile), ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`, including JOC, the complexity index and the dynamic objects) |
 | DTS | `tests/fixtures/dts` | `make_dts_fixtures.py`; `make_external_dts_fixtures.py` (ffmpeg's dca encoder) | ffprobe, ffmpeg (a decode of each frame alone, with the error it must give for the damaged ones), libdca (`dca_frames.c`), MediaInfo (`crosscheck_dts_fixtures.py`) |
 | WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader and checksum verifier (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
 | ASF and WMA | `tests/fixtures/asf` | `make_asf_fixtures.py`; `make_external_asf_fixtures.py`; `import_windows_wma_fixtures.py` (Microsoft's encoder, below) | ffprobe, ffmpeg decoding (bit-exact for Lossless), MediaInfo (`crosscheck_asf_fixtures.py`); `wma_tables.py --check` for the tables generated from FFmpeg's source |
@@ -128,6 +128,7 @@ Every cross-check script also compares each fixture's golden report with MediaIn
 - **What is compared:** each script's docstring lists the fields. A listed difference that no longer occurs fails the run, and the summary counts each field as compared, compared and absent on both, or skipped with its reason.
 - **MediaInfo's own readings** are asserted as such, each with the evidence, mostly a line of MediaInfoLib's source (github.com/MediaArea/MediaInfoLib, tag v24.01; Ubuntu's only patch touches the build). Among them:
   - AC-3: `mixlevel` read as 8 bits instead of A/52's 5, so `dynrng`, the time codes and Annex D's `dsurexmod` come out 3 bits late in a frame with production information; the script reproduces that reading and compares with it.
+  - E-AC-3 object audio: MediaInfo parses an EMDF container only if it starts before the auxiliary data field, reports JOC only when every container agrees on one object count, and fills its complexity index from the frames only after it has parsed a JOC payload; its names (JOC, complexity index, number of dynamic objects) are mapped to the analyzer's in the script.
   - MPEG audio: the names of the Layer I and II mode extension, the frames it parses of a variable bitrate without a VBR header, no encoder without a LAME tag, an encoder string or an ID3v2 TSSE.
   - Musepack: no format for SV4 to SV6 (one superframe stream taken for MPEG-2.5 Layer II) or after a leading ID3v2 tag, the SV7 encoder version read from byte 24 instead of 27, no channels or encoder for SV8.
   - DTS: a core with an extension substream is taken as DTS-HD only where MediaInfo finds a component's sync word (an XLL or LBR whose sync word is wrong, or a header whose CRC16 fails, leave the core); its bitrate is the core's frame bytes in the file, plus the substream's for DTS-HD, and none for lossless; it reads the descriptors' static fields one after another without their sizes (a second asset comes out as 127 channels); PCMR 7 as 24 bits with the ES flag; no channels for a user defined arrangement; XXCH channels are not counted.
@@ -245,7 +246,7 @@ The models that compute the expected values are:
 - `ogg_model.py` and `vorbis_opus_model.py` for Ogg
 - `musepack_model.py` for Musepack
 - `wavpack_model.py` for WavPack
-- `ac3_model.py` for AC-3
+- `ac3_model.py` and `emdf_model.py` (EMDF containers with JOC and OAMD payloads) for AC-3
 - `dts_model.py` for DTS
 - `asf_model.py` for ASF
 

@@ -98,6 +98,7 @@ A JSON report (schema version 1) is an object:
   - `duration` is in seconds and `averageBitrate` in kbps.
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
+  - `hasObjectAudio` is `true` for a stream with object-based audio (E-AC-3 with joint object coding) and `objectCount` is the number of objects it reconstructs; both are left out otherwise.
   - `multilingualChannels` counts the MPEG-2 multilingual channels a stream carries besides its layout.
   - `series` are numbers for graphs, per frame (`axis` `frameOffset`, `x` the frame's byte offset) and per second of audio (`seconds`, `x` the start of each second). MPEG gives the bitrate and, for Layer III, the bit reservoir fill, both ways.
 - **Findings:** `path` is the child indexes from the root to the node a finding points to. `count` is the number of cases it stands for, since findings of one kind are reported once per stream.
