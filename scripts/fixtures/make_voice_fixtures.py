@@ -123,7 +123,13 @@ def asf(config, blocks, per_object=1, seconds=None, tail=0, rate=None, align=Non
 
 
 def voice_info(stream):
-    return {"superframes": [{"types": i["types"], "samples": i["samples"], "bits": i["bits"], "additional": i["additional"]} for i in stream.info], "decoded_samples": stream.decoded_samples()}
+    def frame(f):
+        # What the analysis reports of a frame: its type, the pitch of a pitch per frame (the frame's) and of a pitch per block (the last block's),
+        # the silence gain index or the window's index, and its bits (with its LSPs where each frame has its own).
+        return {key: f[key] for key in ("type", "bits", "pitch", "parameter", "window_index") if key in f}
+
+    return {"superframes": [{"types": i["types"], "samples": i["samples"], "bits": i["bits"], "additional": i["additional"], "frames": [frame(f) for f in i["frames"]]} for i in stream.info],
+            "decoded_samples": stream.decoded_samples()}
 
 
 # ---- valid streams ----
@@ -181,11 +187,11 @@ valid("voice-object-not-whole", "Voice blocks of 100 bytes, the last media objec
 
 # ---- a configuration FFmpeg's decoder rejects, or that reaches no type ----
 
-def damaged_config(name, description, config_args, code, contains, decode_message, rate=None, size=None, align=None):
+def damaged_config(name, description, config_args, code, contains, decode_message, rate=None, size=None, align=None, extra=b""):
     def build():
         stream = Stream(v.Config(8000, 120, denoise=5, dc_level=9), all_types(6, 7), 7)
         config = v.Config(8000, 120, **config_args)
-        data = config.codec_data()[:size] if size else config.codec_data()
+        data = (config.codec_data()[:size] if size else config.codec_data()) + extra
         return Built(asf(stream.config, stream.blocks, 1, stream.decoded_samples() / 8000, rate=rate, align=align, extra=data), None)
     fixture(name, description, lambda: built(name, build).data,
             [finding(code, contains), finding("wma.voice-not-read", "rejects the stream's configuration")],
@@ -198,6 +204,8 @@ damaged_config("voice-config-table", "A frame type table that puts five frame ty
                {"groups": [0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4], "denoise": 5, "dc_level": 9}, "wma.voice-frame-type-table", "type 4 in group 0", "Invalid VBM tree")
 damaged_config("voice-config-size", "Codec-specific data of 45 bytes, one fewer than the 46 FFmpeg's decoder needs.",
                {"denoise": 5, "dc_level": 9}, "wma.codec-data-size", "is 45 bytes", "Invalid extradata size 45", size=45)
+damaged_config("voice-config-extra", "Codec-specific data of 50 bytes, four more than the 46 FFmpeg's decoder needs.",
+               {"denoise": 5, "dc_level": 9}, "wma.codec-data-size", "is 50 bytes", "Invalid extradata size 50", extra=bytes([1, 2, 3, 4]))
 damaged_config("voice-config-rate", "A sample rate of 100 Hz, below the 322 Hz FFmpeg's decoder supports.",
                {"denoise": 5, "dc_level": 9}, "wma.voice-sample-rate", "100 Hz", "Unsupported samplerate 100", rate=100)
 

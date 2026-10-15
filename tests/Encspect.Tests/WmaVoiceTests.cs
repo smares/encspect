@@ -41,9 +41,9 @@ public class WmaVoiceTests
         Assert.Equal(data.Offset + 18, flags.Offset);
         Assert.Equal(4, flags.Length);
         Assert.Equal(0x0519809FL, flags.Value!.AsInteger());
-        Assert.True(Child(flags, "Postfilter").Value!.AsBoolean());
+        Assert.True(Child(flags, "Uses Postfilter").Value!.AsBoolean());
         Assert.Equal(7, Integer(flags, "Denoise Strength"));
-        Assert.False(Child(flags, "Denoise Tilt Correction").Value!.AsBoolean());
+        Assert.False(Child(flags, "Uses Denoise Tilt Correction").Value!.AsBoolean());
         Assert.Equal(1, Integer(flags, "DC Level"));
         Assert.Equal(10, Integer(flags, "LSP Count"));
         Assert.Equal(0, Integer(flags, "LSP Quantizer Mode"));
@@ -101,7 +101,7 @@ public class WmaVoiceTests
         Node superframes = Child(VoiceStream(Fixtures.AnalyzeMpeg(Eight)), "Superframes");
         Node first = superframes.Children[0];
         Assert.Equal(NodeKind.Frame, first.Kind);
-        Assert.True(Child(first, "Speech Flag").Value!.AsBoolean());
+        Assert.True(Child(first, "Is Speech").Value!.AsBoolean());
         Assert.False(Child(first, "Has Sample Count").Value!.AsBoolean());
         Assert.Equal("10 LSPs for the three frames", Child(first, "LSPs").Value!.ToString());
         Node[] frames = [.. first.Children.Where(c => c.Name == "Frame")];
@@ -208,6 +208,44 @@ public class WmaVoiceTests
         Assert.StartsWith("Windows Media Format SDK", stream.Encoder, StringComparison.Ordinal);
         Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
         Assert.False(stream.IsVbr);
+    }
+
+    // Every node the Voice parser builds is shown by a fixture: the files of the Windows writer and the hand-built ones.
+    [Fact]
+    public void EveryNodeTheParserBuildsAppearsInAFixture()
+    {
+        var seen = new HashSet<string>();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "*").Where(p => Path.GetFileName(p).StartsWith("voice-", StringComparison.Ordinal) && p.EndsWith(".asf", StringComparison.Ordinal))
+            .Concat([Path.Combine(Fixtures.FixtureDirectory, Eight), Path.Combine(Fixtures.FixtureDirectory, Sixteen)]))
+        {
+            Report report = Fixtures.AnalyzeMpeg(Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/'));
+            var pending = new Stack<Node>([report.Root]);
+            while (pending.Count > 0)
+            {
+                Node node = pending.Pop();
+                seen.Add(node.Name);
+                foreach (Node child in node.Children)
+                {
+                    pending.Push(child);
+                }
+            }
+        }
+
+        string[] expected =
+        [
+            "Professional Header", "Flags", "Uses Postfilter", "Denoise Strength", "Uses Denoise Tilt Correction", "DC Level", "LSP Count", "LSP Quantizer Mode", "LSP Default Mode", "Other Flags",
+            "Frame Type Table", "Frame Type 0", "Frame Type 16", "Unused", "Extra Data",
+            "Packet", "Packet Sequence Number", "Has Residual LSPs", "Superframes in Packet", "Spillover Bits", "Superframe End", "Padding", "Skipped Spillover", "Superframe Data",
+            "Superframe Start", "Unfinished Superframe", "Unread Bits",
+            "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
+            "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
+            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Nominal Bitrate",
+            "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
+            "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
+            "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",
+        ];
+        string[] missing = [.. expected.Where(name => !seen.Contains(name))];
+        Assert.True(missing.Length == 0, $"No fixture shows: {string.Join(", ", missing)}");
     }
 
     // The 17 frame types of wmavoice.c: 1 to 8 blocks that divide the frame, silence with the only block of its frame, and the

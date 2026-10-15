@@ -119,10 +119,10 @@ public sealed class WmaVoiceParser : ICodecParser
             uint flags = parameters.Flags;
             Node node = holder.Add("Flags", offset + VoiceParameters.FlagsOffset, 4, NodeValue.Hex(flags, 8), VoiceExplain.Flags, Topics.WmaVoice);
             long at = node.Offset;
-            Bits(node, at, 0, 1, NodeValue.Boolean((flags & 1) != 0), "Postfilter", VoiceExplain.FlagPostfilter, Topics.WmaVoice);
+            Bits(node, at, 0, 1, NodeValue.Boolean((flags & 1) != 0), "Uses Postfilter", VoiceExplain.FlagPostfilter, Topics.WmaVoice);
             Bits(node, at, 1, 2, NodeValue.Integer((flags >> 1) & 1), "Unread Flag", VoiceExplain.FlagUnread);
             Bits(node, at, 2, 6, NodeValue.Integer(parameters.DenoiseStrength), "Denoise Strength", VoiceExplain.FlagDenoiseStrength, Topics.WmaVoice);
-            Bits(node, at, 6, 7, NodeValue.Boolean(parameters.HasDenoiseTiltCorrection), "Denoise Tilt Correction", VoiceExplain.FlagTiltCorrection, Topics.WmaVoice);
+            Bits(node, at, 6, 7, NodeValue.Boolean(parameters.HasDenoiseTiltCorrection), "Uses Denoise Tilt Correction", VoiceExplain.FlagTiltCorrection, Topics.WmaVoice);
             Bits(node, at, 7, 11, NodeValue.Integer(parameters.DcLevel), "DC Level", VoiceExplain.FlagDcLevel, Topics.WmaVoice);
             Bits(node, at, 11, 12, NodeValue.Integer((flags >> 11) & 1), "Unread Flag", VoiceExplain.FlagUnread);
             Bits(node, at, 12, 13, NodeValue.Integer(parameters.LspCount), "LSP Count", VoiceExplain.FlagLspCount, Topics.WmaVoiceFrames);

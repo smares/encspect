@@ -123,7 +123,7 @@ internal static class VoiceReport
         Add("LSPs per Frame", NodeValue.Integer(p.LspCount), VoiceExplain.StatLspCount, Topics.WmaVoiceFrames);
         Add("Superframes with Residual LSPs", ProReport.Share(t.ResidualSuperframes, t.Superframes, "superframe", "superframes"), VoiceExplain.StatResidual, Topics.WmaVoiceFrames);
         Add("Superframes with Additional Data", NodeValue.Integer(t.AdditionalDataSuperframes), VoiceExplain.StatAdditionalData);
-        Add("Postfilter", NodeValue.Boolean(p.HasPostfilter), VoiceExplain.StatPostfilter, Topics.WmaVoice);
+        Add("Uses Postfilter", NodeValue.Boolean(p.HasPostfilter), VoiceExplain.StatPostfilter, Topics.WmaVoice);
         Add("Pitch Range", NodeValue.Text($"{p.MinPitch} to {p.MaxPitch - 1} samples"), VoiceExplain.StatPitchRange, Topics.WmaVoiceFrames);
         if (t.IgnoredBits > 0)
         {

@@ -8,8 +8,8 @@ namespace Encspect.Tests;
 // repeated at places chosen from a fixed seed (the fuzzer, tests/Encspect.Fuzz, does the same at scale).
 public class WmaCorruptionTests
 {
-    public static TheoryData<string> Names => new()
-    {
+    private static readonly string[] Real =
+    [
         "asf/external-ffmpeg-wmav2-stereo-44k-64k.wma",
         "asf/external-ffmpeg-wmav1-mono-22k-24k.wma",
         "asf/external-windows-wma92-cbr-stereo-44k-128.wma",
@@ -24,7 +24,27 @@ public class WmaCorruptionTests
         "asf/external-windows-wma92-cbr-stereo-22k-20-sdk.wma",
         "asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma",
         "asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma",
-    };
+    ];
+
+    // The real files of every codec, and the hand-built Voice files (damaged ones among them).
+    public static TheoryData<string> Names
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            foreach (string name in Real)
+            {
+                data.Add(name);
+            }
+
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "voice-*.asf").Order(StringComparer.Ordinal))
+            {
+                data.Add($"asf/{Path.GetFileName(path)}");
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Names))]

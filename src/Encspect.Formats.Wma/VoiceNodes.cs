@@ -214,7 +214,7 @@ internal sealed class VoiceNodes
             _map.Field(parts, start, end, name, value, description, topic);
 
         bool music = record.Status == (byte)VoiceStatus.Music;
-        nodes.Add(Field(0, 1, "Speech Flag", NodeValue.Boolean(!music), VoiceExplain.SpeechFlag, Topics.WmaVoice));
+        nodes.Add(Field(0, 1, "Is Speech", NodeValue.Boolean(!music), VoiceExplain.SpeechFlag, Topics.WmaVoice));
         if (music)
         {
             return nodes;

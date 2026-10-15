@@ -193,7 +193,8 @@ class Writer:
         extended = False
         windows = 0
         if fcb == 0:
-            w.random(rng, 8)
+            info["parameter"] = rng.getrandbits(8)
+            w.write(info["parameter"], 8)
         elif fcb == 2:
             index = rng.getrandbits(6)
             w.write(index, 6)

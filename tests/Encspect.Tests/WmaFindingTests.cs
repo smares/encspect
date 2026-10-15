@@ -100,6 +100,23 @@ public class WmaFindingTests
         Assert.DoesNotContain(findings, f => f.Code == "parse.failed");
     }
 
+    // A Voice media object shorter than the block alignment is skipped, and bytes after the last whole block of one are not read; a media object
+    // of two blocks is read as two packets.
+    [Fact]
+    public void VoiceMediaObjectsOfOtherSizesAreCutIntoBlocks()
+    {
+        Assert.Contains(VoiceRun(s => s.Objects[3] = s.Objects[3][..50]), f => f.Code == "wma.packet-short" && f.Message.Contains("block alignment of 187", StringComparison.Ordinal));
+        Assert.Contains(VoiceRun(s => s.Objects[3] = [.. s.Objects[3], .. new byte[20]]), f => f.Code == "wma.packet-long" && f.Message.Contains("20 of them", StringComparison.Ordinal));
+
+        Stream pair = Load(Voice, 0x000A);
+        var packets = new List<MappedBytes> { new MappedBytes(pair.Objects[0].Concat(pair.Objects[1]).ToArray(), 200) };
+        var parent = new Node("Stream", 0, 1_000_000);
+        var context = new CodecContext(parent, packets, CancellationToken.None, null, null, Configuration(pair, parent));
+        new WmaVoiceParser().Parse(context);
+        Assert.Equal(2, parent.Children.Single(c => c.Name == "Windows Media Audio Voice").Children.Single(c => c.Name == "Packets").Children.Count);
+        Assert.DoesNotContain(context.Findings, f => f.Code is "wma.packet-short" or "wma.packet-long");
+    }
+
     // The standard decoder's other findings: a Pro stream that is Lossless-like in its header, and the codec data of the
     // Professional and Lossless parsers.
     [Theory]

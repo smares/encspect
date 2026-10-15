@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Formats.Wma;
 
 namespace Encspect.Tests;
 
@@ -47,6 +48,7 @@ public class VoiceFixtureTests
             int samples = expected[i].GetProperty("samples").GetInt32();
             Node? count = superframes[i].Children.FirstOrDefault(c => c.Name == "Sample Count");
             Assert.Equal(samples == 480 ? null : samples, count is null ? (int?)null : (int)count.Value!.AsInteger()!.Value);
+            CheckFrames(superframes[i], expected[i].GetProperty("frames"));
             int additional = expected[i].GetProperty("additional").GetInt32();
             Node tail = Child(superframes[i], "Additional Data");
             Assert.Equal(additional == 0 ? "none" : $"{additional * 10} bits", tail.Value!.ToString());
@@ -69,6 +71,42 @@ public class VoiceFixtureTests
         }
 
         Assert.Equal(written.Where(c => c > 0).Select(c => c), counts.Children.Select(c => long.Parse(c.Value!.ToString()!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture)));
+    }
+
+    // Each frame's bits, pitch, silence gain and window index, and its blocks, as the writer put them in. A superframe across two packets has
+    // its frames' bits in ranges, where only the fields' values are held.
+    private static void CheckFrames(Node superframe, JsonElement written)
+    {
+        Node[] frames = [.. superframe.Children.Where(c => c.Name == "Frame")];
+        JsonElement[] expected = [.. written.EnumerateArray()];
+        Assert.Equal(expected.Length, frames.Length);
+        for (int i = 0; i < frames.Length; i++)
+        {
+            byte[] descriptor = VoiceTables.FrameDescriptors[expected[i].GetProperty("type").GetInt32()];
+            if (superframe.Ranges is null)
+            {
+                Assert.Equal(expected[i].GetProperty("bits").GetInt32(), frames[i].BitLength is { } width ? width : (int)(frames[i].Length * 8));
+            }
+
+            Assert.Equal(descriptor[0], Child(frames[i], "Blocks").Children.Count);
+            if (descriptor[2] == 1)
+            {
+                Assert.Equal(expected[i].GetProperty("pitch").GetInt64(), Child(frames[i], "Pitch").Value!.AsInteger());
+            }
+            else
+            {
+                Assert.DoesNotContain(frames[i].Children, c => c.Name == "Pitch");
+            }
+
+            if (descriptor[3] == 0)
+            {
+                Assert.Equal(expected[i].GetProperty("parameter").GetInt64(), Child(frames[i], "Silence Gain").Value!.AsInteger());
+            }
+            else if (descriptor[3] == 2)
+            {
+                Assert.Equal(expected[i].GetProperty("window_index").GetInt64(), Child(frames[i], "Window Index").Value!.AsInteger());
+            }
+        }
     }
 
     // The fixtures cover every frame type, the silence and hardcoded types among them.

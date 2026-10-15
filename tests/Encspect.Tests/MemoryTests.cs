@@ -334,7 +334,7 @@ public class MemoryTests(ITestOutputHelper output)
     private const long ProPeakBound = 1200;
 
     // Voice packets of a Microsoft-encoded file, repeated: 14 packets of 187 bytes hold 50 superframes of three frames, each kept
-    // as a record of 48 bytes, three of 20, and a part of 12 or 24, with the packet record, the tail owner and the series: 175 bytes
+    // as a record of 36 bytes, three of 16, and a part of 12 or 24, with the packet record, the tail owner and the series: 175 bytes
     // kept per superframe on linux-x64 and a peak of 195. The bounds are about twice that.
     [Fact]
     public void ManyVoiceSuperframesStayCompact()

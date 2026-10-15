@@ -21,7 +21,7 @@ internal enum VoiceStatus : byte
     Overrun,
 }
 
-// A frame of 160 samples: where its bits lie, counted from the start of the superframe's own bits. 20 bytes.
+// A frame of 160 samples: where its bits lie, counted from the start of the superframe's own bits. 16 bytes.
 internal struct VoiceFrameRecord
 {
     public int StartBit;
@@ -47,7 +47,7 @@ internal struct VoiceFrameRecord
 }
 
 // A superframe: three frames, the unit that is decoded to 480 samples or fewer. It lies in the bits of one packet, or its start is
-// the end of one packet and the rest the start of the next. 48 bytes.
+// the end of one packet and the rest the start of the next. 36 bytes.
 internal struct VoiceSuperframeRecord
 {
     public int FirstPart;
