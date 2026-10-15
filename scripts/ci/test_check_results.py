@@ -31,6 +31,13 @@ class CheckResultsTests(unittest.TestCase):
         n["changes"]["outputs"] = {}
         self.assertEqual(len(check_results.verdict(n)), 1)
 
+    def test_no_skip_is_accepted_when_the_pipeline_changed(self):
+        n = needs(a="success", b="skipped")
+        n["changes"]["outputs"]["pipeline"] = "true"
+        self.assertEqual(len(check_results.verdict(n)), 1)
+        n["changes"]["outputs"]["pipeline"] = "false"
+        self.assertEqual(check_results.verdict(n), [])
+
     def test_failure_and_cancellation_fail(self):
         self.assertEqual(len(check_results.verdict(needs(a="failure", b="cancelled"))), 2)
 

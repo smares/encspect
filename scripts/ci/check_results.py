@@ -5,6 +5,11 @@ Reads the aggregate job's needs context as JSON from the NEEDS environment varia
 job decides which jobs a pull request needs and publishes one output per job, named like the job: a job
 may be skipped only when that output is "false". A job that is skipped for any other reason (a failed
 dependency, a condition nobody meant) fails the check, as does a failed or canceled one.
+
+A change to the pipeline itself (.github/, scripts/ci/) runs every job. The changes job tells that in a plain
+shell step, not through changes.py, and publishes it as the "pipeline" output; when it is "true" no skip is
+accepted at all, so a change to the filter cannot excuse itself. The workflow repeats that rule in a step
+of its own (jq), which this script cannot weaken.
 """
 
 import json
@@ -24,7 +29,7 @@ def verdict(needs):
         result = info.get("result")
         if result == "success":
             continue
-        if result == "skipped" and outputs.get(job) == "false":
+        if result == "skipped" and outputs.get(job) == "false" and outputs.get("pipeline") != "true":
             continue
         problems.append(f"{job}: {result}" + (" (skipped, but the change filter wanted it to run)" if result == "skipped" else ""))
     return problems

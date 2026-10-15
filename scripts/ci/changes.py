@@ -151,20 +151,36 @@ def matches(path, patterns):
     return any(glob_match(path, p) for p in patterns)
 
 
+IMPORT = re.compile(r"^\s*import\s+(.+?)\s*(?:#.*)?$", re.MULTILINE)
+FROM_IMPORT = re.compile(r"^\s*from\s+([A-Za-z_][A-Za-z0-9_]*)\s+import\b", re.MULTILINE)
+
+
+def imported_modules(text):
+    """The top-level module names a script imports: import a, b as c; from d import e."""
+    names = set(FROM_IMPORT.findall(text))
+    for clause in IMPORT.findall(text):
+        for item in clause.split(","):
+            name = item.strip().split(" ")[0].split(".")[0]
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+                names.add(name)
+    return names
+
+
 def import_closure(entries, root=ROOT):
-    """The scripts in scripts/fixtures that the entry scripts import, directly or not, entries included."""
+    """The scripts in scripts/fixtures that the entry scripts import, directly or not, entries included.
+    A module is in the closure by name whether or not its file exists: a helper that a change deletes or
+    renames must still run the jobs that imported it."""
     directory = root / FIXTURE_SCRIPTS
     seen = set()
-    pending = [e for e in entries if (directory / e).exists()]
+    pending = list(entries)
     while pending:
         name = pending.pop()
         if name in seen:
             continue
         seen.add(name)
-        text = (directory / name).read_text(encoding="utf-8", errors="replace")
-        for module in re.findall(r"^\s*(?:import|from)\s+([A-Za-z_][A-Za-z0-9_]*)", text, re.MULTILINE):
-            if (directory / f"{module}.py").exists():
-                pending.append(f"{module}.py")
+        if (directory / name).exists():
+            text = (directory / name).read_text(encoding="utf-8", errors="replace")
+            pending += [f"{module}.py" for module in imported_modules(text)]
     return seen
 
 
@@ -183,24 +199,42 @@ def is_docs(path):
     return matches(path, DOCS) and not path.startswith(("src/", "tests/"))
 
 
-def unknown_parser_or_fixture(path):
-    """A parser project or a fixture directory no cross-check job is known to read: a new format."""
+SOURCE_PROJECTS = {project for spec in AREAS.values() for project in spec["projects"]} | {"Encspect.Gui"}
+TEST_FOLDERS = {"Encspect.Tests", "Encspect.Gui.Tests", "Encspect.Fuzz", "fixtures", "conformance"}
+PARSER_PREFIXES = ("src/Encspect.Formats.", "src/Encspect.Tags.")
+
+# What the fixtures job's scripts read outside scripts/ and tests/: check_aac_tables.py compares the Huffman
+# and band tables in the AAC parser with fdk-aac's.
+FIXTURES_READ = ["src/Encspect.Formats.Aac/**"]
+
+
+def unknown_path(path):
+    """A path no job is known to read: a new format, a new shared library, a data file of the fixture scripts.
+    Anything unknown runs everything."""
     parts = path.split("/")
-    if parts[0] == "src" and len(parts) > 2 and re.match(r"Encspect\.(Formats|Tags)\.", parts[1]):
-        return not any(parts[1] in spec["projects"] for spec in AREAS.values())
-    if parts[:2] == ["tests", "fixtures"] and len(parts) > 3:
-        return parts[2] != "fuzz" and not any(parts[2] in spec["fixtures"] for spec in AREAS.values())
+    if parts[0] == "src":
+        return len(parts) < 3 or parts[1] not in SOURCE_PROJECTS
+    if parts[0] == "tests":
+        if len(parts) < 3 or parts[1] not in TEST_FOLDERS:
+            return True
+        if parts[1] == "fixtures":
+            return len(parts) < 4 or (parts[2] != "fuzz" and not any(parts[2] in spec["fixtures"] for spec in AREAS.values()))
+        return False
+    if path.startswith(FIXTURE_SCRIPTS + "/"):
+        top_level_script = path.count("/") == 2 and path.endswith(".py")
+        return not top_level_script and not any(matches(path, spec["globs"]) for spec in AREAS.values())
     return False
 
 
 def known_elsewhere(path):
     """Paths no cross-check reads and that are not shared either."""
     return (matches(path, ["src/Encspect.Gui/**", "tests/Encspect.Gui.Tests/**", "tests/Encspect.Tests/**", "tests/Encspect.Fuzz/**"])
-            or is_docs(path) or matches(path, FIXTURE_ONLY))
+            or is_docs(path) or matches(path, FIXTURE_ONLY) or path == "scripts/ci_report.py")
 
 
-def decide(event, files, root=ROOT):
-    """The job flags for a change; files is None when the change cannot be read."""
+def decide(event, files, root=ROOT, removed=()):
+    """The job flags for a change; files is None when the change cannot be read. removed are the paths a change
+    deleted or renamed away from."""
     flags = {job: True for job in ALL_JOBS}
     reason = "every job runs on " + event
     if event == "pull_request" and files is not None:
@@ -208,12 +242,17 @@ def decide(event, files, root=ROOT):
         files = [f for f in files if f]
         closures = {area: import_closure(AREAS[area]["scripts"], root) for area in AREAS}
         reasons = []
+        gone = [r for r in removed if r.startswith("scripts/")]
+        if gone:
+            flags = {job: True for job in ALL_JOBS}
+            reasons.append(f"{gone[0]} was deleted or renamed, and what imported it cannot be told")
+            files = []
         for path in files:
             if matches(path, SHARED):
                 flags = {job: True for job in ALL_JOBS}
                 reasons.append(f"{path} is shared")
                 break
-            if unknown_parser_or_fixture(path):
+            if unknown_path(path):
                 flags = {job: True for job in ALL_JOBS}
                 reasons.append(f"{path} belongs to no known area")
                 break
@@ -226,8 +265,13 @@ def decide(event, files, root=ROOT):
                 for job in CI_JOBS_DOTNET:
                     flags[job] = True
                 hit = True
-            if path.startswith(FIXTURE_SCRIPTS + "/") or path.startswith("tests/fixtures/") or path.startswith("tests/conformance/"):
+            if path.startswith(FIXTURE_SCRIPTS + "/") or path.startswith("tests/fixtures/") or path.startswith("tests/conformance/") or matches(path, FIXTURES_READ):
                 flags["fixtures"] = True
+                hit = True
+            if path.startswith(PARSER_PREFIXES):
+                # The cross-checks that run the analyzer over downloaded samples (ISO conformance, mp3PRO, xHE-AAC,
+                # HE-AAC) are in these two jobs; any parser's detection could start claiming those streams.
+                flags["mpeg-crosscheck"] = flags["mp4-crosscheck"] = True
                 hit = True
             if not hit and not known_elsewhere(path):
                 # An unknown path might be a new format or a new check: run everything.
@@ -249,28 +293,41 @@ def platforms(event):
     return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
 
 
+def parse_name_status(text):
+    """(paths, removed) from git diff --name-status: removed are deleted paths and the old paths of renames."""
+    files, removed = [], []
+    for line in text.splitlines():
+        fields = line.split("\t")
+        if len(fields) < 2:
+            continue
+        files += fields[1:]
+        if fields[0][:1] in ("D", "R"):
+            removed.append(fields[1])
+    return files, removed
+
+
 def changed_files(root=ROOT):
     """The files the pull request changes: the merge commit's first parent (the base branch) against the commit."""
     parents = subprocess.run(["git", "rev-list", "--parents", "-n", "1", "HEAD"], cwd=root, capture_output=True, text=True)
     if parents.returncode != 0 or len(parents.stdout.split()) != 3:
-        return None
-    diff = subprocess.run(["git", "diff", "--name-only", "--no-renames", "HEAD^1", "HEAD"], cwd=root, capture_output=True, text=True)
-    return diff.stdout.splitlines() if diff.returncode == 0 else None
+        return None, []
+    diff = subprocess.run(["git", "diff", "--name-status", "HEAD^1", "HEAD"], cwd=root, capture_output=True, text=True)
+    return parse_name_status(diff.stdout) if diff.returncode == 0 else (None, [])
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", default=os.environ.get("GITHUB_EVENT_NAME", "push"))
-    parser.add_argument("--files-from", help="a file with one changed path per line, or - for standard input")
+    parser.add_argument("--files-from", help="a file with one changed path per line (or git diff --name-status lines), or - for standard input")
     parser.add_argument("--print", action="store_true", help="print the outputs instead of appending them to $GITHUB_OUTPUT")
     args = parser.parse_args()
 
     if args.files_from:
         text = sys.stdin.read() if args.files_from == "-" else pathlib.Path(args.files_from).read_text()
-        files = text.splitlines()
+        files, removed = parse_name_status(text) if "\t" in text else (text.splitlines(), [])
     else:
-        files = changed_files() if args.event == "pull_request" else None
-    flags, reason = decide(args.event, files)
+        files, removed = changed_files() if args.event == "pull_request" else (None, [])
+    flags, reason = decide(args.event, files, removed=removed)
 
     os_list = platforms(args.event)
     shards = shard_config.load()
