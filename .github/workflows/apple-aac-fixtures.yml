@@ -9,6 +9,11 @@ name: AAC and ALAC fixtures from Apple's encoders
 # scripts/fixtures/import_macos_aac_fixtures.py takes them into tests/fixtures/aac and
 # tests/fixtures/alac.
 #
+# The win-* encodes (8 s of varied signals: speech, plucks, clicks, chords, noise, tones, sweeps,
+# transients, wide and narrow stereo, mono; AAC-LC in each strategy and -q setting, HE-AAC and HE-AAC v2)
+# are for one question, whether Apple's encoder writes sine windows only; scripts/fixtures/window_shapes.py
+# tabulates the window shapes of the downloaded encoded/ folder.
+#
 # Two runners encode the same signals: macos-15 (arm64) and macos-15-intel (x86-64). The first
 # run showed that the bytes differ between them (other access unit sizes and spectral data, the
 # same structure and iTunSMPB), so a detection rule can use only the structure; the importer's
@@ -29,7 +34,7 @@ jobs:
   encode:
     name: encode on ${{ matrix.runner }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -49,7 +54,7 @@ jobs:
         run: |
           cat apple-out/problems.txt || true
           awk -F '\t' '$7 != 0 { print "FAILED (" $7 "): " $9 }' apple-out/encodes.tsv
-          for name in lc-m4a-cbr-st44 he-m4a-cbr-st44 hev2-m4a-cbr-st44 alac-m4a-st44q16; do
+          for name in lc-m4a-cbr-st44 he-m4a-cbr-st44 hev2-m4a-cbr-st44 alac-m4a-st44q16 win-lc-m4a-cbr128-speech win-lc-m4a-q127-cbr128-clicks; do
             echo "== $name"; cat "apple-out/info/$name.afinfo.txt"
           done
 

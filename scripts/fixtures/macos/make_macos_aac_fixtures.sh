@@ -318,6 +318,54 @@ encode passthru-m4a-from-fdkaac-he-m4a  fdkaac-he-m4a   m4af 0 copy
 encode passthru-m4a-from-fdkaac-he-adts fdkaac-he-adts  m4af 0 copy
 encode passthru-adts-from-fdkaac-he-adts fdkaac-he-adts adts 0 copy
 
+# ---- the window shape matrix: does Apple's AAC encoder use sine windows only? -----------------------------------------
+# The 8 s sources win-* (window_signals.py): speech, music with sharp attacks, noise, tones, sweeps, transients, wide and
+# narrow stereo, mono. Names read win-<codec>-<file type>-<strategy and bitrate>-<source>. After the run, scripts/fixtures/
+# window_shapes.py <artifact>/encoded tabulates the share of sine and KBD windows per file and window sequence.
+# Per stereo source: AAC-LC at 64, 128 and 256 kbps (constant), variable quality 0, 64 and 127, constrained variable 128,
+# -q 0 and -q 127 at 128 kbps constant (q127 is the setting that gave KBD windows before), HE-AAC at 64 and 96, HE-AAC v2 at 32
+# and 48. Per mono source: AAC-LC at 64, 128 and 192, the same variable and -q runs, HE-AAC at 32 and 48. -q 127 also at the
+# lowest and highest constant bitrate for some, and ADTS for a few. M4A otherwise.
+say "== window shape matrix"
+WIN_STEREO="pluck clicks chords white pink tones sweep transient wide narrow"
+WIN_MONO="speech mix"
+win_lc() {
+    # win_lc SOURCE BITRATE-LOW BITRATE-MID BITRATE-HIGH
+    local s="$1" lo="$2" mid="$3" hi="$4"
+    encode "win-lc-m4a-cbr$lo-$s"      "win-$s" m4af aac cbr -s 0 -b "${lo}000"
+    encode "win-lc-m4a-cbr$mid-$s"     "win-$s" m4af aac cbr -s 0 -b "${mid}000"
+    encode "win-lc-m4a-cbr$hi-$s"      "win-$s" m4af aac cbr -s 0 -b "${hi}000"
+    encode "win-lc-m4a-vbrq0-$s"       "win-$s" m4af aac vbr -s 3 -u vbrq 0
+    encode "win-lc-m4a-vbrq64-$s"      "win-$s" m4af aac vbr -s 3 -u vbrq 64
+    encode "win-lc-m4a-vbrq127-$s"     "win-$s" m4af aac vbr -s 3 -u vbrq 127
+    encode "win-lc-m4a-cvbr$mid-$s"    "win-$s" m4af aac constrained-vbr -s 2 -b "${mid}000"
+    encode "win-lc-m4a-q0-cbr$mid-$s"   "win-$s" m4af aac cbr -s 0 -b "${mid}000" -q 0
+    encode "win-lc-m4a-q127-cbr$mid-$s" "win-$s" m4af aac cbr -s 0 -b "${mid}000" -q 127
+}
+for s in $WIN_STEREO; do
+    win_lc "$s" 64 128 256
+    encode "win-he-m4a-cbr64-$s"    "win-$s" m4af aach cbr -s 0 -b 64000
+    encode "win-he-m4a-cbr96-$s"    "win-$s" m4af aach cbr -s 0 -b 96000
+    encode "win-hev2-m4a-cbr32-$s"  "win-$s" m4af aacp cbr -s 0 -b 32000
+    encode "win-hev2-m4a-cbr48-$s"  "win-$s" m4af aacp cbr -s 0 -b 48000
+done
+for s in $WIN_MONO; do
+    win_lc "$s" 64 128 192
+    encode "win-he-m4a-cbr32-$s"    "win-$s" m4af aach cbr -s 0 -b 32000
+    encode "win-he-m4a-cbr48-$s"    "win-$s" m4af aach cbr -s 0 -b 48000
+done
+for s in pluck clicks white transient; do
+    encode "win-lc-m4a-q127-cbr64-$s"  "win-$s" m4af aac cbr -s 0 -b 64000 -q 127
+    encode "win-lc-m4a-q127-cbr256-$s" "win-$s" m4af aac cbr -s 0 -b 256000 -q 127
+done
+encode "win-lc-m4a-q127-cbr64-mix"  "win-mix" m4af aac cbr -s 0 -b 64000 -q 127
+encode "win-lc-m4a-q127-cbr192-mix" "win-mix" m4af aac cbr -s 0 -b 192000 -q 127
+for s in speech clicks white transient; do
+    encode "win-lc-adts-cbr128-$s"      "win-$s" adts aac cbr -s 0 -b 128000
+    encode "win-lc-adts-q127-cbr128-$s" "win-$s" adts aac cbr -s 0 -b 128000 -q 127
+done
+encode "win-he-adts-cbr64-clicks" "win-clicks" adts aach cbr -s 0 -b 64000
+
 # ---- record ------------------------------------------------------------------------------------
 say "== manifest"
 python3 "$HERE/macos_aac_support.py" manifest "$OUT" "$TSV" "$OUT/environment.txt"
