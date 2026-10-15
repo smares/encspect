@@ -68,13 +68,64 @@ public sealed class CiWorkflowTests
         {
             Assert.Contains("    needs: " + DecisionJob, lines);
             Assert.Contains($"    if: needs.{DecisionJob}.outputs.{job} == 'true'", lines);
-            Assert.Contains($"      {job}: ${{{{ steps.decide.outputs.{job} }}}}", changesLines);
+            Assert.Contains($"      {job}: ${{{{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.{job} }}}}", changesLines);
         }
 
         foreach (string job in UnconditionalJobs.Where(j => j != DecisionJob))
         {
             Assert.DoesNotContain(jobs[job], l => Regex.IsMatch(l, @"^    if:"));
         }
+    }
+
+    // A change to the pipeline is detected in a plain step of the changes job and accepted by no skip, in a step
+    // of all-checks that does not depend on the scripts a pull request may change.
+    [Fact]
+    public void AChangeToThePipelineRunsEverythingAndAcceptsNoSkip()
+    {
+        Dictionary<string, string[]> jobs = ReadJobs();
+        Assert.Contains("      pipeline: ${{ steps.pipeline.outputs.changed }}", jobs[DecisionJob]);
+        Assert.Contains(jobs[DecisionJob], l => l.Contains("^(\\.github/|scripts/ci/)", StringComparison.Ordinal));
+        string[] aggregate = jobs[AggregateJob];
+        Assert.Contains(aggregate, l => l.Contains("PIPELINE: ${{ needs.changes.outputs.pipeline }}", StringComparison.Ordinal));
+        Assert.Contains(aggregate, l => l.Contains("any(.[]; .result == \"skipped\")", StringComparison.Ordinal));
+    }
+
+    // Runs that are not pull requests must not share a group: GitHub cancels all but the newest pending run of a
+    // group, which would drop the result of a commit on main.
+    [Fact]
+    public void RunsOfMainAreNeverCanceled()
+    {
+        string text = File.ReadAllText(Path.Combine(FindRepositoryRoot(), ".github", "workflows", "ci.yml"));
+        Assert.Contains("group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}", text, StringComparison.Ordinal);
+        Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
+    }
+
+    // A step that may fail without failing the job would be a check nobody reads.
+    [Fact]
+    public void NoJobOrStepMayFailWithoutFailingTheRun()
+    {
+        string text = File.ReadAllText(Path.Combine(FindRepositoryRoot(), ".github", "workflows", "ci.yml"));
+        Assert.DoesNotMatch(@"(?m)^\s*continue-on-error:", text);
+    }
+
+    // Every fixture the corrupt-file tests damage is in exactly one of their classes, so none is dropped or run twice
+    // when a class is added or a prefix changes.
+    [Fact]
+    public void EveryCorruptFileFixtureIsInExactlyOneClass()
+    {
+        var rows = new List<string>();
+        foreach (Type type in typeof(CiWorkflowTests).Assembly.GetTypes().Where(t => t.IsPublic && t.Name.StartsWith("Corrupt", StringComparison.Ordinal) && t.Name.EndsWith("FileTests", StringComparison.Ordinal)))
+        {
+            var names = (TheoryData<string>)type.GetProperty("Names")!.GetValue(null)!;
+            foreach (string row in names)
+            {
+                rows.Add(row);
+            }
+        }
+
+        string[] all = [.. CorruptFiles.All()];
+        Assert.NotEmpty(all);
+        Assert.Equal(all.Order(StringComparer.Ordinal), rows.Order(StringComparer.Ordinal));
     }
 
     [Fact]

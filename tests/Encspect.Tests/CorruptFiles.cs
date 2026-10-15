@@ -24,7 +24,7 @@ internal static class CorruptFiles
         return data;
     }
 
-    private static IEnumerable<string> All()
+    public static IEnumerable<string> All()
     {
         foreach (string name in Fixtures.TagFixtureNames())
         {

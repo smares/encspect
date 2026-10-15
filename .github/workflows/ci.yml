@@ -14,10 +14,11 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request replaces its running checks. Runs of main are never canceled: each commit
-# and each night keeps its result, which scripts/ci_report.py reads.
+# A new push to a pull request replaces its running checks. Every other run has a group of its own: runs of a
+# group queue behind each other, and GitHub keeps only one pending run per group and cancels the older pending
+# one, which would drop the result of a commit on main or of a night that scripts/ci_report.py reads.
 concurrency:
-  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}-${{ github.event_name }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -40,22 +41,23 @@ jobs:
     timeout-minutes: 10
     outputs:
       reason: ${{ steps.decide.outputs.reason }}
+      pipeline: ${{ steps.pipeline.outputs.changed }}
       build-matrix: ${{ steps.decide.outputs.build-matrix }}
       test-matrix: ${{ steps.decide.outputs.test-matrix }}
-      build-test: ${{ steps.decide.outputs.build-test }}
-      unit-tests: ${{ steps.decide.outputs.unit-tests }}
-      shard-guard: ${{ steps.decide.outputs.shard-guard }}
-      fuzz: ${{ steps.decide.outputs.fuzz }}
-      format: ${{ steps.decide.outputs.format }}
-      fixtures: ${{ steps.decide.outputs.fixtures }}
-      mpeg-crosscheck: ${{ steps.decide.outputs.mpeg-crosscheck }}
-      mp4-crosscheck: ${{ steps.decide.outputs.mp4-crosscheck }}
-      ogg-crosscheck: ${{ steps.decide.outputs.ogg-crosscheck }}
-      musepack-crosscheck: ${{ steps.decide.outputs.musepack-crosscheck }}
-      wavpack-crosscheck: ${{ steps.decide.outputs.wavpack-crosscheck }}
-      asf-crosscheck: ${{ steps.decide.outputs.asf-crosscheck }}
-      ac3-crosscheck: ${{ steps.decide.outputs.ac3-crosscheck }}
-      dts-crosscheck: ${{ steps.decide.outputs.dts-crosscheck }}
+      build-test: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.build-test }}
+      unit-tests: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.unit-tests }}
+      shard-guard: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.shard-guard }}
+      fuzz: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.fuzz }}
+      format: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.format }}
+      fixtures: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.fixtures }}
+      mpeg-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.mpeg-crosscheck }}
+      mp4-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.mp4-crosscheck }}
+      ogg-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ogg-crosscheck }}
+      musepack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.musepack-crosscheck }}
+      wavpack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wavpack-crosscheck }}
+      asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
+      ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
+      dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
     steps:
       # Two commits deep: on a pull request the checkout is the merge commit, and its first parent is the base.
       # Only the scripts are needed in the working tree; the diff reads names, not contents.
@@ -64,6 +66,20 @@ jobs:
           fetch-depth: 2
           filter: blob:none
           sparse-checkout: scripts
+
+      # Decided here, in plain shell and not by changes.py, so that a change to the filter cannot excuse itself: a
+      # pull request that touches .github/ or scripts/ci/ runs every job and accepts no skip (see all-checks).
+      # A diff that cannot be read counts as a change.
+      - name: Look for changes to the pipeline itself
+        id: pipeline
+        run: |
+          changed=false
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            if ! files=$(git diff --name-only HEAD^1 HEAD) || echo "$files" | grep -qE '^(\.github/|scripts/ci/)'; then
+              changed=true
+            fi
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
       - name: Decide which jobs run
         id: decide
@@ -108,10 +124,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Restore
         run: dotnet restore
@@ -219,7 +240,7 @@ jobs:
           # A compositor alone does not start Wayland: the self-check reports that X11 has no display, with exit 0.
           env -u DISPLAY WAYLAND_DISPLAY=encspect-wl timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland-only.txt"
           grep -q 'Windowing backend: not started, X11 is chosen' "$RUNNER_TEMP/wayland-only.txt"
-          ! grep -q 'Windowing backend: Wayland' "$RUNNER_TEMP/wayland-only.txt"
+          if grep -q 'Windowing backend: Wayland' "$RUNNER_TEMP/wayland-only.txt"; then exit 1; fi
 
           # An unknown value warns and chooses automatically.
           env ENCSPECT_GUI_BACKEND=bogus timeout 120 xvfb-run -a $gui --self-check $fixture > "$RUNNER_TEMP/bogus.err" 2>&1
@@ -254,10 +275,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Restore
         run: dotnet restore tests/Encspect.Tests
@@ -301,10 +327,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Build the tests
         run: dotnet build tests/Encspect.Tests --configuration Release
@@ -328,14 +359,19 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       # A new seed every run; the log prints it, and a failure saves the input as an artifact. Five minutes on
       # a pull request and on main, half an hour in the nightly run.
-      - name: Analyze mutated fixtures for ${{ github.event_name == 'schedule' && 'half an hour' || 'five minutes' }}
+      - name: Analyze mutated fixtures for ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'half an hour' || 'five minutes' }}
         env:
           CI_SUMMARY_FILES: fuzz-failures
           FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 1800 || 300 }}
@@ -363,10 +399,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
 
       - name: Verify whitespace formatting
         run: dotnet format whitespace --folder --verify-no-changes
@@ -457,14 +489,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # minimp3, mp3guessenc and EncSpot are built from third_party with the runner's C and C++ compilers.
@@ -476,28 +515,16 @@ jobs:
       - name: Cross-check the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_fixtures.py
 
-      # ISO's license does not allow redistributing the conformance streams, so they are fetched,
-      # checked against their SHA-256 and cached rather than committed.
-      - name: Cache the ISO conformance streams
-        uses: actions/cache@v4
-        with:
-          path: .cache/conformance
-          key: iso-13818-4-audio-${{ hashFiles('tests/conformance/mpeg2-audio.json') }}
-
+      # ISO's license does not allow redistributing the conformance streams, so they are fetched and checked
+      # against their SHA-256 rather than committed. The download cache keeps the ones a public address served.
       # The private repository's copy is the last address tried, with a read-only token.
       - name: Check the conformance manifest against the ISO streams
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/conformance_mpeg_audio.py .cache/conformance
 
-      # The mp3PRO samples are commercial music, so they are fetched, checked against their SHA-256
-      # and cached rather than committed.
-      - name: Cache the mp3PRO samples
-        uses: actions/cache@v4
-        with:
-          path: .cache/mp3pro
-          key: mp3pro-samples-${{ hashFiles('tests/conformance/mp3pro-samples.json') }}
-
+      # The mp3PRO samples are commercial music, so they are fetched and checked against their SHA-256
+      # rather than committed. The download cache keeps the ones a public address served.
       - name: Check the mp3PRO manifest against the samples
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
@@ -506,10 +533,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -532,14 +564,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       - name: Name the runner image
@@ -564,13 +603,7 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
 
       # Fraunhofer's, the ISO conformance streams' and one more exhale file, which the exhale layout
-      # rule is checked against; fetched, checked against their SHA-256 and cached rather than committed.
-      - name: Cache the xHE-AAC samples
-        uses: actions/cache@v4
-        with:
-          path: .cache/usac
-          key: usac-samples-${{ hashFiles('tests/conformance/usac-samples.json') }}
-
+      # rule is checked against; fetched and checked against their SHA-256 rather than committed.
       - name: Check the xHE-AAC manifest against the samples
         run: python3 scripts/fixtures/check_usac_samples.py .cache/usac
         env:
@@ -578,13 +611,7 @@ jobs:
 
       # The SBR conformance and aacPlus decoder check streams, which the FAAC 2.x layout rule is checked
       # against; fetched from FFmpeg's FATE suite (or the private repository's copies), checked against their
-      # SHA-256 and cached.
-      - name: Cache the HE-AAC samples
-        uses: actions/cache@v4
-        with:
-          path: .cache/sbr
-          key: sbr-samples-${{ hashFiles('tests/conformance/sbr-samples.json') }}
-
+      # SHA-256.
       - name: Check the HE-AAC manifest against the samples
         run: python3 scripts/fixtures/check_sbr_samples.py .cache/sbr
         env:
@@ -593,10 +620,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -623,14 +655,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       - name: Install ffmpeg, oggz-tools, vorbis-tools, speex and opus-tools
@@ -653,14 +692,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
@@ -691,14 +737,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # wavpack 5.6.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
@@ -723,14 +776,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked
@@ -759,14 +819,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1 and liba52 0.7.4 from Ubuntu 24.04; a52_blocks.c is built against liba52.
@@ -778,10 +845,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            **/*.csproj
+
+      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
+      # cache is keyed on the OS alone and saves from jobs that restore nothing).
+      - name: Cache the NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       # The skip field insertion check rewrites E-AC-3 frames at the analyzer's block positions.
       - name: Build the CLI
@@ -802,14 +874,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Pinned downloads (source archives, samples) are kept between runs. The cache is addressed by the
-      # files' SHA-256 and every entry is checked against its pin before use (scripts/fixtures/downloads.py),
-      # so a changed pin downloads the new file; nothing here can hide one.
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads (source archives, samples) a public address served are kept between runs. The cache is
+      # addressed by the files' SHA-256 and every entry is checked against its pin before use
+      # (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can hide one.
+      # Files only the private repository served are never put in it: the public Actions cache can be restored by
+      # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
+      # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
         uses: actions/cache@v4
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ hashFiles('scripts/fixtures/**/*.py', 'tests/conformance/*.json') }}
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
       # ffmpeg 6.1, libdca 0.0.7 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
@@ -852,6 +931,17 @@ jobs:
       - uses: actions/checkout@v5
         with:
           sparse-checkout: scripts/ci
+
+      # Apart from the script, which a pull request may change: no skip passes when the pipeline changed.
+      - name: A change to the pipeline accepts no skipped job
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          PIPELINE: ${{ needs.changes.outputs.pipeline }}
+        run: |
+          if [ "$PIPELINE" != false ] && echo "$NEEDS" | jq -e 'any(.[]; .result == "skipped")' > /dev/null; then
+            echo "::error::The pipeline changed, or the changes job did not say, and a job was skipped."
+            exit 1
+          fi
 
       - name: Require every job to succeed or to be skipped on purpose
         env:

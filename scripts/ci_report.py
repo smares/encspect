@@ -9,7 +9,9 @@ one, which jobs and steps failed and which tests. Run it at the start of a worki
   tests and the problem lines the pipeline reports). With GITHUB_TOKEN (or GH_TOKEN) set, the failed jobs'
   logs are read as well, and the failed tests are listed from them.
 - Lists every workflow on main (CI, the weekly sources check, the WMA fixtures). --all adds the green runs.
-- Exits with 1 when a run is red, 0 when none is, 2 when GitHub could not be reached.
+- A canceled run is not green either: it is listed as CANCELED, apart from the red ones, and still makes the exit
+  code 1 (a commit or a night without a verdict). A run that is still going is listed as it is.
+- Exits with 1 when a run is red or canceled, 0 when none is, 2 when GitHub could not be reached.
 """
 
 import argparse
@@ -25,6 +27,7 @@ import urllib.request
 API = "https://api.github.com"
 EVENTS = ("push", "schedule", "workflow_dispatch")
 RED = ("failure", "timed_out", "startup_failure")
+CANCELED = ("cancelled", "canceled")
 TEST_FAILURE = re.compile(r"^\s*(?:\d{4}-\d\d-\d\dT[\d:.]+Z\s+)?((?:Failed\s+|\[FAIL\]\s+)[A-Za-z0-9_.]+\.[A-Za-z0-9_.]+(?:\(.*?\))?)(?:\s+\[[<\s\d.]+m?s\])?\s*$", re.MULTILINE)
 LOG_ERROR = re.compile(r"##\[error\](.*)")
 
@@ -143,16 +146,17 @@ def main():
         return 2
 
     red = [r for r in runs if r["conclusion"] in RED]
+    canceled = [r for r in runs if r["conclusion"] in CANCELED]
     running = [r for r in runs if r["status"] != "completed"]
-    print(f"{args.repo}, {args.branch}, since {since}: {len(runs)} runs, {len(red)} red, {len(running)} not finished"
+    print(f"{args.repo}, {args.branch}, since {since}: {len(runs)} runs, {len(red)} red, {len(canceled)} canceled, {len(running)} not finished"
           + ("" if token else " (no GITHUB_TOKEN: job logs are not read)"))
     out = []
     for run in sorted(runs, key=lambda r: r["created_at"], reverse=True):
         verdict = run["conclusion"] or run["status"]
-        if run in red or args.all or run["status"] != "completed":
+        if run in red or run in canceled or args.all or run["status"] != "completed":
             stamp = run["created_at"].replace("T", " ")[:16]
             out.append(f"  {stamp}  {run['name']:<22} {run['event']:<17} {verdict.upper():<10} {run['head_sha'][:7]}  {run['html_url']}")
-            if run in red:
+            if run in red or run in canceled:
                 out.append(f"      {run['display_title']}")
                 try:
                     describe_failure(run, args.repo, token, out)
@@ -162,7 +166,7 @@ def main():
     if DENIED:
         print(f"\nThe token could not read the job logs ({'; '.join(sorted(DENIED))}); it needs read access to Actions. "
               "Failing tests come from the annotations instead, which name only what the pipeline reports.")
-    return 1 if red else 0
+    return 1 if red or canceled else 0
 
 
 if __name__ == "__main__":

@@ -82,6 +82,8 @@ def cached(digest):
 
 
 def remember(path, digest):
+    """Keeps a file that a public address served. Never call it for a file the private repository served: CI
+    keeps this cache in the public Actions cache, which a pull request from a fork can restore."""
     directory = os.environ.get(CACHE_VARIABLE)
     if directory:
         pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
@@ -103,7 +105,8 @@ def fetch(addresses, digest, path):
         if error is None and sha256(path) == digest:
             if failures:
                 print(f"{path.name}: fetched from {address} after {'; '.join(failures)}", file=sys.stderr)
-            remember(path, digest)
+            if not address.startswith(PRIVATE):
+                remember(path, digest)
             return
         failures.append(f"{address} has SHA-256 {sha256(path)}" if error is None else f"{address}: {error}")
         path.unlink(missing_ok=True)

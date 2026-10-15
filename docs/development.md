@@ -28,9 +28,9 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - `InputReleaseTests` analyzes every fixture and long input from a stream held only weakly, and requires a collection to free it while the report lives: a node builder must not capture a parse's state, reader or decoder.
   - **Isolation:** a collector thread stalls every other test of the process, so the tests that run one (`LongListReadTests`, `LongReportWriteTests`, `ParallelAnalysisTests`) and the block list tests (`BlockedChildrenTests`) share the `Thread hammers` collection, which runs alone. The others run beside the rest.
   - **Pull request and nightly:** `ThreadTestScope` decides how much they read.
-    - On a pull request the fixture-wide tests (`ThreadSafetyTests.RebuiltAfterCollectionMatches`, `ParallelAnalysisMatchTests`) read a deterministic sample of each directory: every fifth file, every file of 128 KiB or more, and the first of each extension.
-    - `LongReportWriteTests` writes with the JSON writer on three threads over one input per list implementation; the AC-3 input, with 450,000 nodes, is left to the nightly run. `LongReportRebuildTests` rebuilds the same inputs. `ParallelAnalysisTests` writes each report 6 times on 4 threads.
-    - `ENCSPECT_FULL_THREAD_TESTS=1`, set by the nightly run and by a manual run, restores the whole corpus, every long input, all three writers on four threads and 24 writes on eight threads.
+    - The fixture-wide tests (`ThreadSafetyTests.RebuiltAfterCollectionMatches`, `ParallelAnalysisMatchTests`) read the whole corpus in every mode. A sample of it dropped three DTS files that had exposed a race.
+    - On a pull request `LongReportWriteTests` writes with the JSON writer on three threads over the inputs in `ThreadTestScope.PullRequestLongInputs`: one per list implementation, with DTS and one AC-3 family input (E-AC-3) among them. The AC-3 input itself, with 450,000 nodes, is left to the nightly run. `LongReportRebuildTests` rebuilds the same inputs. `ParallelAnalysisTests` writes each report 6 times on 4 threads.
+    - `ENCSPECT_FULL_THREAD_TESTS=1`, set by the nightly run and by a manual run, writes every long input with all three writers on four threads and 24 times on eight threads.
     - The hammer, the block list tests and `InputReleaseTests` run in full every time.
   - On a mismatch between two writes, `ReportRendering` writes both again as text and names the first differing line.
   - Only the two public mutable static arrays (`Sv7Parser.SampleRates`, `SpeexHeader.ModeNames`) became read-only; the internal `static readonly` tables stay arrays.
@@ -47,10 +47,10 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 | | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
-| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 | those and Linux arm64, macOS x64 | same as main |
+| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | same as main |
 | Thread-safety tests | sampled | sampled | the whole corpus (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Fuzzing | 300 s | 300 s | 1,800 s |
-| Concurrency | a new push cancels the running checks | runs are kept | runs are kept |
+| Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
 
 - The platform lists and the sharded test matrix are computed by `scripts/ci/changes.py` from the event.
 - `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow and unchanged.
@@ -63,32 +63,36 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header and DTS fixtures, and `MemoryTests`.
   - `rest`: every other test, among them the `Thread hammers` collection, which runs alone at the end of the shard.
   - Locally, about three minutes each, against ten for the whole project in one process. Move a class between shards by editing `shards.json` when one shard's job takes clearly longer than the others'; `check_shards.py` stays green whatever the split.
-- `shard-guard`: `scripts/ci/check_shards.py` lists the tests under each shard's filter and under none and fails unless the shards partition them, every theory row once. Run it locally after building the tests in Release.
+- `shard-guard`: `scripts/ci/check_shards.py` lists the tests that `dotnet test --list-tests` reports under each shard's filter and under none, and fails unless every listed entry is in exactly one shard. The list has one entry per theory row it can enumerate and one for a theory it cannot (such as `UsacLayoutTests.NotExhale`), so a shard may run more tests than it lists (the `rest` shard listed 5,288 and ran 5,306). Run it locally after building the tests in Release.
 - `fuzz`, `format`, `fixtures` (the hand-built fixtures are reproducible) and one cross-check job per format family, as before.
 - `docs`: links and indexes of the documentation (`scripts/ci/check_docs.py`) and the Python tests of the pipeline scripts. It runs on every change, so a documentation-only pull request still gets a check.
 
 ### Path filter
 
 - The first job, `changes`, runs `scripts/ci/changes.py`, which diffs the pull request's merge commit against its base and publishes one output per job, named like the job.
-- A cross-check job runs when its parser projects, its fixture folders, its scripts (and the scripts they import) or its manifests changed. A change to `src/Encspect.Core.Abstractions`, `src/Encspect.Host`, `src/Encspect.Cli`, `downloads.py`, `mediainfo_tool.py`, `channel_layouts.py`, `.github/workflows/**`, `scripts/ci/**` or the build props runs every job.
-- The .NET jobs (`build-test`, `unit-tests`, `shard-guard`, `fuzz`, `format`) run for any change under `src`, `tests` and the build files; the `fixtures` job for any change under `scripts/fixtures` or the fixture and manifest folders.
+- A change under `.github/` or `scripts/ci/` runs every job and accepts no skip. A plain shell step of the `changes` job decides that (not `changes.py`, which would judge its own change), `pipeline` is its output, and `all-checks` repeats the rule in a `jq` step before it runs `check_results.py`.
+- A cross-check job runs when its parser projects, its fixture folders, its scripts (and the scripts they import) or its manifests changed. Any change under `src/Encspect.Formats.*` or `src/Encspect.Tags.*` also runs the MPEG and MP4 jobs, which run the analyzer over downloaded samples (the ISO conformance streams, mp3PRO, xHE-AAC and HE-AAC) that any parser's detection could start claiming. A deleted or renamed file under `scripts/` runs everything, since what imported it cannot be told, and an imported helper counts by name even when its file is gone. A change to `src/Encspect.Core.Abstractions`, `src/Encspect.Host`, `src/Encspect.Cli`, `downloads.py`, `mediainfo_tool.py`, `channel_layouts.py`, `.github/workflows/**`, `scripts/ci/**` or the build props runs every job.
+- The .NET jobs (`build-test`, `unit-tests`, `shard-guard`, `fuzz`, `format`) run for any change under `src`, `tests` and the build files; the `fixtures` job for any change under `scripts/fixtures`, the fixture and manifest folders, and what its scripts read (`src/Encspect.Formats.Aac`, which `check_aac_tables.py` compares with fdk-aac).
 - Documentation only (`docs/**`, `README.md`, `CLAUDE.md`, other Markdown outside `src` and `tests`) runs nothing but `docs`. A topic article under `src/Encspect.Host/Topics` is code: `DescriptionTests` reads it.
-- A path no area knows (a new parser project, a new fixture folder, a new `crosscheck_*.py`) runs everything. A change that cannot be read runs everything. Pushes to main, the schedule and manual runs never skip a job.
+- A path no area knows runs everything: a new project or file under `src` (`src/Directory.Build.props` too), a new folder under `tests`, a new fixture folder, a data file or subfolder of `scripts/fixtures` that no area lists, a new `crosscheck_*.py`. A change that cannot be read runs everything. Pushes to main, the schedule and manual runs never skip a job.
 - `scripts/ci/check_results.py` is the verdict of `all-checks`: a job may be skipped only when the `changes` job published `false` for it; a skip behind a failed dependency fails the check. When a new job reads files the filter does not know, add them to `AREAS` in `changes.py`; `scripts/ci/test_changes.py` covers the rules.
 
 ### Caches
 
-- NuGet packages: `actions/setup-dotnet` with `cache: true`, keyed on `Directory.Packages.props` and every project file.
-- Pinned downloads (source archives, samples): `ENCSPECT_DOWNLOAD_CACHE` (`.cache/downloads`) is read and written by `downloads.fetch`. Entries are named by their SHA-256 and checked against it on every use, so a changed pin downloads the new file and a cache entry can never serve another one. The cache key holds the fixture scripts and the manifests; one cache per job.
+- NuGet packages: `actions/cache` on `~/.nuget/packages`, one entry per platform, architecture and job, keyed on `Directory.Packages.props` and every project file. Only the jobs that restore have it (`format` runs `dotnet format whitespace`, which restores nothing).
+- Pinned downloads (source archives, samples): `ENCSPECT_DOWNLOAD_CACHE` (`.cache/downloads`) is read and written by `downloads.fetch`.
+  - Entries are named by their SHA-256 and checked against it on every use, so a changed pin downloads the new file and a cache entry can never serve another one.
+  - **A file only the private repository served is never cached.** The Actions cache of a public repository can be restored by a pull request from a fork, so `fetch` remembers a file only when a public address served it. `mpc.zip`, and any sample whose public addresses are gone, are fetched from the private repository on every run.
+  - The ISO conformance, mp3PRO, xHE-AAC and HE-AAC samples no longer have caches of their own: those held whatever address served them. They live in the download cache, under the same rule.
+  - The key holds the job, the ISO week and the manifests under `tests/conformance`: a job saves one entry a week, not one per commit, and a manifest change refreshes it at once. A new tool pin in a script is downloaded on every run until the next week's entry, and restored entries from earlier weeks still serve every file whose pin did not change.
 - The traced faad2 build of the MP4 cross-check (`.cache/tools/faad2-trace`): keyed on `faad_trace_tool.py`, which holds the pinned commit and the patches, and the runner image.
-- The ISO conformance streams, the mp3PRO, xHE-AAC and HE-AAC samples keep their own caches keyed on their manifests.
-- The other tools the cross-checks build (minimp3, mp3guessenc, EncSpot, mctoolamed, libwavpack's block reader, libmpcdec, libdca, liba52's block reader) compile in seconds from the cached downloads and are not cached themselves.
+- The other tools the cross-checks build (minimp3, mp3guessenc, EncSpot, mctoolamed, libwavpack's block reader, libmpcdec, libdca, liba52's block reader) compile in seconds from the downloads and are not cached themselves.
 
 ### When a job fails
 
-- Every Linux job runs its steps through `scripts/ci/step-shell.sh`. When a step fails, it writes the lines that name a problem and the last lines of the step's output to the job's step summary, and the first of them as annotations. The fuzz job lists the inputs it saved.
+- The `fuzz`, `format`, `fixtures`, `shard-guard` and cross-check jobs run their steps through `scripts/ci/step-shell.sh`. When a step fails, it writes the lines that name a problem and the last lines of the step's output to the job's step summary, and the first of them as annotations. The fuzz job lists the inputs it saved.
 - The test jobs write the failed tests with the first lines of their messages to the step summary from the TRX files, and upload the TRX files as the artifact `test-results-<platform>-<shard>` (`test-results-gui-<platform>` for the GUI tests) with a retention of 30 days. The fuzz inputs are the artifact `fuzz-failures`.
-- `python3 scripts/ci_report.py` lists the runs on main (pushes, the nightly schedule, manual runs; every workflow) of the last 14 days (`--days`, `--since 2026-10-01`), and for each red one the failed jobs and steps and the failing tests. It uses only the standard library and the public API: without a token the tests come from the annotations; with `GITHUB_TOKEN` (or `GH_TOKEN`) set, from the job logs. Exit code 1 means a run is red. `CLAUDE.md` asks for it at the start of a working session.
+- `python3 scripts/ci_report.py` lists the runs on main (pushes, the nightly schedule, manual runs; every workflow) of the last 14 days (`--days`, `--since 2026-10-01`), and for each red one the failed jobs and steps and the failing tests. It uses only the standard library and the public API: without a token the tests come from the annotations; with `GITHUB_TOKEN` (or `GH_TOKEN`) set, from the job logs. A canceled run is listed as CANCELED, apart from the red ones, and counts as not green: it is a commit or a night without a verdict. Exit code 1 means a run is red or canceled. `CLAUDE.md` asks for it at the start of a working session.
 
 
 ## Fixtures and cross-checks
