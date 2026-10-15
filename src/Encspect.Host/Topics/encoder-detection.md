@@ -19,6 +19,7 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 - In WavPack, libwavpack 5.0's [config block](wavpack-blocks) and checksums (medium).
 - In ASF, [metadata](asf-metadata) such as WMFSDKVersion and the header's layout tell Microsoft's writers apart (medium); in WMA, ffmpeg's 'N' filler bytes count high.
 - An ID3v2 TSSE frame, an APE Encoder item or an MP4 [©too item](itunes-metadata), which whatever software wrote the tag fills in. Alone, it names an encoder with low confidence; for AC-3 and DTS it is the only evidence.
+- The BUILDVER chunk of a [.dtshd file](dtshd-file), a string the standard lists as the encoder's version identification and calls compiler information; low confidence, since it may name the tool that wrote the file as well.
 
 **Confidence.** High means the encoder signed the file in a way that checks out; medium, specific but weaker evidence; low, only habits or text other software may have written.
 
