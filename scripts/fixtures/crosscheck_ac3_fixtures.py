@@ -418,7 +418,7 @@ def mediainfo_bsi(data, offset):
 # the samples and stream size from the duration rounded to the millisecond.
 FIRST_FRAME_RATE = "MediaInfo takes the bitrate of the first frame of each substream (File_Ac3.cpp, frmsizplus1_Max) and derives the duration, samples and stream size from it and the file size"
 COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), where the analyzer counts every frame, the cut one with a finding"
-LEADING_JUNK = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), so the 100 bytes of junk in front of the frames count as part of a frame, where the analyzer counts the frames"
+LEADING_JUNK = "MediaInfo derives the duration from the file size, junk included (File_Ac3.cpp, Streams_Finish), and the samples and stream size from it, where the analyzer counts the frames"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
 AUXILIARY_FIELD = "MediaInfo searches the frame for the container but parses it only if it starts before the auxiliary data field (File_Ac3.cpp, Core_Frame: BitsAtEnd<EMDF_RemainPos), which this fixture's container, inside that field, does not"

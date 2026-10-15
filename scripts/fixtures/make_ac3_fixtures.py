@@ -201,6 +201,26 @@ def build():
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it.",
                                  "liba52": "liba52 does not decode E-AC-3."}})
 
+    # The same with an MPEG header: AC-3 frames of 768 bytes whose unused tail holds the bytes of a
+    # CRC-protected MPEG-2.5 Layer I header of 768 bytes, which chain from frame to frame as in
+    # monsters_inc_2.0_192.ac3 with junk in front. Their CRCs do not hold, so MPEG audio ranks the
+    # chain 30 and the CRC-checked AC-3 chain 55 wins.
+    mpeg = bytes.fromhex("FFE6C5BA")
+    frames = []
+    for _ in range(8):
+        frame = bytearray(ac3())
+        assert not any(frame[500:504]) and len(frame) == 768
+        frame[500:504] = mpeg
+        frames.append(bytes(m.fix_crc2(m.fix_crc1(frame))))
+    junk = bytes((i * 37 + 11) % 251 for i in range(100))
+    assert b"\xFF" not in junk
+    data = junk + b"".join(frames)
+    fixture("junk-mpeg-in-frames", ".ac3", "100 bytes of junk, then eight 2/0 AC-3 frames of 768 bytes, each with the bytes of a protected MPEG-2.5 Layer I header of 768 bytes at its offset 500.",
+            data, frames_of(data, 100), [stream("AC-3", 48000, 2, 0, 8 * 1536)], [("ac3.leading-junk", "100 bytes before the first frame")],
+            gaps=[(0, 100)], read=False,
+            crosscheck={"ffprobe": False, "decode": True, "liba52": True,
+                        "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it."}})
+
     # A frame whose second half is missing: the next frame's sync word starts inside it.
     frame = ac3()
     data = frame * 2 + frame[:400] + frame * 3

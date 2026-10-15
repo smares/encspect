@@ -17,6 +17,8 @@
    "url": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/Example/AVSync_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4",
    "sha256": "872267d4d3b9ba623420464ae9759567b2530c936879a4dfb86e1ccc64e607e8",
    "size": 15123330,
+   "format": "MP4",
+   "codec": "E-AC-3",
    "frames": 5669,
    "object_audio": true,
    "joc_object_count": 15,
@@ -31,6 +33,8 @@
    "url": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/Example/AVSync_1280x720p_2997fps_h264_6ch_640kbps_ddp_joc.mp4",
    "sha256": "12d9a722f7ff4262885d1fb2cc1d4c5433b96e8904e0d89a165dc8614265e711",
    "size": 15268867,
+   "format": "MP4",
+   "codec": "E-AC-3",
    "frames": 5673,
    "object_audio": true,
    "joc_object_count": 15,
@@ -46,6 +50,8 @@
    "url": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/Example/ChID_voices_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4",
    "sha256": "b055bc4cd0d65c87aab6c3f0f57d1fb44a7ede0dd0f69206bc184525b1371192",
    "size": 32105062,
+   "format": "MP4",
+   "codec": "E-AC-3",
    "frames": 2361,
    "object_audio": true,
    "joc_object_count": 15,
@@ -63,6 +69,8 @@
    "url": "https://samples.ffmpeg.org/A-codecs/AC3/eac3/casablanca_aht_mono_64.eac3",
    "sha256": "d5ad1e5868c2b4c3f69b6d832cd4e9abe65710b052266ccd19d0d05c15f7c40c",
    "size": 6013664,
+   "format": "AC-3",
+   "codec": "E-AC-3",
    "object_audio": false,
    "findings": [
     "ac3.frame-truncated"
@@ -78,6 +86,8 @@
    "url": "https://samples.ffmpeg.org/A-codecs/AC3/eac3/buggy_aht_5.1_384.eac3",
    "sha256": "2017afb0ab859f8c51b9f3c5ea743dd2756260da0fe8105e338b367b06d0d44f",
    "size": 7014912,
+   "format": "AC-3",
+   "codec": "E-AC-3",
    "object_audio": false,
    "findings": [
     "ac3.dialnorm-reserved"
@@ -103,7 +113,7 @@
    "info_findings": [
     "ac3.aht-not-read"
    ],
-   "note": "352 bytes of junk precede the first frame, and the E-AC-3 headers' own bytes (from offset 6 of each frame) read as an ADTS header whose chain of three frames exists at several places, so the file is E-AC-3 only because its chain of CRC-checked frames outranks that ADTS chain (ffprobe's packet count includes the junk, so no frame count is listed)"
+   "note": "352 bytes of junk precede the first frame, and the E-AC-3 frame headers' own bytes (from offset 6 of each frame) read as an ADTS header whose chain of three frames exists at several places; the file is E-AC-3 because the ADTS sniff asks eight frames of a chain further in and the CRC-checked E-AC-3 chain ranks 55 (ffprobe's packet count includes the junk, so no frame count is listed)"
   }
  ]
 }
