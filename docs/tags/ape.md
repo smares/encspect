@@ -9,4 +9,4 @@
   - text items in UTF-8.
 - An APE tag whose header puts `TAG` at 128 bytes before the end of the file wins over a supposed ID3v1 tag there. The [plan](../PLAN.md#tag-detection-and-false-positives) explains this collision.
 - Musepack SV8 chapters hold APEv2 items, which go to this parser.
-- A text item with the key `Encoder` (in any case: FFmpeg writes `encoder`, with its Lavf version) is an encoder claim, which the format parsers weigh as they do an ID3v2 TSSE frame. The software that writes the tag fills it in, so a claim has low confidence. An empty item is none.
+- A text item with the key `Encoder` (in any case: FFmpeg writes `encoder`, with its Lavf version) is a claim of the writer role, which the format parsers resolve apart from the encoder. The APEv2 item key list has no key for the encoder, so the specification gives the item to neither role, and a field it leaves open goes to the writer. The software that writes the tag fills it in, so a claim has low confidence. An empty item is none.

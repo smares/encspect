@@ -75,7 +75,8 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 
 ## Encoder detection
 
-- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. Claims from tags (an ID3v2 TSSE frame, an APEv2 Encoder item) and from a container (the BUILDVER chunk of a [.dtshd file](dtshd.md)) name one with low confidence, as written. A name FFmpeg's muxer writes (Lavf) names none.
+- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. An ID3v2 TSSE frame names the encoder with low confidence, as written (`dts.encoder-claim` for a second one that differs).
+- The writer is resolved apart, from the claims of the writer role: the BUILDVER chunk of a [.dtshd file](dtshd.md), an APEv2 Encoder item and ffmpeg's muxer version (Lavf), with low confidence; two that name different software are `dts.writer-claim`.
 
 ## MP4
 

@@ -22,4 +22,5 @@ Mono or stereo.
 
 ## Encoder detection
 
-speexenc, ffmpeg's libspeex, or the libspeex version.
+- **Encoder:** speexenc, from its vendor string ("Encoded with Speex 1.2.1") with the header's version agreeing (high), or libspeex from the header's version string, which libspeex writes whatever program encodes (low).
+- **Writer:** ffmpeg, from the ENCODER field ("Lavc60.31.102 libspeex") and a vendor string that is its muxer's version ("Lavf60.16.100"). Two claims that name different software are `speex.writer-claim-differs`.

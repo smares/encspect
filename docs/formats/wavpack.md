@@ -48,7 +48,8 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - "WavPack 5.0 or later" where the blocks hold a new configuration block or a block checksum, which libwavpack has written since 5.0, as libwavpack tells encoder versions 5 and 4. The confidence is medium: the library writes no encoder name. FFmpeg 6.1.1's encoder writes neither.
 - "WavPack 4 stream, no WavPack 5 features" for the others, with low confidence: libwavpack reports encoder version 4 for them, but other encoders write such streams too (FFmpeg's writes version 0x410 with no new configuration block and no checksums). The evidence says so.
-- The tags' claims weigh in: an ID3v2 TSSE frame, or an APEv2 Encoder item (the key in any case, which FFmpeg writes as `encoder` with its Lavf version). A claim that names WavPack is evidence; one that names FFmpeg is evidence for a WavPack 4 stream, which FFmpeg writes; a claim that names anything else is a finding (`wavpack.encoder-claim-differs`).
+- An ID3v2 TSSE frame weighs in as a claim of the encoder role. A claim that names WavPack is evidence; one that names FFmpeg is evidence for a WavPack 4 stream, which FFmpeg writes; a claim that names anything else is a finding (`wavpack.encoder-claim-differs`).
+- An APEv2 Encoder item (the key in any case, which FFmpeg writes as `encoder` with its Lavf version) and ffmpeg's muxer version name the writer, with low confidence, apart from the blocks' encoder; two that name different software are `wavpack.writer-claim-differs`.
 - Configuration flags are shown as the command line options that set them (`-f`, `-h`, `-hh`, `-x`, `-c`, `-m`).
 
 ## Tags

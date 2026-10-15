@@ -131,7 +131,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 Every format has three kinds of fixture:
 
 - **Hand-built fixtures**, written by a script that CI reruns to check they are reproducible.
-- **Encoder-written fixtures**, written by real encoders. `--manifests-only` recomputes their manifests from the committed files without the encoders.
+- **Encoder-written fixtures**, written by real encoders. A manifest that lists the encoder a stream must be named by lists its writer too (`writer`), since the two are resolved apart. `--manifests-only` recomputes their manifests from the committed files without the encoders.
 - **A cross-check script**, which confirms the manifests with other tools in its own CI job.
 
 | Format | Fixtures | Scripts | Checked against |

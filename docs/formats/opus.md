@@ -22,7 +22,8 @@ From mapping family 0 or 1. Ambisonics and family 255 name no speakers.
 
 ## Encoder detection
 
-opusenc and ffmpeg, from the vendor string.
+- **Encoder:** the vendor string of libopusenc, which names libopus' version ("libopus 1.4"), with medium confidence.
+- **Writer:** the ENCODER field, which the Vorbis comment specification leaves open: opusenc's "opusenc from opus-tools 0.2" is shown as "opusenc 0.2", ffmpeg's "Lavc60.31.102 libopus" as "FFmpeg (Lavc60.31.102 libopus)"; a vendor string that is ffmpeg's muxer version ("Lavf60.16.100") names the writer too. Two claims that name different software are `opus.writer-claim-differs`.
 
 ## Not yet covered
 

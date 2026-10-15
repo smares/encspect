@@ -21,12 +21,11 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 ## Encoder detection
 
-From the vendor string:
-
-- libvorbis by release;
-- aoTuV by release, from its sources and builds;
-- Lancer;
-- ffmpeg.
+- **Encoder**, from the vendor string:
+  - libvorbis by release;
+  - aoTuV by release, from its sources and builds;
+  - Lancer.
+- **Writer:** the ENCODER field, which section 5.2.2 of the Vorbis I specification does not list, and a vendor string that is ffmpeg's muxer version ("Lavf60.16.100"): ffmpeg rewrites the vendor string, so its Ogg Vorbis files name the writer "FFmpeg (Lavf60.16.100)" and no encoder. Two claims that name different software are `vorbis.writer-claim-differs`.
 
 ## Not yet covered
 

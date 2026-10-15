@@ -34,6 +34,32 @@ public sealed class CacheTests : IDisposable
     }
 
     [Fact]
+    public void The_writer_survives_the_cache_apart_from_the_encoder()
+    {
+        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "aac", "faac-2.2-he.m4a"), "faac.m4a");
+        FileSummary summary = Summarize(file);
+        Assert.Equal(("FAAC", Encspect.Core.Confidence.Medium, "FAAC 2.2.0 (6acbe23)", Encspect.Core.Confidence.Low),
+            (summary.Summary.Encoder, summary.Summary.EncoderConfidence, summary.Summary.Writer, summary.Summary.WriterConfidence));
+        using (SummaryCache cache = Cache())
+        {
+            cache.Put(file, FileFingerprint.Read(file)!, summary);
+        }
+
+        using SummaryCache later = Cache();
+        FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
+        AssertSame(summary, read);
+        Assert.Equal("FAAC 2.2.0 (6acbe23)", read!.Summary.Writer);
+        Assert.Equal(Encspect.Core.Confidence.Low, read.Summary.WriterConfidence);
+    }
+
+    // The writer changed what a summary holds and so the store's layout: a store of version 3 reads as empty, and the folder is analyzed again.
+    [Fact]
+    public void The_store_format_was_bumped_for_the_writer()
+    {
+        Assert.Equal(4, SummaryCache.FormatVersion);
+    }
+
+    [Fact]
     public void Object_audio_survives_the_cache()
     {
         string file = _folder.Copy(Path.Combine(Fixtures.Directory, "ac3", "joc-atmos.eac3"), "atmos.eac3");

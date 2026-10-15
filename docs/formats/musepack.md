@@ -50,7 +50,9 @@ Musepack SV8, SV7, and SV4 to SV6.
 
 - the frames inside SV8 audio packets, which have no length of their own (planned: entropy pass).
 
-## Encoder detection
+## Encoder and writer detection
+
+The encoder comes from the stream's version fields (below) and an ID3v2 TSSE frame (low); an APEv2 Encoder item, which SV8 files and trailing tags carry, names the writer, with low confidence, and so does ffmpeg's muxer version (`musepack.writer-claim-differs` for two that name different software).
 
 - **SV8**: mpcenc 1.30.1, and mpc2sv8 conversions.
 - **SV7**: the header's version byte and, where builds share it, the true gapless flag, Max Level and profile 1. Encodes with mppenc 1.16 and every Rarewares Win32 build confirm each name, with high confidence:

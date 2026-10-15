@@ -23,6 +23,7 @@ public class DetailViewModelTests
         Assert.Same(model.Report!.Root, model.Tree!.Root.Node);
         Assert.Same(model.Tree.Root, model.SelectedNode);
         Assert.Equal("MPEG-1 Layer III · 44.1 kHz · Joint stereo · stereo (front left, front right) · 0:00.5 · 128 kbps CBR · LAME 3.100 (high)", model.StreamsText);
+        Assert.DoesNotContain("written by", model.StreamsText, StringComparison.Ordinal);
         Assert.NotNull(model.Document);
         Assert.True(model.HasNoFindings);
     }
@@ -298,5 +299,30 @@ public class DetailViewModelTests
 
         Assert.Equal(ReportFormat.Json, ReportExport.FormatOf("song.JSON"));
         Assert.Equal(ReportFormat.Text, ReportExport.FormatOf("song.txt"));
+    }
+
+    // The writer comes after the encoder in the stream's line, as a separate fact.
+    [Fact]
+    public void A_stream_line_names_the_writer_after_the_encoder()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "aac", "ffmpeg-lc.m4a"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.EndsWith(" · FFmpeg (Lavc60.31.102) (high) · written by FFmpeg (Lavf60.16.100) (low)", model.StreamsText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_stream_line_names_a_writer_without_an_encoder()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "aac", "fdkaac-lc.m4a"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.EndsWith(" · written by fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", model.StreamsText, StringComparison.Ordinal);
     }
 }

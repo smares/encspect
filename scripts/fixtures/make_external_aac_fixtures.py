@@ -13,7 +13,7 @@ must report, mostly from independent tools at the time of encoding:
 - "boxes": the boxes MP4Box -diso lists, as path and size (the offset is null: MP4Box gives none).
 - "units": the packets ffprobe lists with edit lists ignored (offset and size), or for xHE-AAC, which ffmpeg
   6.1 cannot read, the sample sizes MP4Box -dtsx lists (offset null).
-- "streams": the codec, rate, channels, samples and encoder the settings give, with ffprobe's profile where
+- "streams": the codec, rate, channels, samples, encoder and writer (each with its confidence, where the analyzer names one) the settings give, with ffprobe's profile where
   ffmpeg names one, and "ffprobe_sample_rate" where ffmpeg finds SBR the configuration does not signal.
 - "fields": the values MP4Box reads from the movie, track and media headers, the first edit, the audio sample
   entry and the decoder configuration (crosscheck_mp4_fixtures.mp4box_fields), and the fields the settings give.

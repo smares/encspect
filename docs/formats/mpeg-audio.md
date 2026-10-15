@@ -43,8 +43,9 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 
 ## Encoder detection
 
-- **From tags:** the LAME tag, and the version string LAME writes into ancillary data, name the encoder with a confidence level.
-- **From habits:** without a tag, Shine, Helix, Fraunhofer's encoders and TwoLAME are recognized from habits their encodes show, with low confidence.
+- **Encoder, from the stream:** the LAME tag, and the version string LAME writes into ancillary data, name the encoder with a confidence level. Without a tag, Shine, Helix, Fraunhofer's encoders and TwoLAME are recognized from habits their encodes show, with low confidence.
+- **Encoder, from tags:** an ID3v2 TSSE frame, which the ID3v2 specification defines as the used audio encoder and its settings, names the encoder with low confidence; naming the same encoder as low-confidence evidence from the stream, it raises that to medium. A different name is an information finding (`mpeg.encoder-claim-differs`).
+- **Writer:** ffmpeg's muxer version ("Lavf60.16.100") in a TSSE frame, in an APEv2 Encoder item or in the LAME tag it writes into every MP3 it muxes, and any APEv2 Encoder item, whose key the APEv2 item key list does not give to the encoder. The writer is shown apart from the encoder; two claims that name different software are an information finding (`mpeg.writer-claim-differs`).
 
 ## Not yet covered
 

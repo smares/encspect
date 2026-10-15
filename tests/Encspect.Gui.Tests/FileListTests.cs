@@ -111,10 +111,13 @@ public class FileListTests
 
         FileRow he = model.Rows.Single(r => r.Name == "he-v2.m4a");
         Assert.Equal(("MP4", "HE-AAC v2", "44.1 kHz", "Parametric stereo"), (he.Format, he.Codec, he.SampleRateText, he.ChannelMode));
-        Assert.Equal("fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", he.EncoderText);
+        // fdkaac's tool atom names the writer; its stream carries no text, so the encoder is not told.
+        Assert.Null(he.EncoderText);
+        Assert.Equal("fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", he.WriterText);
         Assert.Contains("iTunes Metadata", he.Tags, StringComparison.Ordinal);
         FileRow lc = model.Rows.Single(r => r.Name == "lc.aac");
         Assert.Equal(("AAC", "AAC LC", "FFmpeg (Lavc60.31.102) (high)"), (lc.Format, lc.Codec, lc.EncoderText));
+        Assert.Null(lc.WriterText);
         Assert.EndsWith("VBR", lc.BitrateText, StringComparison.Ordinal);
     }
 
@@ -164,7 +167,7 @@ public class FileListTests
 
         FileRow cbr = model.Rows.Single(r => r.Name == "cbr.opus");
         Assert.Equal(("Opus", "Stereo", "48 kHz"), (cbr.Codec, cbr.ChannelMode, cbr.SampleRateText));
-        Assert.Equal("opusenc 0.2 (libopus 1.4) (high)", cbr.EncoderText);
+        Assert.Equal(("libopus 1.4 (medium)", "opusenc 0.2 (low)"), (cbr.EncoderText, cbr.WriterText));
         Assert.EndsWith("kbps CBR", cbr.BitrateText, StringComparison.Ordinal);
     }
 
