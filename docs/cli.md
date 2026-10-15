@@ -61,9 +61,35 @@ Without it, the output is unchanged.
 
 `--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3`, `dts`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage.
 
+### `--as <format>`
+
+`--as aac` skips format detection and analyzes every file as that format, for a file whose format detection does not find (a damaged one) or finds wrongly. The name is the start of a format's name, as for `--only-format` (`mpeg`, `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3`, `asf`, `dts`), ignoring case; one that starts no format, or several (`a`), is wrong usage.
+
+- **Tags:** found as always; only the format parser changes.
+- **Report:** says it was forced and what detection would have chosen (see "Format detection" below).
+- **With `--only-format`:** wrong usage. `--only-format` selects files by the format detection finds and `--as` skips detection, so the two cannot both say which files are meant.
+- **Wrong format:** a format forced on a file that is none of it gives findings (leading junk, sync lost, invalid data), never a failed parser.
+
 ### `--fail-on info|warning|error`
 
 Makes the exit code 1 when a finding of that severity or worse turns up.
+
+## Format detection
+
+The host picks the format from the evidence each parser finds: its class, where the matched structure starts, and how many consistent and checksum-verified frames it found (see "Format detection" in the [plan](PLAN.md)). Two things show in the report when detection is not the whole story, and only then:
+
+- **Also matches:** other formats whose evidence is real, not a stray header-like match: the chosen format's class, or, above class 30, a frame that passes a checksum or a chain of eight frames or more. A format whose data lies inside a container's declared data (AC-3 frames in an MP4 file) is the container's payload and not listed.
+- **Forced:** the analysis ran the format `--as` named.
+
+The text tree ends with a "Format detection:" section:
+
+```
+Format detection:
+  Analyzed as AAC as requested; detection would take MPEG Audio.
+  Also matches: MPEG Audio (class 90, starting at 0x0, 16 consistent frames, 0 checksum-verified)
+```
+
+Findings: `format.forced` (info) for a forced analysis, and `format.ambiguous` (info) when two formats match with exactly the same evidence, in which case the one the host lists first is taken.
 
 ## JSON reports
 
@@ -101,6 +127,10 @@ A JSON report (schema version 1) is an object:
   - `hasObjectAudio` is `true` for a stream with object-based audio (E-AC-3 with joint object coding) and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.
   - `multilingualChannels` counts the MPEG-2 multilingual channels a stream carries besides its layout.
   - `series` are numbers for graphs, per frame (`axis` `frameOffset`, `x` the frame's byte offset) and per second of audio (`seconds`, `x` the start of each second). MPEG gives the bitrate and, for Layer III, the bit reservoir fill, both ways.
+- **Detection:** `detection`, present only when other formats also match or the analysis was forced, has:
+  - `format`, the format that ran, and `evidence` for it (`class`, `offset`, `frames`, `verifiedFrames` and, where the parser gives one, `note`);
+  - `isForced`, and with it `detected`, the format detection would have chosen (null if it finds none);
+  - `alternatives`, a list of `format` and `evidence`.
 - **Findings:** `path` is the child indexes from the root to the node a finding points to. `count` is the number of cases it stands for, since findings of one kind are reported once per stream.
 - **Depth:** trees are written down to 64 levels below the root. Deeper children are left out, which JSON marks with `"hasOmittedChildren": true` on the node and the text tree with a line. No parser nests that deep today; a damaged container could.
 - **Schema version:** `schemaVersion` changes when a field changes meaning or type or goes away, not when one is added.

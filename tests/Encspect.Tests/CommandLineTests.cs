@@ -260,6 +260,36 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void AsAnalyzesEveryFileAsTheFormatAndSaysWhatDetectionWouldHaveChosen()
+    {
+        (int code, string output, string errors) = Run("--as", "aac", Tagged);
+
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Empty(errors);
+        Assert.Contains("  File: AAC", output);
+        Assert.Contains("Format detection:", output);
+        Assert.Contains("Analyzed as AAC as requested; detection would take MPEG Audio.", output);
+        Assert.Contains("[Info] format.forced:", output);
+        Assert.DoesNotContain("parse.failed", output);
+
+        using JsonDocument json = JsonDocument.Parse(Run("--as=AAC", "--json", Tagged).Output);
+        JsonElement detection = json.RootElement[0].GetProperty("detection");
+        Assert.True(detection.GetProperty("isForced").GetBoolean());
+        Assert.Equal(("AAC", "MPEG Audio"), (detection.GetProperty("format").GetString(), detection.GetProperty("detected").GetString()));
+
+        // Without --as, a plain file has no detection section.
+        Assert.DoesNotContain("Format detection:", Run(Tagged).Output);
+        using JsonDocument plain = JsonDocument.Parse(Run("--json", Tagged).Output);
+        Assert.False(plain.RootElement[0].TryGetProperty("detection", out _));
+    }
+
+    [Fact]
+    public void HelpDescribesAs()
+    {
+        Assert.Contains("--as <format>", Run("--help").Output);
+    }
+
+    [Fact]
     public void OnlyFormatOggKeepsOggFiles()
     {
         string folder = Directory.CreateTempSubdirectory("encspect-").FullName;
@@ -289,6 +319,11 @@ public class CommandLineTests
     [InlineData("--only-format", "flac")]
     [InlineData("--only-format", "mpeg,flac")]
     [InlineData("--only-format", ",")]
+    [InlineData("--as", "flac")]
+    [InlineData("--as", "a")]
+    [InlineData("--as")]
+    [InlineData("--as", "aac", "--only-format", "mpeg")]
+    [InlineData("--only-format", "mpeg", "--as", "aac")]
     [InlineData("--hide", "")]
     [InlineData("--hide", " , ")]
     [InlineData("--offsets", "--json")]

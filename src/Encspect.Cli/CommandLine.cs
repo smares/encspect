@@ -43,6 +43,10 @@ internal static class CommandLine
         Selection:
           --only-format <names> Analyze only files of these formats, comma-separated, by the
                                 start of the format's name (mpeg: MPEG Audio). Others are skipped.
+                                Not with --as.
+          --as <format>         Skip format detection and analyze every file as this format, by the
+                                start of its name, for a file detection misses or gets wrong. The
+                                report says it was forced and what detection would have chosen.
 
         Exit code:
           --fail-on <severity>  Exit with 1 when a finding of this severity or worse is found:
@@ -70,6 +74,8 @@ internal static class CommandLine
         bool explain = false;
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
+        string? forcedFormat = null;
+        var analyzer = Analyzer.CreateDefault();
         Severity? failOn = null;
         var paths = new List<string>();
         bool optionsEnded = false;
@@ -158,6 +164,22 @@ internal static class CommandLine
                     }
 
                     break;
+                case "--as":
+                    if (Value(arg) is not { } wanted)
+                    {
+                        return Fail(stderr, "--as needs a format.");
+                    }
+
+                    IReadOnlyList<string> matches = analyzer.MatchFormats(wanted);
+                    if (matches.Count != 1)
+                    {
+                        return Fail(stderr, matches.Count == 0
+                            ? $"Unknown format: {wanted}. Formats: {string.Join(", ", KnownFormats)}."
+                            : $"Ambiguous format: {wanted} starts {string.Join(", ", matches)}. Name one of them.");
+                    }
+
+                    forcedFormat = matches[0];
+                    break;
                 case "--fail-on":
                     failOn = Value(arg)?.ToLowerInvariant() switch
                     {
@@ -205,6 +227,11 @@ internal static class CommandLine
             return Fail(stderr, "Name at least one file or folder.");
         }
 
+        if (forcedFormat is not null && formats.Count > 0)
+        {
+            return Fail(stderr, "--as and --only-format cannot be combined: --only-format selects files by the format detection finds, and --as skips detection.");
+        }
+
         Output chosenOutput = output ?? Output.Text;
         if (offsets && chosenOutput != Output.Text)
         {
@@ -221,7 +248,6 @@ internal static class CommandLine
             return Fail(stderr, "--explain is for the text tree and JSON; CSV has one summary row per file.");
         }
 
-        var analyzer = Analyzer.CreateDefault();
         var filter = new ReportFilter(hidden);
         bool unreadable = false;
         Severity? worst = null;
@@ -316,7 +342,7 @@ internal static class CommandLine
                     return null;
                 }
 
-                return analyzer.AnalyzeFile(input.Path);
+                return analyzer.AnalyzeFile(input.Path, forcedFormat is null ? null : new AnalysisOptions { ForcedFormat = forcedFormat });
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -382,5 +408,5 @@ internal static class CommandLine
     private static IEnumerable<string> List(string value) => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg".
-    private static string Normalize(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+    private static string Normalize(string name) => Analyzer.NormalizeFormat(name);
 }

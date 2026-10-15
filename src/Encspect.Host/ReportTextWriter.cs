@@ -35,6 +35,22 @@ public static class ReportTextWriter
 
         WriteNode(report.Root, writer, new Options(showOffsets, explain, filter), 0, anchored);
 
+        if (report.Detection is { } detection)
+        {
+            writer.WriteLine();
+            writer.WriteLine("Format detection:");
+            if (detection.IsForced)
+            {
+                string detected = detection.Detected is { } name ? $"detection would take {name}" : "detection finds no format";
+                writer.WriteLine($"  Analyzed as {detection.Format} as requested; {detected}.");
+            }
+
+            foreach (FormatCandidate candidate in detection.Alternatives)
+            {
+                writer.WriteLine($"  Also matches: {candidate.Format} ({candidate.Evidence.Describe()})");
+            }
+        }
+
         if (report.Findings.Count > 0)
         {
             writer.WriteLine();
