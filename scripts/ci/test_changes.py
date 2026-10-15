@@ -121,6 +121,8 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("mp4-crosscheck", run("tests/fixtures/alac/apple-alac-st44.m4a"))
         self.assertEqual(run("scripts/fixtures/macos/make_macos_aac_fixtures.sh"), {"fixtures"})
         self.assertEqual(run("scripts/fixtures/macos/macos_aac_support.py"), {"fixtures"})
+        self.assertEqual(run("scripts/fixtures/macos/window_signals.py"), {"fixtures"})
+        self.assertEqual(run("scripts/fixtures/window_shapes.py"), {"fixtures"})
 
     def test_the_ac3_fixture_models_belong_to_the_ac3_job(self):
         self.assertEqual(run("scripts/fixtures/emdf_model.py"), {"fixtures", "ac3-crosscheck"})

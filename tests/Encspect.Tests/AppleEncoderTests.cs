@@ -50,6 +50,37 @@ public class AppleEncoderTests
         Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
     }
 
+    // afconvert -q 127 (maximum quality) writes KBD windows, up to every channel stream (win-lc-m4a-q127-*, 8 s of window_signals.py, macOS 15.7 arm64).
+    // The window shape tells nothing about the encoder, so no rule may use it: the encoder is named from the sbtd box and the stream type 0x14 alone.
+    [Theory]
+    [InlineData("apple/apple-win-lc-m4a-q127-cbr64-clicks.m4a")]
+    [InlineData("apple/apple-win-lc-m4a-q127-cbr64-pluck.m4a")]
+    [InlineData("apple/apple-win-lc-m4a-q127-cbr128-tones.m4a")]
+    public void KbdWindowsAtMaximumQualityStillNameTheEncoderWithMediumConfidence(string name)
+    {
+        byte[] bytes = Read(name);
+        Assert.Equal(0x14, bytes[StreamTypeByte(bytes)]);
+        Assert.True(Find(bytes, "sbtd") >= 0);
+        Report report = Analyze("apple.m4a", bytes);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal((Encoder, Confidence.Medium), (stream.Encoder, stream.EncoderConfidence));
+        Node shapes = Descendants(report.Root).First(n => n.Name == "Window Shapes");
+        Node kbd = Assert.Single(shapes.Children, c => c.Name == "KBD");
+        Assert.NotNull(kbd.Value);
+    }
+
+    private static IEnumerable<Node> Descendants(Node node)
+    {
+        foreach (Node child in node.Children)
+        {
+            yield return child;
+            foreach (Node below in Descendants(child))
+            {
+                yield return below;
+            }
+        }
+    }
+
     [Fact]
     public void ReservedStreamTypeBitSetNamesNothing()
     {

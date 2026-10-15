@@ -194,7 +194,7 @@ def import_encode(artifact, encode, sources, environment, force, allow_large, pr
     if source.get("foreign"):
         describe = f"afconvert {' '.join(encode['command'].split()[1:])}: the packets of {source['from']} copied (-d 0), not encoded."
     else:
-        describe = f"afconvert {' '.join(encode['command'].split()[1:])} on {source['seconds']} s of the {source['signal']} signal of wma_signals.py."
+        describe = f"afconvert {' '.join(encode['command'].split()[1:])} on {source['seconds']} s of the {source['signal']} signal of {source.get('generator', 'wma_signals.py')}."
     provenance = {
         "description": describe,
         "encoder": {
