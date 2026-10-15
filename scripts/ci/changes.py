@@ -76,7 +76,7 @@ AREAS = {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],
         "fixtures": ["ac3"],
         "scripts": ["crosscheck_ac3_fixtures.py"],
-        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*"],
+        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*", "scripts/fixtures/emdf_model.py"],
     },
     "dts-crosscheck": {
         "projects": ["Encspect.Formats.Dts", "Encspect.Formats.Mp4"],

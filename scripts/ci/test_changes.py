@@ -121,6 +121,12 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("scripts/fixtures/macos/make_macos_aac_fixtures.sh"), {"fixtures"})
         self.assertEqual(run("scripts/fixtures/macos/macos_aac_support.py"), {"fixtures"})
 
+    def test_the_ac3_fixture_models_belong_to_the_ac3_job(self):
+        self.assertEqual(run("scripts/fixtures/emdf_model.py"), {"fixtures", "ac3-crosscheck"})
+        self.assertEqual(run("scripts/fixtures/make_ac3_fixtures.py"), {"fixtures", "ac3-crosscheck"})
+        self.assertEqual(run("scripts/fixtures/crosscheck_ac3_fixtures.py"), {"fixtures", "ac3-crosscheck"})
+        self.assertIn("ac3-crosscheck", run("tests/fixtures/ac3/joc-atmos.eac3"))
+
     def test_platforms(self):
         self.assertEqual(len(changes.platforms("pull_request")), 4)
         self.assertEqual(len(changes.platforms("push")), 6)
