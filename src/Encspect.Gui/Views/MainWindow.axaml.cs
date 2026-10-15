@@ -28,6 +28,7 @@ public partial class MainWindow : Window
         ["Channel Mode"] = "How the first stream's channels are coded, as its format names it, such as joint stereo or dual channel in MPEG audio, or parametric stereo in HE-AAC v2.",
         ["Channel Layout"] = "Which speakers the first stream's channels feed, by the layout's common name such as stereo or 5.1; the cell's tooltip lists the speakers in the stream's channel order. Discrete channels feed no speaker of their own, such as the two programs of dual channel.",
         ["Encoder"] = "Which program encoded the file, and how sure the analysis is: high when the encoder wrote its name, low when only its habits match.",
+        ["Written by"] = "Which software wrote the file around the audio, such as the muxer or the container writer, and how sure the analysis is. It need not be the encoder: a remuxed file keeps the encoder of its audio.",
         ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APE.",
         ["Findings"] = "Problems and notes found, by severity: errors, warnings and infos.",
     };
@@ -122,6 +123,7 @@ public partial class MainWindow : Window
             CellTemplate = new FuncDataTemplate<FileRow>((_, _) => LayoutCell()),
         });
         grid.Columns.Add(Column("Encoder", CompiledBinding.Create<FileRow, string?>(r => r.EncoderText), nameof(FileRow.EncoderText), new DataGridLength(150)));
+        grid.Columns.Add(Column("Written by", CompiledBinding.Create<FileRow, string?>(r => r.WriterText), nameof(FileRow.WriterText), new DataGridLength(150)));
         grid.Columns.Add(Column("Tags", CompiledBinding.Create<FileRow, string?>(r => r.Tags), nameof(FileRow.Tags), new DataGridLength(110)));
         grid.Columns.Add(new DataGridTemplateColumn
         {

@@ -318,10 +318,11 @@ public sealed class ApeTagParser : ITagParser
                 item.Value = IsV1 ? AddV1Value(item, valueStart, valueSize) : AddValue(item, key, valueStart, valueSize, type);
 
                 // Keys are compared without regard to case, so the item of a writer that spells it
-                // "encoder" (FFmpeg's) names the encoder as "Encoder" does.
+                // "encoder" (FFmpeg's) is read as "Encoder" is. The APEv2 item key list has no key for
+                // the encoder, so the specification gives it to no role and the claim is the writer's.
                 if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && item.Value?.AsText() is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
-                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item"));
+                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item", ClaimRole.Writer));
                 }
 
                 if (IsV1 && flags != 0)

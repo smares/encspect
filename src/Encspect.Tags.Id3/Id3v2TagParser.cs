@@ -291,10 +291,12 @@ public sealed class Id3v2TagParser : ITagParser
     }
 
     // TSSE (TSS in ID3v2.2): "the used audio encoder and its settings when the file was encoded"
-    // (ID3v2.3 section 4.2.1), as the software that wrote the tag fills it in.
+    // (ID3v2.3 section 4.2.1), as the software that wrote the tag fills it in, so the specification
+    // gives it to the encoder. The version text of ffmpeg's muxer ("Lavf60.16.100"), which ffmpeg
+    // writes into it whatever encoded the audio, names the writer.
     private static List<EncoderClaim> EncoderClaims(ParseState state) =>
         state.Frames.Where(f => f.Name is "TSSE" or "TSS" && !string.IsNullOrWhiteSpace(f.Value?.AsText()))
-            .Select(f => new EncoderClaim(f.Value!.ToString(), f, $"ID3v2 {f.Name} frame"))
+            .Select(f => new EncoderClaim(f.Value!.ToString(), f, $"ID3v2 {f.Name} frame", ClaimRoles.Of(ClaimRole.Encoder, f.Value!.ToString())))
             .ToList();
 
     private static void VerifyCrc(ByteReader reader, ParseState state, bool unsync, long bodyEnd, long? declaredPadding, bool truncated)

@@ -350,7 +350,7 @@ internal static class Explain
     public const string Evidence = "What in the stream shows the profile.";
     public const string IsLossless = "Whether the stream has a lossless extension (XLL), which makes the audio exact.";
     public const string HasExtensionSubstream = "Whether any frame is followed by, or is, an extension substream (7.2).";
-    public const string Encoder = "The encoder, from what the file's tags say; the frames only carry a revision number (5.4.2, VERNUM).";
+    public const string Encoder = "The encoder, from what a tag of the file names as the encoder; the frames only carry a revision number (5.4.2, VERNUM).";
     public const string Confidence = "How far the evidence can be trusted.";
     public const string EvidenceText = "What shows the encoder.";
 }

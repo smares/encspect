@@ -347,7 +347,7 @@ internal static class ChunkReader
         Node? text = c.Text("Text", Explain.BuildVersionText, null);
         if (text?.Value?.ToString() is { Length: > 0 } build)
         {
-            state.Context.AddEncoderClaim(new EncoderClaim(build, text, "BUILDVER chunk (the DTS-HD encoder version identification of A/103 Annex E.2.14)"));
+            state.Context.AddEncoderClaim(new EncoderClaim(build, text, "BUILDVER chunk (the DTS-HD encoder version identification of A/103 Annex E.2.14)", ClaimRole.Writer));
         }
     }
 

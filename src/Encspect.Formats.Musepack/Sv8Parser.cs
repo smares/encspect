@@ -946,13 +946,20 @@ internal static class Sv8Parser
 
         Node? encoder = MusepackEncoder.Detect(null, state.EncoderVersion?.Version, state.EncoderVersion?.Node, claims,
             (name, value, description) => name == "Encoder"
-                ? new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.EncoderDetection }
+                ? new Node(name, node.Offset, node.Length, value) { Description = description, Topic = ClaimRoles.EncoderTopic }
                 : Cover(name, value, description),
             (claim, text, name) => state.Findings.Add(Severity.Info, "musepack.encoder-claim-differs", claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded."));
         if (encoder is not null)
         {
             state.Leading.Add(encoder);
+        }
+
+        Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => state.Findings.Add(Severity.Info, "musepack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+        if (writer is not null)
+        {
+            state.Leading.Add(writer);
         }
 
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
@@ -990,6 +997,8 @@ internal static class Sv8Parser
             IsVbr = true,
             Encoder = encoder?.Value?.ToString(),
             EncoderConfidence = MusepackEncoder.ConfidenceOf(encoder),
+            Writer = ClaimRoles.Resolved(writer).Name,
+            WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Series = figures.Series(bitrate, state.Cancellation),
         });
     }

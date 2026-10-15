@@ -15,58 +15,24 @@ public sealed partial class OpusParser
     [GeneratedRegex(@"^libopus (\S+?)(,|$)")]
     private static partial Regex LibopusVendor();
 
-    // ffmpeg's ENCODER field after libopus or its native encoder: "Lavc60.31.102 libopus".
-    [GeneratedRegex(@"^Lavc\S* (lib)?opus$")]
-    private static partial Regex FfmpegEncoder();
-
     private sealed partial class StreamState
     {
-        // The encoder, from the comment's vendor string and ENCODER field: opusenc writes
-        // libopusenc's vendor string, which names libopus' version, and "opusenc from opus-tools"
-        // as ENCODER; ffmpeg writes its own version ("Lavf60.16.100") as the vendor and
-        // "Lavc60.31.102 libopus" or, for its native encoder, "Lavc60.31.102 opus" as ENCODER. Only
-        // the stream's own comment counts.
+        // The encoder, from the comment's vendor string: libopusenc writes the version of libopus into it.
+        // The ENCODER field is the writer's: opusenc writes "opusenc from opus-tools" and ffmpeg
+        // "Lavc60.31.102 libopus" or, for its native encoder, "Lavc60.31.102 opus", with its own version
+        // ("Lavf60.16.100") as the vendor, which names the writer too (AddWriter).
         private Node? AddEncoder()
         {
-            List<EncoderClaim> claims = _comment is { } tag
-                ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
-                : [];
-            EncoderClaim? vendor = claims.FirstOrDefault(c => c.Source.Name == "Vendor");
-            EncoderClaim? field = claims.FirstOrDefault(c => c.Source.Name != "Vendor");
+            EncoderClaim? vendor = ClaimRoles.Encoders(CommentClaims()).FirstOrDefault(c => c.Source.Name == "Vendor");
             Match? library = vendor is null ? null : LibopusVendor().Match(vendor.Text);
 
             var evidence = new List<Node>();
             string? name = null;
             Confidence confidence = Confidence.Medium;
-            if (field is not null && OpusencEncoder().Match(field.Text) is { Success: true } opusenc)
-            {
-                name = library is { Success: true } ? $"opusenc {opusenc.Groups[1].Value} (libopus {library.Groups[1].Value})" : $"opusenc {opusenc.Groups[1].Value}";
-                confidence = library is { Success: true } ? Confidence.High : Confidence.Medium;
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which opusenc writes"));
-                if (vendor is not null)
-                {
-                    evidence.Add(Evidence(vendor.Source, library is { Success: true }
-                        ? $"Vorbis comment vendor string \"{vendor.Text}\", which libopusenc writes with libopus' version"
-                        : $"Vorbis comment vendor string \"{vendor.Text}\""));
-                }
-            }
-            else if (field is not null && FfmpegEncoder().IsMatch(field.Text))
-            {
-                name = $"FFmpeg ({field.Text})";
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
-                if (vendor is not null)
-                {
-                    evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\""));
-                }
-            }
-            else if (vendor is not null && library is { Success: true })
+            if (vendor is not null && library is { Success: true })
             {
                 name = $"libopus {library.Groups[1].Value}";
                 evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which names libopus' version"));
-                if (field is not null)
-                {
-                    evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\""));
-                }
             }
 
             if (name is null)
@@ -84,6 +50,27 @@ public sealed partial class OpusParser
             }
 
             return _parent.Add(node);
+        }
+
+        // The comment of the stream itself: only its claims count.
+        private List<EncoderClaim> CommentClaims() => _comment is { } tag
+            ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
+            : [];
+
+        // The writer, from the comment's ENCODER field and a vendor string that is a muxer's version.
+        private Node? AddWriter()
+        {
+            List<EncoderClaim> claims = CommentClaims();
+            if (_comment is not { } tag || !ClaimRoles.Writers(claims).Any())
+            {
+                return null;
+            }
+
+            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+                (claim, text, name) => _findings.Add(Severity.Info, "opus.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+                text => OpusencEncoder().Match(text) is { Success: true } opusenc ? $"opusenc {opusenc.Groups[1].Value}" : ClaimRoles.WriterName(text),
+                isEvidenceAtSource: true);
+            return writer is null ? null : _parent.Add(writer);
         }
 
         private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence };

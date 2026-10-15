@@ -4,7 +4,7 @@ namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
-// channel layout and encoder are the first stream's; the duration and samples add up over all streams, and the
+// channel layout, encoder and writer are the first stream's that has one; the duration and samples add up over all streams, and the
 // average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
 // most JOC objects one reconstructs. Tags are the file's and those its container holds in its chunks,
 // in tree order.
@@ -21,6 +21,8 @@ public sealed record ReportSummary(
     IReadOnlyList<Speaker>? ChannelLayout,
     string? Encoder,
     Confidence? EncoderConfidence,
+    string? Writer,
+    Confidence? WriterConfidence,
     IReadOnlyList<string> Tags,
     int Errors,
     int Warnings,
@@ -42,6 +44,7 @@ public sealed record ReportSummary(
         IReadOnlyList<StreamInfo> streams = report.Streams;
         StreamInfo? first = streams.Count > 0 ? streams[0] : null;
         StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
+        StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
         List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
 
@@ -58,6 +61,8 @@ public sealed record ReportSummary(
             first?.ChannelLayout,
             encoded?.Encoder,
             encoded?.EncoderConfidence,
+            written?.Writer,
+            written?.WriterConfidence,
             TagNames(report.Root),
             report.Findings.Count(f => f.Severity == Severity.Error),
             report.Findings.Count(f => f.Severity == Severity.Warning),

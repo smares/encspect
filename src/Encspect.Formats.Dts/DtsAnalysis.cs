@@ -299,12 +299,19 @@ internal sealed class DtsAnalysis
         Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
             new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind, Ranges = first.Node.Ranges, Description = description, Topic = topic };
 
-        Node? encoder = DtsEncoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
+        Node? encoder = DtsEncoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
             (claim, text) => Findings.Add(Severity.Info, "dts.encoder-claim", () => claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\"; nothing in the stream confirms or contradicts it."));
         if (encoder is not null)
         {
             first.Leading.Add(encoder);
+        }
+
+        Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
+            (claim, text, name) => Findings.Add(Severity.Info, "dts.writer-claim", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
+        if (writer is not null)
+        {
+            first.Leading.Add(writer);
         }
 
         stream.Figures.DeliveredRate = stream.DeliveredRate;
@@ -315,7 +322,8 @@ internal sealed class DtsAnalysis
         }
 
         first.Leading.Add(statistics);
-        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
             Nodes = [.. Regions.Where(r => stream.Regions.Contains(r)).Select(r => r.Node!)],
@@ -329,8 +337,10 @@ internal sealed class DtsAnalysis
             Duration = stream.Figures.Duration,
             AverageBitrate = stream.Figures.AverageBitrate,
             IsVbr = stream.IsVbr,
-            Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Encoder = encoderName,
+            EncoderConfidence = encoderConfidence,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
             Series = stream.Figures.Series(bitrate, Cancellation),
         });
     }

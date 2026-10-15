@@ -707,11 +707,12 @@ public sealed class RawAacParser : IFormatParser
         Node Cover(string name, NodeValue? value, NodeKind kind, string description, string? topic = null) =>
             new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind, Description = description, Topic = topic };
 
-        // Apple's ADTS writer: see IsAppleHeader. A habit of one writer, so a claim of low confidence.
+        // Apple's ADTS writer: see IsAppleHeader. A habit of one writer, so a claim of low confidence; it names the
+        // writer, which writes these headers around any stream it is given.
         if (frames >= AppleMinimumFrames && appleHeaders == frames)
         {
             claims = [.. claims, new EncoderClaim("Apple AudioToolbox", FirstFrame(),
-                $"ADTS header layout of Apple's AudioToolbox writer: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0")
+                $"ADTS header layout of Apple's AudioToolbox writer: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0", ClaimRole.Writer)
             {
                 IsLayout = true,
             }];
@@ -722,7 +723,7 @@ public sealed class RawAacParser : IFormatParser
                 ? new AacEncoder.Signature(signature.Text, WithoutChildren(FrameNode(state.Records, signature.Index)), signature.Index - start)
                 : null,
             claims,
-            (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
+            (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => state.Findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
                 AacEncoder.Disagreement(claim, text, name, "the tag may have been written by other software, or kept when the audio was re-encoded.")),
             tally: found.Tally);
@@ -731,11 +732,20 @@ public sealed class RawAacParser : IFormatParser
             first.Leading.Add(encoder);
         }
 
+        Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
+            (claim, text, name) => state.Findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            AacEncoder.WriterName);
+        if (writer is not null)
+        {
+            first.Leading.Add(writer);
+        }
+
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Frame", "Frames", out Node bitrate);
         CodingStatistics.Add(statistics, found.Tally, found.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         first.Leading.Add(statistics);
 
-        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         context.AddStream(new StreamInfo
         {
             Nodes = regions.Select(r => r.Node!).ToList(),
@@ -748,8 +758,10 @@ public sealed class RawAacParser : IFormatParser
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = vbr > 0 && vbr == frames,
-            Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Encoder = encoderName,
+            EncoderConfidence = encoderConfidence,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
             Series = figures.Series(bitrate, state.Cancellation),
         });
     }

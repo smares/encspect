@@ -357,12 +357,18 @@ public sealed partial class MpegAudioParser
         if (vbr is { HasLameTag: true })
         {
             // libavcodec encodes MP3 only with libmp3lame or libshine, so "Lavc" supports either; a
-            // remux ("Lavf") names no encoder, and the stream's evidence stands as it would alone.
+            // remux ("Lavf") names no encoder, and the stream's evidence stands as it would alone. The tag
+            // names FFmpeg's muxer either way, which the writer is resolved from (DetectWriter).
             string text = vbr.LameEncoder.TrimEnd(' ');
             bool encoded = text.StartsWith("Lavc", StringComparison.Ordinal);
             Node support = Evidence(tagNode, $"LAME tag written by FFmpeg ({text})");
             if (StreamEncoder(context) is { } behind)
             {
+                if (!encoded)
+                {
+                    return behind;
+                }
+
                 behind = WithEvidence(behind, support, null);
                 Node confidence = behind.Children.First(c => c.Name == "Confidence");
                 if (encoded && confidence.Value == "Low" && (behind.Value == "Shine" || behind.Value!.ToString().StartsWith("LAME", StringComparison.Ordinal)))
@@ -389,6 +395,40 @@ public sealed partial class MpegAudioParser
         }
 
         return StreamEncoder(context);
+    }
+
+    // The writer a region's claims and its LAME tags name: ffmpeg's mp3 muxer fills the encoder field of the LAME tag it writes with
+    // "Lavc" and the version of its codec library when libavcodec encoded, and with "Lavf" and its own version when it only
+    // muxed, so either names the writer. Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with them.
+    private static Node? DetectWriter(StreamState state, RegionState region, IReadOnlyList<EncoderClaim> claims)
+    {
+        ChunkedList<Entry> frames = state.Build.Frames;
+        int end = region.End ?? frames.Count;
+        var all = new List<EncoderClaim>(claims);
+        for (int i = region.First; i < end; i++)
+        {
+            state.CheckCancellation(i - region.First);
+            if (!frames[i].IsVbrHeader)
+            {
+                continue;
+            }
+
+            var header = new HeaderFrame(i, frames[i], ReadVbrHeader(state.Build, frames[i]));
+            if (header.Vbr is { HasLameTag: true, IsVbri: false } && IsFfmpeg(header.Vbr.LameEncoder.TrimEnd(' ')))
+            {
+                all.Add(new EncoderClaim(header.Vbr.LameEncoder.TrimEnd(' '), header.TagNode, "LAME tag", ClaimRole.Writer));
+            }
+        }
+
+        if (region.AudioFrames == 0 || !ClaimRoles.Writers(all).Any())
+        {
+            return null;
+        }
+
+        long offset = region.AudioStart;
+        long length = region.AudioEnd - offset;
+        return WriterDetection.Detect(all, (name, value, description) => new Node(name, offset, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
     }
 
     // The encoder named by the stream's own evidence, without its VBR headers.

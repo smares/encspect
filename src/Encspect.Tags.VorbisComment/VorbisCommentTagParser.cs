@@ -72,7 +72,7 @@ public sealed class VorbisCommentTagParser : ITagParser
                 Node? vendor = ReadText(bytes, ref position, vendorLength, "Vendor", "the vendor string", out string? text);
                 if (vendor is not null && text is { Length: > 0 })
                 {
-                    _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string"));
+                    _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string", ClaimRoles.Of(ClaimRole.Encoder, text)));
                 }
 
                 // 3) [user_comment_list_length], 4) to 6): the comments.
@@ -174,7 +174,9 @@ public sealed class VorbisCommentTagParser : ITagParser
             }
             else if (name.Equals("ENCODER", StringComparison.OrdinalIgnoreCase) && value.Length > 0)
             {
-                _claims.Add(new EncoderClaim(value, comment, "Vorbis comment ENCODER field"));
+                // The field names of section 5.2.2 ("TITLE", "VERSION", "ALBUM" and so on) include no ENCODER, so the specification
+                // gives it to no role: ffmpeg writes the version of its own libraries into it, and the claim is the writer's.
+                _claims.Add(new EncoderClaim(value, comment, "Vorbis comment ENCODER field", ClaimRole.Writer));
             }
 
             return comment;

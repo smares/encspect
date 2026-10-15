@@ -119,7 +119,7 @@ public sealed class AacCodecParser : ICodecParser
         Node? encoder = AacEncoder.Detect(
             signature is { } named ? new AacEncoder.Signature(named.Text, signatureNode!, named.Index) : null,
             context.EncoderClaims,
-            (name, value, description) => Cover(name, value, description, topic: name == "Encoder" ? Topics.EncoderDetection : null),
+            (name, value, description) => Cover(name, value, description, topic: ClaimRoles.TopicOf(name)),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
                 AacEncoder.Disagreement(claim, text, name, "the file may have been written by other software, or kept its metadata when the audio was re-encoded.")),
             config?.UsacLayout,
@@ -127,6 +127,14 @@ public sealed class AacCodecParser : ICodecParser
         if (encoder is not null)
         {
             leading.Add(encoder);
+        }
+
+        Node? writer = WriterDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, topic: ClaimRoles.TopicOf(name)),
+            (claim, text, name) => findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            AacEncoder.WriterName);
+        if (writer is not null)
+        {
+            leading.Add(writer);
         }
 
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, description, kind), "Access Unit", "Access Units", out Node bitrate);
@@ -169,7 +177,8 @@ public sealed class AacCodecParser : ICodecParser
             return;
         }
 
-        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -182,8 +191,10 @@ public sealed class AacCodecParser : ICodecParser
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = context.Configuration?.IsVbr ?? false,
-            Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Encoder = encoderName,
+            EncoderConfidence = encoderConfidence,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
             Series = figures.Series(bitrate, context.CancellationToken),
         });
     }

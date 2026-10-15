@@ -42,7 +42,7 @@ internal static class SelfCheck
         foreach (string file in files)
         {
             ReportSummary summary = ReportSummary.From(analyzer.AnalyzeFile(file));
-            Console.Out.WriteLine($"{file}: {summary.Format}, {summary.Codec}, {summary.Encoder} ({summary.EncoderConfidence})");
+            Console.Out.WriteLine($"{file}: {summary.Format}, {summary.Codec}, {summary.Encoder} ({summary.EncoderConfidence}), written by {summary.Writer} ({summary.WriterConfidence})");
             if (summary.Errors > 0)
             {
                 return 1;
