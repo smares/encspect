@@ -5,7 +5,7 @@ using Encspect.Host;
 namespace Encspect.Tests;
 
 // Not in the "Thread hammers" collection: it forces no collections and needs no idle machine, so it
-// runs beside the other tests (see ThreadTestScope for what a pull request samples).
+// runs beside the other tests.
 public class ParallelAnalysisMatchTests
 {
     // Analyses of the files of a directory on several threads write the same reports as one thread does,
@@ -14,7 +14,7 @@ public class ParallelAnalysisMatchTests
     [MemberData(nameof(ThreadSafetyTests.FixtureDirectories), MemberType = typeof(ThreadSafetyTests))]
     public void ParallelAnalysisMatchesSequential(string directory)
     {
-        List<string> files = ThreadTestScope.Sample(ThreadSafetyTests.FixturesIn(directory));
+        List<string> files = ThreadSafetyTests.FixturesIn(directory);
         var analyzer = Analyzer.CreateDefault();
         Dictionary<string, string> sequential = files.ToDictionary(f => f, f => ReportRendering.All(analyzer.AnalyzeFile(f)));
 

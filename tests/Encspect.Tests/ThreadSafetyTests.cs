@@ -8,7 +8,7 @@ namespace Encspect.Tests;
 // them weakly and build them again after a collection; two threads reading one block may both build
 // it. These tests read reports the ways that could go wrong: on several threads, with collections in
 // between, and past more than one block, which no committed fixture is. They force no collections from
-// other threads, so they run beside the other tests (see ThreadTestScope for what a pull request samples).
+// other threads, so they run beside the other tests.
 public class ThreadSafetyTests
 {
     internal const int BlockSize = 1024;
@@ -56,7 +56,7 @@ public class ThreadSafetyTests
     public void RebuiltAfterCollectionMatches(string directory)
     {
         var analyzer = Analyzer.CreateDefault();
-        List<string> files = ThreadTestScope.Sample(FixturesIn(directory));
+        List<string> files = FixturesIn(directory);
         var reports = new List<Report>();
         var first = new List<string>();
         foreach (string file in files)
