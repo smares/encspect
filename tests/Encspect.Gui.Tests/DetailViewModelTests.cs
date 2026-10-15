@@ -33,7 +33,7 @@ public class DetailViewModelTests
         var ui = new TestDispatcher();
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
 
-        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames.eac3"));
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames-cut.eac3"));
         ui.Until(() => load.IsCompleted);
 
         Assert.True(model.HasDetectionText);
@@ -72,7 +72,7 @@ public class DetailViewModelTests
 
         Assert.Equal("AAC", model.ForcedFormat);
         Assert.Equal("AAC", model.Report!.Root.Value);
-        Assert.Equal("Analyzed as AAC on request; detection would take MPEG Audio.", model.DetectionText);
+        Assert.Equal("Analyzed as AAC as requested; detection would take MPEG Audio.", model.DetectionText);
         Assert.Equal("MPEG Audio", Assert.Single(model.Alternatives).Format);
         Assert.Contains(model.Findings, f => f.Code == "format.forced");
         Assert.DoesNotContain(model.Findings, f => f.Code == "parse.failed");

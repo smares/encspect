@@ -115,8 +115,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     // formats that match (the choices follow it), or an analysis the user forced.
     public string? DetectionText => _report?.Detection switch
     {
-        { IsForced: true, Detected: { } detected } detection => $"Analyzed as {detection.Format} on request; detection would take {detected}.",
-        { IsForced: true } detection => $"Analyzed as {detection.Format} on request; detection finds no format.",
+        { IsForced: true, Detected: { } detected } detection => $"Analyzed as {detection.Format} as requested; detection would take {detected}.",
+        { IsForced: true } detection => $"Analyzed as {detection.Format} as requested; detection finds no format.",
         { Alternatives.Count: > 0 } => "Also matches:",
         _ => null,
     };

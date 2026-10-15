@@ -419,7 +419,7 @@ public sealed class WindowTests : IDisposable
     {
         var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
         window.Show();
-        Task load = window.Model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames.eac3"));
+        Task load = window.Model.LoadAsync(Path.Combine(Fixtures.Directory, "ac3", "junk-adts-in-frames-cut.eac3"));
         UiPump.Until(() => load.IsCompleted);
         UiPump.Until(() => true);
 
@@ -431,7 +431,7 @@ public sealed class WindowTests : IDisposable
         chip.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         UiPump.Until(() => window.Model.ForcedFormat == "AAC" && window.Model.Report is { Detection.IsForced: true });
         Assert.Equal("AAC", window.Model.Report!.Root.Value);
-        Assert.StartsWith("Analyzed as AAC on request", window.DetectionText.Text, StringComparison.Ordinal);
+        Assert.StartsWith("Analyzed as AAC as requested", window.DetectionText.Text, StringComparison.Ordinal);
         Assert.Equal("AC-3", window.AlternativeChoices.GetVisualDescendants().OfType<Button>().Single().Content);
 
         // The menu lists detection and every format, and a choice analyzes the file as it.

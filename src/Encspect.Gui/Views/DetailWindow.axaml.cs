@@ -166,7 +166,7 @@ public partial class DetailWindow : Window
             flyout.Items.Add(new Separator());
             foreach (string name in Model.FormatNames)
             {
-                flyout.Items.Add(FormatItem(name, name, Model.Report?.Detection is { IsForced: true, Format: { } forced } && forced == name));
+                flyout.Items.Add(FormatItem(name, name, Model.ForcedFormat == name));
             }
         };
         return flyout;

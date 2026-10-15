@@ -284,6 +284,17 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void AsTakesTheNamesAFormatGoesBy()
+    {
+        Assert.Contains("  File: AC-3", Run("--as", "ac3", Tagged).Output);
+        Assert.Contains("  File: AC-3", Run("--as", "eac3", Tagged).Output);
+        Assert.Contains("  File: MPEG Audio", Run("--as", "mp3", Tagged).Output);
+        (int code, _, string errors) = Run("--as", Tagged);
+        Assert.Equal(CommandLine.UsageError, code);
+        Assert.Contains("is a path", errors);
+    }
+
+    [Fact]
     public void HelpDescribesAs()
     {
         Assert.Contains("--as <format>", Run("--help").Output);
@@ -322,6 +333,7 @@ public class CommandLineTests
     [InlineData("--as", "flac")]
     [InlineData("--as", "a")]
     [InlineData("--as")]
+    [InlineData("--only-format")]
     [InlineData("--as", "aac", "--only-format", "mpeg")]
     [InlineData("--only-format", "mpeg", "--as", "aac")]
     [InlineData("--hide", "")]
