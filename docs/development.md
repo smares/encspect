@@ -29,7 +29,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - **Isolation:** a collector thread stalls every other test of the process, so the tests that run one (`LongListReadTests`, `LongReportWriteTests`, `ParallelAnalysisTests`) and the block list tests (`BlockedChildrenTests`) share the `Thread hammers` collection, which runs alone. The others run beside the rest.
   - **Pull request and nightly:** `ThreadTestScope` decides how much they read.
     - The fixture-wide tests (`ThreadSafetyTests.RebuiltAfterCollectionMatches`, `ParallelAnalysisMatchTests`) read the whole corpus in every mode. A sample of it dropped three DTS files that had exposed a race.
-    - On a pull request `LongReportWriteTests` writes with the JSON writer on three threads over the inputs in `ThreadTestScope.PullRequestLongInputs`: one per list implementation, with DTS and one AC-3 family input (E-AC-3) among them. The AC-3 input itself, with 450,000 nodes, is left to the nightly run. `LongReportRebuildTests` rebuilds the same inputs. `ParallelAnalysisTests` writes each report 6 times on 4 threads.
+    - On a pull request `LongReportWriteTests` writes with the JSON writer on three threads over the inputs in `ThreadTestScope.PullRequestLongInputs`: one per list implementation, with DTS and one AC-3 family input (E-AC-3) among them. The AC-3 input itself, with 450,000 nodes, is left to the nightly run. `LongReportRebuildTests` rebuilds the same inputs, the AC-3 one included. `ParallelAnalysisTests` writes each report 6 times on 4 threads.
     - `ENCSPECT_FULL_THREAD_TESTS=1`, set by the nightly run and by a manual run, writes every long input with all three writers on four threads and 24 times on eight threads.
     - The hammer, the block list tests and `InputReleaseTests` run in full every time.
   - On a mismatch between two writes, `ReportRendering` writes both again as text and names the first differing line.
@@ -48,7 +48,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
 | `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | same as main |
-| Thread-safety tests | sampled | sampled | the whole corpus (`ENCSPECT_FULL_THREAD_TESTS=1`) |
+| Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
 
@@ -79,11 +79,15 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 
 ### Caches
 
-- NuGet packages: `actions/cache` on `~/.nuget/packages`, one entry per platform, architecture and job, keyed on `Directory.Packages.props` and every project file. Only the jobs that restore have it (`format` runs `dotnet format whitespace`, which restores nothing).
+- NuGet packages: only the `build-test` job has a cache, `actions/cache/restore` on every run and `actions/cache/save` only on pushes to main, the schedule and manual runs, so a pull request adds no entry. One entry per platform and architecture, keyed on `Directory.Packages.props` and the project files.
+  - Measured on Linux x64 after a restore and the two self-contained publishes: `build-test` leaves 1.5 GB in `~/.nuget/packages` (377 MB of `.nupkg`, mostly the SkiaSharp native assets of every platform, which restore fetches whatever the platform), about 0.8 GB compressed. `unit-tests` restores only `Encspect.Tests` and leaves 78 MB (20 MB of `.nupkg`), which downloads faster than a cache restores, so it has no cache. `Encspect.Cli` and `Encspect.Fuzz` have no package references, so the fuzz and cross-check jobs have none either, and `format` restores nothing.
+  - Six entries of about 0.8 GB are 4 to 5 GB of the repository's 10 GB cache budget while one package set is current, and up to twice that for the week after a package changes until the old keys age out (7 days without use). If the download caches or the faad2 build start to be evicted, delete the NuGet cache steps of `build-test`: restoring 0.8 GB takes about as long as downloading 0.4 GB from nuget.org.
 - Pinned downloads (source archives, samples): `ENCSPECT_DOWNLOAD_CACHE` (`.cache/downloads`) is read and written by `downloads.fetch`.
   - Entries are named by their SHA-256 and checked against it on every use, so a changed pin downloads the new file and a cache entry can never serve another one.
   - **A file only the private repository served is never cached.** The Actions cache of a public repository can be restored by a pull request from a fork, so `fetch` remembers a file only when a public address served it. `mpc.zip`, and any sample whose public addresses are gone, are fetched from the private repository on every run.
-  - The ISO conformance, mp3PRO, xHE-AAC and HE-AAC samples no longer have caches of their own: those held whatever address served them. They live in the download cache, under the same rule.
+  - **Pull requests from forks** do not get the files the private repository served (they cannot read the secret, and the cache holds none), so their MPEG and MP4 cross-checks depend on ISO's server, the Wayback Machine and FFmpeg's FATE server being up. That is accepted.
+  - The ISO conformance, mp3PRO, xHE-AAC and HE-AAC samples no longer have caches of their own (the `iso-13818-4-audio-*`, `mp3pro-samples-*`, `usac-samples-*` and `sbr-samples-*` caches are retired; they may hold files the private repository served and age out 7 days after their last use): those held whatever address served them. They live in the download cache, under the same rule.
+  - A file is touched when it is used or stored, and each job deletes files unused for 30 days before it runs, so a pin that changed does not ride along from week to week.
   - The key holds the job, the ISO week and the manifests under `tests/conformance`: a job saves one entry a week, not one per commit, and a manifest change refreshes it at once. A new tool pin in a script is downloaded on every run until the next week's entry, and restored entries from earlier weeks still serve every file whose pin did not change.
 - The traced faad2 build of the MP4 cross-check (`.cache/tools/faad2-trace`): keyed on `faad_trace_tool.py`, which holds the pinned commit and the patches, and the runner image.
 - The other tools the cross-checks build (minimp3, mp3guessenc, EncSpot, mctoolamed, libwavpack's block reader, libmpcdec, libdca, liba52's block reader) compile in seconds from the downloads and are not cached themselves.

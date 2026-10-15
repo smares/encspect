@@ -78,7 +78,10 @@ def cached(digest):
     if not directory:
         return None
     entry = pathlib.Path(directory) / digest
-    return entry if entry.is_file() and sha256(entry) == digest else None
+    if entry.is_file() and sha256(entry) == digest:
+        os.utime(entry)  # CI drops what nobody has used for a month
+        return entry
+    return None
 
 
 def remember(path, digest):

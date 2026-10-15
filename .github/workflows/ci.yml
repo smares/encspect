@@ -1,8 +1,8 @@
 name: CI
 
 # Pull requests run what the change needs, on four platforms; a push to main, the nightly schedule and a
-# manual run run everything, on six, and the nightly run (and a manual one) also the whole thread-safety
-# corpus and a long fuzz. See "CI" in docs/development.md.
+# manual run run everything, on six, and the nightly run (and a manual one) also write every long input with
+# all three writers on more threads, and fuzz for half an hour. See "CI" in docs/development.md.
 on:
   push:
     branches: [main]
@@ -26,7 +26,7 @@ env:
   AVALONIA_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  # The thread-safety tests read the whole corpus, every long input and all three writers only here.
+  # The thread-safety tests write every long input with all three writers on more threads only here.
   ENCSPECT_FULL_THREAD_TESTS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '' }}
   # Where scripts/fixtures/downloads.py keeps the files it fetched (restored by the jobs that download).
   ENCSPECT_DOWNLOAD_CACHE: ${{ github.workspace }}/.cache/downloads
@@ -75,7 +75,7 @@ jobs:
         run: |
           changed=false
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            if ! files=$(git diff --name-only HEAD^1 HEAD) || echo "$files" | grep -qE '^(\.github/|scripts/ci/)'; then
+            if ! files=$(git -c core.quotePath=false diff --no-renames --name-only HEAD^1 HEAD) || grep -qE '^(\.github/|scripts/ci/)' <<< "$files"; then
               changed=true
             fi
           fi
@@ -125,14 +125,16 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
+      # The packages of this job are 1.5 GB unpacked (the SkiaSharp native assets of every platform), so they are
+      # restored on every run and saved by none but the runs of main, once per platform and package set (the last
+      # step). Pull requests add no entry; docs/development.md has the numbers.
+      - name: Restore the NuGet packages
+        id: nuget
+        uses: actions/cache/restore@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore
         run: dotnet restore
@@ -259,6 +261,14 @@ jobs:
   # Encspect.Tests in shards (scripts/ci/shards.json), each on every platform of the event, so a platform's
   # tests take as long as its slowest shard. check_shards.py proves in shard-guard that the shards together
   # run every test exactly once.
+
+      - name: Save the NuGet packages
+        if: github.event_name != 'pull_request' && steps.nuget.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+
   unit-tests:
     name: unit tests (${{ matrix.os }}, ${{ matrix.shard }})
     needs: changes
@@ -275,15 +285,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Restore
         run: dotnet restore tests/Encspect.Tests
@@ -328,15 +329,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
-
       - name: Build the tests
         run: dotnet build tests/Encspect.Tests --configuration Release
 
@@ -359,15 +351,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       # A new seed every run; the log prints it, and a failure saves the input as an artifact. Five minutes on
       # a pull request and on main, half an hour in the nightly run.
@@ -506,6 +489,11 @@ jobs:
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
       # minimp3, mp3guessenc and EncSpot are built from third_party with the runner's C and C++ compilers.
       - name: Install ffmpeg, madplay and mpg123
         run: |
@@ -533,15 +521,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -580,6 +559,11 @@ jobs:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
+
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       - name: Name the runner image
         id: image
@@ -620,15 +604,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
@@ -672,6 +647,11 @@ jobs:
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
       - name: Install ffmpeg, oggz-tools, vorbis-tools, speex and opus-tools
         run: |
           sudo apt-get update
@@ -708,6 +688,11 @@ jobs:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
+
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
       # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
@@ -754,6 +739,11 @@ jobs:
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
       # wavpack 5.6.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
       # checked with; libwavpack's block reader is built from the pinned 5.6.0 source with the runner's gcc.
       - name: Install wavpack, ffmpeg and mediainfo
@@ -792,6 +782,11 @@ jobs:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
+
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       # ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked
       # with. The tables of the WMA parser are generated from FFmpeg 6.1.1's source, pinned by its
@@ -836,6 +831,11 @@ jobs:
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
 
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
       # ffmpeg 6.1 and liba52 0.7.4 from Ubuntu 24.04; a52_blocks.c is built against liba52.
       - name: Install ffmpeg and liba52
         run: |
@@ -845,15 +845,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      # The packages of the jobs that restore. One entry per platform, architecture and job (setup-dotnet's own
-      # cache is keyed on the OS alone and saves from jobs that restore nothing).
-      - name: Cache the NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
 
       # The skip field insertion check rewrites E-AC-3 frames at the analyzer's block positions.
       - name: Build the CLI
@@ -890,6 +881,11 @@ jobs:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
           restore-keys: downloads-${{ github.job }}-
+
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       # ffmpeg 6.1, libdca 0.0.7 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
       # checked with; dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
@@ -943,7 +939,9 @@ jobs:
             exit 1
           fi
 
+      # Always runs, so the log shows each job's result and the real cause (a canceled changes job, say) even when the step above failed.
       - name: Require every job to succeed or to be skipped on purpose
+        if: always()
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: python3 scripts/ci/check_results.py

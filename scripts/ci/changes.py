@@ -101,7 +101,7 @@ DOTNET = ["src/**", "tests/**", "Directory.*.props", "Directory.Packages.props",
 
 # Documentation only: nothing here changes what the analyzer does. Markdown under src is a topic article
 # (the host serves it, and DescriptionTests reads it), so it is code.
-DOCS = ["docs/**", "LICENSE", "**/*.md", ".github/ISSUE_TEMPLATE/**", ".github/PULL_REQUEST_TEMPLATE*", ".github/PULL_REQUEST_TEMPLATE/**"]
+DOCS = ["docs/**", "LICENSE", "**/*.md"]
 
 # Scripts that only write fixtures with encoders no job installs; a change reruns the reproducibility job.
 FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scripts/fixtures/import_*.py", "scripts/fixtures/*_specs.py",
