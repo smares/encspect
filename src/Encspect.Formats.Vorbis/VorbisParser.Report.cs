@@ -98,10 +98,16 @@ public sealed partial class VorbisParser
             var evidence = new List<Node>();
             string? name = null;
             Confidence confidence = Confidence.Medium;
-            if (field is not null && FfmpegEncoder().IsMatch(field.Text))
+            if (field is not null)
             {
+                // A libavcodec encoder ID names an encoder in any field; one of another codec is kept and reported.
                 name = $"FFmpeg ({field.Text})";
                 evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
+                if (!FfmpegEncoder().IsMatch(field.Text))
+                {
+                    string text = field.Text;
+                    _findings.Add(Severity.Info, "vorbis.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Vorbis.");
+                }
             }
             else if (vendor is not null && LibvorbisReleases.TryGetValue(vendor.Text, out string? release))
             {

@@ -293,7 +293,7 @@ def usac_layout_config(fill_element):
 
 def xhe_layouts():
     """The element layout exhale writes, which names it as the encoder, the same with the fill element Fraunhofer's demonstration files and
-    libxaac write, which names none, exhale's layout with a tool atom that names other software, and MPEG Surround 2-1-2."""
+    libxaac write, which names none, exhale's layout with a tool atom that names other software, the same with a tool atom that names software that cannot write xHE-AAC, and MPEG Surround 2-1-2."""
     out = []
     for name, description, fill_element, tool, encoder, findings in [
         ("xhe-aac-exhale-layout", "xHE-AAC whose UsacConfig has the layout exhale writes: an audio pre-roll element first, then a channel pair "
@@ -301,8 +301,11 @@ def xhe_layouts():
          "confidence.", False, None, ("exhale", "Medium"), []),
         ("xhe-aac-fill-element", "xHE-AAC with exhale's layout but for a fill element after the channel pair element, as Fraunhofer's "
          "demonstration files and libxaac write: no encoder is named.", True, None, None, []),
-        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names FAAC: the stream's evidence "
-         "names exhale as the encoder and the tool atom names the writer, two facts that do not conflict, but FAAC writes AAC, not xHE-AAC.", False, "FAAC 1.30", ("exhale", "Medium"),
+        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names other software: the stream's evidence "
+         "names exhale as the encoder and the tool atom names the writer, two facts that do not conflict.", False, "hand-built", ("exhale", "Medium"),
+         []),
+        ("xhe-aac-writer-other-format", "exhale's layout of the UsacConfig with a tool atom that names FAAC 1.30: the stream's evidence "
+         "names exhale as the encoder, and FAAC, which writes AAC and not xHE-AAC, as the writer, which is a finding of its own.", False, "FAAC 1.30", ("exhale", "Medium"),
          [["aac.writer-other-format", "which writes AAC, not xHE-AAC (USAC)"]]),
     ]:
         config = usac_layout_config(fill_element)

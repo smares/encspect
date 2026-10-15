@@ -42,11 +42,23 @@ public static class KnownWriters
     };
 
     // What the software named by a writer's text writes, as a label such as "MPEG audio", when it is listed and writes another kind
-    // of stream than kind; null when the text names software that is not listed or writes that kind.
+    // of stream than kind; null when the text names software that is not listed or writes that kind. A row matches only a text that
+    // starts with the software's name, followed by white space, a digit (its version, as in "LAME3.100") or the end of the text,
+    // so "FAAC-based tool", "exhale_wrapper", "Lame-o-matic" and "foobar2000 (LAME 3.100)" name no listed software.
     public static string? WritesInstead(string writerText, string kind)
     {
         ArgumentNullException.ThrowIfNull(writerText);
 
-        return Rows.TryGetValue(ClaimRoles.FamilyOf(writerText), out (string Kind, string Label) row) && row.Kind != kind ? row.Label : null;
+        string text = writerText.TrimStart();
+        foreach ((string name, (string rowKind, string label)) in Rows)
+        {
+            if (text.StartsWith(name, StringComparison.OrdinalIgnoreCase)
+                && (text.Length == name.Length || char.IsWhiteSpace(text[name.Length]) || char.IsAsciiDigit(text[name.Length])))
+            {
+                return rowKind != kind ? label : null;
+            }
+        }
+
+        return null;
     }
 }

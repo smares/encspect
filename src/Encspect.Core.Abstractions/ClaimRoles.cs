@@ -6,16 +6,18 @@ namespace Encspect.Core;
 // software family a text names, and the Encoder and Writer nodes' name and confidence.
 public static partial class ClaimRoles
 {
-    // The version text of ffmpeg's muxer ("Lavf60.16.100", or a bare "Lavf"), which libavformat writes into whichever tag
-    // its output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as
-    // the vendor string, movenc.c:4202 into ©too).
+    // The text of ffmpeg's muxer ("Lavf60.16.100", a bare "Lavf" or "Lavf lame"), which libavformat writes into whichever tag its
+    // output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as the
+    // vendor string, movenc.c:4202 into ©too). In the LAME tag mp3enc.c:250-252 replaces the bit-exact encoder ID "Lavc libmp3lame"
+    // with "Lavf lame" and mp3enc.c:258 writes a bare "Lavf" without any: the muxer wrote them, so they name the writer.
     [GeneratedRegex(@"^\s*Lavf(?![A-Za-z])", RegexOptions.CultureInvariant)]
     private static partial Regex MuxerVersion();
 
-    // The libavcodec identification of an encoder ("Lavc60.31.102 libvorbis"): fftools/ffmpeg_enc.c set_encoder_id sets the
-    // stream's "encoder" metadata to "Lavc<version> <codec>" only when ffmpeg encodes, mp3enc.c:247-257 copies it into the
-    // LAME tag ("Lavf" when there is none) and oggenc.c writes it as the ENCODER comment. It names an encoder in whichever field.
-    [GeneratedRegex(@"^\s*Lavc\d", RegexOptions.CultureInvariant)]
+    // The libavcodec identification of an encoder ("Lavc60.31.102 libvorbis", or "Lavc libvorbis" when bit-exact):
+    // fftools/ffmpeg_enc.c:157-160 set_encoder_id sets the stream's "encoder" metadata to it only when ffmpeg encodes, mp3enc.c copies
+    // it into the LAME tag and the Vorbis comment writer (ff_vorbiscomment_write) into the ENCODER comment. It names an encoder
+    // in whichever field.
+    [GeneratedRegex(@"^\s*Lavc(?![A-Za-z])", RegexOptions.CultureInvariant)]
     private static partial Regex EncoderId();
 
     // Whether the text is a muxer's version and so names the writer, not the encoder, in whichever field it stands.
@@ -58,6 +60,11 @@ public static partial class ClaimRoles
     public static string WriterName(string text, int maxLength = 64)
     {
         text = text.Trim();
+        if (text == "ffmpeg")
+        {
+            return "FFmpeg";
+        }
+
         if (IsMuxerVersion(text) || IsEncoderId(text))
         {
             return $"FFmpeg ({(text.Length > maxLength ? text[..maxLength] : text)})";
@@ -67,14 +74,15 @@ public static partial class ClaimRoles
     }
 
     // The version a writer claim carries, for an encoder the stream's own evidence named without one (FAAC 2.x's layout names "FAAC";
-    // the front end's tool atom reads "FAAC 2.2.0 (6acbe23)"). Only a name without a digit is completed, and only by a writer
-    // claim of the same family that is no muxer's version and whose name is the encoder's, then white space and a version that starts
-    // with a digit, so a remux by MP4Box or ffmpeg lends nothing, "FAAC" is not "FAAC-based tool" and "LAME 3.100" is not extended.
-    // Of several such claims the strongest counts, and if the strongest differ in name nothing is completed. A writer claim never
-    // creates an encoder or raises its confidence; the evidence says where the version came from.
+    // the front end's tool atom reads "FAAC 2.2.0 (6acbe23)"). Only a name without a digit is completed, and only by a writer claim
+    // of the same family that is no muxer's version and whose text is the encoder's name, white space, and a version: digits and dots
+    // (letters and signs may follow), optionally one parenthesized build. Anything else after the version ("LAME 3.100 via foobar")
+    // completes nothing, and so does a remux by MP4Box or ffmpeg. Of several such claims the strongest counts, and if the strongest
+    // differ in name (compared without regard to case) nothing is completed. A writer claim never creates an encoder or raises its
+    // confidence; the evidence says where the version came from.
     public static void CompleteVersion(Node? encoder, IEnumerable<EncoderClaim> claims, Func<string, string>? nameOf = null)
     {
-        if (encoder?.Value?.ToString() is not { Length: > 0 } named || named.Any(char.IsDigit))
+        if (encoder?.Value?.ToString() is not { Length: > 0 } named || named.Any(char.IsAsciiDigit))
         {
             return;
         }
@@ -85,7 +93,7 @@ public static partial class ClaimRoles
             .Where(c => !IsMuxerVersion(c.Text) && FamilyOf(c.Text) == family)
             .Select(c => (Claim: c, Name: nameOf(c.Text)))
             .Where(x => x.Name.Length > named.Length && x.Name.StartsWith(named, StringComparison.OrdinalIgnoreCase)
-                && char.IsWhiteSpace(x.Name[named.Length]) && x.Name.AsSpan(named.Length).TrimStart().Length > 0 && char.IsDigit(x.Name.AsSpan(named.Length).TrimStart()[0]))
+                && VersionPart().IsMatch(x.Name.AsSpan(named.Length)))
             .ToList();
         if (candidates.Count == 0)
         {
@@ -94,12 +102,12 @@ public static partial class ClaimRoles
 
         Confidence strongest = candidates.Max(x => x.Claim.Confidence);
         var top = candidates.Where(x => x.Claim.Confidence == strongest).ToList();
-        if (top.Select(x => x.Name).Distinct(StringComparer.Ordinal).Count() != 1)
+        if (top.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1)
         {
             return;
         }
 
-        (EncoderClaim claim, string name) = top.OrderBy(x => x.Claim.Source.Offset).First();
+        (EncoderClaim claim, string name) = top.OrderBy(x => x.Claim.Source.Offset).ThenBy(x => x.Name, StringComparer.Ordinal).First();
         encoder.Value = name;
         encoder.Add(new Node("Evidence", encoder.Offset, encoder.Length,
             $"The version comes from the {claim.Description} at 0x{claim.Source.Offset:X}, which names \"{claim.Text.Trim()}\" as the writer: software of the same name")
@@ -108,6 +116,9 @@ public static partial class ClaimRoles
             Ranges = encoder.Ranges,
         });
     }
+
+    [GeneratedRegex(@"^\s+[0-9][0-9.]*[A-Za-z0-9+-]*(\s\([^)]*\))?$", RegexOptions.CultureInvariant)]
+    private static partial Regex VersionPart();
 
     private static readonly (string Family, string[] Markers)[] Families =
     [

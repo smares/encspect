@@ -269,6 +269,12 @@
                   "value": "ID3v2 TSSE frame at 0xA names \"Lavf60.16.100\"",
                   "offset": 253,
                   "length": 4388
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavc60.31\" and ffmpeg's tag CRC (at 0xBA)",
+                  "offset": 253,
+                  "length": 4388
                 }
               ]
             },

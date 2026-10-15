@@ -397,10 +397,12 @@ public sealed partial class MpegAudioParser
         return StreamEncoder(context);
     }
 
-    // The writer a region's claims and its LAME tags name: ffmpeg's mp3 muxer fills the encoder field of the LAME tag it writes with
-    // the stream's "encoder" metadata (mp3enc.c:247-257): "Lavc" and the version of its codec library when libavcodec encoded, which
-    // names the encoder (HeaderEncoder), and "Lavf" with its own version when there is none, which names the muxer. Tags of the
-    // claims' kind (ID3v2 TSSE, APE) are weighed with them.
+    // The writer a region's claims and its LAME tags name. ffmpeg's mp3 muxer writes the whole Xing and LAME tag (libavformat/mp3enc.c),
+    // so a tag laid out as it writes it is the muxer's: an encoder string that starts "Lavc" (the stream's "encoder" metadata, the
+    // codec library's version, which names the encoder: HeaderEncoder) or "Lavf" ("Lavf lame" in place of the bit-exact "Lavc libmp3lame",
+    // mp3enc.c:250-252, or a bare "Lavf" without metadata, mp3enc.c:258), or the CRC over the frame's first 190 bytes that only ffmpeg
+    // writes. It names the writer "FFmpeg" without a version, since the "Lavc" version is the codec library's, with low confidence.
+    // Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with it.
     private static Node? DetectWriter(StreamState state, RegionState region, IReadOnlyList<EncoderClaim> claims)
     {
         ChunkedList<Entry> frames = state.Build.Frames;
@@ -415,9 +417,18 @@ public sealed partial class MpegAudioParser
             }
 
             var header = new HeaderFrame(i, frames[i], ReadVbrHeader(state.Build, frames[i]));
-            if (header.Vbr is { HasLameTag: true, IsVbri: false } && ClaimRoles.IsMuxerVersion(header.Vbr.LameEncoder.TrimEnd(' ')))
+            if (header.Vbr is { HasLameTag: true, IsVbri: false } lame)
             {
-                all.Add(new EncoderClaim(header.Vbr.LameEncoder.TrimEnd(' '), header.TagNode, "LAME tag", ClaimRole.Writer));
+                string text = lame.LameEncoder.TrimEnd(' ');
+                bool quirk = lame.FfmpegTagCrc >= 0 && !lame.IsTagCrcValid && lame.StoredTagCrc == lame.FfmpegTagCrc;
+                if (IsFfmpeg(text) || quirk)
+                {
+                    all.Add(new EncoderClaim("FFmpeg", header.TagNode,
+                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
+                    {
+                        IsLayout = true,
+                    });
+                }
             }
         }
 

@@ -72,7 +72,9 @@ public sealed class VorbisCommentTagParser : ITagParser
                 Node? vendor = ReadText(bytes, ref position, vendorLength, "Vendor", "the vendor string", out string? text);
                 if (vendor is not null && text is { Length: > 0 })
                 {
-                    _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string", ClaimRoles.Of(ClaimRole.Encoder, text)));
+                    // The vendor string names the encoder (libvorbis writes its own), except that ffmpeg's Ogg muxer writes its version as
+                    // the vendor, "ffmpeg" when bit-exact (libavformat/oggenc.c:281), which names the writer.
+                    _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string", text == "ffmpeg" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Encoder, text)));
                 }
 
                 // 3) [user_comment_list_length], 4) to 6): the comments.
@@ -176,8 +178,9 @@ public sealed class VorbisCommentTagParser : ITagParser
             {
                 // The field names of section 5.2.2 of the Vorbis I specification ("TITLE", "VERSION", "ALBUM" and so on) include no
                 // ENCODER, so that specification gives it to no role and the claim is the writer's (RFC 7845 section 5.2 has Opus
-                // applications use it "to identify themselves"). ffmpeg writes its libavcodec encoder ID into it when it encodes
-                // (oggenc.c:281), which names the encoder.
+                // applications use it "to identify themselves"). ffmpeg writes the stream's "encoder" metadata into it
+                // (libavformat/vorbiscomment.c ff_vorbiscomment_write, in lower case "encoder"), which is its libavcodec encoder ID when
+                // it encodes (ffmpeg_enc.c set_encoder_id) and names the encoder; oggenc.c:281 writes the muxer's version as the vendor string.
                 _claims.Add(new EncoderClaim(value, comment, "Vorbis comment ENCODER field", ClaimRoles.Of(ClaimRole.Writer, value)));
             }
 

@@ -48,6 +48,11 @@ AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
 AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
 AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
 LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
+# Bit-exact (-fflags +bitexact -flags:a +bitexact): ffmpeg writes "ffmpeg" as the vendor string (oggenc.c:281) and "Lavc libvorbis" as the
+# encoder ID, without a version (ffmpeg_enc.c:157-160).
+BITEXACT_WRITER = {"name": "FFmpeg", "confidence": "Low"}
+FFMPEG_LIBVORBIS_BITEXACT = {"name": "FFmpeg (Lavc libvorbis)", "confidence": "Medium", "writer": BITEXACT_WRITER}
+FFMPEG_LIBOPUS_BITEXACT = {"name": "FFmpeg (Lavc libopus)", "confidence": "Medium", "writer": BITEXACT_WRITER}
 FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, seconds, arguments, detected encoder, expected findings)
@@ -67,6 +72,10 @@ FIXTURES = {
     "external-oggenc2-lancer-sse2": ("wine:lancer-sse2", 44100, 2, 1.5, ["-q", "5"], LANCER, []),
     "external-ffmpeg-libvorbis": ("ffmpeg", 44100, 2, 1.5, ["-c:a", "libvorbis", "-q:a", "4"], FFMPEG_LIBVORBIS, []),
     "external-ffmpeg-vorbis": ("ffmpeg", 44100, 2, 1.5, ["-strict", "-2", "-c:a", "vorbis"], FFMPEG_VORBIS, []),
+    "external-ffmpeg-libvorbis-bitexact": ("ffmpeg", 44100, 2, 1.5, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libvorbis", "-q:a", "4"],
+                                           FFMPEG_LIBVORBIS_BITEXACT, []),
+    "external-ffmpeg-libopus-bitexact": ("ffmpeg", 48000, 2, 1.5, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libopus", "-b:a", "96k"],
+                                         FFMPEG_LIBOPUS_BITEXACT, []),
     "external-opusenc-96": ("opusenc", 48000, 2, 1.5, ["--bitrate", "96"], OPUSENC, []),
     "external-opusenc-24-mono": ("opusenc", 16000, 1, 1.5, ["--bitrate", "24"], OPUSENC, []),
     "external-opusenc-hard-cbr": ("opusenc", 48000, 2, 1.5, ["--bitrate", "64", "--hard-cbr"], OPUSENC, []),

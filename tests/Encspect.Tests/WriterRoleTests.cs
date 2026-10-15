@@ -173,6 +173,9 @@ public partial class WriterRoleTests
     [InlineData("LAME 3.100", "LAME 3.100.1")]
     [InlineData("FFmpeg", "Lavf60.16.100")]
     [InlineData("FFmpeg", "Lavf")]
+    [InlineData("LAME", "LAME 3.100 via foobar")]
+    [InlineData("FAAC", "FAAC 2\u0663.0")]
+    [InlineData("FAAC", "FAAC")]
     public void AWriterOfAnotherNameOrWithoutMoreLendsNoVersion(string encoderName, string writerText)
     {
         Node encoder = EncoderNode(encoderName);
@@ -202,7 +205,7 @@ public partial class WriterRoleTests
 
         encoder = Fresh();
         ClaimRoles.CompleteVersion(encoder, [Claim("FAAC 2.2.0", Confidence.Low), Claim("faac 2.2.0", Confidence.Low)]);
-        Assert.Equal("FAAC", encoder.Value?.ToString());
+        Assert.Equal("FAAC 2.2.0", encoder.Value?.ToString(), ignoreCase: true);
     }
 
     [Fact]
@@ -319,6 +322,8 @@ public partial class WriterRoleTests
     [InlineData("oggenc 1.4.2", KnownWriters.Speex, "Vorbis")]
     [InlineData("speexenc 1.2.1", KnownWriters.Musepack, "Speex")]
     [InlineData("WavPack 5.6.0", KnownWriters.MpegAudio, "WavPack")]
+    [InlineData("LAME3.100", KnownWriters.WavPack, "MPEG audio")]
+    [InlineData("FAAC2", KnownWriters.Usac, "AAC")]
     public void SoftwareThatWritesAnotherFormatIsKnown(string writer, string kind, string writes) =>
         Assert.Equal(writes, KnownWriters.WritesInstead(writer, kind));
 
@@ -333,6 +338,14 @@ public partial class WriterRoleTests
     [InlineData("MP4Box 2.2", KnownWriters.Opus)]
     [InlineData("Foo Muxer 1.0", KnownWriters.WavPack)]
     [InlineData("TwoLAME 0.4.0", KnownWriters.Aac)]
+    [InlineData("WavPack-based tool", KnownWriters.MpegAudio)]
+    [InlineData("FAAC-based tool", KnownWriters.Usac)]
+    [InlineData("exhale_wrapper", KnownWriters.Aac)]
+    [InlineData("Lame-o-matic", KnownWriters.WavPack)]
+    [InlineData("foobar2000 (LAME 3.100)", KnownWriters.WavPack)]
+    [InlineData("LAMEenc", KnownWriters.WavPack)]
+    [InlineData("LameXP", KnownWriters.WavPack)]
+    [InlineData("RazorLame", KnownWriters.WavPack)]
     [InlineData("Windows Media Format SDK 12", KnownWriters.MpegAudio)]
     public void SoftwareThatWritesTheFormatOrIsNotKnownRaisesNothing(string writer, string kind) =>
         Assert.Null(KnownWriters.WritesInstead(writer, kind));
@@ -344,7 +357,7 @@ public partial class WriterRoleTests
         var format = new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => found.Add((message, node.Name)));
         Node? writer = WriterDetection.Detect([new EncoderClaim("LAME 3.100", At("item"), "APE Encoder item", ClaimRole.Writer)], Cover, (_, _, _) => { }, format: format);
         Assert.Equal("LAME 3.100", writer?.Value?.ToString());
-        Assert.Equal([("The APE Encoder item names \"LAME 3.100\", which writes MPEG audio, not WavPack.", "Evidence")], found);
+        Assert.Equal([("The APE Encoder item names \"LAME 3.100\", which writes MPEG audio, not WavPack.", "item")], found);
 
         // a differing writer is no finding by itself, and neither is FFmpeg on any format or unknown software
         found.Clear();
@@ -362,6 +375,18 @@ public partial class WriterRoleTests
         Finding mpeg = Only(WithApe("mpeg/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg.writer-other-format");
         Assert.Equal("The APE Encoder item names \"FAAC 1.30\", which writes AAC, not MPEG audio.", mpeg.Message);
         Assert.NotNull(mpeg.Path);
+        // the finding points at the tag item that states the claim, not at the encoder's evidence
+        Report pointed = WithApe("wavpack/external-lossless-16-stereo.wv", "p.wv", "Encoder", "LAME 3.100");
+        Finding other = Only(pointed, "wavpack.writer-other-format");
+        Node at = pointed.Root;
+        foreach (int index in other.Path!)
+        {
+            at = at.Children[index];
+        }
+
+        Assert.Equal("Encoder", at.Name);
+        Assert.Equal("LAME 3.100", at.Value?.ToString());
+        Assert.Equal("APE", pointed.Root.Children[other.Path![0]].Name);
         Assert.Equal(Severity.Info, mpeg.Severity);
         Only(WithApe("musepack/external-mpcenc-standard.mpc", "a.mpc", "Encoder", "LAME 3.100"), "musepack.writer-other-format");
         Only(WithApe("ac3/annex-d.ac3", "a.ac3", "Encoder", "LAME 3.100"), "ac3.writer-other-format");
@@ -372,6 +397,42 @@ public partial class WriterRoleTests
         Assert.DoesNotContain(WithApe("wavpack/external-lossless-16-stereo.wv", "b.wv", "Encoder", "Lavf60.16.100").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
         Assert.DoesNotContain(WithApe("wavpack/external-lossless-16-stereo.wv", "c.wv", "Encoder", "Foo Muxer 1.0").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
         Assert.DoesNotContain(Analyze("d.m4a", Fixture("aac/mp4box-mux.m4a")).Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
+    }
+
+    // ---- bit-exact ffmpeg and the LAME tag
+
+    [Theory]
+    [InlineData("ogg/external-ffmpeg-libvorbis-bitexact.ogg", "FFmpeg (Lavc libvorbis)")]
+    [InlineData("ogg/external-ffmpeg-libopus-bitexact.opus", "FFmpeg (Lavc libopus)")]
+    [InlineData("ogg/external-ffmpeg-libspeex-bitexact.spx", "FFmpeg (Lavc libspeex)")]
+    public void ABitExactFfmpegKeepsItsEncoderIdWithoutAVersion(string path, string encoder)
+    {
+        StreamInfo stream = Assert.Single(Analyze("bitexact", Fixture(path)).Streams);
+        Assert.Equal((encoder, Confidence.Medium), (stream.Encoder, stream.EncoderConfidence));
+        Assert.Equal(("FFmpeg", Confidence.Low), (stream.Writer, stream.WriterConfidence));
+    }
+
+    [Fact]
+    public void AnFfmpegStyleLameTagNamesTheMuxerAsTheWriterWithoutAVersion()
+    {
+        StreamInfo bitExact = Assert.Single(Analyze("bitexact.mp3", Fixture("mpeg/external-ffmpeg-bitexact.mp3")).Streams);
+        Assert.Equal(("LAME 3.100", "FFmpeg", Confidence.Low), (bitExact.Encoder, bitExact.Writer, bitExact.WriterConfidence));
+
+        // ffmpeg's tag CRC over the frame's first 190 bytes is the muxer's layout, whatever the encoder string says
+        StreamInfo quirk = Assert.Single(Fixtures.AnalyzeMpeg("vbr/lame-ffmpeg-crc.mp3").Streams);
+        Assert.Equal(("FFmpeg", Confidence.Low), (quirk.Writer, quirk.WriterConfidence));
+        Assert.StartsWith("FFmpeg (Lavc", quirk.Encoder, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEncoderIdOfAnotherCodecIsKeptAndReported()
+    {
+        Report opus = Analyze("other.opus", Fixture("ogg/opus-encoder-other-format.opus"));
+        StreamInfo stream = Assert.Single(opus.Streams);
+        Assert.Equal("FFmpeg (Lavc60.31.102 libvorbis)", stream.Encoder);
+        Finding finding = Assert.Single(opus.Findings, f => f.Code == "opus.encoder-other-format");
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Contains("an encoder of another codec, not of Opus", finding.Message, StringComparison.Ordinal);
     }
 
     // ---- the front ends

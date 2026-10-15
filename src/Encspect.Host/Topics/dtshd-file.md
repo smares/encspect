@@ -16,4 +16,4 @@ references: ATSC A/103:2014 Annex E; FFmpeg 6.1.1 libavformat/dtshddec.c; MediaI
 - STRMDATA, the stream itself, a DTS stream as in a .dts file;
 - TIMECODE, BLACKOUT and BUILDVER, which may follow the stream.
 
-**What you see.** Each chunk with its fields, the stream inside STRMDATA analyzed as DTS, and checks of the metadata against it (sampling frequency and channels). BUILDVER is a string the standard calls the encoder's version identification and describes as compiler information; the analyzer reports it as a low confidence claim about the [writer](writer-detection), since the standard does not say whether it names the encoder or the tool that wrote the file.
+**What you see.** Each chunk with its fields, the stream inside STRMDATA analyzed as DTS, and checks of the metadata against it (sampling frequency and channels). BUILDVER is a string the standard calls the encoder's version identification and describes as compiler information; the analyzer reports it as a low confidence claim about the [encoder](encoder-detection), since compiler information may name the authoring tool rather than the encoder itself.

@@ -19,7 +19,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 - QuickTime ©swr and ASF WM/ToolName: writer. MP4 ©too has no Apple specification: writer.
 - APEv2 Encoder item and ASF WMFSDKVersion: unverified, so writer.
 
-**Versions.** The encoder may take the version of a writer claim that starts with the encoder's own name and goes on, and the evidence says so. Another name, as in a remux by MP4Box or ffmpeg, lends nothing.
+**Versions.** The encoder may take the version of a writer claim that is the encoder's own name followed by white space and a version, and the evidence says so. Another name, as in a remux by MP4Box or ffmpeg, lends nothing.
 
 **Conflicts.** Two writer claims that name different software are a finding. So is a claim that names software known to write another format (LAME on a WavPack stream; a table of the tools the fixtures show). A writer that differs from the encoder, unknown software, and FFmpeg or GPAC, which write many formats, raise none.
 

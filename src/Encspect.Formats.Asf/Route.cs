@@ -186,7 +186,7 @@ public sealed partial class AsfParser
     // MediaFoundationVersion), and the SDK's files alone carry a Codec List Object and a Compatibility Object
     // (the files the project encoded with them, tests/fixtures/asf, wmvcore 12.0.26100). What tells the writers apart
     // is that attribute and those two objects. A Language List, Extended Stream Properties, a Metadata Object, a Padding
-    // Object and Stream Bitrate Properties are in the files of both writers (all 31 fixtures), so they tell nothing apart;
+    // Object and Stream Bitrate Properties are in the files of both writers (all 35 Windows fixtures: 24 SDK, 11 Media Foundation), so they tell nothing apart;
     // Media Foundation's rule still requires them, so that its medium confidence does not rest on one attribute and two
     // absences. The objects are the specification's, but that a writer chooses them is a habit, not a rule, so the
     // evidence is medium. It names the writer, which drives whatever codec it was asked for; a name the file states

@@ -266,7 +266,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "LAME tag at 0xC9 names \"Lavf\"",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavf\" (at 0xC9)",
                   "offset": 462,
                   "length": 32183
                 }

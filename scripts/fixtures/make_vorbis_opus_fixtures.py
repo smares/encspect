@@ -227,12 +227,21 @@ def vorbis_mono():
 
 
 def vorbis_writer_claims_differ():
-    # Two ENCODER fields that name different software: the writer is the first, and the second is a finding of its own role.
+    # Three ENCODER fields that name different software, the last LAME, which writes MPEG audio: the writer is the first.
     blocks = switching(24)
     packets, granules = vorbis_stream(1, 44100, blocks, comments=[b"ENCODER=Foo Muxer 1.0", b"ENCODER=Bar Tool 2.0", b"ENCODER=LAME 3.100"])
     f = single("vorbis-writer-claims-differ", packets, granules, vorbis_cuts(len(blocks)), codec="Vorbis")
     f.finding("vorbis.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
     f.finding("vorbis.writer-other-format", "which writes MPEG audio, not Vorbis")
+    f.write()
+
+
+def vorbis_encoder_other_format():
+    # A libavcodec encoder ID of another codec in the ENCODER field names an encoder all the same, and a finding says it is not Vorbis'.
+    blocks = switching(24)
+    packets, granules = vorbis_stream(1, 44100, blocks, comments=[b"ENCODER=Lavc60.31.102 libopus"])
+    f = single("vorbis-encoder-other-format", packets, granules, vorbis_cuts(len(blocks)), codec="Vorbis")
+    f.finding("vorbis.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libopus\"")
     f.write()
 
 
@@ -780,7 +789,7 @@ def opus_packets_corrupt():
 
 
 def opus_writer_claims_differ():
-    # Two ENCODER fields that name different software: the writer is the first, and the second is a finding of its own role.
+    # Three ENCODER fields that name different software, the last LAME, which writes MPEG audio: the writer is the first.
     f = Fixture("opus-writer-claims-differ", ".opus")
     audio = [v.opus_packet(28, 1, [25]) for _ in range(10)]
     serial = 0x0F0F0500
@@ -791,6 +800,20 @@ def opus_writer_claims_differ():
     f.stream(serial, pages, codec="Opus")
     f.finding("opus.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
     f.finding("opus.writer-other-format", "which writes MPEG audio, not Opus")
+    f.write()
+
+
+def opus_encoder_other_format():
+    # A libavcodec encoder ID of another codec in the ENCODER field names an encoder all the same, and a finding says it is not Opus'.
+    f = Fixture("opus-encoder-other-format", ".opus")
+    audio = [v.opus_packet(28, 1, [25]) for _ in range(10)]
+    serial = 0x0F0F0510
+    packets, granules = opus_stream(v.opus_head(2), audio, tags=v.opus_tags(VENDOR, [b"ENCODER=Lavc60.31.102 libvorbis"]))
+    pages = pages_for(serial, packets, granules, opus_cuts(len(audio)))
+    for p in pages:
+        f.w.write(p)
+    f.stream(serial, pages, codec="Opus")
+    f.finding("opus.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libvorbis\"")
     f.write()
 
 
@@ -829,10 +852,10 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_writer_claims_differ, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
-    opus_packets_corrupt, opus_writer_claims_differ, opus_tags_variants,
+    opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_tags_variants,
 ]
 
 

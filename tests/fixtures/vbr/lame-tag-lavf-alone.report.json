@@ -22,7 +22,7 @@
           "children": [
             {
               "name": "Writer",
-              "value": "FFmpeg (Lavf)",
+              "value": "FFmpeg",
               "offset": 417,
               "length": 2507,
               "children": [
@@ -34,7 +34,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "LAME tag at 0x9C names \"Lavf\"",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavf\" (at 0x9C)",
                   "offset": 417,
                   "length": 2507
                 }
@@ -4947,7 +4947,7 @@
         "duration": 0.156734693877551,
         "averageBitrate": 127.96145833333334,
         "isVbr": false,
-        "writer": "FFmpeg (Lavf)",
+        "writer": "FFmpeg",
         "writerConfidence": "Low",
         "series": [
           {

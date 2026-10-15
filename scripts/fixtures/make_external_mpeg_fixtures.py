@@ -209,6 +209,10 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=True)),
     ("external-ffmpeg-cbr", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "libmp3lame", "-b:a", "128k", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
+    # Bit-exact: the stream's encoder metadata is "Lavc libmp3lame", which the muxer replaces with "Lavf lame" in the LAME tag it writes
+    # (mp3enc.c:250-252), so the tag names the muxer and the encoder is told by LAME's own signature in the frames.
+    ("external-ffmpeg-bitexact", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libmp3lame", "-b:a", "128k", "{out}"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
     ("external-ffmpeg-vbr", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "libmp3lame", "-q:a", "2", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
     # ffmpeg's tag CRC covers the first 190 bytes, which only fits an MPEG-1 stereo frame.
@@ -740,6 +744,10 @@ def detected_encoder(command, tag, settings, rows, path):
     lame = tag.get("lame") if tag else None
     if lame is None:
         return {"name": "LAME 3.100", "confidence": "Low"}
+    if lame["encoder"].startswith("Lavf"):
+        # The muxer wrote "Lavf lame" in place of the bit-exact "Lavc libmp3lame" (mp3enc.c:250-252): it names no encoder and
+        # supports none, so LAME's own signature in the frames stands alone.
+        return {"name": "LAME 3.100", "confidence": "Low"}
     if not lame["encoder"].startswith("LAME"):
         return {"name": "LAME 3.100", "confidence": "Medium"}
     return {"name": "LAME 3.100", "confidence": "High" if lame["tag_crc"] == lame["tag_crc_computed"] else "Medium"}
@@ -865,6 +873,9 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest["findings"] = ["mpeg.frame-truncated"] if truncated_last(path, manifest["ffprobe_packets"]) else []
         if settings["layer"] == 1:
             manifest["findings"] += layer1_findings(path, manifest["ffprobe_packets"])
+    if "+bitexact" in command and "findings" in manifest:
+        # A bit-exact ffmpeg writes no encoder tag, so the ID3v2 tag it still writes holds no frame.
+        manifest["findings"].append("id3v2.no-frames")
     if settings["layer"] in (2, 3):
         manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
     if settings["layer"] == 3 and settings["version"] == "1" and scalefactors_exceed(manifest["minimp3_side_info"], channels):

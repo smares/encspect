@@ -62,6 +62,9 @@ FIXTURES = {
     "external-ffmpeg-libspeex-uwb-abr": ("ffmpeg", 32000, 1, ["-c:a", "libspeex", "-abr", "1", "-b:a", "24k"], FFMPEG_NAME, []),
     "external-ffmpeg-libspeex-frames": ("ffmpeg", 16000, 1, ["-c:a", "libspeex", "-frames_per_packet", "3", "-metadata", "title=ffmpeg title"],
                                         FFMPEG_NAME, []),
+    # Bit-exact: the vendor string is "ffmpeg" and the encoder ID "Lavc libspeex" has no version.
+    "external-ffmpeg-libspeex-bitexact": ("ffmpeg", 16000, 1, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libspeex"],
+                                          {"name": "FFmpeg (Lavc libspeex)", "confidence": "Medium", "writer": {"name": "FFmpeg", "confidence": "Low"}}, []),
     # ffmpeg rewrites the granule positions of a stream it copies without the encoder's lookahead.
     "external-ffmpeg-remux": ("remux", 16000, 1, ["-c", "copy"], {"name": "libspeex 1.2.1", "confidence": "Low", "writer": FFMPEG_WRITER},
                               [("speex.delay-unusual", "an encoder delay of 0 samples")]),

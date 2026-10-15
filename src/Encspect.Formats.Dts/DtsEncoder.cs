@@ -4,9 +4,10 @@ namespace Encspect.Formats.Dts;
 
 // The encoder of a DTS stream. The bit stream carries the revision of the encoder software
 // (ETSI TS 102 114 5.4.2, VERNUM), which the frames show as a field, and no name, so only what the
-// file's tags claim as the encoder's names one: as written, with low confidence, as an
-// ID3v2 TSSE frame does for MPEG audio. What names the writer (the BUILDVER chunk of a .dtshd file, an
-// APEv2 Encoder item, ffmpeg's muxer version "Lavf60.16.100") is resolved apart (WriterDetection).
+// file's tags and the container claim as the encoder's names one: as written, with low confidence, as an
+// ID3v2 TSSE frame does for MPEG audio, and the BUILDVER chunk of a .dtshd file (ATSC A/103:2014 Table E.1,
+// "DTS-HD Encoder Version Identification"). What names the writer (an APEv2 Encoder item, ffmpeg's muxer
+// version "Lavf60.16.100") is resolved apart (WriterDetection).
 internal static class DtsEncoder
 {
     private const int MaxClaimedName = 64;
