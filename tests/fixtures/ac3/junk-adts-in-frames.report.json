@@ -7169,6 +7169,27 @@
         ]
       }
     ],
+    "detection": {
+      "format": "AC-3",
+      "evidence": {
+        "class": 50,
+        "offset": 100,
+        "frames": 8,
+        "verifiedFrames": 8
+      },
+      "isForced": false,
+      "alternatives": [
+        {
+          "format": "AAC",
+          "evidence": {
+            "class": 50,
+            "offset": 400,
+            "frames": 8,
+            "verifiedFrames": 0
+          }
+        }
+      ]
+    },
     "findings": [
       {
         "severity": "Warning",
