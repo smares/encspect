@@ -13,6 +13,9 @@ public sealed class DtsHdParser : IFormatParser
     private const int ChunkHeader = 16;
     private const int MaxCounted = SniffResult.MaxFrames;
 
+    // A file has about 15 chunks; a file of millions of empty ones must not become millions of nodes or a walk through all of it.
+    internal const int MaxChunks = 1024;
+
     // FFmpeg refuses sizes beyond this.
     private const ulong MaxSize = 1UL << 61;
 
@@ -76,13 +79,9 @@ public sealed class DtsHdParser : IFormatParser
         }
 
         long position = reader.Start;
-        for (int count = 0; position < reader.End; count++)
+        for (int count = 0; position < reader.End && count < MaxChunks; count++)
         {
-            if (count % 4096 == 0)
-            {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-            }
-
+            reader.CancellationToken.ThrowIfCancellationRequested();
             if (!TryChunk(reader, position, out _, out ulong size))
             {
                 break;
@@ -127,9 +126,12 @@ public sealed class DtsHdParser : IFormatParser
         int count = 0;
         while (position < reader.End)
         {
-            if (count++ % 4096 == 0)
+            context.CancellationToken.ThrowIfCancellationRequested();
+            if (count++ >= MaxChunks)
             {
-                context.CancellationToken.ThrowIfCancellationRequested();
+                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {MaxChunks} chunks; the bytes from 0x{position:X} are not read.");
+                position = reader.End;
+                break;
             }
 
             long remaining = reader.End - position;

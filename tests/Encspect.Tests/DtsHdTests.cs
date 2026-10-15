@@ -158,6 +158,17 @@ public class DtsHdTests
         Assert.Empty(report.Streams);
     }
 
+    // A file of a million empty chunks is not a million nodes: the chunks are read up to a limit and the rest is reported as not read.
+    [Fact]
+    public void ManyChunksAreReadUpToALimit()
+    {
+        byte[] data = [.. Header, .. Enumerable.Range(0, 3000).SelectMany(_ => Chunk("UNKNOWN_", new byte[4])), .. Chunk("STRMDATA", Fixture("core-16be.dts"))];
+        Report report = Analyzer.CreateDefault().Analyze("many.dtshd", new MemoryStream(data));
+        Assert.Contains(report.Findings, f => f.Code == "dtshd.chunk-count");
+        Assert.True(report.Root.Children.Count <= DtsHdParser.MaxChunks + 1);
+        Assert.Equal("DTS-HD", report.Root.Value?.ToString());
+    }
+
     [Fact]
     public void ASecondStreamChunkAndASecondHeaderAreReported()
     {

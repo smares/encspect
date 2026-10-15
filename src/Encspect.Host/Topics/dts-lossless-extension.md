@@ -13,7 +13,7 @@ references: ETSI TS 102 114 V1.6.1 (2019-08), clause 8; FFmpeg 6.1.1 libavcodec/
 - the navigation index (NAVI, CRC16): the byte size of the band data for each frequency band, segment and channel set;
 - the band data: predictor orders, entropy-coded residuals and, above 96 kHz, extra frequency bands.
 
-Channel sets form a hierarchy. A 7.1 stream is usually a primary 5.1 set plus a set of two channels; the layout is the union of the masks. The residual bits of a set say whether it carries the original audio or its difference from the core.
+Channel sets form a hierarchy. The 7.1 stream of the FFmpeg sample archive is a primary 5.1 set plus a set of the two rear channels; the layout is the union of the masks. The residual bits of a set say whether it carries the original audio or its difference from the core.
 
 **What you see.** Each sub-header and its fields, the navigation index, and the verdict of every CRC16. The stream reports the source resolution, sampling frequency and layout of the channel sets. The band data is not decoded.
 

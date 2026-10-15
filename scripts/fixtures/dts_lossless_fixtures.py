@@ -68,7 +68,7 @@ def build(api):
 
     def stats(channels, sets, rate, bits, width):
         return {"DTS/Statistics/Lossless Channel Sets": f"{sets} channel set" + ("s" if sets != 1 else ""), "DTS/Statistics/Lossless Channels": f"{channels} channels",
-                "DTS/Statistics/Lossless Sampling Frequency": f"{rate} Hz", "DTS/Statistics/Lossless Source PCM Resolution": f"{bits} bits",
+                "DTS/Statistics/Lossless Sampling Frequency": f"{rate} Hz", "DTS/Statistics/Lossless Bits Per Sample": f"{bits} bits",
                 "DTS/Statistics/Lossless Storage Bit Width": f"{width} bits"}
 
     # The layers: 2.0, 5.1 and 7.1 at 48, 96 and 192 kHz, 24 bits; 16 and 20 bits at 48 kHz.

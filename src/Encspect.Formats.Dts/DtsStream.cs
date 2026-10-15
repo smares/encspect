@@ -304,7 +304,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             Add("Lossless Channel Sets", NodeValue.Integer(sets.Count, "channel sets", "channel set"), Explain.StatLosslessSets, Topics.Lossless);
             Add("Lossless Channels", NodeValue.Integer(sets.Sum(s => s.Channels), "channels", "channel"), Explain.StatLosslessChannels, Topics.Lossless);
             Add("Lossless Sampling Frequency", NodeValue.Integer(sets.Max(s => s.SampleRate), "Hz"), Explain.StatLosslessRate, Topics.Lossless);
-            Add("Lossless Source PCM Resolution", NodeValue.Integer(sets.Max(s => s.Resolution), "bits", "bit"), Explain.StatLosslessResolution, Topics.Lossless);
+            Add("Lossless Bits Per Sample", NodeValue.Integer(sets.Max(s => s.Resolution), "bits", "bit"), Explain.StatLosslessResolution, Topics.Lossless);
             Add("Lossless Storage Bit Width", NodeValue.Integer(sets.Max(s => s.StorageWidth), "bits", "bit"), Explain.StatLosslessWidth, Topics.Lossless);
         }
 

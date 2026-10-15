@@ -290,7 +290,7 @@ internal static class Explain
     public const string XllXImaxSync = "A word FFmpeg's dca_xll.c takes as the start of DTS:X IMAX data (0xF14000D0 or 0xF14000D1); MediaInfo's File_Dts.cpp reads 0xF14000D0 as IMAX and 0xF14000D1 as DTS:X.";
     public const string XllTrailing = "Bytes after the band data up to the end of the lossless frame, whose first word is neither of the sync words that FFmpeg's dca_xll.c and MediaInfo's File_Dts.cpp look for. Not read.";
     public const string XllExtensionPayload = "The bytes after the sync word up to the end of the lossless frame. Not described by any source, not read.";
-    public const string StatLosslessResolution = "The source PCM resolution the channel sets of the lossless extension state in their sub-headers (8.3.2).";
+    public const string StatLosslessResolution = "The bits per sample of the lossless layer: the source PCM resolution the channel sets state in their sub-headers (nBitResolution, 8.3.2), the same concept as the core's source PCM resolution.";
     public const string StatLosslessWidth = "The storage bit width the channel sets of the lossless extension state in their sub-headers (8.3.2).";
     public const string StatLosslessRate = "The sampling frequency the channel sets of the lossless extension state in their sub-headers (8.3.2).";
     public const string StatLosslessChannels = "The channels of the lossless extension: all its channel sets together.";

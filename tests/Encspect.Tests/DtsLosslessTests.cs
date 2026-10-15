@@ -75,7 +75,7 @@ public class DtsLosslessTests
     {
         Report report = Open(name);
         Assert.Equal(resolution, Assert.Single(report.Streams).BitsPerSample);
-        Assert.Equal($"{resolution} bits", Field(report, "DTS/Statistics/Lossless Source PCM Resolution"));
+        Assert.Equal($"{resolution} bits", Field(report, "DTS/Statistics/Lossless Bits Per Sample"));
         Assert.Equal($"{width} bits", Field(report, "DTS/Statistics/Lossless Storage Bit Width"));
     }
 
