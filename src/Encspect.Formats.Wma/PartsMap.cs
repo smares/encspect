@@ -112,7 +112,7 @@ internal sealed class PartsMap(Func<int, MappedBytes> superframe)
         if (place.Map is { } map)
         {
             IReadOnlyList<ByteRange> ranges = map.FileRanges(place.StartBit / 8, Math.Min(map.Length, (place.EndBit + 7) / 8));
-            if (ranges.Count == 0 || place.StartBit == place.EndBit)
+            if (ranges.Count == 0)
             {
                 return (map.OffsetOf(Math.Min(map.Length, place.StartBit / 8)), 0, null);
             }
@@ -124,7 +124,7 @@ internal sealed class PartsMap(Func<int, MappedBytes> superframe)
     }
 
     // A field with a value and no bytes, at the byte where the bit lies: for bits that a decoder read from its cache's old bytes and not
-    // from the file. It has no bit position, since a zero-length node cannot hold one.
+    // from the file. It has no bit position: a superframe none of whose bits come from the file has length 0, and Node.FromBits would give an empty field in the middle of a byte a length of 1, which would end past its parent.
     public Node Marker(IReadOnlyList<FramePart> parts, int bit, string name, NodeValue? value, string description, string? topic = null)
     {
         Placed place = Place(parts, bit, bit);

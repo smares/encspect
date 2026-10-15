@@ -400,7 +400,16 @@ public class WmaVoiceTests
         // No bytes of its own: a node of length 0 at the byte where its start lies.
         Assert.Equal(0, last.Length);
         Assert.Equal(tail.Offset, last.Offset);
-        Assert.All(last.Children, c => Assert.Equal((last.Offset, 0L), (c.Offset, c.Length)));
+        var pending = new Stack<Node>(last.Children);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            Assert.Equal((last.Offset, 0L), (node.Offset, node.Length));
+            foreach (Node child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
         Assert.Equal(2266, Integer(Child(voice, "Statistics"), "Bits After the Last Superframe"));
     }
 

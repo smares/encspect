@@ -227,7 +227,9 @@ internal sealed class VoiceNodes
         VoiceSuperframeRecord record = _records.Superframes[index];
         List<FramePart> parts = PartsOf(record);
         int used = Math.Min(record.Bits, record.AvailableBits);
-        (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, 0, used);
+        (long offset, long length, IReadOnlyList<ByteRange>? ranges) = parts.Sum(p => p.BitCount) == 0
+            ? (_map.Marker(parts, 0, "Superframe", null, string.Empty).Offset, 0, null)
+            : _map.Cover(parts, 0, used);
         string value = record.Status == 0
             ? $"{Count(record.FrameCount, "frame", "frames")}, {Count(record.Samples, "sample", "samples")}"
             : $"invalid: {StatusText((VoiceStatus)record.Status)}";
