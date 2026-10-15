@@ -52,6 +52,8 @@ def expect_vorbis(entry, data, packets, page_ends, s):
     vorbis.update({"packets": result["packets"], "blocks": result["blocks"], "statistics": result["statistics"]})
     if s.get("encoder"):
         vorbis["encoder"] = s["encoder"]
+    if s.get("writer"):
+        vorbis["writer"] = s["writer"]
     entry["vorbis"] = vorbis
     entry["model_findings"] = sorted(set(result["findings"] + (setup["problems"] if setup else [])))
     info = result["stream_info"]
@@ -59,6 +61,8 @@ def expect_vorbis(entry, data, packets, page_ends, s):
         info["channel_mode"] = v.VORBIS_LAYOUTS[channels][0] if channels in v.VORBIS_LAYOUTS else f"{channels} channels"
     if info and s.get("encoder"):
         info["encoder"], info["encoder_confidence"] = s["encoder"]["name"], s["encoder"]["confidence"]
+    if info and s.get("writer"):
+        info["writer"], info["writer_confidence"] = s["writer"]["name"], s["writer"]["confidence"]
     return entry, info
 
 
@@ -81,6 +85,8 @@ def expect_opus(entry, data, packets, page_ends, s):
     opus.update({"packets": result["packets"], "tocs": result["tocs"], "statistics": result["statistics"]})
     if s.get("encoder"):
         opus["encoder"] = s["encoder"]
+    if s.get("writer"):
+        opus["writer"] = s["writer"]
     entry["opus"] = opus
     entry["model_findings"] = sorted(set(result["findings"]))
     return entry, result["stream_info"]

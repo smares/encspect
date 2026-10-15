@@ -314,8 +314,8 @@ def build():
     last = bytes(tail[len(aa(a[:2])):])
     b["tag-inside-block"] = ("Bytes that look like an ID3v1 tag 128 bytes before the end, inside the last block's audio.", aa(a[:2]) + join(last, subs(last)[0]),
                               [("tag.near-miss", "ID3v1 signature")], False)
-    b["ape-encoder-claim"] = ("An APEv2 tag after the blocks whose \"encoder\" item names LAME, spelled in lower case.", aa(a) + ape_tag(("encoder", "LAME 3.100")),
-                              [("wavpack.encoder-claim-differs", "APE Encoder item")], True)
+    b["ape-encoder-claim"] = ("An APEv2 tag after the blocks whose \"encoder\" item names LAME, spelled in lower case: the writer, which the blocks' encoder does not contradict.", aa(a) + ape_tag(("encoder", "LAME 3.100")),
+                              [], True)
     b["ape-encoder-wavpack"] = ("An APEv2 tag after the blocks whose Encoder item names WavPack.", aa(a) + ape_tag(("Encoder", "WavPack 5.6.0")), [], True)
     small = blocks(base("lossless-16-stereo-small-blocks"))
     b["set-without-final-limit"] = ("24 stereo blocks of which only the first is initial and none is final, each 8 of them with one first sample: libwavpack ends a set at its 8 streams.",

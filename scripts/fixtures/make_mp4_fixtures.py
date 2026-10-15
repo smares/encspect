@@ -56,11 +56,13 @@ SPEAKERS = {1: ["front center"], 2: ["front left", "front right"],
             8: ["front center", "front left", "front right", "side left", "side right", "back left", "back right", "LFE"]}
 
 
-def stream(codec, rate, channels, mode, samples, vbr=False, encoder=None):
+def stream(codec, rate, channels, mode, samples, vbr=False, encoder=None, writer=None):
     entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels],
              "samples": samples, "is_vbr": vbr}
     if encoder:
         entry["encoder"] = list(encoder)
+    if writer:
+        entry["writer"] = list(writer)
     return entry
 
 
@@ -291,7 +293,7 @@ def usac_layout_config(fill_element):
 
 def xhe_layouts():
     """The element layout exhale writes, which names it as the encoder, the same with the fill element Fraunhofer's demonstration files and
-    libxaac write, which names none, exhale's layout with a tool atom that names another encoder, and MPEG Surround 2-1-2."""
+    libxaac write, which names none, exhale's layout with a tool atom that names other software, and MPEG Surround 2-1-2."""
     out = []
     for name, description, fill_element, tool, encoder, findings in [
         ("xhe-aac-exhale-layout", "xHE-AAC whose UsacConfig has the layout exhale writes: an audio pre-roll element first, then a channel pair "
@@ -299,9 +301,9 @@ def xhe_layouts():
          "confidence.", False, None, ("exhale", "Medium"), []),
         ("xhe-aac-fill-element", "xHE-AAC with exhale's layout but for a fill element after the channel pair element, as Fraunhofer's "
          "demonstration files and libxaac write: no encoder is named.", True, None, None, []),
-        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names another encoder: the stream's evidence "
-         "names exhale, and the claim that differs is an info finding.", False, "hand-built", ("exhale", "Medium"),
-         [["aac.encoder-claim-differs", "names \"hand-built\", but the stream points to \"exhale\""]]),
+        ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names other software: the stream's evidence "
+         "names exhale as the encoder and the tool atom names the writer, two facts that do not conflict.", False, "hand-built", ("exhale", "Medium"),
+         []),
     ]:
         config = usac_layout_config(fill_element)
         samples = [bytes([0x80 if i % 10 == 0 else 0x00]) + bytes((i * 13) % 50 + 20) for i in range(30)]
@@ -311,7 +313,7 @@ def xhe_layouts():
         elements = ASC + "/UsacConfig/UsacDecoderConfig"
         out.append((name, data, {
             "description": description, "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder)],
+            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder, writer=("hand-built", "Low") if tool else None)],
             "units": unit_list(offsets[0], samples, 10),
             "fields": {elements: f"{3 if fill_element else 2} elements", elements + "/Element[0]/Extension Element Type": "3 (audio pre-roll)",
                        elements + "/Element[1]": "CPE", ASC + "/UsacConfig/UsacConfigExtension/Extension Type": "2 (loudness info)"},
@@ -455,7 +457,7 @@ def gapless():
             fields["MP4/moov/trak/Gapless/Samples (Edit List)"] = f"{length} samples"
         out.append((name, data, {
             "description": description, "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-            "streams": [stream("AAC LC", 44100, 2, "Stereo", total, vbr=True, encoder=("hand-built", "Low"))],
+            "streams": [stream("AAC LC", 44100, 2, "Stereo", total, vbr=True, writer=("hand-built", "Low"))],
             "units": unit_list(offsets[0], samples, 10), "fields": fields,
             "findings": [finding] if finding else [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)},
         }))

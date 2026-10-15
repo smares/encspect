@@ -244,29 +244,43 @@
                   "name": "Encoder",
                   "value": "libspeex 1.2.1",
                   "offset": 36,
-                  "length": 146,
+                  "length": 20,
                   "children": [
                     {
                       "name": "Confidence",
                       "value": "Low",
                       "offset": 36,
-                      "length": 146
+                      "length": 20
                     },
                     {
                       "name": "Evidence",
                       "value": "Speex header version \"1.2.1\", which libspeex writes whatever program encodes",
                       "offset": 36,
                       "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 136,
+                  "length": 46,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 136,
+                      "length": 46
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"Lavf60.16.100\" names no encoder",
+                      "value": "Vorbis comment vendor string at 0x8C names \"Lavf60.16.100\"",
                       "offset": 140,
                       "length": 13
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment ENCODER field \"Lavf60.16.100\" names no encoder",
+                      "value": "Vorbis comment ENCODER field at 0x9D names \"Lavf60.16.100\"",
                       "offset": 157,
                       "length": 25
                     }
@@ -9462,6 +9476,8 @@
         "isVbr": false,
         "encoder": "libspeex 1.2.1",
         "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

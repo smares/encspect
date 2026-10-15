@@ -6012,7 +6012,7 @@
                   "length": 201140,
                   "children": [
                     {
-                      "name": "Encoder",
+                      "name": "Writer",
                       "value": "Windows Media Format SDK 12.0.26100.33438",
                       "offset": 4991,
                       "length": 201140,
@@ -6025,7 +6025,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 9.2 Lossless\", \"VBR Quality 100, 44 kHz, 2 channel 16 bit 1-pass VBR\"; IsVBR true (at 0x10F5)",
+                          "value": "ASF header layout of the Windows Media Format SDK's writer: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object, which the files of Media Foundation's ASF sink lack. The writer states codec list \"Windows Media Audio 9.2 Lossless\", \"VBR Quality 100, 44 kHz, 2 channel 16 bit 1-pass VBR\"; IsVBR true (at 0x10F5)",
                           "offset": 4991,
                           "length": 201140
                         },
@@ -6350,8 +6350,8 @@
         "duration": 2,
         "averageBitrate": 1152,
         "isVbr": true,
-        "encoder": "Windows Media Format SDK 12.0.26100.33438",
-        "encoderConfidence": "Medium",
+        "writer": "Windows Media Format SDK 12.0.26100.33438",
+        "writerConfidence": "Medium",
         "series": []
       }
     ],

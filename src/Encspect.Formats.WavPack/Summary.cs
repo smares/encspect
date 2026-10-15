@@ -37,10 +37,7 @@ internal static partial class Summary
             s.Leading.Add(encoder);
         }
 
-        Node? writer = s.Blocks > 0
-            ? WriterDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
-                (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)))
-            : null;
+        Node? writer = s.Blocks > 0 ? Writer(s, context.EncoderClaims, start, end) : null;
         if (writer is not null)
         {
             s.Leading.Add(writer);
@@ -174,6 +171,11 @@ internal static partial class Summary
 
         return encoder;
     }
+
+    // In a method of its own, so the lambdas that keep the state alive do not share a closure with the ones that outlive the analysis.
+    private static Node? Writer(State s, IReadOnlyList<EncoderClaim> claims, long start, long end) =>
+        WriterDetection.Detect(claims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
 
     // A target the encoder floored to its lowest is only a limit, which is text rather than a number.
     internal static NodeValue TargetValue(double value, int decimals, string unit, bool isAtMost) =>

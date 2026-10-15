@@ -30,6 +30,7 @@ public class WavPackFindingTests
         },
         ["wavpack.mixed-streams"] = () => WavPackBuilder.Concat([.. WavPackBuilder.Blocks("external-hybrid-b4-correction.wv"), .. WavPackBuilder.Blocks("external-hybrid-b4-correction-wvc.wvc")]),
         ["wavpack.no-blocks"] = () => new byte[1000],
+        ["wavpack.writer-claim-differs"] = () => [.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. File.ReadAllBytes(WavPackBuilder.FixturePath("external-lossless-16-stereo.wv")), .. TestFiles.ApeText("Encoder", "LAME 3.100")],
         ["wavpack.encoder-claim-differs"] = () => [.. TestFiles.Id3v23(("TSSE", "LAME 3.100")), .. File.ReadAllBytes(WavPackBuilder.FixturePath("external-lossless-16-stereo.wv"))],
     };
 

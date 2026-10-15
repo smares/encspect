@@ -249,12 +249,32 @@
                   "value": "LAME tag written by FFmpeg (Lavc60.31)",
                   "offset": 201,
                   "length": 36
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 462,
+              "length": 8777,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 462,
+                  "length": 8777
                 },
                 {
                   "name": "Evidence",
                   "value": "ID3v2 TSSE frame at 0xA names \"Lavf60.16.100\"",
-                  "offset": 201,
-                  "length": 8475
+                  "offset": 462,
+                  "length": 8777
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag at 0xC9 names \"Lavc60.31\"",
+                  "offset": 462,
+                  "length": 8777
                 }
               ]
             },
@@ -14195,6 +14215,8 @@
         "isVbr": false,
         "encoder": "LAME 3.100",
         "encoderConfidence": "Medium",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

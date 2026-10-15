@@ -23,26 +23,40 @@
             {
               "name": "Encoder",
               "value": "Xing",
-              "offset": 156,
-              "length": 10292,
+              "offset": 417,
+              "length": 10031,
               "children": [
                 {
                   "name": "Confidence",
                   "value": "Low",
-                  "offset": 156,
-                  "length": 10292
+                  "offset": 417,
+                  "length": 10031
                 },
                 {
                   "name": "Evidence",
                   "value": "No short blocks or scfsi in any frame and the original bit in every one, as Xing's encoder writes them",
                   "offset": 417,
                   "length": 10031
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "Lavf",
+              "offset": 417,
+              "length": 10031,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 417,
+                  "length": 10031
                 },
                 {
                   "name": "Evidence",
-                  "value": "LAME tag written by FFmpeg (Lavf)",
-                  "offset": 156,
-                  "length": 36
+                  "value": "LAME tag at 0x9C names \"Lavf\"",
+                  "offset": 417,
+                  "length": 10031
                 }
               ]
             },
@@ -15701,6 +15715,8 @@
         "isVbr": false,
         "encoder": "Xing",
         "encoderConfidence": "Low",
+        "writer": "Lavf",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

@@ -200,13 +200,8 @@
    "length": 90
   }
  ],
- "description": "An APEv2 tag after the blocks whose \"encoder\" item names LAME, spelled in lower case.",
- "findings": [
-  {
-   "code": "wavpack.encoder-claim-differs",
-   "contains": "APE Encoder item"
-  }
- ],
+ "description": "An APEv2 tag after the blocks whose \"encoder\" item names LAME, spelled in lower case: the writer, which the blocks' encoder does not contradict.",
+ "findings": [],
  "crosscheck": {
   "valid": true
  }

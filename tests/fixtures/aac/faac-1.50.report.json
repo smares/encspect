@@ -154,6 +154,20 @@
                               "value": "A fill element of access unit 1 at 0x30 holds \"libfaac 1.50.0\", which libfaac writes",
                               "offset": 48,
                               "length": 21908
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FAAC 1.50.0",
+                          "offset": 48,
+                          "length": 21908,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 48,
+                              "length": 21908
                             },
                             {
                               "name": "Evidence",
@@ -47413,6 +47427,8 @@
         "isVbr": false,
         "encoder": "FAAC 1.50.0",
         "encoderConfidence": "High",
+        "writer": "FAAC 1.50.0",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

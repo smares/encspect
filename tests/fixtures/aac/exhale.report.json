@@ -2363,7 +2363,7 @@
                       "children": [
                         {
                           "name": "Encoder",
-                          "value": "exhale 1.2.2",
+                          "value": "exhale",
                           "offset": 1147,
                           "length": 4330,
                           "children": [
@@ -2376,6 +2376,20 @@
                             {
                               "name": "Evidence",
                               "value": "The UsacConfig at 0x23D has the layout exhale writes: an audio pre-roll element first, then only channel elements without time-warped MDCT and no fill element, and one loudness info extension of 9 bytes with one measurement",
+                              "offset": 1147,
+                              "length": 4330
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "exhale 1.2.2",
+                          "offset": 1147,
+                          "length": 4330,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
                               "offset": 1147,
                               "length": 4330
                             },
@@ -3596,8 +3610,10 @@
         "duration": 1.509297052154195,
         "averageBitrate": 22.951081730769232,
         "isVbr": false,
-        "encoder": "exhale 1.2.2",
+        "encoder": "exhale",
         "encoderConfidence": "Medium",
+        "writer": "exhale 1.2.2",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

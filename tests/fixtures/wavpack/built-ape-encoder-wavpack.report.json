@@ -35,6 +35,20 @@
                   "value": "The blocks hold a new config block, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one",
                   "offset": 0,
                   "length": 47650
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "WavPack 5.6.0",
+              "offset": 0,
+              "length": 47650,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 47650
                 },
                 {
                   "name": "Evidence",
@@ -4176,6 +4190,8 @@
         "isVbr": true,
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
+        "writer": "WavPack 5.6.0",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

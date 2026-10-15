@@ -1804,6 +1804,26 @@
                           ]
                         },
                         {
+                          "name": "Writer",
+                          "value": "hand-built",
+                          "offset": 834,
+                          "length": 1335,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 834,
+                              "length": 1335
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 ©too atom (encoding tool) at 0x318 names \"hand-built\"",
+                              "offset": 834,
+                              "length": 1335
+                            }
+                          ]
+                        },
+                        {
                           "name": "Statistics",
                           "kind": "Statistics",
                           "offset": 834,
@@ -2419,6 +2439,8 @@
         "isVbr": true,
         "encoder": "exhale",
         "encoderConfidence": "Medium",
+        "writer": "hand-built",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
@@ -2523,22 +2545,6 @@
           4,
           4,
           7,
-          2
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "aac.encoder-claim-differs",
-        "message": "The MP4 ©too atom (encoding tool) names \"hand-built\", but the stream points to \"exhale\"; the file may have been written by other software, or kept its metadata when the audio was re-encoded.",
-        "offset": 792,
-        "length": 34,
-        "path": [
-          0,
-          1,
-          4,
-          2,
-          5,
           2
         ],
         "count": 1

@@ -39,6 +39,26 @@
               ]
             },
             {
+              "name": "Writer",
+              "value": "LAME 3.100",
+              "offset": 0,
+              "length": 47650,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 47650
+                },
+                {
+                  "name": "Evidence",
+                  "value": "APE Encoder item at 0xBA42 names \"LAME 3.100\"",
+                  "offset": 0,
+                  "length": 47650
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -4170,6 +4190,8 @@
         "isVbr": true,
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
+        "writer": "LAME 3.100",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
@@ -4200,20 +4222,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "wavpack.encoder-claim-differs",
-        "message": "The APE Encoder item names \"LAME 3.100\", but the blocks point to WavPack 5.0 or later; the tag may have been written by other software, or kept when the audio was re-encoded.",
-        "offset": 47682,
-        "length": 26,
-        "path": [
-          1,
-          1,
-          0
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

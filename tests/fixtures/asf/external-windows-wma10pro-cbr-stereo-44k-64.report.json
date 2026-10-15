@@ -4347,7 +4347,7 @@
                   "length": 33072,
                   "children": [
                     {
-                      "name": "Encoder",
+                      "name": "Writer",
                       "value": "Media Foundation 2.112",
                       "offset": 1649,
                       "length": 33072,
@@ -4360,7 +4360,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: MediaFoundationVersion 2.112, a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object, a Padding Object, and no Codec List Object or WMFSDKVersion, the layout of Media Foundation's ASF sink. The writer states IsVBR false (at 0x665)",
+                          "value": "ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion 2.112 and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have. The writer states IsVBR false (at 0x665)",
                           "offset": 1649,
                           "length": 33072
                         },
@@ -24207,8 +24207,8 @@
         "duration": 2.988390022675737,
         "averageBitrate": 87.54680547546059,
         "isVbr": false,
-        "encoder": "Media Foundation 2.112",
-        "encoderConfidence": "Medium",
+        "writer": "Media Foundation 2.112",
+        "writerConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",

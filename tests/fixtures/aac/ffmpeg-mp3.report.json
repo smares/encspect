@@ -148,12 +148,26 @@
                               "value": "\"LAME3.100\" in ancillary data",
                               "offset": 4116,
                               "length": 9
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FFmpeg (Lavf60.16.100)",
+                          "offset": 44,
+                          "length": 24659,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 44,
+                              "length": 24659
                             },
                             {
                               "name": "Evidence",
                               "value": "MP4 ©too atom (encoding tool) at 0x6415 names \"Lavf60.16.100\"",
-                              "offset": 4116,
-                              "length": 9
+                              "offset": 44,
+                              "length": 24659
                             }
                           ]
                         },
@@ -37734,6 +37748,8 @@
         "isVbr": false,
         "encoder": "LAME 3.100",
         "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

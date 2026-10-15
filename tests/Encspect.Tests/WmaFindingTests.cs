@@ -33,7 +33,8 @@ public class WmaFindingTests
             s.Objects[0] = With(s.Objects[0][..100], o => { o[0] = 0x03; o[1] = 0xFF; o[2] = 0xFF; });
         }),
         ["wma.codec-data-size"] = () => Standard(FFmpeg, 0x0161, s => s.Data = s.Data[..7]),
-        ["wma.encoder-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim")]),
+        ["wma.writer-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("Windows Media Format SDK 12", new Node("Claim", 0, 1), "test layout", ClaimRole.Writer) { Confidence = Confidence.Medium, IsLayout = true }, new EncoderClaim("Foo Muxer 1.0", new Node("Claim", 0, 1), "test claim", ClaimRole.Writer)]),
+        ["wma.encoder-claim-differs"] = () => Standard(FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim", ClaimRole.Encoder)]),
         ["wma.format-unsupported"] = () => Standard(FFmpeg, 0x0161, s => s.Format = s.Format with { BlockAlign = 0 }),
         ["wma.frame-filler"] = () => Standard("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, _ => { }),
         ["wma.frame-invalid"] = () => Standard(FFmpeg, 0x0161, s => s.Objects[0] = With(s.Objects[0], o => Array.Fill(o, (byte)0xFF, 4, 60))),

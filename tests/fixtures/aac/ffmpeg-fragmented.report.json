@@ -3752,6 +3752,48 @@
                               "length": 8089
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
+                      "offset": 925,
+                      "length": 24361,
+                      "ranges": [
+                        {
+                          "offset": 925,
+                          "length": 7560
+                        },
+                        {
+                          "offset": 8681,
+                          "length": 8232
+                        },
+                        {
+                          "offset": 17197,
+                          "length": 8089
+                        }
+                      ],
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 925,
+                          "length": 24361,
+                          "ranges": [
+                            {
+                              "offset": 925,
+                              "length": 7560
+                            },
+                            {
+                              "offset": 8681,
+                              "length": 8232
+                            },
+                            {
+                              "offset": 17197,
+                              "length": 8089
+                            }
+                          ]
                         },
                         {
                           "name": "Evidence",
@@ -36290,6 +36332,8 @@
         "isVbr": false,
         "encoder": "FFmpeg (Lavc60.31.102)",
         "encoderConfidence": "High",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

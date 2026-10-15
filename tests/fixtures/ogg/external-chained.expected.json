@@ -2012,8 +2012,12 @@
     },
     "speexdec_samples": 23777,
     "encoder": {
-     "name": "FFmpeg (Lavc60.31.102 libspeex)",
-     "confidence": "Medium"
+     "name": "libspeex 1.2.1",
+     "confidence": "Low"
+    },
+    "writer": {
+     "name": "FFmpeg (Lavf60.16.100)",
+     "confidence": "Low"
     }
    }
   }
@@ -2044,8 +2048,10 @@
    "duration": 1.4910625,
    "average_bitrate": 28.0,
    "is_vbr": false,
-   "encoder": "FFmpeg (Lavc60.31.102 libspeex)",
-   "encoder_confidence": "Medium"
+   "encoder": "libspeex 1.2.1",
+   "encoder_confidence": "Low",
+   "writer": "FFmpeg (Lavf60.16.100)",
+   "writer_confidence": "Low"
   }
  ],
  "findings": [],

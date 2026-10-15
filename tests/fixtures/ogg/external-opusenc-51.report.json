@@ -305,27 +305,41 @@
                 },
                 {
                   "name": "Encoder",
-                  "value": "opusenc 0.2 (libopus 1.4)",
+                  "value": "libopus 1.4",
                   "offset": 97,
-                  "length": 72,
+                  "length": 29,
                   "children": [
                     {
                       "name": "Confidence",
-                      "value": "High",
-                      "offset": 97,
-                      "length": 72
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Vorbis comment ENCODER field \"opusenc from opus-tools 0.2\", which opusenc writes",
-                      "offset": 130,
-                      "length": 39
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"libopus 1.4, libopusenc 0.2.1\", which libopusenc writes with libopus' version",
+                      "value": "Medium",
                       "offset": 97,
                       "length": 29
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string \"libopus 1.4, libopusenc 0.2.1\", which names libopus' version",
+                      "offset": 97,
+                      "length": 29
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "opusenc 0.2",
+                  "offset": 93,
+                  "length": 109,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 93,
+                      "length": 109
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment ENCODER field at 0x82 names \"opusenc from opus-tools 0.2\"",
+                      "offset": 130,
+                      "length": 39
                     }
                   ]
                 },
@@ -13557,8 +13571,10 @@
         "duration": 1,
         "averageBitrate": 299.7960784313725,
         "isVbr": true,
-        "encoder": "opusenc 0.2 (libopus 1.4)",
-        "encoderConfidence": "High",
+        "encoder": "libopus 1.4",
+        "encoderConfidence": "Medium",
+        "writer": "opusenc 0.2",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

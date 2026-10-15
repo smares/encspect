@@ -245,7 +245,7 @@ def build_dtshd(api):
                   ("STRMDATA", None), ("TIMECODE", m.dtshd_timecode(48000, 2, 172800000, 7, 172800512, 9)),
                   ("BUILDVER", m.dtshd_text("DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)"))]
     parts = units()
-    claim = {"STRMDATA/DTS/Encoder": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", "STRMDATA/DTS/Encoder/Confidence": "Low"}
+    claim = {"STRMDATA/DTS/Writer": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", "STRMDATA/DTS/Writer/Confidence": "Low"}
     file("dtshd-all-chunks", "A .dtshd file with every chunk Annex E defines, four units of a core frame and a lossless extension substream in STRMDATA, and BUILDVER and TIMECODE after it.",
          all_chunks, parts, lossless, fields={"BUILDVER/Text": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", "DTSHDHDR/Stream Metadata/IsVbr": "true",
                                                "DTSHDHDR/Time Code": "01:00:00 and 1234 samples", "FILEINFO/Text": "Hand-built DTS-HD Master Audio, VBR, 5.1", **claim},

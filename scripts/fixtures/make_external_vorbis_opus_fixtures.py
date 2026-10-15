@@ -35,16 +35,19 @@ import ogg_model as m
 OUT = hand.OUT
 
 LIBVORBIS = {"name": "libvorbis 1.3.7", "confidence": "High"}
-OPUSENC = {"name": "opusenc 0.2 (libopus 1.4)", "confidence": "High"}
-FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium"}
-FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium"}
-FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium"}
+# What the analyzer names: the encoder, from the vendor string (libopusenc writes libopus' version into it), and the writer, from the
+# ENCODER field and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor, which names no encoder.
+FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
+OPUSENC = {"name": "libopus 1.4", "confidence": "Medium", "writer": {"name": "opusenc 0.2", "confidence": "Low"}}
+FFMPEG_LIBVORBIS = {"writer": FFMPEG_WRITER}
+FFMPEG_VORBIS = {"writer": FFMPEG_WRITER}
+FFMPEG_LIBOPUS = {"writer": FFMPEG_WRITER}
 AOTUV_B57 = {"name": "aoTuV b5.7 (20090301)", "confidence": "High"}
 AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
 AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
 AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
 LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
-FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium"}
+FFMPEG_OPUS = {"writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, seconds, arguments, detected encoder, expected findings)
 FIXTURES = {
@@ -145,13 +148,17 @@ def manifest(name, encoder, detected, findings):
         records.append({"name": "Page", "offset": p["offset"], "length": p["length"], "serial": p["serial"], "sequence": p["sequence"],
                         "granule": p["granule"], "flags": p["flags"], "crc_ok": computed == p["crc"]})
     codec = "Vorbis" if data[pages[0]["body"]:pages[0]["body"] + 7] == b"\x01vorbis" else "Opus"
-    spec = {"serial": serial, "link": 1, "codec": codec, "analyzed": True, "lost": set(), "extra_headers": 0, "encoder": detected}
+    named = {k: detected[k] for k in ("name", "confidence")} if "name" in detected else None
+    spec = {"serial": serial, "link": 1, "codec": codec, "analyzed": True, "lost": set(), "extra_headers": 0, "encoder": named, "writer": detected.get("writer")}
     entry, info = hand.expect_stream(data, records, spec)
     model = set(entry.pop("model_findings", [])) - {"vorbis.header-extra-data"}
     unexpected = model - {code for code, _ in findings}
     if unexpected:
         raise SystemExit(f"{name}: the model predicts {sorted(unexpected)}, which the fixture does not list")
-    info["encoder"], info["encoder_confidence"] = detected["name"], detected["confidence"]
+    if named:
+        info["encoder"], info["encoder_confidence"] = named["name"], named["confidence"]
+    if "writer" in detected:
+        info["writer"], info["writer_confidence"] = detected["writer"]["name"], detected["writer"]["confidence"]
     return {
         "length": len(data), "regions": [{"name": "Ogg", "offset": 0, "length": len(data)}], "encoder": encoder,
         "pages": records, "streams": [entry], "stream_infos": [info],

@@ -3763,6 +3763,26 @@
                   "children": [
                     {
                       "name": "Encoder",
+                      "value": "Microsoft's Windows Media Audio encoder",
+                      "offset": 1641,
+                      "length": 80564,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Medium",
+                          "offset": 1641,
+                          "length": 80564
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "The codec data states 34816 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
+                          "offset": 1641,
+                          "length": 80564
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Writer",
                       "value": "Media Foundation 2.112",
                       "offset": 1641,
                       "length": 80564,
@@ -3775,13 +3795,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: MediaFoundationVersion 2.112, a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object, a Padding Object, and no Codec List Object or WMFSDKVersion, the layout of Media Foundation's ASF sink. The writer states IsVBR false (at 0x65D)",
-                          "offset": 1641,
-                          "length": 80564
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "The codec data states 34816 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
+                          "value": "ASF header layout of Media Foundation's ASF sink: MediaFoundationVersion 2.112 and none of WMFSDKVersion, a Codec List Object and a Compatibility Object, which the files of the Windows Media Format SDK's writer have. The writer states IsVBR false (at 0x65D)",
                           "offset": 1641,
                           "length": 80564
                         },
@@ -23421,8 +23435,10 @@
         "duration": 3.01859410430839,
         "averageBitrate": 212.68974158653845,
         "isVbr": false,
-        "encoder": "Media Foundation 2.112",
+        "encoder": "Microsoft's Windows Media Audio encoder",
         "encoderConfidence": "Medium",
+        "writer": "Media Foundation 2.112",
+        "writerConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",
@@ -23623,7 +23639,7 @@
           0,
           1,
           7,
-          3
+          4
         ],
         "count": 1
       },
@@ -23637,7 +23653,7 @@
           0,
           1,
           7,
-          3,
+          4,
           65
         ],
         "count": 4
@@ -23652,7 +23668,7 @@
           0,
           1,
           7,
-          3,
+          4,
           65
         ],
         "count": 3

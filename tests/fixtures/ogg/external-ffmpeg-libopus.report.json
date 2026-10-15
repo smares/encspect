@@ -205,28 +205,28 @@
                   ]
                 },
                 {
-                  "name": "Encoder",
-                  "value": "FFmpeg (Lavc60.31.102 libopus)",
-                  "offset": 87,
-                  "length": 50,
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 83,
+                  "length": 54,
                   "children": [
                     {
                       "name": "Confidence",
-                      "value": "Medium",
-                      "offset": 87,
-                      "length": 50
+                      "value": "Low",
+                      "offset": 83,
+                      "length": 54
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment ENCODER field \"Lavc60.31.102 libopus\", which ffmpeg writes when it encodes",
-                      "offset": 104,
-                      "length": 33
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"Lavf60.16.100\"",
+                      "value": "Vorbis comment vendor string at 0x57 names \"Lavf60.16.100\"",
                       "offset": 87,
                       "length": 13
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment ENCODER field at 0x68 names \"Lavc60.31.102 libopus\"",
+                      "offset": 104,
+                      "length": 33
                     }
                   ]
                 },
@@ -6029,8 +6029,8 @@
         "duration": 1.5,
         "averageBitrate": 148.67368421052632,
         "isVbr": true,
-        "encoder": "FFmpeg (Lavc60.31.102 libopus)",
-        "encoderConfidence": "Medium",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

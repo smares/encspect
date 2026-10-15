@@ -142,24 +142,25 @@ public class DtsHdTests
     // BUILDVER is the encoder version identification of Table E.1: the DTS parser names the encoder from it as written, with low
     // confidence, and the claim's evidence points at the chunk.
     [Fact]
-    public void BuildVersionIsALowConfidenceEncoderClaim()
+    public void BuildVersionIsALowConfidenceWriterClaim()
     {
         Report report = Fixtures.AnalyzeMpeg("dts/dtshd-all-chunks.dtshd");
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Equal("DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", stream.Encoder);
-        Assert.Equal(Confidence.Low, stream.EncoderConfidence);
+        Assert.Equal("DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", stream.Writer);
+        Assert.Equal(Confidence.Low, stream.WriterConfidence);
+        Assert.Null(stream.Encoder);
         Node build = report.Root.Children.Single(c => c.Name == "BUILDVER");
-        Node evidence = Fixtures.Resolve(report.Root, "STRMDATA/DTS/Encoder/Evidence").Single();
+        Node evidence = Fixtures.Resolve(report.Root, "STRMDATA/DTS/Writer/Evidence").Single();
         Assert.Contains($"at 0x{build.Children.Single(c => c.Name == "Text").Offset:X}", evidence.Value?.ToString());
     }
 
     [Fact]
-    public void ABuildVersionBeforeTheStreamNamesTheEncoderToo()
+    public void ABuildVersionBeforeTheStreamNamesTheWriterToo()
     {
         byte[] stream = Fixture("core-16be.dts");
         byte[] data = [.. Header, .. Chunk("BUILDVER", "Encoder 7\0\0\0"u8.ToArray()), .. Chunk("STRMDATA", stream)];
         Report report = Analyzer.CreateDefault().Analyze("early.dtshd", new MemoryStream(data));
-        Assert.Equal("Encoder 7", Assert.Single(report.Streams).Encoder);
+        Assert.Equal("Encoder 7", Assert.Single(report.Streams).Writer);
     }
 
     // A first chunk that is not DTSHDHDR cannot be detected, but a forced analysis reports it; a size of 2^61 or more, FFmpeg's limit, ends

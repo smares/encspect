@@ -243,33 +243,47 @@
                 },
                 {
                   "name": "Encoder",
-                  "value": "FFmpeg (Lavc60.31.102 libspeex)",
+                  "value": "libspeex 1.2.1",
                   "offset": 36,
-                  "length": 155,
+                  "length": 20,
                   "children": [
                     {
                       "name": "Confidence",
-                      "value": "Medium",
+                      "value": "Low",
                       "offset": 36,
-                      "length": 155
+                      "length": 20
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment ENCODER field \"Lavc60.31.102 libspeex\", which ffmpeg writes when it encodes with libspeex",
-                      "offset": 157,
-                      "length": 34
+                      "value": "Speex header version \"1.2.1\", which libspeex writes whatever program encodes",
+                      "offset": 36,
+                      "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 136,
+                  "length": 55,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 136,
+                      "length": 55
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"Lavf60.16.100\"",
+                      "value": "Vorbis comment vendor string at 0x8C names \"Lavf60.16.100\"",
                       "offset": 140,
                       "length": 13
                     },
                     {
                       "name": "Evidence",
-                      "value": "Speex header version \"1.2.1\", which libspeex writes",
-                      "offset": 36,
-                      "length": 20
+                      "value": "Vorbis comment ENCODER field at 0x9D names \"Lavc60.31.102 libspeex\"",
+                      "offset": 157,
+                      "length": 34
                     }
                   ]
                 },
@@ -11766,8 +11780,10 @@
         "duration": 1.48909375,
         "averageBitrate": 12.864,
         "isVbr": true,
-        "encoder": "FFmpeg (Lavc60.31.102 libspeex)",
-        "encoderConfidence": "Medium",
+        "encoder": "libspeex 1.2.1",
+        "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
