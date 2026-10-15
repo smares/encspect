@@ -81,17 +81,30 @@ public static class TopicLibrary
 
         var text = new StringBuilder();
         text.Append(topic.Title).Append('\n').Append(new string('=', topic.Title.Length)).Append("\n\n");
+        bool inList = false;
         foreach (TopicBlock block in topic.Blocks)
         {
             if (block.IsListItem)
             {
                 Wrap(text, PlainText(block.Inlines), width, "  - ", "    ");
+                inList = true;
             }
             else
             {
+                if (inList)
+                {
+                    text.Append('\n');
+                    inList = false;
+                }
+
                 Wrap(text, PlainText(block.Inlines), width, string.Empty, string.Empty);
                 text.Append('\n');
             }
+        }
+
+        if (inList)
+        {
+            text.Append('\n');
         }
 
         if (topic.Related.Count > 0)
