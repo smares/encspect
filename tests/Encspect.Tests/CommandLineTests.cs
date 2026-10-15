@@ -106,6 +106,16 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void PlainTextSeparatesAListFromTheParagraphAfterIt()
+    {
+        var topic = new Topic("t", "Title", [], [], "Intro.\n\n- one\n- two\n\nAfter.\n\n- last\n");
+        string[] lines = TopicLibrary.ToPlainText(topic).ReplaceLineEndings("\n").Split('\n');
+
+        Assert.Equal("", lines[Array.IndexOf(lines, "  - two") + 1]);
+        Assert.Equal("", lines[Array.IndexOf(lines, "  - last") + 1]);
+    }
+
+    [Fact]
     public void LearnRejectsUnknownTopicsAndOtherArguments()
     {
         (int code, _, string errors) = Run("--learn", "no-such-topic");
