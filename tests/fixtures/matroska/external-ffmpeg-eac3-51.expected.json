@@ -1,0 +1,848 @@
+{
+ "description": "ffmpeg 6.1.1-3ubuntu5 -c copy",
+ "length": 17013,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 473,
+     "length": 16512,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 16
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "Lavf60.16.100",
+    "writing_app": "Lavf60.16.100",
+    "duration": 512.0
+   },
+   "length": 16973,
+   "declared_end": 17013
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   16973,
+   [
+    [
+     "SeekHead",
+     52,
+     69,
+     [
+      [
+       "CRC-32",
+       57,
+       6,
+       [
+        [
+         "Computed",
+         59,
+         4
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       63,
+       14,
+       [
+        [
+         "SeekID",
+         66,
+         7
+        ],
+        [
+         "SeekPosition",
+         73,
+         4
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       77,
+       14,
+       [
+        [
+         "SeekID",
+         80,
+         7
+        ],
+        [
+         "SeekPosition",
+         87,
+         4
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       91,
+       15,
+       [
+        [
+         "SeekID",
+         94,
+         7
+        ],
+        [
+         "SeekPosition",
+         101,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       106,
+       15,
+       [
+        [
+         "SeekID",
+         109,
+         7
+        ],
+        [
+         "SeekPosition",
+         116,
+         5
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     121,
+     92
+    ],
+    [
+     "Info",
+     213,
+     80,
+     [
+      [
+       "CRC-32",
+       218,
+       6,
+       [
+        [
+         "Computed",
+         220,
+         4
+        ]
+       ]
+      ],
+      [
+       "TimestampScale",
+       224,
+       7
+      ],
+      [
+       "MuxingApp",
+       231,
+       16
+      ],
+      [
+       "WritingApp",
+       247,
+       16
+      ],
+      [
+       "SegmentUUID",
+       263,
+       19
+      ],
+      [
+       "Duration",
+       282,
+       11
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     293,
+     81,
+     [
+      [
+       "CRC-32",
+       298,
+       6,
+       [
+        [
+         "Computed",
+         300,
+         4
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       304,
+       70,
+       [
+        [
+         "TrackNumber",
+         313,
+         3
+        ],
+        [
+         "TrackUID",
+         316,
+         11
+        ],
+        [
+         "FlagLacing",
+         327,
+         3
+        ],
+        [
+         "Language",
+         330,
+         7
+        ],
+        [
+         "FlagDefault",
+         337,
+         3
+        ],
+        [
+         "CodecID",
+         340,
+         8
+        ],
+        [
+         "TrackType",
+         348,
+         3
+        ],
+        [
+         "Audio",
+         351,
+         19,
+         [
+          [
+           "Channels",
+           353,
+           3
+          ],
+          [
+           "SamplingFrequency",
+           356,
+           10
+          ],
+          [
+           "BitDepth",
+           366,
+           4
+          ]
+         ]
+        ],
+        [
+         "MaxBlockAdditionID",
+         370,
+         4
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     374,
+     99,
+     [
+      [
+       "CRC-32",
+       379,
+       6,
+       [
+        [
+         "Computed",
+         381,
+         4
+        ]
+       ]
+      ],
+      [
+       "Tag",
+       385,
+       35,
+       [
+        [
+         "Targets",
+         388,
+         3
+        ],
+        [
+         "SimpleTag",
+         391,
+         29,
+         [
+          [
+           "TagName",
+           394,
+           10
+          ],
+          [
+           "TagString",
+           404,
+           16
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "Tag",
+       420,
+       53,
+       [
+        [
+         "Targets",
+         423,
+         14,
+         [
+          [
+           "TagTrackUID",
+           426,
+           11
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         437,
+         36,
+         [
+          [
+           "TagName",
+           440,
+           11
+          ],
+          [
+           "TagString",
+           451,
+           22
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     473,
+     16512,
+     [
+      [
+       "CRC-32",
+       480,
+       6,
+       [
+        [
+         "Computed",
+         482,
+         4
+        ]
+       ]
+      ],
+      [
+       "Timestamp",
+       486,
+       3
+      ],
+      [
+       "SimpleBlock",
+       489,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       1520,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       2551,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       3582,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       4613,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       5644,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       6675,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       7706,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       8737,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       9768,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       10799,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       11830,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       12861,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       13892,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       14923,
+       1031
+      ],
+      [
+       "SimpleBlock",
+       15954,
+       1031
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     16985,
+     28,
+     [
+      [
+       "CRC-32",
+       16990,
+       6,
+       [
+        [
+         "Computed",
+         16992,
+         4
+        ]
+       ]
+      ],
+      [
+       "CuePoint",
+       16996,
+       17,
+       [
+        [
+         "CueTime",
+         16998,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         17001,
+         12,
+         [
+          [
+           "CueTrack",
+           17003,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           17006,
+           4
+          ],
+          [
+           "CueRelativePosition",
+           17010,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 489,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     496,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1520,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 32,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1527,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2551,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 64,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2558,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 3582,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 96,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     3589,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4613,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 128,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4620,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5644,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 160,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5651,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6675,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 192,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6682,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 7706,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 224,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     7713,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 8737,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 256,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     8744,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 9768,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 288,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     9775,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 10799,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 320,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     10806,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 11830,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 352,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     11837,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 12861,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 384,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     12868,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 13892,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 416,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     13899,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 14923,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 448,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     14930,
+     1024
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 15954,
+   "length": 1031,
+   "track": 1,
+   "timestamp": 480,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     15961,
+     1024
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 10168157984030737468,
+   "type": 2,
+   "codec": "A_EAC3",
+   "private": null,
+   "channels": 6,
+   "rate": 48000.0,
+   "bits": 32,
+   "delay": 0,
+   "encodings": [],
+   "lacing": false
+  }
+ ],
+ "encoder": {
+  "tool": "ffmpeg 6.1.1-3ubuntu5",
+  "arguments": [
+   "-c",
+   "copy"
+  ],
+  "inputs": [
+   "ac3/external-ffmpeg-eac3-5.1-256k.eac3"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

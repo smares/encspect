@@ -1,0 +1,329 @@
+{
+ "description": "A file that starts at the Segment's first child: no EBML Header and no Segment header, as a recording cut at its start looks.",
+ "length": 447,
+ "format": "Matroska",
+ "ebml": {},
+ "segments": [
+  {
+   "offset": 0,
+   "clusters": [
+    {
+     "offset": 147,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    },
+    {
+     "offset": 297,
+     "length": 150,
+     "timestamp": 60,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": true,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 447,
+   "declared_end": 447
+  }
+ ],
+ "tree": [
+  [
+   "Segment",
+   0,
+   447,
+   [
+    [
+     "Info",
+     0,
+     71,
+     [
+      [
+       "TimestampScale",
+       5,
+       7
+      ],
+      [
+       "Duration",
+       12,
+       11
+      ],
+      [
+       "MuxingApp",
+       23,
+       20
+      ],
+      [
+       "WritingApp",
+       43,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     71,
+     76,
+     [
+      [
+       "TrackEntry",
+       76,
+       71,
+       [
+        [
+         "TrackNumber",
+         78,
+         3
+        ],
+        [
+         "TrackUID",
+         81,
+         5
+        ],
+        [
+         "TrackType",
+         86,
+         3
+        ],
+        [
+         "CodecID",
+         89,
+         8
+        ],
+        [
+         "CodecPrivate",
+         97,
+         22
+        ],
+        [
+         "CodecDelay",
+         119,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         125,
+         7
+        ],
+        [
+         "Audio",
+         132,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           134,
+           10
+          ],
+          [
+           "Channels",
+           144,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     147,
+     150,
+     [
+      [
+       "Timestamp",
+       153,
+       3
+      ],
+      [
+       "SimpleBlock",
+       156,
+       46
+      ],
+      [
+       "SimpleBlock",
+       202,
+       47
+      ],
+      [
+       "SimpleBlock",
+       249,
+       48
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     297,
+     150,
+     [
+      [
+       "Timestamp",
+       303,
+       3
+      ],
+      [
+       "SimpleBlock",
+       306,
+       46
+      ],
+      [
+       "SimpleBlock",
+       352,
+       47
+      ],
+      [
+       "SimpleBlock",
+       399,
+       48
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 156,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     162,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 202,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     208,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 249,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     255,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 306,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     312,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 352,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     358,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 399,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     405,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    100,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.no-ebml-header",
+   "contains": "does not start with an EBML Header"
+  },
+  {
+   "code": "matroska.segment-header-missing",
+   "contains": "no Segment element before them"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

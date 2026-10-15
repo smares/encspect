@@ -4,7 +4,8 @@ namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
-// channel layout and encoder are the first stream's; the duration and samples add up over all streams, and the
+// channel layout and encoder are the first stream's; the duration and samples add up over all streams, except that
+// streams that play at the same time (StreamInfo.IsParallel) count their longest once, and the
 // average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
 // most JOC objects one reconstructs. Tags are the file's and those its container holds in its chunks,
 // in tree order.
@@ -44,14 +45,18 @@ public sealed record ReportSummary(
         StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
         List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
+        List<StreamInfo> parallel = streams.Where(s => s.IsParallel).ToList();
+        StreamInfo? longest = parallel.Count == 0 ? null : parallel.MaxBy(s => s.Duration);
+        double duration = streams.Where(s => !s.IsParallel).Sum(s => s.Duration) + (longest?.Duration ?? 0);
+        long samples = streams.Where(s => !s.IsParallel).Sum(s => s.Samples) + (longest?.Samples ?? 0);
 
         return new ReportSummary(
             report.Source,
             report.Root.Value?.ToString(),
             streams.Count,
             first?.Codec,
-            first is null ? null : streams.Sum(s => s.Duration),
-            first is null ? null : streams.Sum(s => s.Samples),
+            first is null ? null : duration,
+            first is null ? null : samples,
             timedDuration > 0 ? timed.Sum(s => s.AverageBitrate!.Value * s.Duration) / timedDuration : null,
             first?.SampleRate,
             first?.ChannelMode,

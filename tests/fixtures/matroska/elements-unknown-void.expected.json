@@ -1,0 +1,324 @@
+{
+ "description": "Void elements between and inside others, elements the schema does not list (one with an ID coded longer than needed), and a deprecated SilentTracks element in a Cluster.",
+ "length": 318,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 49,
+   "clusters": [
+    {
+     "offset": 200,
+     "length": 118,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "x",
+    "writing_app": "y"
+   },
+   "length": 269,
+   "declared_end": 318
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Void",
+   40,
+   9
+  ],
+  [
+   "Segment",
+   49,
+   269,
+   [
+    [
+     "Void",
+     55,
+     20
+    ],
+    [
+     "Info",
+     75,
+     33,
+     [
+      [
+       "Void",
+       80,
+       7
+      ],
+      [
+       "TimestampScale",
+       87,
+       7
+      ],
+      [
+       "Unknown Element",
+       94,
+       6
+      ],
+      [
+       "MuxingApp",
+       100,
+       4
+      ],
+      [
+       "WritingApp",
+       104,
+       4
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     108,
+     86,
+     [
+      [
+       "TrackEntry",
+       113,
+       71,
+       [
+        [
+         "TrackNumber",
+         115,
+         3
+        ],
+        [
+         "TrackUID",
+         118,
+         5
+        ],
+        [
+         "TrackType",
+         123,
+         3
+        ],
+        [
+         "CodecID",
+         126,
+         8
+        ],
+        [
+         "CodecPrivate",
+         134,
+         22
+        ],
+        [
+         "CodecDelay",
+         156,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         162,
+         7
+        ],
+        [
+         "Audio",
+         169,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           171,
+           10
+          ],
+          [
+           "Channels",
+           181,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "Unknown Element",
+       184,
+       10
+      ]
+     ]
+    ],
+    [
+     "Unknown Element",
+     194,
+     6
+    ],
+    [
+     "Cluster",
+     200,
+     118,
+     [
+      [
+       "Timestamp",
+       205,
+       3
+      ],
+      [
+       "Void",
+       208,
+       3
+      ],
+      [
+       "SimpleBlock",
+       211,
+       46
+      ],
+      [
+       "SimpleBlock",
+       257,
+       47
+      ],
+      [
+       "SilentTracks",
+       304,
+       7
+      ],
+      [
+       "Unknown Element",
+       311,
+       5
+      ],
+      [
+       "Void",
+       316,
+       2
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 211,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     217,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 257,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     263,
+     41
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    137,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.unknown-element",
+   "contains": "none the Matroska schema lists"
+  },
+  {
+   "code": "matroska.element-id-long",
+   "contains": "shortest length"
+  },
+  {
+   "code": "matroska.deprecated-element",
+   "contains": "no longer used"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -1,0 +1,318 @@
+{
+ "description": "BlockGroups without a Block and with two Blocks (RFC 9559 section 5.1.3.5.1).",
+ "length": 347,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 193,
+     "length": 154,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 307,
+   "declared_end": 347
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   307,
+   [
+    [
+     "Info",
+     46,
+     71,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     117,
+     76,
+     [
+      [
+       "TrackEntry",
+       122,
+       71,
+       [
+        [
+         "TrackNumber",
+         124,
+         3
+        ],
+        [
+         "TrackUID",
+         127,
+         5
+        ],
+        [
+         "TrackType",
+         132,
+         3
+        ],
+        [
+         "CodecID",
+         135,
+         8
+        ],
+        [
+         "CodecPrivate",
+         143,
+         22
+        ],
+        [
+         "CodecDelay",
+         165,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         171,
+         7
+        ],
+        [
+         "Audio",
+         178,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           180,
+           10
+          ],
+          [
+           "Channels",
+           190,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     193,
+     154,
+     [
+      [
+       "Timestamp",
+       199,
+       3
+      ],
+      [
+       "SimpleBlock",
+       202,
+       46
+      ],
+      [
+       "BlockGroup",
+       248,
+       5,
+       [
+        [
+         "BlockDuration",
+         250,
+         3
+        ]
+       ]
+      ],
+      [
+       "BlockGroup",
+       253,
+       94,
+       [
+        [
+         "Block",
+         255,
+         46
+        ],
+        [
+         "Block",
+         301,
+         46
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 202,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     208,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "Block",
+   "offset": 255,
+   "length": 46,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     261,
+     40
+    ]
+   ],
+   "in_group": true
+  },
+  {
+   "name": "Block",
+   "offset": 301,
+   "length": 46,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     307,
+     40
+    ]
+   ],
+   "in_group": true
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    146,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.group-no-block",
+   "contains": "no Block"
+  },
+  {
+   "code": "matroska.group-multiple-blocks",
+   "contains": "more than one Block"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -1,0 +1,413 @@
+{
+ "description": "A WebM file: the DocType webm, a VP9 video track and an Opus track.",
+ "length": 457,
+ "format": "WebM",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "webm",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 36,
+   "clusters": [
+    {
+     "offset": 217,
+     "length": 240,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 421,
+   "declared_end": 457
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   36,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     7
+    ],
+    [
+     "DocTypeVersion",
+     28,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     32,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   36,
+   421,
+   [
+    [
+     "Info",
+     42,
+     71,
+     [
+      [
+       "TimestampScale",
+       47,
+       7
+      ],
+      [
+       "Duration",
+       54,
+       11
+      ],
+      [
+       "MuxingApp",
+       65,
+       20
+      ],
+      [
+       "WritingApp",
+       85,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     113,
+     104,
+     [
+      [
+       "TrackEntry",
+       118,
+       28,
+       [
+        [
+         "TrackNumber",
+         120,
+         3
+        ],
+        [
+         "TrackUID",
+         123,
+         5
+        ],
+        [
+         "TrackType",
+         128,
+         3
+        ],
+        [
+         "CodecID",
+         131,
+         7
+        ],
+        [
+         "Video",
+         138,
+         8,
+         [
+          [
+           "PixelWidth",
+           140,
+           3
+          ],
+          [
+           "PixelHeight",
+           143,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       146,
+       71,
+       [
+        [
+         "TrackNumber",
+         148,
+         3
+        ],
+        [
+         "TrackUID",
+         151,
+         5
+        ],
+        [
+         "TrackType",
+         156,
+         3
+        ],
+        [
+         "CodecID",
+         159,
+         8
+        ],
+        [
+         "CodecPrivate",
+         167,
+         22
+        ],
+        [
+         "CodecDelay",
+         189,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         195,
+         7
+        ],
+        [
+         "Audio",
+         202,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           204,
+           10
+          ],
+          [
+           "Channels",
+           214,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     217,
+     240,
+     [
+      [
+       "Timestamp",
+       223,
+       3
+      ],
+      [
+       "SimpleBlock",
+       226,
+       31
+      ],
+      [
+       "SimpleBlock",
+       257,
+       46
+      ],
+      [
+       "SimpleBlock",
+       303,
+       31
+      ],
+      [
+       "SimpleBlock",
+       334,
+       46
+      ],
+      [
+       "SimpleBlock",
+       380,
+       31
+      ],
+      [
+       "SimpleBlock",
+       411,
+       46
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 226,
+   "length": 31,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     232,
+     25
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 257,
+   "length": 46,
+   "track": 2,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     263,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 303,
+   "length": 31,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     309,
+     25
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 334,
+   "length": 46,
+   "track": 2,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     340,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 380,
+   "length": 31,
+   "track": 1,
+   "timestamp": 80,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     386,
+     25
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 411,
+   "length": 46,
+   "track": 2,
+   "timestamp": 80,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     417,
+     40
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 8193,
+   "type": 1,
+   "codec": "V_VP9",
+   "private": null,
+   "channels": null,
+   "rate": null,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 2,
+   "uid": 4098,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    170,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.track-not-analyzed",
+   "contains": "video track"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

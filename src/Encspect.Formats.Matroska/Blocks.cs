@@ -40,6 +40,8 @@ internal sealed partial class FileReader
             block.TrackLength = (byte)Math.Min(trackLength, dataLength);
             block.Track = trackLength != 0 && headCount >= trackLength ? TrackNumberOf(head[..trackLength]) : 0;
             block.FramesDelta = element.Length + (int)dataLength;
+            _findings.Add(Severity.Warning, "matroska.block-short", () => new Node(name, element.Offset, end - element.Offset), n =>
+                $"{(n == 1 ? "A block is" : $"{n} blocks are")} too short for the track number, timestamp and flags a block starts with (RFC 9559, section 10.1); the first is the {name} at 0x{element.Offset:X} with {Bytes(dataLength)}. No frame is read from {(n == 1 ? "it" : "them")}.");
             return AddBlock(records, block, name, cluster.Timestamp);
         }
 
@@ -115,6 +117,12 @@ internal sealed partial class FileReader
     // Adds a block to its track's totals.
     private void NoteBlock(BlockRecord block, string name, long clusterTimestamp)
     {
+        // A block too short to name its track belongs to none.
+        if ((block.Status & (BlockStatus.Short | BlockStatus.TooLarge)) != 0 && block.Track == 0)
+        {
+            return;
+        }
+
         SegmentState segment = _segment!;
         if (!segment.Statistics.TryGetValue(block.Track, out TrackStatistics? statistics))
         {
@@ -326,6 +334,7 @@ internal sealed partial class FileReader
             HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
+                records.Children.Add(new Child { Id = uint.MaxValue, Offset = position, DataLength = end - position, Depth = (byte)depth, Block = -1 });
                 _findings.AddNow(problem == HeaderProblem.Truncated ? Severity.Warning : Severity.Error, "matroska.element-header-invalid",
                     $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
                     Unparsed(position, end, "the " + parentName));
@@ -339,6 +348,7 @@ internal sealed partial class FileReader
 
             ElementDefinition? definition = Schema.Find(child.Id);
             long childEnd = ChildEnd(child, definition, end, parentName);
+            CheckHeaderForm(child, definition, childEnd);
             var record = new Child { Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Id = (uint)Math.Min(child.Id, uint.MaxValue), Depth = (byte)depth, Block = -1 };
             if (child.Id == Schema.Block && depth == 0)
             {

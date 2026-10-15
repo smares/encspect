@@ -25,8 +25,7 @@ internal static class Explain
     public const string LaceHeader = "The lacing header: the number of frames minus one and the sizes of all frames but the last, coded as the lacing mode says (RFC 9559, section 10.3).";
     public const string LaceFrameCount = "The number of frames in the lace minus 1 (RFC 9559, section 10.3).";
     public const string LaceSizes = "The sizes of the frames except the last, whose size is what the block has left (RFC 9559, section 10.3).";
-    public const string Frame = "One frame of the block's track: the unit a codec decodes, such as an audio frame, an access unit or a video picture (RFC 9559, section 10.3).";
-    public const string FrameOfAudio = "One frame of audio data: the unit the track's codec decodes (RFC 9559, section 10.3).";
+    public const string Frame = "One frame of the block's track: the unit its codec decodes, such as an audio frame, an access unit or a video picture (RFC 9559, section 10.3).";
     public const string BlockData = "The bytes of the block after its header, which the analyzer does not read as frames.";
 
     public const string TrackFrames = "The frames of an audio track put together from the blocks that carry them, handed to the codec parser of the track's codec ID.";

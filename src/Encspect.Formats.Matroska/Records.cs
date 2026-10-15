@@ -133,9 +133,6 @@ internal sealed class Records
     // The sizes of all the frames of each laced block, the last included.
     public ChunkedList<int> LaceSizes { get; } = new();
 
-    // The track numbers of audio tracks, whose frames are frame nodes.
-    public HashSet<ulong> AudioTracks { get; } = [];
-
     // The Segment's top-level children in file order: a Cluster by its record (Index), another element by its node.
     public ChunkedList<TopLevel> Entries { get; } = new();
 

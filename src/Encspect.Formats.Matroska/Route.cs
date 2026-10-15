@@ -11,6 +11,7 @@ internal sealed partial class FileReader
 
     private void RouteTracks(SegmentState segment)
     {
+        int streamsBefore = _context.Streams.Count;
         foreach (TrackInfo track in segment.Tracks)
         {
             string label = track.Number is { } n ? $"Track {n}" : "A track without a number";
@@ -23,6 +24,16 @@ internal sealed partial class FileReader
             }
 
             RouteAudio(segment, track, label);
+        }
+
+        // The audio tracks of a Segment play together, so a summary of the file does not add their durations up.
+        List<StreamInfo> added = [.. _context.Streams.Skip(streamsBefore)];
+        if (added.Count > 1)
+        {
+            foreach (StreamInfo stream in added)
+            {
+                _context.UpdateStream(stream, stream with { IsParallel = true });
+            }
         }
     }
 
@@ -39,6 +50,13 @@ internal sealed partial class FileReader
         }
 
         (Decoder? frames, Decoder? priv, string? problem, bool isEncrypted) = Decoders(track);
+        if (problem is null && (frames is not null || priv is not null) && codec is not null and not ("aac" or "vorbis" or "opus"))
+        {
+            // The AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
+            // stripped or inflated bytes do not have.
+            problem = $"stores its frames with {(track.Encodings.Any(e => e.CompressionAlgorithm == 0) ? "zlib compression" : "header stripping")}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
+        }
+
         if (problem is not null)
         {
             _findings.AddNow(Severity.Info, isEncrypted ? "matroska.track-encrypted" : "matroska.track-encoding-not-read",
@@ -91,7 +109,9 @@ internal sealed partial class FileReader
         }
 
         string prefix = _segments.Count > 1 ? $"Segment {segment.Number} " : string.Empty;
-        long first = statistics.FirstOffset;
+
+        // The headers handed over as packets (Vorbis, Opus) lie in the CodecPrivate, before the first frame in the Tracks element.
+        long first = headers.Count > 0 ? Math.Min(headers[0].FileStart, statistics.FirstOffset) : statistics.FirstOffset;
         var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, statistics.LastEnd - first), NodeValue.Integer(statistics.Frames, "frames", "frame"))
         {
             Description = Explain.TrackFrames,

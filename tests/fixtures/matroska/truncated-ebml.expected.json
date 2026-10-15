@@ -1,0 +1,53 @@
+{
+ "description": "A file that ends inside the EBML Header.",
+ "length": 20,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 0
+ },
+ "segments": [],
+ "tree": [
+  [
+   "EBML",
+   0,
+   20,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     3
+    ]
+   ]
+  ]
+ ],
+ "blocks": [],
+ "tracks": [],
+ "streams": null,
+ "findings": [
+  {
+   "code": "matroska.element-truncated",
+   "contains": "2 elements state a size that runs past the end of the file"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

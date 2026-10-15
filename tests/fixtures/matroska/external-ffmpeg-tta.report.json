@@ -1,0 +1,675 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ffmpeg-tta.mka",
+    "root": {
+      "name": "File",
+      "value": "Matroska",
+      "offset": 0,
+      "length": 21074,
+      "children": [
+        {
+          "name": "Matroska",
+          "value": "1 audio track",
+          "offset": 0,
+          "length": 21074,
+          "children": [
+            {
+              "name": "EBML",
+              "offset": 0,
+              "length": 40,
+              "children": [
+                {
+                  "name": "EBMLVersion",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLReadVersion",
+                  "value": 1,
+                  "offset": 9,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxIDLength",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 13,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxSizeLength",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 17,
+                  "length": 4
+                },
+                {
+                  "name": "DocType",
+                  "value": "matroska",
+                  "offset": 21,
+                  "length": 11
+                },
+                {
+                  "name": "DocTypeVersion",
+                  "value": 4,
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "DocTypeReadVersion",
+                  "value": 2,
+                  "offset": 36,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Segment",
+              "value": "1 track, 1 cluster",
+              "offset": 40,
+              "length": 21034,
+              "children": [
+                {
+                  "name": "SeekHead",
+                  "offset": 52,
+                  "length": 69,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 1939947078,
+                      "offset": 57,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1939947078,
+                          "offset": 59,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Seek",
+                      "offset": 63,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "SeekID",
+                          "value": "0x1549A966 (Info)",
+                          "offset": 66,
+                          "length": 7
+                        },
+                        {
+                          "name": "SeekPosition",
+                          "value": 161,
+                          "offset": 73,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Seek",
+                      "offset": 77,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "SeekID",
+                          "value": "0x1654AE6B (Tracks)",
+                          "offset": 80,
+                          "length": 7
+                        },
+                        {
+                          "name": "SeekPosition",
+                          "value": 241,
+                          "offset": 87,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Seek",
+                      "offset": 91,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "SeekID",
+                          "value": "0x1254C367 (Tags)",
+                          "offset": 94,
+                          "length": 7
+                        },
+                        {
+                          "name": "SeekPosition",
+                          "value": 330,
+                          "offset": 101,
+                          "length": 5
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Seek",
+                      "offset": 106,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "SeekID",
+                          "value": "0x1C53BB6B (Cues)",
+                          "offset": 109,
+                          "length": 7
+                        },
+                        {
+                          "name": "SeekPosition",
+                          "value": 20994,
+                          "offset": 116,
+                          "length": 5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Void",
+                  "value": 83,
+                  "unit": "bytes",
+                  "offset": 121,
+                  "length": 92
+                },
+                {
+                  "name": "Info",
+                  "offset": 213,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 2469005382,
+                      "offset": 218,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 2469005382,
+                          "offset": 220,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TimestampScale",
+                      "value": 1000000,
+                      "unit": "ns",
+                      "offset": 224,
+                      "length": 7
+                    },
+                    {
+                      "name": "MuxingApp",
+                      "value": "Lavf60.16.100",
+                      "offset": 231,
+                      "length": 16
+                    },
+                    {
+                      "name": "WritingApp",
+                      "value": "Lavf60.16.100",
+                      "offset": 247,
+                      "length": 16
+                    },
+                    {
+                      "name": "SegmentUUID",
+                      "value": "0x1BBE3D49152F6613359682046B13058E",
+                      "offset": 263,
+                      "length": 19
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 1000,
+                      "unit": "ticks",
+                      "offset": 282,
+                      "length": 11
+                    }
+                  ]
+                },
+                {
+                  "name": "Tracks",
+                  "offset": 293,
+                  "length": 89,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 769553016,
+                      "offset": 298,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 769553016,
+                          "offset": 300,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_TTA1, 1 channel, 44100 Hz",
+                      "offset": 304,
+                      "length": 78,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 1,
+                          "offset": 313,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 6626299709375753087,
+                          "offset": 316,
+                          "length": 11
+                        },
+                        {
+                          "name": "FlagLacing",
+                          "value": false,
+                          "offset": 327,
+                          "length": 3
+                        },
+                        {
+                          "name": "Language",
+                          "value": "und",
+                          "offset": 330,
+                          "length": 7
+                        },
+                        {
+                          "name": "FlagDefault",
+                          "value": false,
+                          "offset": 337,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_TTA1",
+                          "offset": 340,
+                          "length": 8
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 348,
+                          "length": 3
+                        },
+                        {
+                          "name": "DefaultDuration",
+                          "value": 1044897959,
+                          "unit": "ns",
+                          "offset": 351,
+                          "length": 8
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 359,
+                          "length": 19,
+                          "children": [
+                            {
+                              "name": "Channels",
+                              "value": 1,
+                              "offset": 361,
+                              "length": 3
+                            },
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 44100,
+                              "unit": "Hz",
+                              "offset": 364,
+                              "length": 10
+                            },
+                            {
+                              "name": "BitDepth",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 374,
+                              "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "MaxBlockAdditionID",
+                          "value": 0,
+                          "offset": 378,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Tags",
+                  "offset": 382,
+                  "length": 133,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 1211240911,
+                      "offset": 388,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1211240911,
+                          "offset": 390,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Tag",
+                      "offset": 394,
+                      "length": 35,
+                      "children": [
+                        {
+                          "name": "Targets",
+                          "offset": 397,
+                          "length": 3
+                        },
+                        {
+                          "name": "SimpleTag",
+                          "offset": 400,
+                          "length": 29,
+                          "children": [
+                            {
+                              "name": "TagName",
+                              "value": "ENCODER",
+                              "offset": 403,
+                              "length": 10
+                            },
+                            {
+                              "name": "TagString",
+                              "value": "Lavf60.16.100",
+                              "offset": 413,
+                              "length": 16
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Tag",
+                      "offset": 429,
+                      "length": 86,
+                      "children": [
+                        {
+                          "name": "Targets",
+                          "offset": 432,
+                          "length": 14,
+                          "children": [
+                            {
+                              "name": "TagTrackUID",
+                              "value": 6626299709375753087,
+                              "offset": 435,
+                              "length": 11
+                            }
+                          ]
+                        },
+                        {
+                          "name": "SimpleTag",
+                          "offset": 446,
+                          "length": 33,
+                          "children": [
+                            {
+                              "name": "TagName",
+                              "value": "ENCODER",
+                              "offset": 449,
+                              "length": 10
+                            },
+                            {
+                              "name": "TagString",
+                              "value": "Lavc60.31.102 tta",
+                              "offset": 459,
+                              "length": 20
+                            }
+                          ]
+                        },
+                        {
+                          "name": "SimpleTag",
+                          "offset": 479,
+                          "length": 36,
+                          "children": [
+                            {
+                              "name": "TagName",
+                              "value": "DURATION",
+                              "offset": 482,
+                              "length": 11
+                            },
+                            {
+                              "name": "TagString",
+                              "value": "00:00:01.000000000",
+                              "offset": 493,
+                              "length": 22
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Cluster",
+                  "kind": "Stream",
+                  "value": 1,
+                  "unit": "blocks",
+                  "offset": 515,
+                  "length": 20531,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 1114664896,
+                      "offset": 522,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1114664896,
+                          "offset": 524,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Timestamp",
+                      "value": 0,
+                      "unit": "ticks",
+                      "offset": 528,
+                      "length": 3
+                    },
+                    {
+                      "name": "BlockGroup",
+                      "offset": 531,
+                      "length": 20515,
+                      "children": [
+                        {
+                          "name": "Block",
+                          "kind": "Frame",
+                          "value": 1,
+                          "unit": "frames",
+                          "offset": 535,
+                          "length": 20507,
+                          "children": [
+                            {
+                              "name": "Track Number",
+                              "value": 1,
+                              "offset": 539,
+                              "length": 1
+                            },
+                            {
+                              "name": "Timestamp",
+                              "value": 0,
+                              "unit": "ticks",
+                              "offset": 540,
+                              "length": 2
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 542,
+                              "length": 1,
+                              "children": [
+                                {
+                                  "name": "Reserved",
+                                  "value": 0,
+                                  "offset": 542,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Invisible",
+                                  "value": false,
+                                  "offset": 542,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Lacing",
+                                  "value": "0 (none)",
+                                  "offset": 542,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Unused",
+                                  "value": 0,
+                                  "offset": 542,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Frame",
+                              "value": 20499,
+                              "unit": "bytes",
+                              "offset": 543,
+                              "length": 20499
+                            }
+                          ]
+                        },
+                        {
+                          "name": "BlockDuration",
+                          "value": 1000,
+                          "unit": "ticks",
+                          "offset": 21042,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Cues",
+                  "offset": 21046,
+                  "length": 28,
+                  "children": [
+                    {
+                      "name": "CRC-32",
+                      "value": 381572515,
+                      "offset": 21051,
+                      "length": 6,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 381572515,
+                          "offset": 21053,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "CuePoint",
+                      "offset": 21057,
+                      "length": 17,
+                      "children": [
+                        {
+                          "name": "CueTime",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 21059,
+                          "length": 3
+                        },
+                        {
+                          "name": "CueTrackPositions",
+                          "offset": 21062,
+                          "length": 12,
+                          "children": [
+                            {
+                              "name": "CueTrack",
+                              "value": 1,
+                              "offset": 21064,
+                              "length": 3
+                            },
+                            {
+                              "name": "CueClusterPosition",
+                              "value": 463,
+                              "offset": 21067,
+                              "length": 4
+                            },
+                            {
+                              "name": "CueRelativePosition",
+                              "value": 9,
+                              "offset": 21071,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            3,
+            1
+          ]
+        ],
+        "codec": "TTA",
+        "sampleRate": 44100,
+        "channels": 1,
+        "samples": 0,
+        "duration": 1.044897959,
+        "averageBitrate": 156.94546877758808,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 1 is coded as TTA (A_TTA1), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 340,
+        "length": 8,
+        "path": [
+          0,
+          1,
+          3,
+          1,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

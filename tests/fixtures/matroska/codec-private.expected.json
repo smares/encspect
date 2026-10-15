@@ -1,0 +1,475 @@
+{
+ "description": "Tracks whose CodecPrivate is missing (an Opus track) or invalid (a Vorbis track whose Xiph-laced headers are cut).",
+ "length": 363,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 259,
+     "length": 104,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 323,
+   "declared_end": 363
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   323,
+   [
+    [
+     "Info",
+     46,
+     71,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     117,
+     142,
+     [
+      [
+       "TrackEntry",
+       123,
+       42,
+       [
+        [
+         "TrackNumber",
+         125,
+         3
+        ],
+        [
+         "TrackUID",
+         128,
+         5
+        ],
+        [
+         "TrackType",
+         133,
+         3
+        ],
+        [
+         "CodecID",
+         136,
+         8
+        ],
+        [
+         "CodecDelay",
+         144,
+         6
+        ],
+        [
+         "Audio",
+         150,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           152,
+           10
+          ],
+          [
+           "Channels",
+           162,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       165,
+       47,
+       [
+        [
+         "TrackNumber",
+         167,
+         3
+        ],
+        [
+         "TrackUID",
+         170,
+         5
+        ],
+        [
+         "TrackType",
+         175,
+         3
+        ],
+        [
+         "CodecID",
+         178,
+         10
+        ],
+        [
+         "CodecPrivate",
+         188,
+         9
+        ],
+        [
+         "Audio",
+         197,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           199,
+           10
+          ],
+          [
+           "Channels",
+           209,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       212,
+       47,
+       [
+        [
+         "TrackNumber",
+         214,
+         3
+        ],
+        [
+         "TrackUID",
+         217,
+         5
+        ],
+        [
+         "TrackType",
+         222,
+         3
+        ],
+        [
+         "CodecID",
+         225,
+         10
+        ],
+        [
+         "CodecPrivate",
+         235,
+         9
+        ],
+        [
+         "Audio",
+         244,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           246,
+           10
+          ],
+          [
+           "Channels",
+           256,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     259,
+     104,
+     [
+      [
+       "Timestamp",
+       264,
+       3
+      ],
+      [
+       "SimpleBlock",
+       267,
+       16
+      ],
+      [
+       "SimpleBlock",
+       283,
+       16
+      ],
+      [
+       "SimpleBlock",
+       299,
+       16
+      ],
+      [
+       "SimpleBlock",
+       315,
+       16
+      ],
+      [
+       "SimpleBlock",
+       331,
+       16
+      ],
+      [
+       "SimpleBlock",
+       347,
+       16
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 267,
+   "length": 16,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     273,
+     10
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 283,
+   "length": 16,
+   "track": 2,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     289,
+     10
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 299,
+   "length": 16,
+   "track": 3,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     305,
+     10
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 315,
+   "length": 16,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     321,
+     10
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 331,
+   "length": 16,
+   "track": 2,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     337,
+     10
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 347,
+   "length": 16,
+   "track": 3,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     353,
+     10
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": null,
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 2,
+   "uid": 4098,
+   "type": 2,
+   "codec": "A_VORBIS",
+   "private": [
+    191,
+    6
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 3,
+   "uid": 4099,
+   "type": 2,
+   "codec": "A_VORBIS",
+   "private": [
+    238,
+    6
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": null,
+ "findings": [
+  {
+   "code": "matroska.codec-private-missing",
+   "contains": "has no CodecPrivate"
+  },
+  {
+   "code": "matroska.codec-private-invalid",
+   "contains": "counts 4 packets"
+  },
+  {
+   "code": "matroska.codec-private-invalid",
+   "contains": "three Xiph-laced Vorbis headers"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

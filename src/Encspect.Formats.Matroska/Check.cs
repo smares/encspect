@@ -9,7 +9,6 @@ internal sealed partial class FileReader
     private void CheckSegment(SegmentState segment)
     {
         Node anchor = segment.Node!;
-        Records records = segment.Records;
         bool hasClusters = segment.ClusterCount > 0;
         string number = _segments.Count > 1 ? $" {segment.Number}" : string.Empty;
         if (!segment.IsHeaderMissing)
@@ -36,11 +35,6 @@ internal sealed partial class FileReader
             if (track.Number is { } trackNumber && segment.Statistics.TryGetValue(trackNumber, out TrackStatistics? statistics) && segment.TracksByNumber.GetValueOrDefault(trackNumber) == track)
             {
                 track.Statistics = statistics;
-                if (track.IsAudio)
-                {
-                    records.AudioTracks.Add(trackNumber);
-                }
-
                 if (statistics.Backwards > 0 && (track.IsAudio || segment.Document?.IsWebM == true))
                 {
                     TrackStatistics shown = statistics;

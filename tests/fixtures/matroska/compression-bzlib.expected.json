@@ -1,0 +1,343 @@
+{
+ "description": "A track compressed with bzlib, which the analyzer does not undo.",
+ "length": 368,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 218,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 328,
+   "declared_end": 368
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   328,
+   [
+    [
+     "Info",
+     46,
+     71,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     117,
+     101,
+     [
+      [
+       "TrackEntry",
+       122,
+       96,
+       [
+        [
+         "TrackNumber",
+         124,
+         3
+        ],
+        [
+         "TrackUID",
+         127,
+         5
+        ],
+        [
+         "TrackType",
+         132,
+         3
+        ],
+        [
+         "CodecID",
+         135,
+         8
+        ],
+        [
+         "CodecPrivate",
+         143,
+         22
+        ],
+        [
+         "CodecDelay",
+         165,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         171,
+         7
+        ],
+        [
+         "ContentEncodings",
+         178,
+         25,
+         [
+          [
+           "ContentEncoding",
+           181,
+           22,
+           [
+            [
+             "ContentEncodingOrder",
+             184,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             188,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             192,
+             4
+            ],
+            [
+             "ContentCompression",
+             196,
+             7,
+             [
+              [
+               "ContentCompAlgo",
+               199,
+               4
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         203,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           205,
+           10
+          ],
+          [
+           "Channels",
+           215,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     218,
+     150,
+     [
+      [
+       "Timestamp",
+       224,
+       3
+      ],
+      [
+       "SimpleBlock",
+       227,
+       46
+      ],
+      [
+       "SimpleBlock",
+       273,
+       47
+      ],
+      [
+       "SimpleBlock",
+       320,
+       48
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 227,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     233,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 273,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     279,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 320,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     326,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    146,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 0,
+     "compression": 1,
+     "settings": null,
+     "encryption": null
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.track-encoding-not-read",
+   "contains": "compressed with bzlib"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

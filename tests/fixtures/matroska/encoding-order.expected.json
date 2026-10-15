@@ -1,0 +1,401 @@
+{
+ "description": "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2), and a header-stripped track.",
+ "length": 391,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 247,
+     "length": 144,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 351,
+   "declared_end": 391
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   351,
+   [
+    [
+     "Info",
+     46,
+     71,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     117,
+     130,
+     [
+      [
+       "TrackEntry",
+       122,
+       125,
+       [
+        [
+         "TrackNumber",
+         124,
+         3
+        ],
+        [
+         "TrackUID",
+         127,
+         5
+        ],
+        [
+         "TrackType",
+         132,
+         3
+        ],
+        [
+         "CodecID",
+         135,
+         8
+        ],
+        [
+         "CodecPrivate",
+         143,
+         22
+        ],
+        [
+         "CodecDelay",
+         165,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         171,
+         7
+        ],
+        [
+         "ContentEncodings",
+         178,
+         54,
+         [
+          [
+           "ContentEncoding",
+           181,
+           26,
+           [
+            [
+             "ContentEncodingOrder",
+             184,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             188,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             192,
+             4
+            ],
+            [
+             "ContentCompression",
+             196,
+             11,
+             [
+              [
+               "ContentCompAlgo",
+               199,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               203,
+               4
+              ]
+             ]
+            ]
+           ]
+          ],
+          [
+           "ContentEncoding",
+           207,
+           25,
+           [
+            [
+             "ContentEncodingOrder",
+             210,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             214,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             218,
+             4
+            ],
+            [
+             "ContentCompression",
+             222,
+             10,
+             [
+              [
+               "ContentCompAlgo",
+               225,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               229,
+               3
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         232,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           234,
+           10
+          ],
+          [
+           "Channels",
+           244,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     247,
+     144,
+     [
+      [
+       "Timestamp",
+       253,
+       3
+      ],
+      [
+       "SimpleBlock",
+       256,
+       45
+      ],
+      [
+       "SimpleBlock",
+       301,
+       45
+      ],
+      [
+       "SimpleBlock",
+       346,
+       45
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 256,
+   "length": 45,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     262,
+     39
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 301,
+   "length": 45,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     307,
+     39
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 346,
+   "length": 45,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     352,
+     39
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    146,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [
+    {
+     "order": 1,
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      206,
+      1
+     ],
+     "encryption": null
+    },
+    {
+     "order": 1,
+     "scope": 2,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      232,
+      0
+     ],
+     "encryption": null
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.encoding-order",
+   "contains": "unique"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

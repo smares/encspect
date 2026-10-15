@@ -51,6 +51,11 @@ public sealed record StreamInfo
 
     public bool IsVbr { get; init; }
 
+    // True for one of several streams that play at the same time, such as the audio tracks of a Matroska Segment, as opposed to streams
+    // that follow one another (chained Ogg streams, the regions of an MPEG file). A summary of the file counts the longest of the
+    // parallel streams once, instead of adding their durations and samples up.
+    public bool IsParallel { get; init; }
+
     // True where the stream's data carry object-based audio: for E-AC-3, joint object coding (JOC)
     // side information in an EMDF container (ETSI TS 103 420), the layer Dolby Atmos adds to a
     // channel-based stream. A stream that only signals it, as a container's configuration may, is not; nor is DTS:X, whose word after the band data is reported through the profile.

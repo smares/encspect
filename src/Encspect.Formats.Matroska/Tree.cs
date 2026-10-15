@@ -46,7 +46,7 @@ internal sealed partial class FileReader
             else
             {
                 _findings.Add(Severity.Warning, "matroska.element-overruns-parent", node, count =>
-                    $"{(count == 1 ? "An element states" : $"{count} elements state")} a size that runs past the end of its parent (RFC 8794, section 7.7); the {name} at 0x{header.Offset:X} states {Bytes((long)header.Size!.Value)}, {Bytes(over)} more than its parent has left, and is read only up to the parent's end.");
+                    $"{(count == 1 ? "An element states" : $"{count} elements state")} a size that runs past the end of {(count == 1 ? "its" : "their")} parent (RFC 8794, section 7.7); the {name} at 0x{header.Offset:X} states {Bytes((long)header.Size!.Value)}, {Bytes(over)} more than its parent has left, and is read only up to the parent's end.");
             }
         }
 
@@ -78,8 +78,7 @@ internal sealed partial class FileReader
 
         if (parentDefinition is not null && !Schema.IsChildOf(definition, parentDefinition))
         {
-            _findings.Add(Severity.Warning, "matroska.misplaced-element", node, count =>
-                $"{(count == 1 ? "An element is" : $"{count} elements are")} placed where the schema does not allow them (RFC 9559, section 5); the first is the {name} at 0x{header.Offset:X}, in the {parentDefinition.Name}, where it belongs in {PlaceOf(definition)}.");
+            _findings.Add(Severity.Warning, "matroska.misplaced-element", node, count => MisplacedMessage(count, definition, header.Offset, parentDefinition));
         }
 
         if (definition.Type == ElementType.Master)
@@ -104,6 +103,9 @@ internal sealed partial class FileReader
 
         return node;
     }
+
+    private static string MisplacedMessage(int count, ElementDefinition definition, long offset, ElementDefinition? parent) =>
+        $"{(count == 1 ? "An element is" : $"{count} elements are")} placed where the schema does not allow them (RFC 9559, section 5); the first is the {definition.Name} at 0x{offset:X}, {ParentText(parent)}, where it belongs in {PlaceOf(definition)}.";
 
     private static string ParentText(ElementDefinition? parent) => parent is null ? "at the root of the document" : $"in the {parent.Name}";
 

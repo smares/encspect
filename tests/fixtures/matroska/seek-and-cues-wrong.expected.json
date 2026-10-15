@@ -1,0 +1,513 @@
+{
+ "description": "A SeekHead and Cues whose positions are wrong: a Seek entry that points at the wrong element and one outside the Segment, and a cue that points where no Cluster starts.",
+ "length": 587,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 255,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    },
+    {
+     "offset": 405,
+     "length": 150,
+     "timestamp": 60,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 547,
+   "declared_end": 587
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   547,
+   [
+    [
+     "SeekHead",
+     46,
+     73,
+     [
+      [
+       "Seek",
+       51,
+       17,
+       [
+        [
+         "SeekID",
+         54,
+         7
+        ],
+        [
+         "SeekPosition",
+         61,
+         7
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       68,
+       17,
+       [
+        [
+         "SeekID",
+         71,
+         7
+        ],
+        [
+         "SeekPosition",
+         78,
+         7
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       85,
+       17,
+       [
+        [
+         "SeekID",
+         88,
+         7
+        ],
+        [
+         "SeekPosition",
+         95,
+         7
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       102,
+       17,
+       [
+        [
+         "SeekID",
+         105,
+         7
+        ],
+        [
+         "SeekPosition",
+         112,
+         7
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Info",
+     119,
+     60,
+     [
+      [
+       "TimestampScale",
+       124,
+       7
+      ],
+      [
+       "MuxingApp",
+       131,
+       20
+      ],
+      [
+       "WritingApp",
+       151,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     179,
+     76,
+     [
+      [
+       "TrackEntry",
+       184,
+       71,
+       [
+        [
+         "TrackNumber",
+         186,
+         3
+        ],
+        [
+         "TrackUID",
+         189,
+         5
+        ],
+        [
+         "TrackType",
+         194,
+         3
+        ],
+        [
+         "CodecID",
+         197,
+         8
+        ],
+        [
+         "CodecPrivate",
+         205,
+         22
+        ],
+        [
+         "CodecDelay",
+         227,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         233,
+         7
+        ],
+        [
+         "Audio",
+         240,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           242,
+           10
+          ],
+          [
+           "Channels",
+           252,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     255,
+     150,
+     [
+      [
+       "Timestamp",
+       261,
+       3
+      ],
+      [
+       "SimpleBlock",
+       264,
+       46
+      ],
+      [
+       "SimpleBlock",
+       310,
+       47
+      ],
+      [
+       "SimpleBlock",
+       357,
+       48
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     405,
+     150,
+     [
+      [
+       "Timestamp",
+       411,
+       3
+      ],
+      [
+       "SimpleBlock",
+       414,
+       46
+      ],
+      [
+       "SimpleBlock",
+       460,
+       47
+      ],
+      [
+       "SimpleBlock",
+       507,
+       48
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     555,
+     32,
+     [
+      [
+       "CuePoint",
+       560,
+       13,
+       [
+        [
+         "CueTime",
+         562,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         565,
+         8,
+         [
+          [
+           "CueTrack",
+           567,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           570,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "CuePoint",
+       573,
+       14,
+       [
+        [
+         "CueTime",
+         575,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         578,
+         9,
+         [
+          [
+           "CueTrack",
+           580,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           583,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 264,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     270,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 310,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     316,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 357,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     363,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 414,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     420,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 460,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     466,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 507,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     513,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    208,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.seek-position",
+   "contains": "Seek entr"
+  },
+  {
+   "code": "matroska.cue-position",
+   "contains": "no Cluster starts"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

@@ -1,0 +1,280 @@
+{
+ "description": "CRC-32 elements that RFC 8794 section 11.3.1 does not allow: one that is not the first child, and one of two bytes.",
+ "length": 253,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 148,
+     "length": 105,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "x",
+    "writing_app": "y"
+   },
+   "length": 213,
+   "declared_end": 253
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   213,
+   [
+    [
+     "Info",
+     46,
+     26,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "CRC-32",
+       58,
+       6
+      ],
+      [
+       "MuxingApp",
+       64,
+       4
+      ],
+      [
+       "WritingApp",
+       68,
+       4
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     72,
+     76,
+     [
+      [
+       "TrackEntry",
+       77,
+       71,
+       [
+        [
+         "TrackNumber",
+         79,
+         3
+        ],
+        [
+         "TrackUID",
+         82,
+         5
+        ],
+        [
+         "TrackType",
+         87,
+         3
+        ],
+        [
+         "CodecID",
+         90,
+         8
+        ],
+        [
+         "CodecPrivate",
+         98,
+         22
+        ],
+        [
+         "CodecDelay",
+         120,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         126,
+         7
+        ],
+        [
+         "Audio",
+         133,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           135,
+           10
+          ],
+          [
+           "Channels",
+           145,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     148,
+     105,
+     [
+      [
+       "CRC-32",
+       153,
+       4
+      ],
+      [
+       "Timestamp",
+       157,
+       3
+      ],
+      [
+       "SimpleBlock",
+       160,
+       46
+      ],
+      [
+       "SimpleBlock",
+       206,
+       47
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 160,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     166,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 206,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     212,
+     41
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    101,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.crc-position",
+   "contains": "not the first child"
+  },
+  {
+   "code": "matroska.crc-size",
+   "contains": "other than the 4 bytes"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

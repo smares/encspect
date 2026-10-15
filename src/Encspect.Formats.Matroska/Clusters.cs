@@ -20,6 +20,12 @@ internal sealed partial class FileReader
         long end = Math.Min(declaredEnd, limit);
         bool isComplete = declaredEnd <= limit;
         long dataStart = header.DataOffset;
+        if (!header.IsUnknownSize && declaredEnd > limit)
+        {
+            ChildEnd(header, Schema.Find(Schema.Cluster), limit, "Segment");
+        }
+
+        CheckHeaderForm(header, Schema.Find(Schema.Cluster), end);
         var cluster = new ClusterRecord { Offset = header.Offset, HeaderLength = (byte)header.Length, IsSizeUnknown = unknown, FirstItem = records.Items.Count };
         Item? crc = null;
         bool afterCrc = false;
@@ -56,6 +62,7 @@ internal sealed partial class FileReader
             }
 
             long childEnd = ChildEnd(child, definition, end, "Cluster");
+            CheckHeaderForm(child, definition, childEnd);
             if (child.Id == Schema.SimpleBlock)
             {
                 int block = ReadBlock(segment, cluster, child, childEnd, false);
@@ -130,7 +137,7 @@ internal sealed partial class FileReader
                 else if (!Schema.IsChildOf(definition, Schema.Find(Schema.Cluster)))
                 {
                     _findings.Add(Severity.Warning, "matroska.misplaced-element", () => new Node(definition.Name, child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "An element is" : $"{count} elements are")} placed where the schema does not allow them (RFC 9559, section 5); the first is the {definition.Name} at 0x{child.Offset:X}, in the Cluster, where it belongs in {PlaceOf(definition)}.");
+                        MisplacedMessage(count, definition, child.Offset, Schema.Find(Schema.Cluster)));
                 }
                 else if (definition.IsDeprecated)
                 {
@@ -178,6 +185,28 @@ internal sealed partial class FileReader
         }
 
         return end;
+    }
+
+    // An Element ID coded longer than it needs to be, or a size coded in more octets than EBMLMaxSizeLength allows.
+    private void CheckHeaderForm(ElementHeader child, ElementDefinition? definition, long end)
+    {
+        if (!child.IsLongId && !child.IsLongSize)
+        {
+            return;
+        }
+
+        string name = definition?.Name ?? "Unknown Element";
+        if (child.IsLongId)
+        {
+            _findings.Add(Severity.Info, "matroska.element-id-long", () => new Node(name, child.Offset, end - child.Offset), count =>
+                $"{(count == 1 ? "An Element ID is" : $"{count} Element IDs are")} not coded at their shortest length, which RFC 8794 requires (section 5); the first is the {name}'s at 0x{child.Offset:X}.");
+        }
+
+        if (child.IsLongSize)
+        {
+            _findings.Add(Severity.Warning, "matroska.size-too-long", () => new Node(name, child.Offset, end - child.Offset), count =>
+                $"{(count == 1 ? "An Element Data Size is" : $"{count} Element Data Sizes are")} coded in more octets than the EBML Header's EBMLMaxSizeLength allows, which makes the element invalid (RFC 8794, section 11.2.5); the first is the {name}'s at 0x{child.Offset:X}.");
+        }
     }
 
     private static Node ClusterAnchor(ClusterRecord cluster, long end) => new("Cluster", cluster.Offset, end - cluster.Offset);
@@ -236,7 +265,7 @@ internal sealed partial class FileReader
         else
         {
             _findings.Add(Severity.Warning, "matroska.element-overruns-parent", () => new Node(name, child.Offset, parentEnd - child.Offset), count =>
-                $"{(count == 1 ? "An element states" : $"{count} elements state")} a size that runs past the end of its parent (RFC 8794, section 7.7); the {name} at 0x{child.Offset:X} states {Bytes((long)child.Size!.Value)}, {Bytes(declared - parentEnd)} more than the {parentName} has left, and is read only up to the parent's end.");
+                $"{(count == 1 ? "An element states" : $"{count} elements state")} a size that runs past the end of {(count == 1 ? "its" : "their")} parent (RFC 8794, section 7.7); the {name} at 0x{child.Offset:X} states {Bytes((long)child.Size!.Value)}, {Bytes(declared - parentEnd)} more than the {parentName} has left, and is read only up to the parent's end.");
         }
 
         return parentEnd;

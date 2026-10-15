@@ -557,7 +557,7 @@ public sealed partial class OpusParser
                     "The stream ends after its identification header, without the comment header RFC 7845 requires (section 3).");
             }
 
-            if (_packets == 0 || (!_hasTags && _packets == 1 && _seen == 2))
+            if (_packets == 0 || (!_isContained && !_hasTags && _packets == 1 && _seen == 2))
             {
                 _findings.Add(Severity.Info, "opus.no-audio", anchor, _ => "The stream holds no audio packets.");
             }

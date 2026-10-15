@@ -93,12 +93,14 @@ internal sealed partial class FileReader(ParseContext context)
         if (id == Schema.Ebml)
         {
             _document.Node = node;
-            CheckHeader(node);
+            if (node.End <= _reader.End && header.End is { } declaredEnd && declaredEnd <= _reader.End)
+            {
+                CheckHeader(node);
+            }
         }
-        else if (!header.IsUnknownSize && Schema.Find(header.Id) is { Id: not Schema.Void })
+        else if (Schema.Find(header.Id) is { Id: not Schema.Void } definition && !Schema.IsChildOf(definition, null))
         {
-            _findings.Add(Severity.Info, "matroska.misplaced-element", node, count =>
-                $"{(count == 1 ? "An element" : $"{count} elements")} of the Matroska schema lie at the root of the document, where RFC 9559 allows only the EBML Header and the Segment (section 4.5); the first is {ElementName(header.Id)} at 0x{header.Offset:X}.");
+            _findings.Add(Severity.Warning, "matroska.misplaced-element", node, count => MisplacedMessage(count, definition, header.Offset, null));
         }
 
         return next;
@@ -179,16 +181,12 @@ internal sealed partial class FileReader(ParseContext context)
     private void Describe()
     {
         var kinds = new List<string>();
-        foreach (SegmentState segment in _segments)
+        foreach (IGrouping<string, TrackInfo> group in _segments.SelectMany(s => s.Tracks).GroupBy(TypeName))
         {
-            foreach (IGrouping<string, TrackInfo> group in segment.Tracks.GroupBy(TypeName))
-            {
-                kinds.Add(group.Count() == 1 ? group.Key : $"{group.Count()} {group.Key}");
-            }
+            kinds.Add($"{group.Count()} {group.Key} {(group.Count() == 1 ? "track" : "tracks")}");
         }
 
-        string tracks = kinds.Count == 0 ? "no tracks" : string.Join(", ", kinds.Select(k => k.Contains(' ', StringComparison.Ordinal) && char.IsDigit(k[0]) ? $"{k} tracks" : $"{k} track"));
-        _file.Value = tracks;
+        _file.Value = kinds.Count == 0 ? "no tracks" : string.Join(", ", kinds);
         _context.Root.Value = _file.Name;
     }
 

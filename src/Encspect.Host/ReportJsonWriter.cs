@@ -232,6 +232,11 @@ public static class ReportJsonWriter
         }
 
         writer.WriteBoolean("isVbr", stream.IsVbr);
+        if (stream.IsParallel)
+        {
+            writer.WriteBoolean("isParallel", true);
+        }
+
         if (stream.HasObjectAudio)
         {
             writer.WriteBoolean("hasObjectAudio", true);

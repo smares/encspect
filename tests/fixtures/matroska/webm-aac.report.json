@@ -1,0 +1,493 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "webm-aac.webm",
+    "root": {
+      "name": "File",
+      "value": "WebM",
+      "offset": 0,
+      "length": 191,
+      "children": [
+        {
+          "name": "WebM",
+          "value": "1 audio track",
+          "offset": 0,
+          "length": 191,
+          "children": [
+            {
+              "name": "EBML",
+              "offset": 0,
+              "length": 36,
+              "children": [
+                {
+                  "name": "EBMLVersion",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLReadVersion",
+                  "value": 1,
+                  "offset": 9,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxIDLength",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 13,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxSizeLength",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 17,
+                  "length": 4
+                },
+                {
+                  "name": "DocType",
+                  "value": "webm",
+                  "offset": 21,
+                  "length": 7
+                },
+                {
+                  "name": "DocTypeVersion",
+                  "value": 4,
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "DocTypeReadVersion",
+                  "value": 2,
+                  "offset": 32,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Segment",
+              "value": "1 track, 1 cluster",
+              "offset": 36,
+              "length": 155,
+              "children": [
+                {
+                  "name": "Info",
+                  "offset": 42,
+                  "length": 71,
+                  "children": [
+                    {
+                      "name": "TimestampScale",
+                      "value": 1000000,
+                      "unit": "ns",
+                      "offset": 47,
+                      "length": 7
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 100,
+                      "unit": "ticks",
+                      "offset": 54,
+                      "length": 11
+                    },
+                    {
+                      "name": "MuxingApp",
+                      "value": "encspect fixtures",
+                      "offset": 65,
+                      "length": 20
+                    },
+                    {
+                      "name": "WritingApp",
+                      "value": "make_matroska_fixtures.py",
+                      "offset": 85,
+                      "length": 28
+                    }
+                  ]
+                },
+                {
+                  "name": "Tracks",
+                  "offset": 113,
+                  "length": 40,
+                  "children": [
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_AAC, 2 channels, 44100 Hz",
+                      "offset": 118,
+                      "length": 35,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 1,
+                          "offset": 120,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 4097,
+                          "offset": 123,
+                          "length": 5
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 128,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_AAC",
+                          "offset": 131,
+                          "length": 7
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 138,
+                          "length": 15,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 44100,
+                              "unit": "Hz",
+                              "offset": 140,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 150,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Cluster",
+                  "kind": "Stream",
+                  "value": 2,
+                  "unit": "blocks",
+                  "offset": 153,
+                  "length": 38,
+                  "children": [
+                    {
+                      "name": "Timestamp",
+                      "value": 0,
+                      "unit": "ticks",
+                      "offset": 158,
+                      "length": 3
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 161,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 1,
+                          "offset": 163,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 164,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 166,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 166,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 166,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 166,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 166,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 166,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 9,
+                          "unit": "bytes",
+                          "offset": 167,
+                          "length": 9
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 176,
+                      "length": 15,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 1,
+                          "offset": 178,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 23,
+                          "unit": "ticks",
+                          "offset": 179,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 181,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 181,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 181,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 181,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 181,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 181,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 9,
+                          "unit": "bytes",
+                          "offset": 182,
+                          "length": 9
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": 2,
+              "unit": "frames",
+              "offset": 167,
+              "length": 24,
+              "children": [
+                {
+                  "name": "AAC",
+                  "kind": "Stream",
+                  "value": 2,
+                  "unit": "access units",
+                  "offset": 167,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 167,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Access Units",
+                          "value": 2,
+                          "unit": "access units",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 2048,
+                          "unit": "samples",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0,
+                          "unit": "s",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": "none",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Smallest Access Unit",
+                          "value": 9,
+                          "unit": "bytes",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Largest Access Unit",
+                          "value": 9,
+                          "unit": "bytes",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Minimum Bitrate",
+                          "value": 0,
+                          "unit": "kbps",
+                          "offset": 167,
+                          "length": 24
+                        },
+                        {
+                          "name": "Maximum Bitrate",
+                          "value": 0,
+                          "unit": "kbps",
+                          "offset": 167,
+                          "length": 24
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Access Unit",
+                      "kind": "Frame",
+                      "value": "9 bytes",
+                      "offset": 167,
+                      "length": 9
+                    },
+                    {
+                      "name": "Access Unit",
+                      "kind": "Frame",
+                      "value": "9 bytes",
+                      "offset": 182,
+                      "length": 9
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            2
+          ]
+        ],
+        "codec": "AAC",
+        "sampleRate": 44100,
+        "channels": 2,
+        "samples": 0,
+        "duration": 0.046,
+        "averageBitrate": 3.1304347826086953,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "matroska.webm-codec",
+        "message": "A track's codec is none WebM allows (VP8, VP9 or AV1 video, Vorbis or Opus audio, WebVTT; the WebM Container Guidelines); the first is A_AAC in track 1.",
+        "offset": 131,
+        "length": 7,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "aac.no-configuration",
+        "message": "The container hands over AAC without an AudioSpecificConfig, so the object type, sample rate and channels are unknown.",
+        "offset": 167,
+        "length": 24,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

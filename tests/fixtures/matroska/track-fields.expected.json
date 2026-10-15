@@ -1,0 +1,568 @@
+{
+ "description": "TrackEntries that lack what RFC 9559 requires: no TrackNumber, a TrackNumber of 0, no CodecID, no TrackUID and no TrackType, an audio track with no Audio element, a repeated TrackNumber, and an audio track of 0 channels.",
+ "length": 334,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 298,
+     "length": 36,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "make_matroska_fixtures.py"
+   },
+   "length": 294,
+   "declared_end": 334
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   294,
+   [
+    [
+     "Info",
+     46,
+     60,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "MuxingApp",
+       58,
+       20
+      ],
+      [
+       "WritingApp",
+       78,
+       28
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     106,
+     192,
+     [
+      [
+       "TrackEntry",
+       112,
+       17,
+       [
+        [
+         "TrackUID",
+         114,
+         4
+        ],
+        [
+         "TrackType",
+         118,
+         3
+        ],
+        [
+         "CodecID",
+         121,
+         8
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       129,
+       25,
+       [
+        [
+         "TrackNumber",
+         131,
+         3
+        ],
+        [
+         "TrackUID",
+         134,
+         4
+        ],
+        [
+         "TrackType",
+         138,
+         3
+        ],
+        [
+         "CodecID",
+         141,
+         8
+        ],
+        [
+         "Audio",
+         149,
+         5,
+         [
+          [
+           "Channels",
+           151,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       154,
+       12,
+       [
+        [
+         "TrackNumber",
+         156,
+         3
+        ],
+        [
+         "TrackUID",
+         159,
+         4
+        ],
+        [
+         "TrackType",
+         163,
+         3
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       166,
+       31,
+       [
+        [
+         "TrackNumber",
+         168,
+         3
+        ],
+        [
+         "TrackType",
+         171,
+         3
+        ],
+        [
+         "CodecID",
+         174,
+         8
+        ],
+        [
+         "Audio",
+         182,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           184,
+           10
+          ],
+          [
+           "Channels",
+           194,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       197,
+       42,
+       [
+        [
+         "TrackNumber",
+         199,
+         3
+        ],
+        [
+         "TrackUID",
+         202,
+         4
+        ],
+        [
+         "TrackType",
+         206,
+         3
+        ],
+        [
+         "CodecID",
+         209,
+         15
+        ],
+        [
+         "Audio",
+         224,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           226,
+           10
+          ],
+          [
+           "Channels",
+           236,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       239,
+       42,
+       [
+        [
+         "TrackNumber",
+         241,
+         3
+        ],
+        [
+         "TrackUID",
+         244,
+         4
+        ],
+        [
+         "TrackType",
+         248,
+         3
+        ],
+        [
+         "CodecID",
+         251,
+         15
+        ],
+        [
+         "Audio",
+         266,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           268,
+           10
+          ],
+          [
+           "Channels",
+           278,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       281,
+       17,
+       [
+        [
+         "TrackNumber",
+         283,
+         3
+        ],
+        [
+         "TrackUID",
+         286,
+         4
+        ],
+        [
+         "CodecID",
+         290,
+         8
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     298,
+     36,
+     [
+      [
+       "Timestamp",
+       303,
+       3
+      ],
+      [
+       "SimpleBlock",
+       306,
+       14
+      ],
+      [
+       "SimpleBlock",
+       320,
+       14
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 306,
+   "length": 14,
+   "track": 5,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     312,
+     8
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 320,
+   "length": 14,
+   "track": 5,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     326,
+     8
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": null,
+   "uid": 1,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": null,
+   "channels": null,
+   "rate": null,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 0,
+   "uid": 2,
+   "type": 2,
+   "codec": "A_FLAC",
+   "private": null,
+   "channels": 2,
+   "rate": null,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 3,
+   "uid": 3,
+   "type": 2,
+   "codec": null,
+   "private": null,
+   "channels": null,
+   "rate": null,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 4,
+   "uid": null,
+   "type": 2,
+   "codec": "A_FLAC",
+   "private": null,
+   "channels": 0,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 5,
+   "uid": 5,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 1,
+   "rate": 8000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 5,
+   "uid": 6,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 1,
+   "rate": 8000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 7,
+   "uid": 7,
+   "type": null,
+   "codec": "A_OPUS",
+   "private": null,
+   "channels": null,
+   "rate": null,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "streams": null,
+ "findings": [
+  {
+   "code": "matroska.track-field",
+   "contains": "no TrackNumber"
+  },
+  {
+   "code": "matroska.track-field",
+   "contains": "TrackNumber 0"
+  },
+  {
+   "code": "matroska.track-field",
+   "contains": "no CodecID"
+  },
+  {
+   "code": "matroska.track-field",
+   "contains": "no TrackUID"
+  },
+  {
+   "code": "matroska.track-field",
+   "contains": "no TrackType"
+  },
+  {
+   "code": "matroska.audio-fields",
+   "contains": "without an Audio element"
+  },
+  {
+   "code": "matroska.audio-fields",
+   "contains": "without an Audio element"
+  },
+  {
+   "code": "matroska.audio-fields",
+   "contains": "0 channels"
+  },
+  {
+   "code": "matroska.track-number-duplicate",
+   "contains": "first repeated number is 5"
+  },
+  {
+   "code": "matroska.track-empty",
+   "contains": "A track without a number"
+  },
+  {
+   "code": "matroska.track-empty",
+   "contains": "Track 0"
+  },
+  {
+   "code": "matroska.track-empty",
+   "contains": "Track 3"
+  },
+  {
+   "code": "matroska.track-empty",
+   "contains": "Track 4"
+  },
+  {
+   "code": "matroska.track-empty",
+   "contains": "Track 5"
+  },
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "matroska.track-not-analyzed",
+   "contains": "of no stated type"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

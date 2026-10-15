@@ -16,6 +16,7 @@ internal static class ClusterNodes
         return new Node("Cluster", cluster.Offset, cluster.HeaderLength + cluster.DataLength, NodeValue.Integer(cluster.Blocks, "blocks", "block"),
             () => new BlockedChildren([], count, i => ItemNode(records, first + i)))
         {
+            Kind = NodeKind.Stream,
             Description = definition.Description,
             Topic = Topics.Container,
         };
@@ -93,7 +94,9 @@ internal static class ClusterNodes
         for (int i = first; i < first + count; i++)
         {
             Child child = records.Children[i];
-            Node node = child.Block >= 0 ? BlockNode(records, child.Block, "Block") : ElementNode(child.Id, child.Offset, child.HeaderLength, child.DataLength, child.Value);
+            Node node = child.Block >= 0 ? BlockNode(records, child.Block, "Block")
+                : child.Id == uint.MaxValue ? new Node("Unparsed Data", child.Offset, child.DataLength, NodeValue.Integer(child.DataLength, "bytes", "byte")) { Description = Explain.UnparsedData }
+                : ElementNode(child.Id, child.Offset, child.HeaderLength, child.DataLength, child.Value);
             if (child.Depth == 0 || stack.Count == 0)
             {
                 top.Add(node);
@@ -130,6 +133,7 @@ internal static class ClusterNodes
         NodeValue? value = (block.Status & (BlockStatus.Short | BlockStatus.TooLarge)) != 0 ? NodeValue.Integer(0, "frames", "frame") : NodeValue.Integer(block.Frames, "frames", "frame");
         return new Node(name, block.Offset, block.End - block.Offset, value, () => BlockChildren(records, index, name == "Block"))
         {
+            Kind = NodeKind.Frame,
             Description = definition.Description,
             Topic = Topics.Lacing,
         };
@@ -198,16 +202,11 @@ internal static class ClusterNodes
             return children;
         }
 
-        bool audio = records.AudioTracks.Contains(block.Track);
         long position = framesAt;
         for (int i = 0; i < block.Frames; i++)
         {
             long size = block.Frames > 1 ? records.LaceSizes[block.Lace + i] : end - framesAt;
-            children.Add(new Node("Frame", position, size, NodeValue.Integer(size, "bytes", "byte"))
-            {
-                Kind = audio ? NodeKind.Frame : NodeKind.Detail,
-                Description = audio ? Explain.FrameOfAudio : Explain.Frame,
-            });
+            children.Add(new Node("Frame", position, size, NodeValue.Integer(size, "bytes", "byte")) { Description = Explain.Frame });
             position += size;
         }
 
