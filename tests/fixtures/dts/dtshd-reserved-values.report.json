@@ -9452,14 +9452,50 @@
       {
         "severity": "Warning",
         "code": "dtshd.reserved-value",
-        "message": "The reference clock code of the time code is 3, which Table E.4 reserves. The same finding comes 3 more times in the file.",
+        "message": "The reference clock code of the time code is 3, which Table E.4 reserves.",
         "offset": 20,
         "length": 5,
         "path": [
           0,
           2
         ],
-        "count": 4
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "dtshd.reserved-value",
+        "message": "The time code frame rate 9 is reserved (Table E.5).",
+        "offset": 25,
+        "length": 1,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "dtshd.reserved-value",
+        "message": "Bitw_Stream_Metadata has the reserved flags 0x0100 set (Table E.6).",
+        "offset": 26,
+        "length": 2,
+        "path": [
+          0,
+          4
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "dtshd.reserved-value",
+        "message": "Bitw_Aupres_Metadata has the reserved flags 0x0100 set (Table E.12).",
+        "offset": 49,
+        "length": 2,
+        "path": [
+          1,
+          2
+        ],
+        "count": 1
       }
     ]
   }

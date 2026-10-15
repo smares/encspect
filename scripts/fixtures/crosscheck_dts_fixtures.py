@@ -296,6 +296,9 @@ MEDIAINFO_READS_OTHERWISE["xll-lt-rt"] = {"channel layout": "MediaInfo reads the
 MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
     ["commercial name", "IMAX feature"], "FFmpeg's dca_xll.c takes 0xF14000D0 and 0xF14000D1 for DTS:X IMAX (it ignores the lowest bit), MediaInfo's Extensions2 only 0xF14000D0, and reads "
                                          "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
+MEDIAINFO_READS_OTHERWISE["xll-x-rejected-set"] = dict.fromkeys(
+    ["commercial name", "objects in the channel layout", "DTS:X feature"], "FFmpeg's dca_xll.c refuses the channel set (a source resolution beyond its storage width) in parse_sub_headers before it looks for the "
+    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (measured with MediaInfo 24.01) and reports DTS:X")
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}

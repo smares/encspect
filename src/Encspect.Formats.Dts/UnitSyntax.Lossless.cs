@@ -74,7 +74,7 @@ internal sealed partial class UnitSyntax
 
         asset.XllSets.AddRange(sets);
         asset.IsXllComplete = allFacts;
-        ReadXllNavigation(at, endBit, asset, setAt, common, bandsOf);
+        ReadXllNavigation(at, endBit, asset, setAt, common, bandsOf, allFacts);
     }
 
     // 8.3.2, Table 8-4: one channel set sub-header, up to the frequency band parameters, whose bytes are shown as such, and its CRC16.
@@ -283,7 +283,7 @@ internal sealed partial class UnitSyntax
 
     // 8.4.2: the sizes of the band data of every frequency band, segment and channel set, its CRC16, and the band data they add up to;
     // then the extension data after it that FFmpeg's dca_xll.c reads as DTS:X (it aligns to 32 bits and compares one word).
-    private void ReadXllNavigation(int at, int endBit, AssetFacts asset, int naviAt, XllCommon common, List<int> bandsOf)
+    private void ReadXllNavigation(int at, int endBit, AssetFacts asset, int naviAt, XllCommon common, List<int> bandsOf, bool areSetsAccepted)
     {
         int maxBands = bandsOf.Max();
         int segments = 1 << common.SegmentsLog;
@@ -308,7 +308,6 @@ internal sealed partial class UnitSyntax
         int verdict = CrcVerdict(naviAt, naviBytes);
         _tree?.Open("Navigation Index", _pos, Explain.XllNavigation, Topics.Lossless);
         long total = 0;
-        bool oversized = false;
         int depth = (_tree?.Depth ?? 1) - 1;
         int sizesStart = _pos;
         try
@@ -322,7 +321,6 @@ internal sealed partial class UnitSyntax
                         if (bands > band)
                         {
                             long size = (long)Read(common.SegmentBits);
-                            oversized |= size >= common.FrameSize;
                             total += size + 1;
                         }
                     }
@@ -330,11 +328,6 @@ internal sealed partial class UnitSyntax
             }
 
             _tree?.Field("Band Data Sizes", sizesStart, _pos, NodeValue.Integer(entries, "sizes", "size"), Explain.XllNaviSizes, Topics.Lossless);
-            if (oversized)
-            {
-                Report(Issue.LosslessInconsistent, "Band Data Sizes", sizesStart, _pos, $"a band data size of the navigation index is {common.FrameSize} bytes or more, the size of the whole frame (FFmpeg refuses it)");
-            }
-
             if (Aligned(_pos) > _pos)
             {
                 Skip("Padding", Aligned(_pos) - _pos, Explain.Reserved);
@@ -377,8 +370,11 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        // FFmpeg stops at a navigation index whose CRC16 fails or whose size is beyond the frame, before it looks for the word; so does MediaInfo.
-        if (verdict == 1 && !oversized)
+        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, in parse_sub_headers, at a channel
+        // set it refuses (a failing CRC16, a source resolution beyond the storage width, a channel mask of another number of speakers than
+        // channels); so does the analyzer. MediaInfo 24.01 still reads the word after such a set. A band data size of the frame's size or
+        // more puts the end of the band data past the frame, where there is no room for the word.
+        if (verdict == 1 && areSetsAccepted)
         {
             ReadXllExtensionData(at, endBit, asset, dataEnd, common);
         }

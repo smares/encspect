@@ -82,7 +82,7 @@ public sealed class DtsHdParser : IFormatParser
         for (int count = 0; position < reader.End && count < MaxChunks; count++)
         {
             reader.CancellationToken.ThrowIfCancellationRequested();
-            if (!TryChunk(reader, position, out _, out ulong size, strict: false))
+            if (!TryChunk(reader, position, out _, out ulong size))
             {
                 break;
             }
@@ -93,9 +93,26 @@ public sealed class DtsHdParser : IFormatParser
         return position;
     }
 
-    // A chunk header at position: an ID of printable characters and a size FFmpeg accepts (4 to 2^61); the parser itself reads a smaller size,
-    // with a finding, so the chain's declared end does not ask for it (strict: false).
-    private static bool TryChunk(ByteReader reader, long position, out string id, out ulong size, bool strict = true)
+    // A chunk header at position: an ID of printable characters and a size FFmpeg accepts (4 to 2^61). The parser itself reads a smaller size,
+    // with a finding, but a chain only goes through one when it is plainly a chunk: the file ends with it or a chunk header FFmpeg accepts
+    // follows it. Bytes that merely read as a printable ID and a size of zero, such as an ID3v1 tag whose title fills five characters, are no chunk.
+    private static bool TryChunk(ByteReader reader, long position, out string id, out ulong size)
+    {
+        if (!ReadHeader(reader, position, out id, out size))
+        {
+            return false;
+        }
+
+        if (size >= 4)
+        {
+            return true;
+        }
+
+        long end = position + ChunkHeader + (long)size;
+        return end == reader.End || (ReadHeader(reader, end, out _, out ulong next) && next >= 4);
+    }
+
+    private static bool ReadHeader(ByteReader reader, long position, out string id, out ulong size)
     {
         id = string.Empty;
         size = 0;
@@ -115,7 +132,7 @@ public sealed class DtsHdParser : IFormatParser
 
         id = Encoding.ASCII.GetString(header, 0, 8);
         size = BinaryPrimitives.ReadUInt64BigEndian(header.AsSpan(8));
-        return size <= MaxSize && (!strict || size >= 4);
+        return size <= MaxSize;
     }
 
     public void Parse(ParseContext context)
@@ -175,12 +192,12 @@ public sealed class DtsHdParser : IFormatParser
 
             if (size < 4)
             {
-                state.Note("dtshd.chunk-size", $"The {id} chunk at 0x{position:X} has a size of {size} bytes; FFmpeg refuses a size under 4.", chunk);
+                state.Note("dtshd.chunk-size", "small", $"The {id} chunk at 0x{position:X} has a size of {size} bytes; FFmpeg refuses a size under 4.", chunk);
             }
 
             if ((position - reader.Start) % 4 != 0)
             {
-                state.Note("dtshd.chunk-misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
+                state.Note("dtshd.chunk-misaligned", "misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
             }
 
             if (state.Chunks.Count == 0 && id != "DTSHDHDR")
@@ -242,33 +259,37 @@ internal sealed class State(ParseContext context)
     private readonly Dictionary<string, Aggregate> _aggregated = [];
     private readonly List<string> _order = [];
 
-    // A finding of a kind that can occur at every chunk is reported once with a count, pointing at the first case.
-    public void Note(string code, string message, Node node)
+    // A finding of a kind that can occur at every chunk is reported once with a count, pointing at the first case; the kind is the code and
+    // the field or cause, so findings of one code about different fields stay apart.
+    public void Note(string code, string kind, string message, Node node)
     {
-        if (_aggregated.TryGetValue(code, out Aggregate? known))
+        string key = code + "|" + kind;
+        if (_aggregated.TryGetValue(key, out Aggregate? known))
         {
             known.Count++;
             return;
         }
 
-        _aggregated[code] = new Aggregate(message, node);
-        _order.Add(code);
+        _aggregated[key] = new Aggregate(code, message, node);
+        _order.Add(key);
     }
 
     public void Flush()
     {
-        foreach (string code in _order)
+        foreach (string key in _order)
         {
-            Aggregate found = _aggregated[code];
-            context.AddFinding(Severity.Warning, code, found.Count == 1 ? found.Message : $"{found.Message} The same finding comes {found.Count - 1} more times in the file.", found.Node, found.Count);
+            Aggregate found = _aggregated[key];
+            context.AddFinding(Severity.Warning, found.Code, found.Count == 1 ? found.Message : $"First case: {found.Message} ({found.Count} times in the file.)", found.Node, found.Count);
         }
 
         _order.Clear();
         _aggregated.Clear();
     }
 
-    private sealed class Aggregate(string message, Node node)
+    private sealed class Aggregate(string code, string message, Node node)
     {
+        public string Code => code;
+
         public string Message => message;
 
         public Node Node => node;

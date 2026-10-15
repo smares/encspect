@@ -236,7 +236,17 @@ internal sealed class DtsAnalysis
                 string to = key.Describe();
                 if (from == to)
                 {
-                    to += " (the figures of its extension substream's assets differ)";
+                    // Neither the form nor the extension substream's figures are in the description, so say which one differs.
+                    StreamKey previous = _current.Key;
+                    if (previous.Form != key.Form)
+                    {
+                        from += $" ({previous.Form.Describe()})";
+                        to += $" ({key.Form.Describe()})";
+                    }
+                    else
+                    {
+                        to += " (the figures of its extension substream's assets differ)";
+                    }
                 }
 
                 Findings.AddNow(Severity.Info, "dts.stream-changed", $"The stream changes at 0x{offset:X} from {from} to {to}.", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame });

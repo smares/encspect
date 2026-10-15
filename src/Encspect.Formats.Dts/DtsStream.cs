@@ -11,7 +11,7 @@ internal readonly record struct StreamKey(bool HasCore, int SampleRate, int Amod
     public string Describe()
     {
         string channels = HasCore ? $"{Tables.ArrangementShort(Amode)}{(HasLfe ? " + LFE" : string.Empty)}" : "extension substream only";
-        return $"{(HasCore ? "DTS" : "DTS-HD")}, {SampleRate} Hz, {channels}{(Extension == CoreExtension.None ? string.Empty : $", with {Extension.ToString().ToUpperInvariant()}")}{(Substreams == 0 ? string.Empty : ", with an extension substream")}";
+        return $"{(HasCore ? "DTS" : "DTS-HD")}, {SampleRate} Hz, {channels}{(Extension == CoreExtension.None ? string.Empty : $", with {Extension.ToString().ToUpperInvariant()}")}{(!HasCore || Substreams == 0 ? string.Empty : ", with an extension substream")}";
     }
 
     public static StreamKey Of(UnitFacts facts)

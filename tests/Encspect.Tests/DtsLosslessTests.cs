@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -222,5 +223,28 @@ public class DtsLosslessTests
         Assert.Equal("false", Field(report, "DTS/Statistics/HasDtsX"));
         Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
         Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
+    }
+
+    // parse_sub_headers refuses a channel set whose resolution is beyond its width before dca_xll.c looks for the word; the analyzer follows
+    // FFmpeg here (MediaInfo 24.01 still reads the word).
+    [Fact]
+    public void TheDtsXWordIsNotLookedForAfterARejectedChannelSet()
+    {
+        Report report = Open("xll-x-rejected-set");
+        Assert.Equal("false", Field(report, "DTS/Statistics/HasDtsX"));
+        Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
+        Assert.Contains(report.Findings, f => f.Code == "dts.lossless-inconsistent");
+    }
+
+    // The description of a stream names no form and no extension substream figures, so the message says which of the two changed.
+    [Fact]
+    public void ANewStreamFormIsNamedInTheChangeMessage()
+    {
+        string directory = Path.Combine(Fixtures.FixtureDirectory, "dts");
+        byte[] data = [.. File.ReadAllBytes(Path.Combine(directory, "core-16be.dts")), .. File.ReadAllBytes(Path.Combine(directory, "core-16le.dts"))];
+        Report report = Analyzer.CreateDefault().Analyze("forms.dts", new MemoryStream(data));
+        string message = report.Findings.Single(f => f.Code == "dts.stream-changed").Message;
+        Assert.Contains("from DTS, 48000 Hz, 2/0 (16-bit words, big endian) to DTS, 48000 Hz, 2/0 (16-bit words, little endian)", message, StringComparison.Ordinal);
+        Assert.DoesNotContain("extension substream", message, StringComparison.Ordinal);
     }
 }

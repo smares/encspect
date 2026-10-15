@@ -149,6 +149,11 @@ def build(api):
              (SURROUND_5_1, 48000), xll=dict(x_sync=0x02000850, bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC16")],
              fields={"DTS/Statistics/HasDtsX": "false"},
              crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC16 before it looks for the DTS:X word (dca_xll.c: 'Invalid NAVI checksum')"))
+    lossless("xll-x-rejected-set", "Four units whose lossless channel set has a source resolution of 24 bits stored in 16, so it is rejected, and the DTS:X word after the band data, which is not looked for.", dict(channels=2, mask=0x02),
+             (STEREO, 48000), sets=[m.xll_set(2, bit_res=24, storage=16)], xll=dict(x_sync=0x02000850),
+             findings=[("dts.lossless-inconsistent", "source resolution of 24 bits is more than its storage width of 16 bits")], fields={"DTS/Statistics/HasDtsX": "false"},
+             crosscheck=undecodable(cc, "Invalid PCM bit resolution for XLL channel set", "ffmpeg's decoder refuses a resolution beyond the width in parse_sub_headers, before it looks for the DTS:X word (dca_xll.c: 'Invalid PCM bit resolution for XLL channel set'); MediaInfo 24.01 would still read the word",
+                                  ffprobe_channels=2, skip={"ffprobe_channels": "ffmpeg cannot decode the lossless layer, so it reports the core's two channels and their layout"}))
     lossless("xll-frame-size", "Four units whose lossless extension states a frame of 20 bytes, less than its band data reach.", dict(channels=2, mask=0x02),
              (STEREO, 48000), xll=dict(frame_size=20), findings=[("dts.lossless-inconsistent", "past the 20 bytes of the frame")],
              crosscheck=undecodable(cc, "Read past end of XLL frame", "ffmpeg's decoder refuses band data that runs past the frame's stated size (dca_xll.c: 'Read past end of XLL frame')"))
@@ -222,12 +227,12 @@ def build_dtshd(api):
                 data += m.dtshd_chunk(chunk_id, payload, **({"size": chunk[2]} if len(chunk) > 2 else {}))
         return data, frames
 
-    def file(file_name, description, chunks, parts, expected, findings=(), fields=None, crosscheck=None, gaps=(), cut=None, frames=None, name_=name, extra=b""):
+    def file(file_name, description, chunks, parts, expected, findings=(), fields=None, crosscheck=None, gaps=(), cut=None, frames=None, name_=name, extra=b"", regions=None):
         data, rows_ = build_file(chunks, parts)
         data += extra
         if cut is not None:
             data = data[:cut]
-        fixture(file_name, ".dtshd", description, data, rows_ if frames is None else frames, expected, list(findings), fields=fields, gaps=gaps, crosscheck=crosscheck or cc(), fmt="DTS-HD")
+        fixture(file_name, ".dtshd", description, data, rows_ if frames is None else frames, expected, list(findings), fields=fields, gaps=gaps, crosscheck=crosscheck or cc(), fmt="DTS-HD", **({"regions": regions} if regions else {}))
 
     lossless = [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)]
     header = ("DTSHDHDR", m.dtshd_header(vbr=True, core=True, extension=True, tc_rate=2, stamp=48000 * 3600 + 1234, substreams=0))
@@ -287,6 +292,14 @@ def build_dtshd(api):
          crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
     file("dtshd-trailing-data", "A .dtshd file with five bytes after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
          findings=[("dtshd.trailing-data", "5 bytes after the last chunk")], extra=b"\x01\x02\x03\x04\x05", crosscheck=cc_hd(cc))
+    # An ID3v1 tag after the last chunk: its first sixteen bytes read as a chunk ID and, with a title of five characters padded with nulls, as a size of
+    # zero. It is a tag, not a chunk: the chain of chunks ends at the tag (the tag owns the bytes), so the file is not cut short by it.
+    for title, label in (("Intro", "five"), ("Intros", "six")):
+        tag = b"TAG" + title.encode().ljust(30, b"\0") + b"Artist".ljust(30, b"\0") + b"Album".ljust(30, b"\0") + b"2026" + b"Comment".ljust(28, b"\0") + b"\0\x01\x11"
+        size = len(m.dtshd_chunk("DTSHDHDR", header[1]) + m.dtshd_chunk("STRMDATA", b"".join(parts)))
+        file(f"dtshd-id3v1-{label}-char-title", f"A .dtshd file with an ID3v1 tag whose title has {label} characters after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
+             extra=tag, regions=[["ID3v1", size, 128]],
+             crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the tag as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
     file("dtshd-no-stream-data", "A .dtshd file with a header and metadata, but no STRMDATA chunk.", [header, presentation], [], [], findings=[("dtshd.no-stream-data", "no STRMDATA")], frames=[],
          crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk (dtshddec.c: end of file)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
 
@@ -294,7 +307,8 @@ def build_dtshd(api):
     reserved = ("DTSHDHDR", m.dtshd_header(clock_code=3, tc_rate=9, reserved_flags=0x0100, core=True, extension=True))
     file("dtshd-reserved-values", "A .dtshd file whose header has a reserved reference clock code, a reserved time code frame rate and a reserved flag, and whose presentation has a reserved flag.",
          [reserved, ("AUPR-HDR", m.dtshd_presentation(48000, 4, 512, 2048, 0x0F, lossless=True, core=True, reserved_flags=0x0100)), ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.reserved-value", "reference clock code of the time code is 3")],
+         findings=[("dtshd.reserved-value", "reference clock code of the time code is 3"), ("dtshd.reserved-value", "time code frame rate 9 is reserved"),
+                   ("dtshd.reserved-value", "Bitw_Stream_Metadata has the reserved flags"), ("dtshd.reserved-value", "Bitw_Aupres_Metadata has the reserved flags")],
          crosscheck=cc_hd(cc))
     file("dtshd-metadata-differs", "A .dtshd file whose AUPR-HDR gives 96,000 Hz and the channels of a 7.1 mask for a 48 kHz 5.1 stream.",
          [header, ("AUPR-HDR", m.dtshd_presentation(96000, 4, 1024, 4096, 0x84B, lossless=True, core=True)), ("STRMDATA", None)], parts, lossless,

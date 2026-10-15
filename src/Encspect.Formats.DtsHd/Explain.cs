@@ -101,5 +101,5 @@ internal static class Explain
     public const string BranchData = "The entries, each the frame index of a branch point (A/103 Table E.20). Not read.";
     public const string UnknownChunk = "A chunk this analyzer does not know. A reader skips chunks it does not understand (A/103 E.2).";
     public const string UnknownData = "The payload of a chunk that is not defined. Not read.";
-    public const string ExtensionMetadataBeforeHeader = "EXTSS_MD fields that depend on the variable bit rate flag of DTSHDHDR, which comes later in this file, so they are not read (A/103 Table E.10).";
+    public const string ExtensionMetadataBeforeHeader = "EXTSS_MD fields that depend on the variable bit rate flag of DTSHDHDR, which has not been read when this chunk is, so they are not read (A/103 Table E.10).";
 }

@@ -72,6 +72,28 @@ public class DtsHdTests
         Assert.DoesNotContain(report.Root.Children, c => c.Kind == NodeKind.Tag);
     }
 
+    // An ID3v1 tag after the chunks reads as a chunk ID and, with a five-character title padded with nulls, as a size of zero; no chunk header
+    // follows it, so the chain ends before it and the tag is found. A six-character title makes the size too large to be one.
+    [Theory]
+    [InlineData("dtshd-id3v1-five-char-title")]
+    [InlineData("dtshd-id3v1-six-char-title")]
+    public void AnId3v1TagAfterTheChunksIsATagNotAChunk(string name)
+    {
+        byte[] data = Fixture(name + ".dtshd");
+        Assert.Equal(data.Length - 128, new DtsHdParser().DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(data)))));
+        Report report = Analyzer.CreateDefault().Analyze(name + ".dtshd", new MemoryStream(data));
+        Assert.Contains(report.Root.Children, c => c.Kind == NodeKind.Tag && c.Offset == data.Length - 128);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "tag.near-miss" or "dtshd.trailing-data" or "dtshd.chunk-size");
+    }
+
+    // A chunk of under 4 bytes that is the last one of the file is still a chunk.
+    [Fact]
+    public void ASmallLastChunkIsPartOfTheChain()
+    {
+        byte[] chain = [.. Header, .. Chunk("STRMDATA", new byte[32]), .. Chunk("FILEINFO", [], 0)];
+        Assert.Equal(chain.Length, new DtsHdParser().DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(chain)))));
+    }
+
     // The signature is the first eight bytes, as A/103 E.2.2 and FFmpeg's probe have it: no other format's file, and none of the DTS
     // fixtures that are not .dtshd files, sniffs as one.
     [Fact]
@@ -195,28 +217,32 @@ public class DtsHdTests
         Assert.True(report.Findings.Count < 12);
     }
 
-    // The reserved values of the three tables, one file each, since the findings of a kind are reported once.
-    [Theory]
-    [InlineData(0xC0, 0, 0x0000, "reference clock code of the time code is 3")]
-    [InlineData(0x00, 9, 0x0000, "time code frame rate 9 is reserved")]
-    [InlineData(0x00, 0, 0x0100, "Bitw_Stream_Metadata has the reserved flags 0x0100")]
-    public void ReservedValuesOfTheHeaderAreReported(int clock, int rate, int flags, string wanted)
+    // The reserved values of four tables are four findings, one for each field, though they have one code.
+    [Fact]
+    public void EachReservedValueIsReportedForItsField()
     {
         var header = new byte[14];
-        header[4] = (byte)clock;
-        header[9] = (byte)rate;
-        BinaryPrimitives.WriteUInt16BigEndian(header.AsSpan(10), (ushort)(0x08 | flags));
-        Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Chunk("DTSHDHDR", header), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.reserved-value" && f.Message.Contains(wanted, StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void AReservedPresentationFlagIsReported()
-    {
+        header[4] = 0xC0;
+        header[9] = 9;
+        BinaryPrimitives.WriteUInt16BigEndian(header.AsSpan(10), 0x0108);
         var presentation = new byte[24];
         presentation[1] = 0x01;
-        Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Header, .. Chunk("AUPR-HDR", presentation), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.reserved-value" && f.Message.Contains("Bitw_Aupres_Metadata has the reserved flags 0x0100", StringComparison.Ordinal));
+        Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Chunk("DTSHDHDR", header), .. Chunk("AUPR-HDR", presentation), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
+        string[] messages = [.. report.Findings.Where(f => f.Code == "dtshd.reserved-value").Select(f => f.Message)];
+        Assert.Equal(4, messages.Length);
+        foreach (string wanted in new[] { "reference clock code of the time code is 3", "time code frame rate 9 is reserved", "Bitw_Stream_Metadata has the reserved flags 0x0100", "Bitw_Aupres_Metadata has the reserved flags 0x0100" })
+        {
+            Assert.Contains(messages, m => m.Contains(wanted, StringComparison.Ordinal));
+        }
+    }
+
+    // Findings of one code about different fields or causes stay apart; the same one at every chunk is one finding with its count.
+    [Fact]
+    public void FindingsOfOneCodeAboutDifferentCausesStayApart()
+    {
+        byte[] data = [.. Header, .. Chunk("FILEINFO", [], 0), .. Chunk("TIMECODE", new byte[8]), .. Chunk("STRMDATA", Fixture("core-16be.dts"))];
+        Report report = Analyzer.CreateDefault().Analyze("causes.dtshd", new MemoryStream(data));
+        Assert.True(report.Findings.Count(f => f.Code == "dtshd.chunk-size") >= 2);
     }
 
     [Fact]

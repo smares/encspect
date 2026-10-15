@@ -95,7 +95,7 @@ internal static class ChunkReader
     {
         if (state.Stream is not null)
         {
-            state.Note("dtshd.stream-repeated", $"The file has more than one STRMDATA chunk; only the first, at 0x{state.Stream.Offset:X}, is analyzed.", chunk);
+            state.Note("dtshd.stream-repeated", "stream", $"The file has more than one STRMDATA chunk; only the first, at 0x{state.Stream.Offset:X}, is analyzed.", chunk);
             return;
         }
 
@@ -108,7 +108,7 @@ internal static class ChunkReader
     {
         if (state.Chunks.Count > 0 && state.StreamFlags >= 0)
         {
-            state.Note("dtshd.header-repeated", "The file has more than one DTSHDHDR chunk.", c.Chunk);
+            state.Note("dtshd.header-repeated", "header", "The file has more than one DTSHDHDR chunk.", c.Chunk);
         }
 
         c.Number("Version", 4, Explain.HeaderVersion, null);
@@ -125,7 +125,7 @@ internal static class ChunkReader
             c.Add(code);
             if (clockCode == 3)
             {
-                state.Note("dtshd.reserved-value", "The reference clock code of the time code is 3, which Table E.4 reserves.", code);
+                state.Note("dtshd.reserved-value", "clock", "The reference clock code of the time code is 3, which Table E.4 reserves.", code);
             }
         }
 
@@ -150,7 +150,7 @@ internal static class ChunkReader
         if ((flags & 0xFFE0) != 0)
         {
             meta.Add(Node.FromBits("Reserved", c.Offset(flagsAt), 0, 11, NodeValue.Hex(flags >> 5, 3), description: Explain.ReservedFlags, topic: Topics.File));
-            state.Note("dtshd.reserved-value", $"Bitw_Stream_Metadata has the reserved flags 0x{flags & 0xFFE0:X4} set (Table E.6).", meta);
+            state.Note("dtshd.reserved-value", "stream-flags", $"Bitw_Stream_Metadata has the reserved flags 0x{flags & 0xFFE0:X4} set (Table E.6).", meta);
         }
 
         int presentationsAt = c.Position;
@@ -229,7 +229,7 @@ internal static class ChunkReader
             if ((flags & 0xFFF0) != 0)
             {
                 meta.Add(Node.FromBits("Reserved", c.Offset(flagsAt), 0, 12, NodeValue.Hex(flags >> 4, 3), description: Explain.ReservedFlags, topic: Topics.File));
-                state.Note("dtshd.reserved-value", $"Bitw_Aupres_Metadata has the reserved flags 0x{flags & 0xFFF0:X4} set (Table E.12).", meta);
+                state.Note("dtshd.reserved-value", "aupres-flags", $"Bitw_Aupres_Metadata has the reserved flags 0x{flags & 0xFFF0:X4} set (Table E.12).", meta);
             }
         }
 
@@ -311,7 +311,7 @@ internal static class ChunkReader
 
         if (available < need)
         {
-            c.State.Note("dtshd.table-size", $"The table of the {c.Id} chunk has {entries} entries of {size} bytes, more than the chunk holds.", c.Chunk);
+            c.State.Note("dtshd.table-size", c.Id, $"The table of the {c.Id} chunk has {entries} entries of {size} bytes, more than the chunk holds.", c.Chunk);
         }
     }
 
@@ -328,7 +328,7 @@ internal static class ChunkReader
 
         if (available < need)
         {
-            c.State.Note("dtshd.table-size", $"The table of the BITSHVTB chunk has {entries} entries of 5 bytes, more than the chunk holds.", c.Chunk);
+            c.State.Note("dtshd.table-size", "BITSHVTB", $"The table of the BITSHVTB chunk has {entries} entries of 5 bytes, more than the chunk holds.", c.Chunk);
         }
     }
 
@@ -402,7 +402,7 @@ internal static class ChunkReader
                     return false;
                 }
 
-                State.Note("dtshd.chunk-size", $"The {Id} chunk's size of {_end - _start} bytes is too small for its fields; they end at 0x{_start + _at:X}.", Chunk);
+                State.Note("dtshd.chunk-size", "fields:" + Id, $"The {Id} chunk's size of {_end - _start} bytes is too small for its fields; they end at 0x{_start + _at:X}.", Chunk);
             }
 
             return false;
@@ -454,7 +454,7 @@ internal static class ChunkReader
             Node node = Add(new Node(name, Offset(at), 1, rate < FrameRates.Length ? FrameRates[rate] : $"{rate} (reserved)") { Description = description, Topic = Topics.File });
             if (rate >= FrameRates.Length)
             {
-                State.Note("dtshd.reserved-value", $"The time code frame rate {rate} is reserved (Table E.5).", node);
+                State.Note("dtshd.reserved-value", "rate", $"The time code frame rate {rate} is reserved (Table E.5).", node);
             }
         }
 
