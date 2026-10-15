@@ -12,9 +12,9 @@ references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_templ
 **Window shapes.** window_shape picks the shape of the window's slopes: a sine window or a Kaiser-Bessel derived (KBD) window. Each frame's bit sets the shape of its window's second half; the first half keeps the previous frame's.
 
 **Observed choices.** In Encspect's test files, and not used by the analyzer to name an encoder:
-- Apple's encoder (AudioToolbox, macOS 15) wrote sine windows in every setting tried except `-q 127`, its maximum quality, where KBD appeared in up to all channel streams, depending on the signal.
-- fdkaac 1.0.0 and FFmpeg 6.1.1's native encoder wrote KBD in long and stop windows and sine in start and short windows (93% to 99% KBD per file).
-- FAAC 1.31.1 to 2.2 wrote sine only.
+- Apple's encoder (AudioToolbox, macOS 15.7.9) wrote sine windows, except in three files encoded at `-q 127`, its maximum quality, where 84% to 100% of the channel streams use KBD.
+- On short test signals (about 1.5 s, with one or two transitions), fdkaac 1.0.0 and ffmpeg's AAC encoder (Lavc60.31.102) used KBD in long and stop windows and sine in start and short windows. How much of a file is KBD depends on the signal.
+- FAAC 1.30 to 2.2 wrote sine only.
 
 **Grouping.** Eight short windows code their spectra one after another, and scale_factor_grouping joins neighboring windows into groups that share one set of sections and scalefactors, which saves bits where the windows are alike.
 

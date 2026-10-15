@@ -5,16 +5,15 @@ related: wavpack-blocks, lame-tag, vbri-header, ancillary-data, id3v2, aac-raw-d
 references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib/info.c of libvorbis and aoTuV
 ---
 
-**Why it is possible.** The standards define only decoding; encoders choose freely and many leave traces: a tag with their name, text in unused bits, or coding habits.
+**Why it is possible.** The standards define only decoding; encoders choose freely and leave traces: a tag with their name, text in unused bits, or coding habits.
 
 **The evidence, from strongest to weakest:**
 
 - A header the encoder wrote with its name, such as the [LAME tag](lame-tag) or Fraunhofer's [VBRI header](vbri-header); where its CRC holds, confidence is high.
 - A signature in the [ancillary data](ancillary-data), such as LAME's version text, or an extension only some encoders write (mp3PRO, MP3 Surround).
-- Habits (low), which the analyzer uses: in Encspect's test files Shine 3.1.1 never used the bit reservoir or short blocks, Xing's tompg 3.0 never switched to short blocks, and Fraunhofer's MP3 Surround encoder 1.5 never used scfsi. Only habits every encode shows over 20 or more frames count; silence shows none.
-- In AAC, ffmpeg's or FAAC 1.x's version text in a [fill element](aac-raw-data-blocks) (high); exhale's [xHE-AAC](usac) layout and the [SBR](sbr) layout of FAAC 2.x's HE-AAC (medium), which other encoders' files lack. Apple's encoder writes no text; its file writer's layout names it in MP4 with an sbtd box (medium), and the writer, "Apple AudioToolbox", without one and in ADTS (low). A version text in the stream wins.
-- In Vorbis, the [comment](vorbis-comments)'s vendor string: each libvorbis, aoTuV and Lancer release writes its own.
-- In Musepack, the encoder's version in the stream ([SV8 packets](musepack-sv8-packets)).
+- Habits (low), applied by the analyzer: in Encspect's test files Shine 3.1.1 never used the bit reservoir or short blocks, Xing's tompg 3.0 never switched to short blocks, and Fraunhofer's MP3 Surround encoder 1.5 never used scfsi, a rule the analyzer applies to any Fraunhofer encoder. Only habits every encode shows over 20 or more frames count; a silent stream may match another encoder's habits.
+- In AAC, ffmpeg's or FAAC 1.x's version text in a [fill element](aac-raw-data-blocks) (high); exhale's [xHE-AAC](usac) layout and the [SBR](sbr) layout of FAAC 2.x's HE-AAC (medium). Apple's encoder writes no text; its file writer's layout names it in MP4 with an sbtd box (medium), and the writer, "Apple AudioToolbox", without one and in ADTS (low). A version text in the stream wins.
+- In Vorbis, the [comment](vorbis-comments)'s vendor string, which each libvorbis, aoTuV and Lancer release writes; in Musepack, the encoder's version in the stream ([SV8 packets](musepack-sv8-packets)).
 - In DTS, VERNUM is a revision field and names no encoder.
 - In WavPack, libwavpack 5.0's [config block](wavpack-blocks) and checksums (medium).
 - In ASF, [metadata](asf-metadata) such as WMFSDKVersion and the header's layout tell Microsoft's writers apart (medium); in WMA, ffmpeg's 'N' filler bytes count high.
