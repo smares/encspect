@@ -82,7 +82,7 @@ public sealed class DtsHdParser : IFormatParser
         for (int count = 0; position < reader.End && count < MaxChunks; count++)
         {
             reader.CancellationToken.ThrowIfCancellationRequested();
-            if (!TryChunk(reader, position, out _, out ulong size))
+            if (!TryChunk(reader, position, out _, out ulong size, strict: false))
             {
                 break;
             }
@@ -93,8 +93,9 @@ public sealed class DtsHdParser : IFormatParser
         return position;
     }
 
-    // A chunk header at position: an ID of printable characters and a size FFmpeg accepts (4 to 2^61).
-    private static bool TryChunk(ByteReader reader, long position, out string id, out ulong size)
+    // A chunk header at position: an ID of printable characters and a size FFmpeg accepts (4 to 2^61); the parser itself reads a smaller size,
+    // with a finding, so the chain's declared end does not ask for it (strict: false).
+    private static bool TryChunk(ByteReader reader, long position, out string id, out ulong size, bool strict = true)
     {
         id = string.Empty;
         size = 0;
@@ -114,7 +115,7 @@ public sealed class DtsHdParser : IFormatParser
 
         id = Encoding.ASCII.GetString(header, 0, 8);
         size = BinaryPrimitives.ReadUInt64BigEndian(header.AsSpan(8));
-        return size is >= 4 and <= MaxSize;
+        return size <= MaxSize && (!strict || size >= 4);
     }
 
     public void Parse(ParseContext context)
@@ -124,12 +125,14 @@ public sealed class DtsHdParser : IFormatParser
         var state = new State(context);
         long position = reader.Start;
         int count = 0;
+        bool capped = false;
         while (position < reader.End)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
             if (count++ >= MaxChunks)
             {
-                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {MaxChunks} chunks; the bytes from 0x{position:X} are not read.");
+                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {MaxChunks} chunks; the bytes from 0x{position:X} are not read, so the file may hold more than was found.");
+                capped = true;
                 position = reader.End;
                 break;
             }
@@ -172,12 +175,12 @@ public sealed class DtsHdParser : IFormatParser
 
             if (size < 4)
             {
-                state.Context.AddFinding(Severity.Warning, "dtshd.chunk-size", $"The {id} chunk at 0x{position:X} has a size of {size} bytes; FFmpeg refuses a size under 4.", chunk);
+                state.Note("dtshd.chunk-size", $"The {id} chunk at 0x{position:X} has a size of {size} bytes; FFmpeg refuses a size under 4.", chunk);
             }
 
             if ((position - reader.Start) % 4 != 0)
             {
-                state.Context.AddFinding(Severity.Warning, "dtshd.chunk-misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
+                state.Note("dtshd.chunk-misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
             }
 
             if (state.Chunks.Count == 0 && id != "DTSHDHDR")
@@ -190,14 +193,16 @@ public sealed class DtsHdParser : IFormatParser
             position = end;
         }
 
-        if (state.Stream is null)
-        {
-            context.AddFinding(Severity.Warning, "dtshd.no-stream-data", "The file has no STRMDATA chunk, so it holds no audio.", root);
-        }
-        else
+        if (state.Stream is not null)
         {
             state.ParseStream(reader);
         }
+        else if (!capped)
+        {
+            context.AddFinding(Severity.Warning, "dtshd.no-stream-data", "The file has no STRMDATA chunk, so it holds no audio.", root);
+        }
+
+        state.Flush();
     }
 
     private static void Trailing(State state, long start, long end, string code, string message)
@@ -233,6 +238,43 @@ public sealed class DtsHdParser : IFormatParser
 internal sealed class State(ParseContext context)
 {
     public ParseContext Context => context;
+
+    private readonly Dictionary<string, Aggregate> _aggregated = [];
+    private readonly List<string> _order = [];
+
+    // A finding of a kind that can occur at every chunk is reported once with a count, pointing at the first case.
+    public void Note(string code, string message, Node node)
+    {
+        if (_aggregated.TryGetValue(code, out Aggregate? known))
+        {
+            known.Count++;
+            return;
+        }
+
+        _aggregated[code] = new Aggregate(message, node);
+        _order.Add(code);
+    }
+
+    public void Flush()
+    {
+        foreach (string code in _order)
+        {
+            Aggregate found = _aggregated[code];
+            context.AddFinding(Severity.Warning, code, found.Count == 1 ? found.Message : $"{found.Message} The same finding comes {found.Count - 1} more times in the file.", found.Node, found.Count);
+        }
+
+        _order.Clear();
+        _aggregated.Clear();
+    }
+
+    private sealed class Aggregate(string message, Node node)
+    {
+        public string Message => message;
+
+        public Node Node => node;
+
+        public int Count { get; set; } = 1;
+    }
 
     public List<Node> Chunks { get; } = [];
 

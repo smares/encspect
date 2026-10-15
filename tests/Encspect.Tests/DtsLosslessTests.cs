@@ -75,7 +75,7 @@ public class DtsLosslessTests
     {
         Report report = Open(name);
         Assert.Equal(resolution, Assert.Single(report.Streams).BitsPerSample);
-        Assert.Equal($"{resolution} bits", Field(report, "DTS/Statistics/Lossless Bits Per Sample"));
+        Assert.Equal($"{resolution} bits", Field(report, "DTS/Statistics/Lossless Source PCM Resolution"));
         Assert.Equal($"{width} bits", Field(report, "DTS/Statistics/Lossless Storage Bit Width"));
     }
 
@@ -166,7 +166,7 @@ public class DtsLosslessTests
         {
             // A word neither tool knows is bytes, not a sync word.
             Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
-            Assert.EndsWith("bytes", Field(report, $"{Xll}/Trailing Data"), StringComparison.Ordinal);
+            Assert.EndsWith("bytes", Field(report, $"{Xll}/Data After Band Data"), StringComparison.Ordinal);
         }
 
         Assert.False(Assert.Single(report.Streams).HasObjectAudio);
@@ -177,7 +177,7 @@ public class DtsLosslessTests
     {
         Report report = Open("xll-5-1-24bit-48k");
         Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
-        Assert.Equal("80 bytes", Field(report, $"{Xll}/Trailing Data"));
+        Assert.Equal("80 bytes", Field(report, $"{Xll}/Data After Band Data"));
         Assert.Equal("false", Field(report, "DTS/Statistics/HasDtsX"));
         Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
     }
@@ -200,5 +200,27 @@ public class DtsLosslessTests
         Assert.Equal("true", Field(report, $"{Xll}/HasScalableLsbs"));
         Assert.Equal("0 bits", Field(report, $"{Xll}/Fixed LSB Width"));
         Assert.Empty(report.Findings);
+    }
+
+    // FFmpeg's hier_ofs counts the channels of the sets before one whether or not they are kept, so the second set of a 7.1 stream whose first set is rejected still has
+    // its 18 downmix coefficients and reads its mask from the right bits.
+    [Fact]
+    public void ARejectedSetStillCountsInTheHierarchy()
+    {
+        Report report = Open("xll-7-1-hierarchy-after-rejected-set");
+        Assert.Equal("18 coefficients", Field(report, $"{Xll}/Channel Set 2/Downmix Coefficients"));
+        Assert.Equal("true", Field(report, $"{Xll}/Channel Set 2/HasChannelMask"));
+        Assert.Equal("(missing)", Field(report, $"{Xll}/Channel Set 2/Speaker Positions"));
+        Assert.Equal("(missing)", Field(report, "DTS/Statistics/Lossless Channels"));
+    }
+
+    // dca_xll.c returns at a navigation index whose CRC16 fails before it compares the word; so does MediaInfo's XLL().
+    [Fact]
+    public void TheDtsXWordIsNotLookedForAfterAFailingNavigationIndex()
+    {
+        Report report = Open("xll-x-navigation-bad-crc");
+        Assert.Equal("false", Field(report, "DTS/Statistics/HasDtsX"));
+        Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
+        Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
     }
 }

@@ -3,22 +3,19 @@ namespace Encspect.Formats.DtsHd;
 internal static class Topics
 {
     public const string File = "dtshd-file";
-    public const string Lossless = "dts-lossless-extension";
     public const string ChannelArrangements = "dts-channel-arrangements";
     public const string BitrateModes = "bitrate-modes";
-    public const string EncoderDetection = "encoder-detection";
 }
 
 // What each node of a DTS-HD file is, citing ATSC A/103:2014 Annex E (the DTS-HD file structure) by its clauses and tables, and
 // FFmpeg's libavformat/dtshddec.c and MediaInfo's File_Dts.cpp where they read a field.
 internal static class Explain
 {
-    public const string Chunk = "A chunk of a DTS-HD file: an 8-character ID, an 8-byte size and a payload. The size covers the payload, any reserved bytes and the zero bytes that bring the next chunk to a 32-bit boundary (A/103 E.2.1).";
     public const string ChunkSize = "The size of the chunk in bytes, a 64-bit big endian number, without the 8-byte ID and the 8-byte size field itself (A/103 E.2.1).";
     public const string Reserved = "Bytes the chunk's size covers beyond the fields that are read: reserved for later versions of the format, which a reader skips (A/103 E.2.4 to E.2.16).";
     public const string Padding = "Zero bytes, one to three, that bring the next chunk to a 32-bit boundary (A/103 E.2.1).";
     public const string TrailingData = "Bytes after the last chunk that do not make a chunk header.";
-    public const string UnreadData = "Bytes from a chunk header that cannot be one on: they are not read.";
+    public const string UnreadData = "Bytes that are not read: they do not start a chunk, or they lie beyond the limit of chunks that are read.";
 
     public const string Header = "DTSHDHDR: the first chunk of a .dtshd file, with the version of the file structure, a time code and what the stream holds (A/103 E.2.4, Table E.2).";
     public const string HeaderVersion = "Hdr_Version: the version of the DTS-HD file structure, a 32-bit number (A/103 Table E.2).";
@@ -94,7 +91,7 @@ internal static class Explain
     public const string TimecodeReference = "Reference samples since midnight: the sample count at a reference point (A/103 Table E.17).";
     public const string TimecodeReferenceResidual = "Reference Residual: a residual of the reference position (A/103 Table E.17), which the standard does not describe further.";
 
-    public const string BuildVersion = "BUILDVER: a null-terminated string of compiler information, which the standard lists as the DTS-HD encoder version identification (A/103 E.2.14, Tables E.1 and E.18). The standard does not say whether the text names the encoder or the tool that wrote the file, so the analyzer reports it as a claim about the encoder, with low confidence.";
+    public const string BuildVersion = "BUILDVER: a null-terminated string that the standard lists as the DTS-HD encoder version identification and describes as compiler information (A/103 E.2.14); it does not say whether it names the encoder or the tool that wrote the file.";
     public const string BuildVersionText = "The build text, null terminated ASCII (A/103 Table E.18).";
     public const string Blackout = "BLACKOUT: silent audio frames of the stream's format (A/103 E.2.15, Table E.19). Not read.";
     public const string BlackoutData = "The encoded silence frame data (A/103 Table E.19). Not read.";
@@ -104,4 +101,5 @@ internal static class Explain
     public const string BranchData = "The entries, each the frame index of a branch point (A/103 Table E.20). Not read.";
     public const string UnknownChunk = "A chunk this analyzer does not know. A reader skips chunks it does not understand (A/103 E.2).";
     public const string UnknownData = "The payload of a chunk that is not defined. Not read.";
+    public const string ExtensionMetadataBeforeHeader = "EXTSS_MD fields that depend on the variable bit rate flag of DTSHDHDR, which comes later in this file, so they are not read (A/103 Table E.10).";
 }

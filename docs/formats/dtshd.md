@@ -28,12 +28,13 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 ## Detection
 
 - A file is a DTS-HD file when its first eight bytes are `DTSHDHDR`, as E.2.2 and FFmpeg's probe have it, and the chain of chunks from there holds: each chunk header has an ID of printable characters and a size of 4 to 2^61 bytes that FFmpeg accepts, and the chunk ends inside the data (a STRMDATA chunk that the data cuts short counts). Class 100 with the chunks counted (`SniffResult.Frames`, at most 16) and the end of the last; no checksum is defined, so none is verified. The signature followed by a chain that breaks after the first chunk is class 80, a signature with a first chunk whose size is invalid 70. Class 100 beats the DTS parser's chain further in (class 50) in the stream chunk, whatever the order of the parsers.
-- The end of the chain is the file's declared end (`DeclaredEnd`): a tag signature inside a chunk is not a tag.
+- The end of the chain is the file's declared end (`DeclaredEnd`), walked as the parser reads (an ID of printable characters and a size up to 2^61, so a chunk under 4 bytes does not end it): a tag signature inside a chunk is not a tag.
 - A file whose chunks do not start at its first byte (junk in front) is not found as a DTS-HD file; the DTS parser reads the stream in it.
 
 ## Findings
 
-- `dtshd.chunk-truncated` (the data ends inside a chunk), `dtshd.chunk-size` (a size under 4, which FFmpeg refuses, or too small for the chunk's fields), `dtshd.chunk-header` (bytes where a chunk should start that are no header, or a size beyond 2^61: the rest is not read), `dtshd.chunk-misaligned` (a chunk off a 32-bit boundary), `dtshd.trailing-data` (fewer than 16 bytes after the last chunk), `dtshd.header-first` (the first chunk is not DTSHDHDR, reachable by forcing the format), `dtshd.header-repeated`, `dtshd.stream-repeated`, `dtshd.no-stream-data`, `dtshd.reserved-value` (the reference clock code 3, a frame rate above 7, reserved flags), `dtshd.table-size`, `dtshd.metadata-differs`, `dtshd.stream-not-analyzed`.
+- `dtshd.chunk-truncated` (the data ends inside a chunk), `dtshd.chunk-size` (a size under 4, which FFmpeg refuses, or too small for the chunk's fields), `dtshd.chunk-header` (bytes where a chunk should start that are no header, or a size beyond 2^61: the rest is not read), `dtshd.chunk-misaligned` (a chunk off a 32-bit boundary), `dtshd.trailing-data` (fewer than 16 bytes after the last chunk), `dtshd.header-first` (the first chunk is not DTSHDHDR, reachable by forcing the format), `dtshd.header-repeated`, `dtshd.stream-repeated`, `dtshd.no-stream-data`, `dtshd.reserved-value` (the reference clock code 3, a frame rate above 7, reserved flags), `dtshd.table-size`, `dtshd.metadata-differs`, `dtshd.stream-not-analyzed`, `dtshd.chunk-count` (more than 1,024 chunks: the rest is not read).
+- Findings that can occur at every chunk (`dtshd.chunk-size`, `dtshd.chunk-misaligned`, `dtshd.reserved-value`, `dtshd.table-size`, `dtshd.header-repeated`, `dtshd.stream-repeated`) are reported once with a count, pointing at the first case.
 
 ## Not covered
 

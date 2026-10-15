@@ -37,7 +37,7 @@ internal sealed partial class UnitSyntax
                 break;
             }
 
-            XllSetFacts? set = ReadXllSet(index, setAt, asset, common, hierChannels, out int size, out int bands, out bool hier, out bool isStructural);
+            XllSetFacts? set = ReadXllSet(index, setAt, asset, common, hierChannels, out int size, out int bands, out int hierAdd, out bool isStructural);
             if (size <= 0)
             {
                 complete = false;
@@ -59,10 +59,8 @@ internal sealed partial class UnitSyntax
                 sets.Add(set);
             }
 
-            if (hier)
-            {
-                hierChannels += set?.Channels ?? 0;
-            }
+            // FFmpeg's hier_ofs: the channels of the hierarchical sets so far, whether or not this set's facts are kept.
+            hierChannels += hierAdd;
 
             setAt += size;
         }
@@ -80,12 +78,12 @@ internal sealed partial class UnitSyntax
     }
 
     // 8.3.2, Table 8-4: one channel set sub-header, up to the frequency band parameters, whose bytes are shown as such, and its CRC16.
-    private XllSetFacts? ReadXllSet(int index, int setAt, AssetFacts asset, XllCommon common, int hierChannels, out int size, out int bands, out bool hier, out bool isStructural)
+    private XllSetFacts? ReadXllSet(int index, int setAt, AssetFacts asset, XllCommon common, int hierChannels, out int size, out int bands, out int hierAdd, out bool isStructural)
     {
         isStructural = false;
         size = 0;
         bands = 1;
-        hier = false;
+        hierAdd = 0;
         int outerLimit = _limit;
         int depth = _tree?.Depth ?? 0;
         _pos = setAt * 8;
@@ -107,7 +105,7 @@ internal sealed partial class UnitSyntax
             _limit = Math.Min(outerLimit, Math.Max(crcBit, _pos));
             try
             {
-                facts = ReadXllSetFields(common, asset, hierChannels, crcBit, out bands, out hier);
+                facts = ReadXllSetFields(common, asset, hierChannels, crcBit, out bands, out hierAdd);
             }
             catch (EndOfStreamException)
             {
@@ -160,9 +158,10 @@ internal sealed partial class UnitSyntax
         return facts;
     }
 
-    private XllSetFacts? ReadXllSetFields(XllCommon common, AssetFacts asset, int hierChannels, int crcBit, out int bands, out bool hier)
+    private XllSetFacts? ReadXllSetFields(XllCommon common, AssetFacts asset, int hierChannels, int crcBit, out int bands, out int hierAdd)
     {
         int channels = Num("Channels", 4, Explain.XllSetChannels, Topics.Lossless, "channels", 1) + 1;
+        hierAdd = channels;
         int start = _pos;
         uint residual = Read(channels);
         _tree?.Field("Residual Channel Encoding", start, _pos, NodeValue.Hex(residual, (channels + 3) / 4), Explain.XllResidual, Topics.Lossless);
@@ -187,7 +186,6 @@ internal sealed partial class UnitSyntax
         bool hasMask = false;
         uint mask = 0;
         bool read = true;
-        hier = true;
         if (asset.IsOneToOne)
         {
             primary = Flag("IsPrimaryChannelSet", Explain.XllPrimary, Topics.Lossless);
@@ -218,7 +216,7 @@ internal sealed partial class UnitSyntax
                 }
             }
 
-            hier = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless);
+            hierAdd = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless) ? channels : 0;
             if (hasCoefficients)
             {
                 // FFmpeg's parse_dmix_coeffs: a primary set mixes to the channels its downmix type names; any other set has a row for each
@@ -295,11 +293,13 @@ internal sealed partial class UnitSyntax
             entries += (long)bands * segments;
         }
 
+        // FFmpeg refuses more than 1,024 entries counted as the most bands of any set times the segments times the sets.
+        long counted = (long)maxBands * segments * bandsOf.Count;
         _pos = naviAt * 8;
-        if (entries > NaviMaxEntries)
+        if (counted > NaviMaxEntries)
         {
-            _tree?.Field("Navigation Index", _pos, Math.Min(_limit, endBit), NodeValue.Integer(entries, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
-            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {entries} entries, more than the {NaviMaxEntries} that FFmpeg reads");
+            _tree?.Field("Navigation Index", _pos, Math.Min(_limit, endBit), NodeValue.Integer(counted, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
+            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {counted} entries (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
             return;
         }
 
@@ -308,6 +308,7 @@ internal sealed partial class UnitSyntax
         int verdict = CrcVerdict(naviAt, naviBytes);
         _tree?.Open("Navigation Index", _pos, Explain.XllNavigation, Topics.Lossless);
         long total = 0;
+        bool oversized = false;
         int depth = (_tree?.Depth ?? 1) - 1;
         int sizesStart = _pos;
         try
@@ -320,13 +321,20 @@ internal sealed partial class UnitSyntax
                     {
                         if (bands > band)
                         {
-                            total += (long)Read(common.SegmentBits) + 1;
+                            long size = (long)Read(common.SegmentBits);
+                            oversized |= size >= common.FrameSize;
+                            total += size + 1;
                         }
                     }
                 }
             }
 
             _tree?.Field("Band Data Sizes", sizesStart, _pos, NodeValue.Integer(entries, "sizes", "size"), Explain.XllNaviSizes, Topics.Lossless);
+            if (oversized)
+            {
+                Report(Issue.LosslessInconsistent, "Band Data Sizes", sizesStart, _pos, $"a band data size of the navigation index is {common.FrameSize} bytes or more, the size of the whole frame (FFmpeg refuses it)");
+            }
+
             if (Aligned(_pos) > _pos)
             {
                 Skip("Padding", Aligned(_pos) - _pos, Explain.Reserved);
@@ -369,11 +377,15 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        ReadXllExtensionData(at, endBit, asset, dataEnd, common);
+        // FFmpeg stops at a navigation index whose CRC16 fails or whose size is beyond the frame, before it looks for the word; so does MediaInfo.
+        if (verdict == 1 && !oversized)
+        {
+            ReadXllExtensionData(at, endBit, asset, dataEnd, common);
+        }
     }
 
     // dca_xll.c: when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
-    // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1).
+    // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; FFmpeg reads it with 1 to 3 left too.
     private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common)
     {
         long aligned = at + ((dataEnd - at + 3) & ~3L);
@@ -393,7 +405,7 @@ internal sealed partial class UnitSyntax
         _limit = Math.Min(_limit, available * 8);
         if (kind == XllExtension.None)
         {
-            _tree?.Field("Trailing Data", start * 8, _limit, NodeValue.Integer(available - start, "bytes"), Explain.XllTrailing, Topics.Lossless);
+            _tree?.Field("Data After Band Data", start * 8, _limit, NodeValue.Integer(available - start, "bytes"), Explain.XllTrailing, Topics.Lossless);
             return;
         }
 

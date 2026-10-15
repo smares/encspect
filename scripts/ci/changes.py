@@ -272,9 +272,9 @@ def decide(event, files, root=ROOT, removed=()):
                 hit = True
             if path.startswith(PARSER_PREFIXES):
                 # The cross-checks that run the analyzer over downloaded samples (ISO conformance, mp3PRO, xHE-AAC,
-                # HE-AAC, Dolby's and FFmpeg's E-AC-3 files) are in these three jobs; any parser's detection could
-                # start claiming those streams.
-                flags["mpeg-crosscheck"] = flags["mp4-crosscheck"] = flags["ac3-crosscheck"] = True
+                # HE-AAC, Dolby's and FFmpeg's E-AC-3 files, FFmpeg's DTS-HD Master Audio files) are in these four jobs; any
+                # parser's detection could start claiming those streams.
+                flags["mpeg-crosscheck"] = flags["mp4-crosscheck"] = flags["ac3-crosscheck"] = flags["dts-crosscheck"] = True
                 hit = True
             if not hit and not known_elsewhere(path):
                 # An unknown path might be a new format or a new check: run everything.

@@ -234,6 +234,11 @@ internal sealed class DtsAnalysis
                 long offset = layout.Offset;
                 string from = _current.Key.Describe();
                 string to = key.Describe();
+                if (from == to)
+                {
+                    to += " (the figures of its extension substream's assets differ)";
+                }
+
                 Findings.AddNow(Severity.Info, "dts.stream-changed", $"The stream changes at 0x{offset:X} from {from} to {to}.", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame });
             }
 

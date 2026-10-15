@@ -53,7 +53,7 @@ public sealed record StreamInfo
 
     // True where the stream's data carry object-based audio: for E-AC-3, joint object coding (JOC)
     // side information in an EMDF container (ETSI TS 103 420), the layer Dolby Atmos adds to a
-    // channel-based stream. A stream that only signals it, as a container's configuration may, is not.
+    // channel-based stream. A stream that only signals it, as a container's configuration may, is not; nor is DTS:X, whose word after the band data is reported through the profile.
     public bool HasObjectAudio { get; init; }
 
     // The number of objects the object audio reconstructs (E-AC-3: joc_num_objects of the JOC header,

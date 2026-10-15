@@ -68,7 +68,7 @@ def build(api):
 
     def stats(channels, sets, rate, bits, width):
         return {"DTS/Statistics/Lossless Channel Sets": f"{sets} channel set" + ("s" if sets != 1 else ""), "DTS/Statistics/Lossless Channels": f"{channels} channels",
-                "DTS/Statistics/Lossless Sampling Frequency": f"{rate} Hz", "DTS/Statistics/Lossless Bits Per Sample": f"{bits} bits",
+                "DTS/Statistics/Lossless Sampling Frequency": f"{rate} Hz", "DTS/Statistics/Lossless Source PCM Resolution": f"{bits} bits",
                 "DTS/Statistics/Lossless Storage Bit Width": f"{width} bits"}
 
     # The layers: 2.0, 5.1 and 7.1 at 48, 96 and 192 kHz, 24 bits; 16 and 20 bits at 48 kHz.
@@ -99,6 +99,14 @@ def build(api):
                  dict(channels=8, mask=0x84B, **wide), (SEVEN_ONE, rate, samples, "2/0"), sets=seven_one(rate), size=192,
                  fields={**stats(8, 2, rate, 24, 24), "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 1/Downmix Coefficients": "12 coefficients",
                          "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 2/Downmix Coefficients": "18 coefficients"})
+    # A rejected set still counts in the hierarchy: the second set's downmix coefficients are counted from the first set's 6 channels (FFmpeg's hier_ofs).
+    rejected = seven_one(48000)
+    rejected[0] = m.xll_set(6, 0x627, bit_res=24, storage=16, dmix=dict(type=1, embedded=True))
+    lossless("xll-7-1-hierarchy-after-rejected-set", "Four units of a lossless extension of two channel sets, the primary 5.1 set with a resolution of 24 bits stored in 16, so it is rejected, and a set of two more channels.",
+             dict(channels=8, mask=0x84B), (SEVEN_ONE, 48000), sets=rejected, size=192, findings=[("dts.lossless-inconsistent", "source resolution of 24 bits is more than its storage width of 16 bits")],
+             fields={"DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 2/Downmix Coefficients": "18 coefficients", "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 2/Channel Mask": "0x180"},
+             crosscheck=undecodable(cc, "Invalid PCM bit resolution for XLL channel set", "ffmpeg's decoder refuses a resolution beyond the width (dca_xll.c: 'Invalid PCM bit resolution for XLL channel set')",
+                                  ffprobe_channels=2, skip={"ffprobe_channels": "ffmpeg cannot decode the lossless layer, so it reports the core's two channels and their layout"}))
     lossless("xll-2-0-16bit-48k", "Four units of a stereo core frame and a lossless extension of a stereo set of 16 bits stored in 16.", dict(channels=2, mask=0x02, bit_resolution=16),
              (STEREO, 48000), sets=[m.xll_set(2, bit_res=16, storage=16)], fields=stats(2, 1, 48000, 16, 16))
     lossless("xll-2-0-20bit-48k", "Four units of a stereo core frame and a lossless extension of a stereo set of 20 bits stored in 24.", dict(channels=2, mask=0x02, bit_resolution=20),
@@ -137,6 +145,10 @@ def build(api):
     lossless("xll-navigation-bad-crc", "Four units whose lossless navigation index has a CRC16 that fails.", dict(channels=2, mask=0x02),
              (STEREO, 48000), xll=dict(bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC16")],
              crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC16 (dca_xll.c: 'Invalid NAVI checksum')"))
+    lossless("xll-x-navigation-bad-crc", "Four units whose lossless frame has the DTS:X word after its band data and a navigation index whose CRC16 fails, so the word is not looked for.", dict(channels=6, mask=0x0F),
+             (SURROUND_5_1, 48000), xll=dict(x_sync=0x02000850, bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC16")],
+             fields={"DTS/Statistics/HasDtsX": "false"},
+             crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC16 before it looks for the DTS:X word (dca_xll.c: 'Invalid NAVI checksum')"))
     lossless("xll-frame-size", "Four units whose lossless extension states a frame of 20 bytes, less than its band data reach.", dict(channels=2, mask=0x02),
              (STEREO, 48000), xll=dict(frame_size=20), findings=[("dts.lossless-inconsistent", "past the 20 bytes of the frame")],
              crosscheck=undecodable(cc, "Read past end of XLL frame", "ffmpeg's decoder refuses band data that runs past the frame's stated size (dca_xll.c: 'Read past end of XLL frame')"))
@@ -282,8 +294,7 @@ def build_dtshd(api):
     reserved = ("DTSHDHDR", m.dtshd_header(clock_code=3, tc_rate=9, reserved_flags=0x0100, core=True, extension=True))
     file("dtshd-reserved-values", "A .dtshd file whose header has a reserved reference clock code, a reserved time code frame rate and a reserved flag, and whose presentation has a reserved flag.",
          [reserved, ("AUPR-HDR", m.dtshd_presentation(48000, 4, 512, 2048, 0x0F, lossless=True, core=True, reserved_flags=0x0100)), ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.reserved-value", "reference clock code of the time code is 3"), ("dtshd.reserved-value", "time code frame rate 9 is reserved"), ("dtshd.reserved-value", "Bitw_Stream_Metadata has the reserved flags"),
-                   ("dtshd.reserved-value", "Bitw_Aupres_Metadata has the reserved flags")],
+         findings=[("dtshd.reserved-value", "reference clock code of the time code is 3")],
          crosscheck=cc_hd(cc))
     file("dtshd-metadata-differs", "A .dtshd file whose AUPR-HDR gives 96,000 Hz and the channels of a 7.1 mask for a 48 kHz 5.1 stream.",
          [header, ("AUPR-HDR", m.dtshd_presentation(96000, 4, 1024, 4096, 0x84B, lossless=True, core=True)), ("STRMDATA", None)], parts, lossless,

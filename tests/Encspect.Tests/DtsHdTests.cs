@@ -61,6 +61,17 @@ public class DtsHdTests
         Assert.Null(parser.DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(new byte[100])))));
     }
 
+    // The parser reads a chunk of under 4 bytes, with a finding, so the chain goes on past it; a stream byte pattern after it is no tag.
+    [Fact]
+    public void TheDeclaredEndWalksPastAChunkUnderFourBytes()
+    {
+        byte[] chain = [.. Header, .. Chunk("FILEINFO", [], 0), .. Chunk("STRMDATA", new byte[32])];
+        Assert.Equal(chain.Length, new DtsHdParser().DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(chain)))));
+        byte[] tagged = [.. Header, .. Chunk("FILEINFO", [], 0), .. Chunk("STRMDATA", [.. new byte[200], .. "TAG"u8.ToArray(), .. new byte[125]])];
+        Report report = Analyzer.CreateDefault().Analyze("tagged.dtshd", new MemoryStream(tagged));
+        Assert.DoesNotContain(report.Root.Children, c => c.Kind == NodeKind.Tag);
+    }
+
     // The signature is the first eight bytes, as A/103 E.2.2 and FFmpeg's probe have it: no other format's file, and none of the DTS
     // fixtures that are not .dtshd files, sniffs as one.
     [Fact]
@@ -166,7 +177,46 @@ public class DtsHdTests
         Report report = Analyzer.CreateDefault().Analyze("many.dtshd", new MemoryStream(data));
         Assert.Contains(report.Findings, f => f.Code == "dtshd.chunk-count");
         Assert.True(report.Root.Children.Count <= DtsHdParser.MaxChunks + 1);
+        // The stream chunk lies beyond the limit: the report says the limit was reached, not that the file holds no audio.
+        Assert.DoesNotContain(report.Findings, f => f.Code == "dtshd.no-stream-data");
         Assert.Equal("DTS-HD", report.Root.Value?.ToString());
+    }
+
+    // A finding that can occur at every chunk is reported once, with its count, at the first case.
+    [Fact]
+    public void FindingsAtEveryChunkAreReportedOnceWithACount()
+    {
+        byte[] stream = Fixture("core-16be.dts");
+        byte[] data = [.. Header, .. Enumerable.Range(0, 500).SelectMany(_ => Chunk("STRMDATA", stream)), .. Enumerable.Range(0, 500).SelectMany(_ => Chunk("FILEINFO", [], 0))];
+        Report report = Analyzer.CreateDefault().Analyze("repeated.dtshd", new MemoryStream(data));
+        Finding repeated = report.Findings.Single(f => f.Code == "dtshd.stream-repeated");
+        Assert.Equal(499, repeated.Count);
+        Assert.Equal(500, report.Findings.Single(f => f.Code == "dtshd.chunk-size").Count);
+        Assert.True(report.Findings.Count < 12);
+    }
+
+    // The reserved values of the three tables, one file each, since the findings of a kind are reported once.
+    [Theory]
+    [InlineData(0xC0, 0, 0x0000, "reference clock code of the time code is 3")]
+    [InlineData(0x00, 9, 0x0000, "time code frame rate 9 is reserved")]
+    [InlineData(0x00, 0, 0x0100, "Bitw_Stream_Metadata has the reserved flags 0x0100")]
+    public void ReservedValuesOfTheHeaderAreReported(int clock, int rate, int flags, string wanted)
+    {
+        var header = new byte[14];
+        header[4] = (byte)clock;
+        header[9] = (byte)rate;
+        BinaryPrimitives.WriteUInt16BigEndian(header.AsSpan(10), (ushort)(0x08 | flags));
+        Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Chunk("DTSHDHDR", header), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
+        Assert.Contains(report.Findings, f => f.Code == "dtshd.reserved-value" && f.Message.Contains(wanted, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AReservedPresentationFlagIsReported()
+    {
+        var presentation = new byte[24];
+        presentation[1] = 0x01;
+        Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Header, .. Chunk("AUPR-HDR", presentation), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
+        Assert.Contains(report.Findings, f => f.Code == "dtshd.reserved-value" && f.Message.Contains("Bitw_Aupres_Metadata has the reserved flags 0x0100", StringComparison.Ordinal));
     }
 
     [Fact]
