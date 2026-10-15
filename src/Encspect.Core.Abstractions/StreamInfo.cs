@@ -61,6 +61,12 @@ public sealed record StreamInfo
     // where it is not known or the stream has no object audio.
     public int? JocObjectCount { get; init; }
 
+    // How the container protects the stream, or null where it does not. The container sets it on the
+    // stream a codec parser reported (AnalysisContext.UpdateStream), or on the one it reports itself.
+    public StreamProtection? Protection { get; init; }
+
+    public bool IsProtected => Protection is not null;
+
     public string? Encoder { get; init; }
 
     public Confidence? EncoderConfidence { get; init; }

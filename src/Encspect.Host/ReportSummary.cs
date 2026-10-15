@@ -6,7 +6,8 @@ namespace Encspect.Host;
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
 // channel layout and encoder are the first stream's; the duration and samples add up over all streams, and the
 // average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
-// most JOC objects one reconstructs. Tags are the file's and those its container holds in its chunks,
+// most JOC objects one reconstructs. Protection is whether any stream is protected, with the schemes
+// and DRM systems the protected streams name, without repeats, in stream order. Tags are the file's and those its container holds in its chunks,
 // in tree order.
 public sealed record ReportSummary(
     string Source,
@@ -26,8 +27,16 @@ public sealed record ReportSummary(
     int Warnings,
     int Infos,
     bool HasObjectAudio = false,
-    int? JocObjectCount = null)
+    int? JocObjectCount = null,
+    bool IsProtected = false,
+    IReadOnlyList<string>? ProtectionSchemes = null,
+    IReadOnlyList<string>? DrmSystems = null)
 {
+    // The schemes and systems as lists even for a summary made without them.
+    public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
+
+    public IReadOnlyList<string> DrmSystems { get; init; } = DrmSystems ?? [];
+
     // The layout's common name, such as "5.1", or null.
     public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
 
@@ -63,7 +72,10 @@ public sealed record ReportSummary(
             report.Findings.Count(f => f.Severity == Severity.Warning),
             report.Findings.Count(f => f.Severity == Severity.Info),
             streams.Any(s => s.HasObjectAudio),
-            streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max());
+            streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max(),
+            streams.Any(s => s.IsProtected),
+            [.. streams.Select(s => s.Protection?.Scheme).OfType<string>().Distinct()],
+            [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()]);
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or

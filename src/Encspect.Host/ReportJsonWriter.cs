@@ -242,6 +242,22 @@ public static class ReportJsonWriter
             writer.WriteNumber("jocObjectCount", objects);
         }
 
+        if (stream.Protection is { } protection)
+        {
+            writer.WriteBoolean("isProtected", true);
+            writer.WriteStartObject("protection");
+            writer.WriteString("scheme", protection.Scheme);
+            writer.WriteBoolean("isEncrypted", protection.IsEncrypted);
+            writer.WriteStartArray("systems");
+            foreach (string system in protection.Systems)
+            {
+                writer.WriteStringValue(system);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
         if (stream.Encoder is not null)
         {
             writer.WriteString("encoder", stream.Encoder);

@@ -21,7 +21,7 @@ public sealed class FileRow : ObservableObject
         nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(ChannelLayout),
         nameof(ChannelLayoutTip), nameof(Encoder), nameof(EncoderConfidence),
         nameof(EncoderText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
-        nameof(InfosText), nameof(FindingsRank), nameof(Problem),
+        nameof(InfosText), nameof(FindingsRank), nameof(Problem), nameof(IsProtected), nameof(ProtectionText), nameof(ProtectionTip),
     ];
 
     private FileState _state;
@@ -91,6 +91,17 @@ public sealed class FileRow : ObservableObject
 
     // The speakers in the stream's channel order, for the cell's tooltip.
     public string? ChannelLayoutTip => _summary?.Summary.ChannelLayout is { } layout ? ChannelLayouts.Speakers(layout) : null;
+
+    // Whether any stream is protected; null for a file without a stream.
+    public bool? IsProtected => _summary is { Summary.Streams: > 0 } summary ? summary.Summary.IsProtected : null;
+
+    // "Protected" or nothing, so the column stays empty for the files that matter least.
+    public string? ProtectionText => IsProtected == true ? "Protected" : null;
+
+    // The schemes and DRM systems, for the cell's tooltip.
+    public string? ProtectionTip => _summary?.Summary is { IsProtected: true } summary
+        ? string.Join("; ", summary.ProtectionSchemes.Concat(summary.DrmSystems.Count > 0 ? ["DRM systems: " + string.Join(", ", summary.DrmSystems)] : []))
+        : null;
 
     public string? Encoder => _summary?.Summary.Encoder;
 

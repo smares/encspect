@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         ["Channel Layout"] = "Which speakers the first stream's channels feed, by the layout's common name such as stereo or 5.1; the cell's tooltip lists the speakers in the stream's channel order. Discrete channels feed no speaker of their own, such as the two programs of dual channel.",
         ["Encoder"] = "Which program encoded the file, and how sure the analysis is: high when the encoder wrote its name, low when only its habits match.",
         ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APE.",
+        ["Protection"] = "Protected where a stream is encrypted or covered by a protection scheme such as Common Encryption or Windows Media DRM; the cell's tooltip names the scheme and the DRM systems. The analyzer reads no encrypted frames.",
         ["Findings"] = "Problems and notes found, by severity: errors, warnings and infos.",
     };
 
@@ -123,6 +124,7 @@ public partial class MainWindow : Window
         });
         grid.Columns.Add(Column("Encoder", CompiledBinding.Create<FileRow, string?>(r => r.EncoderText), nameof(FileRow.EncoderText), new DataGridLength(150)));
         grid.Columns.Add(Column("Tags", CompiledBinding.Create<FileRow, string?>(r => r.Tags), nameof(FileRow.Tags), new DataGridLength(110)));
+        AddProtectionColumn(grid);
         grid.Columns.Add(new DataGridTemplateColumn
         {
             Header = "Findings",
@@ -130,6 +132,24 @@ public partial class MainWindow : Window
             Width = new DataGridLength(112),
             CellTemplate = new FuncDataTemplate<FileRow>((_, _) => FindingsCell()),
         });
+    }
+
+    private static void AddProtectionColumn(DataGrid grid) =>
+        grid.Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Protection",
+            SortMemberPath = nameof(FileRow.ProtectionText),
+            Width = new DataGridLength(92),
+            CellTemplate = new FuncDataTemplate<FileRow>((_, _) => ProtectionCell()),
+        });
+
+    // "Protected", with the scheme and DRM systems as the tooltip.
+    private static TextBlock ProtectionCell()
+    {
+        var text = new TextBlock { Margin = new Avalonia.Thickness(12, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+        text.Bind(TextBlock.TextProperty, CompiledBinding.Create<FileRow, string?>(r => r.ProtectionText));
+        text.Bind(ToolTip.TipProperty, CompiledBinding.Create<FileRow, string?>(r => r.ProtectionTip));
+        return text;
     }
 
     // Each column shows text and sorts by the typed figure behind it (SortMemberPath), so durations

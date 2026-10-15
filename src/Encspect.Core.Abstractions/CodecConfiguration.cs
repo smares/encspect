@@ -39,4 +39,9 @@ public sealed record CodecConfiguration
     // preroll), for codec parsers that do not read the data far enough to count samples; null when
     // it states none.
     public double? Duration { get; init; }
+
+    // True where the container knows the stream's samples are encrypted: it hands over no packets,
+    // since ciphertext is no valid coding, and the codec parser describes the stream from the
+    // configuration alone, without findings about frames it did not see.
+    public bool AreSamplesEncrypted { get; init; }
 }
