@@ -216,6 +216,8 @@ def main():
                 "frames": entry["frames"],
                 "type": entry["inputType"],
                 "generator": "wma_signals.py",
+                # The PCM file the run wrote with wma_signals.py's arguments: the generator makes the same bytes again.
+                **({"pcm_sha256": hashlib.sha256((artifact / entry["pcm"]).read_bytes()).hexdigest()} if entry.get("pcm") and (artifact / entry["pcm"]).exists() else {}),
             },
             "runner": {
                 "image_os": environment.get("runnerImageOS"),

@@ -11,7 +11,13 @@ public class WmaVoiceTests
     private const string Eight = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
     private const string Sixteen = "asf/external-windows-wmavoice-cbr-mono-16k-16.wma";
 
-    public static TheoryData<string> Files => new() { Eight, Sixteen };
+    // The two files of tones and the four of a speech-like signal (silence and hardcoded codebook frames among them) from the same writer.
+    public static TheoryData<string> Files => new()
+    {
+        Eight, Sixteen,
+        "asf/external-windows-wmavoice-cbr-mono-8k-4-speech.wma", "asf/external-windows-wmavoice-cbr-mono-8k-5-speech.wma",
+        "asf/external-windows-wmavoice-cbr-mono-8k-8-speech.wma", "asf/external-windows-wmavoice-cbr-mono-16k-16-speech.wma",
+    };
 
     private static Node Child(Node parent, string name) => parent.Children.Single(c => c.Name == name);
 
