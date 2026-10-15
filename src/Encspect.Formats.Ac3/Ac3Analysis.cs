@@ -187,6 +187,7 @@ internal sealed class Ac3Analysis
         Issue.JocReserved => "ac3.joc-reserved",
         Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
         Issue.EmdfLimit => "ac3.emdf-limit",
+        Issue.DownmixModeReserved => "ac3.dmixmod-reserved",
         _ => "ac3.auxiliary-length",
     };
 
@@ -280,6 +281,10 @@ internal sealed class Ac3Analysis
             case Issue.ObjectAudioIncomplete:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"An EMDF container has only one of the two payloads of object audio: {detail}; ETSI TS 103 420 8.2 carries the JOC and the OAMD payload together. First in {at} ({Times(count)}).");
+                break;
+            case Issue.DownmixModeReserved:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it for a Lt/Rt downmix for Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
                 break;
             case Issue.EmdfLimit:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>

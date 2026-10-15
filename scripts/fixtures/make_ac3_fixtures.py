@@ -215,6 +215,13 @@ def build():
                     "AC-3/Frame/Bit Stream Information/Extended Information 2/A/D Converter Type": "1 (HDCD)"},
             crosscheck={"ffprobe": True, "decode": True, "liba52": True})
 
+    # dmixmod 3: reserved in Table D2.2, though encoders (Dolby's among them) write it for Dolby Pro Logic II.
+    data = silent(4, bsid=6, acmod=7, lfeon=1, frmsizecod=28, xbsi1=(3, 2, 4, 2, 4))
+    fixture("dmixmod-reserved", ".ac3", "Four 3/2 + LFE frames with bsid 6 whose xbsi1 sets dmixmod 3, which Table D2.2 reserves.",
+            data, frames_of(data), [stream("AC-3", 48000, 7, 1, 4 * 1536)], [("ac3.dmixmod-reserved", "dmixmod is 3")],
+            fields={"AC-3/Frame/Bit Stream Information/Extended Information 1/Preferred Downmix": "3 (reserved)"},
+            crosscheck={"ffprobe": True, "decode": True, "liba52": True})
+
     # Reserved values in the bit stream information of a 3/2 frame.
     data = silent(4, acmod=7, frmsizecod=28, cmixlev=3, surmixlev=3, dialnorm=0, langcod=0x41, audprod=(10, 3))
     fixture("reserved-values", ".ac3", "Four 3/2 frames with the reserved cmixlev, surmixlev and roomtyp, dialnorm 0 and a language code.",

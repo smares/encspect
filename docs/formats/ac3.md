@@ -12,6 +12,8 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 - **MP4:** the dac3 and dec3 boxes, compared with the frames.
 - **Object audio (E-AC-3):** the additional bit stream information's extension flag and complexity index, the EMDF containers with their payloads, and the header of the joint object coding payload. See "Object audio" below.
 
+- **dmixmod 3:** A/52:2018 Annex D Table D2.2 reserves it (E-AC-3's mixing metadata has the same field and Annex E gives no table of its own), and the decoder should still reproduce audio. Dolby's own test files write it, and ffmpeg's `ac3defs.h` notes that encoders use it for a Lt/Rt downmix for Dolby Pro Logic II. It is an info finding (`ac3.dmixmod-reserved`), not a warning. The other reserved values of the shared tables (the surround mix levels 0 to 2, dheadphonmod and roomtyp 3) stay warnings; no real file the project has uses them.
+
 ## Channel layout
 
 From the audio coding mode and the LFE flag. E-AC-3's dependent substreams add their channels to their program's layout.

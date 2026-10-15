@@ -1,5 +1,5 @@
 {
- "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and two E-AC-3 files with the adaptive hybrid transform from the FFmpeg sample archive. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, and the warnings the analyzer reports (\"findings\"; the codes of every finding that is not an info).",
+ "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and two E-AC-3 files with the adaptive hybrid transform from the FFmpeg sample archive. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set.",
  "sources": {
   "dolby": {
    "page": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/MP4_Muxed_Streams.html",
@@ -22,7 +22,8 @@
    "object_count": 15,
    "complexity_index": 16,
    "dynamic_objects": 15,
-   "findings": []
+   "findings": [],
+   "info_findings": []
   },
   {
    "file": "AVSync_1280x720p_2997fps_h264_6ch_640kbps_ddp_joc.mp4",
@@ -35,7 +36,24 @@
    "object_count": 15,
    "complexity_index": 16,
    "dynamic_objects": 15,
-   "findings": []
+   "findings": [],
+   "info_findings": []
+  },
+  {
+   "file": "ChID_voices_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4",
+   "source": "dolby",
+   "url": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/Example/ChID_voices_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4",
+   "sha256": "b055bc4cd0d65c87aab6c3f0f57d1fb44a7ede0dd0f69206bc184525b1371192",
+   "size": 32105062,
+   "frames": 2361,
+   "object_audio": true,
+   "object_count": 15,
+   "complexity_index": 16,
+   "dynamic_objects": 15,
+   "findings": [],
+   "info_findings": [
+    "ac3.dmixmod-reserved"
+   ]
   },
   {
    "file": "casablanca_aht_mono_64.eac3",
@@ -44,7 +62,13 @@
    "sha256": "d5ad1e5868c2b4c3f69b6d832cd4e9abe65710b052266ccd19d0d05c15f7c40c",
    "size": 6013664,
    "object_audio": false,
-   "findings": ["ac3.frame-truncated"]
+   "findings": [
+    "ac3.frame-truncated"
+   ],
+   "info_findings": [
+    "ac3.aht-not-read"
+   ],
+   "note": "the file ends 32 bytes into its last 256-byte frame (6013664 is not a multiple of 256, ffprobe lists the partial packet too)"
   },
   {
    "file": "buggy_aht_5.1_384.eac3",
@@ -53,7 +77,14 @@
    "sha256": "2017afb0ab859f8c51b9f3c5ea743dd2756260da0fe8105e338b367b06d0d44f",
    "size": 7014912,
    "object_audio": false,
-   "findings": ["ac3.dialnorm-reserved", "ac3.reserved-value"]
+   "findings": [
+    "ac3.dialnorm-reserved"
+   ],
+   "info_findings": [
+    "ac3.aht-not-read",
+    "ac3.dmixmod-reserved"
+   ],
+   "note": "dialnorm is 0 in every frame, which A/52 5.4.2.8 reserves (MediaInfo reads it as -31 dB too); dmixmod is 3"
   }
  ]
 }

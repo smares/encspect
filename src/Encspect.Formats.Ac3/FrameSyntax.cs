@@ -29,6 +29,7 @@ internal enum Issue : byte
     JocReserved,
     ObjectAudioIncomplete,
     EmdfLimit,
+    DownmixModeReserved,
 }
 
 // Reads one syncframe field by field: the syncinfo and bit stream information of AC-3 (ATSC
@@ -474,7 +475,10 @@ internal sealed partial class FrameSyntax
     {
         if (annexD || _acmod > 2)
         {
-            ReservedIf(F("Preferred Downmix", 2, Explain.Dmixmod, v => $"{v} ({Ac3Names.PreferredDownmix(v)})") == 3);
+            if (F("Preferred Downmix", 2, Explain.Dmixmod, v => $"{v} ({Ac3Names.PreferredDownmix(v)})") == 3)
+            {
+                Report(Issue.DownmixModeReserved, "Preferred Downmix", _lastStart, _lastEnd, string.Empty);
+            }
         }
 
         if (annexD)

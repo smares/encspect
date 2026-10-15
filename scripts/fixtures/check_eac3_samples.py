@@ -15,7 +15,7 @@ Per file, ffprobe and MediaInfo must agree with the manifest, with their words m
 crosscheck_ac3_fixtures.py does (ffprobe's profile "Dolby Digital Plus + Dolby Atmos" is the frames'
 extension flag; MediaInfo's JOC feature, ComplexityIndex and NumberOfDynamicObjects). With --analyzer, the
 analyzer's report (encspect --ndjson) must match instead: object audio and its object count, the EMDF
-containers and the complexity index in the statistics, and exactly the warnings "findings" lists.
+containers and the complexity index in the statistics, and exactly the warnings "findings" and the infos "info_findings" list.
 
 Needs curl, ffprobe and mediainfo. Usage:
 
@@ -109,6 +109,9 @@ def analyzer_problems(analyzer, path, sample):
     serious = sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"})
     if serious != sorted(sample["findings"]):
         problems.append(f"the analyzer reports {serious}, the manifest {sample['findings']}")
+    infos = sorted({f["code"] for f in report["findings"] if f["severity"] == "Info"})
+    if infos != sorted(sample["info_findings"]):
+        problems.append(f"the analyzer reports the infos {infos}, the manifest {sample['info_findings']}")
     return problems
 
 

@@ -66,7 +66,7 @@ internal static class Explain
     public const string Xbsi1 = "Extra bit stream information 1: the preferred stereo downmix and the Lt/Rt and Lo/Ro mix levels (A/52 Annex D 2.3.1.1 to 2.3.1.6).";
     public const string Xbsi2e = "xbsi2e: whether the Dolby Surround EX, Dolby Headphone and A/D converter fields follow (A/52 Annex D 2.3.1.7).";
     public const string Xbsi2 = "Extra bit stream information 2: surround and headphone encoding modes and the A/D converter type (A/52 Annex D 2.3.1.7 to 2.3.1.12).";
-    public const string Dmixmod = "dmixmod: the stereo downmix the mastering engineer prefers, Lt/Rt (matrix surround compatible) or Lo/Ro (A/52 Annex D 2.3.1.2, Table D2.2).";
+    public const string Dmixmod = "dmixmod: the stereo downmix the mastering engineer prefers, Lt/Rt (matrix surround compatible) or Lo/Ro (A/52 Annex D 2.3.1.2, Table D2.2). 3 is reserved there, though encoders use it for a Lt/Rt downmix for Dolby Pro Logic II.";
     public const string LtrtCenter = "ltrtcmixlev: the center's level in an Lt/Rt downmix (A/52 Annex D 2.3.1.3, Table D2.3).";
     public const string LtrtSurround = "ltrtsurmixlev: the surround channels' level in an Lt/Rt downmix; 0 to 2 are reserved (A/52 Annex D 2.3.1.4, Table D2.4).";
     public const string LoroCenter = "lorocmixlev: the center's level in an Lo/Ro downmix (A/52 Annex D 2.3.1.5, Table D2.5).";
