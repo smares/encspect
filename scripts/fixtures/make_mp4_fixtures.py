@@ -301,7 +301,7 @@ def xhe_layouts():
          "demonstration files and libxaac write: no encoder is named.", True, None, None, []),
         ("xhe-aac-exhale-layout-claim", "exhale's layout of the UsacConfig with a tool atom that names another encoder: the stream's evidence "
          "names exhale, and the claim that differs is an info finding.", False, "hand-built", ("exhale", "Medium"),
-         [["aac.encoder-claim-differs", "names \"hand-built\", but the stream points to exhale"]]),
+         [["aac.encoder-claim-differs", "names \"hand-built\", but the stream points to \"exhale\""]]),
     ]:
         config = usac_layout_config(fill_element)
         samples = [bytes([0x80 if i % 10 == 0 else 0x00]) + bytes((i * 13) % 50 + 20) for i in range(30)]

@@ -1,0 +1,90 @@
+{
+ "description": "ADTS at a core rate of 22050 Hz whose channel pairs are each followed by SBR data with FIXVAR frame grids of three and two envelopes whose frequency resolutions differ (sent last envelope first): the first channel's envelopes are of high, low and low resolution, the second's of high and low.",
+ "length": 2568,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AAC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   215
+  ],
+  [
+   215,
+   214
+  ],
+  [
+   429,
+   213
+  ],
+  [
+   642,
+   214
+  ],
+  [
+   856,
+   216
+  ],
+  [
+   1072,
+   214
+  ],
+  [
+   1286,
+   215
+  ],
+  [
+   1501,
+   213
+  ],
+  [
+   1714,
+   215
+  ],
+  [
+   1929,
+   213
+  ],
+  [
+   2142,
+   212
+  ],
+  [
+   2354,
+   214
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "12 access units (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo": "0 access units (0.0%)",
+  "ADTS/Statistics/SBR/SBR Headers": "3 headers"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."
+  }
+ }
+}

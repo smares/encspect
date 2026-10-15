@@ -278,6 +278,31 @@ def sbr_fields(prefix, count, headers, ps):
     return fields
 
 
+def sbr_fixvar_adts():
+    """Channel pairs followed by SBR data whose grids are FIXVAR frames of two and three envelopes of different frequency resolutions in
+    both channels, each envelope coded with another difference: the resolutions are sent last envelope first (4.4.2.8), so a reader that
+    takes them in envelope order finds other band counts, and its envelopes, which take as many bits as the codewords of their differences and
+    their bands come to, run past the payload (aac.sbr-past-fill) for these grids. Apple's HE-AAC encoder writes such frames."""
+    counts = M.sbr_bands(SBR_HEADER, 44100)
+    channels = [[(1, 12), (0, 5), (0, 20)], [(1, 0), (0, 0)]]
+    blocks = []
+    for i in range(12):
+        header = SBR_HEADER if i % 4 == 0 else None
+        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, header, pair=True, fixvar=channels))
+        block, _ = pair_block(0, rate=22050, extra=[fill], first=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=22050),
+                              second=channel(M.ONLY_LONG, 1, [[(9, 4), (1, 16)]], seed=i + 1, rate=22050))
+        blocks.append(block)
+    data, rows = concat(adts_frames(blocks, rate=22050, channels=2))
+    return "sbr-fixvar-resolutions.aac", data, manifest(
+        "ADTS at a core rate of 22050 Hz whose channel pairs are each followed by SBR data with FIXVAR frame grids of three and two envelopes whose "
+        "frequency resolutions differ (sent last envelope first): the first channel's envelopes are of high, low and low resolution, the second's of "
+        "high and low.", data, rows,
+        [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="HE-AAC")], sbr_fields("ADTS", 12, 3, False),
+        [["aac.implicit-sbr", "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."},
+        rate=22050)
+
+
 def implicit_sbr_adts():
     blocks = sbr_units(12, "stereo")
     data, rows = concat(adts_frames(blocks, rate=22050, channels=2))
@@ -673,6 +698,6 @@ def corrupt():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     return out

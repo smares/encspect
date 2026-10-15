@@ -1,0 +1,79 @@
+{
+ "description": "afconvert -v -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav encoded/aacl-m4a-cbr-mono44.m4a on 0.5 s of the tones signal of wma_signals.py.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d aacl -s 0 -b 32000 pcm/mono44.wav encoded/aacl-m4a-cbr-mono44.m4a",
+  "file_type": "m4af",
+  "format_id": "aacl",
+  "codec": "AAC LD",
+  "strategy": "cbr",
+  "options": "-s 0 -b 32000",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 1,
+   "sample_rate": 44100,
+   "format_id": "aacl",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/aacl-m4a-cbr-mono44.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     1 ch,  44100 Hz, aacl (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
+    "                no channel layout.",
+    "estimated duration: 0.500000 sec",
+    "audio bytes: 2026",
+    "audio packets: 45",
+    "bit rate: 31023 bits per second",
+    "packet size upper bound: 68",
+    "maximum packet size: 68",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 22050 valid frames + 584 priming + 406 remainder = 23040",
+    "source bit depth: I16",
+    "format list:",
+    "[ 0] format:\t  1 ch,  44100 Hz, aacl (0x00000000) 0 bits/channel, 0 bytes/packet, 512 frames/packet, 0 bytes/frame",
+    "Channel layout: Mono",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "mono44",
+  "channels": 1,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 0.5,
+  "signal": "tones",
+  "generator": "wma_signals.py",
+  "channel_mask": null,
+  "channel_layout_tag": null,
+  "info_tags": null,
+  "sha256": "2e1578c40bd4c084892322ceb5a608aa844f161372a6d724aed58dab9ba12737"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin sjc22-be112-396cb34a-af06-4f69-a67b-79fe64e831fb-9ABA5FDF8053.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 6122,
+ "sha256": "19b656e525687691b05347a4cac541ae8b07a73518e3db6edd7db6b8163bfb37",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}

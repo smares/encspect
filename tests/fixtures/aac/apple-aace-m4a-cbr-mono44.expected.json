@@ -1,0 +1,405 @@
+{
+ "description": "afconvert -f m4af -d aace -s 0 -b 32000 pcm/mono44.wav {out} on the deterministic signal of wma_signals.py (pcm/mono44.wav).",
+ "encoder": {
+  "command": [
+   "afconvert",
+   "-f",
+   "m4af",
+   "-d",
+   "aace",
+   "-s",
+   "0",
+   "-b",
+   "32000",
+   "pcm/mono44.wav",
+   "{out}"
+  ]
+ },
+ "length": 6072,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   null,
+   28
+  ],
+  [
+   "moov",
+   null,
+   996
+  ],
+  [
+   "moov/mvhd",
+   null,
+   108
+  ],
+  [
+   "moov/trak",
+   null,
+   630
+  ],
+  [
+   "moov/trak/tkhd",
+   null,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   null,
+   530
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   null,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   null,
+   34
+  ],
+  [
+   "moov/trak/mdia/minf",
+   null,
+   456
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   null,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   null,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   null,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   null,
+   396
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   null,
+   120
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   null,
+   104
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   null,
+   53
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/sbtd",
+   null,
+   15
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   null,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   null,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   null,
+   196
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   null,
+   20
+  ],
+  [
+   "moov/udta",
+   null,
+   250
+  ],
+  [
+   "moov/udta/meta",
+   null,
+   242
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   null,
+   34
+  ],
+  [
+   "moov/udta/meta/ilst",
+   null,
+   196
+  ],
+  [
+   "moov/udta/meta/ilst/----",
+   null,
+   188
+  ],
+  [
+   "moov/udta/meta/ilst/----/mean",
+   null,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/----/name",
+   null,
+   20
+  ],
+  [
+   "moov/udta/meta/ilst/----/data",
+   null,
+   132
+  ],
+  [
+   "free",
+   null,
+   3064
+  ],
+  [
+   "mdat",
+   null,
+   1984
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "ER AAC ELD",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "is_vbr": false,
+   "encoder": [
+    "Apple AAC encoder (AudioToolbox)",
+    "Medium"
+   ],
+   "ffprobe_profile": "ELD",
+   "samples": 22528
+  }
+ ],
+ "units": [
+  [
+   4096,
+   67
+  ],
+  [
+   4163,
+   44
+  ],
+  [
+   4207,
+   38
+  ],
+  [
+   4245,
+   36
+  ],
+  [
+   4281,
+   37
+  ],
+  [
+   4318,
+   32
+  ],
+  [
+   4350,
+   35
+  ],
+  [
+   4385,
+   38
+  ],
+  [
+   4423,
+   32
+  ],
+  [
+   4455,
+   35
+  ],
+  [
+   4490,
+   51
+  ],
+  [
+   4541,
+   43
+  ],
+  [
+   4584,
+   54
+  ],
+  [
+   4638,
+   37
+  ],
+  [
+   4675,
+   55
+  ],
+  [
+   4730,
+   41
+  ],
+  [
+   4771,
+   52
+  ],
+  [
+   4823,
+   47
+  ],
+  [
+   4870,
+   53
+  ],
+  [
+   4923,
+   42
+  ],
+  [
+   4965,
+   37
+  ],
+  [
+   5002,
+   51
+  ],
+  [
+   5053,
+   43
+  ],
+  [
+   5096,
+   51
+  ],
+  [
+   5147,
+   40
+  ],
+  [
+   5187,
+   46
+  ],
+  [
+   5233,
+   46
+  ],
+  [
+   5279,
+   53
+  ],
+  [
+   5332,
+   46
+  ],
+  [
+   5378,
+   47
+  ],
+  [
+   5425,
+   41
+  ],
+  [
+   5466,
+   45
+  ],
+  [
+   5511,
+   54
+  ],
+  [
+   5565,
+   44
+  ],
+  [
+   5609,
+   46
+  ],
+  [
+   5655,
+   61
+  ],
+  [
+   5716,
+   37
+  ],
+  [
+   5753,
+   38
+  ],
+  [
+   5791,
+   46
+  ],
+  [
+   5837,
+   54
+  ],
+  [
+   5891,
+   39
+  ],
+  [
+   5930,
+   46
+  ],
+  [
+   5976,
+   53
+  ],
+  [
+   6029,
+   43
+  ]
+ ],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "44100 units per second",
+  "MP4/moov/mvhd/Duration": "22528 (0.511 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "22528 (0.511 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "44100 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "22528 (0.511 s)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Channels": "2",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/Sample Size": "16 bits",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "888 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "32000 bit/s",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Stream Type": "5 (audio), reserved bit 0",
+  "MP4/moov/trak/Gapless/Encoder Delay (iTunSMPB)": "328 samples",
+  "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "22050 samples",
+  "MP4/moov/trak/Gapless/Padding (iTunSMPB)": "150 samples"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "mp4box_samples": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC LD and ELD in no MP4 file here; ffmpeg decodes them.",
+   "faad_trace": "faad2 does not decode the file."
+  }
+ }
+}

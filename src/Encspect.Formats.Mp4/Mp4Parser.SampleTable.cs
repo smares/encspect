@@ -232,7 +232,8 @@ public sealed partial class Mp4Parser
                     break;
                 case 4:
                     int type = (int)body.Field(node, "Object Type Indication", 1, Explain.ObjectTypeIndication, v => $"0x{v:X2} ({ObjectTypeName((int)v)})");
-                    body.Field(node, "Stream Type", 1, Explain.StreamType, v => $"{v >> 2} ({((v >> 2) == 5 ? "audio" : "other")}){((v & 2) != 0 ? ", upstream" : string.Empty)}");
+                    uint streamType = (uint)body.Field(node, "Stream Type", 1, Explain.StreamType,
+                        v => $"{v >> 2} ({((v >> 2) == 5 ? "audio" : "other")}){((v & 2) != 0 ? ", upstream" : string.Empty)}{((v & 1) == 0 ? ", reserved bit 0" : string.Empty)}");
                     body.Field(node, "Buffer Size", 3, Explain.DecoderBufferSize, unit: "bytes");
                     uint max = (uint)body.Field(node, "Maximum Bitrate", 4, Explain.DecoderMaxBitrate, unit: "bit/s", topic: Topics.BitrateModes);
                     uint average = (uint)body.Field(node, "Average Bitrate", 4, Explain.DecoderAverageBitrate, topic: Topics.BitrateModes, describe: v => v == 0 ? "0 (variable bitrate)" : NodeValue.Integer((long)v, "bit/s"));
@@ -240,6 +241,7 @@ public sealed partial class Mp4Parser
                     if (state.CurrentEntry is { ObjectType: null } entry)
                     {
                         entry.ObjectType = type;
+                        entry.StreamTypeByte = (int)streamType;
                         entry.MaxBitrate = max;
                         entry.AverageBitrate = average;
                     }

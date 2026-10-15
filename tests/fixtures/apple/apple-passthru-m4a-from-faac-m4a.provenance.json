@@ -1,0 +1,70 @@
+{
+ "description": "afconvert -v -f m4af -d 0 foreign/faac-m4a.m4a encoded/passthru-m4a-from-faac-m4a.m4a: the packets of tests/fixtures/aac/faac-1.40.m4a copied (-d 0), not encoded.",
+ "encoder": {
+  "tool": "afconvert (Apple AudioToolbox)",
+  "command": "afconvert -v -f m4af -d 0 foreign/faac-m4a.m4a encoded/passthru-m4a-from-faac-m4a.m4a",
+  "file_type": "m4af",
+  "format_id": "0",
+  "codec": "0",
+  "strategy": "copy",
+  "options": "",
+  "exit_status": 0,
+  "afinfo": {
+   "channels": 2,
+   "sample_rate": 44100,
+   "format_id": "aac",
+   "lines": [
+    "File:           /Users/runner/work/encspect/encspect/apple-out/encoded/passthru-m4a-from-faac-m4a.m4a",
+    "File type ID:   m4af",
+    "Num Tracks:     1",
+    "----",
+    "Data format:     2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "                no channel layout.",
+    "estimated duration: 1.484626 sec",
+    "audio bytes: 20748",
+    "audio packets: 66",
+    "bit rate: 108308 bits per second",
+    "packet size upper bound: 376",
+    "maximum packet size: 376",
+    "audio data file offset: 4096",
+    "optimized",
+    "audio 65472 valid frames + 2112 priming + 0 remainder = 67584",
+    "format list:",
+    "[ 0] format:\t  2 ch,  44100 Hz, aac  (0x00000000) 0 bits/channel, 0 bytes/packet, 1024 frames/packet, 0 bytes/frame",
+    "Channel layout: Stereo (L R)",
+    "----"
+   ]
+  }
+ },
+ "input": {
+  "name": "faac-m4a",
+  "from": "tests/fixtures/aac/faac-1.40.m4a",
+  "sha256": "ee92206db26b0a1ee3ee1ba11324b9aa033d90e8f40848a96aee8ad50624ba06"
+ },
+ "runner": {
+  "image": "macos15 20260907.0337.1",
+  "sw_vers": {
+   "ProductName": "macOS",
+   "ProductVersion": "15.7.9",
+   "BuildVersion": "24G830"
+  },
+  "uname": "Darwin iad20-eo1211-38006ec2-f1e3-44ab-b374-d6b6c61390b9-9A374C98282D.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+  "hardware": [
+   "Apple M1 (Virtual)",
+   "VirtualMac2,1",
+   "arm64",
+   "1"
+  ],
+  "bundles": [
+   "/System/Library/Frameworks/AudioToolbox.framework: 1.14 / 1.14",
+   "/System/Library/Frameworks/CoreAudio.framework: 5.0 / 5.0",
+   "/System/Library/Frameworks/CoreAudioTypes.framework: Print: Entry, \":CFBundleVersion\", Does Not Exist / 1.0",
+   "/System/Library/Frameworks/AudioUnit.framework: 1.14 / 1.14",
+   "/System/Library/Components/AudioCodecs.component: 7.0 / 7.0"
+  ]
+ },
+ "bytes": 24844,
+ "sha256": "514a1662e1b0b21be96a9403212e0914c2e166d64a5db89526283a8a70329838",
+ "reproducible": false,
+ "note": "The muxer stamps the time of the encode into the file; the file is committed as written."
+}

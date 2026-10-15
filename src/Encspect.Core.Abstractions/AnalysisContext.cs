@@ -23,7 +23,8 @@ public abstract class AnalysisContext
     public CancellationToken CancellationToken { get; }
 
     // What the file's tags say about the encoder, in file order, including tags parsed through
-    // ParseTag so far.
+    // ParseTag so far. In a CodecContext it also holds, after the file's, the claims the container made
+    // about that one stream (CodecConfiguration.Claims), which are not tags.
     public IReadOnlyList<EncoderClaim> EncoderClaims => _encoderClaims;
 
     public IReadOnlyList<Finding> Findings => _findings;

@@ -96,13 +96,57 @@ public sealed partial class Mp4Parser
             CodecConfiguration? configuration = null;
             if (entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
             {
-                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first) };
+                // The layout claim is about this track: the codec parser sees it, no other track does.
+                EncoderClaim? layout = codec == "aac" ? AppleEvidence(state, entry) : null;
+                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first), Claims = layout is null ? [] : [layout] };
             }
 
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
         }
 
         CompareLayouts(state, entry, streams, label);
+    }
+
+    // The writer of the AAC track, from the way it lays out the file. Every AAC file afconvert encoded on macOS 15.7
+    // (59 files on each of arm64 and x86-64: AAC-LC including 5.1, HE-AAC, HE-AAC v2, AAC-LD and AAC-ELD, in M4A, M4B, MP4, 3GP and 3GP2)
+    // has a DecoderConfigDescriptor whose stream type byte is 0x14, the reserved bit that ISO/IEC 14496-1 7.2.6.6
+    // sets to 1 written as 0; all 85 esds boxes of the 86 other fixtures (ffmpeg, fdkaac, FAAC, MP4Box, hand-built) write 0x15. The M4A and M4B
+    // files also carry an sbtd box in the sample entry, and all of them a free box that pads the audio data to a
+    // 4,096-byte boundary (afconvert's --no-filler changed nothing in these files). The writer also gives the padding to
+    // every copy of packets (afconvert -d 0, run 4) and the stream type byte 0x14 to a copy of an ADTS source (an M4A
+    // source keeps its own esds, with 0x15), but never the sbtd box, which records the PCM source of an encode: none of the
+    // copies has one. So the padding adds nothing beyond the byte in these data, and:
+    // - with an sbtd box, the claim names the encoder, with medium confidence;
+    // - with the padding alone, it names the writer, with low confidence: the encoder is Apple's unless the stream was copied.
+    // A remux by other software drops the traces and names nothing.
+    private static EncoderClaim? AppleEvidence(State state, SampleEntry entry)
+    {
+        if (entry.StreamTypeByte is not { } streamType || (streamType & 1) != 0 || (streamType >> 2) != 5)
+        {
+            return null;
+        }
+
+        string stream = $"a DecoderConfigDescriptor whose stream type byte is 0x{streamType:X2} (reserved bit 0)";
+        if (entry.SourceBitDepthNode is not null)
+        {
+            return new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode,
+                $"MP4 layout of Apple's AudioToolbox encoder: {stream} and an sbtd box in the sample entry, which records the PCM source of an encode")
+            {
+                Confidence = Confidence.Medium,
+                IsLayout = true,
+            };
+        }
+
+        if (!state.HasPageAlignedMdat)
+        {
+            return null;
+        }
+
+        return new EncoderClaim("Apple AudioToolbox", entry.Node,
+            $"MP4 layout of Apple's AudioToolbox file writer: {stream} and a free box that pads the audio data to a 4,096-byte boundary")
+        {
+            IsLayout = true,
+        };
     }
 
     // What the file says about the bitrate: Apple's encoder records its mode in Encoding Params, and
@@ -405,7 +449,9 @@ public sealed partial class Mp4Parser
             nodes.Add(Cover("Samples (iTunSMPB)", Units(smpb.Samples), Explain.SmpbGaplessSamples));
             nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
-            if (total > 0 && state.Fragments == 0 && (ulong)sum != total)
+            // Apple's lossless writer shortens the last packet by the padding, so the track lasts delay plus samples.
+            bool lossless = track.Entries.Count > 0 && track.Entries[0].Format == "alac";
+            if (total > 0 && state.Fragments == 0 && (ulong)sum != total && !(lossless && (ulong)(sum - smpb.Padding) == total))
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",
                     $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {total} units of its timescale.", smpb.Node);
