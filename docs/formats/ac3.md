@@ -5,6 +5,7 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 ## What is read
 
 - **Frames:** sync on a chain of frames, with resync after damage.
+- **Detection:** a chain at the start of the data (after zero bytes) ranks 92. One after junk ranks 55 when three of its first 16 frames pass their CRCs (crc1 and crc2 in AC-3), otherwise 50, so a file with junk in front stays AC-3 or E-AC-3 where ADTS-looking or MPEG-looking bytes inside its frames chain too.
 - **CRCs:** crc1 and crc2.
 - **Bit stream information:** every field.
 - **Audio blocks:** every block up to its mantissas. The parser steps over the mantissas by running the bit allocation itself; liba52 confirms where every block of the AC-3 fixtures ends.
@@ -39,7 +40,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
   - `ac3.object-payload-short`, `ac3.joc-reserved`, `ac3.object-audio-incomplete`: a payload too short for its first fields, a reserved or out-of-range JOC header value, one of the two payloads missing.
   - `ac3.extension-without-joc`, `ac3.joc-without-extension`: judged over an access unit (an independent frame and its dependent frames), since TS 103 420 8.3.1 puts the flag in the substream that holds the container and ffmpeg reads it from either; the first only when every frame of the unit was read to its end.
   - `ac3.config-differs`: a dec3 box whose flag or complexity index disagrees with the frames, or that has no extension where the frames set the flag or carry JOC.
-- **Verified against a real file:** Dolby's DD+ Online Delivery Kit v1.4.1 serves JOC test files (`check_eac3_samples.py` downloads three of them in CI, with two AHT files from the FFmpeg archive, and checks the analyzer, ffprobe and MediaInfo against `tests/conformance/eac3-samples.json`). They show:
+- **Verified against a real file:** Dolby's DD+ Online Delivery Kit v1.4.1 serves JOC test files (`check_eac3_samples.py` downloads three of them in CI, with three files from the FFmpeg archive (two AHT files and one with junk in front), and checks the analyzer, ffprobe and MediaInfo against `tests/conformance/eac3-samples.json`). They show:
   - the container at the start of a skip field, in block 2 of each frame, filling it exactly;
   - emdf_container_length counting the bytes after the length field (389 in a 393-byte skip field);
   - the payload list ending with a bare 5-bit ID 0;

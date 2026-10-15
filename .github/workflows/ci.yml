@@ -855,8 +855,9 @@ jobs:
 
       # Dolby's joint object coding test files (Dolby Digital Plus Online Delivery Kit v1.4.1) are for testing
       # playback products and are not ours to redistribute, so they are fetched and checked against their
-      # SHA-256 rather than committed, with two AHT files from the FFmpeg sample archive. The download cache
-      # keeps them; every address is public.
+      # SHA-256 rather than committed, with three files from the FFmpeg sample archive (two with the
+      # adaptive hybrid transform, one with junk in front). The download cache keeps them; every
+      # address is public.
       - name: Check the real E-AC-3 samples with ffprobe and MediaInfo
         run: python3 scripts/fixtures/check_eac3_samples.py .cache/eac3
 

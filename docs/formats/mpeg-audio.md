@@ -14,6 +14,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 ## Detection
 
 - Sniffing gives 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data.
+- A chain with a CRC (protection bit 0) further in than the start of the data scores 30, not 90, when none of its first three frames has the CRC its header gives: another format's frames can hold such a header at a fixed offset (AC-3's 768-byte frames hold a protected MPEG-2.5 Layer I header of 768 bytes). Chains at the start and unprotected chains score 90.
 - A free-format chain is only a header repeating at one distance, which other formats' data can make too. It scores 90 only when it is credible, and 30 otherwise, below DTS's 50 and every other format's chain:
   - its first three frames that fit in the data must be well-formed (audio data or side information that fits the frame, no forbidden Layer I allocation 15);
   - in Layers I and II, one of them must also be protected and have the CRC its header and bit allocation give, as an all-zero frame is valid there.

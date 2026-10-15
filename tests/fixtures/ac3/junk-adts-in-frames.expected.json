@@ -1,0 +1,75 @@
+{
+ "description": "100 bytes of junk, then eight 2/0 E-AC-3 frames of 512 bytes, each with the bytes of an ADTS header of 512 bytes at its offset 300.",
+ "length": 4196,
+ "format": "AC-3",
+ "frames": [
+  [
+   100,
+   512
+  ],
+  [
+   612,
+   512
+  ],
+  [
+   1124,
+   512
+  ],
+  [
+   1636,
+   512
+  ],
+  [
+   2148,
+   512
+  ],
+  [
+   2660,
+   512
+  ],
+  [
+   3172,
+   512
+  ],
+  [
+   3684,
+   512
+  ]
+ ],
+ "gaps": [
+  [
+   0,
+   100
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.leading-junk",
+   "100 bytes before the first frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "liba52": false,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the junk into the packets around it.",
+   "liba52": "liba52 does not decode E-AC-3."
+  }
+ }
+}

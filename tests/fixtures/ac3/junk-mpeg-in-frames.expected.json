@@ -1,0 +1,74 @@
+{
+ "description": "100 bytes of junk, then eight 2/0 AC-3 frames of 768 bytes, each with the bytes of a protected MPEG-2.5 Layer I header of 768 bytes at its offset 500.",
+ "length": 6244,
+ "format": "AC-3",
+ "frames": [
+  [
+   100,
+   768
+  ],
+  [
+   868,
+   768
+  ],
+  [
+   1636,
+   768
+  ],
+  [
+   2404,
+   768
+  ],
+  [
+   3172,
+   768
+  ],
+  [
+   3940,
+   768
+  ],
+  [
+   4708,
+   768
+  ],
+  [
+   5476,
+   768
+  ]
+ ],
+ "gaps": [
+  [
+   0,
+   100
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.leading-junk",
+   "100 bytes before the first frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "liba52": true,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the junk into the packets around it."
+  }
+ }
+}

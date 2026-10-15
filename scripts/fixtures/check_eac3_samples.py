@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Checks tests/conformance/eac3-samples.json against real E-AC-3 files that this repository must not
 redistribute: Dolby's joint object coding (Dolby Atmos) test files from the Dolby Digital Plus Online
-Delivery Kit v1.4.1, and two files with the adaptive hybrid transform from the FFmpeg sample archive. The
-script downloads them into a cache directory and checks each file's SHA-256 against the manifest before
+Delivery Kit v1.4.1, and three files from the FFmpeg sample archive: two with the adaptive hybrid
+transform, one with junk in front. The script downloads them into a cache directory and checks each file's SHA-256 against the manifest before
 using it.
 
 The Dolby files are the one source of object audio that no hand-built fixture can stand in for: they
@@ -86,6 +86,10 @@ def analyzer_problems(analyzer, path, sample):
     if report.get("schemaVersion") != 1:
         problems.append(f"the analyzer writes report schema {report.get('schemaVersion')}, this script reads 1")
     stream = report["streams"][0]
+    if stream.get("codec") != sample["codec"]:
+        problems.append(f"the analyzer's codec is {stream.get('codec')}, the manifest {sample['codec']}")
+    if report["root"].get("value") != sample["format"]:
+        problems.append(f"the analyzer's format is {report['root'].get('value')}, the manifest {sample['format']}")
     if bool(stream.get("hasObjectAudio")) != sample["object_audio"]:
         problems.append(f"the analyzer's hasObjectAudio is {stream.get('hasObjectAudio')}")
     if sample["object_audio"]:

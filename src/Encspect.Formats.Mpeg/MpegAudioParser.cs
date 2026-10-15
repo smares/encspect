@@ -28,7 +28,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         ByteReader reader = context.Reader;
         var blocks = new BlockReader(reader);
         // Zero bytes before the audio are common padding and cheap to skip.
-        long limit = Math.Min(reader.End, ZeroRunEnd(blocks, reader.Start, reader.End) + SniffLimit);
+        long start = ZeroRunEnd(blocks, reader.Start, reader.End);
+        long limit = Math.Min(reader.End, start + SniffLimit);
         // A free-format chain that is not credible ranks below every other format's chain, not out: it may be genuine, but it is also what
         // data with a header-like word at a fixed period makes, and the format that owns that data should win.
         bool found = false;
@@ -43,7 +44,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             found = true;
             blocks.TryReadUInt32(position, out uint raw);
             var header = new MpegHeader(raw);
-            if (!header.IsFreeFormat || IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End))
+            if (header.IsFreeFormat ? IsCredibleFreeFormat(blocks, position, header, freeLength, reader.End)
+                : position == start || !HasOnlyBrokenCrcs(blocks, position, header, reader.End))
             {
                 return 90;
             }
@@ -52,6 +54,38 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         return found ? IncredibleFreeFormatScore : 0;
+    }
+
+    // Another format's frames can hold a protected header at a fixed offset (an AC-3 frame of 768 bytes holds the bytes of a protected MPEG-2.5
+    // Layer I header of 768 bytes), which chains from frame to frame. A protected chain further in, whose first three frames that fit in the data
+    // all fail the CRC their header gives (ISO/IEC 11172-3 2.4.1.4), is therefore no more than a stray header-like word; junk passes a CRC once in
+    // 65,536 frames. A chain at the start, or one whose frames are not protected, is unchanged.
+    private static bool HasOnlyBrokenCrcs(BlockReader blocks, long position, MpegHeader first, long end)
+    {
+        if (!first.IsProtected)
+        {
+            return false;
+        }
+
+        long next = position;
+        MpegHeader header = first;
+        for (int count = 0; count < 3 && next + header.FrameLength(0) <= end; count++)
+        {
+            if (header.IsProtected && FrameCrcHolds(blocks, next, header, header.FrameLength(0)))
+            {
+                return false;
+            }
+
+            next += header.FrameLength(0);
+            if (!blocks.TryReadUInt32(next, out uint raw) || new MpegHeader(raw) is not { IsValid: true } following)
+            {
+                break;
+            }
+
+            header = following;
+        }
+
+        return true;
     }
 
     public void Parse(ParseContext context)
