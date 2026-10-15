@@ -1950,19 +1950,19 @@
                       "children": [
                         {
                           "name": "Encoder",
-                          "value": "Apple AudioToolbox",
+                          "value": "Apple AAC encoder (AudioToolbox)",
                           "offset": 4096,
                           "length": 1976,
                           "children": [
                             {
                               "name": "Confidence",
-                              "value": "Low",
+                              "value": "Medium",
                               "offset": 4096,
                               "length": 1976
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 layout of Apple's AudioToolbox file writer, which also writes it around packets it copied: a DecoderConfigDescriptor whose stream type byte is 0x14 (reserved bit 0), an sbtd box in the sample entry, a free box that pads the audio data to a 4,096-byte boundary (at 0x1EB)",
+                              "value": "MP4 layout of Apple's AudioToolbox encoder: a DecoderConfigDescriptor whose stream type byte is 0x14 (reserved bit 0) and an sbtd box in the sample entry, which records the PCM source of an encode (at 0x1EB)",
                               "offset": 4096,
                               "length": 1976
                             }
@@ -2372,8 +2372,8 @@
         "duration": 0.5108390022675737,
         "averageBitrate": 30.945170454545455,
         "isVbr": false,
-        "encoder": "Apple AudioToolbox",
-        "encoderConfidence": "Low",
+        "encoder": "Apple AAC encoder (AudioToolbox)",
+        "encoderConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",

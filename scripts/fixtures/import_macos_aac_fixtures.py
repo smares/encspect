@@ -62,7 +62,7 @@ CHOSEN = [
     "alac-m4a-st44q16", "alac-caf-st44q16", "alac-m4a-st44q24", "alac-caf-st44q24",
     "he-m4a-cbr-st44-32", "he-m4a-cbr-mono22", "lc-m4a-music-st44", "lc-m4b-cbr-st44",
     "passthru-m4a-from-fdkaac-he-adts", "passthru-adts-from-fdkaac-m4a", "passthru-m4a-from-fdkaac-m4a", "passthru-m4a-from-ffmpeg-adts",
-    "passthru-m4a-from-faac-m4a",
+    "passthru-m4a-from-faac-m4a", "passthru-adts-from-ffmpeg-adts",
 ]
 
 

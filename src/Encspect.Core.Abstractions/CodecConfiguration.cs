@@ -26,6 +26,10 @@ public sealed record CodecConfiguration
     // variable bitrate, ISO/IEC 14496-1 7.2.6.6.2).
     public bool? IsVbr { get; init; }
 
+    // What the container's evidence about this one stream says about the encoder (MP4's layout of one track), in addition to the claims
+    // of the whole file. The codec parser sees them with the file's; the caller's claims do not gain them.
+    public IReadOnlyList<EncoderClaim> Claims { get; init; } = [];
+
     // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
     // come with the configuration, whose Data then holds the bytes after the structure.
     public AudioFormat? Format { get; init; }

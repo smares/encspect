@@ -15,10 +15,14 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     private int _depth;
 
     public bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration) =>
-        RunCodec(caller, codecId, parent, () => new CodecContext(parent, payload, caller.EncoderClaims, this, configuration));
+        RunCodec(caller, codecId, parent, () => new CodecContext(parent, payload, ClaimsFor(caller, configuration), this, configuration), configuration);
 
     public bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration) =>
-        RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, caller.EncoderClaims, this, configuration));
+        RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, ClaimsFor(caller, configuration), this, configuration), configuration);
+
+    // The file's claims, then those the container made about this stream alone.
+    private static IReadOnlyList<EncoderClaim> ClaimsFor(AnalysisContext caller, CodecConfiguration? configuration) =>
+        configuration is { Claims.Count: > 0 } ? [.. caller.EncoderClaims, .. configuration.Claims] : caller.EncoderClaims;
 
     public Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent) =>
         RunTag(caller, tagName, parent, slice.Start, slice.End, parser => parser.ParseWhole(new TagProbeContext(slice)));
@@ -89,7 +93,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         return shown;
     }
 
-    private bool RunCodec(AnalysisContext caller, string codecId, Node parent, Func<CodecContext> create)
+    private bool RunCodec(AnalysisContext caller, string codecId, Node parent, Func<CodecContext> create, CodecConfiguration? configuration)
     {
         ICodecParser? codec = codecs.FirstOrDefault(c => c.Id == codecId);
         if (codec is null)
@@ -134,7 +138,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
             caller.AddStream(stream);
         }
 
-        foreach (EncoderClaim claim in context.EncoderClaims.Except(caller.EncoderClaims))
+        foreach (EncoderClaim claim in context.EncoderClaims.Except(caller.EncoderClaims).Except(configuration?.Claims ?? []))
         {
             caller.AddEncoderClaim(claim);
         }

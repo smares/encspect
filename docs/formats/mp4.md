@@ -36,9 +36,10 @@ The codec's layout counts. The chan and chnl boxes complete a stream whose codec
 
 The container's metadata (©too, QuickTime's ©swr) names an encoder as written, with low confidence. Encoding Params and iTunSMPB are shown but name no encoder.
 
-Apple's AudioToolbox is named from the layout of its files, with low confidence (see [AAC](aac.md)):
+Apple's AudioToolbox is named from the layout of its files (see [AAC](aac.md)):
 
 - the DecoderConfigDescriptor's stream type byte has its reserved bit clear (0x14, shown as "reserved bit 0"), where ISO/IEC 14496-1 sets it;
-- and an sbtd box (the source bit depth, shown as a box of its own) in the audio sample entry, or a free box before mdat that puts the audio data on a 4,096-byte boundary.
+- with an sbtd box (the source bit depth, shown as a box of its own) in the audio sample entry, the encoder is named, "Apple AAC encoder (AudioToolbox)", with medium confidence: the box records the PCM source of an encode;
+- with a free box before mdat that puts the audio data on a 4,096-byte boundary instead, the writer is named, "Apple AudioToolbox", with low confidence.
 
-Apple's writer adds the sbtd box to M4A files, not to MP4 or 3GP files. Sound Check adds a `udta/ludt/tlou` loudness box to the track, shown as an unread box, and a freeform iTunNORM item. A remux by other software drops both signs. The layout is the writer's: afconvert's `-d 0` copies the packets of another file as they are, and the writer then writes the same layout when the source is ADTS (run 4: fdkaac streams copied that way are named Apple at low confidence; ffmpeg's and FAAC's keep their version text and are named by it). An M4A source keeps its own esds, so its copy shows no layout and is not named. afconvert writes an iTunSMPB and no Encoding Params or ©too.
+Apple's writer adds the sbtd box to M4A and M4B files, not to MP4 or 3GP files. Sound Check adds a `udta/ludt/tlou` loudness box to the track, shown as an unread box, and a freeform iTunNORM item. A remux by other software drops the signs. The layout is the writer's: afconvert's `-d 0` copies the packets of another file as they are (run 4), and the writer gives the copy the stream type byte and the padding when the source is ADTS (an fdkaac stream copied that way is named Apple at low confidence; ffmpeg's and FAAC's keep their version text and are named by it), but not the sbtd box. An M4A source keeps its own esds, so its copy shows no layout and is not named. afconvert writes an iTunSMPB and no Encoding Params or ©too.

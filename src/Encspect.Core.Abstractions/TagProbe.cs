@@ -12,15 +12,16 @@ public sealed record Evidence(string Description, long Offset, long Length);
 
 // What a tag says about the software that encoded the audio (an ID3v2 TSSE frame), and the node
 // that holds it. Format parsers weigh it against what the audio itself shows. A claim is low
-// confidence, since whatever software wrote the tag fills it in; a container that recognizes the
-// writer from the way it lays out its own structure (not from a name it was given) says so with a
-// higher one.
+// confidence, since whatever software wrote the tag fills it in. A container that recognizes the
+// writer from the way it lays out its own structure (not from a name it was given) makes a layout
+// claim (IsLayout), with the confidence the layout supports.
 public sealed record EncoderClaim(string Text, Node Source, string Description)
 {
     public Confidence Confidence { get; init; } = Confidence.Low;
 
-    // Whether the claim comes from the way a file is laid out and not from a name some software wrote, so it names the writer of the layout,
-    // which need not be the encoder; the text is then the name of that writer.
+    // Whether the claim comes from the way a file is laid out and not from a name some software wrote. It names the writer of the layout,
+    // which need not be the encoder (a writer can lay a file out around packets it only copied), and its description reads
+    // "what the layout is: the traces", the part before the colon being the subject of a finding.
     public bool IsLayout { get; init; }
 }
 

@@ -208,6 +208,7 @@ public sealed partial class AsfParser
                 $"ASF header: WMFSDKVersion {version}, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer{WriterSettings(state)}")
             {
                 Confidence = Confidence.Medium,
+                IsLayout = true,
             });
         }
         else if (state.MediaFoundationVersion is { } foundation && state.SdkVersion is null && !codecList && !writerObject && languageList && extendedStream && metadata && padding && bitrates)
@@ -216,6 +217,7 @@ public sealed partial class AsfParser
                 $"ASF header: MediaFoundationVersion {foundation}, a Language List, Extended Stream Properties and Metadata Object in the Header Extension Object, a Padding Object, and no Codec List Object or WMFSDKVersion, the layout of Media Foundation's ASF sink{WriterSettings(state)}")
             {
                 Confidence = Confidence.Medium,
+                IsLayout = true,
             });
         }
 
