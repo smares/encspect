@@ -34,8 +34,9 @@ class ChangesTests(unittest.TestCase):
         self.assertTrue(all(flags.values()))
 
     def test_parser_runs_its_own_cross_check_and_the_dotnet_jobs(self):
-        # The MPEG and MP4 jobs run the analyzer over downloaded samples, so any parser change runs them.
-        self.assertEqual(run("src/Encspect.Formats.Ogg/OggParser.cs"), set(changes.CI_JOBS_DOTNET) | {"ogg-crosscheck", "mpeg-crosscheck", "mp4-crosscheck"})
+        # The MPEG, MP4 and AC-3 jobs run the analyzer over downloaded samples, so any parser change runs them.
+        self.assertEqual(run("src/Encspect.Formats.Ogg/OggParser.cs"),
+                         set(changes.CI_JOBS_DOTNET) | {"ogg-crosscheck", "mpeg-crosscheck", "mp4-crosscheck", "ac3-crosscheck"})
 
     def test_codec_parser_of_a_container_runs_the_container_cross_checks(self):
         got = run("src/Encspect.Formats.Dts/DtsParser.cs")
@@ -130,6 +131,10 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("ac3-crosscheck", manifest)
         self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "dts-crosscheck"})
         self.assertEqual(run("scripts/fixtures/check_eac3_samples.py"), {"fixtures", "ac3-crosscheck"})
+
+    def test_a_parser_change_runs_the_ac3_samples_too(self):
+        for path in ("src/Encspect.Formats.Aac/AacCodecParser.cs", "src/Encspect.Tags.Ape/ApeTagParser.cs"):
+            self.assertIn("ac3-crosscheck", run(path), path)
 
     def test_platforms(self):
         self.assertEqual(len(changes.platforms("pull_request")), 4)

@@ -39,7 +39,7 @@ public sealed class CacheTests : IDisposable
         string file = _folder.Copy(Path.Combine(Fixtures.Directory, "ac3", "joc-atmos.eac3"), "atmos.eac3");
         FileSummary summary = Summarize(file);
         Assert.True(summary.Summary.HasObjectAudio);
-        Assert.Equal(15, summary.Summary.ObjectCount);
+        Assert.Equal(15, summary.Summary.JocObjectCount);
         using (SummaryCache cache = Cache())
         {
             cache.Put(file, FileFingerprint.Read(file)!, summary);
@@ -49,7 +49,7 @@ public sealed class CacheTests : IDisposable
         FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
         AssertSame(summary, read);
         Assert.True(read!.Summary.HasObjectAudio);
-        Assert.Equal(15, read.Summary.ObjectCount);
+        Assert.Equal(15, read.Summary.JocObjectCount);
     }
 
     [Theory]

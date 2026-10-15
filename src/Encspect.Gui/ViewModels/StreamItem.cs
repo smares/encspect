@@ -55,7 +55,7 @@ public sealed class StreamItem(StreamInfo stream)
 
             if (Stream.HasObjectAudio)
             {
-                parts.Add(Stream.ObjectCount is { } objects ? $"object audio ({Format.Count(objects, "object", "objects")})" : "object audio");
+                parts.Add(Stream.JocObjectCount is { } objects ? $"object audio ({Format.Count(objects, "object", "objects")})" : "object audio");
             }
 
             if (Stream.Encoder is { } encoder)

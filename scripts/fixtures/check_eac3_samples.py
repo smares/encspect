@@ -38,8 +38,8 @@ ATMOS = "Dolby Digital Plus + Dolby Atmos"
 
 
 def addresses(sample):
-    """The file's address, then the Wayback Machine's copy of it."""
-    return [sample["url"], downloads.archived(sample["url"], 2026)]
+    """The file's address, then the Wayback Machine's copy of it where it has one."""
+    return [sample["url"], *([downloads.archived(sample["url"], 2026)] if sample.get("archived", True) else [])]
 
 
 def fetch(manifest, cache):
@@ -90,8 +90,8 @@ def analyzer_problems(analyzer, path, sample):
         problems.append(f"the analyzer's hasObjectAudio is {stream.get('hasObjectAudio')}")
     if sample["object_audio"]:
         frames = sample["frames"]
-        if stream.get("objectCount") != sample["object_count"]:
-            problems.append(f"the analyzer's objectCount is {stream.get('objectCount')}")
+        if stream.get("jocObjectCount") != sample["joc_object_count"]:
+            problems.append(f"the analyzer's jocObjectCount is {stream.get('jocObjectCount')}")
         if statistic(report, "Complexity Index Type A") != sample["complexity_index"]:
             problems.append(f"the analyzer's complexity index is {statistic(report, 'Complexity Index Type A')}")
         # Dolby's encoder sends one container in every frame, and the flag in the same frame.

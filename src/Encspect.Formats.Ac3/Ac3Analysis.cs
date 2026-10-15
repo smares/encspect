@@ -284,7 +284,7 @@ internal sealed class Ac3Analysis
                 break;
             case Issue.DownmixModeReserved:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it for a Lt/Rt downmix for Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
+                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it to indicate Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
                 break;
             case Issue.EmdfLimit:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
@@ -477,7 +477,7 @@ internal sealed class Ac3Analysis
             AverageBitrate = program.Figures.AverageBitrate,
             IsVbr = program.IsVbr,
             HasObjectAudio = program.HasObjectAudio,
-            ObjectCount = program.ObjectCount,
+            JocObjectCount = program.JocObjectCount,
             Encoder = encoder?.Value?.ToString(),
             EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
             Series = program.Figures.Series(bitrate, Cancellation),

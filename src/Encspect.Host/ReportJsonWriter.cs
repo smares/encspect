@@ -190,9 +190,9 @@ public static class ReportJsonWriter
             writer.WriteBoolean("hasObjectAudio", true);
         }
 
-        if (stream.ObjectCount is { } objects)
+        if (stream.JocObjectCount is { } objects)
         {
-            writer.WriteNumber("objectCount", objects);
+            writer.WriteNumber("jocObjectCount", objects);
         }
 
         if (stream.Encoder is not null)

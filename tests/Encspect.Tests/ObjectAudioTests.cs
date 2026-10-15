@@ -18,11 +18,11 @@ public class ObjectAudioTests
         Report report = Analyze("joc-atmos.eac3");
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.True(stream.HasObjectAudio);
-        Assert.Equal(15, stream.ObjectCount);
+        Assert.Equal(15, stream.JocObjectCount);
         Assert.Empty(report.Findings);
         string json = Fixtures.ToJson(report);
         Assert.Contains("\"hasObjectAudio\": true", json, StringComparison.Ordinal);
-        Assert.Contains("\"objectCount\": 15", json, StringComparison.Ordinal);
+        Assert.Contains("\"jocObjectCount\": 15", json, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -35,11 +35,11 @@ public class ObjectAudioTests
         Assert.All(report.Streams, s =>
         {
             Assert.False(s.HasObjectAudio);
-            Assert.Null(s.ObjectCount);
+            Assert.Null(s.JocObjectCount);
         });
         string json = Fixtures.ToJson(report);
         Assert.DoesNotContain("hasObjectAudio", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("objectCount", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("jocObjectCount", json, StringComparison.Ordinal);
         Assert.DoesNotContain(report.Findings, f => f.Code.Contains("joc", StringComparison.Ordinal) || f.Code.Contains("emdf", StringComparison.Ordinal));
     }
 
@@ -48,15 +48,15 @@ public class ObjectAudioTests
     {
         ReportSummary atmos = ReportSummary.From(Analyze("joc-atmos.eac3"));
         Assert.True(atmos.HasObjectAudio);
-        Assert.Equal(15, atmos.ObjectCount);
+        Assert.Equal(15, atmos.JocObjectCount);
         ReportSummary plain = ReportSummary.From(Fixtures.AnalyzeMpeg("ac3/substreams.eac3"));
         Assert.False(plain.HasObjectAudio);
-        Assert.Null(plain.ObjectCount);
+        Assert.Null(plain.JocObjectCount);
 
         var writer = new StringWriter();
         ReportCsvWriter.Write([Analyze("joc-atmos.eac3"), Fixtures.AnalyzeMpeg("ac3/substreams.eac3")], writer);
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.EndsWith(",Object Audio,Object Count", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith(",Has Object Audio,JOC Object Count", lines[0], StringComparison.Ordinal);
         Assert.EndsWith(",true,15", lines[1], StringComparison.Ordinal);
         Assert.EndsWith(",false,", lines[2], StringComparison.Ordinal);
     }
@@ -193,7 +193,7 @@ public class ObjectAudioTests
         Assert.Empty(report.Findings);
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.True(stream.HasObjectAudio);
-        Assert.Equal(15, stream.ObjectCount);
+        Assert.Equal(15, stream.JocObjectCount);
     }
 
     [Theory]
@@ -247,7 +247,7 @@ public class ObjectAudioTests
         Node statistics = Assert.Single(report.Streams).Nodes[0].Children.Single(c => c.Name == "Statistics");
         Assert.Equal("4 containers", statistics.Children.Single(c => c.Name == "EMDF Containers").Value?.ToString());
         Assert.Equal("4 frames", statistics.Children.Single(c => c.Name == "Frames With Object Audio").Value?.ToString());
-        Assert.Equal(4, Assert.Single(report.Streams).ObjectCount);
+        Assert.Equal(4, Assert.Single(report.Streams).JocObjectCount);
     }
 
     [Fact]
@@ -265,7 +265,7 @@ public class ObjectAudioTests
         Report report = Analyze("emdf-truncated.eac3");
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.True(stream.HasObjectAudio);
-        Assert.Equal(4, stream.ObjectCount);
+        Assert.Equal(4, stream.JocObjectCount);
         Assert.Equal("3 frames", Value(report, "AC-3/Statistics/Frames With Object Audio"));
     }
 

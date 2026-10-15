@@ -291,11 +291,10 @@ internal sealed partial class FrameSyntax
                 // auxdatal bits before auxdatal (5.4.4), and what an encoder leaves before it; where
                 // the blocks were not read to their end, the audio blocks' remaining bits too, with the
                 // skip fields they hold. MediaInfo searches the whole frame for a container as well.
-                EmdfRegion(dataEnd, auxStart);
+                EmdfRegion(dataEnd, auxStart, blocksRead);
 
                 _t?.Close(auxStart, NodeValue.Integer(auxStart - dataEnd, "bits"));
             }
-
 
             if (blocksRead)
             {

@@ -32,9 +32,9 @@ public class FormatTests
     [Fact]
     public void A_stream_line_names_object_audio_and_its_object_count()
     {
-        var stream = new StreamInfo { Nodes = [new Node("x", 0, 1)], Codec = "E-AC-3", SampleRate = 48000, Channels = 8, HasObjectAudio = true, ObjectCount = 15 };
+        var stream = new StreamInfo { Nodes = [new Node("x", 0, 1)], Codec = "E-AC-3", SampleRate = 48000, Channels = 8, HasObjectAudio = true, JocObjectCount = 15 };
         Assert.Contains("object audio (15 objects)", new StreamItem(stream).Text, StringComparison.Ordinal);
-        Assert.Contains("object audio", new StreamItem(stream with { ObjectCount = null }).Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("object audio", new StreamItem(stream with { HasObjectAudio = false, ObjectCount = null }).Text, StringComparison.Ordinal);
+        Assert.Contains("object audio", new StreamItem(stream with { JocObjectCount = null }).Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("object audio", new StreamItem(stream with { HasObjectAudio = false, JocObjectCount = null }).Text, StringComparison.Ordinal);
     }
 }

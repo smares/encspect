@@ -554,7 +554,7 @@ public sealed class SummaryCache : IDisposable
         writer.Write(summary.Warnings);
         writer.Write(summary.Infos);
         writer.Write(summary.HasObjectAudio);
-        WriteOptional(writer, summary.ObjectCount, writer.Write);
+        WriteOptional(writer, summary.JocObjectCount, writer.Write);
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
     }

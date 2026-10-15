@@ -1,5 +1,5 @@
 {
- "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and two E-AC-3 files with the adaptive hybrid transform from the FFmpeg sample archive. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set.",
+ "description": "Real E-AC-3 files: joint object coding (Dolby Atmos) test files from Dolby's Dolby Digital Plus Online Delivery Kit v1.4.1, and two E-AC-3 files with the adaptive hybrid transform from the FFmpeg sample archive. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it.",
  "sources": {
   "dolby": {
    "page": "https://ott.dolby.com/OnDelKits/DDP/Dolby_Digital_Plus_Online_Delivery_Kit_v1.4.1/Test_Signals/muxed_streams/MP4/MP4_Muxed_Streams.html",
@@ -19,7 +19,7 @@
    "size": 15123330,
    "frames": 5669,
    "object_audio": true,
-   "object_count": 15,
+   "joc_object_count": 15,
    "complexity_index": 16,
    "dynamic_objects": 15,
    "findings": [],
@@ -33,11 +33,12 @@
    "size": 15268867,
    "frames": 5673,
    "object_audio": true,
-   "object_count": 15,
+   "joc_object_count": 15,
    "complexity_index": 16,
    "dynamic_objects": 15,
    "findings": [],
-   "info_findings": []
+   "info_findings": [],
+   "archived": false
   },
   {
    "file": "ChID_voices_1280x720p_25fps_h264_6ch_640kbps_ddp_joc.mp4",
@@ -47,13 +48,14 @@
    "size": 32105062,
    "frames": 2361,
    "object_audio": true,
-   "object_count": 15,
+   "joc_object_count": 15,
    "complexity_index": 16,
    "dynamic_objects": 15,
    "findings": [],
    "info_findings": [
     "ac3.dmixmod-reserved"
-   ]
+   ],
+   "archived": false
   },
   {
    "file": "casablanca_aht_mono_64.eac3",

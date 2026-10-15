@@ -42,7 +42,7 @@ LRS_RRS = 0x8000 >> 6
 def stream(codec, rate, acmod, lfeon, samples, layout=None, vbr=False, mode=None, objects=None):
     speakers = layout or m.speakers(acmod, lfeon)
     return {"codec": codec, "sample_rate": rate, "channels": len(speakers), "channel_mode": mode or m.CODING_MODES[acmod], "channel_layout": speakers,
-            "samples": samples, "is_vbr": vbr, **({"has_object_audio": True, "object_count": objects} if objects else {})}
+            "samples": samples, "is_vbr": vbr, **({"has_object_audio": True, "joc_object_count": objects} if objects else {})}
 
 
 def frames_of(data, start=0, end=None):

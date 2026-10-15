@@ -44,34 +44,35 @@ internal sealed partial class FrameSyntax
     // EmdfTest, a dry run of the structure as MediaInfo's Ac3_EMDF_Test makes it, since the sync
     // word's 16 bits occur by chance in data. A frame whose additional bit stream information sets
     // the extension flag announces a container, so one that starts the region, or follows another, is
-    // read on its sync word alone and its damage reported. What the analysis found is kept in the
+    // read on its sync word alone and its damage reported, but only where a field starts (a skip field or
+    // the bits after the last block read); the bits after where reading stopped, mid-block, start nowhere. What the analysis found is kept in the
     // record (where each starts), so building nodes reads the same containers.
-    private void EmdfRegion(int start, int end)
+    private void EmdfRegion(int start, int end, bool announced = true)
     {
         if (end - start < MinEmdfBits)
         {
             return;
         }
 
-        int next = FindEmdf(start, end);
+        int next = FindEmdf(start, end, announced);
         int more = _b.Derived(1, next >= 0 ? 1 : 0);
         for (int count = 0; more != 0 && count < MaxEmdfContainers; count++)
         {
             int at = start + _b.Derived(16, Math.Max(0, next - start));
             int stop = EmdfContainer(at, end);
-            next = FindEmdf(stop, end);
+            next = FindEmdf(stop, end, announced);
             more = _b.Derived(1, count + 1 < MaxEmdfContainers && next >= 0 ? 1 : 0);
         }
     }
 
-    private int FindEmdf(int from, int end)
+    private int FindEmdf(int from, int end, bool announced)
     {
         if (_b.IsBuildingNodes || end - from < MinEmdfBits)
         {
             return -1;
         }
 
-        if (_r.ExtensionFlag == 1 && _b.Peek(from, 16) == EmdfSync)
+        if (announced && _r.ExtensionFlag == 1 && _b.Peek(from, 16) == EmdfSync)
         {
             return from;
         }
@@ -97,7 +98,7 @@ internal sealed partial class FrameSyntax
 
     // Whether a container that starts at a sync word is well formed: its length fits, its version
     // is 0, the payloads reach the end marker inside the length, the protection length is defined,
-    // and the fields end in the last byte with zero padding (ETSI TS 102 366 H.2).
+    // and the fields end exactly at emdf_container_length, after zero padding to the byte boundary (ETSI TS 102 366 H.2).
     private bool EmdfTest(int at, int end)
     {
         int pos = at + 16;
@@ -235,7 +236,7 @@ internal sealed partial class FrameSyntax
             Skip(ProtectionBits(primary));
             Skip(secondary == 0 ? 0 : ProtectionBits(secondary));
             int padding = (8 - ((pos - body) & 7)) & 7;
-            return padding == 0 || Take(padding) == 0;
+            return (padding == 0 || Take(padding) == 0) && pos == limit;
         }
         catch (EndOfStreamException)
         {

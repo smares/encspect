@@ -86,7 +86,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // frame gives), or null where no frame says.
     public bool HasObjectAudio => JocFrames > 0;
 
-    public int? ObjectCount => MaxObjects > 0 ? MaxObjects : null;
+    public int? JocObjectCount => MaxObjects > 0 ? MaxObjects : null;
 
     private readonly long[] _strategies = new long[4];
 

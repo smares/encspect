@@ -187,7 +187,7 @@ public class CommandLineTests
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(3, lines.Length);
         Assert.Contains("no-such-file.mp3,,0,", lines[1]);
-        Assert.EndsWith(",1,0,0,false,", lines[1]);
+        Assert.EndsWith(",1,0,0,,", lines[1]);
     }
 
     [Fact]
@@ -469,7 +469,7 @@ public class CommandLineTests
                 Assert.Equal(CommandLine.UnreadableFile, code);
                 Assert.Equal(3, lines.Length);
                 Assert.StartsWith(folder["a.mp3"] + ",MPEG Audio,", lines[1]);
-                Assert.Equal(fifo + ",,0,,,,,,,,,,,1,0,0,false,", lines[2]);
+                Assert.Equal(fifo + ",,0,,,,,,,,,,,1,0,0,,", lines[2]);
                 Assert.Equal($"{fifo}: This is a named pipe, socket or terminal, not a regular file, so it was not read.{Environment.NewLine}", errors);
             }
 
@@ -509,7 +509,7 @@ public class CommandLineTests
 
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(CommandLine.UnreadableFile, code);
-        Assert.Equal("/dev/zero,,0,,,,,,,,,,,1,0,0,false,", lines[1]);
+        Assert.Equal("/dev/zero,,0,,,,,,,,,,,1,0,0,,", lines[1]);
         Assert.Contains(",MPEG Audio,", lines[2]);
         Assert.StartsWith("/dev/zero: This is a device or kernel file that reports a size of 0 but yields data, not a regular file", errors);
     }
@@ -538,7 +538,7 @@ public class CommandLineTests
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Equal(3, lines.Length);
-        Assert.Equal(folder["locked"] + ",,0,,,,,,,,,,,1,0,0,false,", lines[1]);
+        Assert.Equal(folder["locked"] + ",,0,,,,,,,,,,,1,0,0,,", lines[1]);
         Assert.StartsWith(folder["ok/a.mp3"] + ",MPEG Audio,", lines[2]);
         Assert.StartsWith(folder["locked"] + ": ", errors);
     }
@@ -587,8 +587,8 @@ public class CommandLineTests
         Assert.Equal(CommandLine.UnreadableFile, code);
         Assert.Equal(4, lines.Length);
         Assert.Contains(",MPEG Audio,", lines[1]);
-        Assert.EndsWith(",,0,,,,,,,,,,,1,0,0,false,", lines[2]);
-        Assert.EndsWith(",,0,,,,,,,,,,,1,0,0,false,", lines[3]);
+        Assert.EndsWith(",,0,,,,,,,,,,,1,0,0,,", lines[2]);
+        Assert.EndsWith(",,0,,,,,,,,,,,1,0,0,,", lines[3]);
         Assert.Equal(2, errors.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
