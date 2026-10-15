@@ -33,6 +33,25 @@ public sealed class CacheTests : IDisposable
         Assert.Null(later.TryGet(_folder["other.mp3"], fingerprint));
     }
 
+    [Fact]
+    public void Object_audio_survives_the_cache()
+    {
+        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "ac3", "joc-atmos.eac3"), "atmos.eac3");
+        FileSummary summary = Summarize(file);
+        Assert.True(summary.Summary.HasObjectAudio);
+        Assert.Equal(15, summary.Summary.JocObjectCount);
+        using (SummaryCache cache = Cache())
+        {
+            cache.Put(file, FileFingerprint.Read(file)!, summary);
+        }
+
+        using SummaryCache later = Cache();
+        FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
+        AssertSame(summary, read);
+        Assert.True(read!.Summary.HasObjectAudio);
+        Assert.Equal(15, read.Summary.JocObjectCount);
+    }
+
     [Theory]
     [InlineData("size")]
     [InlineData("time")]

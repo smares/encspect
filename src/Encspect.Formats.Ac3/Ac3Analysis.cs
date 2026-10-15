@@ -26,6 +26,7 @@ internal sealed class Ac3Analysis
     private int _frameIndex;
     private long _frameOffset;
     private int _frameLength;
+    private AccessUnit _unit = new();
 
     public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null)
     {
@@ -125,6 +126,12 @@ internal sealed class Ac3Analysis
                     : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
         }
 
+        if (!header.IsDependent)
+        {
+            FinishUnit();
+        }
+
+        _unit.Add(offset, result);
         Program? program = Assign(region, index, header, result);
         program?.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch);
     }
@@ -171,6 +178,16 @@ internal sealed class Ac3Analysis
         Issue.EnhancedCoupling => "ac3.enhanced-coupling-not-read",
         Issue.MixDataOverrun => "ac3.mix-data-overrun",
         Issue.ChannelMapCount => "ac3.channel-map-count",
+        Issue.EmdfTruncated => "ac3.emdf-truncated",
+        Issue.EmdfLength => "ac3.emdf-length",
+        Issue.EmdfPayloadSize => "ac3.emdf-payload-size",
+        Issue.EmdfReserved => "ac3.emdf-reserved",
+        Issue.EmdfVersion => "ac3.emdf-version-not-read",
+        Issue.PayloadShort => "ac3.object-payload-short",
+        Issue.JocReserved => "ac3.joc-reserved",
+        Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
+        Issue.EmdfLimit => "ac3.emdf-limit",
+        Issue.DownmixModeReserved => "ac3.dmixmod-reserved",
         _ => "ac3.auxiliary-length",
     };
 
@@ -233,10 +250,104 @@ internal sealed class Ac3Analysis
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"In a dependent substream {detail} (A/52 Annex E 2.3.1.8 requires them to match). First in {at} ({Times(count)}).");
                 break;
+            case Issue.EmdfTruncated:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container is cut short: {detail} (ETSI TS 102 366 H.2.2.1.2). First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfLength:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container does not end where emdf_container_length says: {detail} (ETSI TS 102 366 H.2.2.1.2). First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfPayloadSize:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF payload runs past its container: {detail} (ETSI TS 102 366 H.2.2.2.5). The rest of the container is not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfReserved:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container holds what ETSI TS 102 366 Annex H does not allow: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfVersion:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"An EMDF container has a version Annex H does not define ({detail}), so its payloads are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.PayloadShort:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An object audio payload is too short for its first fields: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.JocReserved:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"A joint object coding header holds a reserved or out-of-range value: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.ObjectAudioIncomplete:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An EMDF container has only one of the two payloads of object audio: {detail}; ETSI TS 103 420 8.2 carries the JOC and the OAMD payload together. First in {at} ({Times(count)}).");
+                break;
+            case Issue.DownmixModeReserved:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it to indicate Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
+                break;
+            case Issue.EmdfLimit:
+                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
+                    $"An EMDF container goes beyond what the analyzer reads: {detail}, so the rest of the container is not read. First in {at} ({Times(count)}).");
+                break;
             case Issue.AuxiliaryLength:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
                     $"{detail} (A/52 5.4.4.2). First in {at} ({Times(count)}).");
                 break;
+        }
+    }
+
+    // The extension flag and the JOC payload are judged over an access unit, an independent frame and
+    // the dependent frames after it: ETSI TS 103 420 8.3.1 puts the flag in the substream that holds the
+    // container, and ffmpeg reads it from either. A unit whose frames were not all read to their end
+    // may hold a container in the bits that were not.
+    private void FinishUnit()
+    {
+        AccessUnit unit = _unit;
+        _unit = new();
+        if (unit.ExtensionOffset >= 0 && unit.JocOffset < 0 && unit.AllRead)
+        {
+            Findings.Add(Severity.Warning, "ac3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
+                $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x{unit.ExtensionOffset:X}.");
+        }
+        else if (unit.JocOffset >= 0 && unit.ExtensionOffset < 0)
+        {
+            Findings.Add(Severity.Warning, "ac3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
+                $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at 0x{unit.JocOffset:X}.");
+        }
+    }
+
+    private static string Units(int count) => count == 1 ? "1 access unit (an independent frame and its dependent frames)" : $"{count} access units (independent frames and their dependent frames)";
+
+    private sealed class AccessUnit
+    {
+        public long ExtensionOffset { get; private set; } = -1;
+
+        public int ExtensionStart { get; private set; }
+
+        public int ExtensionEnd { get; private set; }
+
+        public long JocOffset { get; private set; } = -1;
+
+        public int JocStart { get; private set; }
+
+        public int JocEnd { get; private set; }
+
+        public bool AllRead { get; private set; } = true;
+
+        public void Add(long offset, FrameResult result)
+        {
+            if (result.ExtensionFlag == 1 && ExtensionOffset < 0)
+            {
+                (ExtensionOffset, ExtensionStart, ExtensionEnd) = (offset, result.ExtensionStart, result.ExtensionEnd);
+            }
+
+            if (result.HasJoc && JocOffset < 0)
+            {
+                (JocOffset, JocStart, JocEnd) = (offset, result.JocStart, result.JocEnd);
+            }
+
+            AllRead &= result.Stop == StopReason.None;
         }
     }
 
@@ -306,6 +417,7 @@ internal sealed class Ac3Analysis
     // region it spans.
     public void Finish(IReadOnlyList<EncoderClaim> claims)
     {
+        FinishUnit();
         List<Program> programs = [.. _finished, .. _programs.Values];
         programs.Sort((a, b) => a.FirstFrame.CompareTo(b.FirstFrame));
         bool several = programs.Select(p => p.Key.Id).Distinct().Count() > 1 || programs.Any(p => p.Key.IsEac3);
@@ -364,6 +476,8 @@ internal sealed class Ac3Analysis
             Duration = program.Figures.Duration,
             AverageBitrate = program.Figures.AverageBitrate,
             IsVbr = program.IsVbr,
+            HasObjectAudio = program.HasObjectAudio,
+            JocObjectCount = program.JocObjectCount,
             Encoder = encoder?.Value?.ToString(),
             EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
             Series = program.Figures.Series(bitrate, Cancellation),

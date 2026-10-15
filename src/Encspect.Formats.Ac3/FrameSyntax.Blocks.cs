@@ -247,7 +247,11 @@ internal sealed partial class FrameSyntax
             int length = F("Skip Length", 9, Explain.Skipl, v => NodeValue.Integer(v, "bytes"));
             int start = _b.Position;
             _b.Skip(length * 8);
-            _t?.Field("Skip Field", start, _b.Position, NodeValue.Integer(length, "bytes"), Explain.Skipfld);
+            int end = _b.Position;
+            _t?.Open("Skip Field", start, Explain.Skipfld);
+            EmdfRegion(start, end);
+            _b.MoveTo(end);
+            _t?.Close(end, NodeValue.Integer(length, "bytes"));
             _r.SkipBytes += length;
         }
 

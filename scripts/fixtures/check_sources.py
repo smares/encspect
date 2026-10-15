@@ -16,6 +16,7 @@ import time
 import aotuv_tool
 import asf_specs
 import blade_tool
+import check_eac3_samples
 import check_mp3pro_samples
 import check_sbr_samples
 import check_usac_samples
@@ -48,6 +49,9 @@ def sources():
     mp3pro = json.loads((ROOT / "tests" / "conformance" / "mp3pro-samples.json").read_text(encoding="utf-8"))
     for sample in mp3pro["samples"]:
         yield sample["file"], sample["sha256"], check_mp3pro_samples.addresses(mp3pro, sample)
+    eac3 = json.loads((ROOT / "tests" / "conformance" / "eac3-samples.json").read_text(encoding="utf-8"))
+    for sample in eac3["samples"]:
+        yield sample["file"], sample["sha256"], check_eac3_samples.addresses(sample)
     usac = json.loads((ROOT / "tests" / "conformance" / "usac-samples.json").read_text(encoding="utf-8"))
     for sample in usac["samples"]:
         yield sample["file"], sample["sha256"], check_usac_samples.addresses(sample)

@@ -1,0 +1,168 @@
+{
+ "description": "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, so their audio blocks are not read, with the extension flag and a container for 4 objects after block 0, and a dec3 box that sets the extension with complexity index 4.",
+ "length": 2980,
+ "format": "MP4",
+ "frames": [
+  [
+   580,
+   600
+  ],
+  [
+   1180,
+   600
+  ],
+  [
+   1780,
+   600
+  ],
+  [
+   2380,
+   600
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "joc_object_count": 4
+  }
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "4"
+ },
+ "findings": [
+  [
+   "ac3.aht-not-read",
+   "adaptive hybrid transform"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "skip": {
+   "decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."
+  }
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   544
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   428
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   328
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   243
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   183
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   67
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3",
+   413,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3/dec3",
+   449,
+   15
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   464,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   488,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   516,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   552,
+   20
+  ],
+  [
+   "mdat",
+   572,
+   2408
+  ]
+ ]
+}

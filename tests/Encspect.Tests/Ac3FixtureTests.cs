@@ -70,6 +70,8 @@ public class Ac3FixtureTests
             Assert.Equal(expected.GetProperty("channel_layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
             Assert.Equal(expected.GetProperty("samples").GetInt64(), stream.Samples);
             Assert.Equal(expected.GetProperty("is_vbr").GetBoolean(), stream.IsVbr);
+            Assert.Equal(expected.TryGetProperty("has_object_audio", out JsonElement hasObjects) && hasObjects.GetBoolean(), stream.HasObjectAudio);
+            Assert.Equal(expected.TryGetProperty("joc_object_count", out JsonElement objects) ? objects.GetInt32() : null, stream.JocObjectCount);
             if (expected.TryGetProperty("encoder", out JsonElement encoder))
             {
                 Assert.Equal((encoder[0].GetString(), encoder[1].GetString()), (stream.Encoder, stream.EncoderConfidence?.ToString()));

@@ -1,0 +1,201 @@
+{
+ "description": "The frames of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
+ "length": 8772,
+ "format": "MP4",
+ "frames": [
+  [
+   580,
+   2048
+  ],
+  [
+   2628,
+   2048
+  ],
+  [
+   4676,
+   2048
+  ],
+  [
+   6724,
+   2048
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 6144,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "joc_object_count": 15
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.config-differs",
+   "gives complexity_index_type_a 12"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   544
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   428
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   328
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   243
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   183
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   67
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3",
+   413,
+   51
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3/dec3",
+   449,
+   15
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   464,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   488,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   516,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   552,
+   20
+  ],
+  [
+   "mdat",
+   572,
+   8200
+  ]
+ ],
+ "block_ends": {
+  "580": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "2628": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "4676": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "6724": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ]
+ }
+}

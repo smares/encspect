@@ -28,4 +28,13 @@ public class FormatTests
         Assert.Equal("0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes", Format.Location(new Node("x", 0x1A, 40) { Ranges = [new ByteRange(0x1A, 2), new ByteRange(0x40, 2)] }));
         Assert.Equal("0x0, 1 byte", Format.Location(new Node("x", 0, 1)));
     }
+
+    [Fact]
+    public void A_stream_line_names_object_audio_and_its_object_count()
+    {
+        var stream = new StreamInfo { Nodes = [new Node("x", 0, 1)], Codec = "E-AC-3", SampleRate = 48000, Channels = 8, HasObjectAudio = true, JocObjectCount = 15 };
+        Assert.Contains("object audio (15 objects)", new StreamItem(stream).Text, StringComparison.Ordinal);
+        Assert.Contains("object audio", new StreamItem(stream with { JocObjectCount = null }).Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("object audio", new StreamItem(stream with { HasObjectAudio = false, JocObjectCount = null }).Text, StringComparison.Ordinal);
+    }
 }

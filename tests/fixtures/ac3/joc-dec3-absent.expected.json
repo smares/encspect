@@ -1,0 +1,201 @@
+{
+ "description": "The frames of joc-atmos in MP4 whose dec3 box ends after its substreams.",
+ "length": 8770,
+ "format": "MP4",
+ "frames": [
+  [
+   578,
+   2048
+  ],
+  [
+   2626,
+   2048
+  ],
+  [
+   4674,
+   2048
+  ],
+  [
+   6722,
+   2048
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 6144,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "joc_object_count": 15
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.config-differs",
+   "ends after its substreams"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   542
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   426
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   326
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   241
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   181
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   65
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3",
+   413,
+   49
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ec-3/dec3",
+   449,
+   13
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   462,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   486,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   514,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   550,
+   20
+  ],
+  [
+   "mdat",
+   570,
+   8200
+  ]
+ ],
+ "block_ends": {
+  "578": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "2626": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "4674": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "6722": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ]
+ }
+}

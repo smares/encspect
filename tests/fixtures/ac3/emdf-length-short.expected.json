@@ -1,0 +1,77 @@
+{
+ "description": "Three 2/0 frames with an EMDF container for 4 objects in the auxiliary data; the second has an emdf_container_length one byte short of its protection bits.",
+ "length": 1800,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   600
+  ],
+  [
+   600,
+   600
+  ],
+  [
+   1200,
+   600
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4608,
+   "is_vbr": false,
+   "has_object_audio": true,
+   "joc_object_count": 4
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.emdf-length",
+   "run past the"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The frames' auxiliary data would move with the rewritten sizes; the check adds nothing for them."
+  }
+ },
+ "block_ends": {
+  "0": [
+   254,
+   258,
+   262,
+   266,
+   270,
+   274
+  ],
+  "600": [
+   254,
+   258,
+   262,
+   266,
+   270,
+   274
+  ],
+  "1200": [
+   254,
+   258,
+   262,
+   266,
+   270,
+   274
+  ]
+ }
+}

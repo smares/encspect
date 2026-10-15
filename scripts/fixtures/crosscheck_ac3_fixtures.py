@@ -29,6 +29,24 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   next block's start; the last block's end is not checked this way.
 - "skip": the checks that are not run on the fixture, each with its reason.
 
+Object audio (ETSI TS 103 420) is compared with both tools, by mapping their words to the analyzer's rather than
+copying them:
+
+- ffprobe's stream profile "Dolby Digital Plus + Dolby Atmos" is ffmpeg's reading of flag_ec3_extension_type_a in
+  the additional bit stream information of the frames it decodes (libavcodec/eac3dec.c, eac3_extension_type_a,
+  and ac3dec.c, AV_PROFILE_EAC3_DDP_ATMOS), not of the EMDF payloads and not of the dec3 box (libavformat/mov.c
+  reads neither dec3's extension nor the JOC payload; movenc.c writes none). It must name the profile exactly when
+  a frame of the golden report sets HasExtensionTypeA.
+- MediaInfo's "JOC" among the additional features (Format_AdditionalFeatures, "E-AC-3 JOC" as the format) is the
+  analyzer's stream with object audio; its commercial name "Dolby Digital Plus with Dolby Atmos" follows from it;
+  its ComplexityIndex is the dec3 box's complexity_index_type_a, "Not present" where the box does not set the
+  flag, and the last frame's from the additional bit stream information (the analyzer's "Complexity Index Type
+  A"), read only after a JOC payload has been seen (File_Ac3.cpp, Streams_Fill and Core_Frame); its
+  NumberOfDynamicObjects is the object count of the last OAMD payload (object_audio_metadata_payload and
+  program_assignment: the fixtures send dynamic objects only, so it equals the analyzer's "Object Count").
+  MediaInfo takes a container wherever Ac3_EMDF_Test finds one before the frame's auxiliary data field; the
+  fixtures that put it in that field, or break the test, name their evidence.
+
 Every fixture is also compared with MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), against
 its golden report: the format, dependent substreams, sample rate, channels and layout, bsid,
 acmod, lfeon, bsmod (ServiceKind), dialnorm and its range, compr, dynrng, dsurmod and the Dolby
@@ -64,7 +82,7 @@ CHECKS = ("ffprobe", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "s
 
 def ffprobe(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
-                          "stream=codec_name,sample_rate,channels,channel_layout,bit_rate:packet=pos,size", "-of", "json", str(path)],
+                          "stream=codec_name,profile,sample_rate,channels,channel_layout,bit_rate:packet=pos,size", "-of", "json", str(path)],
                          capture_output=True, text=True, check=True).stdout
     return json.loads(out)
 
@@ -87,6 +105,107 @@ def normalized(speakers):
     return sorted(speakers)
 
 
+def frame_nodes(report):
+    return [n for n in mi.walk(report["root"]) if n.get("kind") == "Frame"]
+
+
+def extension_complexities(report):
+    """Per frame, complexity_index_type_a where the frame's additional bit stream information sets
+    flag_ec3_extension_type_a, else None."""
+    out = []
+    for frame in frame_nodes(report):
+        flag = next(find(frame, "HasExtensionTypeA"), None)
+        complexity = next(find(frame, "Complexity Index Type A"), None)
+        out.append(complexity["value"] if flag is not None and flag.get("value") is True and complexity is not None else None)
+    return out
+
+
+def objects_of(node):
+    return int(str(node["value"]).split()[0]) if isinstance(node["value"], str) else int(node["value"])
+
+
+def mediainfo_complexity(report):
+    """What MediaInfo 24.01 reports as ComplexityIndex (File_Ac3.cpp, Streams_Fill): the dec3 box's
+    value or "Not present", and the frames' where it differs. The frames' value is set by a frame's
+    additional bit stream information once a JOC payload has been parsed, and cleared by every
+    container."""
+    stream_value = None
+    seen_joc = False
+    for frame in frame_nodes(report):
+        if next(find(frame, "EMDF Container"), None) is not None:
+            stream_value = None
+        if next(find(frame, "JOC Header"), None) is not None:
+            seen_joc = True
+        flag = next(find(frame, "HasExtensionTypeA"), None)
+        complexity = next(find(frame, "Complexity Index Type A"), None)
+        if seen_joc and flag is not None and flag.get("value") is True and complexity is not None:
+            stream_value = complexity["value"]
+    box = next(find(report["root"], "dec3"), None)
+    container = None
+    if box is not None:
+        flag = next(find(box, "HasExtensionTypeA"), None)
+        complexity = next(find(box, "Complexity Index Type A"), None)
+        if flag is not None and flag.get("value") is True and complexity is not None:
+            container = complexity["value"]
+    parts = []
+    if box is not None and container is not None:
+        parts.append(container)
+    if box is not None and container is None and stream_value is not None:
+        parts.append("Not present")
+    if stream_value is not None and stream_value != container:
+        parts.append(stream_value)
+    if box is not None and container is not None and stream_value is None:
+        parts.append("Not present")
+    return " / ".join(str(p) for p in parts) or None
+
+
+def mediainfo_dynamic_objects(data, report):
+    """What MediaInfo 24.01 reports as NumberOfDynamicObjects: the object count of the last OAMD
+    payload, read as File_Ac3.cpp does (object_audio_metadata_payload, program_assignment): a
+    program of dynamic objects only has that many less one for an LFE channel; otherwise the count
+    program_assignment gives, 0 without one. data holds the file; the report's node offsets are in it."""
+    last = None
+    for frame in frame_nodes(report):
+        for payload in find(frame, "Payload"):
+            if str(payload.get("value", "")).startswith("11 "):
+                count = next((c for c in payload.get("children", []) if c["name"] == "Object Count"), None)
+                if count is not None:
+                    last = count
+    if last is None:
+        return None
+    position = last["offset"] * 8 + last.get("bitOffset", 0)
+
+    def read(width):
+        nonlocal position
+        skip = position % 8
+        span = (skip + width + 7) // 8
+        chunk = int.from_bytes(data[position // 8:position // 8 + span], "big")
+        position += width
+        return (chunk >> (span * 8 - skip - width)) & ((1 << width) - 1)
+
+    bits = read(5)
+    if bits == 0x1F:
+        bits += read(7)
+    objects = bits + 1
+    if read(1):
+        return objects - read(1)
+    mask = read(4)
+    if mask & 1:
+        read(1)
+        beds = read(3) + 2 if read(1) else 1
+        for _ in range(beds):
+            if not read(1):
+                read(10) if read(1) else read(17)
+    if mask & 2:
+        read(3)
+    if mask & 4:
+        dynamic = read(5)
+        if dynamic == 0x1F:
+            dynamic += read(7)
+        return dynamic + 1
+    return 0
+
+
 def check_ffprobe(path, data, manifest, problems):
     probe = ffprobe(path)
     streams = probe.get("streams", [])
@@ -102,6 +221,10 @@ def check_ffprobe(path, data, manifest, problems):
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
     if "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
+    flagged = extension_complexities(mi.golden(path))
+    expected_profile = "Dolby Digital Plus + Dolby Atmos" if any(c is not None for c in flagged) else None
+    if actual.get("profile") not in ([expected_profile] if expected_profile else [None, "unknown"]):
+        problems.append(f"ffprobe's profile {actual.get('profile')!r}, expected {expected_profile!r} (flag_ec3_extension_type_a set in {sum(c is not None for c in flagged)} frames)")
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
     expected_packets = packets_of(data, manifest["frames"]) if manifest["format"] == "AC-3" else packets_of_samples(data, manifest["frames"])
     if packets != expected_packets:
@@ -297,6 +420,8 @@ FIRST_FRAME_RATE = "MediaInfo takes the bitrate of the first frame of each subst
 COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), where the analyzer counts every frame, the cut one with a finding"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
+AUXILIARY_FIELD = "MediaInfo searches the frame for the container but parses it only if it starts before the auxiliary data field (File_Ac3.cpp, Core_Frame: BitsAtEnd<EMDF_RemainPos), which this fixture's container, inside that field, does not"
+
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 MEDIAINFO_READS_OTHERWISE = {
     "bsid-10": {"format": "MediaInfo knows the frame size of bsid 0 to 9 and 11 to 16 only (File_Ac3.cpp, FrameSynchPoint_Test), so it never syncs on bsid 10, which A/52 does not define (Annex E 2.3.1.6 has decoders mute bsid 9 and 10, as the analyzer's ac3 finding cites)"},
@@ -306,6 +431,9 @@ MEDIAINFO_READS_OTHERWISE = {
     "dependent-first": dict.fromkeys(["channels", "channel layout", "bitrate", "samples", "duration", "stream size"], DEPENDENT_FIRST),
     "derived-ffmpeg-eac3-mono-48k-spx-delta": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "substreams": dict.fromkeys(["samples", "duration", "stream size"], FIRST_FRAME_RATE),
+    "joc-auxiliary-data": {"joint object coding": AUXILIARY_FIELD},
+    "joc-short": {"frames": "MediaInfo reads the one-byte JOC payload's joc_header and joc_info past the payload and then skips to the end of the data (File_Ac3.cpp, emdf_container: \"Problem during emdf_payload parsing, going to end directly\"), so it does not count that frame",
+                  "joint object coding": "MediaInfo reads joc_header and joc_info without regard to the payload's size (File_Ac3.cpp, joc_header, joc_info), so the one-byte JOC payload gives it a second joc_num_objects, and it reports JOC only when all frames agree on one (HasJOC: joc_num_objects_map.size()==1)"},
     "external-ffmpeg-stereo-44k-64k": dict.fromkeys(["samples", "stream size"], "MediaInfo derives the samples and stream size from its duration rounded to the millisecond: 0.522 s at 44100 Hz is 23020 samples, at 64 kbps 4176 bytes, where 15 frames hold 23040 samples in 4180 bytes"),
 }
 
@@ -319,6 +447,19 @@ def dialnorm(value):
 
 def mediainfo_frames(report):
     return [n for n in mi.walk(report["root"]) if n.get("kind") == "Frame"]
+
+
+def check_object_audio(path, audio, report, stream, features, tally):
+    """MediaInfo's JOC reading against the analyzer's object audio, see the module's notes."""
+    joc = "JOC" in features
+    tally.compare("joint object coding", joc, bool(stream.get("hasObjectAudio")))
+    if stream["codec"] != "E-AC-3":
+        return
+    tally.compare("commercial name", audio.get("Format_Commercial_IfAny"), "Dolby Digital Plus with Dolby Atmos" if joc else "Dolby Digital Plus")
+    extra = audio.get("extra", {})
+    tally.compare("complexity index", extra.get("ComplexityIndex"), mediainfo_complexity(report) if joc else None)
+    objects = mediainfo_dynamic_objects(path.read_bytes(), report)
+    tally.compare("dynamic objects", extra.get("NumberOfDynamicObjects"), None if not joc or objects is None else str(objects))
 
 
 def check_mediainfo(path, tally):
@@ -336,7 +477,9 @@ def check_mediainfo(path, tally):
         return tally.problems
     frames = mediainfo_frames(report)
     dependent = [f for f in frames if mi.value(f, "Bit Stream Information", "Stream Type") == "1 (dependent)"]
-    tally.compare("dependent substreams", audio.get("Format_AdditionalFeatures"), "Dep" if dependent else None)
+    features = (audio.get("Format_AdditionalFeatures") or "").split()
+    tally.compare("dependent substreams", " ".join(t for t in features if t != "JOC") or None, "Dep" if dependent else None)
+    check_object_audio(path, audio, report, stream, features, tally)
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
     tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))

@@ -27,7 +27,7 @@ namespace Encspect.Gui.Cache;
 // SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 2;
+    public const int FormatVersion = 3;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -410,7 +410,9 @@ public sealed class SummaryCache : IDisposable
             [.. Enumerable.Range(0, Bounded(reader.ReadInt32(), 1 << 10)).Select(_ => reader.ReadString())],
             reader.ReadInt32(),
             reader.ReadInt32(),
-            reader.ReadInt32());
+            reader.ReadInt32(),
+            reader.ReadBoolean(),
+            reader.ReadBoolean() ? reader.ReadInt32() : null);
         bool? isVbr = reader.ReadBoolean() ? reader.ReadBoolean() : null;
         string? problem = ReadText(reader);
         return new Entry(new FileFingerprint(size, ticks, id, hash), version, schemaVersion, lastUsed, new FileSummary(summary, isVbr, problem));
@@ -551,6 +553,8 @@ public sealed class SummaryCache : IDisposable
         writer.Write(summary.Errors);
         writer.Write(summary.Warnings);
         writer.Write(summary.Infos);
+        writer.Write(summary.HasObjectAudio);
+        WriteOptional(writer, summary.JocObjectCount, writer.Write);
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
     }

@@ -29,6 +29,17 @@ internal sealed class Tree(long frameOffset)
         return node;
     }
 
+    public int OpenCount => _open.Count;
+
+    // Closes the groups opened after the first count of them, at end.
+    public void CloseTo(int count, int end)
+    {
+        while (_open.Count > count)
+        {
+            Close(end);
+        }
+    }
+
     // Closes every open group at end, as where a frame's data stops inside them.
     public void CloseAll(int end)
     {

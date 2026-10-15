@@ -75,8 +75,8 @@ AREAS = {
     "ac3-crosscheck": {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],
         "fixtures": ["ac3"],
-        "scripts": ["crosscheck_ac3_fixtures.py"],
-        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*"],
+        "scripts": ["crosscheck_ac3_fixtures.py", "check_eac3_samples.py"],
+        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*", "scripts/fixtures/emdf_model.py", "tests/conformance/eac3-samples.json"],
     },
     "dts-crosscheck": {
         "projects": ["Encspect.Formats.Dts", "Encspect.Formats.Mp4"],
@@ -272,8 +272,9 @@ def decide(event, files, root=ROOT, removed=()):
                 hit = True
             if path.startswith(PARSER_PREFIXES):
                 # The cross-checks that run the analyzer over downloaded samples (ISO conformance, mp3PRO, xHE-AAC,
-                # HE-AAC) are in these two jobs; any parser's detection could start claiming those streams.
-                flags["mpeg-crosscheck"] = flags["mp4-crosscheck"] = True
+                # HE-AAC, Dolby's and FFmpeg's E-AC-3 files) are in these three jobs; any parser's detection could
+                # start claiming those streams.
+                flags["mpeg-crosscheck"] = flags["mp4-crosscheck"] = flags["ac3-crosscheck"] = True
                 hit = True
             if not hit and not known_elsewhere(path):
                 # An unknown path might be a new format or a new check: run everything.

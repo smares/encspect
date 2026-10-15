@@ -60,7 +60,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `build-test` (per platform): restore, build the whole solution with warnings as errors, the GUI tests, the CLI smoke test, the self-contained CLI and GUI publish with their self-checks, and on Linux the Wayland and X11 self-checks.
 - `unit-tests` (per platform and shard): `Encspect.Tests` split by test class, so a platform's tests take as long as its slowest shard. `scripts/ci/shards.json` lists the classes of each shard but the last, which runs every test no other shard lists, so a new class lands in a shard by itself. `scripts/ci/shards.py filter <name>` prints a shard's `dotnet test --filter`.
   - `corrupt-a`: the damaged-input classes (`Corrupt*FileTests`) for the MPEG, LAME-written, Ogg and tag fixtures.
-  - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header and DTS fixtures, and `MemoryTests`.
+  - `corrupt-b`: those for the MP4, ADTS and AAC, Layer II and III, VBR header, DTS and AC-3 fixtures, and `MemoryTests`.
   - `rest`: every other test, among them the `Thread hammers` collection, which runs alone at the end of the shard.
   - Locally, about three minutes each, against ten for the whole project in one process. Move a class between shards by editing `shards.json` when one shard's job takes clearly longer than the others'; `check_shards.py` stays green whatever the split.
 - `shard-guard`: `scripts/ci/check_shards.py` lists the tests that `dotnet test --list-tests` reports under each shard's filter and under none, and fails unless every listed entry is in exactly one shard. The list has one entry per theory row it can enumerate and one for a theory it cannot (such as `UsacLayoutTests.NotExhale`), so a shard may run more tests than it lists (the `rest` shard listed 5,288 and ran 5,306). Run it locally after building the tests in Release.
@@ -114,7 +114,7 @@ Every format has three kinds of fixture:
 | MP4 and AAC | `tests/fixtures/mp4`, `adts`, `aac` | `make_mp4_fixtures.py`, `aac_block_fixtures.py`; `make_external_aac_fixtures.py`; `import_macos_aac_fixtures.py` (Apple's encoder, below) | ffprobe, MP4Box, faad, a tracing faad2 build, ffmpeg decoding, MediaInfo (`crosscheck_mp4_fixtures.py`); `check_aac_tables.py` for the Huffman and band tables; TagLib# for iTunes metadata |
 | Ogg, Speex, Vorbis, Opus | `tests/fixtures/ogg` | `make_ogg_fixtures.py`, `make_vorbis_opus_fixtures.py`; `make_external_ogg_fixtures.py`, `make_external_vorbis_opus_fixtures.py` | oggz, ogginfo, vorbiscomment, opusinfo, ffprobe, speexdec, oggdec, opusdec, MediaInfo (`crosscheck_ogg_fixtures.py`) |
 | Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine, MediaInfo (`crosscheck_musepack_fixtures.py`) |
-| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe, ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`) |
+| AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe (including the Atmos profile), ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`, including JOC, the complexity index and the dynamic objects) |
 | DTS | `tests/fixtures/dts` | `make_dts_fixtures.py`; `make_external_dts_fixtures.py` (ffmpeg's dca encoder) | ffprobe, ffmpeg (a decode of each frame alone, with the error it must give for the damaged ones), libdca (`dca_frames.c`), MediaInfo (`crosscheck_dts_fixtures.py`) |
 | WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader and checksum verifier (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
 | ASF and WMA | `tests/fixtures/asf` | `make_asf_fixtures.py`; `make_external_asf_fixtures.py`; `import_windows_wma_fixtures.py` (Microsoft's encoder, below) | ffprobe, ffmpeg decoding (bit-exact for Lossless), MediaInfo (`crosscheck_asf_fixtures.py`); `wma_tables.py --check` for the tables generated from FFmpeg's source |
@@ -128,6 +128,7 @@ Every cross-check script also compares each fixture's golden report with MediaIn
 - **What is compared:** each script's docstring lists the fields. A listed difference that no longer occurs fails the run, and the summary counts each field as compared, compared and absent on both, or skipped with its reason.
 - **MediaInfo's own readings** are asserted as such, each with the evidence, mostly a line of MediaInfoLib's source (github.com/MediaArea/MediaInfoLib, tag v24.01; Ubuntu's only patch touches the build). Among them:
   - AC-3: `mixlevel` read as 8 bits instead of A/52's 5, so `dynrng`, the time codes and Annex D's `dsurexmod` come out 3 bits late in a frame with production information; the script reproduces that reading and compares with it.
+  - E-AC-3 object audio: MediaInfo parses an EMDF container only if it starts before the auxiliary data field, reports JOC only when every container agrees on one object count, and fills its complexity index from the frames only after it has parsed a JOC payload; its names (JOC, complexity index, number of dynamic objects) are mapped to the analyzer's in the script.
   - MPEG audio: the names of the Layer I and II mode extension, the frames it parses of a variable bitrate without a VBR header, no encoder without a LAME tag, an encoder string or an ID3v2 TSSE.
   - Musepack: no format for SV4 to SV6 (one superframe stream taken for MPEG-2.5 Layer II) or after a leading ID3v2 tag, the SV7 encoder version read from byte 24 instead of 27, no channels or encoder for SV8.
   - DTS: a core with an extension substream is taken as DTS-HD only where MediaInfo finds a component's sync word (an XLL or LBR whose sync word is wrong, or a header whose CRC16 fails, leave the core); its bitrate is the core's frame bytes in the file, plus the substream's for DTS-HD, and none for lossless; it reads the descriptors' static fields one after another without their sizes (a second asset comes out as 127 channels); PCMR 7 as 24 bits with the ES flag; no channels for a user defined arrangement; XXCH channels are not counted.
@@ -245,13 +246,14 @@ The models that compute the expected values are:
 - `ogg_model.py` and `vorbis_opus_model.py` for Ogg
 - `musepack_model.py` for Musepack
 - `wavpack_model.py` for WavPack
-- `ac3_model.py` for AC-3
+- `ac3_model.py` and `emdf_model.py` (EMDF containers with JOC and OAMD payloads) for AC-3
 - `dts_model.py` for DTS
 - `asf_model.py` for ASF
 
 ## Conformance streams and downloads
 
 - **MPEG-2 conformance:** `conformance_mpeg_audio.py` checks `tests/conformance/mpeg2-audio.json` against the ISO/IEC 13818-4 audio conformance streams. It downloads them, since they may not be redistributed.
+- **E-AC-3 object audio:** `check_eac3_samples.py` checks `tests/conformance/eac3-samples.json` against three of Dolby's JOC test files (DD+ Online Delivery Kit v1.4.1, copyrighted and for testing playback products, so downloaded and never committed) and two AHT files from the FFmpeg sample archive, with ffprobe, MediaInfo and the analyzer.
 - **mp3PRO:** `check_mp3pro_samples.py` checks `tests/conformance/mp3pro-samples.json` against three mp3PRO files from the FFmpeg sample archive, downloaded for the same reason.
 - **xHE-AAC by other encoders:** `check_usac_samples.py` checks `tests/conformance/usac-samples.json` against 13 downloaded files: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite and one exhale file from it. The private repository holds copies as their fallback address.
   - Without `--analyzer`, a UsacConfig reader of its own reads each file's elements and configuration extensions from the DecoderSpecificInfo that MP4Box lists.
