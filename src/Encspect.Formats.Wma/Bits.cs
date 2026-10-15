@@ -68,4 +68,22 @@ internal sealed class Bits(byte[] data, int length)
     }
 
     public void Align() => Position = (Position + 7) & ~7;
+
+    // Copies count bits from one bit position of a buffer to another of another buffer, most significant first.
+    public static void Copy(byte[] source, int sourceBit, byte[] target, int targetBit, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            int s = sourceBit + i;
+            int t = targetBit + i;
+            if (((source[s >> 3] >> (7 - (s & 7))) & 1) != 0)
+            {
+                target[t >> 3] |= (byte)(1 << (7 - (t & 7)));
+            }
+            else
+            {
+                target[t >> 3] &= (byte)~(1 << (7 - (t & 7)));
+            }
+        }
+    }
 }

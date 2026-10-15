@@ -22,7 +22,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4
 - DTS-HD files (`.dtshd`)
 - WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`
-- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2 and Professional, and Lossless and Voice at header level
+- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2, Professional and Voice, and Lossless at header level
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
 

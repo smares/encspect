@@ -1,0 +1,60 @@
+{
+ "description": "Encoded by the Windows Media Format SDK writer (wmvcore.dll) as Windows Media Audio Voice 9, CBR, \"16 kbps, 16 kHz, mono\".",
+ "encoder": {
+  "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+  "path": "wmf-sdk",
+  "codec": "Windows Media Audio Voice 9",
+  "format_index": 5,
+  "achieved_bitrate": null,
+  "format_description": "16 kbps, 16 kHz, mono",
+  "format_tag": "0x000A",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 1,
+   "requestedRates": [
+    16000,
+    22050
+   ],
+   "requestedBitrate": 16000
+  },
+  "format_channels": 1,
+  "format_rate": 16000,
+  "format_bits": 16,
+  "format_bitrate": 16000,
+  "config_bitrate": 16000,
+  "buffer_window_ms": 4294967295,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "speech",
+  "channels": 1,
+  "rate": 16000,
+  "bits": 16,
+  "seconds": 6,
+  "frames": 96000,
+  "type": "plain",
+  "generator": "wma_signals.py",
+  "pcm_sha256": "9ee207d7ccaffbcbe9879cc3b5b5ab4dcd4e43f555f8913f9c49b1b8ede15ef0"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20261007.264.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wmavoice-cbr-mono-16k-16-speech",
+ "actual": {
+  "format_tag": 10,
+  "channels": 1,
+  "rate": 16000,
+  "bytes_per_second": 2000,
+  "bits": 16
+ },
+ "bytes": 17617,
+ "sha256": "331454524230b94f8fc5c7f81470308537b1dfa9cf185abf8c08638bf0a5a354",
+ "reproducible": false,
+ "note": "The File Properties object's file ID and creation date change with every run; the file is committed as written."
+}

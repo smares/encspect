@@ -1,0 +1,249 @@
+{
+ "description": "Voice blocks of 100 bytes, two to a media object, with 10 bytes in front of the blocks of one media object, after a packet that ends in the start of a superframe: a decoder cuts blocks from the end of the object, so it reads the 10 bytes as the rest of a packet, loses the start it kept, and reads the blocks aligned.",
+ "format": "ASF",
+ "length": 1928,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   330
+  ],
+  [
+   "Data Object",
+   330,
+   1598
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   150
+  ],
+  [
+   "Header Extension Object",
+   284,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 64,
+   "tag": 10,
+   "channels": 1,
+   "rate": 11025,
+   "avg_bytes": 1378,
+   "block_align": 100,
+   "bits": 16,
+   "codec_data": "100004000000000000000000000000000000800700006dc92da92248000000000000000000000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   380,
+   258,
+   1
+  ],
+  [
+   638,
+   258,
+   1
+  ],
+  [
+   896,
+   258,
+   1
+  ],
+  [
+   1154,
+   258,
+   1
+  ],
+  [
+   1412,
+   258,
+   1
+  ],
+  [
+   1670,
+   258,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   200,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   210,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   200,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   4,
+   0,
+   8,
+   200,
+   false,
+   true
+  ],
+  [
+   4,
+   1,
+   5,
+   0,
+   8,
+   200,
+   false,
+   true
+  ],
+  [
+   5,
+   1,
+   6,
+   0,
+   8,
+   200,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   200,
+   0,
+   [
+    [
+     411,
+     200
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   210,
+   130,
+   [
+    [
+     669,
+     210
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   200,
+   261,
+   [
+    [
+     927,
+     200
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   200,
+   391,
+   [
+    [
+     1185,
+     200
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   200,
+   522,
+   [
+    [
+     1443,
+     200
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   200,
+   653,
+   [
+    [
+     1701,
+     200
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1928,
+  "packets": 6,
+  "play_duration": 7836734,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 258,
+  "max_packet": 258,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.packet-long",
+   "contains": "10 bytes before its whole blocks"
+  },
+  {
+   "code": "wma.voice-spillover-orphan",
+   "contains": "no start is left"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": "clean",
+  "messages": [],
+  "ffmpeg": {
+   "samples": 8160,
+   "superframes": 17
+  }
+ }
+}

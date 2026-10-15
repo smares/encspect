@@ -7,8 +7,10 @@ repository and extracts the files the WMA and ASF work is written from:
 - libavformat/asf.h, asf.c, asfdec_f.c and asfenc.c: the reference ASF demuxer and muxer.
 - libavcodec/wma.c, wma.h, wmadec.c, wmadata.h, wma_common.c and wma_freqs.c: the Windows Media
   Audio versions 1 and 2 decoder and its tables.
-- libavcodec/wmaprodec.c, wmalosslessdec.c and wmavoice.c: Windows Media Audio Professional,
-  Lossless and Voice.
+- libavcodec/wmaprodec.c, wmalosslessdec.c, wmavoice.c and wmavoice_data.h: Windows Media Audio Professional,
+  Lossless and Voice (the tables of the speech coder's gains, codebooks and LSP quantizers are in wmavoice_data.h; the analysis
+  needs none of them, since it reads no audio, but they are pinned with the decoder they belong to). decode.c is the generic
+  decode loop that wmavoice.c's return values are read by (an error drops the rest of the packet).
 - libavcodec/aactab.c: the scalefactor codebook that WMA's exponents share with AAC.
 - libavcodec/vlc.c: how a VLC is built from code lengths (ff_vlc_init_from_lengths).
 - libavformat/wvdec.c, wv.c and wv.h and libavcodec/wavpack.c: the WavPack demuxer and decoder, which the WavPack cross-check explains
@@ -38,7 +40,7 @@ FILES = [
     "libavformat/asf.h", "libavformat/asf.c", "libavformat/asfdec_f.c", "libavformat/asfenc.c", "libavformat/asfcrypt.c",
     "libavcodec/wma.c", "libavcodec/wma.h", "libavcodec/wmadec.c", "libavcodec/wmadata.h", "libavcodec/wma_common.c",
     "libavcodec/wma_freqs.c", "libavcodec/wmaprodec.c", "libavcodec/wmalosslessdec.c", "libavcodec/wmavoice.c",
-    "libavcodec/wmaenc.c", "libavcodec/wmaprodata.h", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
+    "libavcodec/wmaenc.c", "libavcodec/wmaprodata.h", "libavcodec/wmavoice_data.h", "libavcodec/decode.c", "libavcodec/aactab.c", "libavcodec/vlc.c", "libavcodec/vlc.h",
     "libavformat/wv.h", "libavformat/wv.c", "libavformat/wvdec.c", "libavcodec/wavpack.c",
     "libavcodec/wavpackenc.c", "libavformat/wvenc.c", "libavformat/apetag.c",
     "libavcodec/dca.c", "libavcodec/dca.h", "libavcodec/dca_syncwords.h", "libavcodec/dca_core.c", "libavcodec/dca_core.h",
