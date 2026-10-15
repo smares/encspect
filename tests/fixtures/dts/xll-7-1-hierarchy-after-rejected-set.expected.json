@@ -1,0 +1,71 @@
+{
+ "description": "Four units of a lossless extension of two channel sets, the primary 5.1 set with a resolution of 24 bits stored in 16, so it is rejected, and a set of two more channels.",
+ "length": 3328,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   832
+  ],
+  [
+   832,
+   832
+  ],
+  [
+   1664,
+   832
+  ],
+  [
+   2496,
+   832
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "LFE",
+    "back left",
+    "back right",
+    "side left",
+    "side right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 2/Downmix Coefficients": "18 coefficients",
+  "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL/Channel Set 2/Channel Mask": "0x180"
+ },
+ "findings": [
+  [
+   "dts.lossless-inconsistent",
+   "source resolution of 24 bits is more than its storage width of 16 bits"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid PCM bit resolution for XLL channel set",
+  "decode_log": "warning",
+  "ffprobe_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder refuses a resolution beyond the width (dca_xll.c: 'Invalid PCM bit resolution for XLL channel set')",
+   "ffprobe_channels": "ffmpeg cannot decode the lossless layer, so it reports the core's two channels and their layout"
+  }
+ }
+}

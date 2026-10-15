@@ -1,0 +1,60 @@
+{
+ "description": "Four units whose primary lossless channel set states downmix type 7, which Table 8-8 does not use.",
+ "length": 2944,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   736
+  ],
+  [
+   736,
+   736
+  ],
+  [
+   1472,
+   736
+  ],
+  [
+   2208,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.reserved-value",
+   "nLLDownmixType 7 is unused"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid XLL primary channel set downmix type",
+  "decode_log": "warning",
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder refuses downmix type 7 (dca_xll.c: 'Invalid XLL primary channel set downmix type')"
+  }
+ }
+}

@@ -38,15 +38,11 @@
  "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "decode": false,
+  "decode": true,
   "libdca": true,
-  "ffprobe_profile": false,
-  "ffprobe_rate": 48000,
-  "decode_error": "Invalid XLL sub-header checksum",
+  "ffprobe_bitrate": false,
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
-   "ffprobe_rate": "ffmpeg's parser takes the rate of a core with an extension substream from the core (dca_parser.c); its decoder sets the 96 kHz of the lossless extension (dca_xll.c) only after it has decoded it, which the stub does not allow",
-   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
   }
  }
 }

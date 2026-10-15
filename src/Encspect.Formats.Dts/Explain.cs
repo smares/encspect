@@ -16,6 +16,7 @@ internal static class Topics
     public const string Lfe = "channel-layouts";
     public const string FilterBank = "dts-core-frames";
     public const string EncoderDetection = "encoder-detection";
+    public const string Lossless = "dts-lossless-extension";
 }
 
 // What each DTS node is, in the words the report shows next to it, citing ETSI TS 102 114 V1.6.1 by its clauses and tables
@@ -252,7 +253,50 @@ internal static class Explain
     public const string XllMaskBits = "nBits4ChMask + 1: how many bits each channel set's channel mask has (8.3.1).";
     public const string XllLsbWidth = "nuFixedLSBWidth: the fixed width of the least significant part, or 0 where it varies (8.3.1).";
     public const string XllCrc = "nCRC16Header: the CRC16 of the common header from the version to the byte alignment (8.3.1, Annex B).";
-    public const string XllData = "The channel set headers, the navigation index and the band data. Not read (8.3).";
+    public const string XllData = "The lossless extension's data after the headers that were read: bytes not read (8.3).";
+
+    public const string XllChannelSet = "One channel set of the lossless extension: channels with a sampling frequency, a resolution and speaker positions of their own. The sets are coded one after another in every segment, the first being the primary set, which can be a 5.1 core layout or a stereo downmix (8.2.1, 8.2.3, 8.3.2).";
+    public const string XllSetHeaderSize = "nChSetHeaderSize + 1: the size in bytes of this channel set sub-header, from this field to its CRC16; it locates the next sub-header (8.3.2).";
+    public const string XllSetChannels = "nChSetLLChannel + 1: the number of channels in the set (8.3.2).";
+    public const string XllResidual = "nResidualChEncode: one bit for each channel, the highest channel in the most significant bit; 0 means the residual is the original audio less the lossy core's, 1 that it is the original audio (8.3.2).";
+    public const string XllResolution = "nBitResolution + 1: the resolution in bits of the PCM audio source as it came from the converter, the same concept as the core's source PCM resolution (8.3.2).";
+    public const string XllStorageWidth = "nBitWidth + 1: the bit width of the medium the audio is stored in; 20-bit audio stored in a 24-bit WAV file has a resolution of 20 and a width of 24, and the decoder shifts the samples right by the difference (8.3.2).";
+    public const string XllRate = "sFreqIndex: the sampling frequency of the channel set's audio, after the interpolation of the next field (8.3.2, Table 8-5).";
+    public const string XllInterpolation = "nFsInterpolate: the factor by which the encoder interpolated the original sampling frequency, 1, 2, 4 or 8, used when channel sets with different sampling frequencies are mixed (8.3.2, Table 8-6).";
+    public const string XllReplacement = "nReplacementSet: which replacement set the channel set belongs to, 1 to 3, or 0 for none (8.3.2, Table 8-7).";
+    public const string XllActiveReplacement = "bActiveReplaceSet: whether this channel set is the active one of its replacement set; present when the set is a member of one (8.3.2).";
+    public const string XllPrimary = "bPrimaryChSet: whether this is a primary channel set, one of the subset of channels that holds the 5.1 audio or a stereo downmix. Present when each channel feeds a loudspeaker (8.3.2).";
+    public const string XllHasDownmix = "bDownmixCoeffCodeEmbedded: whether a matrix of downmix coefficients is embedded in the sub-header (8.3.2).";
+    public const string XllDownmixEmbedded = "bDownmixEmbedded: whether the encoder has already downmixed the audio of this set into the channels of the sets before it, which the decoder has to undo (8.3.2).";
+    public const string XllDownmixType = "nLLDownmixType: the layout the primary channel sets are downmixed to (8.3.2, Table 8-8).";
+    public const string XllHierarchical = "bHierChSet: whether the channel set is part of a hierarchy of sets, each adding channels to the sets before it (8.3.2).";
+    public const string XllDownmixCoefficients = "The downmix coefficients: 9 bits each, in a matrix of one row for each channel it mixes to; a non-primary set also has a scale in each row. Their count follows FFmpeg's dca_xll.c (parse_dmix_coeffs); the values are not decoded (8.3.2, C.9).";
+    public const string XllHasMask = "bChMaskEnabled: whether the channel set uses a predefined channel mask. Otherwise a position in polar coordinates is stored for each channel (8.3.2).";
+    public const string XllChannelMask = "nChMask: which loudspeaker positions the set's channels feed, one bit for each speaker in the order of Table 6-22, as FFmpeg's dca_xll.c reads it. The specification points to its clause C.8 for the bits, which is about entropy coding (8.3.2).";
+    public const string XllSpeakers = "The speakers the bits of the channel mask name (Table 6-22), in the order of the bits.";
+    public const string XllSpeakerPositions = "The position of each channel in polar coordinates, 25 bits each: the radius, the angle theta and the angle phi (8.3.2). Not decoded.";
+    public const string XllHasMapping = "bMappingCoeffsPresent: whether channel-to-speaker mapping coefficients follow. Present when the channels are not loudspeaker feeds; the coefficients and the parameters after them are not read (8.3.2).";
+    public const string XllExtraBands = "bXtraFreqBands: present when the sampling frequency is above 96 kHz. The syntax of Table 8-4 gives 4 frequency bands when it is set and 2 when it is clear; FFmpeg reads 2 and does not decode a set with the flag (8.3.2).";
+    public const string XllBands = "m_nNumFreqBands: how many frequency bands the set is coded in. A set of 96 kHz or less is coded in the base band alone (8.2.5, 8.3.2).";
+    public const string XllMappingParameters = "The channel-to-speaker mapping coefficients and the frequency band parameters of the sub-header. Not read (8.3.2).";
+    public const string XllBandParameters = "The parameters of each frequency band: pairwise channel decorrelation, the orders and reflection coefficients of the predictors, and the sizes of the least significant parts. Not read (8.3.2).";
+    public const string XllSetCrc = "nCRC16SubHeader: the CRC16 of the channel set sub-header from its size field to the byte alignment (8.3.2, Annex B).";
+    public const string XllNavigation = "The navigation index: the size of the band data of every frequency band, segment and channel set, and a CRC16 over them (8.3.3, 8.4.2).";
+    public const string XllNaviSizes = "The byte sizes less one of the band data for each frequency band, segment and channel set that has the band, in the width the common header gives; the pseudo-code of 8.4.2 also reads a total for each segment, which the text, FFmpeg and MediaInfo do not (8.4.2).";
+    public const string XllNaviCrc = "The CRC16 of the navigation index with its byte alignment (8.4.2, Annex B).";
+    public const string XllBandData = "The frequency band data of the frame, segment by segment, as long as the navigation index says. Not decoded (8.3.4).";
+    public const string XllExtensionData = "The bytes after the band data of the lossless frame, which start with the word FFmpeg's dca_xll.c reads as DTS:X; no specification describes them.";
+    public const string XllXSync = "The word 0x02000850, which FFmpeg's dca_xll.c (and MediaInfo's File_Dts.cpp) takes as the start of DTS:X data.";
+    public const string XllXImaxSync = "A word FFmpeg's dca_xll.c takes as the start of DTS:X IMAX data (0xF14000D0 or 0xF14000D1); MediaInfo's File_Dts.cpp reads 0xF14000D0 as IMAX and 0xF14000D1 as DTS:X.";
+    public const string XllTrailing = "Bytes after the band data up to the end of the lossless frame, whose first word is neither of the sync words that FFmpeg's dca_xll.c and MediaInfo's File_Dts.cpp look for. Not read.";
+    public const string XllExtensionPayload = "The bytes after the sync word up to the end of the lossless frame. Not described by any source, not read.";
+    public const string StatLosslessResolution = "The source PCM resolution the channel sets of the lossless extension state in their sub-headers (nBitResolution, 8.3.2), the same concept as the core's and the stream's bits per sample.";
+    public const string StatLosslessWidth = "The storage bit width the channel sets of the lossless extension state in their sub-headers (8.3.2).";
+    public const string StatLosslessRate = "The sampling frequency the channel sets of the lossless extension state in their sub-headers (8.3.2).";
+    public const string StatLosslessChannels = "The channels of the lossless extension: all its channel sets together.";
+    public const string StatLosslessSets = "The number of channel sets of the lossless extension.";
+    public const string HasDtsX = "Whether a frame of the first asset's lossless extension has the sync word of DTS:X after its band data, the signal FFmpeg's dca_xll.c reads. The audio data of DTS:X is not described by the specification and not read.";
+    public const string HasDtsXImax = "Whether a frame of the first asset's lossless extension has the sync word FFmpeg's dca_xll.c reads as DTS:X IMAX (0xF14000D0 or 0xF14000D1) after its band data.";
 
 
     public const string DdtsSamplingFrequency = "DTSSamplingFrequency: the highest sampling frequency stored in the compressed stream (ETSI TS 102 114 E.2.2.3.2).";

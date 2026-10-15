@@ -204,6 +204,41 @@
                   "length": 1920
                 },
                 {
+                  "name": "Lossless Channel Sets",
+                  "value": 1,
+                  "unit": "channel sets",
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "Lossless Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "Lossless Sampling Frequency",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "Lossless Source PCM Resolution",
+                  "value": 24,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "Lossless Storage Bit Width",
+                  "value": 24,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
                   "name": "Audio Assets",
                   "value": 1,
                   "unit": "assets",
@@ -219,6 +254,18 @@
                 {
                   "name": "IsLossless",
                   "value": true,
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "HasDtsX",
+                  "value": false,
+                  "offset": 0,
+                  "length": 1920
+                },
+                {
+                  "name": "HasDtsXImax",
+                  "value": false,
                   "offset": 0,
                   "length": 1920
                 },
@@ -1565,7 +1612,7 @@
                             },
                             {
                               "name": "Segment Size Bits",
-                              "value": 16,
+                              "value": 8,
                               "unit": "bits",
                               "offset": 585,
                               "length": 2,
@@ -1608,7 +1655,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 4314,
+                              "value": 32442,
                               "offset": 588,
                               "length": 2,
                               "children": [
@@ -1621,11 +1668,199 @@
                               ]
                             },
                             {
-                              "name": "Channel Sets",
-                              "value": 50,
+                              "name": "Channel Set 1",
+                              "value": 10,
                               "unit": "bytes",
                               "offset": 590,
-                              "length": 50
+                              "length": 10,
+                              "children": [
+                                {
+                                  "name": "Header Size",
+                                  "value": 10,
+                                  "unit": "bytes",
+                                  "offset": 590,
+                                  "length": 2,
+                                  "bitOffset": 0,
+                                  "bitLength": 10
+                                },
+                                {
+                                  "name": "Channels",
+                                  "value": 2,
+                                  "unit": "channels",
+                                  "offset": 591,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Residual Channel Encoding",
+                                  "value": 3,
+                                  "offset": 591,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Source PCM Resolution",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 592,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Storage Bit Width",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 592,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Sampling Frequency",
+                                  "value": 48000,
+                                  "unit": "Hz",
+                                  "offset": 593,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Sampling Frequency Interpolation",
+                                  "value": 1,
+                                  "offset": 593,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Replacement Set",
+                                  "value": "0 (not a member of a replacement set)",
+                                  "offset": 594,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsPrimaryChannelSet",
+                                  "value": true,
+                                  "offset": 594,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasDownmixCoefficients",
+                                  "value": false,
+                                  "offset": 594,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "IsHierarchicalChannelSet",
+                                  "value": true,
+                                  "offset": 594,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasChannelMask",
+                                  "value": true,
+                                  "offset": 594,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Channel Mask",
+                                  "value": 6,
+                                  "offset": 594,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 8,
+                                  "children": [
+                                    {
+                                      "name": "Speakers",
+                                      "value": "front left, front right",
+                                      "offset": 594,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 8
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Band Parameters",
+                                  "value": 3,
+                                  "unit": "bytes",
+                                  "offset": 595,
+                                  "length": 3,
+                                  "bitOffset": 6,
+                                  "bitLength": 18
+                                },
+                                {
+                                  "name": "Header CRC",
+                                  "value": 25143,
+                                  "offset": 598,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 598,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Navigation Index",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 600,
+                              "length": 3,
+                              "children": [
+                                {
+                                  "name": "Band Data Sizes",
+                                  "value": 1,
+                                  "unit": "sizes",
+                                  "offset": 600,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "CRC",
+                                  "value": 61905,
+                                  "offset": 601,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 601,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Band Data",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 603,
+                              "length": 2
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 608,
+                              "length": 32
                             }
                           ]
                         }
@@ -2962,7 +3197,7 @@
                             },
                             {
                               "name": "Segment Size Bits",
-                              "value": 16,
+                              "value": 8,
                               "unit": "bits",
                               "offset": 1225,
                               "length": 2,
@@ -3005,7 +3240,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 4314,
+                              "value": 32442,
                               "offset": 1228,
                               "length": 2,
                               "children": [
@@ -3018,11 +3253,199 @@
                               ]
                             },
                             {
-                              "name": "Channel Sets",
-                              "value": 50,
+                              "name": "Channel Set 1",
+                              "value": 10,
                               "unit": "bytes",
                               "offset": 1230,
-                              "length": 50
+                              "length": 10,
+                              "children": [
+                                {
+                                  "name": "Header Size",
+                                  "value": 10,
+                                  "unit": "bytes",
+                                  "offset": 1230,
+                                  "length": 2,
+                                  "bitOffset": 0,
+                                  "bitLength": 10
+                                },
+                                {
+                                  "name": "Channels",
+                                  "value": 2,
+                                  "unit": "channels",
+                                  "offset": 1231,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Residual Channel Encoding",
+                                  "value": 3,
+                                  "offset": 1231,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Source PCM Resolution",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 1232,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Storage Bit Width",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 1232,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Sampling Frequency",
+                                  "value": 48000,
+                                  "unit": "Hz",
+                                  "offset": 1233,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Sampling Frequency Interpolation",
+                                  "value": 1,
+                                  "offset": 1233,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Replacement Set",
+                                  "value": "0 (not a member of a replacement set)",
+                                  "offset": 1234,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsPrimaryChannelSet",
+                                  "value": true,
+                                  "offset": 1234,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasDownmixCoefficients",
+                                  "value": false,
+                                  "offset": 1234,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "IsHierarchicalChannelSet",
+                                  "value": true,
+                                  "offset": 1234,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasChannelMask",
+                                  "value": true,
+                                  "offset": 1234,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Channel Mask",
+                                  "value": 6,
+                                  "offset": 1234,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 8,
+                                  "children": [
+                                    {
+                                      "name": "Speakers",
+                                      "value": "front left, front right",
+                                      "offset": 1234,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 8
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Band Parameters",
+                                  "value": 3,
+                                  "unit": "bytes",
+                                  "offset": 1235,
+                                  "length": 3,
+                                  "bitOffset": 6,
+                                  "bitLength": 18
+                                },
+                                {
+                                  "name": "Header CRC",
+                                  "value": 25143,
+                                  "offset": 1238,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 1238,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Navigation Index",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1240,
+                              "length": 3,
+                              "children": [
+                                {
+                                  "name": "Band Data Sizes",
+                                  "value": 1,
+                                  "unit": "sizes",
+                                  "offset": 1240,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "CRC",
+                                  "value": 61905,
+                                  "offset": 1241,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 1241,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Band Data",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1243,
+                              "length": 2
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 1248,
+                              "length": 32
                             }
                           ]
                         }
@@ -4359,7 +4782,7 @@
                             },
                             {
                               "name": "Segment Size Bits",
-                              "value": 16,
+                              "value": 8,
                               "unit": "bits",
                               "offset": 1865,
                               "length": 2,
@@ -4402,7 +4825,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 4314,
+                              "value": 32442,
                               "offset": 1868,
                               "length": 2,
                               "children": [
@@ -4415,11 +4838,199 @@
                               ]
                             },
                             {
-                              "name": "Channel Sets",
-                              "value": 50,
+                              "name": "Channel Set 1",
+                              "value": 10,
                               "unit": "bytes",
                               "offset": 1870,
-                              "length": 50
+                              "length": 10,
+                              "children": [
+                                {
+                                  "name": "Header Size",
+                                  "value": 10,
+                                  "unit": "bytes",
+                                  "offset": 1870,
+                                  "length": 2,
+                                  "bitOffset": 0,
+                                  "bitLength": 10
+                                },
+                                {
+                                  "name": "Channels",
+                                  "value": 2,
+                                  "unit": "channels",
+                                  "offset": 1871,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Residual Channel Encoding",
+                                  "value": 3,
+                                  "offset": 1871,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Source PCM Resolution",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 1872,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Storage Bit Width",
+                                  "value": 24,
+                                  "unit": "bits",
+                                  "offset": 1872,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Sampling Frequency",
+                                  "value": 48000,
+                                  "unit": "Hz",
+                                  "offset": 1873,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Sampling Frequency Interpolation",
+                                  "value": 1,
+                                  "offset": 1873,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Replacement Set",
+                                  "value": "0 (not a member of a replacement set)",
+                                  "offset": 1874,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsPrimaryChannelSet",
+                                  "value": true,
+                                  "offset": 1874,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasDownmixCoefficients",
+                                  "value": false,
+                                  "offset": 1874,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "IsHierarchicalChannelSet",
+                                  "value": true,
+                                  "offset": 1874,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "HasChannelMask",
+                                  "value": true,
+                                  "offset": 1874,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Channel Mask",
+                                  "value": 6,
+                                  "offset": 1874,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 8,
+                                  "children": [
+                                    {
+                                      "name": "Speakers",
+                                      "value": "front left, front right",
+                                      "offset": 1874,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 8
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Band Parameters",
+                                  "value": 3,
+                                  "unit": "bytes",
+                                  "offset": 1875,
+                                  "length": 3,
+                                  "bitOffset": 6,
+                                  "bitLength": 18
+                                },
+                                {
+                                  "name": "Header CRC",
+                                  "value": 25143,
+                                  "offset": 1878,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 1878,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Navigation Index",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1880,
+                              "length": 3,
+                              "children": [
+                                {
+                                  "name": "Band Data Sizes",
+                                  "value": 1,
+                                  "unit": "sizes",
+                                  "offset": 1880,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "CRC",
+                                  "value": 61905,
+                                  "offset": 1881,
+                                  "length": 2,
+                                  "children": [
+                                    {
+                                      "name": "Check",
+                                      "value": "verified",
+                                      "offset": 1881,
+                                      "length": 2
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Band Data",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 1883,
+                              "length": 2
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 1888,
+                              "length": 32
                             }
                           ]
                         }

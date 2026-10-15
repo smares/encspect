@@ -1,0 +1,2698 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "dtshd-core.dtshd",
+    "root": {
+      "name": "File",
+      "value": "DTS-HD",
+      "offset": 0,
+      "length": 1624,
+      "children": [
+        {
+          "name": "DTSHDHDR",
+          "value": 16,
+          "unit": "bytes",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 16,
+              "unit": "bytes",
+              "offset": 8,
+              "length": 8
+            },
+            {
+              "name": "Version",
+              "value": 1,
+              "offset": 16,
+              "length": 4
+            },
+            {
+              "name": "Time Code",
+              "value": "00:00:00 and 0 samples",
+              "offset": 20,
+              "length": 5,
+              "children": [
+                {
+                  "name": "Reference Clock Code",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 20,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Time Stamp",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Time Code Frame Rate",
+              "value": "0 (not indicated)",
+              "offset": 25,
+              "length": 1
+            },
+            {
+              "name": "Stream Metadata",
+              "value": 8,
+              "offset": 26,
+              "length": 2,
+              "children": [
+                {
+                  "name": "IsVbr",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasPeakBitrateSmoothing",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasNavigationTable",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasCoreSubstream",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasExtensionSubstream",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                }
+              ]
+            },
+            {
+              "name": "Audio Presentations",
+              "value": 1,
+              "unit": "presentations",
+              "offset": 28,
+              "length": 1
+            },
+            {
+              "name": "Extension Substreams",
+              "value": 0,
+              "unit": "extension substreams",
+              "offset": 29,
+              "length": 1
+            },
+            {
+              "name": "Padding",
+              "value": 2,
+              "unit": "bytes",
+              "offset": 30,
+              "length": 2
+            }
+          ]
+        },
+        {
+          "name": "AUPR-HDR",
+          "value": 24,
+          "unit": "bytes",
+          "offset": 32,
+          "length": 40,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 24,
+              "unit": "bytes",
+              "offset": 40,
+              "length": 8
+            },
+            {
+              "name": "Audio Presentation Index",
+              "value": 0,
+              "offset": 48,
+              "length": 1
+            },
+            {
+              "name": "Presentation Metadata",
+              "value": 0,
+              "offset": 49,
+              "length": 2,
+              "children": [
+                {
+                  "name": "HasBackwardCompatibleCore",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsBackwardCompatibleCoreInExtension",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasLossless",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasLbr",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                }
+              ]
+            },
+            {
+              "name": "Maximum Sampling Frequency",
+              "value": 48000,
+              "unit": "Hz",
+              "offset": 51,
+              "length": 3
+            },
+            {
+              "name": "Frames",
+              "value": 3,
+              "unit": "frames",
+              "offset": 54,
+              "length": 4
+            },
+            {
+              "name": "Samples per Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 58,
+              "length": 2
+            },
+            {
+              "name": "Original Samples",
+              "value": 1536,
+              "unit": "samples",
+              "offset": 60,
+              "length": 5
+            },
+            {
+              "name": "Channel Mask",
+              "value": 2,
+              "offset": 65,
+              "length": 2,
+              "children": [
+                {
+                  "name": "Speakers",
+                  "value": "front left, front right",
+                  "offset": 65,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Codec Delay",
+              "value": 0,
+              "unit": "samples",
+              "offset": 67,
+              "length": 2
+            },
+            {
+              "name": "Padding",
+              "value": 3,
+              "unit": "bytes",
+              "offset": 69,
+              "length": 3
+            }
+          ]
+        },
+        {
+          "name": "STRMDATA",
+          "value": 1536,
+          "unit": "bytes",
+          "offset": 72,
+          "length": 1552,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 1536,
+              "unit": "bytes",
+              "offset": 80,
+              "length": 8
+            },
+            {
+              "name": "DTS",
+              "kind": "Stream",
+              "offset": 88,
+              "length": 1536,
+              "children": [
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 88,
+                  "length": 1536,
+                  "children": [
+                    {
+                      "name": "Frames",
+                      "value": 3,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 1536,
+                      "unit": "samples",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.032,
+                      "unit": "s",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 384,
+                      "unit": "kbps",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Smallest Frame",
+                      "value": 512,
+                      "unit": "bytes",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Largest Frame",
+                      "value": 512,
+                      "unit": "bytes",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 384,
+                      "unit": "kbps",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 384,
+                      "unit": "kbps",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Core Frames",
+                      "value": 3,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Extension Substream Frames",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Termination Frames",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Sampling Frequency",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Nominal Bitrate",
+                      "value": "384 kbps",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Encoder Revision",
+                      "value": "7",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Dialogue Normalization",
+                      "value": "0 dB",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Source PCM Resolution",
+                      "value": "24 bits",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Frames With Extension",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536,
+                      "children": [
+                        {
+                          "name": "XCh",
+                          "value": 0,
+                          "unit": "frames",
+                          "offset": 88,
+                          "length": 1536
+                        },
+                        {
+                          "name": "X96",
+                          "value": 0,
+                          "unit": "frames",
+                          "offset": 88,
+                          "length": 1536
+                        },
+                        {
+                          "name": "XXCH",
+                          "value": 0,
+                          "unit": "frames",
+                          "offset": 88,
+                          "length": 1536
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames With Dynamic Range Coefficients",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Frames With Time Stamps",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Frames With Auxiliary Data",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Frames With CRC",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Frames Failing a CRC",
+                      "value": 0,
+                      "unit": "frames",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Coding Components",
+                      "value": "core (StreamConstruction 1)",
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "HasExtensionSubstream",
+                      "value": false,
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "IsLossless",
+                      "value": false,
+                      "offset": 88,
+                      "length": 1536
+                    },
+                    {
+                      "name": "Profile",
+                      "value": "DTS",
+                      "offset": 88,
+                      "length": 1536,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "a core with no extension",
+                          "offset": 88,
+                          "length": 1536
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame",
+                  "kind": "Frame",
+                  "value": "2/0, 512 bytes",
+                  "offset": 88,
+                  "length": 512,
+                  "children": [
+                    {
+                      "name": "Core Substream",
+                      "value": "2/0, 48000 Hz",
+                      "offset": 88,
+                      "length": 512,
+                      "children": [
+                        {
+                          "name": "Synchronization",
+                          "offset": 88,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Sync Word",
+                              "value": 2147385345,
+                              "offset": 88,
+                              "length": 4,
+                              "children": [
+                                {
+                                  "name": "Word Size",
+                                  "value": 16,
+                                  "unit": "bits",
+                                  "offset": 88,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "IsBigEndian",
+                                  "value": true,
+                                  "offset": 88,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame Header",
+                          "offset": 92,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "IsTerminationFrame",
+                              "value": false,
+                              "offset": 92,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Deficit Sample Count",
+                              "value": 31,
+                              "offset": 92,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "HasCrc",
+                              "value": false,
+                              "offset": 92,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Sample Blocks",
+                              "value": 16,
+                              "unit": "blocks",
+                              "offset": 92,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 7
+                            },
+                            {
+                              "name": "Frame Size",
+                              "value": 512,
+                              "unit": "bytes",
+                              "offset": 93,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            },
+                            {
+                              "name": "Audio Channel Arrangement",
+                              "value": "2: 2/0 (left, right)",
+                              "offset": 95,
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 6
+                            },
+                            {
+                              "name": "Sampling Frequency",
+                              "value": 48000,
+                              "unit": "Hz",
+                              "offset": 96,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Bit Rate",
+                              "value": 384,
+                              "unit": "kbps",
+                              "offset": 96,
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 97,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 97,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTimeStamp",
+                              "value": false,
+                              "offset": 97,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasAuxiliaryData",
+                              "value": false,
+                              "offset": 97,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsHdcd",
+                              "value": false,
+                              "offset": 97,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Extension Audio Type",
+                              "value": "0: channel extension (XCh)",
+                              "offset": 98,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "HasExtendedAudio",
+                              "value": false,
+                              "offset": 98,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSyncPerSubsubframe",
+                              "value": false,
+                              "offset": 98,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "LFE Channel",
+                              "value": "0 (none)",
+                              "offset": 98,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasPredictorHistory",
+                              "value": true,
+                              "offset": 98,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasPerfectReconstructionFilter",
+                              "value": true,
+                              "offset": 99,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Encoder Revision",
+                              "value": 7,
+                              "offset": 99,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Copy History",
+                              "value": 0,
+                              "offset": 99,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Source PCM Resolution",
+                              "value": 24,
+                              "unit": "bits",
+                              "offset": 99,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "IsEs",
+                                  "value": false,
+                                  "offset": 99,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "IsFrontSumDifference",
+                              "value": false,
+                              "offset": 100,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsSurroundSumDifference",
+                              "value": false,
+                              "offset": 100,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Dialogue Normalization",
+                              "value": 0,
+                              "unit": "dB",
+                              "offset": 100,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Primary Audio Coding Header",
+                          "offset": 101,
+                          "length": 13,
+                          "bitOffset": 0,
+                          "bitLength": 97,
+                          "children": [
+                            {
+                              "name": "Subframes",
+                              "value": 1,
+                              "unit": "subframes",
+                              "offset": 101,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Primary Channels",
+                              "value": 2,
+                              "unit": "channels",
+                              "offset": 101,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Subband Activity Count",
+                              "offset": 101,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 101,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 102,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "High Frequency VQ Start Subband",
+                              "offset": 103,
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 103,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 103,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Joint Intensity Coding Index",
+                              "offset": 104,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "0 (disabled)",
+                                  "offset": 104,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "0 (disabled)",
+                                  "offset": 104,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Transient Mode Code Book",
+                              "offset": 105,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "A4",
+                                  "offset": 105,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "A4",
+                                  "offset": 105,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Code Book",
+                              "offset": 105,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 105,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 106,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bit Allocation Quantizer Select",
+                              "offset": 106,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 106,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 106,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Quantization Index Codebook Select",
+                              "offset": 107,
+                              "length": 7,
+                              "bitOffset": 1,
+                              "bitLength": 48,
+                              "children": [
+                                {
+                                  "name": "ABITS 1",
+                                  "offset": 107,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 1,
+                                      "offset": 107,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 1
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 1,
+                                      "offset": 107,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 1
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 2",
+                                  "offset": 107,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 107,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 107,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 3",
+                                  "offset": 107,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 107,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 108,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 4",
+                                  "offset": 108,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 108,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 108,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 5",
+                                  "offset": 108,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 108,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 109,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 6",
+                                  "offset": 109,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 109,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 109,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 7",
+                                  "offset": 110,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 110,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 110,
+                                      "length": 1,
+                                      "bitOffset": 4,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 8",
+                                  "offset": 110,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 110,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 111,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 9",
+                                  "offset": 111,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 111,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 112,
+                                      "length": 1,
+                                      "bitOffset": 0,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 10",
+                                  "offset": 112,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 112,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 112,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Audio Data",
+                          "value": 487,
+                          "unit": "bytes",
+                          "offset": 113,
+                          "length": 487,
+                          "bitOffset": 1,
+                          "bitLength": 3895
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame",
+                  "kind": "Frame",
+                  "value": "2/0, 512 bytes",
+                  "offset": 600,
+                  "length": 512,
+                  "children": [
+                    {
+                      "name": "Core Substream",
+                      "value": "2/0, 48000 Hz",
+                      "offset": 600,
+                      "length": 512,
+                      "children": [
+                        {
+                          "name": "Synchronization",
+                          "offset": 600,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Sync Word",
+                              "value": 2147385345,
+                              "offset": 600,
+                              "length": 4,
+                              "children": [
+                                {
+                                  "name": "Word Size",
+                                  "value": 16,
+                                  "unit": "bits",
+                                  "offset": 600,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "IsBigEndian",
+                                  "value": true,
+                                  "offset": 600,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame Header",
+                          "offset": 604,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "IsTerminationFrame",
+                              "value": false,
+                              "offset": 604,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Deficit Sample Count",
+                              "value": 31,
+                              "offset": 604,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "HasCrc",
+                              "value": false,
+                              "offset": 604,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Sample Blocks",
+                              "value": 16,
+                              "unit": "blocks",
+                              "offset": 604,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 7
+                            },
+                            {
+                              "name": "Frame Size",
+                              "value": 512,
+                              "unit": "bytes",
+                              "offset": 605,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            },
+                            {
+                              "name": "Audio Channel Arrangement",
+                              "value": "2: 2/0 (left, right)",
+                              "offset": 607,
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 6
+                            },
+                            {
+                              "name": "Sampling Frequency",
+                              "value": 48000,
+                              "unit": "Hz",
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Bit Rate",
+                              "value": 384,
+                              "unit": "kbps",
+                              "offset": 608,
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 609,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 609,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTimeStamp",
+                              "value": false,
+                              "offset": 609,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasAuxiliaryData",
+                              "value": false,
+                              "offset": 609,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsHdcd",
+                              "value": false,
+                              "offset": 609,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Extension Audio Type",
+                              "value": "0: channel extension (XCh)",
+                              "offset": 610,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "HasExtendedAudio",
+                              "value": false,
+                              "offset": 610,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSyncPerSubsubframe",
+                              "value": false,
+                              "offset": 610,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "LFE Channel",
+                              "value": "0 (none)",
+                              "offset": 610,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasPredictorHistory",
+                              "value": true,
+                              "offset": 610,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasPerfectReconstructionFilter",
+                              "value": true,
+                              "offset": 611,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Encoder Revision",
+                              "value": 7,
+                              "offset": 611,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Copy History",
+                              "value": 0,
+                              "offset": 611,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Source PCM Resolution",
+                              "value": 24,
+                              "unit": "bits",
+                              "offset": 611,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "IsEs",
+                                  "value": false,
+                                  "offset": 611,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "IsFrontSumDifference",
+                              "value": false,
+                              "offset": 612,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsSurroundSumDifference",
+                              "value": false,
+                              "offset": 612,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Dialogue Normalization",
+                              "value": 0,
+                              "unit": "dB",
+                              "offset": 612,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Primary Audio Coding Header",
+                          "offset": 613,
+                          "length": 13,
+                          "bitOffset": 0,
+                          "bitLength": 97,
+                          "children": [
+                            {
+                              "name": "Subframes",
+                              "value": 1,
+                              "unit": "subframes",
+                              "offset": 613,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Primary Channels",
+                              "value": 2,
+                              "unit": "channels",
+                              "offset": 613,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Subband Activity Count",
+                              "offset": 613,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 613,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 614,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "High Frequency VQ Start Subband",
+                              "offset": 615,
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 615,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 615,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Joint Intensity Coding Index",
+                              "offset": 616,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "0 (disabled)",
+                                  "offset": 616,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "0 (disabled)",
+                                  "offset": 616,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Transient Mode Code Book",
+                              "offset": 617,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "A4",
+                                  "offset": 617,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "A4",
+                                  "offset": 617,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Code Book",
+                              "offset": 617,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 617,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 618,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bit Allocation Quantizer Select",
+                              "offset": 618,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 618,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 618,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Quantization Index Codebook Select",
+                              "offset": 619,
+                              "length": 7,
+                              "bitOffset": 1,
+                              "bitLength": 48,
+                              "children": [
+                                {
+                                  "name": "ABITS 1",
+                                  "offset": 619,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 1,
+                                      "offset": 619,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 1
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 1,
+                                      "offset": 619,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 1
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 2",
+                                  "offset": 619,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 619,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 619,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 3",
+                                  "offset": 619,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 619,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 620,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 4",
+                                  "offset": 620,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 620,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 620,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 5",
+                                  "offset": 620,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 620,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 621,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 6",
+                                  "offset": 621,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 621,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 621,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 7",
+                                  "offset": 622,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 622,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 622,
+                                      "length": 1,
+                                      "bitOffset": 4,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 8",
+                                  "offset": 622,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 622,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 623,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 9",
+                                  "offset": 623,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 623,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 624,
+                                      "length": 1,
+                                      "bitOffset": 0,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 10",
+                                  "offset": 624,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 624,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 624,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Audio Data",
+                          "value": 487,
+                          "unit": "bytes",
+                          "offset": 625,
+                          "length": 487,
+                          "bitOffset": 1,
+                          "bitLength": 3895
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame",
+                  "kind": "Frame",
+                  "value": "2/0, 512 bytes",
+                  "offset": 1112,
+                  "length": 512,
+                  "children": [
+                    {
+                      "name": "Core Substream",
+                      "value": "2/0, 48000 Hz",
+                      "offset": 1112,
+                      "length": 512,
+                      "children": [
+                        {
+                          "name": "Synchronization",
+                          "offset": 1112,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Sync Word",
+                              "value": 2147385345,
+                              "offset": 1112,
+                              "length": 4,
+                              "children": [
+                                {
+                                  "name": "Word Size",
+                                  "value": 16,
+                                  "unit": "bits",
+                                  "offset": 1112,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "IsBigEndian",
+                                  "value": true,
+                                  "offset": 1112,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame Header",
+                          "offset": 1116,
+                          "length": 9,
+                          "children": [
+                            {
+                              "name": "IsTerminationFrame",
+                              "value": false,
+                              "offset": 1116,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Deficit Sample Count",
+                              "value": 31,
+                              "offset": 1116,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "HasCrc",
+                              "value": false,
+                              "offset": 1116,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Sample Blocks",
+                              "value": 16,
+                              "unit": "blocks",
+                              "offset": 1116,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 7
+                            },
+                            {
+                              "name": "Frame Size",
+                              "value": 512,
+                              "unit": "bytes",
+                              "offset": 1117,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            },
+                            {
+                              "name": "Audio Channel Arrangement",
+                              "value": "2: 2/0 (left, right)",
+                              "offset": 1119,
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 6
+                            },
+                            {
+                              "name": "Sampling Frequency",
+                              "value": 48000,
+                              "unit": "Hz",
+                              "offset": 1120,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Bit Rate",
+                              "value": 384,
+                              "unit": "kbps",
+                              "offset": 1120,
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 1121,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 1121,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTimeStamp",
+                              "value": false,
+                              "offset": 1121,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasAuxiliaryData",
+                              "value": false,
+                              "offset": 1121,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsHdcd",
+                              "value": false,
+                              "offset": 1121,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Extension Audio Type",
+                              "value": "0: channel extension (XCh)",
+                              "offset": 1122,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "HasExtendedAudio",
+                              "value": false,
+                              "offset": 1122,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSyncPerSubsubframe",
+                              "value": false,
+                              "offset": 1122,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "LFE Channel",
+                              "value": "0 (none)",
+                              "offset": 1122,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasPredictorHistory",
+                              "value": true,
+                              "offset": 1122,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasPerfectReconstructionFilter",
+                              "value": true,
+                              "offset": 1123,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Encoder Revision",
+                              "value": 7,
+                              "offset": 1123,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Copy History",
+                              "value": 0,
+                              "offset": 1123,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Source PCM Resolution",
+                              "value": 24,
+                              "unit": "bits",
+                              "offset": 1123,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "IsEs",
+                                  "value": false,
+                                  "offset": 1123,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "IsFrontSumDifference",
+                              "value": false,
+                              "offset": 1124,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsSurroundSumDifference",
+                              "value": false,
+                              "offset": 1124,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Dialogue Normalization",
+                              "value": 0,
+                              "unit": "dB",
+                              "offset": 1124,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Primary Audio Coding Header",
+                          "offset": 1125,
+                          "length": 13,
+                          "bitOffset": 0,
+                          "bitLength": 97,
+                          "children": [
+                            {
+                              "name": "Subframes",
+                              "value": 1,
+                              "unit": "subframes",
+                              "offset": 1125,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Primary Channels",
+                              "value": 2,
+                              "unit": "channels",
+                              "offset": 1125,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Subband Activity Count",
+                              "offset": 1125,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 1125,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 1126,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "High Frequency VQ Start Subband",
+                              "offset": 1127,
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 10,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 1127,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 5
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": 32,
+                                  "unit": "subbands",
+                                  "offset": 1127,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 5
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Joint Intensity Coding Index",
+                              "offset": 1128,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "0 (disabled)",
+                                  "offset": 1128,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "0 (disabled)",
+                                  "offset": 1128,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Transient Mode Code Book",
+                              "offset": 1129,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "A4",
+                                  "offset": 1129,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "A4",
+                                  "offset": 1129,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Code Book",
+                              "offset": 1129,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 1129,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "6: 7-bit linear, 7-bit table",
+                                  "offset": 1130,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bit Allocation Quantizer Select",
+                              "offset": 1130,
+                              "length": 2,
+                              "bitOffset": 3,
+                              "bitLength": 6,
+                              "children": [
+                                {
+                                  "name": "Channel 1",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 1130,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Channel 2",
+                                  "value": "5: linear, 4 bits",
+                                  "offset": 1130,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Quantization Index Codebook Select",
+                              "offset": 1131,
+                              "length": 7,
+                              "bitOffset": 1,
+                              "bitLength": 48,
+                              "children": [
+                                {
+                                  "name": "ABITS 1",
+                                  "offset": 1131,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 1,
+                                      "offset": 1131,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 1
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 1,
+                                      "offset": 1131,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 1
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 2",
+                                  "offset": 1131,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 1131,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 1131,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 3",
+                                  "offset": 1131,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 1131,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 1132,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 4",
+                                  "offset": 1132,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 1132,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 1132,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 5",
+                                  "offset": 1132,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 3,
+                                      "offset": 1132,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 2
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 3,
+                                      "offset": 1133,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 2
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 6",
+                                  "offset": 1133,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 1133,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 1133,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 7",
+                                  "offset": 1134,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 1134,
+                                      "length": 1,
+                                      "bitOffset": 1,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 1134,
+                                      "length": 1,
+                                      "bitOffset": 4,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 8",
+                                  "offset": 1134,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 1134,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 1135,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 9",
+                                  "offset": 1135,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 1135,
+                                      "length": 1,
+                                      "bitOffset": 5,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 1136,
+                                      "length": 1,
+                                      "bitOffset": 0,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "ABITS 10",
+                                  "offset": 1136,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6,
+                                  "children": [
+                                    {
+                                      "name": "Channel 1",
+                                      "value": 7,
+                                      "offset": 1136,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Channel 2",
+                                      "value": 7,
+                                      "offset": 1136,
+                                      "length": 2,
+                                      "bitOffset": 6,
+                                      "bitLength": 3
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Audio Data",
+                          "value": 487,
+                          "unit": "bytes",
+                          "offset": 1137,
+                          "length": 487,
+                          "bitOffset": 1,
+                          "bitLength": 3895
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            2,
+            1
+          ]
+        ],
+        "codec": "DTS",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "2/0",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 24,
+        "samples": 1536,
+        "duration": 0.032,
+        "averageBitrate": 384,
+        "isVbr": false,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              88,
+              600,
+              1112
+            ],
+            "values": [
+              384,
+              384,
+              384
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              384
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

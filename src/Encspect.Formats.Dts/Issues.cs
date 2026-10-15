@@ -26,6 +26,7 @@ internal enum Issue
     ComponentSync,
     CodingModeAuxiliary,
     SubstreamMisaligned,
+    LosslessInconsistent,
 }
 
 // isGroup: the node the finding points to is a group of fields (Tree.Close, Locator.Group), not a single field (Locator.Field); in the

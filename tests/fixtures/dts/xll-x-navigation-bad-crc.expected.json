@@ -1,0 +1,66 @@
+{
+ "description": "Four units whose lossless frame has the DTS:X word after its band data and a navigation index whose CRC16 fails, so the word is not looked for.",
+ "length": 2944,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   736
+  ],
+  [
+   736,
+   736
+  ],
+  [
+   1472,
+   736
+  ],
+  [
+   2208,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/HasDtsX": "false"
+ },
+ "findings": [
+  [
+   "dts.crc-mismatch",
+   "navigation index CRC16"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid NAVI checksum",
+  "decode_log": "warning",
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder checks the navigation index CRC16 before it looks for the DTS:X word (dca_xll.c: 'Invalid NAVI checksum')"
+  }
+ }
+}

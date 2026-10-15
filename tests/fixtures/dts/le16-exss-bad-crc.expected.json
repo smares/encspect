@@ -46,11 +46,11 @@
   "ffprobe": true,
   "decode": false,
   "libdca": true,
-  "ffprobe_profile": false,
+  "ffprobe_bitrate": false,
   "decode_error": "Invalid EXSS header checksum",
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
-   "decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum')"
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"
   }
  }
 }

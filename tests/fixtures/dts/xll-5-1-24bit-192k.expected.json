@@ -1,0 +1,61 @@
+{
+ "description": "Four units of a stereo core frame and a lossless extension of one 5.1 channel set, 24 bits at 192000 Hz.",
+ "length": 3136,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   784
+  ],
+  [
+   784,
+   784
+  ],
+  [
+   1568,
+   784
+  ],
+  [
+   2352,
+   784
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 192000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 8192,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Lossless Channel Sets": "1 channel set",
+  "DTS/Statistics/Lossless Channels": "6 channels",
+  "DTS/Statistics/Lossless Sampling Frequency": "192000 Hz",
+  "DTS/Statistics/Lossless Source PCM Resolution": "24 bits",
+  "DTS/Statistics/Lossless Storage Bit Width": "24 bits",
+  "DTS/Statistics/Extension Sampling Frequency": "192000 Hz"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+  }
+ }
+}

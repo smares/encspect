@@ -3,7 +3,7 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Dts;
 
-// Raw DTS files (.dts, .dtshd, .cpt): core frames, each possibly followed by extension substreams, in any of the four forms of
+// Raw DTS files (.dts, .cpt; a .dtshd file is the DTS-HD parser's, which hands its stream chunk to the codec parser, which reads it as this does): core frames, each possibly followed by extension substreams, in any of the four forms of
 // the core stream (ETSI TS 102 114 5.4.2, 7.2; FFmpeg's dca_syncwords.h; libdca's parse.c), or extension substreams alone. As
 // with MPEG sync, a sync word only starts a stream when a chain of frames follows it: two more at the positions the frame
 // sizes give, in the same form and at the same sampling frequency, or frames that end exactly at the end of the data. Once in sync, frames
@@ -82,7 +82,7 @@ public sealed class DtsParser : IFormatParser
         analysis.Finish(context.EncoderClaims);
     }
 
-    private static void ParseSegment(DtsAnalysis analysis, BlockCache cache, Node parent, long start, long end)
+    internal static void ParseSegment(DtsAnalysis analysis, BlockCache cache, Node parent, long start, long end)
     {
         var region = new DtsAnalysis.Region(analysis.Frames.Count);
         analysis.Regions.Add(region);

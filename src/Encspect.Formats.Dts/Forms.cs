@@ -19,6 +19,8 @@ internal static class Forms
 {
     public const int SyncLength = 6;
 
+    public static string Describe(this StreamForm form) => $"{form.WordBits()}-bit words, {(form.IsLittleEndian() ? "little" : "big")} endian";
+
     public static bool Is14Bit(this StreamForm form) => form >= StreamForm.BigEndian14;
 
     public static bool IsLittleEndian(this StreamForm form) => form is StreamForm.LittleEndian16 or StreamForm.LittleEndian14;

@@ -378,19 +378,22 @@ internal sealed partial class UnitSyntax
         return (high << 8) | low;
     }
 
-    // 8.3.1 Table 8-1: the common header of the lossless extension, with its CRC.
+    // 8.3.1 Table 8-1: the common header of the lossless extension, with its CRC; then the channel set sub-headers, the navigation index
+    // and the band data (8.3.2 to 8.4.2), which UnitSyntax.Lossless reads.
     private void ReadXll(int at, int endBit, AssetFacts asset)
     {
-        Num("Version", 4, Explain.XllVersion, Topics.ExtensionSubstream, null, 1);
-        int headerSize = HeaderSize(8, Explain.XllHeaderSize, Topics.ExtensionSubstream);
-        int sizeBits = Num("Frame Size Bits", 5, Explain.XllFrameSizeBits, Topics.ExtensionSubstream, "bits", 1) + 1;
-        Num("Frame Size", sizeBits, Explain.XllFrameSize, Topics.ExtensionSubstream, "bytes", 1);
-        Num("Channel Sets", 4, Explain.XllSets, Topics.ExtensionSubstream, "channel sets", 1);
+        int version = Num("Version", 4, Explain.XllVersion, Topics.Lossless, null, 1) + 1;
+        int headerSize = HeaderSize(8, Explain.XllHeaderSize, Topics.Lossless);
+        int sizeBits = Num("Frame Size Bits", 5, Explain.XllFrameSizeBits, Topics.Lossless, "bits", 1) + 1;
+        int frameSizeStart = _pos;
+        int frameSize = Num("Frame Size", sizeBits, Explain.XllFrameSize, Topics.Lossless, "bytes", 1) + 1;
+        int frameSizeEnd = _pos;
+        int sets = Num("Channel Sets", 4, Explain.XllSets, Topics.Lossless, "channel sets", 1) + 1;
         int segmentsLog = (int)Read(4);
-        _tree?.Field("Segments", _pos - 4, _pos, NodeValue.Integer(1 << segmentsLog, "segments", "segment"), Explain.XllSegments, Topics.ExtensionSubstream);
+        _tree?.Field("Segments", _pos - 4, _pos, NodeValue.Integer(1 << segmentsLog, "segments", "segment"), Explain.XllSegments, Topics.Lossless);
         int samplesLog = (int)Read(4);
-        _tree?.Field("Samples per Segment", _pos - 4, _pos, NodeValue.Integer(1 << samplesLog, "samples", "sample"), Explain.XllSamplesInSegment, Topics.ExtensionSubstream);
-        Num("Segment Size Bits", 5, Explain.XllSegmentBits, Topics.ExtensionSubstream, "bits", 1);
+        _tree?.Field("Samples per Segment", _pos - 4, _pos, NodeValue.Integer(1 << samplesLog, "samples", "sample"), Explain.XllSamplesInSegment, Topics.Lossless);
+        int segmentBits = Num("Segment Size Bits", 5, Explain.XllSegmentBits, Topics.Lossless, "bits", 1) + 1;
         Num("Band Data CRC", 2, Explain.XllBandCrc, v => v switch
         {
             0 => "0 (none)",
@@ -398,17 +401,24 @@ internal sealed partial class UnitSyntax
             2 => "2 (also at the end of the least significant part)",
             _ => "3 (also at the end of bands 1 to 3)",
         }, Topics.Crc);
-        bool scalable = Flag("HasScalableLsbs", Explain.XllScalable, Topics.ExtensionSubstream);
-        Num("Channel Mask Bits", 5, Explain.XllMaskBits, Topics.ExtensionSubstream, "bits", 1);
+        bool scalable = Flag("HasScalableLsbs", Explain.XllScalable, Topics.Lossless);
+        int maskBits = Num("Channel Mask Bits", 5, Explain.XllMaskBits, Topics.Lossless, "bits", 1) + 1;
         if (scalable)
         {
-            Num("Fixed LSB Width", 4, Explain.XllLsbWidth, Topics.ExtensionSubstream, "bits");
+            Num("Fixed LSB Width", 4, Explain.XllLsbWidth, Topics.Lossless, "bits");
         }
 
         ReadHeaderCrc(at, headerSize, "XLL", Explain.XllCrc, "The lossless extension's header CRC16 (8.3.1) fails");
 
         int bands = asset.MaxSampleRate > 192000 ? 4 : asset.MaxSampleRate > 96000 ? 2 : 1;
         asset.XllSamples = (1 << segmentsLog) * (1 << samplesLog) * bands;
-        AddCoreData(_pos, endBit, "Channel Sets", Explain.XllData);
+        if (version > 1)
+        {
+            Report(Issue.ReservedValue, "Version", at * 8 + 32, at * 8 + 36, $"XLL version {version} is newer than the version 1 that 8.3.1 describes, so a decoder of version 1 does not process the stream; its channel sets are not read");
+            AddCoreData(Math.Max(_pos, (at + headerSize) * 8), endBit, "Lossless Data", Explain.XllData);
+            return;
+        }
+
+        ReadXllFrame(at, endBit, asset, headerSize, new XllCommon(sets, frameSize, segmentsLog, segmentBits, scalable, maskBits, frameSizeStart, frameSizeEnd));
     }
 }

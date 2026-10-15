@@ -13,8 +13,14 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
   - XXCH: the frame header with its CRC16, and each channel set's header with its speaker mask. A header whose CRC16 fails is still the extension's where its channel set sizes lead to the end of the frame; the failure is `dts.crc-mismatch`, not a missing extension.
 - **Extension substreams** (7.5), alone or after a core frame:
   - the header with its CRC16, the static fields, the asset sizes and each audio asset descriptor (type, language, text, resolution, rate, channels, speaker masks, dynamic metadata, the coding mode and the sizes of the components);
-  - each component by its sync word: the core (0x02B09261), XBR, XXCH, X96, LBR (its header with the sampling frequency, speaker mask and bit rate) and XLL (its common header with its CRC16);
+  - each component by its sync word: the core (0x02B09261), XBR, XXCH, X96, LBR (its header with the sampling frequency, speaker mask and bit rate) and XLL (see below);
   - substreams that hold only LBR or XLL, without a core.
+- **The lossless extension, XLL** (clause 8; the article `dts-lossless-extension`), from the sync word 0x41A29547 on:
+  - the common header (8.3.1, Table 8-1) with its CRC16: version, header size, frame size, number of channel sets, segments and samples in a segment, the width of the sizes in the navigation index, the band data CRC mode, the scalable least significant bits flag and the width of the channel masks;
+  - each channel set sub-header (8.3.2, Table 8-4) with its CRC16: channels, the residual channel encoding, source PCM resolution and storage bit width, sampling frequency (Table 8-5), the interpolation factor (Table 8-6), the replacement set and whether it is the active one (Table 8-7), whether the set is a primary set, whether it is hierarchical, whether downmix coefficients are embedded and whether the downmix is already done, the downmix type (Table 8-8), the number of downmix coefficients (not their values), the channel mask or the polar positions, and the number of frequency bands above 96 kHz. The prediction and decorrelation parameters of the bands and the mapping coefficients of sets that are not loudspeaker feeds are shown as bytes;
+  - the navigation index (8.3.3, 8.4.2) with its CRC16: one size for each frequency band, segment and channel set that has the band, which add up to the band data;
+  - the band data, as a node with its size, not decoded;
+  - the extension data after the band data (see DTS:X below).
 - **Headers of the MP4 `ddts` box** (Annex E), compared with the frames.
 - The subframes and the extensions' audio data are not decoded: sizes, sync words and CRCs are what the headers give.
 
@@ -38,13 +44,14 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 ## Reported
 
 - Codec by profile: "DTS", "DTS-ES" (XCh or XXCH in the core), "DTS 96/24" (X96 in the core), "DTS-HD High Resolution Audio" (XBR, XXCH or X96 in a substream), "DTS Express" (LBR, alone or with a core) and "DTS-HD Master Audio" (XLL). The specification names none; the names are FFmpeg's (dca_parser.c, dcadec.c), written out in full, and the profile node cites its evidence. The first asset of the first extension substream names the stream, and LBR comes before XLL, as in FFmpeg.
-- The sampling frequency the stream delivers, the highest the core and the extensions state (96 kHz with X96 or a 96 kHz asset), as the stream's sample rate, with its samples counted at it; the core's frequency stays its own statistic ("Sampling Frequency") beside "Extension Sampling Frequency". ffprobe takes the rate of a core with an extension substream from the core until its decoder has decoded the extension, which the stub components of the fixtures do not allow; the cross-check names those. Channels and layout, bits per sample, samples, duration, nominal and actual bitrate with series (each unit's bitrate and each second's), `IsVbr`, `IsLossless` and `HasExtensionSubstream`.
+- The sampling frequency the stream delivers, the highest the core and the extensions state (96 kHz with X96 or a 96 kHz asset), as the stream's sample rate, with its samples counted at it; the core's frequency stays its own statistic ("Sampling Frequency") beside "Extension Sampling Frequency". ffprobe takes the rate of a core with an extension substream from the core until its decoder has decoded the extension; the lossless fixtures carry decodable silent XLL frames, so it reads the extension's rate, and the cross-check names the fixtures whose extension it cannot decode. Channels and layout, bits per sample, samples, duration, nominal and actual bitrate with series (each unit's bitrate and each second's), `IsVbr`, `IsLossless` and `HasExtensionSubstream`.
+- For a stream whose first asset has an XLL component with every channel set sub-header read and its CRC16 holding, the lossless layer's figures: the bit depth is the largest source PCM resolution of its channel sets (the stream's bits per sample, and "Lossless Source PCM Resolution" in the statistics, with "Lossless Storage Bit Width"), the sampling frequency is the largest of the sets', and the channel layout is the union of their channel masks, which replaces the layout of the descriptor and the core. The statistics also give the number of channel sets and of channels. A set whose fields contradict each other (a resolution beyond the width, a mask of another number of speakers than channels) is not used.
 - The encoder revision (VERNUM) as a field only.
 - Statistics per stream: frames of each kind, termination frames, extensions, dialogue normalization, dynamic range coefficients, time stamps, auxiliary data, CRC flags and failures, the coding components and the audio assets.
 
 ## Header CRCs
 
-- **Verified:** the CRC16 of the extension substream header, the XXCH frame header and channel set headers, the XBR and X96 frame headers (in a substream) and the XLL common header (Annex B). A unit with a failing one counts in "Frames Failing a CRC".
+- **Verified:** the CRC16 of the extension substream header, the XXCH frame header and channel set headers, the XBR and X96 frame headers (in a substream), and XLL's common header, channel set sub-headers and navigation index (Annex B). A unit with a failing one counts in "Frames Failing a CRC".
 - **Not verified:** the CRC words that a core frame with CPF set carries and the parser reads: HCRC (5.4.2), AHCRC (5.4.3) and, for X96, AHCRC96 (6.2.4.4: "will not be used"). 5.4.2 and 5.4.3 say the check shall not be applied; the words are shown as not verified with that reason, and the flag is an info finding (`dts.crc-present`). SICRC (5.5.1, same wording) lies in the subframes, which are not read.
 
 ## Channel layout
@@ -53,9 +60,22 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 - XCh adds a back center channel; XXCH adds the speakers its channel sets' masks name (Table 6-22); an asset of an extension substream states its own speaker activity mask (Table 7-10).
 - A lone surround pair is the back pair; with a rear pair, the surround pair is the side pair, as for other formats. A user defined arrangement (AMODE 16 and above) has discrete channels of the number the core codes and an info finding.
 
+## Channel masks of the lossless extension
+
+- A channel set's mask has one bit for each speaker, in the order of Table 6-22 (the mask of XXCH), which is how FFmpeg's `dca_xll.c` reads it. The specification points to its clause C.8 for the bits, which in V1.6.1 is about entropy coding, so the order rests on FFmpeg and on the real files below: the DTS-HD Master Audio 7.1 sample of the FFmpeg archive has a 5.1 set with the mask 0x627 (center, left, right, LFE and the side pair) and a set with 0x180 (the rear pair), which is the 7.1 layout ffprobe and MediaInfo report.
+- The number of frequency bands follows Table 8-4: with a sampling frequency above 96 kHz, 4 bands when `bXtraFreqBands` is set and 2 when it is clear. The text of 8.3.2 and 8.5.1 describes the counts otherwise (1 or 2 for a set up to 192 kHz when clear), and 8.2.5 gives 2 for 192 kHz; FFmpeg reads 2 and does not decode a set with the flag.
+- Downmix coefficients are counted as FFmpeg's `parse_dmix_coeffs` does: a primary set has a row for each channel its downmix type mixes to (1, 2, 2, 3, 3, 4 and 4 for types 0 to 6), a non-primary set a row for each channel of the sets before it in the hierarchy, each row with a scale; 9 bits each. The real 7.1 sample's 12 and 18 coefficients confirm it.
+- The navigation index has one size for each frequency band, segment and channel set that has the band, as the text of 8.4.2 and FFmpeg say; the pseudo-code in 8.4.2 also reads a total for each segment, which no real file has.
+
+## DTS:X
+
+- No specification describes DTS:X; the analyzer implements the test of FFmpeg 6.1.1's `dca_xll.c` and reports what MediaInfo 24.01's `File_Dts.cpp` reads next to it. From the end of the band data (the sum of the navigation index's sizes behind it) the position is rounded up to 32 bits counted from the XLL sync word; if the frame has more bytes than that, the word there is read. 0x02000850 is DTS:X; 0xF14000D0 and 0xF14000D1 are DTS:X IMAX to FFmpeg (it ignores the lowest bit). MediaInfo reads 0x02000850 and 0xF14000D1 as DTS:X and 0xF14000D0 as IMAX (with DTS:X also set, "reported that IMAX is detected as X on legacy X decoders"), so a stream with 0xF14000D1 is IMAX to FFmpeg and plain DTS:X to MediaInfo.
+- A stream with the word in any frame of its first asset has the profile "DTS-HD Master Audio + DTS:X" or "DTS-HD Master Audio + DTS:X IMAX", FFmpeg's "DTS-HD MA + DTS:X" and "DTS-HD MA + DTS:X IMAX" written out, and the statistics `HasDtsX` and `HasDtsXImax` (FFmpeg's two cases). The word is a node under "Extension Data" in the lossless frame (other bytes there are "Data After Band Data"). It is read only when every channel set is accepted (FFmpeg refuses a set with a failing CRC16, a source resolution beyond its storage width or a channel mask of another number of speakers than channels; MediaInfo 24.01 still reads the word after such a set, which the analyzer does not follow) and the navigation index's CRC16 holds, as FFmpeg returns before the word otherwise; a band data size larger than the frame (its stored value is the frame size or more) puts the band data's end past the frame, so no word is found, and only with 4 bytes left in the frame (FFmpeg reads it with 1 to 3 as well). The navigation index is limited as FFmpeg's is: 1,024 entries counted as the most bands times the segments times the sets. LBR, which FFmpeg's decoder names first, keeps the profile "DTS Express".
+- The object audio behind the word is neither described by a source nor read: `HasObjectAudio` stays false, and the report says nothing about objects.
+
 ## Encoder detection
 
-- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. Claims from tags (an ID3v2 TSSE frame, an APEv2 Encoder item) and from a container name one with low confidence, as written. A name FFmpeg's muxer writes (Lavf) names none.
+- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. Claims from tags (an ID3v2 TSSE frame, an APEv2 Encoder item) and from a container (the BUILDVER chunk of a [.dtshd file](dtshd.md)) name one with low confidence, as written. A name FFmpeg's muxer writes (Lavf) names none.
 
 ## MP4
 
@@ -69,6 +89,7 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 - **Extensions:** `dts.extension-missing`, `dts.extension-size-legacy` (the size field gives the distance itself, which 6.4.2's note accepts).
 - **Alignment:** `dts.substream-misaligned`.
 - **Extension substreams:** `dts.crc-mismatch`, `dts.substream-overrun`, `dts.asset-descriptor-overrun`, `dts.component-sync`, `dts.coding-mode-auxiliary`.
+- **Lossless extension:** `dts.lossless-inconsistent` (a resolution beyond the storage width, a channel mask of another number of speakers than channels, a navigation index of more than 1,024 entries or whose sizes end past the frame); `dts.crc-mismatch`, `dts.reserved-value` (downmix type 7, an XLL version above 1), `dts.substream-overrun` and `dts.header-overrun` also report the sub-headers and the navigation index.
 - **Other:** `dts.encoder-claim`, `dts.config-differs`, `dts.config-reserved`, `dts.config-truncated`.
 - Findings of a kind are counted once per file, pointing at the first case.
 
@@ -80,6 +101,6 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 ## Not covered
 
 - The subframes (side information, scale factors, samples) and the audio data of the extensions: no entropy decoding (planned: entropy pass). A damaged core frame without CRC words shows no finding unless its header is damaged; decoders such as FFmpeg cannot tell either (see `docs/development.md`).
-- DTS:X and IMAX metadata, and the XLL channel set headers and navigation (the common header is read); planned: DTS-HD step of phase 2.
+- DTS:X beyond the sync word of its extension data, and the prediction, decorrelation and entropy parameters of the XLL bands, the band data itself and the mapping coefficients of channel sets that are not loudspeaker feeds. An XLL frame that does not start at the start of its component (peak bit rate smoothing carries one over several access units, 7.5.3.4) is reported as missing its sync word; the real samples used here start every frame at its component.
 - The core's optional information (time stamp, auxiliary data) beyond its flags (planned: entropy pass, as DTS coding statistics).
-- DTS-HD files (`.dtshd`) with their own `DTSHDHDR` chunks: raw streams of the same frames are read, the chunk container is not (planned: DTS-HD step of phase 2).
+- DTS-HD files (`.dtshd`) are read by their own parser, see [dtshd.md](dtshd.md).

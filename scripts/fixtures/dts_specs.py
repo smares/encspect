@@ -5,6 +5,8 @@ pinned by its SHA-256, into a directory outside the repository, which may not ho
 - ETSI TS 102 114 V1.6.1 (2019-08), DTS Coherent Acoustics; Core and Extensions with Additional
   Profiles: the core (clause 5), its extensions XCh, X96 and XXCH (clause 6), the extension
   substream (clause 7), XBR, XLL and LBR, and Annex E: the DTS formats in MP4 (the ddts box).
+- ATSC A/103:2014 (25 July 2014), Non-Real-Time Content Delivery; its Annex E, "DTS-HD File Structure", is the public description of the
+  .dtshd file (Tables E.1 to E.20) that the DTS-HD parser is written from.
 
     python3 scripts/fixtures/dts_specs.py [directory]
 
@@ -21,17 +23,23 @@ NAME = "ts_102114v010601p.pdf"
 SHA256 = "29f9e50575e48bfe55222c5f004088af379bc9a6c65274ed975a81dca10647ba"
 ADDRESSES = ["https://www.etsi.org/deliver/etsi_ts/102100_102199/102114/01.06.01_60/ts_102114v010601p.pdf"]
 
+ATSC_NAME = "atsc_a103_2014.pdf"
+ATSC_SHA256 = "a03955b05ca5131c58dd7633e3c10ad23c6510c51e517d3e1953ea353b211d80"
+ATSC_ADDRESSES = ["https://www.atsc.org/wp-content/uploads/2015/03/Non-Real-Time-Content-Delivery.pdf"]
+
 
 def fetch(directory):
     directory = pathlib.Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     downloads.fetch(ADDRESSES, SHA256, directory / NAME)
+    downloads.fetch(ATSC_ADDRESSES, ATSC_SHA256, directory / ATSC_NAME)
     return directory / NAME
 
 
 def main():
     path = fetch(sys.argv[1] if len(sys.argv) > 1 else "dts-specs")
     print(f"{path}: SHA-256 {SHA256}")
+    print(f"{path.parent / ATSC_NAME}: SHA-256 {ATSC_SHA256}")
     return 0
 
 

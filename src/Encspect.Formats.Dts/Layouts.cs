@@ -92,6 +92,22 @@ internal static class Layouts
         return positions;
     }
 
+    // The positions of a mask with a bit for each speaker, in the order of Table 6-22, lowest bit first: the channel mask of an XLL channel
+    // set, which FFmpeg's dca_xll.c reads in this order (the specification refers to its clause C.8 for it, which is about entropy coding).
+    public static List<Position> SpeakerMask(uint mask)
+    {
+        var positions = new List<Position>();
+        for (int bit = 0; bit < (int)Position.None; bit++)
+        {
+            if ((mask & (1u << bit)) != 0)
+            {
+                positions.Add((Position)bit);
+            }
+        }
+
+        return positions;
+    }
+
     // Table 6-22: the positions of XXCH's extension masks, from bit 6 on (the bit of Position.CenterSurround).
     public static List<Position> XxchMask(uint mask)
     {

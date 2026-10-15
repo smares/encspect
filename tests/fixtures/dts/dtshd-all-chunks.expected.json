@@ -1,0 +1,62 @@
+{
+ "description": "A .dtshd file with every chunk Annex E defines, four units of a core frame and a lossless extension substream in STRMDATA, and BUILDVER and TIMECODE after it.",
+ "length": 3404,
+ "format": "DTS-HD",
+ "frames": [
+  [
+   348,
+   736
+  ],
+  [
+   1084,
+   736
+  ],
+  [
+   1820,
+   736
+  ],
+  [
+   2556,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "BUILDVER/Text": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)",
+  "DTSHDHDR/Stream Metadata/IsVbr": "true",
+  "DTSHDHDR/Time Code": "01:00:00 and 1234 samples",
+  "FILEINFO/Text": "Hand-built DTS-HD Master Audio, VBR, 5.1",
+  "STRMDATA/DTS/Encoder": "DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)",
+  "STRMDATA/DTS/Encoder/Confidence": "Low"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}

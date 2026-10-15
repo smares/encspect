@@ -211,6 +211,10 @@ internal sealed class DtsAnalysis
                 Findings.Add(Severity.Warning, "dts.substream-misaligned", Field, count =>
                     $"An extension substream starts {detail} ; a decoder that follows FFmpeg looks for it on the boundary only, so the stream plays as its core. First in {at} ({Times(count)}).");
                 break;
+            case Issue.LosslessInconsistent:
+                Findings.Add(Severity.Warning, "dts.lossless-inconsistent", Field, count =>
+                    $"The lossless extension contradicts itself: {detail}. First in {at} ({Times(count)}).");
+                break;
             case Issue.CodingModeAuxiliary:
                 Findings.Add(Severity.Info, "dts.coding-mode-auxiliary", Field, count =>
                     $"An asset has coding mode 3, auxiliary, which 7.5.3.4 reserves for the future; its data is not read. First in {at} ({Times(count)}).");
@@ -230,6 +234,21 @@ internal sealed class DtsAnalysis
                 long offset = layout.Offset;
                 string from = _current.Key.Describe();
                 string to = key.Describe();
+                if (from == to)
+                {
+                    // Neither the form nor the extension substream's figures are in the description, so say which one differs.
+                    StreamKey previous = _current.Key;
+                    if (previous.Form != key.Form)
+                    {
+                        from += $" ({previous.Form.Describe()})";
+                        to += $" ({key.Form.Describe()})";
+                    }
+                    else
+                    {
+                        to += " (the figures of its extension substream's assets differ)";
+                    }
+                }
+
                 Findings.AddNow(Severity.Info, "dts.stream-changed", $"The stream changes at 0x{offset:X} from {from} to {to}.", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame });
             }
 

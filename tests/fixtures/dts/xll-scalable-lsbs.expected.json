@@ -1,0 +1,50 @@
+{
+ "description": "Four units whose lossless extension splits the least significant bits of band 0 (the scalable least significant bits flag of the common header).",
+ "length": 2944,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   736
+  ],
+  [
+   736,
+   736
+  ],
+  [
+   1472,
+   736
+  ],
+  [
+   2208,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+  }
+ }
+}

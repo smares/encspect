@@ -35,13 +35,13 @@
  "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "decode": false,
+  "decode": true,
   "libdca": true,
+  "ffprobe_bitrate": false,
   "ffprobe_profile": false,
-  "decode_error": "Invalid XLL sub-header checksum",
   "skip": {
-   "ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c) and its decoder names LBR first (dcadec.c), then sets the profile itself (dca_lbr.c), which the stub components do not allow",
-   "decode": "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c), so ffprobe reads DTS-HD MA where the analyzer names the stream by LBR first, as ffmpeg's decoder does (dcadec.c), which the stub LBR component does not allow it to confirm"
   }
  }
 }

@@ -1,0 +1,52 @@
+{
+ "description": "Two units whose lossless component ends inside the navigation index.",
+ "length": 1332,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   666
+  ],
+  [
+   666,
+   666
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1024,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.header-overrun",
+   "ends inside the navigation index"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid NAVI checksum",
+  "decode_log": "warning",
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder checks the CRC16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"
+  }
+ }
+}

@@ -86,6 +86,38 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No fixture's manifest lists: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(dtshd\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex DtsHdCode();
+
+    // Every code the DTS-HD file parser emits is listed by a fixture's manifest, or asserted present by DtsHdTests (the codes a fixture cannot
+    // reach: a second header or stream chunk, a first chunk that is not DTSHDHDR, which detection never takes, and no codec parser to route to).
+    [Fact]
+    public void EveryDtsHdCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.DtsHd"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => DtsHdCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 10, $"Found only {emitted.Count} codes.");
+
+        var asserted = new HashSet<string>();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "dts"), "*.expected.json"))
+        {
+            foreach (Match m in DtsHdCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        foreach (Match m in DtsHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "DtsHdTests.cs"))))
+        {
+            asserted.Add(m.Groups[1].Value);
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No fixture's manifest or DtsHdTests lists: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex(", \"(wavpack\\.[a-z0-9-]+)\"\\);")]
     private static partial Regex WavPackBoundedCode();
 

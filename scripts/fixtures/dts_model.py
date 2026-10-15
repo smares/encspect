@@ -502,29 +502,209 @@ def finish_header(bits, crc_start):
     return raw
 
 
-def xll_component(size, bad_sync=False, scalable=False, segments_log=0, samples_log=9, sets=1):
-    """The lossless extension (8.3.1, Table 8-1): the common header with its CRC, then filler for the channel set headers and the data."""
-    bits = Bits()
-    bits.put(0 if bad_sync else SYNC_XLL, 32)
-    bits.put(0, 4)  # nVersion - 1
-    bits.put(0, 8)  # nHeaderSize - 1, filled in below
-    bits.put(15, 5)  # nBits4FrameFsize - 1: 16 bits
-    bits.put(size - 1, 16)
-    bits.put(sets - 1, 4)
-    bits.put(segments_log, 4)
-    bits.put(samples_log, 4)
-    bits.put(15, 5)  # nBits4SSize - 1
-    bits.put(0, 2)  # no band data CRC
-    bits.put(1 if scalable else 0, 1)
-    bits.put(7, 5)  # nBits4ChMask - 1
+# Table 7-10's bits (nuSpkrActivityMask) as the bits of Table 6-22, the order of one bit for each speaker that the channel masks of XXCH and
+# of XLL's channel sets use (FFmpeg's DCA_SPEAKER_*): each pair of Table 7-10 is two bits there.
+MASK_7_10_TO_6_22 = [(0,), (1, 2), (3, 4), (5,), (6,), (13, 15), (7, 8), (14,), (19,), (11, 12), (17, 18), (9, 10), (16,), (20, 21), (22,), (23, 24)]
+
+# FFmpeg's ff_dca_dmix_primary_nch: the channels each primary downmix type (Table 8-8) mixes to.
+DMIX_PRIMARY_CHANNELS = [1, 2, 2, 3, 3, 4, 4, 0]
+
+
+def mask_to_speakers(mask):
+    """Table 7-10's activity mask as the mask of Table 6-22."""
+    result = 0
+    for bit, targets in enumerate(MASK_7_10_TO_6_22):
+        if mask & (1 << bit):
+            for t in targets:
+                result |= 1 << t
+    return result
+
+
+def xll_set(channels=2, mask=None, bit_res=24, storage=24, rate=48000, interp=0, replacement=0, active=True, primary=True, dmix=None, hier=True,
+            residual=None, one_to_one=True, polar=False, extra_bands=False, bad_crc=False, header_pad=0, size_override=None):
+    """The options of one channel set sub-header (8.3.2, Table 8-4)."""
+    if mask is None:
+        mask = {1: 0x1, 2: 0x6, 6: 0x3F, 8: 0x63F}.get(channels, (1 << channels) - 1)
+    return dict(channels=channels, mask=mask, bit_res=bit_res, storage=storage, rate=rate, interp=interp, replacement=replacement, active=active,
+                primary=primary, dmix=dmix, hier=hier, residual=(1 << channels) - 1 if residual is None else residual, one_to_one=one_to_one,
+                polar=polar, extra_bands=extra_bands, bad_crc=bad_crc, header_pad=header_pad, size_override=size_override)
+
+
+def _bands_of(s):
+    if s["rate"] > 96000:
+        return 4 if s["extra_bands"] else 2
+    return 1
+
+
+def _set_header(s, hier_ofs, mask_bits, size_bits, scalable):
+    """A channel set sub-header as bytes, with its size and CRC16 (Table 8-4); fields are written as FFmpeg's chs_parse_header reads them."""
+    b = Bits()
+    b.put(0, 10)  # nChSetHeaderSize - 1, filled in below
+    n = s["channels"]
+    b.put(n - 1, 4)
+    b.put(s["residual"], n)
+    b.put(s["bit_res"] - 1, 5)
+    b.put(s["storage"] - 1, 5)
+    b.put(MAX_SAMPLE_RATE_CODES[s["rate"]], 4)
+    b.put(s["interp"], 2)
+    b.put(s["replacement"], 2)
+    if s["replacement"]:
+        b.put(1 if s["active"] else 0, 1)
+    if s["one_to_one"]:
+        b.put(1 if s["primary"] else 0, 1)
+        dmix = s["dmix"]
+        b.put(1 if dmix else 0, 1)
+        if dmix:
+            b.put(1 if dmix.get("embedded") else 0, 1)
+            if s["primary"]:
+                b.put(dmix.get("type", 1), 3)
+        b.put(1 if s["hier"] else 0, 1)
+        if dmix:
+            if s["primary"]:
+                for _ in range(DMIX_PRIMARY_CHANNELS[dmix.get("type", 1)] * n):
+                    b.put(0, 9)
+            else:
+                for _ in range(hier_ofs):
+                    b.put(0x40, 9)  # the scale: a code FFmpeg's table accepts
+                    for _ in range(n):
+                        b.put(0, 9)
+        b.put(0 if s["polar"] else 1, 1)
+        if s["polar"]:
+            for _ in range(n):
+                b.put(0, 25)
+        else:
+            b.put(s["mask"], mask_bits)
+    else:
+        b.put(0, 1)  # bMappingCoeffsPresent
+    bands = _bands_of(s)
+    if s["rate"] > 96000:
+        b.put(1 if s["extra_bands"] else 0, 1)
+    for band in range(bands):
+        b.put(0, 1)  # no pairwise channel decorrelation
+        for _ in range(n):
+            b.put(0, 4)  # adaptive predictor order
+        for _ in range(n):
+            b.put(0, 2)  # fixed predictor order
+        if band == 0:
+            if scalable:
+                b.put(0, size_bits)
+                b.put(0, 4 * n)
+                b.put(0, 4 * n)
+        else:
+            if s["one_to_one"] and s["dmix"] and s["dmix"].get("embedded"):
+                b.put(0, 1)
+            b.put(0, 1)  # no MSB/LSB split
+            b.put(0, 1)  # no scalable resolution
+    b.put(0, s["header_pad"] * 8)
+    b.align()
+    b.put(0, 16)
+    raw = bytearray(b.bytes())
+    size = len(raw)
+    assert size <= 1024, size
+    stated = s["size_override"] or size
+    raw[0] = (stated - 1) >> 2
+    raw[1] = (raw[1] & 0x3F) | (((stated - 1) & 3) << 6)
+    raw[-2:] = crc16(bytes(raw[:-2])).to_bytes(2, "big")
+    if s["bad_crc"]:
+        raw[-1] ^= 0xFF
+    return bytes(raw)
+
+
+def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=None, samples_log=None, scalable=False, size_bits=8, band_crc=0,
+              x_sync=None, x_payload=8, bad_navi_crc=False, bad_sync=False, version=0, header_pad=0, mask_bits=None, frame_size=None):
+    """The lossless extension (8.3) as a decoder reads it: the common header (Table 8-1), a channel set sub-header for each set (Table 8-4),
+    the navigation index (8.4.2) and silent band data: every residual is zero, coded with linear codes of 0 bits, so a decoder plays
+    silence. x_sync adds the 4-byte word FFmpeg looks for after the band data, and x_payload bytes after it (dca_xll.c)."""
+    sets = sets or [xll_set()]
+    mask_bits = mask_bits or max(8, max(s["mask"].bit_length() for s in sets))
+    band_max = max(_bands_of(s) for s in sets)
+    first = sets[0]
+    total_samples = core_samples * first["rate"] // core_rate // _bands_of(first)
+    if samples_log is None:
+        samples_log = min(9, max(1, total_samples.bit_length() - 1))
+    if segments_log is None:
+        segments_log = max(0, (total_samples >> samples_log).bit_length() - 1)
+    head = Bits()
+    head.put(0 if bad_sync else SYNC_XLL, 32)
+    head.put(version, 4)
+    head.put(0, 8)
+    head.put(15, 5)
+    head.put((frame_size or size) - 1, 16)
+    head.put(len(sets) - 1, 4)
+    head.put(segments_log, 4)
+    head.put(samples_log, 4)
+    head.put(size_bits - 1, 5)
+    head.put(band_crc, 2)
+    head.put(1 if scalable else 0, 1)
+    head.put(mask_bits - 1, 5)
     if scalable:
-        bits.put(0, 4)
-    raw = finish_header(bits, 4)
+        head.put(0, 4)
+    head.put(0, header_pad * 8)
+    raw = finish_header(head, 4)
     raw[4] = (raw[4] & 0xF0) | ((len(raw) - 1) >> 4)
     raw[5] = (raw[5] & 0x0F) | (((len(raw) - 1) & 15) << 4)
     raw[-2:] = crc16(bytes(raw[4:-2])).to_bytes(2, "big")
-    assert len(raw) <= size
-    return bytes(raw) + bytes(size - len(raw))
+    out = bytes(raw)
+    hier_ofs = 0
+    for s in sets:
+        out += _set_header(s, hier_ofs, mask_bits, size_bits, scalable)
+        if s["hier"]:
+            hier_ofs += s["channels"]
+    # Band data: for each band, segment and set that has the band.
+    nsegs = 1 << segments_log
+    entries = []
+    data = b""
+    for band in range(band_max):
+        for seg in range(nsegs):
+            for s in sets:
+                if _bands_of(s) <= band:
+                    continue
+                nabits = 5 if s["storage"] > 16 else 4 if s["storage"] > 8 else 3
+                if (len(sets) > 1 or _bands_of(s) > 1) and nabits < 5:
+                    nabits += 1
+                bits = Bits()
+                if seg == 0:
+                    bits.put(1, 1)  # common coding parameters
+                    bits.put(0, 1)  # linear code
+                    bits.put(0, nabits)
+                    bits.put(0, nabits)
+                    if band == 1:
+                        bits.put(0, 5)
+                        bits.put(0, 7 * s["channels"])
+                else:
+                    bits.put(1, 1)  # the parameters of the segment before
+                chunk = bits.bytes()
+                entries.append(len(chunk))
+                data += chunk
+    navi = Bits()
+    for e in entries:
+        navi.put(e - 1, size_bits)
+    navi.align()
+    navi_bytes = bytearray(navi.bytes() + b"\0\0")
+    navi_bytes[-2:] = crc16(bytes(navi_bytes[:-2])).to_bytes(2, "big")
+    if bad_navi_crc:
+        navi_bytes[-1] ^= 0xFF
+    out += bytes(navi_bytes) + data
+    out += bytes(-len(out) % 4)
+    if x_sync is not None:
+        out += x_sync.to_bytes(4, "big") + bytes(x_payload)
+    assert len(out) <= size, (len(out), size)
+    return out + bytes(size - len(out))
+
+
+def sets_of(asset):
+    """The channel sets an asset descriptor's fields imply: one set with all of its channels."""
+    channels = asset.get("channels", 6)
+    mask = asset.get("mask", 0x0F)
+    speakers = mask_to_speakers(mask) if mask else None
+    if speakers is not None and bin(speakers).count("1") != channels:
+        speakers = None
+    return [xll_set(channels=channels, mask=speakers, bit_res=asset.get("bit_resolution", 24), storage=24, rate=asset.get("max_rate", 48000))]
+
+
+def xll_component(size, bad_sync=False, scalable=False, asset=None, sets=None, **options):
+    """The lossless extension of an asset: a decodable silent frame with the channel sets the asset's descriptor implies (or sets)."""
+    return xll_frame(size, sets=sets or sets_of(asset or {}), scalable=scalable, bad_sync=bad_sync, **options)
 
 
 def xbr_component(size, sets=1, channels=(2,), bad_crc=False, bad_sync=False):
@@ -605,7 +785,7 @@ def component_bytes(name, size, sync_ok=True, **options):
         return x96_component(size, bad_sync=not sync_ok, **options.get("x96", {}))
     if name == "lbr":
         return lbr_component(size, bad_sync=not sync_ok, **options.get("lbr", {}))
-    return xll_component(size, bad_sync=not sync_ok, **options.get("xll", {}))
+    return xll_component(size, bad_sync=not sync_ok, asset=options.get("_asset"), **options.get("xll", {}))
 
 
 def exss(assets, index=0, wide=False, static=True, ref_clock=2, duration_code=0, presentations=1, mix=False, bc_core=False, size=None,
@@ -624,7 +804,7 @@ def exss(assets, index=0, wide=False, static=True, ref_clock=2, duration_code=0,
             a.setdefault("sizes", {}).setdefault(name, 64 if name == "xll" else 32)
     payloads = []
     for a in assets:
-        payload = b"".join(a["raw"][n] if n in a.get("raw", {}) else component_bytes(n, a["sizes"][n], sync_ok=n not in a.get("bad_sync", []), **a.get("component_options", {}))
+        payload = b"".join(a["raw"][n] if n in a.get("raw", {}) else component_bytes(n, a["sizes"][n], sync_ok=n not in a.get("bad_sync", []), _asset=a, **a.get("component_options", {}))
                            for n in a["_names"])
         payloads.append(payload + bytes(a.get("data_pad", 0)))
     size_bits = 20 if wide else 16
@@ -707,3 +887,63 @@ def ddts(rate, max_bitrate, avg_bitrate, depth=24, duration=0, construction=1, c
     bits.put(core_layout, 6).put(core_size, 14).put(downmix, 1).put(representation, 3).put(layout, 16).put(multi, 1)
     bits.put(lbr_modifier, 1).put(reserved_box, 1).put(reserved, 5)
     return bits.bytes()
+
+
+# --- DTS-HD files (ATSC A/103:2014 Annex E) -------------------------------------------------------
+
+def dtshd_chunk(chunk_id, payload, size=None, pad=True):
+    """A chunk: its 8-character ID, the size (of the payload and the zero bytes that bring the next chunk to a 32-bit boundary, E.2.1) as 64 bits, the payload."""
+    payload = bytes(payload)
+    if pad:
+        payload += bytes(-len(payload) % 4)
+    return chunk_id.encode("ascii").ljust(8, b" ") + (len(payload) if size is None else size).to_bytes(8, "big") + payload
+
+
+def dtshd_header(version=1, clock_code=2, stamp=0, tc_rate=0, vbr=False, smoothing=False, navigation=False, core=True, extension=False, presentations=1,
+                 substreams=0, reserved_flags=0, extra=b""):
+    """DTSHDHDR (E.2.4, Table E.2): Hdr_Version, the 40-bit time code, TC_Frame_Rate, Bitw_Stream_Metadata, Num_Audio_Presentations, Number_Of_Ext_Sub_Streams."""
+    flags = (1 if vbr else 0) | (2 if smoothing else 0) | (4 if navigation else 0) | (8 if core else 0) | (16 if extension else 0) | reserved_flags
+    return (version.to_bytes(4, "big") + ((clock_code << 38) | stamp).to_bytes(5, "big") + bytes([tc_rate]) + flags.to_bytes(2, "big")
+            + bytes([presentations, substreams]) + extra)
+
+
+def dtshd_presentation(rate, frames, frame_samples, original_samples, mask, delay=0, index=0, core=False, core_in_extension=False, lossless=False, lbr=False,
+                       bc=None, lsb_trim=None, reserved_flags=0, extra=b""):
+    """AUPR-HDR (E.2.8, Table E.11); bc is (rate, kbps, mask) of the backward compatible core component, present with core and core_in_extension."""
+    flags = (1 if core else 0) | (2 if core_in_extension else 0) | (4 if lossless else 0) | (8 if lbr else 0) | reserved_flags
+    out = bytes([index]) + flags.to_bytes(2, "big") + rate.to_bytes(3, "big") + frames.to_bytes(4, "big") + frame_samples.to_bytes(2, "big")
+    out += original_samples.to_bytes(5, "big") + mask.to_bytes(2, "big") + delay.to_bytes(2, "big")
+    if (flags & 3) == 3:
+        bc_rate, bc_kbps, bc_mask = bc
+        out += bc_rate.to_bytes(3, "big") + bc_kbps.to_bytes(2, "big") + bc_mask.to_bytes(2, "big")
+    if flags & 4:
+        out += bytes([lsb_trim or 0])
+    return out + extra
+
+
+def dtshd_core_metadata(rate, kbps, mask, payload):
+    """CORESSMD (E.2.6, Table E.8)."""
+    return rate.to_bytes(3, "big") + kbps.to_bytes(2, "big") + mask.to_bytes(2, "big") + payload.to_bytes(4, "big")
+
+
+def dtshd_extension_metadata(avg, vbr, peak=0, buffer=0, payload=0):
+    """EXTSS_MD (E.2.7, Table E.10): a variable bit rate adds the peak rate and the smoothing buffer, a constant one the frame payload."""
+    out = avg.to_bytes(3, "big")
+    return out + (peak.to_bytes(3, "big") + buffer.to_bytes(2, "big") if vbr else payload.to_bytes(4, "big"))
+
+
+def dtshd_timecode(clock, rate, start, start_residual, reference, reference_residual):
+    """TIMECODE (E.2.13, Table E.17)."""
+    return (clock.to_bytes(4, "big") + bytes([rate]) + start.to_bytes(8, "big") + start_residual.to_bytes(4, "big") + reference.to_bytes(8, "big")
+            + reference_residual.to_bytes(4, "big"))
+
+
+def dtshd_table(entries, entry_size, interval=None, data=b""):
+    """NAVI-TBL (E.2.10, with an interval) or BRANCHPT (E.2.16, without): the entries' count, the interval in frames, the size of an entry, the entries."""
+    out = entries.to_bytes(4, "big") + (interval.to_bytes(2, "big") if interval is not None else b"") + bytes([entry_size])
+    return out + (data or bytes(entries * entry_size))
+
+
+def dtshd_text(text):
+    """A null-terminated ASCII string (FILEINFO, BUILDVER)."""
+    return text.encode("ascii") + b"\0"

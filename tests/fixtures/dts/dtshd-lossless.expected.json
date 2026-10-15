@@ -1,0 +1,55 @@
+{
+ "description": "A .dtshd file with the metadata of a variable bit rate 5.1 stream and four units of a core frame and a lossless extension substream.",
+ "length": 3084,
+ "format": "DTS-HD",
+ "frames": [
+  [
+   140,
+   736
+  ],
+  [
+   876,
+   736
+  ],
+  [
+   1612,
+   736
+  ],
+  [
+   2348,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}

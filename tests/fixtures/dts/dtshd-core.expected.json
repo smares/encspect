@@ -1,0 +1,44 @@
+{
+ "description": "A .dtshd file with a header, the audio presentation header and three stereo core frames in STRMDATA.",
+ "length": 1624,
+ "format": "DTS-HD",
+ "frames": [
+  [
+   88,
+   512
+  ],
+  [
+   600,
+   512
+  ],
+  [
+   1112,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "skip": {
+   "libdca": "libdca reads raw DTS only."
+  }
+ }
+}

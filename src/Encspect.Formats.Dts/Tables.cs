@@ -256,6 +256,11 @@ internal static class Tables
     public const int ExtensionXll = 256;
     public const int ExtensionLbr = 512;
 
+    // Flags beside those components, in the union that names a stream's profile: the lossless frame of the first asset carries the extension
+    // data that FFmpeg reads as DTS:X or as DTS:X IMAX (dca_xll.c). Not bits of Table E-2.
+    public const int FlagDtsX = 1 << 16;
+    public const int FlagDtsXImax = 1 << 17;
+
     // The components of StreamConstruction 1 to 21 (index value - 1).
     public static readonly int[] StreamConstructions =
     [

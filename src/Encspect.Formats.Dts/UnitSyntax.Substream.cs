@@ -311,6 +311,7 @@ internal sealed partial class UnitSyntax
         channels = Num("Total Channels", 8, Explain.TotalChannels, Topics.ExtensionSubstream, "channels", 1) + 1;
         asset.Channels = channels;
         oneToOne = Flag("IsOneToOneSpeakerMap", Explain.OneToOne, Topics.ExtensionSubstream);
+        asset.IsOneToOne = oneToOne;
         if (!oneToOne)
         {
             Num("Representation Type", 3, Explain.RepresentationType, v => v switch

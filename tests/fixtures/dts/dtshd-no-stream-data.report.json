@@ -1,0 +1,276 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "dtshd-no-stream-data.dtshd",
+    "root": {
+      "name": "File",
+      "value": "DTS-HD",
+      "offset": 0,
+      "length": 72,
+      "children": [
+        {
+          "name": "DTSHDHDR",
+          "value": 16,
+          "unit": "bytes",
+          "offset": 0,
+          "length": 32,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 16,
+              "unit": "bytes",
+              "offset": 8,
+              "length": 8
+            },
+            {
+              "name": "Version",
+              "value": 1,
+              "offset": 16,
+              "length": 4
+            },
+            {
+              "name": "Time Code",
+              "value": "01:00:00 and 1234 samples",
+              "offset": 20,
+              "length": 5,
+              "children": [
+                {
+                  "name": "Reference Clock Code",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 20,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Time Stamp",
+                  "value": 172801234,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Time Code Frame Rate",
+              "value": "2 (24 frames per second)",
+              "offset": 25,
+              "length": 1
+            },
+            {
+              "name": "Stream Metadata",
+              "value": 25,
+              "offset": 26,
+              "length": 2,
+              "children": [
+                {
+                  "name": "IsVbr",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasPeakBitrateSmoothing",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasNavigationTable",
+                  "value": false,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasCoreSubstream",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasExtensionSubstream",
+                  "value": true,
+                  "offset": 27,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                }
+              ]
+            },
+            {
+              "name": "Audio Presentations",
+              "value": 1,
+              "unit": "presentations",
+              "offset": 28,
+              "length": 1
+            },
+            {
+              "name": "Extension Substreams",
+              "value": 1,
+              "unit": "extension substreams",
+              "offset": 29,
+              "length": 1
+            },
+            {
+              "name": "Padding",
+              "value": 2,
+              "unit": "bytes",
+              "offset": 30,
+              "length": 2
+            }
+          ]
+        },
+        {
+          "name": "AUPR-HDR",
+          "value": 24,
+          "unit": "bytes",
+          "offset": 32,
+          "length": 40,
+          "children": [
+            {
+              "name": "Chunk Size",
+              "value": 24,
+              "unit": "bytes",
+              "offset": 40,
+              "length": 8
+            },
+            {
+              "name": "Audio Presentation Index",
+              "value": 0,
+              "offset": 48,
+              "length": 1
+            },
+            {
+              "name": "Presentation Metadata",
+              "value": 5,
+              "offset": 49,
+              "length": 2,
+              "children": [
+                {
+                  "name": "HasBackwardCompatibleCore",
+                  "value": true,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsBackwardCompatibleCoreInExtension",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasLossless",
+                  "value": true,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "HasLbr",
+                  "value": false,
+                  "offset": 50,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                }
+              ]
+            },
+            {
+              "name": "Maximum Sampling Frequency",
+              "value": 48000,
+              "unit": "Hz",
+              "offset": 51,
+              "length": 3
+            },
+            {
+              "name": "Frames",
+              "value": 4,
+              "unit": "frames",
+              "offset": 54,
+              "length": 4
+            },
+            {
+              "name": "Samples per Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 58,
+              "length": 2
+            },
+            {
+              "name": "Original Samples",
+              "value": 2048,
+              "unit": "samples",
+              "offset": 60,
+              "length": 5
+            },
+            {
+              "name": "Channel Mask",
+              "value": 15,
+              "offset": 65,
+              "length": 2,
+              "children": [
+                {
+                  "name": "Speakers",
+                  "value": "front center, front left, front right, back left, back right, LFE",
+                  "offset": 65,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Codec Delay",
+              "value": 0,
+              "unit": "samples",
+              "offset": 67,
+              "length": 2
+            },
+            {
+              "name": "LSB Trim",
+              "value": 0,
+              "unit": "percent",
+              "offset": 69,
+              "length": 1
+            },
+            {
+              "name": "Padding",
+              "value": 2,
+              "unit": "bytes",
+              "offset": 70,
+              "length": 2
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "dtshd.no-stream-data",
+        "message": "The file has no STRMDATA chunk, so it holds no audio.",
+        "offset": 0,
+        "length": 72,
+        "path": [],
+        "count": 1
+      }
+    ]
+  }
+]

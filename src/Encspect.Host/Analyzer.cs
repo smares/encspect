@@ -109,7 +109,6 @@ public sealed class Analyzer
         ["wma"] = "ASF",
         ["mpc"] = "Musepack",
         ["wv"] = "WavPack",
-        ["dtshd"] = "DTS",
     };
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3".

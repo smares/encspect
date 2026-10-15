@@ -6,7 +6,8 @@ namespace Encspect.Formats.Dts;
 // DTS handed over by a container, such as MP4's dtsc, dtsh, dtsl and dtse sample entries (ETSI TS 102 114 Annex E): one packet per
 // sample, which holds one access unit, a core frame and its extension substreams (E.3); the DTSSpecificBox ('ddts', E.2.2.3) comes as
 // the configuration and is read field by field and compared with the frames. The ID is named after the coding, "dts", not after
-// MP4's codes for it. FFmpeg's MP4 muxer writes DTS as an 'mp4a' entry with an esds box of object type 0xA9, which routes here
+// MP4's codes for it. A container that holds the stream in one piece, such as a .dtshd file, hands over a payload, which is read as a raw
+// file is. FFmpeg's MP4 muxer writes DTS as an 'mp4a' entry with an esds box of object type 0xA9, which routes here
 // without a configuration.
 public sealed class DtsCodecParser : ICodecParser
 {
@@ -18,25 +19,26 @@ public sealed class DtsCodecParser : ICodecParser
     {
         Node parent = context.Parent;
         var analysis = new DtsAnalysis(context);
+        if (context.Payload is { Length: > 0 } stream)
+        {
+            // A DTS stream in one piece (a .dtshd file's STRMDATA chunk) is read as a .dts file is: frames, gaps and the search for sync.
+            DtsParser.ParseSegment(analysis, new BlockCache(stream), parent, stream.Start, stream.End);
+            analysis.Finish(context.EncoderClaims);
+            return;
+        }
+
         var region = new DtsAnalysis.Region(0);
         analysis.Regions.Add(region);
         var observed = new Observed();
-        if (context.Payload is { } payload)
+        int index = 0;
+        foreach (MappedBytes packet in context.Packets ?? [])
         {
-            ReadPayload(analysis, region, payload, observed);
-        }
-        else
-        {
-            int index = 0;
-            foreach (MappedBytes packet in context.Packets!)
+            if (index++ % 4096 == 0)
             {
-                if (index++ % 4096 == 0)
-                {
-                    context.CancellationToken.ThrowIfCancellationRequested();
-                }
-
-                ReadPacket(analysis, region, packet, observed);
+                context.CancellationToken.ThrowIfCancellationRequested();
             }
+
+            ReadPacket(analysis, region, packet, observed);
         }
 
         region.End = analysis.Frames.Count;
@@ -56,25 +58,6 @@ public sealed class DtsCodecParser : ICodecParser
         }
 
         analysis.Finish(context.EncoderClaims);
-    }
-
-    private static void ReadPayload(DtsAnalysis analysis, DtsAnalysis.Region region, ByteReader payload, Observed observed)
-    {
-        var cache = new BlockCache(payload);
-        long position = payload.Start;
-        while (position < payload.End)
-        {
-            if (Framing.UnitAt(cache, position, payload.End, false) is not { } unit)
-            {
-                analysis.AddGap(position, payload.End, leading: position == payload.Start, trailing: position > payload.Start, cache);
-                return;
-            }
-
-            long stop = Math.Min(position + unit.Length, payload.End);
-            analysis.AddUnit(region, DtsParser.LayoutOf(position, stop, unit, false, position + unit.Length > payload.End), cache);
-            observed.Add(analysis.LastFacts, (int)(stop - position));
-            position = stop;
-        }
     }
 
     // The access unit of one sample, from its start.
