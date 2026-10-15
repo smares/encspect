@@ -134,6 +134,16 @@ class ChangesTests(unittest.TestCase):
         self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "dts-crosscheck"})
         self.assertEqual(run("scripts/fixtures/check_eac3_samples.py"), {"fixtures", "ac3-crosscheck"})
 
+    def test_the_dts_scripts_manifests_and_samples_belong_to_the_dts_job(self):
+        for path in ("scripts/fixtures/dts_model.py", "scripts/fixtures/dts_lossless_fixtures.py", "scripts/fixtures/make_dts_fixtures.py", "scripts/fixtures/crosscheck_dts_fixtures.py",
+                     "scripts/fixtures/check_dts_hd_samples.py", "scripts/fixtures/dts_specs.py"):
+            self.assertEqual(run(path), {"fixtures", "dts-crosscheck"}, path)
+        manifest = run("tests/conformance/dts-hd-samples.json")
+        self.assertIn("dts-crosscheck", manifest)
+        self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "ac3-crosscheck"})
+        self.assertIn("dts-crosscheck", run("tests/fixtures/dts/dtshd-all-chunks.dtshd"))
+        self.assertIn("dts-crosscheck", run("src/Encspect.Formats.DtsHd/DtsHdParser.cs"))
+
     def test_a_parser_change_runs_the_ac3_samples_too(self):
         for path in ("src/Encspect.Formats.Aac/AacCodecParser.cs", "src/Encspect.Tags.Ape/ApeTagParser.cs"):
             self.assertIn("ac3-crosscheck", run(path), path)

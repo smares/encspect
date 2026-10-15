@@ -905,8 +905,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential
 
-      - name: Cross-check the DTS fixtures
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The real-sample check below runs the analyzer on the downloaded files.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      - name: Cross-check the DTS fixtures, the .dtshd files and DTS:X
         run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
+
+      # Real DTS-HD Master Audio files (a 7.1 stream of two channel sets, a 96 kHz 5.0 stream, a 16-bit stereo stream) from the FFmpeg sample
+      # archive, which allows downloading and states no license for redistribution, so they are fetched and checked against their SHA-256
+      # rather than committed. The download cache keeps them; every address is public. No real DTS:X or .dtshd file could be found.
+      - name: Check the real DTS-HD Master Audio samples with ffprobe and MediaInfo
+        run: python3 scripts/fixtures/check_dts_hd_samples.py .cache/dts-hd
+
+      - name: Check the analyzer against the real DTS-HD Master Audio samples
+        run: python3 scripts/fixtures/check_dts_hd_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/dts-hd
 
   # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
   # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled. Only

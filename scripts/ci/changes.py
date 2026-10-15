@@ -79,10 +79,10 @@ AREAS = {
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*", "scripts/fixtures/emdf_model.py", "tests/conformance/eac3-samples.json"],
     },
     "dts-crosscheck": {
-        "projects": ["Encspect.Formats.Dts", "Encspect.Formats.Mp4"],
+        "projects": ["Encspect.Formats.Dts", "Encspect.Formats.DtsHd", "Encspect.Formats.Mp4"],
         "fixtures": ["dts"],
-        "scripts": ["crosscheck_dts_fixtures.py"],
-        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*dts*"],
+        "scripts": ["crosscheck_dts_fixtures.py", "check_dts_hd_samples.py"],
+        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*dts*", "scripts/fixtures/dts_*", "tests/conformance/dts-hd-samples.json"],
     },
 }
 
