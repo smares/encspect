@@ -16,7 +16,7 @@ internal static class VoiceExplain
     public const string FlagUnread = "A bit of the flags that FFmpeg's decoder does not read.";
     public const string FlagOthers = "Bits of the flags that FFmpeg's decoder does not read.";
     public const string FrameTypeTable = "The table that maps the codes of the frame types to the 17 frame types: for each type a group of 3 bits, 17 in all, from byte 22 (wmavoice.c: decode_vbmtree). The decoder gives the codes of group 0 two bits, of group 1 four, and so on to ten bits for group 4, twelve for group 5 and fourteen for groups 6 and 7.";
-    public const string FrameTypeGroup = "The code length of one frame type, from the group of 3 bits the table gives it: 2 bits for group 0, 4 for group 1, 6 for group 2, 8 for group 3, 10 for group 4, 12 for group 5 and 14 for groups 6 and 7 (wmavoice.c: wmavoice_init_static_data).";
+    public const string FrameTypeGroup = "The code length of one frame type. The table gives the type a group of 3 bits, which with the types before it in the group sets its slot, and the slot sets which of the 22 codes is its; a type in a slot that no code reaches has none (wmavoice.c: decode_vbmtree, wmavoice_init_static_data).";
     public const string FrameTypeTableUnused = "The bits of the table after the 17 groups, which FFmpeg's decoder does not read; the comment in wmavoice.c says they are 0.";
     public const string ExtraData = "Bytes after the fields the format defines, which decoders ignore.";
 
@@ -33,9 +33,9 @@ internal static class VoiceExplain
     public const string PacketSkippedSpillover = "Spillover bits that a decoder skips, since no start of a superframe is left from the packet before (wmavoice.c: wmavoice_decode_packet).";
     public const string PacketSuperframe = "The bits of a superframe that lies in this packet.";
     public const string PacketSuperframeStart = "The first bits of a superframe that goes on in the next packet.";
-    public const string PacketUnfinished = "The first bits of a superframe that no packet finishes: the stream ends, or the superframe needs more bits than there are.";
+    public const string PacketUnfinished = "The first bits of a superframe that no packet finishes: the stream ends, a media object with no header drops it, or the superframe needs more bits than there are.";
     public const string PacketPadding = "Bits that a superframe's reading did not use, between its end and the end of the span the packets give it. A decoder ignores them.";
-    public const string PacketUnread = "Bits of the packet that the reading did not take: after a superframe that failed, which a decoder takes to end the packet, or after the last superframe the header counts.";
+    public const string PacketUnread = "Bits of the packet that the reading did not take: after a superframe that failed, which makes a decoder drop the rest of the media object, after the last superframe the header counts, or in front of the packet's own superframes where a decoder's resync skips a few bits more than the spillover.";
 
     public const string Superframe = "A superframe: a header, three frames of 160 samples and optional additional data (wmavoice.c: synth_superframe).";
     public const string SpeechFlag = "The first bit of a superframe: set for speech, which the codec reads; clear for music, Windows Media Audio Professional data that FFmpeg's decoder does not support (wmavoice.c: synth_superframe).";
@@ -48,7 +48,7 @@ internal static class VoiceExplain
     public const string Frame = "A frame: 160 samples, divided by its type into 1 to 8 blocks. It holds its type and, unless the superframe sends them once, its LSPs, then the pitch and the excitation (wmavoice.c: synth_frame).";
     public const string FrameLsps = "The LSPs of the frame, coded on their own: 24 bits for 10, 34 for 16 (wmavoice.c: dequant_lsp10i, dequant_lsp16i). A decoder turns them into the filter that shapes the excitation.";
     public const string FrameType = "The type of the frame: a code of 2 to 14 bits that the frame type table of the codec data maps to one of 17 types. The type sets the blocks per frame, the adaptive codebook and the fixed codebook (wmavoice.c: frame_descs).";
-    public const string FramePitch = "The pitch of the frame in samples, the delay of its adaptive codebook, sent once for the types with a pitch per frame. A decoder interpolates it from the last frame's pitch to give each block its own (wmavoice.c: synth_frame). Its width follows from the sample rate.";
+    public const string FramePitch = "The pitch of the frame in samples, the delay of its adaptive codebook, sent once for the types with a pitch per frame; a decoder interpolates it from the last frame's pitch to give each block its own (wmavoice.c: synth_frame). The field is as wide as the sample rate's range of pitches needs.";
     public const string SilenceGain = "The index (8 bits) of the gain of a silence frame's comfort noise (wmavoice.c: synth_frame).";
     public const string WindowIndex = "Where the first pulse of the pitch-adaptive window lies, an index of 6 bits, or 8 for values from 54 (wmavoice.c: aw_parse_coords).";
     public const string Blocks = "The blocks of the frame, each with its own excitation. Their fields are read to find where the frame ends and are not reported.";
@@ -61,7 +61,7 @@ internal static class VoiceExplain
     public const string StatFrames = "How many frames the superframes hold.";
     public const string StatSamples = "The samples a decoder outputs: the samples the superframes state, 480 for each unless the header says fewer.";
     public const string StatDuration = "The time those samples last.";
-    public const string StatAverageBitrate = "The bits of the superframes over the time their samples last; the packets' headers and the bits no superframe uses are not counted.";
+    public const string StatSuperframeBitrate = "The bits of the superframes over the time their samples last; the packets' headers and the bits no superframe uses are not counted.";
     public const string StatSmallestSuperframe = "The fewest bytes a superframe takes.";
     public const string StatLargestSuperframe = "The most bytes a superframe takes.";
     public const string StatMinimumSuperframeBitrate = "The bitrate of the smallest superframe.";
@@ -85,9 +85,6 @@ internal static class VoiceExplain
     public const string StatAdaptiveCodebooks = "How many frames use each kind of adaptive codebook.";
     public const string StatBlocksPerFrame = "How many frames are divided into each number of blocks.";
     public const string StatCodebookShare = "The share of the frames that use one kind of codebook, or one number of blocks.";
-    public const string StatFrameTypeTable = "The frame types the table of the codec data gives a code, or none.";
-    public const string StatUnreachableTypes = "Frame types of the table that no code reaches, which a stream cannot use.";
-    public const string StatChannels = "The number of channels FFmpeg's decoder outputs: the codec always outputs mono, whatever the container states.";
 }
 
 internal static class VoiceSeriesText

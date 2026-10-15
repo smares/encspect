@@ -2807,32 +2807,38 @@
                 {
                   "name": "Windows Media Audio Voice",
                   "kind": "Stream",
-                  "value": "18 superframes",
+                  "value": "16 superframes",
                   "offset": 330,
                   "length": 1598,
                   "children": [
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "18 superframes, 0.784 s",
+                      "value": "16 superframes, 0.697 s",
                       "offset": 330,
                       "length": 1598,
                       "children": [
                         {
                           "name": "Packets",
-                          "value": 12,
+                          "value": 13,
                           "offset": 330,
                           "length": 1598
                         },
                         {
                           "name": "Superframes",
-                          "value": 18,
+                          "value": 16,
+                          "offset": 330,
+                          "length": 1598
+                        },
+                        {
+                          "name": "Invalid Superframes",
+                          "value": 1,
                           "offset": 330,
                           "length": 1598
                         },
                         {
                           "name": "Frames",
-                          "value": 54,
+                          "value": 48,
                           "offset": 330,
                           "length": 1598
                         },
@@ -2845,14 +2851,14 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 8640,
+                          "value": 7680,
                           "unit": "samples",
                           "offset": 330,
                           "length": 1598
                         },
                         {
                           "name": "Duration",
-                          "value": 0.7836734693877551,
+                          "value": 0.6965986394557823,
                           "unit": "s",
                           "offset": 330,
                           "length": 1598
@@ -2873,14 +2879,21 @@
                         },
                         {
                           "name": "Packet Bytes",
-                          "value": 1200,
+                          "value": 1210,
                           "unit": "bytes",
                           "offset": 330,
                           "length": 1598
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 10.968854166666668,
+                          "value": 13.896093750000002,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 1598
+                        },
+                        {
+                          "name": "Superframe Bitrate",
+                          "value": 10.8584765625,
                           "unit": "kbps",
                           "offset": 330,
                           "length": 1598
@@ -2922,7 +2935,7 @@
                         },
                         {
                           "name": "Superframes Spanning Packets",
-                          "value": 11,
+                          "value": 9,
                           "offset": 330,
                           "length": 1598
                         },
@@ -2953,7 +2966,7 @@
                         },
                         {
                           "name": "Superframes with Residual LSPs",
-                          "value": "18 superframes (100.0%)",
+                          "value": "16 superframes (100.0%)",
                           "offset": 330,
                           "length": 1598
                         },
@@ -2976,6 +2989,13 @@
                           "length": 1598
                         },
                         {
+                          "name": "Skipped Spillover Bits",
+                          "value": 430,
+                          "unit": "bits",
+                          "offset": 330,
+                          "length": 1598
+                        },
+                        {
                           "name": "Frame Types",
                           "value": 17,
                           "unit": "types",
@@ -2984,103 +3004,103 @@
                           "children": [
                             {
                               "name": "Type 0 (silence (comfort noise), 1 block, no adaptive codebook)",
-                              "value": "3 frames (5.6%)",
+                              "value": "2 frames (4.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 1 (hardcoded codebook, 2 blocks, no adaptive codebook)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 2 (pitch-adaptive window pulses, 2 blocks, pitch per frame)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 3 (pulse sets, 2 blocks, pitch per frame, 2 pulse pairs and 3 single pulses)",
-                              "value": "4 frames (7.4%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 4 (pulse sets, 2 blocks, pitch per frame, 5 pulse pairs)",
-                              "value": "3 frames (5.6%)",
+                              "value": "2 frames (4.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 5 (pulse sets, 4 blocks, pitch per frame, 5 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 6 (pulse sets, 4 blocks, pitch per frame, 2 pulse pairs and 3 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 7 (pulse sets, 4 blocks, pitch per frame, 5 pulse pairs)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 8 (pulse sets, 2 blocks, pitch per block, 5 single pulses)",
-                              "value": "4 frames (7.4%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 9 (pulse sets, 2 blocks, pitch per block, 2 pulse pairs and 3 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 10 (pulse sets, 2 blocks, pitch per block, 5 pulse pairs)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 11 (pulse sets, 4 blocks, pitch per block, 5 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 12 (pulse sets, 4 blocks, pitch per block, 2 pulse pairs and 3 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 13 (pulse sets, 4 blocks, pitch per block, 5 pulse pairs)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 14 (pulse sets, 8 blocks, pitch per block, 5 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 15 (pulse sets, 8 blocks, pitch per block, 2 pulse pairs and 3 single pulses)",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Type 16 (pulse sets, 8 blocks, pitch per block, 5 pulse pairs)",
-                              "value": "4 frames (7.4%)",
+                              "value": "2 frames (4.2%)",
                               "offset": 330,
                               "length": 1598
                             }
@@ -3095,25 +3115,25 @@
                           "children": [
                             {
                               "name": "Silence (comfort noise)",
-                              "value": "3 frames (5.6%)",
+                              "value": "2 frames (4.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Hardcoded codebook",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Pitch-adaptive window pulses",
-                              "value": "3 frames (5.6%)",
+                              "value": "3 frames (6.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Pulse sets",
-                              "value": "45 frames (83.3%)",
+                              "value": "40 frames (83.3%)",
                               "offset": 330,
                               "length": 1598
                             }
@@ -3128,19 +3148,19 @@
                           "children": [
                             {
                               "name": "No adaptive codebook",
-                              "value": "6 frames (11.1%)",
+                              "value": "5 frames (10.4%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Pitch per frame",
-                              "value": "19 frames (35.2%)",
+                              "value": "17 frames (35.4%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "Pitch per block",
-                              "value": "29 frames (53.7%)",
+                              "value": "26 frames (54.2%)",
                               "offset": 330,
                               "length": 1598
                             }
@@ -3155,25 +3175,25 @@
                           "children": [
                             {
                               "name": "1 block",
-                              "value": "3 frames (5.6%)",
+                              "value": "2 frames (4.2%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "2 blocks",
-                              "value": "23 frames (42.6%)",
+                              "value": "20 frames (41.7%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "4 blocks",
-                              "value": "18 frames (33.3%)",
+                              "value": "18 frames (37.5%)",
                               "offset": 330,
                               "length": 1598
                             },
                             {
                               "name": "8 blocks",
-                              "value": "10 frames (18.5%)",
+                              "value": "8 frames (16.7%)",
                               "offset": 330,
                               "length": 1598
                             }
@@ -3183,7 +3203,7 @@
                     },
                     {
                       "name": "Packets",
-                      "value": "12 packets",
+                      "value": "13 packets",
                       "offset": 330,
                       "length": 1598,
                       "children": [
@@ -3767,7 +3787,7 @@
                         {
                           "name": "Packet",
                           "kind": "Frame",
-                          "value": "1 superframe",
+                          "value": "0 superframes",
                           "offset": 1543,
                           "length": 100,
                           "children": [
@@ -3814,7 +3834,7 @@
                               "bitLength": 553
                             },
                             {
-                              "name": "Superframe Start",
+                              "name": "Unfinished Superframe",
                               "value": 226,
                               "unit": "bits",
                               "offset": 1614,
@@ -3827,74 +3847,30 @@
                         {
                           "name": "Packet",
                           "kind": "Frame",
-                          "value": "1 superframe",
+                          "value": "no header, 0 superframes",
                           "offset": 1701,
-                          "length": 100,
+                          "length": 10,
                           "children": [
                             {
-                              "name": "Packet Sequence Number",
-                              "value": 10,
-                              "offset": 1701,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 4
-                            },
-                            {
-                              "name": "Has Residual LSPs",
-                              "value": true,
-                              "offset": 1701,
-                              "length": 1,
-                              "bitOffset": 4,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "Superframes in Packet",
-                              "value": 1,
-                              "offset": 1701,
-                              "length": 2,
-                              "bitOffset": 5,
-                              "bitLength": 6
-                            },
-                            {
-                              "name": "Spillover Bits",
-                              "value": 265,
+                              "name": "Unread Bits",
+                              "value": 80,
                               "unit": "bits",
-                              "offset": 1702,
-                              "length": 2,
-                              "bitOffset": 3,
-                              "bitLength": 10
-                            },
-                            {
-                              "name": "Superframe End",
-                              "value": 265,
-                              "unit": "bits",
-                              "offset": 1703,
-                              "length": 34,
-                              "bitOffset": 5,
-                              "bitLength": 265
-                            },
-                            {
-                              "name": "Superframe Start",
-                              "value": 514,
-                              "unit": "bits",
-                              "offset": 1736,
-                              "length": 65,
-                              "bitOffset": 6,
-                              "bitLength": 514
+                              "offset": 1701,
+                              "length": 10
                             }
                           ]
                         },
                         {
                           "name": "Packet",
                           "kind": "Frame",
-                          "value": "0 superframes",
-                          "offset": 1801,
+                          "value": "1 superframe",
+                          "offset": 1711,
                           "length": 100,
                           "children": [
                             {
                               "name": "Packet Sequence Number",
-                              "value": 11,
-                              "offset": 1801,
+                              "value": 13,
+                              "offset": 1711,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 4
@@ -3902,51 +3878,68 @@
                             {
                               "name": "Has Residual LSPs",
                               "value": true,
-                              "offset": 1801,
+                              "offset": 1711,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
                             },
                             {
                               "name": "Superframes in Packet",
-                              "value": 0,
-                              "offset": 1801,
+                              "value": 45,
+                              "offset": 1711,
                               "length": 2,
                               "bitOffset": 5,
                               "bitLength": 6
                             },
                             {
                               "name": "Spillover Bits",
-                              "value": 27,
+                              "value": 430,
                               "unit": "bits",
-                              "offset": 1802,
+                              "offset": 1712,
                               "length": 2,
                               "bitOffset": 3,
                               "bitLength": 10
                             },
                             {
-                              "name": "Superframe End",
-                              "value": 27,
+                              "name": "Skipped Spillover",
+                              "value": 430,
                               "unit": "bits",
-                              "offset": 1803,
-                              "length": 4,
+                              "offset": 1713,
+                              "length": 55,
                               "bitOffset": 5,
-                              "bitLength": 27
+                              "bitLength": 430
+                            },
+                            {
+                              "name": "Superframe Data",
+                              "value": "invalid",
+                              "offset": 1767,
+                              "length": 7,
+                              "bitOffset": 3,
+                              "bitLength": 52
                             },
                             {
                               "name": "Unread Bits",
-                              "value": 752,
+                              "value": 297,
                               "unit": "bits",
-                              "offset": 1807,
-                              "length": 94
+                              "offset": 1773,
+                              "length": 38,
+                              "bitOffset": 7,
+                              "bitLength": 297
                             }
                           ]
+                        },
+                        {
+                          "name": "Packet",
+                          "kind": "Frame",
+                          "value": "not read",
+                          "offset": 1811,
+                          "length": 100
                         }
                       ]
                     },
                     {
                       "name": "Superframes",
-                      "value": "18 superframes",
+                      "value": "17 superframes",
                       "offset": 330,
                       "length": 1598,
                       "children": [
@@ -8064,543 +8057,42 @@
                         {
                           "name": "Superframe",
                           "kind": "Frame",
-                          "value": "3 frames, 480 samples",
-                          "offset": 1614,
-                          "length": 123,
-                          "ranges": [
-                            {
-                              "offset": 1614,
-                              "length": 29
-                            },
-                            {
-                              "offset": 1703,
-                              "length": 34
-                            }
-                          ],
+                          "value": "invalid: a frame type code with no type",
+                          "offset": 1767,
+                          "length": 7,
                           "children": [
                             {
                               "name": "Is Speech",
                               "value": true,
-                              "offset": 1614,
+                              "offset": 1767,
                               "length": 1,
-                              "bitOffset": 6,
+                              "bitOffset": 3,
                               "bitLength": 1
                             },
                             {
                               "name": "Has Sample Count",
                               "value": false,
-                              "offset": 1614,
+                              "offset": 1767,
                               "length": 1,
-                              "bitOffset": 7,
+                              "bitOffset": 4,
                               "bitLength": 1
                             },
                             {
                               "name": "LSPs",
                               "value": "10 LSPs for the three frames",
-                              "offset": 1615,
-                              "length": 6
+                              "offset": 1767,
+                              "length": 7,
+                              "bitOffset": 5,
+                              "bitLength": 48
                             },
                             {
-                              "name": "Frame",
-                              "value": "Type 0: silence (comfort noise), 1 block, no adaptive codebook",
-                              "offset": 1621,
-                              "length": 2,
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 0,
-                                  "offset": 1621,
-                                  "length": 1
-                                },
-                                {
-                                  "name": "Silence Gain",
-                                  "value": 154,
-                                  "offset": 1622,
-                                  "length": 1
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 1,
-                                  "unit": "blocks",
-                                  "offset": 1623,
-                                  "length": 0,
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 0,
-                                      "unit": "bits",
-                                      "offset": 1623,
-                                      "length": 0
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 16: pulse sets, 8 blocks, pitch per block, 5 pulse pairs",
-                              "offset": 1623,
-                              "length": 99,
-                              "ranges": [
-                                {
-                                  "offset": 1623,
-                                  "length": 20
-                                },
-                                {
-                                  "offset": 1703,
-                                  "length": 19
-                                }
-                              ],
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 16,
-                                  "offset": 1623,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 2
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 8,
-                                  "unit": "blocks",
-                                  "offset": 1623,
-                                  "length": 99,
-                                  "ranges": [
-                                    {
-                                      "offset": 1623,
-                                      "length": 20
-                                    },
-                                    {
-                                      "offset": 1703,
-                                      "length": 19
-                                    }
-                                  ],
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 41,
-                                      "unit": "bits",
-                                      "offset": 1623,
-                                      "length": 6,
-                                      "bitOffset": 2,
-                                      "bitLength": 41
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1628,
-                                      "length": 5,
-                                      "bitOffset": 3,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 3",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1633,
-                                      "length": 5,
-                                      "bitOffset": 0,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 4",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1637,
-                                      "length": 6,
-                                      "bitOffset": 5,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 5",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1642,
-                                      "length": 66,
-                                      "ranges": [
-                                        {
-                                          "offset": 1642,
-                                          "length": 1
-                                        },
-                                        {
-                                          "offset": 1703,
-                                          "length": 5
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "name": "Block 6",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1707,
-                                      "length": 6,
-                                      "bitOffset": 4,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 7",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1712,
-                                      "length": 5,
-                                      "bitOffset": 1,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 8",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1716,
-                                      "length": 6,
-                                      "bitOffset": 6,
-                                      "bitLength": 37
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 4: pulse sets, 2 blocks, pitch per frame, 5 pulse pairs",
-                              "offset": 1721,
-                              "length": 16,
-                              "bitOffset": 3,
-                              "bitLength": 122,
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 4,
-                                  "offset": 1721,
-                                  "length": 2,
-                                  "bitOffset": 3,
-                                  "bitLength": 10
-                                },
-                                {
-                                  "name": "Pitch",
-                                  "value": 60,
-                                  "unit": "samples",
-                                  "offset": 1722,
-                                  "length": 2,
-                                  "bitOffset": 5,
-                                  "bitLength": 8
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 2,
-                                  "unit": "blocks",
-                                  "offset": 1723,
-                                  "length": 14,
-                                  "bitOffset": 5,
-                                  "bitLength": 104,
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 52,
-                                      "unit": "bits",
-                                      "offset": 1723,
-                                      "length": 8,
-                                      "bitOffset": 5,
-                                      "bitLength": 52
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 52,
-                                      "unit": "bits",
-                                      "offset": 1730,
-                                      "length": 7,
-                                      "bitOffset": 1,
-                                      "bitLength": 52
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Additional Data",
-                              "value": "none",
-                              "offset": 1736,
+                              "name": "Unread Bits",
+                              "value": 2,
+                              "unit": "bits",
+                              "offset": 1773,
                               "length": 1,
                               "bitOffset": 5,
-                              "bitLength": 1
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Superframe",
-                          "kind": "Frame",
-                          "value": "3 frames, 480 samples",
-                          "offset": 1736,
-                          "length": 71,
-                          "ranges": [
-                            {
-                              "offset": 1736,
-                              "length": 65
-                            },
-                            {
-                              "offset": 1803,
-                              "length": 4
-                            }
-                          ],
-                          "children": [
-                            {
-                              "name": "Is Speech",
-                              "value": true,
-                              "offset": 1736,
-                              "length": 1,
-                              "bitOffset": 6,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "Has Sample Count",
-                              "value": false,
-                              "offset": 1736,
-                              "length": 1,
-                              "bitOffset": 7,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "LSPs",
-                              "value": "10 LSPs for the three frames",
-                              "offset": 1737,
-                              "length": 6
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 3: pulse sets, 2 blocks, pitch per frame, 2 pulse pairs and 3 single pulses",
-                              "offset": 1743,
-                              "length": 13,
-                              "bitOffset": 0,
-                              "bitLength": 98,
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 3,
-                                  "offset": 1743,
-                                  "length": 2,
-                                  "bitOffset": 0,
-                                  "bitLength": 10
-                                },
-                                {
-                                  "name": "Pitch",
-                                  "value": 203,
-                                  "unit": "samples",
-                                  "offset": 1744,
-                                  "length": 2,
-                                  "bitOffset": 2,
-                                  "bitLength": 8
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 2,
-                                  "unit": "blocks",
-                                  "offset": 1745,
-                                  "length": 11,
-                                  "bitOffset": 2,
-                                  "bitLength": 80,
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 40,
-                                      "unit": "bits",
-                                      "offset": 1745,
-                                      "length": 6,
-                                      "bitOffset": 2,
-                                      "bitLength": 40
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 40,
-                                      "unit": "bits",
-                                      "offset": 1750,
-                                      "length": 6,
-                                      "bitOffset": 2,
-                                      "bitLength": 40
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 8: pulse sets, 2 blocks, pitch per block, 5 single pulses",
-                              "offset": 1755,
-                              "length": 12,
-                              "bitOffset": 2,
-                              "bitLength": 90,
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 8,
-                                  "offset": 1755,
-                                  "length": 2,
-                                  "bitOffset": 2,
-                                  "bitLength": 12
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 2,
-                                  "unit": "blocks",
-                                  "offset": 1756,
-                                  "length": 11,
-                                  "bitOffset": 6,
-                                  "bitLength": 78,
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 41,
-                                      "unit": "bits",
-                                      "offset": 1756,
-                                      "length": 6,
-                                      "bitOffset": 6,
-                                      "bitLength": 41
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1761,
-                                      "length": 6,
-                                      "bitOffset": 7,
-                                      "bitLength": 37
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 16: pulse sets, 8 blocks, pitch per block, 5 pulse pairs",
-                              "offset": 1766,
-                              "length": 41,
-                              "ranges": [
-                                {
-                                  "offset": 1766,
-                                  "length": 35
-                                },
-                                {
-                                  "offset": 1803,
-                                  "length": 4
-                                }
-                              ],
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 16,
-                                  "offset": 1766,
-                                  "length": 1,
-                                  "bitOffset": 4,
-                                  "bitLength": 2
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 8,
-                                  "unit": "blocks",
-                                  "offset": 1766,
-                                  "length": 41,
-                                  "ranges": [
-                                    {
-                                      "offset": 1766,
-                                      "length": 35
-                                    },
-                                    {
-                                      "offset": 1803,
-                                      "length": 4
-                                    }
-                                  ],
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 41,
-                                      "unit": "bits",
-                                      "offset": 1766,
-                                      "length": 6,
-                                      "bitOffset": 6,
-                                      "bitLength": 41
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1771,
-                                      "length": 6,
-                                      "bitOffset": 7,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 3",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1776,
-                                      "length": 6,
-                                      "bitOffset": 4,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 4",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1781,
-                                      "length": 5,
-                                      "bitOffset": 1,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 5",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1785,
-                                      "length": 6,
-                                      "bitOffset": 6,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 6",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1790,
-                                      "length": 5,
-                                      "bitOffset": 3,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 7",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1795,
-                                      "length": 5,
-                                      "bitOffset": 0,
-                                      "bitLength": 37
-                                    },
-                                    {
-                                      "name": "Block 8",
-                                      "value": 37,
-                                      "unit": "bits",
-                                      "offset": 1799,
-                                      "length": 8,
-                                      "ranges": [
-                                        {
-                                          "offset": 1799,
-                                          "length": 2
-                                        },
-                                        {
-                                          "offset": 1803,
-                                          "length": 4
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Additional Data",
-                              "value": "none",
-                              "offset": 1806,
-                              "length": 1,
-                              "bitOffset": 7,
-                              "bitLength": 1
+                              "bitLength": 2
                             }
                           ]
                         }
@@ -8630,9 +8122,9 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 8640,
-        "duration": 0.7836734693877551,
-        "averageBitrate": 10.968854166666668,
+        "samples": 7680,
+        "duration": 0.6965986394557823,
+        "averageBitrate": 13.896093750000002,
         "isVbr": false,
         "series": [
           {
@@ -8656,8 +8148,7 @@
               1381,
               1496,
               1541,
-              1614,
-              1736
+              1767
             ],
             "values": [
               10.72640625,
@@ -8676,8 +8167,7 @@
               9.89953125,
               8.24578125,
               13.06921875,
-              11.27765625,
-              12.42609375
+              0
             ]
           },
           {
@@ -8688,7 +8178,7 @@
               0
             ],
             "values": [
-              11
+              10.9
             ]
           }
         ]
@@ -8698,15 +8188,60 @@
       {
         "severity": "Info",
         "code": "wma.packet-long",
-        "message": "A media object holds bytes after its last whole block of 100, 10 of them; they are not read.",
+        "message": "A media object is not a whole number of blocks of 100 bytes (10 bytes before its whole blocks); a decoder cuts blocks from the end of a media object (wmavoice.c), so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.",
         "offset": 1701,
-        "length": 100,
+        "length": 10,
         "path": [
           0,
           1,
           7,
           1,
           10
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "wma.voice-packet-sequence",
+        "message": "A packet's sequence number does not follow the packet before (13 for 10); a packet may be missing. FFmpeg's decoder does not read the number.",
+        "offset": 1711,
+        "length": 100,
+        "path": [
+          0,
+          1,
+          7,
+          1,
+          11
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wma.voice-spillover-orphan",
+        "message": "A packet states spillover bits (430) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, a media object with no header, or a superframe that began exactly at its end); a decoder skips them.",
+        "offset": 1711,
+        "length": 100,
+        "path": [
+          0,
+          1,
+          7,
+          1,
+          11
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wma.voice-frame-type",
+        "message": "A frame's type code is one that the frame type table gives no type, so the superframe fails; a decoder drops it and the rest of its media object.",
+        "offset": 1767,
+        "length": 7,
+        "path": [
+          0,
+          1,
+          7,
+          2,
+          16
         ],
         "count": 1
       }

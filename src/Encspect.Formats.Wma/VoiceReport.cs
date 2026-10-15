@@ -56,7 +56,7 @@ internal static class VoiceReport
             ChannelLayout = channels == 1 ? ChannelLayouts.Mono : channels == 2 ? ChannelLayouts.Stereo : null,
             Samples = samples,
             Duration = duration,
-            AverageBitrate = duration > 0 ? totals.SuperframeBits / duration / 1000 : null,
+            AverageBitrate = duration > 0 ? totals.UsedBytes * 8.0 / duration / 1000 : null,
             IsVbr = context.Configuration?.IsVbr ?? false,
             Encoder = encoder,
             EncoderConfidence = confidence,
@@ -99,7 +99,8 @@ internal static class VoiceReport
         Add("Packet Bytes", NodeValue.Integer(t.UsedBytes, "bytes"), ProExplain.StatPacketBytes);
         if (duration > 0)
         {
-            Add("Average Bitrate", NodeValue.Decimal(t.SuperframeBits / duration / 1000, 1, "kbps"), VoiceExplain.StatAverageBitrate);
+            Add("Average Bitrate", NodeValue.Decimal(t.UsedBytes * 8.0 / duration / 1000, 1, "kbps"), ProExplain.StatAverageBitrate);
+            Add("Superframe Bitrate", NodeValue.Decimal(t.SuperframeBits / duration / 1000, 1, "kbps"), VoiceExplain.StatSuperframeBitrate);
         }
 
         if (nominal > 0)

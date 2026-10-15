@@ -6373,6 +6373,13 @@
                         },
                         {
                           "name": "Average Bitrate",
+                          "value": 10.793650793650793,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 2566
+                        },
+                        {
+                          "name": "Superframe Bitrate",
                           "value": 7.934920634920635,
                           "unit": "kbps",
                           "offset": 330,
@@ -7132,6 +7139,15 @@
                               "length": 23,
                               "bitOffset": 5,
                               "bitLength": 176
+                            },
+                            {
+                              "name": "Unread Bits",
+                              "value": 6,
+                              "unit": "bits",
+                              "offset": 1323,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 6
                             },
                             {
                               "name": "Superframe Start",
@@ -13319,7 +13335,7 @@
         "channelLayoutName": "mono",
         "samples": 10080,
         "duration": 1.26,
-        "averageBitrate": 7.934920634920635,
+        "averageBitrate": 10.793650793650793,
         "isVbr": false,
         "series": [
           {
@@ -13399,7 +13415,7 @@
       {
         "severity": "Info",
         "code": "wma.voice-music",
-        "message": "A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops it and the rest of the packet.",
+        "message": "A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops it and the rest of its media object.",
         "offset": 585,
         "length": 1,
         "path": [
@@ -13412,9 +13428,9 @@
         "count": 1
       },
       {
-        "severity": "Warning",
-        "code": "wma.voice-spillover-orphan",
-        "message": "2 packets state spillover bits (the first has 491) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, or a superframe that began exactly at its end); a decoder skips them.",
+        "severity": "Info",
+        "code": "wma.voice-spillover-after-music",
+        "message": "A packet states spillover bits (491) of a superframe that began in the packet before, and that packet's superframes were lost to a superframe of music, which a decoder cannot read: it drops the rest of the media object, the start of this superframe with it, and skips the bits.",
         "offset": 707,
         "length": 100,
         "path": [
@@ -13424,12 +13440,12 @@
           1,
           2
         ],
-        "count": 2
+        "count": 1
       },
       {
         "severity": "Warning",
         "code": "wma.voice-sample-count",
-        "message": "A superframe states more samples than the 480 it holds; a decoder drops it and the rest of the packet.",
+        "message": "A superframe states more samples than the 480 it holds; a decoder drops it and the rest of its media object.",
         "offset": 874,
         "length": 2,
         "path": [
@@ -13437,6 +13453,21 @@
           1,
           7,
           2,
+          4
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wma.voice-spillover-orphan",
+        "message": "A packet states spillover bits (197) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, a media object with no header, or a superframe that began exactly at its end); a decoder skips them.",
+        "offset": 1003,
+        "length": 100,
+        "path": [
+          0,
+          1,
+          7,
+          1,
           4
         ],
         "count": 1

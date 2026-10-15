@@ -395,6 +395,35 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("tiny.wma", data, 300_000_000, "wma.records-limit");
     }
 
+    // Media objects of nothing but blocks of 2 bytes, each a valid header that counts no superframe: one media object holds
+    // thousands of packets, which the count of media objects does not limit. The packets are kept up to a count.
+    [Fact]
+    public void ManyTinyVoiceBlocksAreBounded()
+    {
+        const string fixture = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
+        (byte[] properties, _) = AsfBuilder.Take(fixture, 0x000A);
+
+        // The WAVEFORMATEX starts 78 bytes into the Stream Properties Object; its block alignment is 12 bytes in.
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(properties.AsSpan(90), 2);
+        var packets = new List<byte[]>();
+        const int blocksPerObject = 16_000;
+        for (int i = 0; i < 400; i++)
+        {
+            byte[] mediaObject = new byte[blocksPerObject * 2];
+            for (int block = 0; block < blocksPerObject; block++)
+            {
+                VoiceBuilder.Packet(2, block & 15, true, 0, 0, new VoiceBitWriter()).CopyTo(mediaObject, block * 2);
+            }
+
+            byte[] packet = AsfBuilder.Packet(23 + mediaObject.Length, 1, i & 0xFF, 0, (uint)mediaObject.Length, (uint)(i * 299));
+            mediaObject.CopyTo(packet, 23);
+            packets.Add(packet);
+        }
+
+        byte[] data = AsfBuilder.Assemble(properties, 23 + (blocksPerObject * 2), packets);
+        Bounded("blocks.wma", data, 120_000_000, "wma.records-limit");
+    }
+
     // PCM payloads, which no codec parser takes: the container's own records.
     [Fact]
     public void ManyAsfPcmPayloadsStayCompact()

@@ -1,28 +1,58 @@
+using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Formats.Wma;
 
-// Walks a stream's packets and reads the superframes in them, as FFmpeg's wmavoice_decode_packet does. A packet is a block of the
-// block alignment's size. Its header holds a sequence number, the flag for residual LSPs, the count of superframes that begin in
-// it, and the bits of the superframe before that continue in it (the spillover). Those bits come first; then whole superframes
-// follow one another bit by bit; the last of the counted superframes goes on to the end of the packet and is finished by the next
-// packet's spillover bits.
+// Walks a stream's media objects and reads the superframes in them, as FFmpeg's wmavoice_decode_packet is driven by libavcodec's
+// decode loop. A packet is a block of the block alignment's size. Its header holds a sequence number, the flag for residual LSPs,
+// the count of superframes that begin in it, and the bits of the superframe before that continue in it (the spillover). Those bits
+// come first; then whole superframes follow one another bit by bit; the last of the counted superframes goes on to the end of the
+// packet and is finished by the next packet's spillover bits.
+//
+// The decoder's state is kept as the decoder keeps it, so that the walk reads what it reads: the count of superframes the last
+// header still has to read, the cache of the superframe a packet ends in (a buffer of 256 bytes whose bytes stay until written
+// again), and the flag for residual LSPs, which the header sets before it can fail.
 internal sealed class VoiceStream
 {
     private readonly VoiceDecoder _decoder;
     private VoiceState _state = new();
 
-    // The bits of the superframe that the last packet ends in, to be finished by the next one's spillover.
-    private byte[] _cache = [];
+    // wmavoice.c: sframe_cache, the buffer the start of a superframe is kept in until the next packet finishes it. Bytes that a
+    // copy did not write are those an earlier superframe left (or zero), and a decoder reads them.
+    private readonly byte[] _cache = new byte[VoiceParameters.CacheBytes];
+
+    // wmavoice.c: sframe_cache_size: the bits of the cached start and the spillover bits added to them, or 0.
     private int _cacheBits;
+
+    // The bits written to the cache (the put position), which a copy that does not fit leaves where they were.
+    private int _cacheWritten;
+
+    // Where the cached start lies in its packet, for the nodes.
     private int _cachePacket;
     private int _cacheStart;
+    private int _tailBits;
 
     private readonly CancellationToken _cancellation;
     private bool _haveSequence;
     private int _lastSequence;
-    private bool _lastResidual;
-    private bool _havePacket;
+
+    // wmavoice.c: has_residual_lsps: the flag of the last header read, also one that could not be read to its end.
+    private bool _residual;
+
+    // wmavoice.c: nb_superframes: the superframes the last header counted that are still to read. It is 0 once a packet's last
+    // superframe is cached, and below 0 after a packet that counted none was passed over.
+    private int _pending;
+
+    // wmavoice.c: skip_bits_next: the bits to skip at the start of the next call, set when a superframe ended inside a byte.
+    private int _skipNext;
+
+    // Within one media object: the bits of the next block that an earlier superframe's reading went on into, and whether an error
+    // dropped the rest of the object (libavcodec drops the whole remaining packet then).
+    private int _carry;
+    private bool _dropped;
+
+    // The last packet's superframes were lost to a superframe of music, which a decoder cannot read.
+    private bool _lostToMusic;
 
     public VoiceStream(VoiceParameters parameters, FindingCollector findings, Func<int, Node> packetNode, Func<int, Node> superframeNode, CancellationToken cancellation = default)
     {
@@ -57,14 +87,24 @@ internal sealed class VoiceStream
 
     public VoiceTotals Totals { get; } = new();
 
-    // Superframes are kept in records up to this count (about 65 MB), so a crafted file of packets that hold nothing but tiny superframes
-    // stays bounded; after it the stream is not read, and Truncated says so.
+    // Superframes are kept in records up to this count (about 92 MB with their frames), so a crafted file of packets that hold
+    // nothing but tiny superframes stays bounded; after it the stream is not read, and Limit says which count was reached.
     internal const int MaxSuperframes = 1 << 19;
+
+    // Packets (blocks) are kept in records up to this count (about 15 MB). The count of media objects is limited by the parser, but
+    // one media object can hold millions of blocks of a few bytes.
+    internal const int MaxBlocks = 1 << 18;
 
     public bool Truncated { get; private set; }
 
+    // What was counted to the limit: "superframes" or "packets".
+    public string Limit { get; private set; } = string.Empty;
+
+    public long LimitCount => Limit == "packets" ? MaxBlocks : MaxSuperframes;
+
     // A media object of the container is one or more blocks of the block alignment's size: FFmpeg's decoder cuts what an ASF packet
-    // holds into blocks of that size (wmavoice.c: wmavoice_decode_packet).
+    // holds into blocks of that size from its end (wmavoice.c: wmavoice_decode_packet). The bytes before the whole blocks are
+    // read as the rest of a packet that has no header.
     public void Add(MappedBytes media)
     {
         if (Truncated)
@@ -73,39 +113,61 @@ internal sealed class VoiceStream
         }
 
         int align = Parameters.BlockAlign;
-        if (media.Length < align)
+        int length = media.Length;
+        int lead = length % align;
+        _carry = 0;
+        _dropped = false;
+        int start = 0;
+        if (lead != 0 || length == 0)
         {
-            AddShort(media);
+            int index = Packets.Count;
+            if (length < align)
+            {
+                Findings.Add(Severity.Warning, "wma.packet-short", () => PacketNode(Math.Min(index, Packets.Count - 1)), count =>
+                    $"{(count == 1 ? "A media object holds" : $"{count} media objects hold")} fewer bytes than the block alignment of {align}; a decoder takes {(count == 1 ? "it" : "them")} for the rest of a packet and reads no header in {(count == 1 ? "it" : "them")}: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (wmavoice.c).");
+            }
+            else
+            {
+                Findings.Add(Severity.Info, "wma.packet-long", () => PacketNode(Math.Min(index, Packets.Count - 1)), count =>
+                    $"{(count == 1 ? "A media object is" : $"{count} media objects are")} not a whole number of blocks of {align} bytes ({(count == 1 ? $"{lead} bytes before its whole blocks" : "the first has " + lead + " bytes before them")}); a decoder cuts blocks from the end of a media object (wmavoice.c), so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.");
+            }
+
+            AddBlock(media, 0, lead, isWhole: false);
+            start = lead;
+        }
+
+        for (; start + align <= length && !Truncated; start += align)
+        {
+            AddBlock(media, start, align, isWhole: true);
+        }
+    }
+
+    private void AddBlock(MappedBytes media, int start, int length, bool isWhole)
+    {
+        if (Packets.Count >= MaxBlocks)
+        {
+            Truncated = true;
+            Limit = "packets";
             return;
         }
 
-        if (media.Length % align != 0)
+        if (Packets.Count % 4096 == 0)
         {
-            int index = Packets.Count;
-            int excess = media.Length % align;
-            Findings.Add(Severity.Info, "wma.packet-long", () => PacketNode(Math.Min(index, Packets.Count - 1)), count =>
-                $"{(count == 1 ? "A media object holds" : $"{count} media objects hold")} bytes after its last whole block of {align}, {(count == 1 ? $"{excess} of them" : "the first with " + excess)}; they are not read.");
+            _cancellation.ThrowIfCancellationRequested();
         }
 
-        for (int offset = 0; offset + align <= media.Length; offset += align)
-        {
-            AddBlock(media, offset);
-        }
-    }
-
-    private void AddShort(MappedBytes media)
-    {
         int index = Packets.Count;
-        int align = Parameters.BlockAlign;
+        int total = length * 8;
         var record = new VoicePacketRecord
         {
-            Offset = media.FileStart,
-            Length = media.Length,
+            Offset = length == 0 ? media.FileStart : media.OffsetOf(start),
+            Length = length,
             RangeIndex = -1,
             FirstSuperframe = Superframes.Count,
-            Flags = VoicePacketRecord.Short,
+            TailStart = total,
         };
-        IReadOnlyList<ByteRange> ranges = media.FileRanges();
+
+        IReadOnlyList<ByteRange> ranges = length == 0 ? [] : media.FileRanges(start, start + length);
         if (ranges.Count > 1)
         {
             Ranges[index] = [.. ranges];
@@ -118,43 +180,148 @@ internal sealed class VoiceStream
         }
 
         Totals.Packets++;
-        Totals.ShortPackets++;
+        Totals.UsedBytes += length;
+
+        // The bits of this block an earlier superframe's reading went on into: a block read through to its end is passed over.
+        int carry = _carry;
+        _carry = 0;
+        if (carry >= total && carry > 0)
+        {
+            record.Flags |= VoicePacketRecord.Dropped;
+            _carry = (carry >> 3) == length ? 0 : carry - total;
+            Packets.Add(record);
+            return;
+        }
+
+        if (_dropped)
+        {
+            record.Flags |= VoicePacketRecord.Dropped;
+            Packets.Add(record);
+            return;
+        }
+
+        byte[] data = media.Span.Slice(start, length).ToArray();
+        var bits = new Bits(data);
+        int position;
+        if (isWhole && carry == 0)
+        {
+            _skipNext = 0;
+            HeaderResult result = ReadHeader(index, data, bits, total, media.Length - start, ref record, out position);
+            if (result != HeaderResult.Read)
+            {
+                record.SuperframeCount = Superframes.Count - record.FirstSuperframe;
+                Totals.MaxSuperframesInPacket = Math.Max(Totals.MaxSuperframesInPacket, record.SuperframeCount);
+                Packets.Add(record);
+                return;
+            }
+        }
+        else
+        {
+            // No header: wmavoice.c skips the bits the last superframe ended inside of, and goes on at once.
+            record.Flags |= VoicePacketRecord.Headerless;
+            Totals.HeaderlessPackets++;
+            position = carry > 0 ? carry : _skipNext;
+            _skipNext = 0;
+            record.HeaderEnd = position;
+            _cacheBits = 0;
+        }
+
+        // wmavoice.c: wmavoice_decode_packet: each call reads one superframe that lies in the packet, or caches the start of the last.
+        // The count of superframes is taken off first, so a packet that counted none is passed over.
+        int inPacket = 0;
+        while (true)
+        {
+            _skipNext = 0;
+            int old = _pending;
+            _pending = Math.Max(old - 1, -1);
+            if (old == 0)
+            {
+                break;
+            }
+
+            if (_pending > 0)
+            {
+                if (Superframes.Count >= MaxSuperframes)
+                {
+                    Truncated = true;
+                    Limit = "superframes";
+                    break;
+                }
+
+                if (Superframes.Count % 4096 == 0)
+                {
+                    _cancellation.ThrowIfCancellationRequested();
+                }
+
+                bits.Position = position;
+                VoiceStatus status = ReadInPacket(index, data, bits, _residual);
+                if (status != VoiceStatus.Ok)
+                {
+                    // libavcodec drops what is left of the packet it handed over, which is the media object.
+                    record.Flags |= VoicePacketRecord.Failed;
+                    _dropped = true;
+                    _lostToMusic = status == VoiceStatus.Music;
+                    break;
+                }
+
+                inPacket++;
+                position = bits.Position;
+                if (position >= total)
+                {
+                    // The superframe ended with the packet; the superframes the header counted still are not read.
+                    break;
+                }
+
+                continue;
+            }
+
+            int left = total - position;
+            if (left > 0)
+            {
+                record.TailStart = position;
+                record.TailBits = left;
+                _cachePacket = index;
+                _cacheStart = position;
+                _tailBits = left;
+                _cacheBits = left;
+                _cacheWritten = 0;
+                if (left <= VoiceParameters.CacheBytes * 8)
+                {
+                    Bits.Copy(data, position, _cache, 0, left);
+                    _cacheWritten = left;
+                }
+                else
+                {
+                    CacheOverflow(index);
+                }
+            }
+
+            break;
+        }
+
+        record.SuperframeCount = Superframes.Count - record.FirstSuperframe;
+        Totals.MaxSuperframesInPacket = Math.Max(Totals.MaxSuperframesInPacket, inPacket + ((record.Flags & VoicePacketRecord.CompletesPrevious) != 0 ? 1 : 0));
         Packets.Add(record);
-        Findings.Add(Severity.Warning, "wma.packet-short", () => PacketNode(index), count =>
-            $"{(count == 1 ? "A media object holds" : $"{count} media objects hold")} fewer bytes than the block alignment of {align}; a decoder takes it for the continuation of the packet before and reads no superframe in it (wmavoice.c), and this analysis does not read it.");
     }
 
-    private void AddBlock(MappedBytes media, int offset)
+    private enum HeaderResult
+    {
+        // The header is read; the packet's own superframes follow from the position.
+        Read,
+
+        // A decoder rejects the header and drops the media object.
+        Rejected,
+
+        // The superframe the packet before ended in used the packet up: the block is done.
+        Used,
+    }
+
+    // wmavoice.c: parse_packet_header and the first part of wmavoice_decode_packet: the header, then the bits that finish the cached
+    // superframe or are skipped. Sets the position the superframes of the packet are read from.
+    private HeaderResult ReadHeader(int index, byte[] data, Bits bits, int total, int objectBytes, ref VoicePacketRecord record, out int position)
     {
         VoiceParameters p = Parameters;
-        int index = Packets.Count;
-        int align = p.BlockAlign;
-        int packetBits = align * 8;
-        var record = new VoicePacketRecord
-        {
-            Offset = media.OffsetOf(offset),
-            Length = align,
-            RangeIndex = -1,
-            FirstSuperframe = Superframes.Count,
-            TailStart = packetBits,
-        };
-
-        IReadOnlyList<ByteRange> ranges = media.FileRanges(offset, offset + align);
-        if (ranges.Count > 1)
-        {
-            Ranges[index] = [.. ranges];
-            record.RangeIndex = index;
-        }
-
-        if (ranges.Count > 0)
-        {
-            record.Offset = ranges[0].Offset;
-        }
-
-        Totals.Packets++;
-        Totals.UsedBytes += align;
-        byte[] data = media.Span.Slice(offset, align).ToArray();
-        var bits = new Bits(data);
+        position = 0;
         int sequence = (int)bits.Read(4);
         bool residual = bits.ReadBit() != 0;
         record.Sequence = (byte)sequence;
@@ -162,6 +329,9 @@ internal sealed class VoiceStream
         {
             record.Flags |= VoicePacketRecord.ResidualLsps;
         }
+
+        bool changed = _residual != residual;
+        _residual = residual;
 
         if (_haveSequence && ((_lastSequence + 1) & 0xF) != sequence)
         {
@@ -184,10 +354,10 @@ internal sealed class VoiceStream
             {
                 record.Flags |= VoicePacketRecord.BadHeader;
                 Totals.BadHeaders++;
-                Packets.Add(record);
+                _dropped = true;
                 Findings.Add(Severity.Warning, "wma.voice-packet-header", () => PacketNode(index), count =>
-                    $"{(count == 1 ? "A packet's header runs" : $"{count} packets' headers run")} past the packet; a decoder rejects it and reads nothing of the packet.");
-                return;
+                    $"{(count == 1 ? "A packet's header runs" : $"{count} packets' headers run")} past the packet; a decoder rejects {(count == 1 ? "it" : "them")} and drops the rest of the media object.");
+                return HeaderResult.Rejected;
             }
 
             value = (int)bits.Read(6);
@@ -199,107 +369,119 @@ internal sealed class VoiceStream
         record.StatedSuperframes = stated;
         record.StatedSpillover = spillover;
         record.HeaderEnd = bits.Position;
-        int position = bits.Position;
+        position = bits.Position;
+        _pending = stated;
+        bool lostToMusic = _lostToMusic;
+        _lostToMusic = false;
 
         // The bits that finish the superframe the packet before ended in. A packet with no such superframe skips them.
         if (_cacheBits > 0)
         {
-            int available = Math.Min(spillover, packetBits - position);
+            int left = total - position;
+
+            // wmavoice.c: the spillover is cut to the media object that is left, not to the block; a copy takes bits that lie in the
+            // block and fit the cache whole, else it takes none.
+            int give = Math.Min(spillover, (objectBytes * 8) - position);
+            bool copied = left >= give && give <= (VoiceParameters.CacheBytes * 8) - _cacheWritten;
+            if (copied)
+            {
+                Bits.Copy(data, position, _cache, _cacheWritten, give);
+                _cacheWritten += give;
+            }
+            else
+            {
+                CacheOverflow(index);
+            }
+
+            // flush_put_bits: the last byte written is completed with zero bits.
+            if ((_cacheWritten & 7) != 0)
+            {
+                _cache[_cacheWritten >> 3] &= (byte)(0xFF << (8 - (_cacheWritten & 7)));
+            }
+
+            _cacheBits += give;
+            int shown = Math.Max(0, Math.Min(give, left));
             record.Flags |= VoicePacketRecord.CompletesPrevious;
-            record.Spillover = available;
-            if (_lastResidual != residual)
+            record.Spillover = shown;
+            if (changed)
             {
                 Findings.Add(Severity.Info, "wma.voice-lsp-flag-changes", () => PacketNode(index), count =>
                     $"{(count == 1 ? "A packet sets" : $"{count} packets set")} the flag for residual LSPs differently from the packet before, and the superframe that goes on into {(count == 1 ? "it is" : "them is")} read with the later flag, as FFmpeg's decoder reads it.");
             }
 
-            VoiceStatus status = ReadCached(index, data, position, available, residual, atEnd: false);
-            position += available;
-            if (status != VoiceStatus.Ok)
+            VoiceStatus status = ReadCached(index, position, shown, atEnd: false);
+            int end = position + give;
+            if (status == VoiceStatus.Ok)
             {
-                // wmavoice.c: wmavoice_decode_packet: the resync after a superframe that failed skips the spillover bits from a position
-                // that copy_bits has already moved on by the bits that keep the rest of the copy byte aligned, and so ends that many bits late.
-                position += 2 * Math.Min((packetBits - record.HeaderEnd) & 7, available);
+                position = end;
+                if (position >= total)
+                {
+                    // The packet is used up (or more): a decoder goes on at the byte the reading ended in, which may be in the next block.
+                    if (position > total)
+                    {
+                        EndOutsideBlock(position, total, record.Length);
+                    }
+
+                    return HeaderResult.Used;
+                }
+            }
+            else
+            {
+                // wmavoice.c: the resync after a superframe that failed skips the spillover bits from a position that copy_bits has
+                // already moved on by the bits that keep the rest of the copy byte aligned, and so ends that many bits late.
+                position = end + (copied ? 2 * Math.Min(left & 7, give) : 0);
             }
         }
         else if (spillover > 0)
         {
             record.Flags |= VoicePacketRecord.SpilloverDropped;
-            record.Spillover = Math.Max(0, Math.Min(spillover, packetBits - position));
+            record.Spillover = Math.Max(0, Math.Min(spillover, total - position));
             Totals.SkippedSpilloverBits += spillover;
-            Findings.Add(Severity.Warning, "wma.voice-spillover-orphan", () => PacketNode(index), count =>
-                $"{(count == 1 ? "A packet states" : $"{count} packets state")} spillover bits ({(count == 1 ? spillover.ToString(System.Globalization.CultureInfo.InvariantCulture) : "the first has " + spillover)}) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, or a superframe that began exactly at its end); a decoder skips them.");
-            position += spillover;
-        }
-
-        _cacheBits = 0;
-        _lastResidual = residual;
-        _havePacket = true;
-        bits.Position = position;
-        bool failed = false;
-        int inPacket = 0;
-        for (int k = 0; k < stated; k++)
-        {
-            if (k % 4096 == 0)
+            if (lostToMusic)
             {
-                _cancellation.ThrowIfCancellationRequested();
-            }
-
-            if (Superframes.Count >= MaxSuperframes)
-            {
-                Truncated = true;
-                break;
-            }
-
-            if (k < stated - 1)
-            {
-                if (ReadInPacket(index, data, bits, residual) != VoiceStatus.Ok)
-                {
-                    failed = true;
-                    break;
-                }
-
-                inPacket++;
+                Findings.Add(Severity.Info, "wma.voice-spillover-after-music", () => PacketNode(index), count =>
+                    $"{(count == 1 ? "A packet states" : $"{count} packets state")} spillover bits ({(count == 1 ? spillover.ToString(CultureInfo.InvariantCulture) : "the first has " + spillover)}) of a superframe that began in the packet before, and that packet's superframes were lost to a superframe of music, which a decoder cannot read: it drops the rest of the media object, the start of this superframe with it, and skips the bits.");
             }
             else
             {
-                int left = packetBits - bits.Position;
-                if (left > 0)
-                {
-                    record.TailStart = bits.Position;
-                    record.TailBits = left;
-                    _cache = new byte[(left + 7) / 8];
-                    Bits.Copy(data, bits.Position, _cache, 0, left);
-                    _cacheBits = left;
-                    _cachePacket = index;
-                    _cacheStart = bits.Position;
-                    if (left > VoiceParameters.CacheBytes * 8)
-                    {
-                        Totals.OverlongCaches++;
-                        Findings.Add(Severity.Info, "wma.voice-cache-overflow", () => PacketNode(index), count =>
-                            $"{(count == 1 ? "A packet ends" : $"{count} packets end")} with more than {VoiceParameters.CacheBytes} bytes of a superframe that goes on in the next packet; FFmpeg's decoder keeps {VoiceParameters.CacheBytes} bytes of it and copies nothing for more (wmavoice.c: copy_bits), so it reads stale cache bytes there.");
-                    }
-                }
+                Findings.Add(Severity.Warning, "wma.voice-spillover-orphan", () => PacketNode(index), count =>
+                    $"{(count == 1 ? "A packet states" : $"{count} packets state")} spillover bits ({(count == 1 ? spillover.ToString(CultureInfo.InvariantCulture) : "the first has " + spillover)}) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, a media object with no header, or a superframe that began exactly at its end); a decoder skips them.");
             }
+
+            position += spillover;
         }
 
-        if (failed)
-        {
-            record.Flags |= VoicePacketRecord.Failed;
-        }
-
-        record.SuperframeCount = Superframes.Count - record.FirstSuperframe;
-        Totals.MaxSuperframesInPacket = Math.Max(Totals.MaxSuperframesInPacket, inPacket + ((record.Flags & VoicePacketRecord.CompletesPrevious) != 0 ? 1 : 0));
-        Packets.Add(record);
+        return HeaderResult.Read;
     }
 
-    // Called when the last packet is in: FFmpeg's decoder is asked for what it still holds, and reads the superframe the last
+    // The reading of a superframe went on past the block's end: libavcodec hands the decoder what is left of the media object from the
+    // byte it ended in, which is a header again only where that is the next block's first byte.
+    private void EndOutsideBlock(int position, int total, int length)
+    {
+        int extra = (position >> 3) - length;
+        _carry = extra == 0 ? 0 : position - total;
+        _skipNext = position & 7;
+    }
+
+    private void CacheOverflow(int packet)
+    {
+        Totals.OverlongCaches++;
+        Findings.Add(Severity.Info, "wma.voice-cache-overflow", () => PacketNode(packet), count =>
+            $"{(count == 1 ? "A packet" : $"{count} packets")} start{(count == 1 ? "s" : string.Empty)} or finish{(count == 1 ? "es" : string.Empty)} a superframe that does not fit the {VoiceParameters.CacheBytes} bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit (wmavoice.c: copy_bits), so it reads the cache's old bytes in their place.");
+    }
+
+    // Called when the last media object is in: FFmpeg's decoder is asked for what it still holds, and reads the superframe the last
     // packet ended in from the bits of that packet alone.
     public void Finish()
     {
-        if (_cacheBits > 0 && _havePacket && !Truncated)
+        if (_cacheBits > 0 && !Truncated)
         {
-            ReadCached(Packets.Count - 1, [], 0, 0, _lastResidual, atEnd: true);
+            if ((_cacheWritten & 7) != 0)
+            {
+                _cache[_cacheWritten >> 3] &= (byte)(0xFF << (8 - (_cacheWritten & 7)));
+            }
+
+            ReadCached(Packets.Count - 1, 0, 0, atEnd: true);
             _cacheBits = 0;
         }
     }
@@ -308,24 +490,22 @@ internal sealed class VoiceStream
     private VoiceStatus ReadInPacket(int packet, byte[] data, Bits bits, bool residual)
     {
         int start = bits.Position;
-        var record = new VoiceSuperframeRecord { Packet = packet, AvailableBits = (data.Length * 8) - start };
+        var record = new VoiceSuperframeRecord { Packet = packet, AvailableBits = Math.Max(0, (data.Length * 8) - start) };
         Span<VoiceFrameRecord> frames = stackalloc VoiceFrameRecord[VoiceParameters.FramesPerSuperframe];
         VoiceStatus status = _decoder.Read(bits, residual, ref _state, ref record, frames);
-        int used = Math.Min(record.Bits, record.AvailableBits);
-        Add(ref record, frames, status, [new FramePart(packet, start, used)], leftover: 0, atEnd: false);
+        int used = Math.Max(0, Math.Min(record.Bits, record.AvailableBits));
+        Add(ref record, frames, status, [new FramePart(packet, Math.Min(start, data.Length * 8), used)], leftover: 0, atEnd: false);
         return status;
     }
 
-    // The superframe begun in an earlier packet: its bits are the tail that packet ended in and the spillover bits of this one.
-    private VoiceStatus ReadCached(int packet, byte[] data, int spilloverStart, int spillover, bool residual, bool atEnd)
+    // The superframe begun in an earlier packet: its bits are the cache, the tail that packet ended in and the spillover bits of this
+    // one. A decoder reads the cache whatever it holds, and so does this.
+    private VoiceStatus ReadCached(int packet, int spilloverStart, int shown, bool atEnd)
     {
-        int total = _cacheBits + spillover;
+        int total = _cacheBits;
+        _cacheBits = 0;
         byte[] joined = new byte[(total + 7) / 8];
         Array.Copy(_cache, joined, Math.Min(_cache.Length, joined.Length));
-        if (spillover > 0)
-        {
-            Bits.Copy(data, spilloverStart, joined, _cacheBits, spillover);
-        }
 
         var bits = new Bits(joined, total);
         var record = new VoiceSuperframeRecord { Packet = packet, AvailableBits = total, Flags = VoiceSuperframeRecord.StartsEarlier };
@@ -335,11 +515,12 @@ internal sealed class VoiceStream
         }
 
         Span<VoiceFrameRecord> frames = stackalloc VoiceFrameRecord[VoiceParameters.FramesPerSuperframe];
-        VoiceStatus status = _decoder.Read(bits, residual, ref _state, ref record, frames);
-        int used = Math.Min(record.Bits, total);
-        FramePart[] parts = used <= _cacheBits
-            ? [new FramePart(_cachePacket, _cacheStart, used)]
-            : [new FramePart(_cachePacket, _cacheStart, _cacheBits), new FramePart(packet, spilloverStart, used - _cacheBits)];
+        VoiceStatus status = _decoder.Read(bits, _residual, ref _state, ref record, frames);
+        int used = Math.Max(0, Math.Min(record.Bits, total));
+        int fromTail = Math.Min(used, _tailBits);
+        FramePart[] parts = used <= _tailBits || shown <= 0
+            ? [new FramePart(_cachePacket, _cacheStart, fromTail)]
+            : [new FramePart(_cachePacket, _cacheStart, fromTail), new FramePart(packet, spilloverStart, Math.Min(used - _tailBits, shown))];
         Add(ref record, frames, status, parts, leftover: status == VoiceStatus.Ok ? total - record.Bits : 0, atEnd);
         return status;
     }
@@ -417,7 +598,7 @@ internal sealed class VoiceStream
             {
                 Totals.IgnoredBits += leftover;
                 Findings.Add(Severity.Info, "wma.voice-superframe-padding", () => SuperframeNode(index), count =>
-                    $"{(count == 1 ? "A superframe ends" : $"{count} superframes end")} before the bits the packets give {(count == 1 ? "it" : "them")} ({(count == 1 ? leftover.ToString(System.Globalization.CultureInfo.InvariantCulture) + " bits" : "the first leaves " + leftover + " bits")}); a decoder ignores them and goes on at the position the next packet's header states.");
+                    $"{(count == 1 ? "A superframe ends" : $"{count} superframes end")} before the bits the packets give {(count == 1 ? "it" : "them")} ({(count == 1 ? leftover.ToString(CultureInfo.InvariantCulture) + " bits" : "the first leaves " + leftover + " bits")}); a decoder ignores them and goes on at the position the next packet's header states.");
             }
         }
     }
@@ -425,11 +606,14 @@ internal sealed class VoiceStream
     private void ReportFailure(int index, VoiceStatus status, VoiceSuperframeRecord record, bool atEnd)
     {
         int bits = record.Bits;
-        int available = record.AvailableBits;
+        int available = Math.Max(0, record.AvailableBits);
 
-        // A superframe in a packet that fails ends the packet for a decoder; one finished from the packet before leaves the packet's own.
+        // A superframe that lies in a packet and fails drops the rest of its media object; one finished from the packet before leaves
+        // the packet's own superframes to be read, and one read at the end of the stream has nothing after it.
         bool cached = record.Has(VoiceSuperframeRecord.StartsEarlier);
-        string After(int count) => (count == 1 ? "it" : "them") + (cached ? " and goes on with the packet's own superframes" : " and the rest of the packet");
+        string After(int count) => count != 1
+            ? "each, and with one that lies in a packet the rest of its media object"
+            : (count == 1 ? "it" : "them") + (atEnd ? string.Empty : cached ? " and goes on with the packet's own superframes" : " and the rest of its media object");
         switch (status)
         {
             case VoiceStatus.Music:

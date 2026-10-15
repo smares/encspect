@@ -11,8 +11,8 @@ namespace Encspect.Formats.Wma;
 // ends and what it holds. Microsoft has published no specification of the codec; FFmpeg's decoder is the reference.
 public sealed class WmaVoiceParser : ICodecParser
 {
-    // Packets are described in records up to this count, so a crafted file of millions of tiny ones stays bounded; the
-    // rest are counted but not read.
+    // Media objects are read up to this count, so a crafted file of millions of tiny ones stays bounded; the rest are counted but
+    // not read. The packets (blocks) in them are limited separately, in VoiceStream.
     internal const int MaxPackets = 1 << 18;
 
     public const string CodecId = "wma-voice";
@@ -87,7 +87,7 @@ public sealed class WmaVoiceParser : ICodecParser
         if (stream.Truncated)
         {
             findings.AddNow(Severity.Info, "wma.records-limit",
-                $"The stream has more than {VoiceStream.MaxSuperframes} superframes; the rest are not read, so the statistics and the series cover the first {VoiceStream.MaxSuperframes}.", parent);
+                $"The stream has more than {stream.LimitCount} {stream.Limit}; the rest are not read, so the statistics and the series cover the first {stream.LimitCount}.", parent);
         }
 
         stream.Finish();
@@ -137,11 +137,12 @@ public sealed class WmaVoiceParser : ICodecParser
             Node node = holder.Add("Frame Type Table", offset + VoiceParameters.TableOffset, bytes.Length - VoiceParameters.TableOffset,
                 NodeValue.Integer(VoiceParameters.FrameTypes, "frame types", "frame type"), VoiceExplain.FrameTypeTable, Topics.WmaVoiceFrames);
             long at = node.Offset;
+            int[] slots = VoiceParameters.Slots(table);
             for (int type = 0; type < VoiceParameters.FrameTypes; type++)
             {
-                int group = VoiceParameters.ReadBits(table, type * 3, 3);
-                int length = group >= 6 ? 14 : 2 * (group + 1);
-                node.Add(Node.FromBits($"Frame Type {type}", at, type * 3, (type * 3) + 3, NodeValue.Integer(length, "bits"),
+                int slot = slots[type];
+                NodeValue code = slot >= 0 ? NodeValue.Integer(VoiceTables.FrameTypeCodeLengths[slot], "bits") : NodeValue.Text("no code");
+                node.Add(Node.FromBits($"Frame Type {type}", at, type * 3, (type * 3) + 3, code,
                     description: VoiceExplain.FrameTypeGroup, topic: Topics.WmaVoiceFrames));
             }
 

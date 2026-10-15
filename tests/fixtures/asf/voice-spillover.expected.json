@@ -365,7 +365,7 @@
  "findings": [
   {
    "code": "wma.voice-spillover-orphan",
-   "contains": "the first has 9"
+   "contains": "spillover bits (9)"
   },
   {
    "code": "wma.voice-superframe-padding",
@@ -378,6 +378,10 @@
   {
    "code": "wma.voice-music",
    "contains": "first bit is clear"
+  },
+  {
+   "code": "wma.voice-spillover-after-music",
+   "contains": "lost to a superframe of music"
   }
  ],
  "crosscheck": {
@@ -385,6 +389,10 @@
   "decode": "errors",
   "messages": [
    "WMAPro-in-WMAVoice"
-  ]
+  ],
+  "ffmpeg": {
+   "samples": 7200,
+   "superframes": 15
+  }
  }
 }

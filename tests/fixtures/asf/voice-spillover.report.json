@@ -4471,6 +4471,13 @@
                         },
                         {
                           "name": "Average Bitrate",
+                          "value": 9.777777777777777,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 1678
+                        },
+                        {
+                          "name": "Superframe Bitrate",
                           "value": 7.796666666666666,
                           "unit": "kbps",
                           "offset": 330,
@@ -5444,6 +5451,15 @@
                               "length": 36,
                               "bitOffset": 5,
                               "bitLength": 276
+                            },
+                            {
+                              "name": "Unread Bits",
+                              "value": 6,
+                              "unit": "bits",
+                              "offset": 1780,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 6
                             },
                             {
                               "name": "Superframe Data",
@@ -9406,15 +9422,6 @@
                                   ]
                                 }
                               ]
-                            },
-                            {
-                              "name": "Unread Bits",
-                              "value": 1,
-                              "unit": "bits",
-                              "offset": 1780,
-                              "length": 1,
-                              "bitOffset": 1,
-                              "bitLength": 0
                             }
                           ]
                         },
@@ -9709,7 +9716,7 @@
         "channelLayoutName": "mono",
         "samples": 7200,
         "duration": 0.9,
-        "averageBitrate": 7.796666666666666,
+        "averageBitrate": 9.777777777777777,
         "isVbr": false,
         "series": [
           {
@@ -9773,7 +9780,7 @@
       {
         "severity": "Warning",
         "code": "wma.voice-spillover-orphan",
-        "message": "2 packets state spillover bits (the first has 9) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, or a superframe that began exactly at its end); a decoder skips them.",
+        "message": "A packet states spillover bits (9) of a superframe that began in the packet before, and no start is left from it (the first packet, a packet that could not be read, a media object with no header, or a superframe that began exactly at its end); a decoder skips them.",
         "offset": 411,
         "length": 100,
         "path": [
@@ -9783,7 +9790,7 @@
           1,
           0
         ],
-        "count": 2
+        "count": 1
       },
       {
         "severity": "Info",
@@ -9818,7 +9825,7 @@
       {
         "severity": "Info",
         "code": "wma.voice-music",
-        "message": "A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops it and the rest of the packet.",
+        "message": "A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops it and the rest of its media object.",
         "offset": 1780,
         "length": 1,
         "path": [
@@ -9827,6 +9834,21 @@
           7,
           2,
           15
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "wma.voice-spillover-after-music",
+        "message": "A packet states spillover bits (215) of a superframe that began in the packet before, and that packet's superframes were lost to a superframe of music, which a decoder cannot read: it drops the rest of the media object, the start of this superframe with it, and skips the bits.",
+        "offset": 1891,
+        "length": 100,
+        "path": [
+          0,
+          1,
+          7,
+          1,
+          10
         ],
         "count": 1
       }

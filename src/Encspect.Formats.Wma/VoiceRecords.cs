@@ -117,8 +117,9 @@ internal struct VoicePacketRecord
     public byte Sequence;
     public byte Flags;
 
-    // The block is shorter than the block alignment: not read.
-    public const byte Short = 1;
+    // The block holds no packet header: the bytes before a media object's whole blocks, or a media object shorter than a block. A
+    // decoder reads them as the rest of a packet.
+    public const byte Headerless = 1;
 
     // The header runs past the packet.
     public const byte BadHeader = 2;
@@ -129,7 +130,7 @@ internal struct VoicePacketRecord
     // The first superframe of the packet is the one that began in the packet before.
     public const byte CompletesPrevious = 8;
 
-    // A superframe failed, so the rest of the packet is not read.
+    // A superframe failed, so the rest of the media object is not read.
     public const byte Failed = 16;
 
     // The packet states spillover bits and no superframe begins before them.
@@ -137,6 +138,10 @@ internal struct VoicePacketRecord
 
     // Its sequence number does not follow the one before.
     public const byte SequenceBreak = 64;
+
+    // Not read: an error before it in the media object dropped what was left of the object, or an earlier superframe's reading went
+    // through it.
+    public const byte Dropped = 128;
 
     public readonly bool Has(byte flag) => (Flags & flag) != 0;
 }
@@ -146,7 +151,7 @@ internal sealed class VoiceTotals
 {
     public long Packets { get; set; }
 
-    public long ShortPackets { get; set; }
+    public long HeaderlessPackets { get; set; }
 
     public long BadHeaders { get; set; }
 

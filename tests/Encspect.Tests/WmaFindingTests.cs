@@ -83,6 +83,7 @@ public class WmaFindingTests
             SetBits(s.Objects[0], 24, 12, 4000);
         }),
         ["wma.voice-sample-rate"] = () => VoiceRun(s => s.Format = s.Format with { SampleRate = 100 }),
+        ["wma.voice-spillover-after-music"] = () => VoiceRun(s => SetBits(s.Objects[0], 22, 1, 0)),
         ["wma.voice-spillover-orphan"] = () => VoiceRun(s => SetBits(s.Objects[0], 11, 11, 5)),
         ["wma.voice-superframe-overrun"] = () => VoiceRun(s => SetBits(s.Objects[1], 11, 11, 100)),
         ["wma.voice-superframe-padding"] = () => VoiceRun(s => SetBits(s.Objects[1], 11, 11, 330)),
@@ -100,13 +101,13 @@ public class WmaFindingTests
         Assert.DoesNotContain(findings, f => f.Code == "parse.failed");
     }
 
-    // A Voice media object shorter than the block alignment is skipped, and bytes after the last whole block of one are not read; a media object
-    // of two blocks is read as two packets.
+    // A Voice media object shorter than the block alignment is the rest of a packet with no header, and so are the bytes before the whole
+    // blocks of a longer one (a decoder cuts blocks from the end); a media object of two blocks is read as two packets.
     [Fact]
     public void VoiceMediaObjectsOfOtherSizesAreCutIntoBlocks()
     {
         Assert.Contains(VoiceRun(s => s.Objects[3] = s.Objects[3][..50]), f => f.Code == "wma.packet-short" && f.Message.Contains("block alignment of 187", StringComparison.Ordinal));
-        Assert.Contains(VoiceRun(s => s.Objects[3] = [.. s.Objects[3], .. new byte[20]]), f => f.Code == "wma.packet-long" && f.Message.Contains("20 of them", StringComparison.Ordinal));
+        Assert.Contains(VoiceRun(s => s.Objects[3] = [.. s.Objects[3], .. new byte[20]]), f => f.Code == "wma.packet-long" && f.Message.Contains("20 bytes before its whole blocks", StringComparison.Ordinal));
 
         Stream pair = Load(Voice, 0x000A);
         var packets = new List<MappedBytes> { new MappedBytes(pair.Objects[0].Concat(pair.Objects[1]).ToArray(), 200) };
@@ -115,6 +116,26 @@ public class WmaFindingTests
         new WmaVoiceParser().Parse(context);
         Assert.Equal(2, parent.Children.Single(c => c.Name == "Windows Media Audio Voice").Children.Single(c => c.Name == "Packets").Children.Count);
         Assert.DoesNotContain(context.Findings, f => f.Code is "wma.packet-short" or "wma.packet-long");
+    }
+
+    // Four superframes of 87 bits fill a block of 46 bytes after its header of 20 bits, and the header counts a fifth: a decoder reads the
+    // four, finds the packet used up and goes on with the next, so that no superframe is reported as running past the packet.
+    [Fact]
+    public void ASuperframeThatEndsWithItsBlockLeavesNoOverrun()
+    {
+        IReadOnlyList<Finding> findings = VoiceRun(s =>
+        {
+            var body = new VoiceBitWriter();
+            for (int i = 0; i < 4; i++)
+            {
+                body.Append(VoiceBuilder.Superframe());
+            }
+
+            s.Format = s.Format with { BlockAlign = 46 };
+            s.Objects = [VoiceBuilder.Packet(46, 0, true, 5, 0, body), VoiceBuilder.Packet(46, 1, true, 0, 0, new VoiceBitWriter())];
+        });
+
+        Assert.DoesNotContain(findings, f => f.Code is "wma.voice-superframe-overrun" or "parse.failed");
     }
 
     // The standard decoder's other findings: a Pro stream that is Lossless-like in its header, and the codec data of the

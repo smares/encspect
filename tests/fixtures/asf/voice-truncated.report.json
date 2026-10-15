@@ -5098,6 +5098,13 @@
                         },
                         {
                           "name": "Average Bitrate",
+                          "value": 8.565055762081785,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 2144
+                        },
+                        {
+                          "name": "Superframe Bitrate",
                           "value": 8.185873605947956,
                           "unit": "kbps",
                           "offset": 330,
@@ -12282,74 +12289,10 @@
                                       "length": 5,
                                       "bitOffset": 1,
                                       "bitLength": 39
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 57,
-                                      "unit": "bits",
-                                      "offset": 2379,
-                                      "length": 0
                                     }
                                   ]
                                 }
                               ]
-                            },
-                            {
-                              "name": "Frame",
-                              "value": "Type 2: pitch-adaptive window pulses, 2 blocks, pitch per frame",
-                              "offset": 2379,
-                              "length": 0,
-                              "children": [
-                                {
-                                  "name": "Frame Type",
-                                  "value": 2,
-                                  "offset": 2379,
-                                  "length": 0
-                                },
-                                {
-                                  "name": "Pitch",
-                                  "value": 20,
-                                  "unit": "samples",
-                                  "offset": 2379,
-                                  "length": 0
-                                },
-                                {
-                                  "name": "Window Index",
-                                  "value": 0,
-                                  "offset": 2379,
-                                  "length": 0
-                                },
-                                {
-                                  "name": "Blocks",
-                                  "value": 2,
-                                  "unit": "blocks",
-                                  "offset": 2379,
-                                  "length": 0,
-                                  "children": [
-                                    {
-                                      "name": "Block 1",
-                                      "value": 25,
-                                      "unit": "bits",
-                                      "offset": 2379,
-                                      "length": 0
-                                    },
-                                    {
-                                      "name": "Block 2",
-                                      "value": 23,
-                                      "unit": "bits",
-                                      "offset": 2379,
-                                      "length": 0
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Unread Bits",
-                              "value": 1,
-                              "unit": "bits",
-                              "offset": 2379,
-                              "length": 0
                             }
                           ]
                         }
@@ -12381,7 +12324,7 @@
         "channelLayoutName": "mono",
         "samples": 10760,
         "duration": 1.345,
-        "averageBitrate": 8.185873605947956,
+        "averageBitrate": 8.565055762081785,
         "isVbr": false,
         "series": [
           {

@@ -11,7 +11,7 @@ superframe that a packet's spillover does not use, ASF packets that hold two blo
 what the analyzer reads is confirmed by ffmpeg decoding the same number of samples.
 
 Per file, ffprobe, ffmpeg and MediaInfo must agree with the manifest, with their words mapped to the analyzer's: ffprobe's codec name "wmavoice"
-and bit rate (the container's nominal one), the samples ffmpeg decodes (the analyzer's, apart from where the manifest says why not) and
+and bit rate (the container's nominal one), the samples ffmpeg decodes (the analyzer's) and
 MediaInfo's Format "WMA" with the Format_Profile "Voice" and the CodecID "A", which are the format tag 0x000A; its BitRate is the nominal
 bitrate and its SamplingCount the duration times the rate, which the analyzer's samples equal within a superframe. With --analyzer, the
 analyzer's report (encspect --ndjson --hide frames) must match the manifest instead: the first stream, the superframes, frames and frame
@@ -117,8 +117,8 @@ def analyzer_problems(analyzer, path, sample):
     for key, expected in (("codec", "Windows Media Audio Voice"), ("sampleRate", sample["rate"]), ("channels", sample["channels"]), ("samples", sample["samples"])):
         if stream.get(key) != expected:
             problems.append(f"the analyzer's {key} is {stream.get(key)}, the manifest {expected}")
-    if sample["samples"] != sample["ffmpeg_samples"] and "samples_differ" not in sample:
-        problems.append("the manifest's samples differ from ffmpeg's and give no reason")
+    if sample["samples"] != sample["ffmpeg_samples"]:
+        problems.append("the manifest's samples differ from ffmpeg's")
     for name, expected in (("Superframes", sample["superframes"]), ("Frames", sample["frames"]), ("LSPs per Frame", sample["lsps"]), ("Block Alignment", sample["block_align"])):
         if statistic(report, name) != expected:
             problems.append(f"the analyzer's {name} is {statistic(report, name)}, the manifest {expected}")

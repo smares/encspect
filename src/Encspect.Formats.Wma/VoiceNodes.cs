@@ -31,8 +31,9 @@ internal sealed class VoiceNodes
         VoicePacketRecord record = _records.Packets[index];
         IReadOnlyList<ByteRange> ranges = record.RangeIndex >= 0 ? _records.Ranges[record.RangeIndex] : [new ByteRange(record.Offset, record.Length)];
         long end = ranges.Count > 0 ? ranges[^1].End : record.Offset + record.Length;
-        string value = record.Has(VoicePacketRecord.Short) ? "not read"
+        string value = record.Has(VoicePacketRecord.Dropped) ? "not read"
             : record.Has(VoicePacketRecord.BadHeader) ? "invalid header"
+            : record.Has(VoicePacketRecord.Headerless) ? $"no header, {Count(StartedIn(index).Count, "superframe", "superframes")}"
             : Count(StartedIn(index).Count, "superframe", "superframes");
         return new Node("Packet", record.Offset, end - record.Offset, value, () => PacketChildren(index))
         {
@@ -77,22 +78,44 @@ internal sealed class VoiceNodes
             covered = Math.Max(covered, Math.Min(end, total));
         }
 
-        if (record.Has(VoicePacketRecord.Short))
+        // Bits between what was shown and the next field that the reading skipped: the resync after a spillover that did not finish its
+        // superframe goes on a few bits late.
+        void Gap(int upTo)
+        {
+            if (upTo > covered && covered < total)
+            {
+                Add(covered, upTo, "Unread Bits", NodeValue.Integer(Math.Min(upTo, total) - covered, "bits"), VoiceExplain.PacketUnread);
+            }
+        }
+
+        if (record.Has(VoicePacketRecord.Dropped))
         {
             return nodes;
         }
 
-        Add(0, 4, "Packet Sequence Number", NodeValue.Integer(record.Sequence), VoiceExplain.PacketSequence);
-        Add(4, 5, "Has Residual LSPs", NodeValue.Boolean(record.Has(VoicePacketRecord.ResidualLsps)), VoiceExplain.PacketResidual, Topics.WmaVoiceFrames);
-        if (record.Has(VoicePacketRecord.BadHeader))
+        if (record.Has(VoicePacketRecord.Headerless))
         {
-            Unread();
-            return nodes;
+            // No header: the reading goes on from the bits an earlier superframe ended inside of, if there are any.
+            if (record.HeaderEnd > 0)
+            {
+                Add(0, record.HeaderEnd, "Unread Bits", NodeValue.Integer(record.HeaderEnd, "bits"), VoiceExplain.PacketUnread);
+            }
+        }
+        else
+        {
+            Add(0, 4, "Packet Sequence Number", NodeValue.Integer(record.Sequence), VoiceExplain.PacketSequence);
+            Add(4, 5, "Has Residual LSPs", NodeValue.Boolean(record.Has(VoicePacketRecord.ResidualLsps)), VoiceExplain.PacketResidual, Topics.WmaVoiceFrames);
+            if (record.Has(VoicePacketRecord.BadHeader))
+            {
+                Unread();
+                return nodes;
+            }
+
+            int groups = (record.StatedSuperframes / 63) + 1;
+            Add(5, 5 + (6 * groups), "Superframes in Packet", NodeValue.Integer(record.StatedSuperframes), VoiceExplain.PacketSuperframes, Topics.WmaVoiceSuperframes);
+            Add(5 + (6 * groups), record.HeaderEnd, "Spillover Bits", NodeValue.Integer(record.StatedSpillover, "bits"), VoiceExplain.PacketSpillover, Topics.WmaVoiceSuperframes);
         }
 
-        int groups = (record.StatedSuperframes / 63) + 1;
-        Add(5, 5 + (6 * groups), "Superframes in Packet", NodeValue.Integer(record.StatedSuperframes), VoiceExplain.PacketSuperframes, Topics.WmaVoiceSuperframes);
-        Add(5 + (6 * groups), record.HeaderEnd, "Spillover Bits", NodeValue.Integer(record.StatedSpillover, "bits"), VoiceExplain.PacketSpillover, Topics.WmaVoiceSuperframes);
         int at = record.HeaderEnd;
         if (record.Has(VoicePacketRecord.CompletesPrevious))
         {
@@ -122,7 +145,13 @@ internal sealed class VoiceNodes
             }
 
             FramePart part = _records.Parts[superframe.FirstPart];
+            if (part.BitCount == 0)
+            {
+                continue;
+            }
+
             string value = superframe.Status == 0 ? Count(superframe.FrameCount, "frame", "frames") : "invalid";
+            Gap(part.StartBit);
             Add(part.StartBit, part.StartBit + part.BitCount, "Superframe Data", value, VoiceExplain.PacketSuperframe, Topics.WmaVoiceSuperframes);
         }
 
@@ -139,6 +168,7 @@ internal sealed class VoiceNodes
                 name = finished ? "Superframe Start" : "Unfinished Superframe";
             }
 
+            Gap(record.TailStart);
             Add(record.TailStart, record.TailStart + used, name, NodeValue.Integer(used, "bits"), finished ? VoiceExplain.PacketSuperframeStart : VoiceExplain.PacketUnfinished, Topics.WmaVoiceSuperframes);
             if (used < record.TailBits)
             {
@@ -210,22 +240,31 @@ internal sealed class VoiceNodes
         VoiceSuperframeRecord record = _records.Superframes[index];
         VoiceParameters p = P;
         var nodes = new List<Node>();
-        Node Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
-            _map.Field(parts, start, end, name, value, description, topic);
+        int used = parts.Sum(part => part.BitCount);
+        Node? Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
+            PlaceField(parts, used, start, end, name, value, description, topic);
+
+        void Put(Node? node)
+        {
+            if (node is not null)
+            {
+                nodes.Add(node);
+            }
+        }
 
         bool music = record.Status == (byte)VoiceStatus.Music;
-        nodes.Add(Field(0, 1, "Is Speech", NodeValue.Boolean(!music), VoiceExplain.SpeechFlag, Topics.WmaVoice));
+        Put(Field(0, 1, "Is Speech", NodeValue.Boolean(!music), VoiceExplain.SpeechFlag, Topics.WmaVoice));
         if (music)
         {
             return nodes;
         }
 
         bool hasCount = record.Has(VoiceSuperframeRecord.HasSampleCount);
-        nodes.Add(Field(1, 2, "Has Sample Count", NodeValue.Boolean(hasCount), VoiceExplain.HasSampleCount));
+        Put(Field(1, 2, "Has Sample Count", NodeValue.Boolean(hasCount), VoiceExplain.HasSampleCount));
         int at = 2;
         if (hasCount)
         {
-            nodes.Add(Field(2, 14, "Sample Count", NodeValue.Integer(record.Samples, "samples"), VoiceExplain.SampleCount));
+            Put(Field(2, 14, "Sample Count", NodeValue.Integer(record.Samples, "samples"), VoiceExplain.SampleCount));
             at = 14;
         }
 
@@ -237,14 +276,18 @@ internal sealed class VoiceNodes
         bool residual = record.Has(VoiceSuperframeRecord.ResidualLsps);
         if (residual)
         {
-            nodes.Add(Field(at, at + p.ResidualLspBits, "LSPs", NodeValue.Text($"{p.LspCount} LSPs for the three frames"), VoiceExplain.SuperframeLsps, Topics.WmaVoiceFrames));
+            Put(Field(at, at + p.ResidualLspBits, "LSPs", NodeValue.Text($"{p.LspCount} LSPs for the three frames"), VoiceExplain.SuperframeLsps, Topics.WmaVoiceFrames));
         }
 
         int last = Math.Max(at, record.HeaderBits);
         for (int i = 0; i < record.FrameCount; i++)
         {
             VoiceFrameRecord frame = _records.Frames[record.FirstFrame + i];
-            nodes.Add(FrameNode(parts, frame, residual));
+            if (frame.StartBit < used)
+            {
+                nodes.Add(FrameNode(parts, used, frame, residual));
+            }
+
             last = frame.EndBit;
         }
 
@@ -252,62 +295,75 @@ internal sealed class VoiceNodes
         {
             int end = record.FramesEnd;
             bool extra = record.Has(VoiceSuperframeRecord.HasAdditionalData);
-            nodes.Add(Field(end, record.Bits, "Additional Data", extra ? NodeValue.Integer(record.ExtraBits, "bits") : NodeValue.Text("none"), VoiceExplain.AdditionalData));
+            Put(Field(end, record.Bits, "Additional Data", extra ? NodeValue.Integer(record.ExtraBits, "bits") : NodeValue.Text("none"), VoiceExplain.AdditionalData));
         }
         else if (record.Bits > last)
         {
-            nodes.Add(Field(last, record.Bits, "Unread Bits", NodeValue.Integer(record.Bits - last, "bits"), VoiceExplain.UnreadBits));
+            Put(Field(last, record.Bits, "Unread Bits", NodeValue.Integer(record.Bits - last, "bits"), VoiceExplain.UnreadBits));
         }
 
         return nodes;
     }
 
-    private Node FrameNode(List<FramePart> parts, VoiceFrameRecord frame, bool residual)
+    // A field of the bits the parts hold, or none where the field starts past them: a superframe that needs more bits than it has
+    // gets no node for what it would have read there.
+    private Node? PlaceField(List<FramePart> parts, int used, int start, int end, string name, NodeValue? value, string description, string? topic) =>
+        start >= used ? null : _map.Field(parts, start, Math.Min(Math.Max(start, end), used), name, value, description, topic);
+
+    private Node FrameNode(List<FramePart> parts, int used, VoiceFrameRecord frame, bool residual)
     {
         VoiceParameters p = P;
         byte[] descriptor = VoiceTables.FrameDescriptors[frame.Type];
-        Node node = _map.Field(parts, frame.StartBit, frame.EndBit, "Frame", NodeValue.Text($"Type {frame.Type}: {VoiceNames.Frame(frame.Type)}"), VoiceExplain.Frame, Topics.WmaVoiceFrames);
+        Node node = PlaceField(parts, used, frame.StartBit, frame.EndBit, "Frame", NodeValue.Text($"Type {frame.Type}: {VoiceNames.Frame(frame.Type)}"), VoiceExplain.Frame, Topics.WmaVoiceFrames)!;
 
-        Node Field(int start, int end, string name, NodeValue? value, string description, string? topic = null) =>
-            _map.Field(parts, start, Math.Max(start, end), name, value, description, topic);
+        void Add(Node parent, int start, int end, string name, NodeValue? value, string description, string? topic = null)
+        {
+            if (PlaceField(parts, used, start, end, name, value, description, topic) is { } child)
+            {
+                parent.Add(child);
+            }
+        }
 
         int at = frame.StartBit;
         if (!residual)
         {
-            node.Add(Field(at, at + p.IndependentLspBits, "LSPs", NodeValue.Text($"{p.LspCount} LSPs"), VoiceExplain.FrameLsps, Topics.WmaVoiceFrames));
+            Add(node, at, at + p.IndependentLspBits, "LSPs", NodeValue.Text($"{p.LspCount} LSPs"), VoiceExplain.FrameLsps, Topics.WmaVoiceFrames);
             at += p.IndependentLspBits;
         }
 
-        node.Add(Field(at, at + frame.TypeBits, "Frame Type", NodeValue.Integer(frame.Type), VoiceExplain.FrameType, Topics.WmaVoiceFrames));
+        Add(node, at, at + frame.TypeBits, "Frame Type", NodeValue.Integer(frame.Type), VoiceExplain.FrameType, Topics.WmaVoiceFrames);
         at += frame.TypeBits;
         if (descriptor[2] == 1)
         {
-            node.Add(Field(at, at + p.PitchBits, "Pitch", NodeValue.Integer(frame.Pitch, "samples"), VoiceExplain.FramePitch, Topics.WmaVoiceFrames));
+            Add(node, at, at + p.PitchBits, "Pitch", NodeValue.Integer(frame.Pitch, "samples"), VoiceExplain.FramePitch, Topics.WmaVoiceFrames);
             at += p.PitchBits;
         }
 
         if (descriptor[3] == 0)
         {
-            node.Add(Field(at, at + 8, "Silence Gain", NodeValue.Integer(frame.Parameter), VoiceExplain.SilenceGain, Topics.WmaVoiceFrames));
+            Add(node, at, at + 8, "Silence Gain", NodeValue.Integer(frame.Parameter), VoiceExplain.SilenceGain, Topics.WmaVoiceFrames);
             at += 8;
         }
         else if (descriptor[3] == 2)
         {
             int width = frame.Has(VoiceFrameRecord.WindowExtended) ? 8 : 6;
-            node.Add(Field(at, at + width, "Window Index", NodeValue.Integer(frame.Parameter), VoiceExplain.WindowIndex, Topics.WmaVoiceFrames));
+            Add(node, at, at + width, "Window Index", NodeValue.Integer(frame.Parameter), VoiceExplain.WindowIndex, Topics.WmaVoiceFrames);
             at += width;
         }
 
         int blocks = descriptor[0];
-        Node blockList = Field(at, frame.EndBit, "Blocks", NodeValue.Integer(blocks, "blocks", "block"), VoiceExplain.Blocks, Topics.WmaVoiceFrames);
-        for (int n = 0; n < blocks; n++)
+        if (PlaceField(parts, used, at, frame.EndBit, "Blocks", NodeValue.Integer(blocks, "blocks", "block"), VoiceExplain.Blocks, Topics.WmaVoiceFrames) is { } blockList)
         {
-            int width = BlockBits(frame, descriptor, n);
-            blockList.Add(Field(at, Math.Min(at + width, frame.EndBit), $"Block {n + 1}", NodeValue.Integer(width, "bits"), VoiceExplain.Block, Topics.WmaVoiceFrames));
-            at += width;
+            for (int n = 0; n < blocks; n++)
+            {
+                int width = BlockBits(frame, descriptor, n);
+                Add(blockList, at, Math.Min(at + width, frame.EndBit), $"Block {n + 1}", NodeValue.Integer(width, "bits"), VoiceExplain.Block, Topics.WmaVoiceFrames);
+                at += width;
+            }
+
+            node.Add(blockList);
         }
 
-        node.Add(blockList);
         return node;
     }
 

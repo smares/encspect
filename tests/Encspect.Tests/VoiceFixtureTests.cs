@@ -56,7 +56,11 @@ public class VoiceFixtureTests
 
         Assert.Equal(voice.GetProperty("decoded_samples").GetInt64(), stream.Samples);
         long bits = expected.Sum(e => e.GetProperty("bits").GetInt64());
-        Assert.Equal(bits, Math.Round((stream.AverageBitrate ?? 0) * stream.Duration * 1000));
+        Node statistics = Child(node, "Statistics");
+
+        // The statistic is rounded to a tenth of a kilobit per second.
+        Assert.Equal(bits, Child(statistics, "Superframe Bitrate").Value!.AsDouble()!.Value * stream.Duration * 1000, 50 * stream.Duration + 1);
+        Assert.Equal(Child(statistics, "Packet Bytes").Value!.AsInteger()!.Value * 8, Math.Round((stream.AverageBitrate ?? 0) * stream.Duration * 1000));
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
 
         // The statistics count the same frames by type.

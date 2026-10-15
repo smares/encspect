@@ -153,28 +153,18 @@ internal sealed class VoiceParameters
 
         if (min < 1 || max + 8 > MaxSignalHistory)
         {
-            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz is outside the 322 to 22,097 Hz that FFmpeg's decoder supports (wmavoice.c: Unsupported samplerate)");
+            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz is below 322 Hz or above 22,097 Hz, which FFmpeg's decoder rejects (wmavoice.c: Unsupported samplerate)");
         }
 
         int[] conversion = [min, (range * 25) >> 6, (range * 44) >> 6, max - 1];
         int halfRange = (range >> 3) & ~0xF;
         if (halfRange <= 0)
         {
-            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz gives a block pitch step of {halfRange}; FFmpeg's decoder rejects it (wmavoice.c: Invalid delta pitch hrange)");
+            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz gives a delta pitch range of {halfRange}; FFmpeg's decoder rejects it (wmavoice.c: Invalid delta pitch hrange), and so accepts only 7,990 to 22,097 Hz");
         }
 
         int blockRange = conversion[2] + conversion[3] + 1 + (2 * (conversion[1] - (2 * min)));
-        var slots = new int[FrameTypes];
-        Array.Fill(slots, -1);
-        for (int slot = 0; slot < VoiceTables.FrameTypeCodeLengths.Length; slot++)
-        {
-            int type = table[slot];
-            if (type >= 0)
-            {
-                slots[type] = slot;
-            }
-        }
-
+        int[] slots = Slots(data[TableOffset..]);
         return new VoiceParameters
         {
             Channels = format.Channels,
@@ -194,6 +184,36 @@ internal sealed class VoiceParameters
             BlockPitchBits = CeilLog2(blockRange),
             OverfullGroup = overfull,
         };
+    }
+
+    // The code each frame type is reached by, as a slot of the frame type VLC, or -1 for a type that no code reaches: one placed in a
+    // slot past the 22 codes, or one that a later type of the table took the slot of. The same for a table that FFmpeg's decoder rejects.
+    internal static int[] Slots(ReadOnlySpan<byte> table)
+    {
+        var tree = new sbyte[FrameTypes * 3];
+        Array.Fill(tree, (sbyte)-1);
+        var counts = new int[8];
+        for (int type = 0; type < FrameTypes; type++)
+        {
+            int group = ReadBits(table, type * 3, 3);
+            int slot = (group * 3) + counts[group]++;
+            if (slot < tree.Length)
+            {
+                tree[slot] = (sbyte)type;
+            }
+        }
+
+        var slots = new int[FrameTypes];
+        Array.Fill(slots, -1);
+        for (int slot = 0; slot < VoiceTables.FrameTypeCodeLengths.Length; slot++)
+        {
+            if (tree[slot] >= 0)
+            {
+                slots[tree[slot]] = slot;
+            }
+        }
+
+        return slots;
     }
 
     // The bits of a failed check are the finding; the figures that follow from a good configuration are left out.

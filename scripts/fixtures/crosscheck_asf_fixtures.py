@@ -88,12 +88,15 @@ def analyzer_statistic(path, name):
     return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
 
 
-def check_voice_frames(path, problems):
-    """ffprobe -count_frames decodes the stream: each superframe it decodes is a frame, so the count is the analyzer's superframes."""
+def check_voice_frames(path, problems, pinned=None):
+    """ffprobe -count_frames decodes the stream: each superframe it decodes is a frame, so the count is the analyzer's superframes (and
+    the manifest's, where it pins the count)."""
     code, data = ffprobe_json(path, "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames")
     counted = int(data["streams"][0].get("nb_read_frames", 0)) if code == 0 and data.get("streams") else None
     if counted != analyzer_statistic(path, "Superframes"):
         problems.append(f"ffprobe decodes {counted} frames, the analyzer's golden report has {analyzer_statistic(path, 'Superframes')} superframes")
+    if pinned is not None and counted != pinned:
+        problems.append(f"ffprobe decodes {counted} frames, the manifest pins {pinned}")
 
 
 def check_voice_decode(name, manifest, path, problems):
@@ -103,8 +106,18 @@ def check_voice_decode(name, manifest, path, problems):
     code, pcm, errors = decode(path, level="warning")
     samples = len(pcm) // 2
     analyzed = analyzer_samples(path)
-    if mode != "error" and "samples_differ" not in crosscheck:
-        check_voice_frames(path, problems)
+    pins = crosscheck.get("ffmpeg", {})
+    if mode != "error":
+        check_voice_frames(path, problems, pins.get("superframes"))
+    if "samples" in pins and samples != pins["samples"]:
+        problems.append(f"ffmpeg decodes {samples} samples, the manifest pins {pins['samples']}")
+    if mode == "clean":
+        # No error at all, though the stream is not what the writer put in: the analysis must agree with what the decoder makes of it.
+        if errors:
+            problems.append(f"ffmpeg decoding: {errors.splitlines()[0]}")
+        if analyzed != samples:
+            problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+        return
     if mode == "ok":
         if errors:
             problems.append(f"ffmpeg decoding: {errors.splitlines()[0]}")
@@ -120,8 +133,6 @@ def check_voice_decode(name, manifest, path, problems):
         # The decoder does not open: nothing is decoded, and the analyzer states what the container says.
         if samples != 0 or code == 0:
             problems.append(f"ffmpeg decodes {samples} samples (exit status {code}) where it should refuse the configuration")
-    elif "samples_differ" in crosscheck:
-        skip(name, "the sample count", crosscheck["samples_differ"])
     elif analyzed != samples:
         problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
 

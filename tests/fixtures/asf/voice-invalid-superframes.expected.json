@@ -543,7 +543,11 @@
   },
   {
    "code": "wma.voice-spillover-orphan",
-   "contains": "state spillover bits"
+   "contains": "spillover bits"
+  },
+  {
+   "code": "wma.voice-spillover-after-music",
+   "contains": "lost to a superframe of music"
   },
   {
    "code": "wma.voice-superframe-padding",
@@ -557,6 +561,10 @@
    "WMAPro-in-WMAVoice",
    "Superframe encodes > 480 samples",
    "Invalid frame type VLC code"
-  ]
+  ],
+  "ffmpeg": {
+   "samples": 10080,
+   "superframes": 21
+  }
  }
 }

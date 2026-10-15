@@ -2141,7 +2141,7 @@
       {
         "severity": "Warning",
         "code": "wma.voice-packet-header",
-        "message": "3 packets' headers run past the packet; a decoder rejects it and reads nothing of the packet.",
+        "message": "3 packets' headers run past the packet; a decoder rejects them and drops the rest of the media object.",
         "offset": 411,
         "length": 2,
         "path": [

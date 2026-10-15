@@ -210,6 +210,136 @@ public class WmaVoiceTests
         Assert.False(stream.IsVbr);
     }
 
+    public static TheoryData<string> AllVoiceFixtures
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            foreach (string manifest in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "voice-*.expected.json").Order(StringComparer.Ordinal))
+            {
+                data.Add($"asf/{Path.GetFileName(manifest)[..^".expected.json".Length]}.asf");
+            }
+
+            return data;
+        }
+    }
+
+    private static Node? Find(Node node, string name)
+    {
+        if (node.Name == name)
+        {
+            return node;
+        }
+
+        foreach (Node child in node.Children)
+        {
+            if (Find(child, name) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    // The packets that were read are tiled by their children to the last bit, whatever the stream does, and no node of a packet or a
+    // superframe is empty: a superframe that needs more bits than it has gets no node for what it would have read past them.
+    [Theory]
+    [MemberData(nameof(AllVoiceFixtures))]
+    public void EveryVoiceFixtureTilesItsPacketsAndHasNoEmptyNodes(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        if (Find(report.Root, "Windows Media Audio Voice") is not { } voice || voice.Children.All(c => c.Name != "Packets"))
+        {
+            return;
+        }
+
+        foreach (Node packet in Child(voice, "Packets").Children)
+        {
+            if (packet.Children.Count == 0)
+            {
+                Assert.Equal("not read", packet.Value!.ToString());
+                continue;
+            }
+
+            long at = packet.Offset * 8;
+            foreach (Node child in packet.Children)
+            {
+                (long start, long end) = Bits(child);
+                Assert.Equal(at, start);
+                at = end;
+            }
+
+            Assert.Equal(packet.End * 8, at);
+        }
+
+        var pending = new Stack<Node>([Child(voice, "Packets"), Child(voice, "Superframes")]);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            foreach (Node child in node.Children)
+            {
+                (long start, long end) = Bits(child);
+                // The blocks of a silence frame read nothing: their gain is the frame's own field.
+                Assert.True(end > start || child.Ranges is not null || child.Name.StartsWith("Block", StringComparison.Ordinal), $"{child.Name} at bit {start} is empty");
+                pending.Push(child);
+            }
+        }
+    }
+
+    // An error in a superframe that lies in a packet drops the rest of the media object, as FFmpeg's decoder does (libavcodec drops what is
+    // left of the packet it handed over): here the two blocks after the first of a media object of three.
+    [Fact]
+    public void AnErrorDropsTheRestOfTheMediaObject()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/voice-object-dropped-blocks.asf");
+        Node[] packets = [.. Child(VoiceStream(report), "Packets").Children];
+        Node[] dropped = [.. packets.Where(p => p.Value!.ToString() == "not read")];
+        Assert.Equal(2, dropped.Length);
+        int first = Array.IndexOf(packets, dropped[0]);
+        Assert.Same(dropped[1], packets[first + 1]);
+        Assert.Contains(report.Findings, f => f.Code == "wma.voice-music" && f.Message.Contains("the rest of its media object", StringComparison.Ordinal));
+        Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
+    }
+
+    // Bytes with no header are the rest of a packet: a media object shorter than a block, bytes in front of its whole blocks, and the
+    // bytes of a media object after a packet that counted no superframe, which begin a superframe that the next packet's spillover ends.
+    [Fact]
+    public void BytesWithNoHeaderAreThePacketsRest()
+    {
+        foreach (string name in new[] { "asf/voice-object-short.asf", "asf/voice-object-remainder-first.asf" })
+        {
+            Node[] packets = [.. Child(VoiceStream(Fixtures.AnalyzeMpeg(name)), "Packets").Children];
+            Node headerless = Assert.Single(packets, p => p.Value!.ToString()!.StartsWith("no header", StringComparison.Ordinal));
+            Assert.DoesNotContain(headerless.Children, c => c.Name == "Packet Sequence Number");
+        }
+
+        Report report = Fixtures.AnalyzeMpeg("asf/voice-object-headerless-start.asf");
+        Node voice = VoiceStream(report);
+        Node[] blocks = [.. Child(voice, "Packets").Children];
+        Node lead = Assert.Single(blocks, p => p.Value!.ToString()!.StartsWith("no header", StringComparison.Ordinal));
+        Assert.Equal(10, lead.Length);
+        Assert.Equal("no header, 1 superframe", lead.Value!.ToString());
+        Assert.Equal("Superframe Start", lead.Children.Single().Name);
+        Assert.Equal(10, Integer(Child(voice, "Statistics"), "Superframes"));
+        Assert.Equal(4800, Assert.Single(report.Streams).Samples);
+    }
+
+    // The average bitrate is the packets' bytes over the duration, as for the other codecs; the superframes' bits are the superframe
+    // bitrate, which is less by the headers and the bits no superframe uses.
+    [Theory]
+    [MemberData(nameof(Files))]
+    public void TheAverageBitrateCountsThePacketsBytes(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Node statistics = Child(VoiceStream(report), "Statistics");
+        double bytes = Integer(statistics, "Packet Bytes");
+        Assert.Equal(bytes * 8 / stream.Duration / 1000, stream.AverageBitrate!.Value, 6);
+        Assert.Equal(stream.AverageBitrate.Value, Child(statistics, "Average Bitrate").Value!.AsDouble()!.Value, 6);
+        Assert.True(Child(statistics, "Superframe Bitrate").Value!.AsDouble() < Child(statistics, "Average Bitrate").Value!.AsDouble());
+    }
+
     // Every node the Voice parser builds is shown by a fixture: the files of the Windows writer and the hand-built ones.
     [Fact]
     public void EveryNodeTheParserBuildsAppearsInAFixture()
@@ -239,7 +369,7 @@ public class WmaVoiceTests
             "Superframe Start", "Unfinished Superframe", "Unread Bits",
             "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
             "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
-            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Nominal Bitrate",
+            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Superframe Bitrate", "Nominal Bitrate",
             "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
             "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
             "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",

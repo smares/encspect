@@ -1,5 +1,5 @@
 {
- "description": "Real Windows Media Audio Voice files from the FFmpeg sample archive: ten ASF files of Microsoft's \"Windows Media 9 Speech Codec\" samples (A-codecs/WMSP: 4, 8 and 16 kbit/s, progressive and streaming muxes, one cut to a length, one with a broken end, one whose superframes hold music) and an ASF video file with a Voice track (A-codecs/WMA9/WMAVoice). None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe, ffmpeg and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it. \"samples_differ\" says why the samples ffmpeg decodes are not the analyzer's.",
+ "description": "Real Windows Media Audio Voice files from the FFmpeg sample archive: ten ASF files of Microsoft's \"Windows Media 9 Speech Codec\" samples (A-codecs/WMSP: 4, 8 and 16 kbit/s, progressive and streaming muxes, one cut to a length, one with a broken end, one whose superframes hold music) and an ASF video file with a Voice track (A-codecs/WMA9/WMAVoice). None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what the analyzer, ffprobe, ffmpeg and MediaInfo must report, the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\"), each as a set. \"archived\": false marks a file the Wayback Machine has no capture of (its availability API, October 2026), so no Wayback address is listed for it.",
  "sources": {
   "ffmpeg": {
    "page": "https://samples.ffmpeg.org/A-codecs/WMSP/",
@@ -310,13 +310,13 @@
    "lsps": 16,
    "superframes": 485,
    "frames": 1455,
-   "samples": 232739,
+   "samples": 232800,
    "ffmpeg_samples": 232800,
    "frame_types": {
-    "0": 268,
+    "0": 265,
     "1": 58,
-    "11": 12,
-    "12": 38,
+    "11": 14,
+    "12": 39,
     "13": 1079
    },
    "findings": [],
@@ -335,8 +335,7 @@
     "BitRate": "16000",
     "Channels": "1",
     "SamplingRate": "16000"
-   },
-   "samples_differ": "The last packet ends with 2,291 bits that begin the last superframe, more than the 256 bytes FFmpeg's decoder keeps (SFRAME_CACHE_MAXSIZE), so it reads stale cache bytes there and decodes a whole superframe of 480 samples where the file states 419 for it; the analyzer's samples are the container's duration (14.546 s) to the sample."
+   }
   },
   {
    "file": "wma9audio-notworkmplayer.wma",
@@ -409,11 +408,10 @@
     "13": 19,
     "16": 3
    },
-   "findings": [
-    "wma.voice-spillover-orphan"
-   ],
+   "findings": [],
    "info_findings": [
-    "wma.voice-music"
+    "wma.voice-music",
+    "wma.voice-spillover-after-music"
    ],
    "ffprobe": {
     "bit_rate": 8000

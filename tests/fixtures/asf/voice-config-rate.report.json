@@ -1952,7 +1952,7 @@
       {
         "severity": "Warning",
         "code": "wma.voice-sample-rate",
-        "message": "The sample rate of 100 Hz is outside the 322 to 22,097 Hz that FFmpeg's decoder supports (wmavoice.c: Unsupported samplerate).",
+        "message": "The sample rate of 100 Hz is below 322 Hz or above 22,097 Hz, which FFmpeg's decoder rejects (wmavoice.c: Unsupported samplerate).",
         "offset": 230,
         "length": 46,
         "path": [

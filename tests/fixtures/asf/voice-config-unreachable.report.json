@@ -591,8 +591,7 @@
                                 },
                                 {
                                   "name": "Frame Type 16",
-                                  "value": 14,
-                                  "unit": "bits",
+                                  "value": "no code",
                                   "offset": 258,
                                   "length": 1,
                                   "bitOffset": 0,
@@ -2880,6 +2879,13 @@
                         },
                         {
                           "name": "Average Bitrate",
+                          "value": 8,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 1058
+                        },
+                        {
+                          "name": "Superframe Bitrate",
                           "value": 7.179166666666667,
                           "unit": "kbps",
                           "offset": 330,
@@ -6533,7 +6539,7 @@
         "channelLayoutName": "mono",
         "samples": 5760,
         "duration": 0.72,
-        "averageBitrate": 7.179166666666667,
+        "averageBitrate": 8,
         "isVbr": false,
         "series": [
           {

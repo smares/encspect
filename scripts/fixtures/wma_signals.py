@@ -43,7 +43,7 @@ def samples(rate, channels, bits, seconds, kind):
             yield int(max(-1, min(1, value)) * full * 0.98)
 
 
-# The speech signal: (start, end) in seconds of a one-second cycle, then its kind and the formants (centre Hz, bandwidth Hz).
+# The speech signal: (start, end) in seconds of a one-second cycle, then its kind and the formants (center Hz, bandwidth Hz).
 SPEECH = [
     (0.00, 0.30, "vowel", ((730, 90), (1090, 110), (2440, 160)), (110, 150)),
     (0.30, 0.42, "pause", (), ()),
@@ -72,9 +72,9 @@ def speech(rate, seconds):
             pulse = 1.0 if phase >= 1.0 else 0.0
             phase %= 1.0
             value = 0.0
-            for n, (centre, bandwidth) in enumerate(formants):
+            for n, (center, bandwidth) in enumerate(formants):
                 radius = math.exp(-math.pi * bandwidth / rate)
-                a1 = 2 * radius * math.cos(2 * math.pi * centre / rate)
+                a1 = 2 * radius * math.cos(2 * math.pi * center / rate)
                 a2 = -radius * radius
                 y1, y2 = state.get((kind, start, n), (0.0, 0.0))
                 y = pulse + a1 * y1 + a2 * y2
