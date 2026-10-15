@@ -21,14 +21,58 @@ public sealed class Ac3Parser : IFormatParser
     // A chain at the start of the data, after any zero bytes, outranks MPEG audio (90) and ADTS
     // (91), since a chain of AC-3 frames is no MPEG or ADTS chain: their sync words, 0xFFE and
     // 0xFFF, cannot start with 0x0B. One found further in ranks below MPEG audio and Ogg, so a stray
-    // run inside another format's junk never takes the file.
+    // run inside another format's junk never takes the file. A chain further in in which three of
+    // the first 16 frames pass their CRCs (crc1 over the first 5/8 and crc2 over the whole frame in
+    // AC-3, the one CRC over the whole frame in E-AC-3; A/52 7.10.1 and Annex E 3.2) is not a stray
+    // run: it takes 55, above an ADTS chain's 50 and below MPEG audio, Ogg, Musepack and WavPack.
+    // Junk passes three given frames about once in 2^48, any three of 16 about C(16,3) times that.
+    // Other formats' frames can repeat header-like bytes at the fixed distance of AC-3's frame
+    // size, and several bit errors may spoil the first frames, so the count is of passing frames,
+    // not of the first three.
     public int Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
         long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
-        return found < 0 ? 0 : found == start ? 92 : 50;
+        return found < 0 ? 0 : found == start ? 92 : CrcsHold(cache, found, reader.End) ? 55 : 50;
+    }
+
+    private const int CrcFrames = 16;
+    private const int CrcsNeeded = 3;
+
+    // Whether CrcsNeeded of the first CrcFrames frames of the chain at position are whole and pass their CRCs.
+    private static bool CrcsHold(BlockCache cache, long position, long end)
+    {
+        var buffer = new byte[Ac3Analysis.MaxFrame];
+        int passing = 0;
+        SyncFrame? previous = null;
+        for (int count = 0; count < CrcFrames; count++)
+        {
+            if (HeaderAt(cache, position, end) is not { } header || (previous is { } before && !header.Continues(before)) || position + header.FrameLength > end)
+            {
+                break;
+            }
+
+            int length = header.FrameLength;
+            cache.Read(position, buffer.AsSpan(0, length));
+            bool holds = Crc16.Compute(buffer.AsSpan(2, length - 2)) == 0;
+            if (holds && !header.IsEac3)
+            {
+                int words = header.FrameSizeWords;
+                holds = Crc16.Compute(buffer.AsSpan(2, (((words >> 1) + (words >> 3)) * 2) - 2)) == 0;
+            }
+
+            if (holds && ++passing == CrcsNeeded)
+            {
+                return true;
+            }
+
+            previous = header;
+            position += length;
+        }
+
+        return false;
     }
 
     public void Parse(ParseContext context)

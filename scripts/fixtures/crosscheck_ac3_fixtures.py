@@ -418,6 +418,7 @@ def mediainfo_bsi(data, offset):
 # the samples and stream size from the duration rounded to the millisecond.
 FIRST_FRAME_RATE = "MediaInfo takes the bitrate of the first frame of each substream (File_Ac3.cpp, frmsizplus1_Max) and derives the duration, samples and stream size from it and the file size"
 COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), where the analyzer counts every frame, the cut one with a finding"
+LEADING_JUNK = "MediaInfo derives the duration from the file size, junk included (File_Ac3.cpp, Streams_Finish), and the samples and stream size from it, where the analyzer counts the frames"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
 AUXILIARY_FIELD = "MediaInfo searches the frame for the container but parses it only if it starts before the auxiliary data field (File_Ac3.cpp, Core_Frame: BitsAtEnd<EMDF_RemainPos), which this fixture's container, inside that field, does not"
@@ -428,6 +429,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "bsid-9": {"duration": "MediaInfo gives bsid 9 frames 16 ms (File_Ac3.cpp, Streams_Finish, \"Unofficial hack for low sample rate\"), which disagrees with its own 6144 samples at 24000 Hz, 0.256 s"},
     "cut-frame": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
     "truncated": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
+    "junk-adts-in-frames": dict.fromkeys(["samples", "duration", "stream size"], LEADING_JUNK),
     "dependent-first": dict.fromkeys(["channels", "channel layout", "bitrate", "samples", "duration", "stream size"], DEPENDENT_FIRST),
     "derived-ffmpeg-eac3-mono-48k-spx-delta": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "substreams": dict.fromkeys(["samples", "duration", "stream size"], FIRST_FRAME_RATE),

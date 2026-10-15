@@ -14,6 +14,10 @@ public sealed class RawAacParser : IFormatParser
     private const int SniffLimit = 1 << 20;
     private const int ChainLength = 3;
 
+    // A chain further in than the start of the data, where other formats' frames or junk can repeat header-like bytes at a fixed distance,
+    // must be longer to count for the sniff: the ones that FFmpeg's E-AC-3 samples make hold three frames at most.
+    private const int FurtherChainLength = 8;
+
     public string Name => "AAC";
 
     // MPEG audio returns 90 wherever its chain starts. An ADTS chain at the start of the data, after
@@ -29,8 +33,13 @@ public sealed class RawAacParser : IFormatParser
 
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
-        long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
-        return found < 0 ? 0 : found == start ? 91 : 50;
+        long limit = Math.Min(reader.End, start + SniffLimit);
+        if (FindChain(cache, start, Math.Min(limit, start + 1), reader.End) == start)
+        {
+            return 91;
+        }
+
+        return FindChain(cache, start, limit, reader.End, FurtherChainLength) < 0 ? 0 : 50;
     }
 
     public void Parse(ParseContext context) => ParseInto(context.Reader, context.Root, context, context.EncoderClaims, context.EmbeddedTags);
@@ -400,7 +409,7 @@ public sealed class RawAacParser : IFormatParser
 
     // The offset of the first header in [from, limit) that a chain of consistent frames follows, or
     // -1.
-    internal static long FindChain(BlockCache cache, long from, long limit, long end)
+    internal static long FindChain(BlockCache cache, long from, long limit, long end, int chainLength = ChainLength)
     {
         for (long position = cache.IndexOf(0xFF, from, limit); position >= 0; position = cache.IndexOf(0xFF, position + 1, limit))
         {
@@ -409,7 +418,7 @@ public sealed class RawAacParser : IFormatParser
                 continue;
             }
 
-            if (HeaderAt(cache, position, end) is { } header && Chains(cache, position, header, end))
+            if (HeaderAt(cache, position, end) is { } header && Chains(cache, position, header, end, chainLength))
             {
                 return position;
             }
@@ -418,10 +427,10 @@ public sealed class RawAacParser : IFormatParser
         return -1;
     }
 
-    private static bool Chains(BlockCache cache, long position, AdtsHeader header, long end)
+    private static bool Chains(BlockCache cache, long position, AdtsHeader header, long end, int chainLength)
     {
         long next = position + header.FrameLength;
-        for (int count = 1; count < ChainLength; count++)
+        for (int count = 1; count < chainLength; count++)
         {
             if (next == end)
             {
@@ -436,7 +445,7 @@ public sealed class RawAacParser : IFormatParser
             next += following.FrameLength;
             if (next > end)
             {
-                return count >= 2;
+                return count >= chainLength - 1;
             }
         }
 

@@ -11,6 +11,7 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF.
   - the Huffman-coded spectral data;
   - fill elements with SBR headers, parametric stereo, dynamic range control, fill and ancillary data.
 - **ADTS:** sync on a chain of frames, resync after damage, every header field, and the CRC over the elements it covers.
+- **ADTS detection:** a chain at the start of the data (after zero bytes) of three frames scores 91. A chain further in scores 50 only with eight consistent frames or frames to the end of the data, since other formats' bytes (E-AC-3's frame headers) can chain three.
 - **ADIF:** the header, and its raw data blocks, which the parser delimits.
 - **Implicit signaling:** SBR and PS found only inside the blocks make the stream HE-AAC or HE-AAC v2, with a finding that says so.
 
