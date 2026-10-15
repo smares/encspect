@@ -38,7 +38,8 @@ namespace Encspect.Formats.Aac;
 // parser), and ADTS headers with the original/copy bit set and a buffer fullness of 0. They are claims that name
 // "Apple AudioToolbox", the writer, with low confidence, because afconvert's -d 0 gives the layout to packets it only
 // copied, such as an fdkaac stream (macOS 15.7, run 4): an ADTS target always gets Apple's headers, whatever the source,
-// and an M4A or MP4 target gets the layout when the source has no esds of its own (an ADTS source). With an sbtd box in
+// and an M4A or MP4 target always gets the padding and, from an ADTS source, the stream type byte (an M4A source keeps its
+// own). With an sbtd box in
 // the sample entry, which records the PCM source of an encode and which no copy had, the MP4 claim names the encoder at
 // medium confidence. A signature in the stream (ffmpeg's, FAAC's) wins over a claim, and a name some software wrote
 // (a tool atom) outranks a layout of equal confidence.
@@ -217,9 +218,9 @@ internal static partial class AacEncoder
         };
     }
 
-    // What won, as "but ..." in a finding: the stream, or the claim that named the encoder.
+    // What won, as "but ..." in a finding: the stream, or the claim that named the encoder. The name is the Encoder node's value, quoted for both.
     private static string Phrase(EncoderClaim? winner, string name) => winner is null
-        ? $"the stream points to {name}"
+        ? $"the stream points to \"{name}\""
         : winner.IsLayout ? $"the {Subject(winner)} points to \"{name}\"" : $"the {winner.Description} names \"{name}\"";
 
     // A layout claim's description reads "what it is: the traces", and its subject is the part before the colon.
@@ -233,9 +234,15 @@ internal static partial class AacEncoder
     // a layout is the traces of the writer that laid the file out, which also writes them around packets it only copied.
     public static string Disagreement(EncoderClaim claim, string text, string winner, string cause)
     {
-        return claim.IsLayout
-            ? $"The {Subject(claim)} points to \"{text}\", but {winner}; the writer also lays out streams it only copied in the same way, and other software may have rewritten the file."
-            : $"The {claim.Description} names \"{text}\", but {winner}; {cause}";
+        if (!claim.IsLayout)
+        {
+            return $"The {claim.Description} names \"{text}\", but {winner}; {cause}";
+        }
+
+        // An sbtd box records the PCM source of an encode, and no copy had one; a layout without it is the writer's, which also lays it around copies.
+        return claim.Confidence >= Confidence.Medium
+            ? $"The {Subject(claim)} points to \"{text}\", but {winner}; the sbtd box records the source of an encode, so other software may have replaced the stream in the file."
+            : $"The {Subject(claim)} points to \"{text}\", but {winner}; the writer also lays out streams it only copied in the same way, and other software may have rewritten the file.";
     }
 
     private static HashSet<string> FamiliesOf(string text)

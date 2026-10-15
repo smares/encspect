@@ -342,9 +342,9 @@ public class AppleEncoderTests
         Assert.NotNull(record.GetProperty("encoder").GetProperty("afinfo").GetProperty("format_id").GetString());
     }
 
-    // afconvert -d 0 copies packets. An ADTS target gets Apple's headers whatever the source; an M4A target gets the layout only when the source has
-    // no esds of its own (an ADTS source). A copy of an fdkaac stream, which writes no text, is therefore named for the writer, with low confidence;
-    // an M4A copied into M4A keeps its esds (stream type byte 0x15) and shows no layout.
+    // afconvert -d 0 copies packets. An ADTS target gets Apple's headers whatever the source; an M4A target always gets the padding and gets the
+    // stream type byte 0x14 when the source is ADTS. A copy of an fdkaac stream, which writes no text, is therefore named for the writer, with low
+    // confidence; an M4A copied into M4A keeps its esds (stream type byte 0x15) and shows no layout.
     [Theory]
     [InlineData("apple/apple-passthru-m4a-from-fdkaac-he-adts.m4a")]
     [InlineData("apple/apple-passthru-adts-from-fdkaac-m4a.aac")]
@@ -371,7 +371,6 @@ public class AppleEncoderTests
     [InlineData("apple/apple-passthru-m4a-from-ffmpeg-adts.m4a", "MP4 layout of Apple's AudioToolbox file writer")]
     [InlineData("apple/apple-intel-passthru-m4a-from-ffmpeg-adts.m4a", "MP4 layout of Apple's AudioToolbox file writer")]
     [InlineData("apple/apple-passthru-adts-from-ffmpeg-adts.aac", "ADTS header layout of Apple's AudioToolbox writer")]
-    [InlineData("apple/apple-intel-passthru-adts-from-ffmpeg-adts.aac", "ADTS header layout of Apple's AudioToolbox writer")]
     public void ASignatureInTheStreamBeatsTheWritersLayout(string name, string subject)
     {
         Report report = Analyze(name, Read(name));
@@ -380,8 +379,27 @@ public class AppleEncoderTests
         Finding differing = Assert.Single(report.Findings, f => f.Code == "aac.encoder-claim-differs");
         Assert.Equal(Severity.Info, differing.Severity);
         Assert.Equal(
-            $"The {subject} points to \"Apple AudioToolbox\", but the stream points to FFmpeg (Lavc60.31.102); the writer also lays out streams it only copied in the same way, and other software may have rewritten the file.",
+            $"The {subject} points to \"Apple AudioToolbox\", but the stream points to \"FFmpeg (Lavc60.31.102)\"; the writer also lays out streams it only copied in the same way, and other software may have rewritten the file.",
             differing.Message);
+    }
+
+    // The ADTS copy was byte for byte the same on both runners, so one file and one record stand for both.
+    [Fact]
+    public void TheAdtsCopyOfFfmpegsStreamIsOneFileForBothRunners()
+    {
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "apple/apple-passthru-adts-from-ffmpeg-adts.provenance.json")));
+        JsonElement other = Assert.Single(document.RootElement.GetProperty("identical_on").EnumerateArray());
+        Assert.Contains("X86_64", other.GetProperty("uname").GetString(), StringComparison.Ordinal);
+    }
+
+    // With an sbtd box the claim names the encoder; the finding for a stream that disagrees says what an sbtd box records.
+    [Fact]
+    public void ADisagreeingSbtdClaimIsWordedForTheSbtdBox()
+    {
+        var claim = new EncoderClaim("Apple AAC encoder (AudioToolbox)", new Node("sbtd", 0, 1), "MP4 layout of Apple's AudioToolbox encoder: x") { Confidence = Confidence.Medium, IsLayout = true };
+        Assert.Equal(
+            "The MP4 layout of Apple's AudioToolbox encoder points to \"Apple AAC encoder (AudioToolbox)\", but the stream points to \"FFmpeg (Lavc60.31.102)\"; the sbtd box records the source of an encode, so other software may have replaced the stream in the file.",
+            Encspect.Formats.Aac.AacEncoder.Disagreement(claim, claim.Text, "the stream points to \"FFmpeg (Lavc60.31.102)\"", "unused"));
     }
 
     // FAAC's copy came from an M4A: the esds is kept, there is no layout, and the version text names the encoder.

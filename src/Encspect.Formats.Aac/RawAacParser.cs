@@ -614,7 +614,7 @@ public sealed class RawAacParser : IFormatParser
 
     // The headers afconvert writes (macOS 15.7, 16 ADTS files of AAC-LC, HE-AAC and HE-AAC v2 of at least 20 frames, 8 on each of arm64 and
     // x86-64): the MPEG-2 ID, no CRC, the original/copy bit set, the other flag bits clear and a buffer fullness of 0 in
-    // every frame. In the 55 other ADTS fixtures (FAAC, fdkaac, ffmpeg, hand-built) the original/copy bit is clear and
+    // every frame. In the 56 other ADTS fixtures (FAAC, fdkaac, ffmpeg, hand-built) the original/copy bit is clear and
     // the buffer fullness is 0x7FF, 256, or varies.
     private static bool IsAppleHeader(AdtsHeader header) =>
         header.Id == 1 && !header.IsProtected && header.IsOriginal && !header.IsHome && !header.IsPrivate && !header.CopyrightIdBit

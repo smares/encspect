@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Takes the files of the apple-aac-fixtures workflow's artifact into tests/fixtures.
 
-    python3 scripts/fixtures/import_macos_aac_fixtures.py path/to/extracted/artifact [--all | --only NAME ...] [--runner NAME] [--force] [--allow-large]
+    python3 scripts/fixtures/import_macos_aac_fixtures.py path/to/extracted/artifact [--all | --only NAME ...] [--runner NAME] [--identical-with DIR] [--force] [--allow-large]
     python3 scripts/fixtures/import_macos_aac_fixtures.py path/to/macos-15/artifact --compare path/to/macos-15-intel/artifact
 
 The artifact is the directory make_macos_aac_fixtures.sh wrote (manifest.json, encoded/, pcm/, info/,
@@ -22,7 +22,8 @@ stamp the time of the encode, so the files are committed once and checked by the
 (.expected.json) are written by make_external_aac_fixtures.py --manifests-only from their entries there, which hold what
 the analyzer must say and what ffprobe, MP4Box and faad confirm.
 
-Without --all a chosen set is imported (CHOSEN below); --only takes exact names. --runner NAME imports the artifact of
+Without --all a chosen set is imported (CHOSEN below); --only takes exact names. --identical-with DIR records, in the provenance of a file the other runner's artifact in DIR wrote with the same bytes, that runner's
+environment, so one record stands for both. --runner NAME imports the artifact of
 another runner under apple-NAME-<name> (the Intel leg's, as apple-intel-<name>). A file that is already
 there is left alone unless it is the same bytes or --force is given. Files over 600 KB are refused unless
 --allow-large is given: a fixture is a few seconds of audio.
@@ -174,7 +175,7 @@ def destination(encode, runner=False):
     return (FIXTURES / "aac" if encode["name"] in GOLDEN and not runner else FIXTURES / "apple"), extension
 
 
-def import_encode(artifact, encode, sources, environment, force, allow_large, prefix="apple-"):
+def import_encode(artifact, encode, sources, environment, force, allow_large, prefix="apple-", identical=None):
     name = encode["name"]
     data = (artifact / encode["output"]).read_bytes()
     if len(data) > LARGE and not allow_large:
@@ -209,6 +210,7 @@ def import_encode(artifact, encode, sources, environment, force, allow_large, pr
         },
         "input": {k: source[k] for k in ("name", "from", "channels", "rate", "bits", "seconds", "signal", "generator", "channel_mask", "channel_layout_tag", "info_tags", "sha256") if k in source},
         "runner": runner(environment),
+        "identical_on": identical or [],
         "bytes": len(data),
         "sha256": sha256(data),
         "reproducible": False,
@@ -265,7 +267,15 @@ def main():
         if name not in names:
             print(f"{name}: not in the artifact or did not work")
     prefix = f"apple-{rest[rest.index('--runner') + 1]}-" if "--runner" in rest else "apple-"
-    imported = sum(import_encode(artifact, e, sources, environment, force, allow_large, prefix) for e in worked if wanted is None or e["name"] in wanted)
+    other = pathlib.Path(rest[rest.index("--identical-with") + 1]) if "--identical-with" in rest else None
+    twins = {}
+    if other is not None:
+        twin = load(other)
+        for e in twin["encodes"]:
+            if e["exit_status"] == 0 and e.get("sha256"):
+                twins[e["name"]] = (e["sha256"], runner(twin.get("environment", "")))
+    imported = sum(import_encode(artifact, e, sources, environment, force, allow_large, prefix,
+                                 [twins[e["name"]][1]] if e["name"] in twins and twins[e["name"]][0] == e["sha256"] else None) for e in worked if wanted is None or e["name"] in wanted)
     print(f"{imported} fixtures imported.")
     return 0
 
