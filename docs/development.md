@@ -51,10 +51,21 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 | | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
-| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | same as main |
+| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main, and Linux x64 on `ubuntu-latest` (see below) |
 | Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
+
+### Runner images
+
+- **Every Linux job is pinned to `ubuntu-24.04`** (Linux arm64 to `ubuntu-24.04-arm`): `changes`, `docs`, `shard-guard`, `fuzz`, `format`, `fixtures`, the cross-check jobs, `all-checks`, the Linux x64 leg of `build-test` and `unit-tests`, and `sources.yml`. `windows-latest`, `macos-latest` and the other platform entries keep their labels; `wma-fixtures.yml` and `apple-aac-fixtures.yml` name their images already.
+- **Why:** `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19 (actions/runner-images#14748). A silent move would change the tools the jobs depend on:
+  - the `fixtures` job regenerates the hand-built fixtures with Python and must reproduce them byte for byte;
+  - the cross-check tool versions come from Ubuntu 24.04's packages: ffmpeg 6.1.1 (6.1.1-3ubuntu5), MediaInfo 24.01, liba52 and libdca. The golden reports and the encoder strings in the fixtures name them.
+- **Early-warning leg:** the nightly run and a manual run add a seventh platform to `build-test` and `unit-tests`, Linux x64 on `ubuntu-latest` (`UBUNTU_LATEST_PLATFORM` in `scripts/ci/changes.py`). Pull requests and pushes to main do not have it.
+  - It is the signal to move the pin: once `ubuntu-latest` is Ubuntu 26, a green leg says the build and the tests pass there. Moving the pin then also means regenerating the fixtures and cross-check versions that come from Ubuntu 24.04's packages.
+  - A failing leg fails `build-test` or `unit-tests`, so `all-checks` and the nightly run are red, and `python3 scripts/ci_report.py` lists the leg by its job name (`build and test (ubuntu-latest)`, `unit tests (ubuntu-latest, <shard>)`). Nightly failures are reported, not blocking.
+- `CiWorkflowTests` fails when any workflow names `ubuntu-latest`, so an unpinned label cannot slip back in; `test_changes.py` checks the platform lists per event.
 
 - The platform lists and the sharded test matrix are computed by `scripts/ci/changes.py` from the event.
 - `.github/workflows/sources.yml` (every download address, weekly) is a separate workflow and unchanged.

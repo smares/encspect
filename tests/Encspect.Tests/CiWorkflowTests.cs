@@ -100,6 +100,28 @@ public sealed class CiWorkflowTests
         Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
     }
 
+    // Every Linux job runs on ubuntu-24.04, so tool versions (ffmpeg, MediaInfo, Python) stay those the golden reports
+    // were made with. The only moving label is the nightly early-warning leg, which changes.py adds to the matrix.
+    [Fact]
+    public void NoWorkflowUsesTheMovingUbuntuLabelExceptThroughTheNightlyLeg()
+    {
+        string root = FindRepositoryRoot();
+        foreach (string workflow in Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml"))
+        {
+            Assert.DoesNotContain("ubuntu-latest", File.ReadAllText(workflow), StringComparison.Ordinal);
+        }
+
+        string changes = File.ReadAllText(Path.Combine(root, "scripts", "ci", "changes.py"));
+        Assert.Equal(1, Regex.Count(changes, @"\{""os"": ""ubuntu-latest"""));
+        Assert.Contains("NIGHTLY_PLATFORMS = FULL_PLATFORMS + [UBUNTU_LATEST_PLATFORM]", changes, StringComparison.Ordinal);
+        Assert.Contains("NIGHTLY_PLATFORMS if event in (\"schedule\", \"workflow_dispatch\")", changes, StringComparison.Ordinal);
+
+        string ci = File.ReadAllText(Path.Combine(root, ".github", "workflows", "ci.yml"));
+        Assert.Equal(2, Regex.Count(ci, @"(?m)^    runs-on: \$\{\{ matrix\.os \}\}"));
+        Assert.All(Regex.Matches(ci, @"(?m)^\s*runs-on:\s*(\S.*?)\s*$").Select(m => m.Groups[1].Value),
+            label => Assert.True(label is "ubuntu-24.04" or "${{ matrix.os }}", $"runs-on: {label} is not pinned"));
+    }
+
     // A step that may fail without failing the job would be a check nobody reads.
     [Fact]
     public void NoJobOrStepMayFailWithoutFailingTheRun()

@@ -114,7 +114,7 @@ CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
 ALL_JOBS = CI_JOBS_DOTNET + ["fixtures"] + list(AREAS)
 
 PULL_REQUEST_PLATFORMS = [
-    {"os": "ubuntu-latest", "rid": "linux-x64"},
+    {"os": "ubuntu-24.04", "rid": "linux-x64"},
     {"os": "windows-latest", "rid": "win-x64"},
     {"os": "macos-latest", "rid": "osx-arm64"},
     {"os": "windows-11-arm", "rid": "win-arm64"},
@@ -123,6 +123,12 @@ FULL_PLATFORMS = PULL_REQUEST_PLATFORMS + [
     {"os": "ubuntu-24.04-arm", "rid": "linux-arm64"},
     {"os": "macos-15-intel", "rid": "osx-x64"},
 ]
+# The early-warning leg: the image `ubuntu-latest` points to, which moves to Ubuntu 26 on 2026-10-19
+# (actions/runner-images#14748). Every other Linux job is pinned to ubuntu-24.04 so the tool versions and
+# the Python of the byte-for-byte fixture reproduction stay stable; this leg tells when to move the pin.
+# Only the nightly schedule and a manual run have it. A failure fails the run, which scripts/ci_report.py lists.
+UBUNTU_LATEST_PLATFORM = {"os": "ubuntu-latest", "rid": "linux-x64"}
+NIGHTLY_PLATFORMS = FULL_PLATFORMS + [UBUNTU_LATEST_PLATFORM]
 
 
 def glob_match(path, pattern):
@@ -293,7 +299,9 @@ def decide(event, files, root=ROOT, removed=()):
 
 
 def platforms(event):
-    return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
+    if event == "pull_request":
+        return PULL_REQUEST_PLATFORMS
+    return NIGHTLY_PLATFORMS if event in ("schedule", "workflow_dispatch") else FULL_PLATFORMS
 
 
 def parse_name_status(text):
