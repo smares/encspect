@@ -114,12 +114,13 @@ Format tag 0x000A, routed as the codec "wma-voice". Read as FFmpeg's `wmavoice.c
 
 ## Encoder detection
 
-The Encoder node and the Writer node of a stream each list their evidence at its bytes and name the strongest. They are resolved apart: the encoder from the stream and its codec data, the writer from the container's layout and metadata. An ASF file's attributes (WMFSDKVersion, MediaFoundationVersion, WM/ToolName, WM/EncodingSettings) are claims of the writer role, since the Windows Media attribute lists give them to no encoder.
+The Encoder node and the Writer node of a stream each list their evidence at its bytes and name the strongest. They are resolved apart: the encoder from the stream and its codec data, the writer from the container's layout and metadata. An ASF file's attributes (WMFSDKVersion, MediaFoundationVersion, WM/ToolName, WM/EncodingSettings) are claims of the writer role, since the Windows Media attribute lists give them to no encoder; WMFSDKVersion and MediaFoundationVersion stay so whatever their text. In WM/ToolName, WM/Tool, WM/ToolVersion and WM/EncodingSettings, text that is ffmpeg's muxer version (`Lavf…`) is a writer claim anyway, and text that is a libavcodec encoder ID (`Lavc…`) is an encoder claim, which encoder detection weighs only where the stream itself shows ffmpeg.
 
 ### Encoder
 
 - **High:** ffmpeg's wmav1 and wmav2 encoders pad every superframe after its frame with 'N' bytes (`wmaenc.c`), with no bit reservoir and no variable block lengths. Two or more padded superframes, all of them 'N', name "FFmpeg (wmav2 encoder)".
 - **Medium, from the codec data of versions 1 and 2:** Microsoft's encoders write a samples-per-block of 17 frames with the bit reservoir and variable block lengths; ffmpeg's write 0 and neither.
+- A claim of the encoder role that names FFmpeg (a `Lavc…` ID in an attribute) is weighed only where the stream shows ffmpeg's superframe padding above; there it is listed as further evidence under "FFmpeg (wmav2 encoder)" and raises nothing. On any other stream it is not listed.
 - Professional, Lossless and Voice have no trait of their own: their codec data and frames name no encoder, so only the writer is named.
 
 ### Writer

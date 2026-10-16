@@ -218,6 +218,10 @@ Every cross-check script also compares each fixture's golden report with MediaIn
   - MediaInfo 24.01, measured: it finds the extensions of a core and the substream behind it in the 16-bit big endian form only, counts a 14-bit frame as FSIZE + 1 times 8 over 7 bytes, and lays out AMODE 10 to 15 differently; each is listed with its fixtures in the script.
   - libdca reads core frames only: XCh and XXCH channels are not counted, and it reads a frame by its size, so it does not resync inside a cut one.
 
+### Derived ASF fixture
+
+`make_asf_fixtures.py` derives `derived-ffmpeg-wmav2-tool-name-lavc.asf` from `external-ffmpeg-wmav2-mono-44k-48k.wma`: the same stream, packets and File Properties figures, with a WM/ToolName attribute of "Lavc60.31.102 wmav2" added. It is not an encoder's output, and its manifest says so (`derived`). ffprobe reads the same start and duration as for the source.
+
 ### Derived Musepack SV6 fixtures
 
 No SV6 encoder was found, so `make_musepack_fixtures.py` derives the SV6 fixtures (`derived-*-as-sv6.mpc`) from the SV5 encoder's variable bitrate fixtures, with and without mid/side. They are relabeled SV5 streams, not an encoder's output, and their manifests say so (`derived`).

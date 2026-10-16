@@ -1,0 +1,298 @@
+{
+ "description": "AAC LC with ffmpeg's signature in a fill element of its first access unit, laid out as aacenc.c (n6.1.1, lines 787-802) writes it, and a tool atom set to a libavcodec encoder ID: the atom adds to the encoder's evidence and names no writer.",
+ "length": 1658,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   797
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   579
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   479
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   394
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   334
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   503,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   527,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   555,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   695,
+   28
+  ],
+  [
+   "moov/udta",
+   723,
+   102
+  ],
+  [
+   "moov/udta/meta",
+   731,
+   94
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   743,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   776,
+   49
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   784,
+   41
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   792,
+   33
+  ],
+  [
+   "mdat",
+   825,
+   833
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "encoder": [
+    "FFmpeg (Lavc60.31.102)",
+    "High"
+   ]
+  }
+ ],
+ "units": [
+  [
+   833,
+   23
+  ],
+  [
+   856,
+   6
+  ],
+  [
+   862,
+   45
+  ],
+  [
+   907,
+   42
+  ],
+  [
+   949,
+   39
+  ],
+  [
+   988,
+   36
+  ],
+  [
+   1024,
+   33
+  ],
+  [
+   1057,
+   30
+  ],
+  [
+   1087,
+   27
+  ],
+  [
+   1114,
+   24
+  ],
+  [
+   1138,
+   20
+  ],
+  [
+   1158,
+   17
+  ],
+  [
+   1175,
+   14
+  ],
+  [
+   1189,
+   11
+  ],
+  [
+   1200,
+   8
+  ],
+  [
+   1208,
+   46
+  ],
+  [
+   1254,
+   43
+  ],
+  [
+   1297,
+   40
+  ],
+  [
+   1337,
+   37
+  ],
+  [
+   1374,
+   34
+  ],
+  [
+   1408,
+   31
+  ],
+  [
+   1439,
+   28
+  ],
+  [
+   1467,
+   25
+  ],
+  [
+   1492,
+   21
+  ],
+  [
+   1513,
+   18
+  ],
+  [
+   1531,
+   15
+  ],
+  [
+   1546,
+   12
+  ],
+  [
+   1558,
+   9
+  ],
+  [
+   1567,
+   47
+  ],
+  [
+   1614,
+   44
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

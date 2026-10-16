@@ -268,6 +268,33 @@ fixture("spread-audio", "Windows Media Audio whose error correction spreads the 
         spread_file, [finding("asf.audio-spread", "2 packets")], {"ffprobe": False, "reason": "ffmpeg descrambles the media objects and decodes them as Windows Media Audio, which these are not."})
 
 
+DERIVED_FROM = "external-ffmpeg-wmav2-mono-44k-48k.wma"
+
+
+def tool_name_file():
+    """The committed ffmpeg wmav2 file DERIVED_FROM with a WM/ToolName attribute added: its stream and codec list, packets and File Properties
+    figures (file ID, creation time, play duration, send duration, preroll, flags, packet sizes, maximum bit rate) are the source's, and the
+    Header Extension Object is as empty as the source's."""
+    source = (OUT / DERIVED_FROM).read_bytes()
+    header_end = struct.unpack_from("<Q", source, 16)[0]
+    objects = m.read_objects(source, 30, header_end)
+    properties = next(source[at:at + size] for name, at, size in objects if name == m.FILE_PROPERTIES)
+    file_id, _, creation, _, play, send, preroll, flags, minimum, maximum, bitrate = struct.unpack_from("<16sQQQQQQIIII", properties, 24)
+    assert minimum == maximum
+    extension = next(source[at:at + size] for name, at, size in objects if name == m.HEADER_EXTENSION)
+    assert len(extension) == 46, "the source's Header Extension Object has children"
+    children = [source[at:at + size] for name, at, size in objects if name in (m.STREAM_PROPERTIES, m.CODEC_LIST)]
+    body = source[header_end + 50:header_end + struct.unpack_from("<Q", source, header_end + 16)[0]]
+    packets = [body[k:k + maximum] for k in range(0, len(body), maximum)]
+    return m.asf_file(children + [m.extended_content_description([("WM/ToolName", 0, "Lavc60.31.102 wmav2")])], packets, maximum,
+                      file_id=file_id, play=play, send=send, preroll=preroll, flags=flags, creation=creation, max_bitrate=bitrate)
+
+
+fixture("derived-ffmpeg-wmav2-tool-name-lavc", "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute added that holds ffmpeg's libavcodec encoder ID: "
+        "the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
+        tool_name_file, [])
+
+
 def two_codecs():
     return m.asf_file(
         [m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)),
@@ -408,7 +435,8 @@ def main():
         data = builder()
         (OUT / f"{name}.asf").write_bytes(data)
         model = m.parse(data)
-        manifest = {"description": description, "format": "ASF", **model, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}
+        derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}} if name.startswith("derived-") else {}
+        manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}
         (OUT / f"{name}.expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         count += 1
     print(f"{count} fixtures written to {OUT}.")
