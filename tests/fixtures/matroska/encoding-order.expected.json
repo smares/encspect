@@ -1,5 +1,5 @@
 {
- "description": "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2), and a header-stripped track.",
+ "description": "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2): they cannot be ordered, so the header-stripped frames are not read.",
  "length": 383,
  "format": "Matroska",
  "ebml": {
@@ -403,6 +403,10 @@
   {
    "code": "matroska.encoding-order",
    "contains": "unique"
+  },
+  {
+   "code": "matroska.track-encoding-not-read",
+   "contains": "cannot be ordered"
   }
  ],
  "crosscheck": {

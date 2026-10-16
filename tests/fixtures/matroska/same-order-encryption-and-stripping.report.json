@@ -5,18 +5,18 @@
       "name": "encspect",
       "version": "(build)"
     },
-    "source": "same-order-encryption-first.mka",
+    "source": "same-order-encryption-and-stripping.mka",
     "root": {
       "name": "File",
       "value": "Matroska",
       "offset": 0,
-      "length": 439,
+      "length": 403,
       "children": [
         {
           "name": "Matroska",
           "value": "1 audio track",
           "offset": 0,
-          "length": 439,
+          "length": 403,
           "children": [
             {
               "name": "EBML",
@@ -73,7 +73,7 @@
               "name": "Segment",
               "value": "1 track, 1 cluster",
               "offset": 40,
-              "length": 399,
+              "length": 363,
               "children": [
                 {
                   "name": "Info",
@@ -198,7 +198,7 @@
                             {
                               "name": "ContentEncoding",
                               "offset": 175,
-                              "length": 33,
+                              "length": 27,
                               "children": [
                                 {
                                   "name": "ContentEncodingOrder",
@@ -208,45 +208,33 @@
                                 },
                                 {
                                   "name": "ContentEncodingScope",
-                                  "value": "4 (next encoding)",
+                                  "value": "1 (frames)",
                                   "offset": 182,
                                   "length": 4
                                 },
                                 {
                                   "name": "ContentEncodingType",
-                                  "value": "1 (encryption)",
+                                  "value": "0 (compression)",
                                   "offset": 186,
                                   "length": 4
                                 },
                                 {
-                                  "name": "ContentEncryption",
+                                  "name": "ContentCompression",
                                   "offset": 190,
-                                  "length": 18,
+                                  "length": 12,
                                   "children": [
                                     {
-                                      "name": "ContentEncAlgo",
-                                      "value": "5 (AES)",
+                                      "name": "ContentCompAlgo",
+                                      "value": "3 (header stripping)",
                                       "offset": 193,
                                       "length": 4
                                     },
                                     {
-                                      "name": "ContentEncKeyID",
-                                      "value": "0x03",
+                                      "name": "ContentCompSettings",
+                                      "value": 2,
+                                      "unit": "bytes",
                                       "offset": 197,
-                                      "length": 4
-                                    },
-                                    {
-                                      "name": "ContentEncAESSettings",
-                                      "offset": 201,
-                                      "length": 7,
-                                      "children": [
-                                        {
-                                          "name": "AESSettingsCipherMode",
-                                          "value": "1 (AES-CTR)",
-                                          "offset": 204,
-                                          "length": 4
-                                        }
-                                      ]
+                                      "length": 5
                                     }
                                   ]
                                 }
@@ -254,44 +242,56 @@
                             },
                             {
                               "name": "ContentEncoding",
-                              "offset": 208,
-                              "length": 27,
+                              "offset": 202,
+                              "length": 33,
                               "children": [
                                 {
                                   "name": "ContentEncodingOrder",
                                   "value": 0,
-                                  "offset": 211,
+                                  "offset": 205,
                                   "length": 4
                                 },
                                 {
                                   "name": "ContentEncodingScope",
-                                  "value": "1 (frames)",
-                                  "offset": 215,
+                                  "value": "4 (next encoding)",
+                                  "offset": 209,
                                   "length": 4
                                 },
                                 {
                                   "name": "ContentEncodingType",
-                                  "value": "0 (compression)",
-                                  "offset": 219,
+                                  "value": "1 (encryption)",
+                                  "offset": 213,
                                   "length": 4
                                 },
                                 {
-                                  "name": "ContentCompression",
-                                  "offset": 223,
-                                  "length": 12,
+                                  "name": "ContentEncryption",
+                                  "offset": 217,
+                                  "length": 18,
                                   "children": [
                                     {
-                                      "name": "ContentCompAlgo",
-                                      "value": "3 (header stripping)",
-                                      "offset": 226,
+                                      "name": "ContentEncAlgo",
+                                      "value": "5 (AES)",
+                                      "offset": 220,
                                       "length": 4
                                     },
                                     {
-                                      "name": "ContentCompSettings",
-                                      "value": 2,
-                                      "unit": "bytes",
-                                      "offset": 230,
-                                      "length": 5
+                                      "name": "ContentEncKeyID",
+                                      "value": "0x03",
+                                      "offset": 224,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "ContentEncAESSettings",
+                                      "offset": 228,
+                                      "length": 7,
+                                      "children": [
+                                        {
+                                          "name": "AESSettingsCipherMode",
+                                          "value": "1 (AES-CTR)",
+                                          "offset": 231,
+                                          "length": 4
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
@@ -329,7 +329,7 @@
                   "value": 4,
                   "unit": "blocks",
                   "offset": 250,
-                  "length": 189,
+                  "length": 153,
                   "children": [
                     {
                       "name": "Timestamp",
@@ -344,7 +344,7 @@
                       "value": 1,
                       "unit": "frames",
                       "offset": 259,
-                      "length": 45,
+                      "length": 36,
                       "children": [
                         {
                           "name": "Track Number",
@@ -409,10 +409,10 @@
                         },
                         {
                           "name": "Frame",
-                          "value": 39,
+                          "value": 30,
                           "unit": "bytes",
                           "offset": 265,
-                          "length": 39
+                          "length": 30
                         }
                       ]
                     },
@@ -421,32 +421,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 304,
-                      "length": 45,
+                      "offset": 295,
+                      "length": 36,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 306,
+                          "offset": 297,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 20,
                           "unit": "ticks",
-                          "offset": 307,
+                          "offset": 298,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 309,
+                          "offset": 300,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 309,
+                              "offset": 300,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -454,7 +454,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 309,
+                              "offset": 300,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -462,7 +462,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 309,
+                              "offset": 300,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -470,7 +470,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 309,
+                              "offset": 300,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -478,7 +478,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 309,
+                              "offset": 300,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -487,10 +487,10 @@
                         },
                         {
                           "name": "Frame",
-                          "value": 39,
+                          "value": 30,
                           "unit": "bytes",
-                          "offset": 310,
-                          "length": 39
+                          "offset": 301,
+                          "length": 30
                         }
                       ]
                     },
@@ -499,32 +499,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 349,
-                      "length": 45,
+                      "offset": 331,
+                      "length": 36,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 351,
+                          "offset": 333,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 40,
                           "unit": "ticks",
-                          "offset": 352,
+                          "offset": 334,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 354,
+                          "offset": 336,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 354,
+                              "offset": 336,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -532,7 +532,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 354,
+                              "offset": 336,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -540,7 +540,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 354,
+                              "offset": 336,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -548,7 +548,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 354,
+                              "offset": 336,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -556,7 +556,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 354,
+                              "offset": 336,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -565,10 +565,10 @@
                         },
                         {
                           "name": "Frame",
-                          "value": 39,
+                          "value": 30,
                           "unit": "bytes",
-                          "offset": 355,
-                          "length": 39
+                          "offset": 337,
+                          "length": 30
                         }
                       ]
                     },
@@ -577,32 +577,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 394,
-                      "length": 45,
+                      "offset": 367,
+                      "length": 36,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 396,
+                          "offset": 369,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 60,
                           "unit": "ticks",
-                          "offset": 397,
+                          "offset": 370,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 399,
+                          "offset": 372,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 399,
+                              "offset": 372,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -610,7 +610,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 399,
+                              "offset": 372,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -618,7 +618,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 399,
+                              "offset": 372,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -626,7 +626,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 399,
+                              "offset": 372,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -634,7 +634,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 399,
+                              "offset": 372,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -643,79 +643,12 @@
                         },
                         {
                           "name": "Frame",
-                          "value": 39,
+                          "value": 30,
                           "unit": "bytes",
-                          "offset": 400,
-                          "length": 39
+                          "offset": 373,
+                          "length": 30
                         }
                       ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Track 1 Frames",
-              "value": "frames not read: encrypted",
-              "offset": 140,
-              "length": 299,
-              "children": [
-                {
-                  "name": "Opus Head",
-                  "value": "1 channel, pre-skip 312",
-                  "offset": 140,
-                  "length": 19,
-                  "children": [
-                    {
-                      "name": "Magic Signature",
-                      "value": "OpusHead",
-                      "offset": 140,
-                      "length": 8
-                    },
-                    {
-                      "name": "Version",
-                      "value": 1,
-                      "offset": 148,
-                      "length": 1
-                    },
-                    {
-                      "name": "Channels",
-                      "value": 1,
-                      "offset": 149,
-                      "length": 1
-                    },
-                    {
-                      "name": "Channel Layout",
-                      "value": "Mono: mono",
-                      "offset": 149,
-                      "length": 1
-                    },
-                    {
-                      "name": "Pre-skip",
-                      "value": 312,
-                      "unit": "samples",
-                      "offset": 150,
-                      "length": 2
-                    },
-                    {
-                      "name": "Input Sample Rate",
-                      "value": 48000,
-                      "unit": "Hz",
-                      "offset": 152,
-                      "length": 4
-                    },
-                    {
-                      "name": "Output Gain",
-                      "value": 0,
-                      "unit": "dB",
-                      "offset": 156,
-                      "length": 2
-                    },
-                    {
-                      "name": "Mapping Family",
-                      "value": "0 (mono or stereo)",
-                      "offset": 158,
-                      "length": 1
                     }
                   ]
                 }
@@ -730,25 +663,22 @@
         "nodes": [
           [
             0,
-            2
+            1,
+            1,
+            0
           ]
         ],
         "codec": "Opus",
         "sampleRate": 48000,
         "channels": 1,
-        "channelMode": "Mono",
-        "channelLayout": [
-          "front center"
-        ],
-        "channelLayoutName": "mono",
         "samples": 3528,
         "duration": 0.0735,
-        "averageBitrate": 15.6,
+        "averageBitrate": 12,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,
         "protection": {
-          "scheme": "Matroska ContentEncryption, AES-CTR",
+          "scheme": "Matroska ContentEncryption",
           "isEncrypted": true,
           "systems": []
         },
@@ -760,10 +690,10 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "matroska.track-encrypted",
-        "message": "Track 1 (A_OPUS) is encrypted (AES-CTR), so its frames cannot be analyzed.",
+        "code": "matroska.track-encoding-not-read",
+        "message": "Track 1 (A_OPUS) has ContentEncodings that share a ContentEncodingOrder, so they cannot be ordered and none is trusted: its frames and its CodecPrivate are not read, so its frames cannot be analyzed.",
         "offset": 175,
-        "length": 33,
+        "length": 27,
         "path": [
           0,
           1,
@@ -778,24 +708,8 @@
         "severity": "Warning",
         "code": "matroska.encoding-order",
         "message": "Track 1 has two ContentEncodings with the ContentEncodingOrder 0, which RFC 9559 requires to be unique (section 5.1.4.1.31.2).",
-        "offset": 208,
-        "length": 27,
-        "path": [
-          0,
-          1,
-          1,
-          0,
-          7,
-          1
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "matroska.encoding-hidden",
-        "message": "Track 1 has a ContentEncoding of order 0 whose settings are hidden by the ContentEncoding of order 0 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts it covers count as encrypted by it.",
-        "offset": 208,
-        "length": 27,
+        "offset": 202,
+        "length": 33,
         "path": [
           0,
           1,

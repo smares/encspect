@@ -265,8 +265,6 @@ public class ProtectionTests
     [InlineData("matroska/encrypted-chain.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/compression-hides-encryption.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
     [InlineData("matroska/encrypted-in-chain-middle.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
-    [InlineData("matroska/same-order-stripping-first.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
-    [InlineData("matroska/same-order-encryption-first.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-aac-delay.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-aac.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-vorbis.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
@@ -301,16 +299,32 @@ public class ProtectionTests
         Assert.Equal(clear.AverageBitrate ?? 0, encrypted.AverageBitrate ?? 0, 0.05);
     }
 
-    // Equal ContentEncodingOrders (which RFC 9559 forbids) do not make the result depend on the order of the elements in the file.
-    [Fact]
-    public void MatroskaEncodingsOfOneOrderGiveTheSameResultInEitherFileOrder()
+    // Encodings that share a ContentEncodingOrder cannot be ordered: nothing is read, and the track is encrypted by an unknown algorithm if any of them is an
+    // encryption.
+    [Theory]
+    [InlineData("matroska/same-order-encryption-and-stripping.mka")]
+    [InlineData("matroska/same-order-aes-modes.mka")]
+    [InlineData("matroska/same-order-over-encryption.mka")]
+    public void MatroskaTiedEncryptionsAreEncryptedByAnUnknownAlgorithm(string name)
     {
-        Report first = Fixtures.AnalyzeMpeg("matroska/same-order-stripping-first.mka");
-        Report second = Fixtures.AnalyzeMpeg("matroska/same-order-encryption-first.mka");
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg(name).Streams);
 
-        Assert.Equal(Assert.Single(first.Streams).Protection, Assert.Single(second.Streams).Protection);
-        Assert.Equal(first.Findings.Select(f => f.Code).Order(), second.Findings.Select(f => f.Code).Order());
-        Assert.Contains(first.Findings, f => f.Code == "matroska.encoding-order");
+        Assert.Equal("Matroska ContentEncryption", stream.Protection!.Scheme);
+        Assert.True(stream.Protection.IsEncrypted);
+        Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
+    // Encodings that share a ContentEncodingOrder cannot be ordered: nothing is read, and with no encryption among them nothing is protected. (That the
+    // result does not depend on the order of the elements is checked over every permutation by check_matroska_encodings.py.)
+    [Fact]
+    public void MatroskaEncodingsOfOneOrderAreNotTrusted()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/same-order-two-compressions.mka");
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Null(stream.Protection);
+        Assert.Contains(report.Findings, f => f.Code == "matroska.track-encoding-not-read" && f.Message.Contains("cannot be ordered", StringComparison.Ordinal));
+        Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
     // A compression whose scope hides the next encoding makes that encoding's settings unreadable: a hidden compression is not read, and the frames are not

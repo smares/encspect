@@ -81,6 +81,7 @@ def build(elements):
 
 
 OPUS = ("Opus", 48000, 1)
+NOT_ORDERED = [("matroska.encoding-order", "unique"), ("matroska.track-encoding-not-read", "cannot be ordered")]
 
 
 # --- The fixtures ------------------------------------------------------------------------------------
@@ -464,28 +465,47 @@ def _():
     return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
 
 
-def same_order(strips_first):
-    """Header stripping (order 0, frames) and AES-CTR (order 0, scope 4), in either order in the file: the tie rule makes the encryption hide the stripping."""
-    stripping = content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad")
-    sealing = content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03")
-    enc = content_encodings(stripping, sealing) if strips_first else content_encodings(sealing, stripping)
-    stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
-    return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+# Encodings that share a ContentEncodingOrder (which RFC 9559 section 5.1.4.1.31.2 forbids): the track cannot be ordered, so nothing of it is read and it is
+# encrypted when any encoding is an encryption. Each case is a list of content_encoding arguments; the fixtures write them in the order given, and
+# check_matroska_encodings.py writes every permutation and expects the same result.
+TIE_CASES = {
+    "same-order-encryption-and-stripping": [dict(order=0, scope=1, compression=3, settings=b"\xde\xad"), dict(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03")],
+    "same-order-two-compressions": [dict(order=0, scope=1, compression=3, settings=b"\xF8"), dict(order=0, scope=1, compression=0)],
+    "same-order-aes-modes": [dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), dict(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x03")],
+    "same-order-over-encryption": [dict(order=1, scope=4, compression=3, settings=b"\x47"), dict(order=1, scope=1, compression=0),
+                                   dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03")],
+}
 
 
-@fixture("same-order-stripping-first", "Header stripping and AES-CTR with scope 4 share ContentEncodingOrder 0 (which RFC 9559 forbids), the stripping first in the file: between equal orders the "
-         "encryption hides the other, as in same-order-encryption-first.",
-         findings=[("matroska.encoding-order", "unique"), ("matroska.encoding-hidden", "hidden by the ContentEncoding of order 0"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")],
-         streams=[("Opus", 48000, 1)], valid=False)
+def tie_file(encodings):
+    """A track with the given content_encoding arguments, in that order, and frames that are the same whatever they are."""
+    enc = content_encodings(*[content_encoding(**kw) for kw in encodings])
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("same-order-encryption-and-stripping", "Header stripping and AES-CTR with scope 4 share ContentEncodingOrder 0 (which RFC 9559 forbids): the encodings cannot be ordered, so none is "
+         "trusted, nothing is read, and the track is encrypted by an unknown algorithm since one of them is an encryption.", findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
-    return same_order(True)
+    return tie_file(TIE_CASES["same-order-encryption-and-stripping"])
 
 
-@fixture("same-order-encryption-first", "The same two encodings as same-order-stripping-first with the encryption first in the file: the result is the same.",
-         findings=[("matroska.encoding-order", "unique"), ("matroska.encoding-hidden", "hidden by the ContentEncoding of order 0"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")],
-         streams=[("Opus", 48000, 1)], valid=False)
+@fixture("same-order-two-compressions", "Header stripping and zlib share ContentEncodingOrder 0: nothing is read, and with no encryption among them nothing is protected.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
-    return same_order(False)
+    return tie_file(TIE_CASES["same-order-two-compressions"])
+
+
+@fixture("same-order-aes-modes", "Two AES encryptions that differ only in the cipher mode (CTR and CBC) share ContentEncodingOrder 0: the scheme names no algorithm, as it could be either.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-aes-modes"])
+
+
+@fixture("same-order-over-encryption", "Two compressions share ContentEncodingOrder 1, one with scope 4, over AES-CTR at order 0: whatever the tie hides, the track is encrypted by an unknown algorithm.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-over-encryption"])
 
 
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
@@ -502,8 +522,8 @@ def _():
     return build(standard(cluster(0, *blocks(count=3)), track=[opus_track(encodings=enc)]))
 
 
-@fixture("encoding-order", "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2), and a header-stripped track.",
-         findings=[("matroska.encoding-order", "unique")], streams=[OPUS], valid=False)
+@fixture("encoding-order", "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2): they cannot be ordered, so the header-stripped "
+         "frames are not read.", findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=1, scope=1, compression=3, settings=b"\xF8"), content_encoding(order=1, scope=2, compression=3, settings=b""))
     stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(3)]

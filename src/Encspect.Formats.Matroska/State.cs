@@ -171,18 +171,17 @@ internal sealed class TrackInfo
 
     public List<EncodingInfo> Encodings { get; } = [];
 
-    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first). RFC 9559 (section 5.1.4.1.31.2) requires the orders to
-    // be unique; between equal ones an encoding with scope bit 4 comes first and hides the others of its order, so that the result does not depend on
-    // the order of the elements in the file. Bit 4 of any encoding makes the settings of the next one unreadable (section 5.1.4.1.31.3): Hiders are the
-    // encodings that do so for this one, the outermost first (the run of encodings with bit 4 before it, and the encoding that hides its tie); HasNext
-    // tells whether an encoding follows.
+    // RFC 9559 (section 5.1.4.1.31.2) requires the ContentEncodingOrders of a track to be unique. With two the same, the encodings cannot be ordered
+    // (the order of the elements in the file would decide), so none of them is trusted.
+    public bool HasDuplicateOrders => Encodings.GroupBy(e => e.Order).Any(g => g.Count() > 1);
+
+    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first), for a track whose orders are unique. Bit 4 of the
+    // scope of any encoding makes the settings of the next one unreadable (section 5.1.4.1.31.3). That holds for a hidden encoding as well, so the
+    // encodings that hide one are all the encodings of the run of bit 4 encodings just before it, the outermost first: Hiders. HasNext tells whether
+    // an encoding follows.
     public List<OrderedEncoding> OrderedEncodings()
     {
-        List<EncodingInfo> ordered =
-        [
-            .. Encodings.OrderByDescending(e => e.Order).ThenByDescending(e => (e.Scope & 4) != 0).ThenByDescending(e => e.Type)
-                .ThenByDescending(e => e.EncryptionAlgorithm).ThenByDescending(e => e.CompressionAlgorithm).ThenByDescending(e => e.Scope),
-        ];
+        List<EncodingInfo> ordered = [.. Encodings.OrderByDescending(e => e.Order)];
         var result = new List<OrderedEncoding>(ordered.Count);
         for (int i = 0; i < ordered.Count; i++)
         {
@@ -192,14 +191,7 @@ internal sealed class TrackInfo
                 start--;
             }
 
-            List<EncodingInfo> hiders = ordered.GetRange(start, i - start);
-            int tie = ordered.FindIndex(e => e.Order == ordered[i].Order);
-            if (tie < i && (ordered[tie].Scope & 4) != 0 && !hiders.Contains(ordered[tie]))
-            {
-                hiders.Insert(0, ordered[tie]);
-            }
-
-            result.Add(new OrderedEncoding(ordered[i], hiders, i + 1 < ordered.Count));
+            result.Add(new OrderedEncoding(ordered[i], ordered.GetRange(start, i - start), i + 1 < ordered.Count));
         }
 
         return result;

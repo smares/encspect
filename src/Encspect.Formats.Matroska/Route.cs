@@ -104,6 +104,15 @@ internal sealed partial class FileReader
             return;
         }
 
+        if (plan.IsAmbiguous)
+        {
+            _findings.AddNow(Severity.Info, "matroska.track-encoding-not-read",
+                $"{label} ({codecId}) has ContentEncodings that share a ContentEncodingOrder, so they cannot be ordered and none is trusted: its frames and its CodecPrivate are not read, so its frames cannot be analyzed.",
+                track.Encodings.FirstOrDefault()?.Node ?? track.Node);
+            AddContainerStream(segment, track, null, plan.Protection);
+            return;
+        }
+
         bool areFramesEncrypted = plan.Frames.IsEncrypted;
         string? problem = plan.Frames.Describe();
         if (problem is null && (plan.Frames.Steps.Count > 0 || plan.Private.Steps.Count > 0) && codec is not null and not ("vorbis" or "opus"))
@@ -521,6 +530,18 @@ internal sealed partial class FileReader
     private EncodingPlan PlanOf(TrackInfo track)
     {
         var plan = new EncodingPlan();
+
+        // Encodings that cannot be ordered are not trusted: neither the frames nor the CodecPrivate are read, and the track is encrypted unless shown
+        // otherwise, as MP4's rule is, when any of them is an encryption or holds a ContentEncryption.
+        if (track.HasDuplicateOrders)
+        {
+            plan.IsAmbiguous = true;
+            plan.Protection = track.Encodings.Any(e => e.Type == 1 || e.HasEncryption)
+                ? new StreamProtection { Scheme = "Matroska ContentEncryption", IsEncrypted = true }
+                : null;
+            return plan;
+        }
+
         Cover? covering = null;
         Cover? other = null;
         foreach (OrderedEncoding ordered in track.OrderedEncodings())
@@ -666,6 +687,9 @@ internal sealed partial class FileReader
 
     private sealed class EncodingPlan
     {
+        // Two encodings share a ContentEncodingOrder: nothing of the track is read.
+        public bool IsAmbiguous { get; set; }
+
         public Pipeline Frames { get; } = new();
 
         public Pipeline Private { get; } = new();

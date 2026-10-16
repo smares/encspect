@@ -1,6 +1,6 @@
 {
- "description": "The same two encodings as same-order-stripping-first with the encryption first in the file: the result is the same.",
- "length": 439,
+ "description": "Header stripping and zlib share ContentEncodingOrder 0: nothing is read, and with no encryption among them nothing is protected.",
+ "length": 389,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,8 +16,8 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 250,
-     "length": 189,
+     "offset": 236,
+     "length": 153,
      "timestamp": 0,
      "size_unknown": false,
      "blocks": 4
@@ -31,8 +31,8 @@
     "muxing_app": "encspect fixtures",
     "writing_app": "encspect fixtures"
    },
-   "length": 399,
-   "declared_end": 439
+   "length": 349,
+   "declared_end": 389
   }
  ],
  "tree": [
@@ -81,7 +81,7 @@
   [
    "Segment",
    40,
-   399,
+   349,
    [
     [
      "Info",
@@ -113,99 +113,87 @@
     [
      "Tracks",
      109,
-     141,
+     127,
      [
       [
        "TrackEntry",
-       115,
-       135,
+       114,
+       122,
        [
         [
          "TrackNumber",
-         118,
+         116,
          3
         ],
         [
          "TrackUID",
-         121,
+         119,
          5
         ],
         [
          "TrackType",
-         126,
+         124,
          3
         ],
         [
          "CodecID",
-         129,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         137,
+         135,
          22
         ],
         [
          "CodecDelay",
-         159,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         165,
+         163,
          7
         ],
         [
          "ContentEncodings",
-         172,
-         63,
+         170,
+         51,
          [
           [
            "ContentEncoding",
-           175,
-           33,
+           173,
+           26,
            [
             [
              "ContentEncodingOrder",
-             178,
+             176,
              4
             ],
             [
              "ContentEncodingScope",
-             182,
+             180,
              4
             ],
             [
              "ContentEncodingType",
-             186,
+             184,
              4
             ],
             [
-             "ContentEncryption",
-             190,
-             18,
+             "ContentCompression",
+             188,
+             11,
              [
               [
-               "ContentEncAlgo",
-               193,
+               "ContentCompAlgo",
+               191,
                4
               ],
               [
-               "ContentEncKeyID",
-               197,
+               "ContentCompSettings",
+               195,
                4
-              ],
-              [
-               "ContentEncAESSettings",
-               201,
-               7,
-               [
-                [
-                 "AESSettingsCipherMode",
-                 204,
-                 4
-                ]
-               ]
               ]
              ]
             ]
@@ -213,38 +201,33 @@
           ],
           [
            "ContentEncoding",
-           208,
-           27,
+           199,
+           22,
            [
             [
              "ContentEncodingOrder",
-             211,
+             202,
              4
             ],
             [
              "ContentEncodingScope",
-             215,
+             206,
              4
             ],
             [
              "ContentEncodingType",
-             219,
+             210,
              4
             ],
             [
              "ContentCompression",
-             223,
-             12,
+             214,
+             7,
              [
               [
                "ContentCompAlgo",
-               226,
+               217,
                4
-              ],
-              [
-               "ContentCompSettings",
-               230,
-               5
               ]
              ]
             ]
@@ -254,17 +237,17 @@
         ],
         [
          "Audio",
-         235,
+         221,
          15,
          [
           [
            "SamplingFrequency",
-           237,
+           223,
            10
           ],
           [
            "Channels",
-           247,
+           233,
            3
           ]
          ]
@@ -275,33 +258,33 @@
     ],
     [
      "Cluster",
-     250,
-     189,
+     236,
+     153,
      [
       [
        "Timestamp",
-       256,
+       242,
        3
       ],
       [
        "SimpleBlock",
-       259,
-       45
+       245,
+       36
       ],
       [
        "SimpleBlock",
-       304,
-       45
+       281,
+       36
       ],
       [
        "SimpleBlock",
-       349,
-       45
+       317,
+       36
       ],
       [
        "SimpleBlock",
-       394,
-       45
+       353,
+       36
       ]
      ]
     ]
@@ -311,8 +294,8 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 259,
-   "length": 45,
+   "offset": 245,
+   "length": 36,
    "track": 1,
    "timestamp": 0,
    "cluster_timestamp": 0,
@@ -320,15 +303,15 @@
    "lacing": "none",
    "frames": [
     [
-     265,
-     39
+     251,
+     30
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 304,
-   "length": 45,
+   "offset": 281,
+   "length": 36,
    "track": 1,
    "timestamp": 20,
    "cluster_timestamp": 0,
@@ -336,15 +319,15 @@
    "lacing": "none",
    "frames": [
     [
-     310,
-     39
+     287,
+     30
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 349,
-   "length": 45,
+   "offset": 317,
+   "length": 36,
    "track": 1,
    "timestamp": 40,
    "cluster_timestamp": 0,
@@ -352,15 +335,15 @@
    "lacing": "none",
    "frames": [
     [
-     355,
-     39
+     323,
+     30
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 394,
-   "length": 45,
+   "offset": 353,
+   "length": 36,
    "track": 1,
    "timestamp": 60,
    "cluster_timestamp": 0,
@@ -368,8 +351,8 @@
    "lacing": "none",
    "frames": [
     [
-     400,
-     39
+     359,
+     30
     ]
    ]
   }
@@ -381,7 +364,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    140,
+    138,
     19
    ],
    "channels": 1,
@@ -391,23 +374,23 @@
    "encodings": [
     {
      "order": 0,
-     "scope": 4,
-     "type": 1,
-     "compression": null,
-     "settings": null,
-     "encryption": 5,
-     "cipher": 1,
-     "has_encryption": true
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      198,
+      1
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
     },
     {
      "order": 0,
      "scope": 1,
      "type": 0,
-     "compression": 3,
-     "settings": [
-      233,
-      2
-     ],
+     "compression": 0,
+     "settings": null,
      "encryption": null,
      "cipher": null,
      "has_encryption": false
@@ -435,12 +418,8 @@
    "contains": "unique"
   },
   {
-   "code": "matroska.encoding-hidden",
-   "contains": "hidden by the ContentEncoding of order 0"
-  },
-  {
-   "code": "matroska.track-encrypted",
-   "contains": "is encrypted (AES-CTR)"
+   "code": "matroska.track-encoding-not-read",
+   "contains": "cannot be ordered"
   }
  ],
  "crosscheck": {
