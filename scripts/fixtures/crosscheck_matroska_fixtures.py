@@ -152,30 +152,49 @@ def mkvinfo_encodings(text):
 
 
 def expected_protection(encodings):
-    """What RFC 9559 makes of a track's encodings (section 5.1.4.1.31.8 and following), as (scheme, isEncrypted) or None: ContentEncryption counts for
-    type 1 only, ContentEncAlgo 0 (also its default, when the element is absent) states that the data are not encrypted (Table 24), only AES has a
-    cipher mode (Table 25), and an encryption with scope bit 4 encrypts the settings of the next encoding, so it covers the frames when that encoding
-    does (section 5.1.4.1.31.3)."""
+    """What RFC 9559 makes of a track's encodings (section 5.1.4.1.31.8 and following), as (scheme, isEncrypted) or None. ContentEncryption counts for
+    type 1 only, ContentEncAlgo 0 (also its default, when the element is absent) states that the data are not encrypted (Table 24), and only AES has a
+    cipher mode (Table 25). Scope bit 4 of any encoding makes the settings of the next one unreadable (section 5.1.4.1.31.3): the parts that encoding
+    covers are encrypted by the hiding encryption, the outermost of a chain, and under a hiding that does not encrypt a hidden encryption counts as
+    encrypted by an unknown algorithm. An encryption whose scope names neither the frames nor the CodecPrivate and hides no next encoding encrypts nothing."""
     ordered = sorted(encodings, key=lambda e: -e["order"])
 
     def algorithm(e):
         return (e["encryption"] or 0) if e["has_encryption"] else None
 
-    def covers_frames(i):
-        scope = ordered[i]["scope"]
-        return bool(scope & 1) or bool(scope & 4 and i + 1 < len(ordered) and covers_frames(i + 1))
+    def encrypts(e):
+        return e["type"] == 1 and algorithm(e) != 0
 
-    encrypting = [i for i, e in enumerate(ordered) if e["type"] == 1 and algorithm(e) != 0]
-    if not encrypting:
+    def name_of(e):
+        if not e["has_encryption"]:
+            return None
+        if e["encryption"] == 5 and e["cipher"] is not None:
+            return AES_MODES.get(e["cipher"], f"AES, mode {e['cipher']}")
+        return ALGORITHM_NAMES.get(e["encryption"], f"algorithm {e['encryption']}")
+
+    covering = other = None
+    hider = None
+    for i, e in enumerate(ordered):
+        hiding, hider = hider, ((hider or e) if e["scope"] & 4 else None)
+        if hiding is not None:
+            if encrypts(hiding):
+                cover = (name_of(hiding),)
+            else:
+                cover = (None,) if e["type"] == 1 else None
+        elif encrypts(e) and (e["scope"] & 3 or (e["scope"] & 4 and i + 1 < len(ordered))):
+            cover = (name_of(e),)
+        else:
+            cover = None
+        if cover is None:
+            continue
+        if e["scope"] & 1:
+            covering = covering or cover
+        else:
+            other = other or cover
+    chosen = covering or other
+    if chosen is None:
         return None
-    chosen = ordered[next((i for i in encrypting if covers_frames(i)), encrypting[0])]
-    if not chosen["has_encryption"]:
-        name = None
-    elif chosen["encryption"] == 5 and chosen["cipher"] is not None:
-        name = AES_MODES.get(chosen["cipher"], f"AES, mode {chosen['cipher']}")
-    else:
-        name = ALGORITHM_NAMES.get(chosen["encryption"], f"algorithm {chosen['encryption']}")
-    return "Matroska ContentEncryption" + (f", {name}" if name else ""), covers_frames(ordered.index(chosen))
+    return "Matroska ContentEncryption" + (f", {chosen[0]}" if chosen[0] else ""), covering is not None
 
 
 def check_protection(name, manifest, path, problems, tally, report):
