@@ -91,7 +91,7 @@ internal static partial class WmaEncoder
             }
 
             string family = FamilyOf(text);
-            // ffmpeg's muxer names itself whatever encoded the stream.
+            // Only an encoder ID reaches here (a muxer's version is a writer claim), and ffmpeg's ID names the encoder only where the stream shows ffmpeg's.
             if (family == "FFmpeg" && !ffmpegStream)
             {
                 continue;

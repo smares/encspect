@@ -319,7 +319,7 @@ public sealed class ApeTagParser : ITagParser
 
                 // Keys are compared without regard to case, so the item of a writer that spells it
                 // "encoder" (FFmpeg's) is read as "Encoder" is. No source at hand lists an APEv2 key for the
-                // encoder (the APEv2 key list could not be checked), so it is given to no role and the claim is the writer's.
+                // encoder (the APEv2 key list could not be checked), so it is given to no role: the claim is the writer's, unless its text is a libavcodec encoder ID, which names the encoder.
                 if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && item.Value?.AsText() is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
                     _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));

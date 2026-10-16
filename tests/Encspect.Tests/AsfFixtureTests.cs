@@ -107,6 +107,19 @@ public class AsfFixtureTests
         Assert.NotNull(rejected.Path);
     }
 
+    // WM/ToolName holds ffmpeg's encoder ID: it is encoder evidence, weighed because the stream shows ffmpeg's superframe padding, and no writer.
+    [Fact]
+    public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "asf/tool-name-lavc.asf");
+        Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(("FFmpeg (wmav2 encoder)", Confidence.High), (stream.Encoder, stream.EncoderConfidence));
+        Assert.Null(stream.Writer);
+        Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
+    }
+
     private static List<string> Listed(JsonElement manifest, string property) =>
         [.. manifest.GetProperty(property).EnumerateArray().Select(e => $"{(e[0].GetString()!.Contains('-', StringComparison.Ordinal) ? "Unknown Object" : e[0].GetString())}@{e[1].GetInt64()}+{e[2].GetInt64()}")];
 

@@ -269,14 +269,22 @@ fixture("spread-audio", "Windows Media Audio whose error correction spreads the 
 
 
 def tool_name_file():
-    return m.asf_file(
-        [m.stream_properties(1, m.wave_format(0x0161, 2, 44100, 16000, 743, 16, bytes(10))),
-         m.extended_content_description([("WM/ToolName", 0, "Lavc60.31.102 wmav2")])],
-        objects_in([1], 3, 100, 512), 512, file_id=FILE_ID, play=500_000)
+    """The stream, its codec list and its packets of a committed ffmpeg wmav2 file (superframes padded with 'N' bytes at the full block
+    alignment), with a WM/ToolName attribute added."""
+    source = (OUT / "external-ffmpeg-wmav2-mono-44k-48k.wma").read_bytes()
+    header_end = struct.unpack_from("<Q", source, 16)[0]
+    children = [source[at:at + size] for name, at, size in m.read_objects(source, 30, header_end) if name in (m.STREAM_PROPERTIES, m.CODEC_LIST)]
+    data_at = header_end
+    packet_size = 3200
+    body = source[data_at + 50:data_at + struct.unpack_from("<Q", source, data_at + 16)[0]]
+    packets = [body[k:k + packet_size] for k in range(0, len(body), packet_size)]
+    return m.asf_file(children + [m.extended_content_description([("WM/ToolName", 0, "Lavc60.31.102 wmav2")])],
+                      packets, packet_size, file_id=FILE_ID, play=50_990_000)
 
 
-fixture("tool-name-lavc", "Windows Media Audio whose WM/ToolName attribute holds ffmpeg's libavcodec encoder ID, which names the encoder in whichever field it stands: the attribute names no writer.",
-        tool_name_file, [finding("wma.superframe-short", "3 media objects")], {"ffprobe": False, "reason": "the payloads are not Windows Media Audio frames."})
+fixture("tool-name-lavc", "The stream of an ffmpeg wmav2 file, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute that holds ffmpeg's libavcodec encoder ID: "
+        "the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
+        tool_name_file, [])
 
 
 def two_codecs():
