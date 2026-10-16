@@ -625,11 +625,13 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
         double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
         double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
-        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the end state: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the end state: {Hundredths(keptPerPacket)} and {Hundredths(peakPerPacket)} per further packet");
         Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
         Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further packet than it ends with.");
         GC.KeepAlive(report);
     }
+
+    private static string Hundredths(double value) => (Math.Round(value, 2) + 0.0).ToString("F2");
 
     // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
     // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
@@ -816,6 +818,7 @@ public class MemoryTests(ITestOutputHelper output)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
+        Live();
         (long withReport, long highest) = ProbedAnalysis(analyzer, name, data);
         long withoutReport = Live();
         (long secondWithReport, long secondHighest) = ProbedAnalysis(analyzer, name, data);
@@ -850,11 +853,20 @@ public class MemoryTests(ITestOutputHelper output)
                 }
             }
         });
+        sampler.IsBackground = true;
         sampler.Start();
-        Report report = analyzer.Analyze(name, stream);
-        Volatile.Write(ref done, true);
-        sampler.Join();
-        Assert.True(stream.Probes >= ProbeStream.Places.Length, $"The input was probed {stream.Probes} times, fewer than its {ProbeStream.Places.Length} places.");
+        Report report;
+        try
+        {
+            report = analyzer.Analyze(name, stream);
+        }
+        finally
+        {
+            Volatile.Write(ref done, true);
+            sampler.Join();
+        }
+
+        Assert.True(stream.FullPasses >= 1, $"No pass over the input reached all {ProbeStream.Places.Length} places ({stream.Probes} places reached in all).");
         long live = Live();
         GC.KeepAlive(report);
         return (live, stream.Highest);
@@ -871,11 +883,15 @@ public class MemoryTests(ITestOutputHelper output)
         private long _highest;
         private int _passed;
         private int _probes;
+        private int _fullPasses;
         private long _endedUntil;
 
         public long Highest => Volatile.Read(ref _highest);
 
         public int Probes => Volatile.Read(ref _probes);
+
+        // Passes that reached every place without a read back before one.
+        public int FullPasses => Volatile.Read(ref _fullPasses);
 
         // True for half a second after a read has reached the end of the input, when what the
         // analysis does next (checks, the stream info, the findings) is read back to back.
@@ -915,7 +931,12 @@ public class MemoryTests(ITestOutputHelper output)
             _passed = reached;
             if (reached > passed)
             {
-                Interlocked.Increment(ref _probes);
+                Interlocked.Add(ref _probes, reached - passed);
+                if (reached == Places.Length)
+                {
+                    Interlocked.Increment(ref _fullPasses);
+                }
+
                 Record(LiveOnce());
             }
         }
@@ -985,10 +1006,19 @@ public class MemoryTests(ITestOutputHelper output)
                 Thread.Sleep(SampleInterval);
             }
         });
+        sampler.IsBackground = true;
         sampler.Start();
-        Report report = analyzer.Analyze(name, new MemoryStream(data));
-        Volatile.Write(ref done, true);
-        sampler.Join();
+        Report report;
+        try
+        {
+            report = analyzer.Analyze(name, new MemoryStream(data));
+        }
+        finally
+        {
+            Volatile.Write(ref done, true);
+            sampler.Join();
+        }
+
         long live = Live();
         GC.KeepAlive(report);
         sampled = Volatile.Read(ref shared);

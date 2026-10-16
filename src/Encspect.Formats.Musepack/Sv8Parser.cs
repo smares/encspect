@@ -323,15 +323,19 @@ internal static class Sv8Parser
         state.Detailed[index] = node;
     }
 
-    // The findings repeated over many packets are kept out of Handle so that it allocates no closure
-    // per packet, and a case after the first only counts, building no delegate.
+    // The findings repeated over many packets count in a method with no lambda: one that captures
+    // its parameters allocates its closure on entry, before any check, so every case after the
+    // first would still cost one. The first case builds its delegates in the Add methods.
     private static void ReportKey(State state, int index, Packet packet, string code)
     {
-        if (state.Findings.Repeat(code))
+        if (!state.Findings.Repeat(code))
         {
-            return;
+            AddKey(state, index, packet, code);
         }
+    }
 
+    private static void AddKey(State state, int index, Packet packet, string code)
+    {
         if (code == "musepack.key-invalid")
         {
             state.Findings.Add(Severity.Warning, code, () => PacketShell(state, index), count =>
@@ -346,16 +350,25 @@ internal static class Sv8Parser
 
     private static void AudioBeforeHeader(State state, int index, Packet packet)
     {
-        if (state.Findings.Repeat("musepack.audio-before-header"))
+        if (!state.Findings.Repeat("musepack.audio-before-header"))
         {
-            return;
+            AddAudioBeforeHeader(state, index, packet);
         }
-
-        state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
-            _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
     }
 
-    private static void PacketAfterAudio(State state, Node node, string key, Packet packet) =>
+    private static void AddAudioBeforeHeader(State state, int index, Packet packet) =>
+        state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
+            _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
+
+    private static void PacketAfterAudio(State state, Node node, string key, Packet packet)
+    {
+        if (!state.Findings.Repeat("musepack.packet-after-audio"))
+        {
+            AddPacketAfterAudio(state, node, key, packet);
+        }
+    }
+
+    private static void AddPacketAfterAudio(State state, Node node, string key, Packet packet) =>
         state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", WithoutChildren(node), _ =>
             $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before.");
 
