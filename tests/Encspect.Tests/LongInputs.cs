@@ -14,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts",
+        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -41,6 +41,7 @@ internal static class LongInputs
         "mp4-ac3" => Mp4Samples(2060, "ac-3", FirstAc3Frame("ac3/external-ffmpeg-mono-96k.ac3")),
         "mp4-eac3" => Mp4Samples(2060, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-mono-48k.eac3")),
         "mp4-dts" => Mp4Samples(2060, "dtsc", FirstDtsFrame("dts/external-ffmpeg-mono-8k-64k.dts")),
+        "matroska" => MatroskaBuilder.OpusBlocks(2060, 1000),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
 

@@ -23,6 +23,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - DTS-HD files (`.dtshd`)
 - WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2, Professional and Voice, and Lossless at header level
+- Matroska and WebM (`.mka`, `.mkv`, `.webm`) with AAC, AC-3, E-AC-3, DTS, Vorbis and Opus audio read by their parsers
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
 

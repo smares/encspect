@@ -74,27 +74,30 @@ public abstract class AnalysisContext
     // context's. Returns false when no codec parser has the ID, and reports nothing then. Damage
     // and parser failures inside the payload become findings on parent, so the container carries
     // on; only cancellation passes through. configuration is what the container stores about the
-    // coding elsewhere, such as AAC's AudioSpecificConfig, or null.
-    public bool ParseStream(string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration = null)
+    // coding elsewhere, such as AAC's AudioSpecificConfig, or null. claims are what the container states about the encoder or the writer of
+    // this one stream (a Matroska Segment's apps), whether or not there is a configuration; CodecConfiguration.Claims are what the container read
+    // about the coding itself (MP4's sample-entry layout). The codec parser weighs both after the file's, and they, like every claim the codec
+    // parser makes, stay with the stream.
+    public bool ParseStream(string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration = null, IReadOnlyList<EncoderClaim>? claims = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);
         ArgumentNullException.ThrowIfNull(parent);
         ArgumentNullException.ThrowIfNull(payload);
 
-        return _router?.ParseStream(this, codecId, parent, payload, configuration) ?? false;
+        return _router?.ParseStream(this, codecId, parent, payload, configuration, claims) ?? false;
     }
 
     // As ParseStream, for a codec whose data the container hands over as packets, such as Ogg
     // pages or MP4 samples. The packets are enumerated once, while the codec parser runs, so a
     // container may read them lazily; it reports damage in its own pages and ends the sequence
     // rather than throwing.
-    public bool ParsePackets(string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration = null)
+    public bool ParsePackets(string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration = null, IReadOnlyList<EncoderClaim>? claims = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);
         ArgumentNullException.ThrowIfNull(parent);
         ArgumentNullException.ThrowIfNull(packets);
 
-        return _router?.ParsePackets(this, codecId, parent, packets, configuration) ?? false;
+        return _router?.ParsePackets(this, codecId, parent, packets, configuration, claims) ?? false;
     }
 
     // Hands a tag that a container holds whole, such as the ID3v2 tag in a RIFF or AIFF chunk, to

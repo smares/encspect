@@ -9,7 +9,7 @@ public sealed partial class OpusParser
     {
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
         int bytes = records.LengthOf(index);
-        long length = ranges is null ? bytes : ranges[^1].End - ranges[0].Offset;
+        long length = records.IsOpaque(index) ? records.SpanOf(index) : ranges is null ? bytes : ranges[^1].End - ranges[0].Offset;
         return new Node("Packet", records.OffsetOf(index), length, Summary(records, index, bytes), () => PacketFields(records, index))
         {
             Kind = NodeKind.Frame,
@@ -36,7 +36,9 @@ public sealed partial class OpusParser
     {
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
         int bytes = records.LengthOf(index);
-        var at = new Place(records.OffsetOf(index), ranges is null ? null : new MappedBytes(new byte[bytes], ranges));
+        var at = new Place(records.OffsetOf(index), records.IsOpaque(index)
+            ? MappedBytes.Opaque(new byte[bytes], records.OffsetOf(index), records.OffsetOf(index) + records.SpanOf(index))
+            : ranges is null ? null : new MappedBytes(new byte[bytes], ranges));
         if (records.StreamCount == 1)
         {
             return PartFields(records, records.Part(index, 0), at, 0);

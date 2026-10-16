@@ -31,6 +31,7 @@ import gogo_tool
 import helix_tool
 import lame_win_tool
 import libdca_source
+import matroska_specs
 import mctoolamed_tool
 import musepack_tool
 import old_lame_tool
@@ -80,6 +81,8 @@ def sources():
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
+    for name, digest, addresses in matroska_specs.SPECS:
+        yield name, digest, addresses
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES

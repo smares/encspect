@@ -157,6 +157,7 @@ Every format has three kinds of fixture:
 | DTS and DTS-HD files | `tests/fixtures/dts` | `make_dts_fixtures.py` (with `dts_lossless_fixtures.py`: XLL, DTS:X and `.dtshd`); `make_external_dts_fixtures.py` (ffmpeg's dca encoder); `check_dts_hd_samples.py` (real files, below) | ffprobe (including the DTS:X profiles and its `dtshd` demuxer), ffmpeg (a decode of each frame alone, with the error it must give for the damaged ones), libdca (`dca_frames.c`), MediaInfo (`crosscheck_dts_fixtures.py`) |
 | WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader and checksum verifier (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
 | ASF and WMA | `tests/fixtures/asf` | `make_asf_fixtures.py`; `make_voice_fixtures.py` (with `voice_model.py`: Windows Media Audio Voice); `make_external_asf_fixtures.py`; `import_windows_wma_fixtures.py` (Microsoft's encoder, below); `check_wmavoice_samples.py` (real Voice files, below) | ffprobe, ffmpeg decoding (bit-exact for Lossless, to the same number of samples for Voice), MediaInfo (`crosscheck_asf_fixtures.py`); `wma_tables.py --check` for the tables generated from FFmpeg's source |
+| Matroska and WebM | `tests/fixtures/matroska` | `make_matroska_fixtures.py` (with `matroska_model.py`: an independent writer and reader); `make_external_matroska_fixtures.py` (ffmpeg, mkvmerge; names on the command line write only those, since the encoders' output differs from run to run); `matroska_tables.py` (the element table, generated from the pinned RFCs) | mkvinfo (every element's position, every block's frames), ffprobe (streams, packet sizes and presentation times), ffmpeg decoding, MediaInfo (`crosscheck_matroska_fixtures.py`) |
 
 All scripts are in `scripts/fixtures`.
 
@@ -283,6 +284,13 @@ Apple's encoders run on macOS only, so a workflow writes the fixtures on GitHub'
 
 `wma_tables.py` writes `src/Encspect.Formats.Wma/Tables.cs` (from FFmpeg 6.1.1's `wmadata.h`, `wma_freqs.c` and `aactab.c`), `ProTables.cs` (from `wmaprodata.h`) and `VoiceTables.cs` (the frame type descriptors, the code lengths of the frame type VLC and the pitch-adaptive window's start offsets, from `wmavoice.c`, which `voice_model.py`'s copies must equal); `--check` fails if any differs from what it writes. `ffmpeg_sources.py` and `asf_specs.py` fetch the pinned sources. `ffmpeg_sources.py` also fetches `wmavoice.c` with its tables and `decode.c` (which Voice's error returns are read by), the DCA decoder, encoder and parser, `dtsdec.c`, `dtshddec.c` and `isom.c`, which the DTS cross-check explains ffprobe's readings with; `dts_specs.py` fetches ETSI TS 102 114 V1.6.1, pinned by SHA-256, and `libdca_source.py` libdca.
 
+### Matroska and WebM
+
+- `matroska_tables.py` writes `src/Encspect.Formats.Matroska/Elements.cs` from RFC 9559 and RFC 8794 (pinned by `matroska_specs.py`); `--check` fails if the file differs, and the `matroska-crosscheck` job runs it.
+- The 80 hand-built fixtures are Opus based (an Opus track needs no codec data beyond the OpusHead; the legacy AAC ones use the frames of the ADTS fixtures) and cover every lacing mode, BlockGroups, unknown sizes, CRC-32 and Void, header stripping, zlib and encryption, video, WebM, cut and truncated files and the damage cases. Some are flagged as not valid where tools legitimately disagree about a file the specification forbids.
+- The 43 encoder-made fixtures come from ffmpeg (Opus, Vorbis, AAC, AC-3, E-AC-3, DTS, MPEG audio, FLAC, ALAC, TrueHD, TTA, WavPack, PCM, live streaming, video, attachments) and mkvmerge (several tracks, a timestamp scale, no Cues, zlib compression).
+- `crosscheck_matroska_fixtures.py` needs mkvinfo, ffprobe, ffmpeg and MediaInfo. mkvinfo confirms every element's position, every block's frames and each Segment's Multiplexing and Writing application; ffprobe the streams, packet sizes and presentation times; ffmpeg decodes the encoder-made files without an error; MediaInfo the format, the writing application and library, tracks, codecs, channels and rates. Where a track stores its frames compressed, or WavPack without its header, only the packet counts are compared.
+
 ### Encoders
 
 These are built or fetched by helper scripts:
@@ -309,6 +317,7 @@ The models that compute the expected values are:
 - `ac3_model.py` and `emdf_model.py` (EMDF containers with JOC and OAMD payloads) for AC-3
 - `dts_model.py` for DTS
 - `asf_model.py` for ASF
+- `matroska_model.py` for Matroska and WebM (an independent writer, which builds the elements and their CRCs, and reader, which works out the manifest from the bytes alone)
 
 ## Conformance streams and downloads
 

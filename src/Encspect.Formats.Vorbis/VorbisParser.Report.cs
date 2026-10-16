@@ -177,7 +177,9 @@ public sealed partial class VorbisParser
         // The writer, from the comment's ENCODER field and a vendor string that is a muxer's version.
         private Node? AddWriter()
         {
-            List<EncoderClaim> claims = CommentClaims();
+            // The headers of a contained stream (Matroska's CodecPrivate) come with the container's claims about the file, which weigh first, with
+            // the claims of the comment: a comment that names other software than the container is a finding.
+            List<EncoderClaim> claims = _isContained ? [.. context.EncoderClaims] : CommentClaims();
             if (_comment is not { } tag || !ClaimRoles.Writers(claims).Any())
             {
                 return null;
@@ -185,7 +187,7 @@ public sealed partial class VorbisParser
 
             Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
                 (claim, text, name) => _findings.Add(Severity.Info, "vorbis.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-                isEvidenceAtSource: true,
+                isEvidenceAtSource: ClaimRoles.Writers(claims).All(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End),
                 format: new WriterDetection.StreamFormat(KnownWriters.Vorbis, "Vorbis", (claim, message, node) => _findings.Add(Severity.Info, "vorbis.writer-other-format", node, _ => message)));
             return writer is null ? null : _parent.Add(writer);
         }

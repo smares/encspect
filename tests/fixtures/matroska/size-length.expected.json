@@ -1,0 +1,272 @@
+{
+ "description": "An EBML Header that limits sizes to two octets (EBMLMaxSizeLength 2) in a file whose elements state sizes in four.",
+ "length": 278,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 2,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 174,
+     "length": 104,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 238,
+   "declared_end": 278
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   238,
+   [
+    [
+     "Info",
+     46,
+     52,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "MuxingApp",
+       58,
+       20
+      ],
+      [
+       "WritingApp",
+       78,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     98,
+     76,
+     [
+      [
+       "TrackEntry",
+       103,
+       71,
+       [
+        [
+         "TrackNumber",
+         105,
+         3
+        ],
+        [
+         "TrackUID",
+         108,
+         5
+        ],
+        [
+         "TrackType",
+         113,
+         3
+        ],
+        [
+         "CodecID",
+         116,
+         8
+        ],
+        [
+         "CodecPrivate",
+         124,
+         22
+        ],
+        [
+         "CodecDelay",
+         146,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         152,
+         7
+        ],
+        [
+         "Audio",
+         159,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           161,
+           10
+          ],
+          [
+           "Channels",
+           171,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     174,
+     104,
+     [
+      [
+       "Timestamp",
+       179,
+       6
+      ],
+      [
+       "SimpleBlock",
+       185,
+       46
+      ],
+      [
+       "SimpleBlock",
+       231,
+       47
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 185,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     191,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 231,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     237,
+     41
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    127,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.size-too-long",
+   "contains": "EBMLMaxSizeLength"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

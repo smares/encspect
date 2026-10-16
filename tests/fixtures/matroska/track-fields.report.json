@@ -1,0 +1,872 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "track-fields.mka",
+    "root": {
+      "name": "File",
+      "value": "Matroska",
+      "offset": 0,
+      "length": 326,
+      "children": [
+        {
+          "name": "Matroska",
+          "value": "6 audio tracks, 1 unknown track",
+          "offset": 0,
+          "length": 326,
+          "children": [
+            {
+              "name": "EBML",
+              "offset": 0,
+              "length": 40,
+              "children": [
+                {
+                  "name": "EBMLVersion",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLReadVersion",
+                  "value": 1,
+                  "offset": 9,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxIDLength",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 13,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxSizeLength",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 17,
+                  "length": 4
+                },
+                {
+                  "name": "DocType",
+                  "value": "matroska",
+                  "offset": 21,
+                  "length": 11
+                },
+                {
+                  "name": "DocTypeVersion",
+                  "value": 4,
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "DocTypeReadVersion",
+                  "value": 2,
+                  "offset": 36,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Segment",
+              "value": "7 tracks, 1 cluster",
+              "offset": 40,
+              "length": 286,
+              "children": [
+                {
+                  "name": "Info",
+                  "offset": 46,
+                  "length": 52,
+                  "children": [
+                    {
+                      "name": "TimestampScale",
+                      "value": 1000000,
+                      "unit": "ns",
+                      "offset": 51,
+                      "length": 7
+                    },
+                    {
+                      "name": "MuxingApp",
+                      "value": "encspect fixtures",
+                      "offset": 58,
+                      "length": 20
+                    },
+                    {
+                      "name": "WritingApp",
+                      "value": "encspect fixtures",
+                      "offset": 78,
+                      "length": 20
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "encspect fixtures",
+                      "offset": 46,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 52
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x4E names \"encspect fixtures\"",
+                          "offset": 78,
+                          "length": 20
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x3A names \"encspect fixtures\"",
+                          "offset": 58,
+                          "length": 20
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Tracks",
+                  "offset": 98,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_OPUS",
+                      "offset": 104,
+                      "length": 17,
+                      "children": [
+                        {
+                          "name": "TrackUID",
+                          "value": 1,
+                          "offset": 106,
+                          "length": 4
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 110,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_OPUS",
+                          "offset": 113,
+                          "length": 8
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_FLAC, 2 channels",
+                      "offset": 121,
+                      "length": 25,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 0,
+                          "offset": 123,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 2,
+                          "offset": 126,
+                          "length": 4
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 130,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_FLAC",
+                          "offset": 133,
+                          "length": 8
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 141,
+                          "length": 5,
+                          "children": [
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 143,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio",
+                      "offset": 146,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 3,
+                          "offset": 148,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 3,
+                          "offset": 151,
+                          "length": 4
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 155,
+                          "length": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_FLAC, 0 channels, 44100 Hz",
+                      "offset": 158,
+                      "length": 31,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 4,
+                          "offset": 160,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 163,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_FLAC",
+                          "offset": 166,
+                          "length": 8
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 174,
+                          "length": 15,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 44100,
+                              "unit": "Hz",
+                              "offset": 176,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 0,
+                              "offset": 186,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 1 channel, 8000 Hz",
+                      "offset": 189,
+                      "length": 42,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 5,
+                          "offset": 191,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 5,
+                          "offset": 194,
+                          "length": 4
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 198,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 201,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 216,
+                          "length": 15,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 8000,
+                              "unit": "Hz",
+                              "offset": 218,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 1,
+                              "offset": 228,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 1 channel, 8000 Hz",
+                      "offset": 231,
+                      "length": 42,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 5,
+                          "offset": 233,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 6,
+                          "offset": 236,
+                          "length": 4
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 240,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 243,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 258,
+                          "length": 15,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 8000,
+                              "unit": "Hz",
+                              "offset": 260,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 1,
+                              "offset": 270,
+                              "length": 3
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "no type, A_OPUS",
+                      "offset": 273,
+                      "length": 17,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 7,
+                          "offset": 275,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 7,
+                          "offset": 278,
+                          "length": 4
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_OPUS",
+                          "offset": 282,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Cluster",
+                  "kind": "Stream",
+                  "value": 2,
+                  "unit": "blocks",
+                  "offset": 290,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "Timestamp",
+                      "value": 0,
+                      "unit": "ticks",
+                      "offset": 295,
+                      "length": 3
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 298,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 5,
+                          "offset": 300,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 301,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 303,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": false,
+                              "offset": 303,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 303,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 303,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 303,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 303,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 8,
+                          "unit": "bytes",
+                          "offset": 304,
+                          "length": 8
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 312,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 5,
+                          "offset": 314,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 10,
+                          "unit": "ticks",
+                          "offset": 315,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 317,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": false,
+                              "offset": 317,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 317,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 317,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 317,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 317,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 8,
+                          "unit": "bytes",
+                          "offset": 318,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            1,
+            4
+          ]
+        ],
+        "codec": "PCM (integer, little-endian)",
+        "sampleRate": 8000,
+        "channels": 1,
+        "samples": 0,
+        "duration": 0.02,
+        "averageBitrate": 6.4,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "A track has no TrackNumber, which RFC 9559 requires of every TrackEntry (section 5.1.4.1.1).",
+        "offset": 104,
+        "length": 17,
+        "path": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "A track is an audio track without an Audio element, which the codec mapping requires (draft-ietf-cellar-codec, section 3.4); its sampling frequency and channels are unstated.",
+        "offset": 104,
+        "length": 17,
+        "path": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-empty",
+        "message": "A track without a number (A_OPUS) has no block with frames, so there is nothing to analyze.",
+        "offset": 104,
+        "length": 17,
+        "path": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "A track (A_OPUS) has no CodecDelay, which the codec mapping requires to be the OpusHead's pre-skip in nanoseconds (draft-ietf-cellar-codec, section 3.4.32).",
+        "offset": 113,
+        "length": 8,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "A track has the TrackNumber 0, which RFC 9559 forbids (section 5.1.4.1.1).",
+        "offset": 121,
+        "length": 25,
+        "path": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-empty",
+        "message": "Track 0 (A_FLAC) has no block with frames, so there is nothing to analyze.",
+        "offset": 121,
+        "length": 25,
+        "path": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "Track 3 has no CodecID, which RFC 9559 requires of every TrackEntry (section 5.1.4.1.21).",
+        "offset": 146,
+        "length": 12,
+        "path": [
+          0,
+          1,
+          1,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 3 is an audio track without an Audio element, which the codec mapping requires (draft-ietf-cellar-codec, section 3.4); its sampling frequency and channels are unstated.",
+        "offset": 146,
+        "length": 12,
+        "path": [
+          0,
+          1,
+          1,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-empty",
+        "message": "Track 3 (no codec ID) has no block with frames, so there is nothing to analyze.",
+        "offset": 146,
+        "length": 12,
+        "path": [
+          0,
+          1,
+          1,
+          2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "Track 4 has no TrackUID, which RFC 9559 requires of every TrackEntry (section 5.1.4.1.2).",
+        "offset": 158,
+        "length": 31,
+        "path": [
+          0,
+          1,
+          1,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-empty",
+        "message": "Track 4 (A_FLAC) has no block with frames, so there is nothing to analyze.",
+        "offset": 158,
+        "length": 31,
+        "path": [
+          0,
+          1,
+          1,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 4 states 0 channels, which RFC 9559 forbids (section 5.1.4.1.29).",
+        "offset": 186,
+        "length": 3,
+        "path": [
+          0,
+          1,
+          1,
+          3,
+          3,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 5 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 201,
+        "length": 15,
+        "path": [
+          0,
+          1,
+          1,
+          4,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-empty",
+        "message": "Track 5 (A_PCM/INT/LIT) has no block with frames, so there is nothing to analyze.",
+        "offset": 231,
+        "length": 42,
+        "path": [
+          0,
+          1,
+          1,
+          5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-number-duplicate",
+        "message": "Two tracks have a TrackNumber another track has, so the blocks that name it cannot be told apart (RFC 9559, section 5.1.4.1.1); the first repeated number is 5.",
+        "offset": 231,
+        "length": 42,
+        "path": [
+          0,
+          1,
+          1,
+          5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "Track 7 has no TrackType, which RFC 9559 requires of every TrackEntry (section 5.1.4.1.3).",
+        "offset": 273,
+        "length": 17,
+        "path": [
+          0,
+          1,
+          1,
+          6
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.track-not-analyzed",
+        "message": "Track 7 is of no stated type (A_OPUS), which is read at container level only: its blocks are reported as they are.",
+        "offset": 273,
+        "length": 17,
+        "path": [
+          0,
+          1,
+          1,
+          6
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.track-field",
+        "message": "Track 7 (A_OPUS) has no CodecDelay, which the codec mapping requires to be the OpusHead's pre-skip in nanoseconds (draft-ietf-cellar-codec, section 3.4.32).",
+        "offset": 282,
+        "length": 8,
+        "path": [
+          0,
+          1,
+          1,
+          6,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

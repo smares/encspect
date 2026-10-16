@@ -1,7 +1,7 @@
 ---
 id: writer-detection
 title: Writer detection
-related: encoder-detection, iso-base-media-format, asf-container, itunes-metadata, vorbis-comments, ape-tag, id3v2, dtshd-file
+related: encoder-detection, matroska-container, iso-base-media-format, asf-container, itunes-metadata, vorbis-comments, ape-tag, id3v2, dtshd-file
 references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbis I specification section 5.2.2; RFC 7845 section 5.2; ATSC A/103:2014 Table E.1; Apple QuickTime File Format user data atoms; FFmpeg n6.1.1 libavformat; the project's fixtures
 ---
 **What it is.** The writer is the software that put the coded audio into the file: a muxer, a container writer or a tagger. It need not be the [encoder](encoder-detection): a file remuxed by ffmpeg keeps its audio's encoder and shows the new writer. The two are resolved apart, each with its own confidence and evidence.
@@ -16,7 +16,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 
 - ID3v2 TSSE: encoder (ID3v2.3 section 4.2.1, ID3v2.4 frames section 4.2.5). DTS-HD BUILDVER: encoder (A/103 Table E.1, "DTS-HD Encoder Version Identification").
 - Vorbis comment vendor string: encoder. ENCODER field: writer; Vorbis I section 5.2.2 lists none, and RFC 7845 section 5.2 has applications "identify themselves" with it.
-- QuickTime ©swr and ASF WM/ToolName: writer. MP4 ©too has no Apple specification: writer.
+- QuickTime ©swr, ASF WM/ToolName, Matroska WritingApp and MuxingApp: writer. MP4 ©too has no Apple specification: writer.
 - APEv2 Encoder item and ASF WMFSDKVersion: unverified, so writer.
 
 **Versions.** The encoder may take the version of a writer claim that is the encoder's own name followed by white space and a version, and the evidence says so. Another name lends nothing.
