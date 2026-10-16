@@ -14,6 +14,7 @@ The main window lists a folder's files on the right, with these columns:
 - sample rate and channel mode;
 - channel layout by its name (the cell's tooltip lists the speakers);
 - encoder with its confidence;
+- "Written by": the software that wrote the file around the audio (the muxer, the container writer, a tagger), with its confidence. It need not be the encoder: a remuxed file keeps the encoder of its audio;
 - tags;
 - findings by severity.
 

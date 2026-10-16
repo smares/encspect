@@ -31,13 +31,21 @@ internal static partial class Summary
         Checks(s, Stream);
         Node Cover(string name, NodeValue? value, string description, string? topic = null) =>
             new(name, start, end - start, value) { Description = description, Topic = topic };
-        Node? encoder = s.Blocks > 0 ? Encoder(s, context.EncoderClaims, Cover) : null;
+        Node? encoder = s.Blocks > 0 ? Encoder(s, ClaimRoles.Encoders(context.EncoderClaims), Cover) : null;
         if (encoder is not null)
         {
             s.Leading.Add(encoder);
         }
 
-        StreamInfo? info = Statistics(s, Cover, stream, encoder);
+        Node? writer = s.Blocks > 0 ? Writer(s, context.EncoderClaims, start, end) : null;
+        if (writer is not null)
+        {
+            s.Leading.Add(writer);
+        }
+
+        ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
+
+        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer);
         if (info is not null)
         {
             context.AddStream(info);
@@ -136,7 +144,7 @@ internal static partial class Summary
         string evidence = isFive
             ? $"The blocks hold {(s.HasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
             : $"The blocks have stream version 0x{first.Header.Version:X3} and neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a file, and another encoder, such as FFmpeg, may have written it";
-        Node encoder = cover("Encoder", name, Explain.Encoder, Topics.EncoderDetection);
+        Node encoder = cover("Encoder", name, Explain.Encoder, ClaimRoles.EncoderTopic);
         encoder.Add(cover("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow, null));
         encoder.Add(cover("Evidence", evidence, Explain.Evidence, null));
         foreach (EncoderClaim claim in claims)
@@ -166,6 +174,12 @@ internal static partial class Summary
         return encoder;
     }
 
+    // In a method of its own, so the lambdas that keep the state alive do not share a closure with the ones that outlive the analysis.
+    private static Node? Writer(State s, IReadOnlyList<EncoderClaim> claims, long start, long end) =>
+        WriterDetection.Detect(claims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => s.Findings.Add(Severity.Info, "wavpack.writer-other-format", node, _ => message)));
+
     // A target the encoder floored to its lowest is only a limit, which is text rather than a number.
     internal static NodeValue TargetValue(double value, int decimals, string unit, bool isAtMost) =>
         isAtMost ? NodeValue.Text(NodeValue.Decimal(value, decimals, unit) + " or less") : NodeValue.Decimal(value, decimals, unit);
@@ -183,7 +197,7 @@ internal static partial class Summary
         return 0;
     }
 
-    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder)
+    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer)
     {
         if (s.Blocks == 0)
         {
@@ -325,6 +339,8 @@ internal static partial class Summary
             IsVbr = s.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
             Encoder = encoder?.Value?.ToString(),
             EncoderConfidence = HasVersionFiveFeatures(s) ? Confidence.Medium : Confidence.Low,
+            Writer = ClaimRoles.Resolved(writer).Name,
+            WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Series = s.Figures?.Series(anchor, s.Cancellation) ?? [],
         };
     }

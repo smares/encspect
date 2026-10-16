@@ -30,6 +30,20 @@ public class MpegFixtureTests
             CheckHandBuilt(manifest, report);
         }
 
+        // The writer a rule of the generator names on its own (ffmpeg's muxer: its TSSE text, or a LAME tag laid out as it writes it).
+        if (manifest.TryGetProperty("detected_writer", out JsonElement writer))
+        {
+            Node? node = Streams(report).SelectMany(s => s.Children).FirstOrDefault(c => c.Name == "Writer");
+            Assert.NotNull(node);
+            Assert.Equal(writer.GetProperty("name").GetString(), node.Value);
+            Assert.Equal(writer.GetProperty("confidence").GetString(), node.Children.Single(c => c.Name == "Confidence").Value);
+        }
+        else if (manifest.TryGetProperty("encoder", out _))
+        {
+            Node? node = Streams(report).SelectMany(s => s.Children).FirstOrDefault(c => c.Name == "Writer");
+            Assert.True(node is null, $"Unexpected writer {node?.Value}");
+        }
+
         if (manifest.TryGetProperty("detected_encoder", out JsonElement detected))
         {
             Node? node = Streams(report).SelectMany(s => s.Children).FirstOrDefault(c => c.Name == "Encoder");

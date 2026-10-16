@@ -582,26 +582,41 @@ public class WavPackTests
         Node encoder = Stream(ffmpeg).Children.Single(c => c.Name == "Encoder");
         Assert.Equal("Low", encoder.Children.Single(c => c.Name == "Confidence").Value?.ToString());
         Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("another encoder, such as FFmpeg, may have written it", StringComparison.Ordinal));
-        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("Lavf", StringComparison.Ordinal));
-        Assert.DoesNotContain(ffmpeg.Findings, f => f.Code == "wavpack.encoder-claim-differs");
+        // FFmpeg's APE item names its muxer: the writer, apart from the WavPack 4 stream's encoder.
+        Assert.StartsWith("FFmpeg (Lavf", stream.Writer, StringComparison.Ordinal);
+        Node writer = Stream(ffmpeg).Children.Single(c => c.Name == "Writer");
+        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("Lavf", StringComparison.Ordinal));
+        Assert.DoesNotContain(ffmpeg.Findings, f => f.Code is "wavpack.encoder-claim-differs" or "wavpack.writer-claim-differs");
 
         StreamInfo five = AnalyzeFixture("external-lossless-16-stereo.wv").Streams.Single();
         Assert.Equal("WavPack 5.0 or later", five.Encoder);
         Assert.Equal(Confidence.Medium, five.EncoderConfidence);
     }
 
-    // The APE tag's Encoder item, spelled in any case, reaches the parser as a claim.
+    // The APE tag's Encoder item, spelled in any case, reaches the parser as a claim of the writer role: it names the writer, whatever
+    // the blocks say of the encoder, and is no conflict with it.
     [Fact]
-    public void AnApeEncoderItemIsAnEncoderClaim()
+    public void AnApeEncoderItemIsAWriterClaim()
     {
         Report differs = AnalyzeFixture("built-ape-encoder-claim.wv");
-        Finding finding = Assert.Single(differs.Findings, f => f.Code == "wavpack.encoder-claim-differs");
-        Assert.Contains("APE Encoder item names \"LAME 3.100\"", finding.Message, StringComparison.Ordinal);
+        StreamInfo other = differs.Streams.Single();
+        Assert.Equal(("LAME 3.100", Confidence.Low), (other.Writer, other.WriterConfidence));
+        Assert.DoesNotContain(differs.Findings, f => f.Code is "wavpack.encoder-claim-differs" or "wavpack.writer-claim-differs");
 
         Report agrees = AnalyzeFixture("built-ape-encoder-wavpack.wv");
-        Assert.DoesNotContain(agrees.Findings, f => f.Code == "wavpack.encoder-claim-differs");
-        Node encoder = Stream(agrees).Children.Single(c => c.Name == "Encoder");
-        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("WavPack 5.6.0", StringComparison.Ordinal));
+        Assert.DoesNotContain(agrees.Findings, f => f.Code is "wavpack.encoder-claim-differs" or "wavpack.writer-claim-differs");
+        Node writer = Stream(agrees).Children.Single(c => c.Name == "Writer");
+        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("WavPack 5.6.0", StringComparison.Ordinal));
+    }
+
+    // An ID3v2 TSSE frame is the encoder's, as the specification defines it; one that differs from the blocks is a conflict within the role.
+    [Fact]
+    public void AnId3TsseFrameIsAnEncoderClaim()
+    {
+        byte[] file = [.. TestFiles.Id3v23(("TSSE", "LAME 3.100")), .. File.ReadAllBytes(WavPackBuilder.FixturePath("external-lossless-16-stereo.wv"))];
+        Report report = Analyze(file, "tsse.wv");
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.encoder-claim-differs");
+        Assert.Null(report.Streams.Single().Writer);
     }
 
     private static byte[] Syncsafe(int value) => [(byte)((value >> 21) & 0x7F), (byte)((value >> 14) & 0x7F), (byte)((value >> 7) & 0x7F), (byte)(value & 0x7F)];

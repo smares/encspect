@@ -21,7 +21,7 @@ public class ClaimRouteTests
 
         public void Parse(ParseContext context)
         {
-            var file = new EncoderClaim("file", context.Root, "the file's tag");
+            var file = new EncoderClaim("file", context.Root, "the file's tag", ClaimRole.Encoder);
             context.AddEncoderClaim(file);
             var node = new Node("stream", 0, 1);
             context.Root.Add(node);
@@ -43,7 +43,7 @@ public class ClaimRouteTests
     [Fact]
     public void AStreamsClaimsReachItsCodecParserOnlyAndAfterTheFilesClaims()
     {
-        var claim = new EncoderClaim("layout", new Node("x", 0, 1), "a layout") { IsLayout = true };
+        var claim = new EncoderClaim("layout", new Node("x", 0, 1), "a layout", ClaimRole.Writer) { IsLayout = true };
         var container = new Container(claim);
         var analyzer = new Analyzer([], [container], [new Probe(container)]);
         analyzer.Analyze("test.bin", new MemoryStream(new byte[4]));

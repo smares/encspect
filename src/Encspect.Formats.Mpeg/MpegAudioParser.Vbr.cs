@@ -357,12 +357,18 @@ public sealed partial class MpegAudioParser
         if (vbr is { HasLameTag: true })
         {
             // libavcodec encodes MP3 only with libmp3lame or libshine, so "Lavc" supports either; a
-            // remux ("Lavf") names no encoder, and the stream's evidence stands as it would alone.
+            // remux ("Lavf") names no encoder, and the stream's evidence stands as it would alone. The tag
+            // names FFmpeg's muxer either way, which the writer is resolved from (DetectWriter).
             string text = vbr.LameEncoder.TrimEnd(' ');
             bool encoded = text.StartsWith("Lavc", StringComparison.Ordinal);
             Node support = Evidence(tagNode, $"LAME tag written by FFmpeg ({text})");
             if (StreamEncoder(context) is { } behind)
             {
+                if (!encoded)
+                {
+                    return behind;
+                }
+
                 behind = WithEvidence(behind, support, null);
                 Node confidence = behind.Children.First(c => c.Name == "Confidence");
                 if (encoded && confidence.Value == "Low" && (behind.Value == "Shine" || behind.Value!.ToString().StartsWith("LAME", StringComparison.Ordinal)))
@@ -389,6 +395,54 @@ public sealed partial class MpegAudioParser
         }
 
         return StreamEncoder(context);
+    }
+
+    // The writer a region's claims and its LAME tags name. ffmpeg's mp3 muxer writes the whole Xing and LAME tag (libavformat/mp3enc.c),
+    // so a tag laid out as it writes it is the muxer's: an encoder string that starts "Lavc" (the stream's "encoder" metadata, the
+    // codec library's version, which names the encoder: HeaderEncoder) or "Lavf" ("Lavf lame" in place of the bit-exact "Lavc libmp3lame",
+    // mp3enc.c:250-252, or a bare "Lavf" without metadata, mp3enc.c:258), or a stored CRC equal to the one ffmpeg's mp3enc.c computes over the
+    // frame's first 190 bytes. The quirk needs !IsTagCrcValid: LAME's own CRC coincides with ffmpeg's for MPEG-1 stereo, so a valid LAME CRC
+    // says nothing. It names the writer "FFmpeg" without a version, since the "Lavc" version is the codec library's, with low confidence.
+    // Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with it.
+    private static Node? DetectWriter(StreamState state, RegionState region, IReadOnlyList<EncoderClaim> claims)
+    {
+        ChunkedList<Entry> frames = state.Build.Frames;
+        int end = region.End ?? frames.Count;
+        var all = new List<EncoderClaim>(claims);
+        for (int i = region.First; i < end; i++)
+        {
+            state.CheckCancellation(i - region.First);
+            if (!frames[i].IsVbrHeader)
+            {
+                continue;
+            }
+
+            var header = new HeaderFrame(i, frames[i], ReadVbrHeader(state.Build, frames[i]));
+            if (header.Vbr is { HasLameTag: true, IsVbri: false } lame)
+            {
+                string text = lame.LameEncoder.TrimEnd(' ');
+                bool quirk = lame.FfmpegTagCrc >= 0 && !lame.IsTagCrcValid && lame.StoredTagCrc == lame.FfmpegTagCrc;
+                if (IsFfmpeg(text) || quirk)
+                {
+                    all.Add(new EncoderClaim("FFmpeg", header.TagNode,
+                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
+                    {
+                        IsLayout = true,
+                    });
+                }
+            }
+        }
+
+        if (region.AudioFrames == 0 || !ClaimRoles.Writers(all).Any())
+        {
+            return null;
+        }
+
+        long offset = region.AudioStart;
+        long length = region.AudioEnd - offset;
+        return WriterDetection.Detect(all, (name, value, description) => new Node(name, offset, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.Add(Severity.Info, "mpeg.writer-other-format", node, _ => message)));
     }
 
     // The encoder named by the stream's own evidence, without its VBR headers.

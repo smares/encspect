@@ -75,7 +75,9 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 
 ## Encoder detection
 
-- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. Claims from tags (an ID3v2 TSSE frame, an APEv2 Encoder item) and from a container (the BUILDVER chunk of a [.dtshd file](dtshd.md)) name one with low confidence, as written. A name FFmpeg's muxer writes (Lavf) names none.
+- The frames name no encoder: VERNUM is the revision of the encoder software, shown as a field. An ID3v2 TSSE frame names the encoder with low confidence, as written (`dts.encoder-claim` for a second one that differs).
+- The BUILDVER chunk of a [.dtshd file](dtshd.md) names the encoder too, with low confidence (A/103 Table E.1 calls it "DTS-HD Encoder Version Identification").
+- The writer is resolved apart, from the claims of the writer role: an APEv2 Encoder item and ffmpeg's muxer version (Lavf), with low confidence; two that name different software are `dts.writer-claim-differs`, and software known to write another format is `dts.writer-other-format`.
 
 ## MP4
 
@@ -90,7 +92,7 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 - **Alignment:** `dts.substream-misaligned`.
 - **Extension substreams:** `dts.crc-mismatch`, `dts.substream-overrun`, `dts.asset-descriptor-overrun`, `dts.component-sync`, `dts.coding-mode-auxiliary`.
 - **Lossless extension:** `dts.lossless-inconsistent` (a resolution beyond the storage width, a channel mask of another number of speakers than channels, a navigation index of more than 1,024 entries or whose sizes end past the frame); `dts.crc-mismatch`, `dts.reserved-value` (downmix type 7, an XLL version above 1), `dts.substream-overrun` and `dts.header-overrun` also report the sub-headers and the navigation index.
-- **Other:** `dts.encoder-claim`, `dts.config-differs`, `dts.config-reserved`, `dts.config-truncated`.
+- **Other:** `dts.encoder-claim`, `dts.writer-claim-differs`, `dts.writer-other-format`, `dts.config-differs`, `dts.config-reserved`, `dts.config-truncated`.
 - Findings of a kind are counted once per file, pointing at the first case.
 
 ## Limits

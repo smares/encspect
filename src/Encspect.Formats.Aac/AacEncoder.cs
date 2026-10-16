@@ -3,16 +3,17 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac;
 
-// The encoder of an AAC stream, from what the stream itself carries and what the container's
-// metadata and the file's tags say (EncoderClaim). ffmpeg's AAC encoder writes its version
+// The encoder of an AAC stream, from what the stream itself carries and the claims of the encoder
+// role (EncoderClaim): ffmpeg's AAC encoder writes its version
 // ("Lavc60.31.102") into a fill element at the start of an access unit, unless told to be
 // bit-exact, and FAAC 1.30 to 1.50 their library's ("libfaac 1.31.1") into one in the first access unit; either names
-// the encoder with high confidence. A claim, such as MP4's tool atom (©too) or an
-// ID3v2 TSSE frame, is written by whatever software wrote the file and survives a re-encode, so
-// alone it names the encoder as written with low confidence, as the MPEG parser weighs a TSSE
-// frame; agreeing with the stream's evidence it is listed as more evidence. ffmpeg's muxer writes its own version
-// ("Lavf60.16.100") whatever encoder it used, so that names none. fdkaac writes "fdkaac 1.0.0,
-// libfdk-aac 4.0.1, CBR 48kbps", named as "fdkaac 1.0.0 (libfdk-aac 4.0.1)".
+// the encoder with high confidence. A claim of the encoder role, such as an ID3v2 TSSE frame, is written by whatever
+// software wrote the file and survives a re-encode, so alone it names the encoder as written with low confidence,
+// as the MPEG parser weighs a TSSE frame; agreeing with the stream's evidence it is listed as more evidence.
+// The writer is resolved apart (WriterDetection): MP4's tool atom (©too), ffmpeg's muxer version
+// ("Lavf60.16.100") and the layouts of Apple's file writer are claims of the writer role, which name the
+// encoder of no stream. fdkaac writes "fdkaac 1.0.0, libfdk-aac 4.0.1, CBR 48kbps" into ©too, named as the
+// writer "fdkaac 1.0.0 (libfdk-aac 4.0.1)".
 //
 // exhale writes no text into a USAC stream, but from release 1.1.2 on, which added the audio
 // pre-roll element, its UsacConfig has a layout of its own, as exhale 1.2.2 writes it
@@ -35,14 +36,14 @@ namespace Encspect.Formats.Aac;
 // Apple's AAC encoder (AudioToolbox, as afconvert, iTunes and QuickTime use it) writes no text into the
 // stream. Its file writer lays files out in a way of its own: an M4A, MP4 or 3GP track whose DecoderConfigDescriptor
 // has its reserved stream type bit clear, with an sbtd box or a free box that pads the audio data to a page (the MP4
-// parser), and ADTS headers with the original/copy bit set and a buffer fullness of 0. They are claims that name
-// "Apple AudioToolbox", the writer, with low confidence, because afconvert's -d 0 gives the layout to packets it only
-// copied, such as an fdkaac stream (macOS 15.7, run 4): an ADTS target always gets Apple's headers, whatever the source,
-// and an M4A or MP4 target always gets the padding and, from an ADTS source, the stream type byte (an M4A source keeps its
-// own). With an sbtd box in
-// the sample entry, which records the PCM source of an encode and which no copy had, the MP4 claim names the encoder at
-// medium confidence. A signature in the stream (ffmpeg's, FAAC's) wins over a claim, and a name some software wrote
-// (a tool atom) outranks a layout of equal confidence.
+// parser), and ADTS headers with the original/copy bit set and a buffer fullness of 0. The layout names
+// "Apple AudioToolbox", the writer, with low confidence (a claim of the writer role), because afconvert's -d 0 gives
+// the layout to packets it only copied, such as an fdkaac stream (macOS 15.7, run 4): an ADTS target always gets Apple's
+// headers, whatever the source, and an M4A or MP4 target always gets the padding and, from an ADTS source, the stream type
+// byte (an M4A source keeps its own). With an sbtd box in
+// the sample entry, which records the PCM source of an encode and which no copy had, the MP4 parser makes a claim of
+// the encoder role that names the encoder at medium confidence. A signature in the stream (ffmpeg's, FAAC's) wins over
+// a claim.
 //
 // FAAC 1.30, 1.31.1, 1.40 and 1.50 sign their streams with text (FaacVersion). FAAC 2.0, 2.1 and 2.2
 // write none, and their HE-AAC encoder lays out its SBR data in ways of its own (FaacSbr): the layout
@@ -95,6 +96,7 @@ internal static partial class AacEncoder
         Node? encoder = null;
         EncoderClaim? winner = null;
         bool versionless = false;
+        claims = ClaimRoles.Encoders(claims);
         if (signature is not null && LavcVersion().IsMatch(signature.Text))
         {
             encoder = cover("Encoder", $"FFmpeg ({signature.Text})", Explain.Encoder);
@@ -135,8 +137,7 @@ internal static partial class AacEncoder
             versionless = true;
         }
 
-        // A stronger claim outranks a weaker one, and a name some software wrote outranks a layout of equal confidence: the
-        // layout may only be a copy's wrapper.
+        // A stronger claim outranks a weaker one, and a name some software wrote outranks a layout of equal confidence.
         foreach (EncoderClaim claim in claims.OrderByDescending(c => c.Confidence).ThenBy(c => c.IsLayout))
         {
             string text = claim.Text.Trim();
@@ -151,7 +152,7 @@ internal static partial class AacEncoder
                 : $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
             if (encoder is null)
             {
-                // ffmpeg's muxer writes its own version whatever encoded the stream.
+                // A text that names only ffmpeg names the muxer, whatever encoded the stream.
                 if (claimed.SetEquals(["FFmpeg"]))
                 {
                     continue;
@@ -221,17 +222,10 @@ internal static partial class AacEncoder
     // What won, as "but ..." in a finding: the stream, or the claim that named the encoder. The name is the Encoder node's value, quoted for both.
     private static string Phrase(EncoderClaim? winner, string name) => winner is null
         ? $"the stream points to \"{name}\""
-        : winner.IsLayout ? $"the {Subject(winner)} points to \"{name}\"" : $"the {winner.Description} names \"{name}\"";
-
-    // A layout claim's description reads "what it is: the traces", and its subject is the part before the colon.
-    private static string Subject(EncoderClaim claim)
-    {
-        int colon = claim.Description.IndexOf(':', StringComparison.Ordinal);
-        return colon > 0 ? claim.Description[..colon] : claim.Description;
-    }
+        : winner.IsLayout ? $"the {WriterDetection.Subject(winner)} points to \"{name}\"" : $"the {winner.Description} names \"{name}\"";
 
     // The finding for a claim that names another encoder than the winner (the phrase Detect gives). A name some software wrote is a claim;
-    // a layout is the traces of the writer that laid the file out, which also writes them around packets it only copied.
+    // the one layout of the encoder role, the sbtd box, records the source of an encode.
     public static string Disagreement(EncoderClaim claim, string text, string winner, string cause)
     {
         if (!claim.IsLayout)
@@ -239,11 +233,13 @@ internal static partial class AacEncoder
             return $"The {claim.Description} names \"{text}\", but {winner}; {cause}";
         }
 
-        // An sbtd box records the PCM source of an encode, and no copy had one; a layout without it is the writer's, which also lays it around copies.
-        return claim.Confidence >= Confidence.Medium
-            ? $"The {Subject(claim)} points to \"{text}\", but {winner}; the sbtd box records the source of an encode, so other software may have replaced the stream in the file."
-            : $"The {Subject(claim)} points to \"{text}\", but {winner}; the writer also lays out streams it only copied in the same way, and other software may have rewritten the file.";
+        return $"The {WriterDetection.Subject(claim)} points to \"{text}\", but {winner}; the sbtd box records the source of an encode, so other software may have replaced the stream in the file.";
     }
+
+    // The writer's name for a claim's text: fdkaac's tool string in the form the encoder's claims have, anything else as ClaimRoles gives it.
+    public static string WriterName(string text) => FdkaacTool().Match(text.Trim()) is { Success: true } match
+        ? $"fdkaac {match.Groups[1].Value} (libfdk-aac {match.Groups[2].Value})"
+        : ClaimRoles.WriterName(text, MaxClaimedName);
 
     private static HashSet<string> FamiliesOf(string text)
     {

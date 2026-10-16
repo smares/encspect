@@ -5470,15 +5470,29 @@
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"Lavf60.16.100\"",
-                      "offset": 3299,
-                      "length": 13
-                    },
-                    {
-                      "name": "Evidence",
                       "value": "Speex header version \"1.2.1\", which libspeex writes",
                       "offset": 3195,
                       "length": 20
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 3295,
+                  "length": 55,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 3295,
+                      "length": 55
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string at 0xCE3 names \"Lavf60.16.100\"",
+                      "offset": 3299,
+                      "length": 13
                     }
                   ]
                 },
@@ -16071,6 +16085,8 @@
         "isVbr": false,
         "encoder": "FFmpeg (Lavc60.31.102 libspeex)",
         "encoderConfidence": "Medium",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

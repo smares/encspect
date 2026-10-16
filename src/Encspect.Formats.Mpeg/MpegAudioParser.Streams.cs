@@ -92,7 +92,8 @@ public sealed partial class MpegAudioParser
         }
 
         Node? encoder = regions.Select(r => r.Encoder).FirstOrDefault(e => e is not null);
-        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(regions.Select(r => r.Writer).FirstOrDefault(w => w is not null));
         (IReadOnlyList<Speaker> layout, int multilingual) = Layout(state, start, end, header);
 
         return new StreamInfo
@@ -108,8 +109,10 @@ public sealed partial class MpegAudioParser
             Duration = ticks / (double)Clock,
             AverageBitrate = ticks > 0 ? bits * (double)Clock / (ticks * 1000.0) : null,
             IsVbr = isVbr,
-            Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Encoder = encoderName,
+            EncoderConfidence = encoderConfidence,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
             Series = Series(state, start, end, audio),
         };
     }

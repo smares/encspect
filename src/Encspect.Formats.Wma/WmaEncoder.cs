@@ -11,9 +11,11 @@ namespace Encspect.Formats.Wma;
 // - A pattern the project's fixtures show Microsoft's encoders keep, or the layout of the header of the
 //   Windows Media Format SDK's writer or Media Foundation's ASF sink: medium, since neither is in a
 //   specification and the fixtures come from one Windows build.
-// - A claim: WMFSDKVersion, WM/EncodingSettings, WM/ToolName and the like, which whatever software wrote the
-//   tags fills in and which survive a re-encode: low. ffmpeg's muxer writes its own version ("Lavf60.16.100")
-//   whatever encoded the stream, so alone it names none.
+// - A claim of the encoder role, which whatever software wrote the tags fills in and which survives a re-encode:
+//   low. The attributes ASF files carry (WMFSDKVersion, MediaFoundationVersion, WM/EncodingSettings, WM/ToolName
+//   and the like) are claims of the writer role, resolved apart (Writer): the Windows Media attribute lists
+//   give them to no encoder, and ffmpeg's muxer writes its own version ("Lavf60.16.100") into them whatever
+//   encoded the stream.
 internal static partial class WmaEncoder
 {
     private const int MaxClaimedName = 64;
@@ -34,22 +36,40 @@ internal static partial class WmaEncoder
 
     // Names the encoder under the stream's node: adds the Encoder node as its first child and returns the
     // name and confidence for the stream's figures, or nulls where nothing names one.
-    public static (string? Name, Confidence? Confidence) Apply(CodecContext context, Node stream, FindingCollector findings, IReadOnlyList<Trait> traits)
+    public static Detected Apply(CodecContext context, Node stream, FindingCollector findings, IReadOnlyList<Trait> traits)
     {
+        Node Cover(string name, NodeValue? value, string description) =>
+            new(name, stream.Offset, stream.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) };
+
         Node? encoder = Detect(
             traits,
             context.EncoderClaims,
-            (name, value, description) => new Node(name, stream.Offset, stream.Length, value) { Description = description, Topic = name == "Encoder" ? Topics.EncoderDetection : null },
+            Cover,
             (claim, text, name) => findings.Add(Severity.Info, "wma.encoder-claim-differs", claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\", but the stream points to {name}; the file may have been written by other software, or kept its metadata when the audio was re-encoded."));
-        if (encoder is null)
+        if (encoder is not null)
         {
-            return (null, null);
+            stream.Add(encoder);
         }
 
-        stream.Add(encoder);
-        return (encoder.Value?.ToString(), Enum.TryParse(encoder.Children[0].Value?.ToString(), out Confidence parsed) ? parsed : null);
+        Node? writer = WriterDetection.Detect(context.EncoderClaims, Cover,
+            (claim, text, name) => findings.Add(Severity.Info, "wma.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            familyOf: FamilyOf,
+            format: new WriterDetection.StreamFormat(KnownWriters.WindowsMedia, "Windows Media Audio",
+                (claim, message, node) => findings.Add(Severity.Info, "wma.writer-other-format", node, _ => message)));
+        if (writer is not null)
+        {
+            stream.Add(writer);
+        }
+
+        ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        return new Detected(encoderName, encoderConfidence, writerName, writerConfidence);
     }
+
+    // What the stream's figures take from the detection.
+    public readonly record struct Detected(string? Encoder, Confidence? EncoderConfidence, string? Writer, Confidence? WriterConfidence);
 
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a claim that
     // names another encoder than the evidence points to.
@@ -62,7 +82,7 @@ internal static partial class WmaEncoder
         }
 
         bool ffmpegStream = traits.Any(t => t.Family == "FFmpeg");
-        foreach (EncoderClaim claim in claims)
+        foreach (EncoderClaim claim in ClaimRoles.Encoders(claims))
         {
             string text = claim.Text.Trim();
             if (text.Length == 0)

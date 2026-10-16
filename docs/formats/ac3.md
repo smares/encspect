@@ -61,4 +61,4 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
 
 ## Encoder detection
 
-No encoder is named from the frames, since no fixture confirms anything that identifies one. Claims from containers and tags name one with low confidence.
+No encoder is named from the frames, since no fixture confirms anything that identifies one. An ID3v2 TSSE frame names the encoder with low confidence (`ac3.encoder-claim` for a second one). The writer is resolved apart from claims of the writer role: an APEv2 Encoder item, ffmpeg's muxer version, and a container's tool atom; two that name different software are `ac3.writer-claim-differs`, and software known to write another format is `ac3.writer-other-format`.

@@ -532,6 +532,8 @@ public sealed partial class VorbisParser
             long trim = EndTrimming();
             long samples = HasTime ? Math.Clamp(_decoded - startTrim - trim, 0, _decoded) : 0;
             Node? encoder = AddEncoder();
+            Node? writer = AddWriter();
+            ClaimRoles.CompleteVersion(encoder, CommentClaims());
             Node? anchor = AddStatistics(samples, startTrim, trim);
             Node? packets = AddPackets();
 
@@ -549,8 +551,10 @@ public sealed partial class VorbisParser
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,
                     IsVbr = _sizes.Count > 1,
-                    Encoder = encoder?.Value?.ToString(),
-                    EncoderConfidence = encoder is null ? null : Enum.Parse<Confidence>(encoder.Children[0].Value!.ToString()),
+                    Encoder = ClaimRoles.Resolved(encoder).Name,
+                    EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
+                    Writer = ClaimRoles.Resolved(writer).Name,
+                    WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
                     Series = Series(anchor, packets),
                 });
             }

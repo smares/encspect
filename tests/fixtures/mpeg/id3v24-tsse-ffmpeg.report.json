@@ -309,6 +309,26 @@
           "length": 3343,
           "children": [
             {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf58.76.100)",
+              "offset": 50,
+              "length": 3343,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 50,
+                  "length": 3343
+                },
+                {
+                  "name": "Evidence",
+                  "value": "ID3v2 TSSE frame at 0x1A names \"Lavf58.76.100\"",
+                  "offset": 50,
+                  "length": 3343
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "value": "8 frames, 0.209 s",
@@ -5365,6 +5385,8 @@
         "duration": 0.2089795918367347,
         "averageBitrate": 127.97421875,
         "isVbr": false,
+        "writer": "FFmpeg (Lavf58.76.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

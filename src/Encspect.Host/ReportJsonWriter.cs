@@ -252,6 +252,16 @@ public static class ReportJsonWriter
             writer.WriteString("encoderConfidence", confidence.ToString());
         }
 
+        if (stream.Writer is not null)
+        {
+            writer.WriteString("writer", stream.Writer);
+        }
+
+        if (stream.WriterConfidence is { } writerConfidence)
+        {
+            writer.WriteString("writerConfidence", writerConfidence.ToString());
+        }
+
         writer.WriteStartArray("series");
         foreach (Series series in stream.Series)
         {

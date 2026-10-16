@@ -35,10 +35,24 @@
                   "value": "The blocks have stream version 0x410 and neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a file, and another encoder, such as FFmpeg, may have written it",
                   "offset": 0,
                   "length": 47396
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 0,
+              "length": 47396,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 47396
                 },
                 {
                   "name": "Evidence",
-                  "value": "APE Encoder item at 0xB944 names \"Lavf60.16.100\"; FFmpeg's WavPack encoder writes stream version 0x410 and neither a new config block nor a block checksum",
+                  "value": "APE Encoder item at 0xB944 names \"Lavf60.16.100\"",
                   "offset": 0,
                   "length": 47396
                 }
@@ -2011,6 +2025,8 @@
         "isVbr": true,
         "encoder": "WavPack 4 stream, no WavPack 5 features",
         "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

@@ -1,0 +1,644 @@
+{
+ "length": 12376,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 12376
+  }
+ ],
+ "encoder": {
+  "tool": "ffmpeg 6.1.1-3ubuntu5",
+  "arguments": [
+   "-fflags",
+   "+bitexact",
+   "-flags:a",
+   "+bitexact",
+   "-c:a",
+   "libvorbis",
+   "-q:a",
+   "4"
+  ],
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 1.5
+ },
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 0,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 4233,
+   "serial": 0,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 4291,
+   "length": 4839,
+   "serial": 0,
+   "sequence": 2,
+   "granule": 44032,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 9130,
+   "length": 3246,
+   "serial": 0,
+   "sequence": 3,
+   "granule": 66150,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x00000000",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 4,
+   "packets": 98,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "2",
+     "Channel Layout": "Stereo: left, right",
+     "Sample Rate": "44100 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "128000 bps",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "Only the nominal: VBR or ABR that averages it",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "ffmpeg",
+     "comments": [
+      "encoder=Lavc libvorbis"
+     ]
+    },
+    "setup": {
+     "value": "42 codebooks, 2 floors, 2 residues, 2 mappings, 2 modes",
+     "groups": {
+      "Codebooks": "42 codebooks",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "2 floors, type 1",
+      "Residues": "2 residues, type 2",
+      "Mappings": "2 mappings, 2 coupling steps",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      4383,
+      64
+     ],
+     [
+      4447,
+      69
+     ],
+     [
+      4516,
+      155
+     ],
+     [
+      4671,
+      103
+     ],
+     [
+      4774,
+      101
+     ],
+     [
+      4875,
+      101
+     ],
+     [
+      4976,
+      102
+     ],
+     [
+      5078,
+      99
+     ],
+     [
+      5177,
+      102
+     ],
+     [
+      5279,
+      101
+     ],
+     [
+      5380,
+      100
+     ],
+     [
+      5480,
+      153
+     ],
+     [
+      5633,
+      42
+     ],
+     [
+      5675,
+      47
+     ],
+     [
+      5722,
+      43
+     ],
+     [
+      5765,
+      47
+     ],
+     [
+      5812,
+      62
+     ],
+     [
+      5874,
+      59
+     ],
+     [
+      5933,
+      144
+     ],
+     [
+      6077,
+      101
+     ],
+     [
+      6178,
+      116
+     ],
+     [
+      6294,
+      124
+     ],
+     [
+      6418,
+      127
+     ],
+     [
+      6545,
+      135
+     ],
+     [
+      6680,
+      130
+     ],
+     [
+      6810,
+      124
+     ],
+     [
+      6934,
+      102
+     ],
+     [
+      7036,
+      142
+     ],
+     [
+      7178,
+      46
+     ],
+     [
+      7224,
+      46
+     ],
+     [
+      7270,
+      49
+     ],
+     [
+      7319,
+      50
+     ],
+     [
+      7369,
+      67
+     ],
+     [
+      7436,
+      65
+     ],
+     [
+      7501,
+      1
+     ],
+     [
+      7502,
+      1
+     ],
+     [
+      7503,
+      1
+     ],
+     [
+      7504,
+      1
+     ],
+     [
+      7505,
+      1
+     ],
+     [
+      7506,
+      1
+     ],
+     [
+      7507,
+      1
+     ],
+     [
+      7508,
+      1
+     ],
+     [
+      7509,
+      1
+     ],
+     [
+      7510,
+      1
+     ],
+     [
+      7511,
+      1
+     ],
+     [
+      7512,
+      1
+     ],
+     [
+      7513,
+      1
+     ],
+     [
+      7514,
+      1
+     ],
+     [
+      7515,
+      73
+     ],
+     [
+      7588,
+      77
+     ],
+     [
+      7665,
+      139
+     ],
+     [
+      7804,
+      102
+     ],
+     [
+      7906,
+      102
+     ],
+     [
+      8008,
+      99
+     ],
+     [
+      8107,
+      135
+     ],
+     [
+      8242,
+      132
+     ],
+     [
+      8374,
+      132
+     ],
+     [
+      8506,
+      98
+     ],
+     [
+      8604,
+      102
+     ],
+     [
+      8706,
+      151
+     ],
+     [
+      8857,
+      51
+     ],
+     [
+      8908,
+      51
+     ],
+     [
+      8959,
+      53
+     ],
+     [
+      9012,
+      50
+     ],
+     [
+      9062,
+      68
+     ],
+     [
+      9188,
+      67
+     ],
+     [
+      9255,
+      45
+     ],
+     [
+      9300,
+      154
+     ],
+     [
+      9454,
+      101
+     ],
+     [
+      9555,
+      98
+     ],
+     [
+      9653,
+      103
+     ],
+     [
+      9756,
+      101
+     ],
+     [
+      9857,
+      98
+     ],
+     [
+      9955,
+      104
+     ],
+     [
+      10059,
+      100
+     ],
+     [
+      10159,
+      102
+     ],
+     [
+      10261,
+      147
+     ],
+     [
+      10408,
+      52
+     ],
+     [
+      10460,
+      50
+     ],
+     [
+      10510,
+      50
+     ],
+     [
+      10560,
+      63
+     ],
+     [
+      10623,
+      62
+     ],
+     [
+      10685,
+      48
+     ],
+     [
+      10733,
+      145
+     ],
+     [
+      10878,
+      102
+     ],
+     [
+      10980,
+      118
+     ],
+     [
+      11098,
+      124
+     ],
+     [
+      11222,
+      130
+     ],
+     [
+      11352,
+      145
+     ],
+     [
+      11497,
+      128
+     ],
+     [
+      11625,
+      118
+     ],
+     [
+      11743,
+      99
+     ],
+     [
+      11842,
+      98
+     ],
+     [
+      11940,
+      271
+     ],
+     [
+      12211,
+      165
+     ]
+    ],
+    "blocks": [
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "95",
+     "Long Blocks": "62 packets (65.3%)",
+     "Short Blocks": "33 packets (34.7%)",
+     "Decoded Samples": "67136 samples",
+     "Start Offset": "0 samples",
+     "Start Trimming": "0 samples",
+     "End Trimming": "986 samples",
+     "Samples": "66150 samples",
+     "Duration": "1.500 s",
+     "IsVbr": "true",
+     "Average Bitrate": "41.7 kbps",
+     "Minimum Bitrate": "0.3 kbps",
+     "Maximum Bitrate": "212.2 kbps",
+     "Packet Sizes": "48 sizes",
+     "Packet Sizes/Long Blocks": "1 to 271 bytes, 101.9 on average",
+     "Packet Sizes/Short Blocks": "1 to 77 bytes, 49.1 on average",
+     "Modes": "2 modes used",
+     "Modes/Mode 0 (short block)": "33 packets (34.7%)",
+     "Modes/Mode 1 (long block)": "62 packets (65.3%)"
+    },
+    "encoder": {
+     "name": "FFmpeg (Lavc libvorbis)",
+     "confidence": "Medium"
+    },
+    "writer": {
+     "name": "FFmpeg",
+     "confidence": "Low"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 66150,
+   "duration": 1.5,
+   "average_bitrate": 41.69846282173499,
+   "is_vbr": true,
+   "channel_mode": "Stereo",
+   "encoder": "FFmpeg (Lavc libvorbis)",
+   "encoder_confidence": "Medium",
+   "writer": "FFmpeg",
+   "writer_confidence": "Low"
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

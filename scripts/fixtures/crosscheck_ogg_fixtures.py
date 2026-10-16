@@ -559,7 +559,8 @@ def check_mediainfo(name, path, tally):
         mi.compare_tags(tally, general, report)
         comments = [c for n in mi.walk(report["root"]) if n["name"] == "Vorbis Comment" for c in n.get("children", [])]
         encoders = [c.get("value") for c in comments if c["name"].upper() in ("ENCODER", "ENCODED_USING")]
-        tally.compare("tag encoder", general.get("Encoded_Application"), encoders[0] if encoders else None)
+        # MediaInfo joins repeated fields with " / ".
+        tally.compare("tag encoder", general.get("Encoded_Application"), " / ".join(encoders) if encoders else None)
     return problems
 
 

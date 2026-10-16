@@ -890,6 +890,10 @@
     "encoder": {
      "name": "FFmpeg (Lavc60.31.102 libopus)",
      "confidence": "Medium"
+    },
+    "writer": {
+     "name": "FFmpeg (Lavf60.16.100)",
+     "confidence": "Low"
     }
    }
   }
@@ -906,7 +910,9 @@
    "channel_mode": "Ambisonics, order 1",
    "channel_layout": [],
    "encoder": "FFmpeg (Lavc60.31.102 libopus)",
-   "encoder_confidence": "Medium"
+   "encoder_confidence": "Medium",
+   "writer": "FFmpeg (Lavf60.16.100)",
+   "writer_confidence": "Low"
   }
  ],
  "findings": [],

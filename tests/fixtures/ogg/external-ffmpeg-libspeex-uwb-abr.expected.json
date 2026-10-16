@@ -1039,6 +1039,10 @@
     "encoder": {
      "name": "FFmpeg (Lavc60.31.102 libspeex)",
      "confidence": "Medium"
+    },
+    "writer": {
+     "name": "FFmpeg (Lavf60.16.100)",
+     "confidence": "Low"
     }
    }
   }
@@ -1056,7 +1060,9 @@
    "average_bitrate": 12.864,
    "is_vbr": true,
    "encoder": "FFmpeg (Lavc60.31.102 libspeex)",
-   "encoder_confidence": "Medium"
+   "encoder_confidence": "Medium",
+   "writer": "FFmpeg (Lavf60.16.100)",
+   "writer_confidence": "Low"
   }
  ],
  "findings": [],

@@ -16,56 +16,58 @@ public sealed partial class OpusParser
     private static partial Regex LibopusVendor();
 
     // ffmpeg's ENCODER field after libopus or its native encoder: "Lavc60.31.102 libopus".
-    [GeneratedRegex(@"^Lavc\S* (lib)?opus$")]
+    [GeneratedRegex(@"^Lavc(\d\S*)? (lib)?opus$")]
     private static partial Regex FfmpegEncoder();
 
     private sealed partial class StreamState
     {
-        // The encoder, from the comment's vendor string and ENCODER field: opusenc writes
-        // libopusenc's vendor string, which names libopus' version, and "opusenc from opus-tools"
-        // as ENCODER; ffmpeg writes its own version ("Lavf60.16.100") as the vendor and
-        // "Lavc60.31.102 libopus" or, for its native encoder, "Lavc60.31.102 opus" as ENCODER. Only
-        // the stream's own comment counts.
+        // The encoder, from the comment's vendor string (libopusenc writes the version of libopus into it) and an ENCODER field that
+        // is a libavcodec encoder ID: ffmpeg writes "Lavc60.31.102 libopus" or, for its native encoder, "Lavc60.31.102 opus" when it
+        // encodes, with its own version ("Lavf60.16.100") as the vendor, which names the writer (AddWriter). RFC 7845 section 5.2
+        // has the vendor string "identify the codec encoder and encapsulation implementations" and applications use the ENCODER
+        // comment "to identify themselves": opusenc's "opusenc from opus-tools" is the writer's.
         private Node? AddEncoder()
         {
-            List<EncoderClaim> claims = _comment is { } tag
-                ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
-                : [];
-            EncoderClaim? vendor = claims.FirstOrDefault(c => c.Source.Name == "Vendor");
-            EncoderClaim? field = claims.FirstOrDefault(c => c.Source.Name != "Vendor");
+            List<EncoderClaim> encoders = [.. ClaimRoles.Encoders(CommentClaims())];
+            EncoderClaim? vendor = encoders.FirstOrDefault(c => c.Source.Name == "Vendor");
+            List<EncoderClaim> fields = encoders.Where(c => c.Source.Name != "Vendor").ToList();
+            EncoderClaim? field = fields.FirstOrDefault(c => FfmpegEncoder().IsMatch(c.Text));
             Match? library = vendor is null ? null : LibopusVendor().Match(vendor.Text);
 
             var evidence = new List<Node>();
             string? name = null;
             Confidence confidence = Confidence.Medium;
-            if (field is not null && OpusencEncoder().Match(field.Text) is { Success: true } opusenc)
-            {
-                name = library is { Success: true } ? $"opusenc {opusenc.Groups[1].Value} (libopus {library.Groups[1].Value})" : $"opusenc {opusenc.Groups[1].Value}";
-                confidence = library is { Success: true } ? Confidence.High : Confidence.Medium;
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which opusenc writes"));
-                if (vendor is not null)
-                {
-                    evidence.Add(Evidence(vendor.Source, library is { Success: true }
-                        ? $"Vorbis comment vendor string \"{vendor.Text}\", which libopusenc writes with libopus' version"
-                        : $"Vorbis comment vendor string \"{vendor.Text}\""));
-                }
-            }
-            else if (field is not null && FfmpegEncoder().IsMatch(field.Text))
-            {
-                name = $"FFmpeg ({field.Text})";
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
-                if (vendor is not null)
-                {
-                    evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\""));
-                }
-            }
-            else if (vendor is not null && library is { Success: true })
+            // One rule for a libavcodec encoder ID in the ENCODER field: one of this codec names an encoder (ffmpeg's) unless stream evidence names a
+            // real encoder first; one of another codec never becomes the encoder, stays as evidence under the Encoder node where there is one and is reported.
+            bool isOwn = field is not null;
+            if (vendor is not null && library is { Success: true })
             {
                 name = $"libopus {library.Groups[1].Value}";
                 evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which names libopus' version"));
-                if (field is not null)
+            }
+            else if (isOwn)
+            {
+                name = $"FFmpeg ({field!.Text})";
+                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
+            }
+
+            foreach (EncoderClaim claim in fields)
+            {
+                if (FfmpegEncoder().IsMatch(claim.Text))
                 {
-                    evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\""));
+                    if (!ReferenceEquals(claim, field) || !name!.StartsWith("FFmpeg", StringComparison.Ordinal))
+                    {
+                        evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{claim.Text}\", which ffmpeg writes when it encodes"));
+                    }
+
+                    continue;
+                }
+
+                string text = claim.Text;
+                _findings.Add(Severity.Info, "opus.encoder-other-format", claim.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Opus.");
+                if (name is not null)
+                {
+                    evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{text}\", an encoder of another codec, which does not count"));
                 }
             }
 
@@ -84,6 +86,29 @@ public sealed partial class OpusParser
             }
 
             return _parent.Add(node);
+        }
+
+        // The comment of the stream itself: only its claims count.
+        private List<EncoderClaim> CommentClaims() => _comment is { } tag
+            ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
+            : [];
+
+        // The writer, from the comment's ENCODER field (RFC 7845 section 5.2: applications use it to identify themselves) and a vendor
+        // string that is a muxer's version.
+        private Node? AddWriter()
+        {
+            List<EncoderClaim> claims = CommentClaims();
+            if (_comment is not { } tag || !ClaimRoles.Writers(claims).Any())
+            {
+                return null;
+            }
+
+            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+                (claim, text, name) => _findings.Add(Severity.Info, "opus.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+                text => OpusencEncoder().Match(text) is { Success: true } opusenc ? $"opusenc {opusenc.Groups[1].Value}" : ClaimRoles.WriterName(text),
+                isEvidenceAtSource: true,
+                format: new WriterDetection.StreamFormat(KnownWriters.Opus, "Opus", (claim, message, node) => _findings.Add(Severity.Info, "opus.writer-other-format", node, _ => message)));
+            return writer is null ? null : _parent.Add(writer);
         }
 
         private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence };

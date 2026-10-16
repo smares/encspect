@@ -10,13 +10,29 @@ public enum Confidence
 // One reason a candidate was accepted, pointing at the bytes that support it.
 public sealed record Evidence(string Description, long Offset, long Length);
 
-// What a tag says about the software that encoded the audio (an ID3v2 TSSE frame), and the node
-// that holds it. Format parsers weigh it against what the audio itself shows. A claim is low
-// confidence, since whatever software wrote the tag fills it in. A container that recognizes the
-// writer from the way it lays out its own structure (not from a name it was given) makes a layout
-// claim (IsLayout), with the confidence the layout supports.
-public sealed record EncoderClaim(string Text, Node Source, string Description)
+// What the claim is evidence of. An encoder turns the audio into the coded stream; a writer puts
+// that stream into a file (a muxer, a container writer, a tagger) and need not be the encoder: a
+// file can be remuxed, or tagged by other software, without its audio being touched. The two are
+// resolved apart, each with a confidence and evidence of its own. There is no default, so a claim
+// that forgot its role is an error.
+public enum ClaimRole
 {
+    Encoder = 1,
+    Writer = 2,
+}
+
+// What a tag or a container says about the software behind the file (an ID3v2 TSSE frame, an MP4
+// tool atom), and the node that holds it. Format parsers weigh it against what the audio itself
+// shows, among the claims of its own role. A claim is low confidence, since whatever software wrote
+// the tag fills it in. A container that recognizes the writer from the way it lays out its own
+// structure (not from a name it was given) makes a layout claim (IsLayout), with the confidence the
+// layout supports.
+public sealed record EncoderClaim(string Text, Node Source, string Description, ClaimRole Role)
+{
+    // The role the claim is evidence of, given by the parser that makes it: where the specification
+    // of the field puts it, and for a field the specification leaves open, the writer.
+    public ClaimRole Role { get; } = Enum.IsDefined(Role) ? Role : throw new ArgumentOutOfRangeException(nameof(Role), Role, "A claim needs the role it is evidence of.");
+
     public Confidence Confidence { get; init; } = Confidence.Low;
 
     // Whether the claim comes from the way a file is laid out and not from a name some software wrote. It names the writer of the layout,
