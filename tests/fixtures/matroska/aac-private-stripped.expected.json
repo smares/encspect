@@ -1,5 +1,5 @@
 {
- "description": "An A_AAC track whose CodecPrivate is header-stripped (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given no configuration.",
+ "description": "An A_AAC track whose CodecPrivate is header-stripped (scope 2, the first byte of the AudioSpecificConfig) and whose frames are in the clear: the byte is put back and the configuration handed to the AAC parser.",
  "length": 428,
  "format": "Matroska",
  "ebml": {
@@ -400,16 +400,7 @@
    "channels": 2
   }
  ],
- "findings": [
-  {
-   "code": "matroska.codec-private-not-read",
-   "contains": "header stripping"
-  },
-  {
-   "code": "aac.no-configuration",
-   "contains": "without an AudioSpecificConfig"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "valid": false
  }

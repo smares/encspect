@@ -314,20 +314,34 @@ public class ProtectionTests
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
-    // A CodecPrivate that is coded but whose frames are in the clear does not block the frames of an AAC track, whatever the coding: the AAC parser reads them
-    // without a configuration, and the finding is about the CodecPrivate.
+    // A CodecPrivate that is zlib-compressed or header-stripped is undone and handed to the AAC parser as its configuration, as the Opus and Vorbis parsers get theirs:
+    // the stream is the clear track's, with the clear track's samples.
     [Theory]
     [InlineData("matroska/aac-private-zlib.mka")]
     [InlineData("matroska/aac-private-stripped.mka")]
-    [InlineData("matroska/aac-private-bzlib.mka")]
-    public void MatroskaCodedCodecPrivateDoesNotBlockClearAacFrames(string name)
+    public void MatroskaUndoneCodecPrivateIsTheAacConfiguration(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Null(stream.Protection);
+        Assert.Equal("AAC LC", stream.Codec);
+        Assert.Equal(6144, stream.Samples);
+        Assert.Empty(report.Findings);
+    }
+
+    // A CodecPrivate that is encrypted or not undone is not handed over, and the clear frames are analyzed all the same, without a configuration.
+    [Theory]
+    [InlineData("matroska/aac-private-bzlib.mka", "matroska.codec-private-not-read", false)]
+    [InlineData("matroska/aac-private-encrypted.mka", "matroska.codec-private-encrypted", true)]
+    public void MatroskaUnreadCodecPrivateDoesNotBlockClearAacFrames(string name, string code, bool isProtected)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(isProtected, stream.IsProtected);
         Assert.True(stream.Duration > 0);
-        Assert.Contains(report.Findings, f => f.Code == "matroska.codec-private-not-read");
+        Assert.Contains(report.Findings, f => f.Code == code);
+        Assert.Contains(report.Findings, f => f.Code == "aac.no-configuration");
         Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
     }
 

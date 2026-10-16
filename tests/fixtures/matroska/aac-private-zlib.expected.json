@@ -1,5 +1,5 @@
 {
- "description": "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given no configuration because it cannot map the inflated bytes back to the file.",
+ "description": "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the CodecPrivate is inflated and handed to the AAC parser as the configuration.",
  "length": 433,
  "format": "Matroska",
  "ebml": {
@@ -392,16 +392,7 @@
    "channels": 2
   }
  ],
- "findings": [
-  {
-   "code": "matroska.codec-private-not-read",
-   "contains": "zlib compression"
-  },
-  {
-   "code": "aac.no-configuration",
-   "contains": "without an AudioSpecificConfig"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "valid": false
  }

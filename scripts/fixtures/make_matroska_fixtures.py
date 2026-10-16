@@ -374,6 +374,19 @@ def _():
     return build(standard(cluster(0, *sealed), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=private, encodings=enc)]))
 
 
+@fixture("vorbis-private-zlib", "An A_VORBIS track whose CodecPrivate (the three headers of external-ffmpeg-vorbis) is zlib-compressed (scope 2), with the frames in the clear: the inflated "
+         "headers are handed to the Vorbis parser as they are, including the framing bit of the comment header.",
+         findings=[("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()
+    offset, length = manifest["tracks"][0]["private"]
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:30]
+    items = [simple_block(1, i * 23, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=0))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(data[offset:offset + length], 9), encodings=enc)]))
+
+
 @fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
          "so the frames count as encrypted by the AES encryption.",
          findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
@@ -445,18 +458,23 @@ def aac_private(encodings, transform):
     return build(standard(cluster(0, *items), track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, encodings=content_encodings(*encodings))]))
 
 
-@fixture("aac-private-zlib", "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given "
-         "no configuration because it cannot map the inflated bytes back to the file.",
-         findings=[("matroska.codec-private-not-read", "zlib compression"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+@fixture("aac-private-zlib", "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the CodecPrivate is inflated and handed to the AAC "
+         "parser as the configuration.", streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_private([content_encoding(order=0, scope=2, compression=0)], lambda config: zlib.compress(config, 9))
 
 
-@fixture("aac-private-stripped", "An A_AAC track whose CodecPrivate is header-stripped (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is "
-         "given no configuration.",
-         findings=[("matroska.codec-private-not-read", "header stripping"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+@fixture("aac-private-stripped", "An A_AAC track whose CodecPrivate is header-stripped (scope 2, the first byte of the AudioSpecificConfig) and whose frames are in the clear: the byte "
+         "is put back and the configuration handed to the AAC parser.", streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_private([content_encoding(order=0, scope=2, compression=3, settings=b"\x12")], lambda config: config[1:])
+
+
+@fixture("aac-private-encrypted", "An A_AAC track whose CodecPrivate is encrypted (AES-CTR, scope 2) and whose frames are in the clear: the frames are analyzed, the AAC parser is given no "
+         "configuration, and the stream carries the scheme with its samples not encrypted.",
+         findings=[("matroska.codec-private-encrypted", "is encrypted (AES-CTR)"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x05")], lambda config: bytes((b ^ 0x5A) for b in config))
 
 
 @fixture("aac-private-bzlib", "An A_AAC track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: the frames are "

@@ -164,13 +164,6 @@ internal sealed partial class FileReader
                 return;
             }
         }
-        else if (hasPrivate && !isOpaque && plan.Private.Steps.Count > 0)
-        {
-            // The same holds for a configuration put together from other bytes: the codec parser is given none.
-            _findings.AddNow(Severity.Info, "matroska.codec-private-not-read",
-                $"The CodecPrivate of {label} ({codecId}) is stored with {plan.Private.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file, so it is given no configuration.",
-                track.CodecPrivateNode ?? anchor);
-        }
         else if (hasPrivate && track.CodecPrivateLength <= MaxInflated)
         {
             try
