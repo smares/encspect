@@ -514,9 +514,9 @@ public class MemoryTests(ITestOutputHelper output)
     // run, so empty packets of an unknown key (3 bytes each) keep about nothing per packet. The
     // bound is on the growth from 1 to 4 million packets: what the report keeps whatever the count
     // (the detailed packets, pools the runtime holds on to) differs by platform and would otherwise
-    // dominate. The second figure is what the sampler read above the heap the analysis ends with
-    // (MeasureExcess), so it does not depend on the heap before the analysis, which is the same
-    // size for both counts only if nothing from earlier work is still alive when it is read.
+    // dominate. The second figure is what the analysis held above the heap it ends with
+    // (MeasureExcess), which reads the heap at fixed places in the input and does not depend on the
+    // heap before the analysis or on when a sampler thread runs.
     [Fact]
     public void UnknownSv8PacketsStayCompact()
     {
@@ -709,17 +709,81 @@ public class MemoryTests(ITestOutputHelper output)
         return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
     }
 
-    // The same measurement with the peak as what the sampler read above the heap the analysis ends
-    // with, report alive: the transient state of the analysis (what it held and let go of), without
-    // the report's own size and without the heap before the analysis. That one is read once per
-    // call, and a few MB of earlier work still alive at that moment, gone by the end, shifted the
-    // peak of one count and not of the other: UnknownSv8PacketsStayCompact read 1.15 bytes per
-    // further packet on ubuntu-26.04 with its 1 million packet peak at about zero. A sampler that
-    // reads nothing late can only lower the figure, never fail a test.
+    // What the analysis holds above the heap it ends with (report alive), read at fixed places in
+    // the input, not at fixed times: the stream the analysis reads from reads the live heap with
+    // the compacting collections of Live each time a read reaches the next eighth of the input
+    // (ProbeStream). That is the transient state of the analysis (what it held and let go of)
+    // without the report's own size and without the heap before the analysis, and it reads the
+    // same for the same input whatever the machine is doing. Two samplers gave up this test. With
+    // the heap before the analysis as the baseline, the 1 million packet peak read 3.4 MB too
+    // little on ubuntu-26.04 (1.15 bytes per further packet). A sampler of non-compacting
+    // collections, read above the end state, read 15.8 MB (x64) and 50 MB (arm64) at 4 million
+    // packets where it read 64 KB at 1 million, which no read of the heap with compacting
+    // collections shows. As with kept, two analyses are taken and the smaller excess counts. What
+    // the analysis holds only after its last read is not seen; what it keeps is bounded by kept.
     private static (Report Report, long Kept, long Excess) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
     {
-        (Report report, long kept, _, long sampled, long atEnd) = Run(name, data, warmUp);
-        return (report, kept, Math.Max(0, sampled - atEnd));
+        var analyzer = Analyzer.CreateDefault();
+        analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
+        (long withReport, long highest) = ProbedAnalysis(analyzer, name, data);
+        long withoutReport = Live();
+        (long secondWithReport, long secondHighest) = ProbedAnalysis(analyzer, name, data);
+        long secondWithoutReport = Live();
+        Report report = analyzer.Analyze(name, new MemoryStream(data));
+        GC.KeepAlive(data);
+        long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
+        long atEnd = Math.Min(withReport, secondWithReport);
+        return (report, kept, Math.Min(Math.Max(0, highest - atEnd), Math.Max(0, secondHighest - atEnd)));
+    }
+
+    // The live heap with the report alive and the highest live heap read while the input was read;
+    // the report is dropped on return.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static (long WithReport, long Highest) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
+    {
+        var stream = new ProbeStream(data, 8);
+        Report report = analyzer.Analyze(name, stream);
+        long live = Live();
+        GC.KeepAlive(report);
+        return (live, stream.Highest);
+    }
+
+    private sealed class ProbeStream(byte[] data, int parts) : MemoryStream(data)
+    {
+        private long _passed;
+
+        public long Highest { get; private set; }
+
+        // Each time the position moves up to a new eighth of the input, whichever pass over the
+        // input that is (detection reads it before the parser does): a move back re-arms it.
+        private void Probe()
+        {
+            long part = Position / (Length / parts);
+            if (part > _passed && part < parts)
+            {
+                Highest = Math.Max(Highest, Live());
+            }
+
+            _passed = part;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            Probe();
+            return base.Read(buffer, offset, count);
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            Probe();
+            return base.Read(buffer);
+        }
+
+        public override int ReadByte()
+        {
+            Probe();
+            return base.ReadByte();
+        }
     }
 
     private static (Report Report, long Kept, long Before, long Sampled, long AtEnd) Run(string name, byte[] data, byte[]? warmUp)
