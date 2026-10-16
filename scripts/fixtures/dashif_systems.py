@@ -19,9 +19,9 @@ import downloads
 NAME = "dashif-content-protection.html"
 SHA256 = "acd094ba1619d8308548076904445fab1f2b22afd2f7ec292481c8131e698232"
 URL = "https://dashif.org/identifiers/content_protection/"
-# No archive address: the Wayback Machine's captures of the page (22 since 2023, with three different contents, none the pinned one) differ byte for byte from the page,
-# and a capture is pinned by its own SHA-256, so a fallback would need its own pin. If the page goes, the pinned bytes are the table of ProtectionSystems.cs.
-ADDRESSES = [URL]
+# No archive address: none of the Wayback Machine's captures of the page (22 since 2023, with four different contents) has the pinned bytes. The private
+# repository keeps a copy of the pinned page as the fallback.
+ADDRESSES = [URL, downloads.private("registries/dashif-content-protection.html")]
 TABLE = pathlib.Path(__file__).resolve().parents[2] / "src" / "Encspect.Core.Abstractions" / "ProtectionSystems.cs"
 
 
