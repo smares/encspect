@@ -148,7 +148,7 @@ internal sealed partial class FileReader
         MappedBytes? privateData = null;
         bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
 
-        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS and A_OPUS only (draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
+        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS and A_OPUS only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
         // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
         if (hasPrivate && !(codec is "vorbis" or "opus" || codecId == "A_AAC"))
@@ -162,9 +162,7 @@ internal sealed partial class FileReader
         if (hasPrivate && plan.Private.Describe() is { } privateProblem)
         {
             // The frames of a track whose CodecPrivate is encrypted may be in the clear (scope 1 alone), but the setup of their codec is not.
-            bool isConfigurationSynthesized = codec == "aac" && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is not null;
             string consequence = needsCodecPrivate ? "the setup of its codec is unavailable and its frames cannot be analyzed"
-                : isConfigurationSynthesized ? "its configuration is worked out from the codec ID instead"
                 : areFramesEncrypted ? "the configuration of its codec is unavailable and no codec parser reads the track"
                 : "its codec parser is given no configuration";
             _findings.AddNow(Severity.Info, plan.Private.IsEncrypted ? "matroska.codec-private-encrypted" : "matroska.codec-private-not-read",

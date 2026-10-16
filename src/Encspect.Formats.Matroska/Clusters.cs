@@ -132,7 +132,7 @@ internal sealed partial class FileReader
                 if (definition is null)
                 {
                     _findings.Add(Severity.Info, "matroska.unknown-element", () => new Node("Unknown Element", child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x{child.Id:X} and lies at 0x{child.Offset:X}, in the Cluster.");
+                        $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID {Ebml.IdText(child.Id)} and lies at 0x{child.Offset:X}, in the Cluster.");
                 }
                 else if (!Schema.IsChildOf(definition, Schema.Find(Schema.Cluster)))
                 {

@@ -57,7 +57,7 @@ internal static class ClusterNodes
         long length = headerLength + dataLength;
         if (definition is null)
         {
-            return new Node("Unknown Element", offset, length, $"ID 0x{id:X}, {(dataLength == 1 ? "1 byte" : $"{dataLength} bytes")}") { Description = Explain.UnknownElement };
+            return new Node("Unknown Element", offset, length, $"ID {Ebml.IdText(id)}, {(dataLength == 1 ? "1 byte" : $"{dataLength} bytes")}") { Description = Explain.UnknownElement };
         }
 
         NodeValue? shown = definition.Type switch

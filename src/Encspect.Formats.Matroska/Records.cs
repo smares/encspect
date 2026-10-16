@@ -22,6 +22,7 @@ internal enum ItemKind : byte
 
 // One element of a Cluster, kept in a record because a long file holds millions of them: the nodes are built from the
 // records when they are read (see ClusterNodes).
+// Value holds a BlockGroup's child count: a separate Count field would make an Item 48 bytes, not 40.
 internal struct Item
 {
     public long Offset;

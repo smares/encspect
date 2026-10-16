@@ -69,7 +69,7 @@ internal static class Values
                 if (bytes is not null && name == "SeekID" && bytes.Length is >= 1 and <= 4)
                 {
                     uint id = (uint)Ebml.Unsigned(bytes);
-                    return NodeValue.Text($"0x{id:X} ({Schema.Find(id)?.Name ?? "unknown"})");
+                    return NodeValue.Text($"{Ebml.IdText(id)} ({Schema.Find(id)?.Name ?? "unknown"})");
                 }
 
                 if (bytes is not null && bytes.Length > 0)

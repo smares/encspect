@@ -111,6 +111,6 @@ public class MatroskaFindingTests
         }
 
         Assert.Equal(2, shown.Count);
-        Assert.All(shown, text => Assert.StartsWith("ID 0x123456789ABCDEF,", text, StringComparison.Ordinal));
+        Assert.All(shown, text => Assert.StartsWith("ID 0x0123456789ABCDEF,", text, StringComparison.Ordinal));
     }
 }

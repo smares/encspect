@@ -302,7 +302,7 @@
                     },
                     {
                       "name": "Unknown Element",
-                      "value": "ID 0x123456789ABCDEF, 2 bytes",
+                      "value": "ID 0x0123456789ABCDEF, 2 bytes",
                       "offset": 228,
                       "length": 11
                     },
@@ -383,7 +383,7 @@
                         },
                         {
                           "name": "Unknown Element",
-                          "value": "ID 0x123456789ABCDEF, 2 bytes",
+                          "value": "ID 0x0123456789ABCDEF, 2 bytes",
                           "offset": 287,
                           "length": 11
                         }
@@ -796,7 +796,7 @@
       {
         "severity": "Info",
         "code": "matroska.unknown-element",
-        "message": "An element is none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x123456789ABCDEF and lies at 0xE4, in the Cluster.",
+        "message": "An element is none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x0123456789ABCDEF and lies at 0xE4, in the Cluster.",
         "offset": 228,
         "length": 11,
         "path": [

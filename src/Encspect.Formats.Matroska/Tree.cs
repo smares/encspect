@@ -64,9 +64,9 @@ internal sealed partial class FileReader
 
         if (definition is null)
         {
-            node.Value = $"ID 0x{header.Id:X}, {Bytes(end - header.DataOffset)}";
+            node.Value = $"ID {Ebml.IdText(header.Id)}, {Bytes(end - header.DataOffset)}";
             _findings.Add(Severity.Info, "matroska.unknown-element", node, count =>
-                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x{header.Id:X} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
+                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID {Ebml.IdText(header.Id)} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
             return node;
         }
 
