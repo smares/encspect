@@ -32,6 +32,7 @@ fixtures with a wrong CRC and the encoder-made files with right ones show) and t
 """
 
 import json
+import os
 import pathlib
 import re
 import shutil
@@ -127,8 +128,6 @@ def check_apps(manifest, text, problems):
     expected = apps_of(manifest)
     if muxing != [m for m, _ in expected if m is not None] or writing != [w for _, w in expected if w is not None]:
         problems.append(f"mkvinfo reads the applications {muxing} and {writing}, the manifest {expected}")
-
-
 
 
 # The fixtures whose protection could not be compared with a tool or the report, for the summary.
@@ -308,12 +307,15 @@ def main():
         failures += 1
     tally.print()
     print(f"{len(NOT_COMPARED)} protection comparisons skipped (listed above)")
-    # The analyzer's reading of random and tied encodings against the model, which needs the command line app built (dotnet build src/Encspect.Cli -c Release).
-    if (ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect.dll").exists():
-        if subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("check_matroska_encodings.py"))]).returncode != 0:
-            failures += 1
-    else:
-        print("random encodings not checked: the command line app is not built (dotnet build src/Encspect.Cli -c Release)")
+    # The analyzer's reading of random and tied encodings against the model needs the command line app (dotnet build src/Encspect.Cli -c Release); a missing
+    # app fails the run, and the check is skipped only when ENCSPECT_SKIP_ENCODINGS is set.
+    if os.environ.get("ENCSPECT_SKIP_ENCODINGS"):
+        print("random encodings not checked: ENCSPECT_SKIP_ENCODINGS is set")
+    elif not check_matroska_encodings.CLI_DLL.exists():
+        print(f"random encodings not checked, and that fails the run: {check_matroska_encodings.CLI_DLL} is not built (dotnet build src/Encspect.Cli -c Release)")
+        failures += 1
+    elif subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("check_matroska_encodings.py"))]).returncode != 0:
+        failures += 1
     print(f"{checked} fixtures checked, {failures} with problems")
     return 1 if failures else 0
 
