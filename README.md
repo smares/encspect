@@ -27,7 +27,7 @@ Formats read so far ([details](docs/formats/README.md)):
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
 
-Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, and Windows Media DRM in ASF.
+Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
 Phase 2, the lossy formats, is done. Next: the lossless formats, among them the frames of WMA Lossless.
 
