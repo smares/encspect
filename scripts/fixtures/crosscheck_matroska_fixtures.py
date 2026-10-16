@@ -13,10 +13,11 @@ For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
 - the protection, on every fixture (those without a ContentEncryption are the negative control): mkvinfo's order, scope, type and encryption
   algorithm of each track's ContentEncodings against the manifest's, and the golden report's protection against what RFC 9559 (section
   5.1.4.1.31.8 and following) makes of the manifest's encodings: a type 1 encoding whose algorithm is not 0 protects, its samples are encrypted
-  when its scope covers the frames (bit 1), and its scheme names the algorithm and, for AES, the cipher mode. mkvinfo 82.0 lists
+  when its scope covers the frames (bit 1, or bit 4 over an encoding that covers them), and its scheme names the algorithm and, for AES, the cipher mode. mkvinfo 82.0 lists
   ContentEncAESSettings as an unknown element, so the cipher mode comes from the manifest, which the independent reader of matroska_model.py
   wrote. MediaInfo 24.01 prints no Encryption field for a Matroska track (observed on these files; its source was not read), which is compared
-  as absent, so the script fails when a later version starts to report one.
+  as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
+  tracks is not compared, and the script prints why.
 - ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*).
 - MediaInfo (24.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
   analyzer's golden report, wherever MediaInfo reports them.
@@ -127,7 +128,7 @@ def check_apps(manifest, text, problems):
         problems.append(f"mkvinfo reads the applications {muxing} and {writing}, the manifest {expected}")
 
 
-MKVINFO_ENCRYPTION = {1: "DES", 2: "3DES", 3: "Twofish", 4: "Blowfish", 5: "AES"}
+ALGORITHM_NAMES = {1: "DES", 2: "3DES", 3: "Twofish", 4: "Blowfish", 5: "AES"}
 AES_MODES = {1: "AES-CTR", 2: "AES-CBC"}
 
 
@@ -148,18 +149,29 @@ def mkvinfo_encodings(text):
 
 def expected_protection(encodings):
     """What RFC 9559 makes of a track's encodings (section 5.1.4.1.31.8 and following), as (scheme, isEncrypted) or None: ContentEncryption counts for
-    type 1 only, ContentEncAlgo 0 states that the data are not encrypted (Table 24), and only AES has a cipher mode (Table 25)."""
-    encrypting = [e for e in sorted(encodings, key=lambda e: -e["order"]) if e["type"] == 1 and e["encryption"] != 0]
+    type 1 only, ContentEncAlgo 0 (also its default, when the element is absent) states that the data are not encrypted (Table 24), only AES has a
+    cipher mode (Table 25), and an encryption with scope bit 4 encrypts the settings of the next encoding, so it covers the frames when that encoding
+    does (section 5.1.4.1.31.3)."""
+    ordered = sorted(encodings, key=lambda e: -e["order"])
+
+    def algorithm(e):
+        return (e["encryption"] or 0) if e["has_encryption"] else None
+
+    def covers_frames(i):
+        scope = ordered[i]["scope"]
+        return bool(scope & 1) or bool(scope & 4 and i + 1 < len(ordered) and covers_frames(i + 1))
+
+    encrypting = [i for i, e in enumerate(ordered) if e["type"] == 1 and algorithm(e) != 0]
     if not encrypting:
         return None
-    chosen = next((e for e in encrypting if e["scope"] & 1), encrypting[0])
-    if chosen["encryption"] is None:
+    chosen = ordered[next((i for i in encrypting if covers_frames(i)), encrypting[0])]
+    if not chosen["has_encryption"]:
         name = None
     elif chosen["encryption"] == 5 and chosen["cipher"] is not None:
         name = AES_MODES.get(chosen["cipher"], f"AES, mode {chosen['cipher']}")
     else:
-        name = MKVINFO_ENCRYPTION.get(chosen["encryption"], f"algorithm {chosen['encryption']}")
-    return "Matroska ContentEncryption" + (f", {name}" if name else ""), bool(chosen["scope"] & 1)
+        name = ALGORITHM_NAMES.get(chosen["encryption"], f"algorithm {chosen['encryption']}")
+    return "Matroska ContentEncryption" + (f", {name}" if name else ""), covers_frames(ordered.index(chosen))
 
 
 def check_protection(name, manifest, path, problems, tally, report):
@@ -172,7 +184,9 @@ def check_protection(name, manifest, path, problems, tally, report):
     elif got != wanted:
         problems.append(f"mkvinfo reads the ContentEncodings {got}, the manifest {wanted}")
     audio = [t for t in manifest["tracks"] if t["type"] == 2]
-    if report is not None and len(report["streams"]) == len(audio):
+    if report is not None and len(report["streams"]) != len(audio):
+        print(f"{name}: the report's protection not compared: it has {len(report['streams'])} streams, the manifest {len(audio)} audio tracks")
+    elif report is not None:
         for track, stream in zip(audio, report["streams"]):
             expected = expected_protection(track["encodings"])
             protection = stream.get("protection")
