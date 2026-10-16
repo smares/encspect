@@ -16,7 +16,7 @@ public sealed partial class OpusParser
     private static partial Regex LibopusVendor();
 
     // ffmpeg's ENCODER field after libopus or its native encoder: "Lavc60.31.102 libopus".
-    [GeneratedRegex(@"^Lavc\S* (lib)?opus$")]
+    [GeneratedRegex(@"^Lavc(\d\S*)? (lib)?opus$")]
     private static partial Regex FfmpegEncoder();
 
     private sealed partial class StreamState
@@ -36,21 +36,28 @@ public sealed partial class OpusParser
             var evidence = new List<Node>();
             string? name = null;
             Confidence confidence = Confidence.Medium;
-            if (field is not null)
-            {
-                // A libavcodec encoder ID names an encoder in any field; one of another codec is kept and reported.
-                name = $"FFmpeg ({field.Text})";
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
-                if (!FfmpegEncoder().IsMatch(field.Text))
-                {
-                    string text = field.Text;
-                    _findings.Add(Severity.Info, "opus.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Opus.");
-                }
-            }
-            else if (vendor is not null && library is { Success: true })
+            // One rule for a libavcodec encoder ID in the ENCODER field: one of this codec names an encoder (ffmpeg's) unless stream evidence names a
+            // real encoder first; one of another codec never becomes the encoder, stays as evidence under the Encoder node where there is one and is reported.
+            bool isOwn = field is not null && FfmpegEncoder().IsMatch(field.Text);
+            if (vendor is not null && library is { Success: true })
             {
                 name = $"libopus {library.Groups[1].Value}";
                 evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", which names libopus' version"));
+            }
+            else if (isOwn)
+            {
+                name = $"FFmpeg ({field!.Text})";
+                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
+            }
+
+            if (field is not null && !isOwn)
+            {
+                string text = field.Text;
+                _findings.Add(Severity.Info, "opus.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Opus.");
+                if (name is not null)
+                {
+                    evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{text}\", an encoder of another codec, which does not count"));
+                }
             }
 
             if (name is null)

@@ -24,12 +24,9 @@ public sealed partial class SpeexParser
             Node? versionNode = _headerNode?.Children.FirstOrDefault(c => c.Name == "Speex Version");
             string? library = _header?.Version is { Length: > 0 } text ? text : null;
 
-            // A libavcodec encoder ID names an encoder in any field; one of another codec is kept and reported.
-            if (field is not null && !field.Text.Contains("libspeex", StringComparison.Ordinal))
-            {
-                string other = field.Text;
-                _findings.Add(Severity.Info, "speex.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{other}\", an encoder of another codec, not of Speex.");
-            }
+            // One rule for a libavcodec encoder ID in the ENCODER field: one of this codec names an encoder (ffmpeg's) unless stream evidence names a
+            // real encoder first; one of another codec never becomes the encoder, stays as evidence under the Encoder node where there is one and is reported.
+            bool isOwn = field is not null && field.Text.Contains("libspeex", StringComparison.Ordinal);
 
             var evidence = new List<Node>();
             string? name = null;
@@ -47,10 +44,18 @@ public sealed partial class SpeexParser
                         : $"Speex header version \"{library}\" differs from the vendor string's"));
                 }
             }
-            else if (field is not null)
+            else if (library is not null && versionNode is not null && !isOwn)
             {
-                name = $"FFmpeg ({field.Text})";
-
+                name = $"libspeex {library}";
+                evidence.Add(Evidence(versionNode, $"Speex header version \"{library}\", which libspeex writes whatever program encodes"));
+                if (vendor is not null)
+                {
+                    evidence.Add(Evidence(vendor.Source, $"{vendor.Description} \"{vendor.Text}\" names no encoder"));
+                }
+            }
+            else if (isOwn)
+            {
+                name = $"FFmpeg ({field!.Text})";
                 confidence = Confidence.Medium;
                 evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes with libspeex"));
                 if (versionNode is not null && library is not null)
@@ -58,13 +63,14 @@ public sealed partial class SpeexParser
                     evidence.Add(Evidence(versionNode, $"Speex header version \"{library}\", which libspeex writes"));
                 }
             }
-            else if (library is not null && versionNode is not null)
+
+            if (field is not null && !isOwn)
             {
-                name = $"libspeex {library}";
-                evidence.Add(Evidence(versionNode, $"Speex header version \"{library}\", which libspeex writes whatever program encodes"));
-                if (vendor is not null)
+                string other = field.Text;
+                _findings.Add(Severity.Info, "speex.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{other}\", an encoder of another codec, not of Speex.");
+                if (name is not null)
                 {
-                    evidence.Add(Evidence(vendor.Source, $"{vendor.Description} \"{vendor.Text}\" names no encoder"));
+                    evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{other}\", an encoder of another codec, which does not count"));
                 }
             }
 

@@ -222,6 +222,10 @@ FIXTURES = [
     # source's encoder string but ffmpeg's fields.
     ("external-ffmpeg-remux", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{lame -V 2}", "-c", "copy", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True)),
+    # A mono LAME file remuxed by a bit-exact ffmpeg: its tag keeps the encoder string "LAME3.100" but gets ffmpeg's CRC over the frame's first 190
+    # bytes, which for mono (a 175-byte range in LAME's) differs from LAME's: the tag is laid out as ffmpeg's muxer writes it, whatever its string says.
+    ("external-ffmpeg-remux-lame-mono", ".mp3", 44100, 1, ["ffmpeg", "-v", "error", "-y", "-i", "{lame -m m -b 64}", "-fflags", "+bitexact", "-c", "copy", "{out}"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=True)),
     # A BladeEnc fixture remuxed by ffmpeg, which writes a LAME tag with "Lavf" when it knows no
     # encoder: a remux names none, so the frames still point to BladeEnc.
     ("external-ffmpeg-remux-blade", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{fixture external-blade-stereo.mp3}", "-c", "copy", "{out}"],
@@ -789,6 +793,38 @@ def weigh_tsse(encoder, claim):
     return encoder
 
 
+def detected_writer(tag, path):
+    """The writer the analyzer must name, by a rule of its own: a TSSE frame of ffmpeg's muxer ("Lavf60.16.100") names it with its version; without
+    one, a LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag) names "FFmpeg": an encoder string of "Lavc"
+    or "Lavf", or a tag CRC that is not LAME's but is the one over the frame's first 190 bytes. Both are low confidence; None names no writer."""
+    text = tsse(path)
+    if text and text.startswith("Lavf"):
+        return {"name": f"FFmpeg ({text})", "confidence": "Low"}
+    lame = tag.get("lame") if tag else None
+    if lame and (lame["encoder"].startswith(("Lavc", "Lavf")) or (lame["tag_crc"] != lame["tag_crc_computed"] and lame["tag_crc"] == lame["tag_crc_ffmpeg"])):
+        return {"name": "FFmpeg", "confidence": "Low"}
+    return None
+
+
+def add_writers():
+    """Adds "detected_writer" to the manifests of the committed files whose writer is named, from the files and the tags the manifests hold, with no encoder."""
+    for path in sorted(OUT.glob("*.expected.json")):
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        data = path.with_name(path.name[: -len(".expected.json")] + ".mp3")
+        if "vbr_header" not in manifest or "encoder" not in manifest or not data.exists():
+            continue
+        writer = detected_writer(manifest["vbr_header"], data)
+        if writer is not None and manifest.get("detected_writer") != writer:
+            ordered = {}
+            for key, value in manifest.items():
+                if key != "detected_writer":
+                    ordered[key] = value
+                if key == "mp3guessenc_encoder_string":
+                    ordered["detected_writer"] = writer
+            ordered.setdefault("detected_writer", writer)
+            path.write_text(json.dumps(ordered, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def describe_tag(path, command, manifest):
     data = path.read_bytes()
     start, length = first_frame(data)
@@ -808,6 +844,8 @@ def describe_tag(path, command, manifest):
     manifest["vbr_header"] = tag
     manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
+    if (writer := detected_writer(tag, path)) is not None:
+        manifest["detected_writer"] = writer
 
 
 def encode(command, source, path, temp):
@@ -972,7 +1010,9 @@ def main(names):
 
 
 if __name__ == "__main__":
-    if sys.argv[1:2] == ["--statistics-only"]:
+    if sys.argv[1:2] == ["--writers-only"]:
+        add_writers()
+    elif sys.argv[1:2] == ["--statistics-only"]:
         write_statistics(sys.argv[2:])
     else:
         main(sys.argv[1:])

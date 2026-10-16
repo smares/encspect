@@ -244,13 +244,13 @@
                   "name": "Encoder",
                   "value": "speexenc 1.2.1",
                   "offset": 36,
-                  "length": 128,
+                  "length": 165,
                   "children": [
                     {
                       "name": "Confidence",
                       "value": "High",
                       "offset": 36,
-                      "length": 128
+                      "length": 165
                     },
                     {
                       "name": "Evidence",
@@ -263,6 +263,12 @@
                       "value": "Speex header version \"1.2.1\", which libspeex writes, agrees",
                       "offset": 36,
                       "length": 20
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment ENCODER field \"Lavc60.31.102 libopus\", an encoder of another codec, which does not count",
+                      "offset": 168,
+                      "length": 33
                     }
                   ]
                 },

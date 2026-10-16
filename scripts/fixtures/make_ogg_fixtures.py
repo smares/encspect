@@ -340,7 +340,7 @@ def writer_claims_differ():
 
 
 def encoder_other_format():
-    # A libavcodec encoder ID of another codec in the ENCODER field names an encoder all the same, and a finding says it is not Speex's.
+    # A libavcodec encoder ID of another codec in the ENCODER field never becomes the encoder (no other evidence names one here), and a finding says it is not Speex's.
     f = Fixture("encoder-other-format")
     packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Lavc60.31.102 libopus"])
     pages = m.pages_for(0x00C0FFF0, packets, granules, default_cuts(10))

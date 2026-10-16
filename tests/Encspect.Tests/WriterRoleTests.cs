@@ -86,6 +86,10 @@ public partial class WriterRoleTests
         Assert.True(ClaimRoles.IsMuxerVersion("Lavf"));
         Assert.True(ClaimRoles.IsEncoderId("Lavc60.31.102 libvorbis"));
         Assert.True(ClaimRoles.IsEncoderId("Lavc60.31"));
+        Assert.True(ClaimRoles.IsEncoderId("Lavc libvorbis"));
+        Assert.False(ClaimRoles.IsEncoderId("Lavc-foo"));
+        Assert.False(ClaimRoles.IsEncoderId("Lavcodec"));
+        Assert.False(ClaimRoles.IsEncoderId(" Lavc60.31"));
         Assert.Equal(ClaimRole.Encoder, ClaimRoles.Of(ClaimRole.Writer, "Lavc60.31.102 libvorbis"));
         Assert.Equal(ClaimRole.Writer, ClaimRoles.Of(ClaimRole.Writer, "opusenc from opus-tools 0.2"));
     }
@@ -324,6 +328,7 @@ public partial class WriterRoleTests
     [InlineData("WavPack 5.6.0", KnownWriters.MpegAudio, "WavPack")]
     [InlineData("LAME3.100", KnownWriters.WavPack, "MPEG audio")]
     [InlineData("FAAC2", KnownWriters.Usac, "AAC")]
+    [InlineData("opusenc.exe", KnownWriters.Vorbis, "Opus")]
     public void SoftwareThatWritesAnotherFormatIsKnown(string writer, string kind, string writes) =>
         Assert.Equal(writes, KnownWriters.WritesInstead(writer, kind));
 
@@ -345,6 +350,7 @@ public partial class WriterRoleTests
     [InlineData("foobar2000 (LAME 3.100)", KnownWriters.WavPack)]
     [InlineData("LAMEenc", KnownWriters.WavPack)]
     [InlineData("LameXP", KnownWriters.WavPack)]
+    [InlineData("LAME-3.100", KnownWriters.WavPack)]
     [InlineData("RazorLame", KnownWriters.WavPack)]
     [InlineData("Windows Media Format SDK 12", KnownWriters.MpegAudio)]
     public void SoftwareThatWritesTheFormatOrIsNotKnownRaisesNothing(string writer, string kind) =>
@@ -425,14 +431,23 @@ public partial class WriterRoleTests
     }
 
     [Fact]
-    public void AnEncoderIdOfAnotherCodecIsKeptAndReported()
+    public void AnEncoderIdOfAnotherCodecNeverBecomesTheEncoder()
     {
         Report opus = Analyze("other.opus", Fixture("ogg/opus-encoder-other-format.opus"));
-        StreamInfo stream = Assert.Single(opus.Streams);
-        Assert.Equal("FFmpeg (Lavc60.31.102 libvorbis)", stream.Encoder);
+        Assert.Null(Assert.Single(opus.Streams).Encoder);
         Finding finding = Assert.Single(opus.Findings, f => f.Code == "opus.encoder-other-format");
         Assert.Equal(Severity.Info, finding.Severity);
         Assert.Contains("an encoder of another codec, not of Opus", finding.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("ogg/vorbis-encoder-vendor-wins.ogg", "vorbis", "libvorbis 1.3.7")]
+    [InlineData("ogg/opus-encoder-vendor-wins.opus", "opus", "libopus 1.4")]
+    public void AVendorThatNamesTheEncoderWinsOverAForeignEncoderId(string path, string code, string encoder)
+    {
+        Report report = Analyze(Path.GetFileName(path), Fixture(path));
+        Assert.Equal(encoder, Assert.Single(report.Streams).Encoder);
+        Assert.Single(report.Findings, f => f.Code == code + ".encoder-other-format");
     }
 
     // ---- the front ends

@@ -400,8 +400,9 @@ public sealed partial class MpegAudioParser
     // The writer a region's claims and its LAME tags name. ffmpeg's mp3 muxer writes the whole Xing and LAME tag (libavformat/mp3enc.c),
     // so a tag laid out as it writes it is the muxer's: an encoder string that starts "Lavc" (the stream's "encoder" metadata, the
     // codec library's version, which names the encoder: HeaderEncoder) or "Lavf" ("Lavf lame" in place of the bit-exact "Lavc libmp3lame",
-    // mp3enc.c:250-252, or a bare "Lavf" without metadata, mp3enc.c:258), or the CRC over the frame's first 190 bytes that only ffmpeg
-    // writes. It names the writer "FFmpeg" without a version, since the "Lavc" version is the codec library's, with low confidence.
+    // mp3enc.c:250-252, or a bare "Lavf" without metadata, mp3enc.c:258), or a stored CRC equal to the one ffmpeg's mp3enc.c computes over the
+    // frame's first 190 bytes. The quirk needs !IsTagCrcValid: LAME's own CRC coincides with ffmpeg's for MPEG-1 stereo, so a valid LAME CRC
+    // says nothing. It names the writer "FFmpeg" without a version, since the "Lavc" version is the codec library's, with low confidence.
     // Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with it.
     private static Node? DetectWriter(StreamState state, RegionState region, IReadOnlyList<EncoderClaim> claims)
     {

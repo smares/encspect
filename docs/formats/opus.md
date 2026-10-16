@@ -23,7 +23,7 @@ From mapping family 0 or 1. Ambisonics and family 255 name no speakers.
 ## Encoder detection
 
 - **Encoder:** the vendor string of libopusenc, which names libopus' version ("libopus 1.4"), with medium confidence.
-- **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libopus"), shown as "FFmpeg (Lavc60.31.102 libopus)" with medium confidence (bit-exact: "FFmpeg (Lavc libopus)"). One that names another codec's encoder is kept and is `opus.encoder-other-format`.
+- **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libopus"), shown as "FFmpeg (Lavc60.31.102 libopus)" with medium confidence (bit-exact, without a version: "Lavc libopus", shown "FFmpeg (Lavc libopus)"). A vendor string that names libopus wins over it; an ID of another codec's encoder never becomes the encoder, stays as evidence under it and is `opus.encoder-other-format`.
 - **Writer:** the ENCODER field of an application (RFC 7845 section 5.2: the vendor string is "intended to identify the codec encoder and encapsulation implementations", and "user-facing applications can use the 'ENCODER' user comment tag to identify themselves"): opusenc's "opusenc from opus-tools 0.2" is shown as "opusenc 0.2". A vendor string that is ffmpeg's muxer version ("Lavf60.16.100") names the writer too. Two claims that name different software are `opus.writer-claim-differs`, and software known to write another format is `opus.writer-other-format`.
 
 ## Not yet covered

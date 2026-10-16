@@ -8,7 +8,7 @@ public static partial class ClaimRoles
 {
     // The text of ffmpeg's muxer ("Lavf60.16.100", a bare "Lavf" or "Lavf lame"), which libavformat writes into whichever tag its
     // output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as the
-    // vendor string, movenc.c:4202 into ©too). In the LAME tag mp3enc.c:250-252 replaces the bit-exact encoder ID "Lavc libmp3lame"
+    // vendor string, movenc.c:4203-4204 into ©too). In the LAME tag mp3enc.c:250-252 replaces the bit-exact encoder ID "Lavc libmp3lame"
     // with "Lavf lame" and mp3enc.c:258 writes a bare "Lavf" without any: the muxer wrote them, so they name the writer.
     [GeneratedRegex(@"^\s*Lavf(?![A-Za-z])", RegexOptions.CultureInvariant)]
     private static partial Regex MuxerVersion();
@@ -16,8 +16,9 @@ public static partial class ClaimRoles
     // The libavcodec identification of an encoder ("Lavc60.31.102 libvorbis", or "Lavc libvorbis" when bit-exact):
     // fftools/ffmpeg_enc.c:157-160 set_encoder_id sets the stream's "encoder" metadata to it only when ffmpeg encodes, mp3enc.c copies
     // it into the LAME tag and the Vorbis comment writer (ff_vorbiscomment_write) into the ENCODER comment. It names an encoder
-    // in whichever field.
-    [GeneratedRegex(@"^\s*Lavc(?![A-Za-z])", RegexOptions.CultureInvariant)]
+    // in whichever field. "Lavc" is followed by a version digit or, bit-exact, a single space, so "Lavc-foo" is no ID; the match is anchored
+    // at the start like the codecs' own patterns (VorbisParser, OpusParser), which agree with it.
+    [GeneratedRegex(@"^Lavc(?:\d| )", RegexOptions.CultureInvariant)]
     private static partial Regex EncoderId();
 
     // Whether the text is a muxer's version and so names the writer, not the encoder, in whichever field it stands.
