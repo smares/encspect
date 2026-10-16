@@ -1475,6 +1475,8 @@
                 },
                 {
                   "name": "Digital Signature Object",
+                  "value": 4,
+                  "unit": "bytes",
                   "offset": 1273,
                   "length": 36,
                   "children": [
@@ -1646,7 +1648,7 @@
                           "children": [
                             {
                               "name": "System ID",
-                              "value": "7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D",
+                              "value": "Windows Media DRM for network devices (7A079BB6-DAA4-4E12-A5CA-91D38DC11A8D)",
                               "offset": 1449,
                               "length": 16
                             },
@@ -1682,8 +1684,7 @@
                                 },
                                 {
                                   "name": "Encrypted Object ID",
-                                  "value": 2,
-                                  "unit": "bytes",
+                                  "value": 1,
                                   "offset": 1475,
                                   "length": 2
                                 }
@@ -2883,6 +2884,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Stream 1",
+                  "kind": "Stream",
+                  "value": "frames not read: encrypted",
+                  "offset": 1547,
+                  "length": 562
+                },
+                {
+                  "name": "Stream 2",
+                  "kind": "Stream",
+                  "value": "frames not read: encrypted",
+                  "offset": 1547,
+                  "length": 562
                 }
               ]
             }
@@ -2890,7 +2905,54 @@
         }
       ]
     },
-    "streams": [],
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            7
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 8000,
+        "channels": 1,
+        "samples": 0,
+        "duration": 0.05,
+        "isVbr": false,
+        "isProtected": true,
+        "protection": {
+          "scheme": "Microsoft Digital Rights Manager version 1",
+          "isEncrypted": true,
+          "systems": [
+            "Windows Media DRM for network devices"
+          ]
+        },
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            8
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 8000,
+        "channels": 1,
+        "samples": 0,
+        "duration": 0.05,
+        "isVbr": false,
+        "isProtected": true,
+        "protection": {
+          "scheme": "Microsoft Digital Rights Manager version 1",
+          "isEncrypted": true,
+          "systems": []
+        },
+        "series": []
+      }
+    ],
     "findings": [
       {
         "severity": "Info",
@@ -2921,7 +2983,7 @@
       {
         "severity": "Info",
         "code": "asf.content-encrypted",
-        "message": "The file is protected by Microsoft Digital Rights Management version 1; its streams are encrypted and are reported as the file holds them.",
+        "message": "The file is protected by Microsoft Digital Rights Manager version 1; its streams are encrypted and are reported as the file holds them.",
         "offset": 1155,
         "length": 85,
         "path": [
@@ -2934,7 +2996,7 @@
       {
         "severity": "Info",
         "code": "asf.content-encrypted",
-        "message": "The file is protected by the Windows Media Rights Manager; its streams are encrypted and are reported as the file holds them.",
+        "message": "The file is protected by Windows Media Rights Manager 7; its streams are encrypted and are reported as the file holds them.",
         "offset": 1240,
         "length": 33,
         "path": [
@@ -2960,7 +3022,7 @@
       {
         "severity": "Info",
         "code": "asf.content-encrypted",
-        "message": "The file is protected by Windows Media DRM for network devices; its streams are encrypted and are reported as the file holds them.",
+        "message": "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them.",
         "offset": 1423,
         "length": 61,
         "path": [

@@ -92,53 +92,101 @@ internal sealed partial class FileReader
         string codecId = track.CodecId ?? string.Empty;
         string? codec = Codecs.RouteOf(codecId);
         Node anchor = track.CodecIdNode ?? track.Node;
+        EncodingPlan plan = PlanOf(track);
         if (statistics.Frames == 0)
         {
             _findings.AddNow(Severity.Info, "matroska.track-empty", $"{label} ({(codecId.Length == 0 ? "no codec ID" : codecId)}) has no block with frames, so there is nothing to analyze.", track.Node);
+            if (plan.Protection is not null)
+            {
+                AddContainerStream(segment, track, null, plan.Protection);
+            }
+
             return;
         }
 
-        (Decoder? frames, Decoder? priv, string? problem, bool isEncrypted) = Decoders(track);
-        if (problem is null && (frames is not null || priv is not null) && codec is not null and not ("vorbis" or "opus"))
+        if (plan.IsAmbiguous)
+        {
+            _findings.AddNow(Severity.Info, "matroska.track-encoding-not-read",
+                $"{label} ({codecId}) has ContentEncodings that share a ContentEncodingOrder, so they cannot be ordered and none is trusted: its frames and its CodecPrivate are not read, so its frames cannot be analyzed.",
+                track.Encodings.FirstOrDefault()?.Node ?? track.Node);
+            AddContainerStream(segment, track, null, plan.Protection, isUnordered: true);
+            return;
+        }
+
+        bool areFramesEncrypted = plan.Frames.IsEncrypted;
+        string? problem = plan.Frames.Describe();
+        // Vorbis and Opus cannot be set up without their CodecPrivate.
+        bool needsCodecPrivate = codec is "vorbis" or "opus";
+        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !needsCodecPrivate)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
-            problem = $"stores its frames with {(track.Encodings.Any(e => e.CompressionAlgorithm == 0) ? "zlib compression" : "header stripping")}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
+            problem = $"stores its frames with {plan.Frames.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
         }
 
         if (problem is not null)
         {
-            _findings.AddNow(Severity.Info, isEncrypted ? "matroska.track-encrypted" : "matroska.track-encoding-not-read",
+            _findings.AddNow(Severity.Info, areFramesEncrypted ? "matroska.track-encrypted" : "matroska.track-encoding-not-read",
                 $"{label} ({codecId}) {problem}, so its frames cannot be analyzed.", track.Encodings.FirstOrDefault()?.Node ?? track.Node);
-            AddContainerStream(segment, track, null);
-            return;
+            if (!areFramesEncrypted || codec is null)
+            {
+                AddContainerStream(segment, track, null, plan.Protection);
+                return;
+            }
         }
-
-        if (codec is null)
+        else if (codec is null)
         {
             _findings.AddNow(Severity.Info, "matroska.codec-not-analyzed",
                 Codecs.NameOf(codecId) is { } name
                     ? $"{label} is coded as {name} ({codecId}), whose frames are not analyzed yet; the track is reported from its TrackEntry."
                     : $"{label} has the codec ID \"{codecId}\", which the Matroska codec mapping does not define for audio, so its frames are not analyzed.",
                 anchor);
-            AddContainerStream(segment, track, null);
+            AddContainerStream(segment, track, null, plan.Protection);
             return;
         }
 
         MappedBytes? privateData = null;
-        if (track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0 && track.CodecPrivateLength <= MaxInflated)
+        bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
+
+        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS and A_OPUS only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
+        // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
+        // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
+        if (hasPrivate && !(codec is "vorbis" or "opus" || codecId == "A_AAC"))
+        {
+            _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
+                $"{label} ({codecId}) has a CodecPrivate, which the codec mapping does not define for it (draft-ietf-cellar-codec, section 3.4), so it is not handed to the codec parser.",
+                track.CodecPrivateNode ?? anchor);
+            hasPrivate = false;
+        }
+
+        if (hasPrivate && plan.Private.Describe() is { } privateProblem)
+        {
+            // The frames of a track whose CodecPrivate is encrypted may be in the clear (scope 1 alone), but the setup of their codec is not.
+            string consequence = needsCodecPrivate ? "the setup of its codec is unavailable and its frames cannot be analyzed"
+                : areFramesEncrypted ? "the configuration of its codec is unavailable and no codec parser reads the track"
+                : "its codec parser is given no configuration";
+            _findings.AddNow(Severity.Info, plan.Private.IsEncrypted ? "matroska.codec-private-encrypted" : "matroska.codec-private-not-read",
+                $"The CodecPrivate of {label} ({codecId}) {privateProblem}, so {consequence}.",
+                track.CodecPrivateNode ?? anchor);
+            if (needsCodecPrivate)
+            {
+                AddContainerStream(segment, track, null, plan.Protection);
+                return;
+            }
+        }
+        else if (hasPrivate && track.CodecPrivateLength <= MaxInflated)
         {
             try
             {
-                privateData = priv is null
+                privateData = plan.Private.Decoder is not { } privateDecoder
                     ? new MappedBytes(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset)
-                    : priv.Decode(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset, this);
+                    : privateDecoder.Decode(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset, this);
             }
             catch (InvalidDataException ex)
             {
                 _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
                     $"The CodecPrivate of {label} cannot be read back from its ContentEncodings (RFC 9559, section 5.1.4.1.31): {ex.Message} Its frames cannot be analyzed.", track.CodecPrivateNode ?? anchor);
-                AddContainerStream(segment, track, null);
+                AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
         }
@@ -160,7 +208,7 @@ internal sealed partial class FileReader
             {
                 _findings.AddNow(Severity.Warning, "matroska.codec-private-missing",
                     $"{label} is coded as {Codecs.NameOf(codecId)} but has no CodecPrivate, which holds its {(codec == "vorbis" ? "three headers" : "identification header")} (draft-ietf-cellar-codec, section 3.4); its frames cannot be analyzed.", anchor);
-                AddContainerStream(segment, track, null);
+                AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
 
@@ -172,9 +220,25 @@ internal sealed partial class FileReader
             {
                 _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
                     $"The CodecPrivate of {label} does not hold the three Xiph-laced Vorbis headers the codec mapping gives it (draft-ietf-cellar-codec, section 3.4): it {why}. Its frames cannot be analyzed.", track.CodecPrivateNode ?? anchor);
-                AddContainerStream(segment, track, null);
+                AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
+        }
+
+        // Encrypted frames give the codec parser no length to count, so the container's timing stands in, as in MP4's RouteEncrypted.
+        double seconds = areFramesEncrypted ? EncryptedDuration(segment, track, privateData) : 0;
+        CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
+            ? new CodecConfiguration(privateData, privateNode)
+            {
+                Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
+                AreSamplesEncrypted = areFramesEncrypted,
+                Duration = seconds > 0 ? seconds : null,
+            }
+            : null;
+        if (areFramesEncrypted && configuration is null)
+        {
+            AddContainerStream(segment, track, null, plan.Protection);
+            return;
         }
 
         string prefix = _segments.Count > 1 ? $"Segment {segment.Number} " : string.Empty;
@@ -189,18 +253,18 @@ internal sealed partial class FileReader
             last = Math.Max(last, header.FileEnd);
         }
 
-        var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, last - first), NodeValue.Integer(statistics.Frames, "frames", "frame"))
+        var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, last - first),
+            areFramesEncrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(statistics.Frames, "frames", "frame"))
         {
-            Description = Explain.TrackFrames,
-            Topic = Topics.Tracks,
+            Description = areFramesEncrypted ? Explain.TrackFramesEncrypted : Explain.TrackFrames,
+            Topic = areFramesEncrypted ? Topics.ContentEncryption : Topics.Tracks,
         };
         _file.Add(node);
 
-        CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
-            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9 }
-            : null;
+        // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
-        bool routed = _context.ParsePackets(codec, node, Packets(segment, track, headers, frames), configuration, segment.StreamClaims);
+        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, headers, plan.Frames.Decoder);
+        bool routed = _context.ParsePackets(codec, node, packets, configuration, segment.StreamClaims);
         if (!routed)
         {
             _findings.AddNow(Severity.Info, "matroska.codec-not-analyzed",
@@ -210,10 +274,29 @@ internal sealed partial class FileReader
         List<StreamInfo> added = [.. _context.Streams.Skip(streamsBefore)];
         if (added.Count == 0)
         {
-            AddContainerStream(segment, track, node);
+            AddContainerStream(segment, track, node, plan.Protection, privateData);
         }
         else
         {
+            foreach (StreamInfo stream in added)
+            {
+                StreamInfo updated = stream with { Protection = plan.Protection ?? stream.Protection };
+                if (areFramesEncrypted && stream.Duration <= 0 && seconds > 0)
+                {
+                    updated = updated with
+                    {
+                        Duration = seconds,
+                        Samples = (long)Math.Round(seconds * stream.SampleRate),
+                        AverageBitrate = statistics.Bytes * 8 / ContainerDuration(segment, track) / 1000,
+                    };
+                }
+
+                if (updated != stream)
+                {
+                    _context.UpdateStream(stream, updated);
+                }
+            }
+
             CompareStreams(track, label, codec, added);
         }
     }
@@ -319,15 +402,42 @@ internal sealed partial class FileReader
         }
     }
 
-    // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.
-    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames)
+    // The length of a track whose frames are encrypted, as the clear track's codec parser would count it. Only Opus drops a delay from its samples: its
+    // pre-skip (the OpusHead's when the CodecPrivate is readable, else the CodecDelay, RFC 9559 section 5.1.4.1.25); the other codec parsers ignore the CodecDelay.
+    private static double EncryptedDuration(SegmentState segment, TrackInfo track, MappedBytes? privateData)
+    {
+        double delay = 0;
+        if (Codecs.RouteOf(track.CodecId ?? string.Empty) == "opus")
+        {
+            ReadOnlySpan<byte> head = privateData is null ? default : privateData.Span;
+            delay = head.Length >= 12 && head[..8].SequenceEqual("OpusHead"u8) ? System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(head[10..]) / 48000.0
+                : track.CodecDelayNode is null ? 0 : track.CodecDelay / 1e9;
+        }
+
+        return Math.Max(0, ContainerDuration(segment, track) - delay);
+    }
+
+    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.
+    private static double ContainerDuration(SegmentState segment, TrackInfo track)
     {
         TrackStatistics statistics = track.Statistics;
-        string codecId = track.CodecId ?? string.Empty;
         double scale = segment.TimestampScale / 1e9;
         double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale * track.TimestampScale : 0;
         double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
-        double duration = statistics.HasTimes ? span + step : 0;
+        return statistics.HasTimes ? span + step : 0;
+    }
+
+    // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.
+    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection, MappedBytes? privateData = null, bool isUnordered = false)
+    {
+        TrackStatistics statistics = track.Statistics;
+        string codecId = track.CodecId ?? string.Empty;
+        // The samples of a track whose frames are not read come from the container's timing less the codec's delay, as the clear track's codec
+        // parser counts them: for encrypted frames, and for encodings that cannot be ordered, encrypted or not, whose CodecPrivate is not trusted, so
+        // that Opus takes the CodecDelay and not the OpusHead's pre-skip.
+        bool areFramesEncrypted = protection is { IsEncrypted: true };
+        bool areSamplesTimed = areFramesEncrypted || isUnordered;
+        double duration = areSamplesTimed ? EncryptedDuration(segment, track, isUnordered ? null : privateData) : ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -335,13 +445,15 @@ internal sealed partial class FileReader
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
+            Protection = protection,
             Nodes = [streamNode],
             Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? "unknown" : codecId),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,
             Duration = duration,
-            AverageBitrate = duration > 0 ? statistics.Bytes * 8 / duration / 1000 : null,
+            Samples = areSamplesTimed ? (long)Math.Round(duration * rate) : 0,
+            AverageBitrate = ContainerDuration(segment, track) is > 0 and var length ? statistics.Bytes * 8 / length / 1000 : null,
             Writer = writerName,
             WriterConfidence = writerConfidence,
         });
@@ -419,51 +531,194 @@ internal sealed partial class FileReader
         }
     }
 
-    // The track's ContentEncodings undone for its frames and its CodecPrivate (RFC 9559 section 5.1.4.1.31): the encodings that apply,
-    // from the highest ContentEncodingOrder down. Header stripping and zlib are undone; encryption and the other compressions are
-    // not, and the problem says so.
-    private (Decoder? Frames, Decoder? Private, string? Problem, bool IsEncrypted) Decoders(TrackInfo track)
+    // What the track's ContentEncodings (RFC 9559 section 5.1.4.1.31) make of its frames and of its CodecPrivate, worked out once for the finding and
+    // the stream's protection. The encodings apply from the highest ContentEncodingOrder down, each to the parts its ContentEncodingScope names
+    // (bit 1 the frames, bit 2 the CodecPrivate). Header stripping and zlib are undone; encryption, the other compressions and other encoding
+    // types are not, and the part they cover is blocked.
+    //
+    // Bit 4 (the next encoding, which players do not support) of any encoding makes the settings of the next one unreadable: its algorithm, its
+    // compression settings and its claim to be "not encrypted" cannot be trusted. That encoding is not read; the parts it applies to count as
+    // encrypted by the hiding encryption, which the scheme names (the outermost of a chain). Under a hiding that does not encrypt, a hidden
+    // encryption, or any encoding after an encryption hidden in the chain, counts as encrypted by an unknown algorithm and a hidden compression
+    // as not read. An encryption covers a part of the track only through its scope: one that names neither the frames nor the CodecPrivate
+    // covers nothing, hidden or not, and the scheme is named only from encodings that cover something.
+    private EncodingPlan PlanOf(TrackInfo track)
     {
-        if (track.Encodings.Count == 0)
+        var plan = new EncodingPlan();
+
+        // Encodings that cannot be ordered are not trusted: neither the frames nor the CodecPrivate are read, and the track is encrypted unless shown
+        // otherwise, as MP4's rule is, when any of them is an encryption (type 1; a ContentEncryption under another type must be ignored, section 5.1.4.1.31.8).
+        if (track.HasDuplicateOrders)
         {
-            return (null, null, null, false);
+            plan.IsAmbiguous = true;
+            plan.Protection = track.Encodings.Any(e => e.Type == 1)
+                ? new StreamProtection { Scheme = "Matroska ContentEncryption", IsEncrypted = true }
+                : null;
+            return plan;
         }
 
-        List<EncodingInfo> ordered = [.. track.Encodings.OrderByDescending(e => e.Order)];
-        var frames = new List<Step>();
-        var priv = new List<Step>();
-        foreach (EncodingInfo encoding in ordered)
+        Cover? first = null;
+        bool isFramesEncrypted = false;
+
+        // The CodecPrivate is covered only if the track has one.
+        bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
+        foreach (OrderedEncoding ordered in track.OrderedEncodings())
         {
-            if (encoding.HasEncryption || encoding.Type == 1)
+            EncodingInfo encoding = ordered.Encoding;
+            Step? step = null;
+            string? problem = null;
+            bool isEncryption = false;
+            Cover? cover = null;
+            if (ordered.Hider is not null)
             {
-                string algorithm = Values.Named("ContentEncAlgo", encoding.EncryptionAlgorithm) ?? $"algorithm {encoding.EncryptionAlgorithm}";
-                return (null, null, $"is encrypted ({algorithm}{(encoding.CipherMode is { } mode ? $", {Values.Named("AESSettingsCipherMode", mode) ?? $"mode {mode}"}" : string.Empty)})", true);
+                isEncryption = ordered.IsHiddenEncrypted;
+                if (isEncryption)
+                {
+                    // An encryption hidden in the chain may be the one that encrypts it, with an algorithm nobody can read: the scheme then has no algorithm.
+                    cover = new Cover(ordered.HiderEncrypts && !ordered.Hiders.Skip(1).Any(h => h.Type == 1) ? EncryptionName(ordered.Hider) : null);
+                    problem = cover.Name is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
+                }
+                else
+                {
+                    problem = "coded with settings that another encoding hides, which the analyzer does not undo";
+                }
             }
 
-            Step? step = encoding.CompressionAlgorithm switch
+            // ContentEncryption is ignored unless the type is 1 (section 5.1.4.1.31.8); ContentEncAlgo 0 states that the data are not
+            // encrypted (Table 24), so such an encoding changes nothing.
+            else if (encoding.Type == 1)
             {
-                3 => encoding.SettingsLength is >= 0 and <= 1 << 16 ? new Step(true, encoding.SettingsOffset >= 0 ? ReadAt(encoding.SettingsOffset, (int)encoding.SettingsLength) : []) : null,
-                0 => new Step(false, []),
-                _ => null,
+                if (encoding.HasEncryption && encoding.EncryptionAlgorithm == 0)
+                {
+                    continue;
+                }
+
+                isEncryption = true;
+                cover = new Cover(EncryptionName(encoding));
+                problem = cover.Name is { } name ? $"encrypted ({name})" : "encrypted";
+            }
+            else if (encoding.Type != 0)
+            {
+                problem = $"coded with the ContentEncodingType {encoding.Type}, which the analyzer does not undo";
+            }
+            else
+            {
+                step = encoding.CompressionAlgorithm switch
+                {
+                    3 => encoding.SettingsLength is >= 0 and <= 1 << 16 ? new Step(true, encoding.SettingsOffset >= 0 ? ReadAt(encoding.SettingsOffset, (int)encoding.SettingsLength) : []) : null,
+                    0 => new Step(false, []),
+                    _ => null,
+                };
+                if (step is null)
+                {
+                    problem = $"compressed with {Values.Named("ContentCompAlgo", encoding.CompressionAlgorithm) ?? $"algorithm {encoding.CompressionAlgorithm}"}, which the analyzer does not undo";
+                }
+            }
+
+            plan.Frames.Apply(encoding.AppliesToFrames, isEncryption, problem, step);
+            plan.Private.Apply(encoding.AppliesToCodecPrivate && hasPrivate, isEncryption, problem, step);
+
+            // An encryption covers a part of the track only through its own scope (an encryption with bit 4 covers what the encoding it hides covers).
+            if (!encoding.AppliesToFrames && !(encoding.AppliesToCodecPrivate && hasPrivate))
+            {
+                continue;
+            }
+
+            if (cover is not null)
+            {
+                first ??= cover;
+                if (encoding.AppliesToFrames)
+                {
+                    isFramesEncrypted = true;
+                }
+            }
+        }
+
+        // The scheme is that of the first encryption, from the highest order down, that covers a part of the track; the samples are encrypted when the
+        // frames are, and in the clear when only the CodecPrivate is.
+        if (first is not null)
+        {
+            plan.Protection = new StreamProtection
+            {
+                Scheme = first.Name is { } name ? $"Matroska ContentEncryption, {name}" : "Matroska ContentEncryption",
+                IsEncrypted = isFramesEncrypted,
             };
-            if (step is null)
+        }
+
+        return plan;
+    }
+
+    // The encryption that covers a part of the track, by the name of its algorithm; null where the algorithm is unknown.
+    private sealed record Cover(string? Name);
+
+    // The algorithm of a ContentEncryption element and, for AES (ContentEncAlgo 5), its cipher mode; AESSettingsCipherMode is not set for another
+    // algorithm (Table 27). Null where the encoding has no ContentEncryption element.
+    private static string? EncryptionName(EncodingInfo encoding)
+    {
+        if (!encoding.HasEncryption)
+        {
+            return null;
+        }
+
+        if (encoding.EncryptionAlgorithm == 5 && encoding.CipherMode is { } mode)
+        {
+            return Values.Named("AESSettingsCipherMode", mode) ?? $"AES, mode {mode}";
+        }
+
+        return Values.Named("ContentEncAlgo", encoding.EncryptionAlgorithm) ?? $"algorithm {encoding.EncryptionAlgorithm}";
+    }
+
+    // What one part of a track (its frames or its CodecPrivate) goes through.
+    private sealed class Pipeline
+    {
+        private readonly List<string> _problems = [];
+
+        public List<Step> Steps { get; } = [];
+
+        public bool IsEncrypted { get; private set; }
+
+        // What the steps undo, for a finding: "zlib compression", "header stripping" or both.
+        public string Kinds => Steps.Any(x => !x.IsStripping) ? (Steps.Any(x => x.IsStripping) ? "zlib compression and header stripping" : "zlib compression") : "header stripping";
+
+        public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps);
+
+        public void Apply(bool applies, bool isEncryption, string? problem, Step? step)
+        {
+            if (!applies)
             {
-                string algorithm = Values.Named("ContentCompAlgo", encoding.CompressionAlgorithm) ?? $"algorithm {encoding.CompressionAlgorithm}";
-                return (null, null, $"is compressed with {algorithm}, which the analyzer does not undo", false);
+                return;
             }
 
-            if (encoding.AppliesToFrames)
+            IsEncrypted |= isEncryption;
+            if (problem is not null)
             {
-                frames.Add(step);
+                if (!_problems.Contains(problem))
+                {
+                    _problems.Add(problem);
+                }
             }
-
-            if (encoding.AppliesToCodecPrivate)
+            else if (_problems.Count == 0 && step is not null)
             {
-                priv.Add(step);
+                Steps.Add(step);
             }
         }
 
-        return (frames.Count == 0 ? null : new Decoder(frames), priv.Count == 0 ? null : new Decoder(priv), null, false);
+        // What keeps the part from being read, the encryption first; null where it can be read.
+        public string? Describe() =>
+            _problems.Count == 0 ? null : "is " + string.Join(" and ", _problems.OrderBy(p => p.StartsWith("encrypted", StringComparison.Ordinal) ? 0 : 1));
+    }
+
+    private sealed class EncodingPlan
+    {
+        // Two encodings share a ContentEncodingOrder: nothing of the track is read.
+        public bool IsAmbiguous { get; set; }
+
+        public Pipeline Frames { get; } = new();
+
+        public Pipeline Private { get; } = new();
+
+        // Set where an encryption (not ContentEncAlgo 0) is declared: IsEncrypted only when it covers the frames. ContentEncKeyID names a key and no DRM system.
+        public StreamProtection? Protection { get; set; }
     }
 
     private sealed record Step(bool IsStripping, byte[] Prefix);

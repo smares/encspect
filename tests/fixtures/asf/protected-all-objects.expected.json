@@ -1,0 +1,261 @@
+{
+ "description": "Windows Media Audio covered by all three encryption objects and a Digital Signature Object: the first object in file order names the scheme, and the systems are those of the Advanced Content Encryption Object.",
+ "format": "ASF",
+ "length": 1569,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   495
+  ],
+  [
+   "Data Object",
+   495,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   106
+  ],
+  [
+   "Content Encryption Object",
+   240,
+   85
+  ],
+  [
+   "Extended Content Encryption Object",
+   325,
+   30
+  ],
+  [
+   "Digital Signature Object",
+   355,
+   36
+  ],
+  [
+   "Header Extension Object",
+   391,
+   104
+  ]
+ ],
+ "extension_objects": [
+  [
+   "Advanced Content Encryption Object",
+   437,
+   58
+  ]
+ ],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": true,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 743,
+   "bits": 16,
+   "codec_data": "00000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   545,
+   512,
+   4
+  ],
+  [
+   1057,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   4,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   5,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   6,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     576,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     693,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     810,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   100,
+   75,
+   [
+    [
+     927,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   100,
+   100,
+   [
+    [
+     1088,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   100,
+   125,
+   [
+    [
+     1205,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1569,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Digital Rights Manager"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Windows Media Rights Manager"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "network devices"
+  },
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "is encrypted"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ },
+ "protection": [
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
+  }
+ ]
+}

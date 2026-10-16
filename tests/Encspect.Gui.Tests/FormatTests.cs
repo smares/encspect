@@ -37,4 +37,18 @@ public class FormatTests
         Assert.Contains("object audio", new StreamItem(stream with { JocObjectCount = null }).Text, StringComparison.Ordinal);
         Assert.DoesNotContain("object audio", new StreamItem(stream with { HasObjectAudio = false, JocObjectCount = null }).Text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void A_stream_line_names_the_protection_scheme_and_the_drm_systems()
+    {
+        var stream = new StreamInfo { Nodes = [new Node("x", 0, 1)], Codec = "AAC LC", SampleRate = 44100, Channels = 2 };
+        Assert.DoesNotContain("protected", new StreamItem(stream).Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("encrypted", new StreamItem(stream).Text, StringComparison.Ordinal);
+
+        var encrypted = stream with { Protection = new StreamProtection { Scheme = "Common Encryption, AES-CTR (cenc)", IsEncrypted = true, Systems = ["Widevine Content Protection", "Microsoft PlayReady"] } };
+        Assert.EndsWith("encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady", new StreamItem(encrypted).Text, StringComparison.Ordinal);
+
+        var clear = stream with { Protection = new StreamProtection { Scheme = "Common Encryption, AES-CTR (cenc)" } };
+        Assert.EndsWith("protected, not encrypted: Common Encryption, AES-CTR (cenc)", new StreamItem(clear).Text, StringComparison.Ordinal);
+    }
 }

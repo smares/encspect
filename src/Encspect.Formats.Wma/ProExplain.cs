@@ -50,6 +50,8 @@ internal static class ProExplain
     public const string ScaleFactors = "The scale factors of the channel's bands: a new set as differences between neighbors, or differences from the scale factors before (run-level coded), or the ones before unchanged (wmaprodec.c: decode_scale_factors).";
     public const string Coefficients = "The quantized coefficients of the channel: groups of four, two or one values by vector codes with signs, then run-level codes for the rest (wmaprodec.c: decode_coeffs).";
 
+    public const string EncryptedHeaderOnlyStream = "The stream as the container and the codec-specific data describe it: its packets are encrypted and their frames are not read.";
+
     public const string HeaderOnlyStream = "The stream as the container and the codec-specific data describe it: its packets are counted and their frames are not read.";
     public const string StatPacketBytes = "The bytes of all the packets.";
     public const string StatSmallestPacket = "The fewest bytes a packet takes.";

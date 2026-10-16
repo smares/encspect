@@ -33,6 +33,13 @@ internal readonly record struct ElementHeader(long Offset, ulong Id, int IdLengt
 
 internal static class Ebml
 {
+    // An element ID as the files write it: hexadecimal, and for an ID of five octets or more (EBMLMaxIDLength) padded to its octets, so that 08 12 34 56 78 is 0x0812345678.
+    public static string IdText(ulong id)
+    {
+        int octets = (64 - System.Numerics.BitOperations.LeadingZeroCount(id) + 7) / 8;
+        return octets >= 5 ? "0x" + id.ToString("X" + (octets * 2), System.Globalization.CultureInfo.InvariantCulture) : "0x" + id.ToString("X", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     // RFC 8794 section 4: the number of octets of a variable-size integer from its first octet, or 0 for a first octet of zero bits.
     public static int Width(byte first) => first == 0 ? 0 : System.Numerics.BitOperations.LeadingZeroCount((uint)first << 24) + 1;
 

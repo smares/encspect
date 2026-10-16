@@ -40,6 +40,11 @@ public sealed record CodecConfiguration
     // it states none.
     public double? Duration { get; init; }
 
+    // True where the container knows the stream's samples are encrypted: it hands over no packets,
+    // since ciphertext is no valid coding, and the codec parser describes the stream from the
+    // configuration alone, without findings about frames it did not see.
+    public bool AreSamplesEncrypted { get; init; }
+
     // The built-in delay of the coding the container states, in seconds (Matroska's CodecDelay, RFC 9559 section 5.1.4.1.25): what a
     // decoder drops from the start of the decoded audio. Null when it states none.
     public double? Delay { get; init; }

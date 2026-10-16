@@ -1,0 +1,272 @@
+{
+ "description": "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read and the rest of the object is not, so every stream is taken to be protected.",
+ "format": "ASF",
+ "length": 7514,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   6440
+  ],
+  [
+   "Data Object",
+   6440,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Stream Properties Object",
+   230,
+   106
+  ],
+  [
+   "Header Extension Object",
+   336,
+   6104
+  ]
+ ],
+ "extension_objects": [
+  [
+   "Advanced Content Encryption Object",
+   382,
+   6058
+  ]
+ ],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  },
+  {
+   "number": 2,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 743,
+   "bits": 16,
+   "codec_data": "00000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   6490,
+   512,
+   4
+  ],
+  [
+   7002,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   2,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   2,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   2,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     6521,
+     100
+    ]
+   ]
+  ],
+  [
+   2,
+   1,
+   100,
+   25,
+   [
+    [
+     6638,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   50,
+   [
+    [
+     6755,
+     100
+    ]
+   ]
+  ],
+  [
+   2,
+   2,
+   100,
+   75,
+   [
+    [
+     6872,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   100,
+   [
+    [
+     7033,
+     100
+    ]
+   ]
+  ],
+  [
+   2,
+   3,
+   100,
+   125,
+   [
+    [
+     7150,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 7514,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "could not be read in full"
+  },
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "is encrypted"
+  },
+  {
+   "code": "asf.too-many-entries",
+   "contains": "encrypted object records"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ },
+ "protection": [
+  {
+   "scheme": "Windows Media DRM for network devices",
+   "is_encrypted": true,
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
+  },
+  {
+   "scheme": "Windows Media DRM for network devices",
+   "is_encrypted": true,
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
+  }
+ ]
+}

@@ -51,6 +51,13 @@ public sealed class WmaStandardParser : ICodecParser
         AddConfiguration(context, configuration, findings, version, parameters);
         string name = version == 1 ? "Windows Media Audio 1" : "Windows Media Audio 2";
 
+        if (configuration.AreSamplesEncrypted)
+        {
+            AddBasicStream(context, parent, name, format, version, configuration);
+            findings.Flush(context);
+            return;
+        }
+
         if (parameters.Error is { } error)
         {
             findings.AddNow(Severity.Warning, "wma.format-unsupported", $"The stream is not analyzed: {error}.", configuration.Parent);
@@ -181,15 +188,18 @@ public sealed class WmaStandardParser : ICodecParser
     private static void OptionBits(Node options, long offset, int first, int width, NodeValue value, string name, string description, string? topic = null) =>
         options.Add(Node.FromBits(name, offset, first, first + width, value, description: description, topic: topic, order: BitOrder.LeastSignificantFirst));
 
-    // A stream that is not read: what the container states of it.
-    internal static void AddBasicStream(CodecContext context, Node parent, string codec, AudioFormat format, int version)
+    // A stream that is not read: what the container states of it. With the container's configuration, a stream whose samples are encrypted:
+    // it takes the container's duration and the nominal bitrate of the format.
+    internal static void AddBasicStream(CodecContext context, Node parent, string codec, AudioFormat format, int version, CodecConfiguration? configuration = null, string? description = null, string? topic = null)
     {
-        var node = parent.Add(new Node(codec, parent.Offset, parent.Length, NodeValue.Text("not analyzed"))
+        bool encrypted = configuration is { AreSamplesEncrypted: true };
+        var node = parent.Add(new Node(codec, parent.Offset, parent.Length, NodeValue.Text(encrypted ? "frames not read: encrypted" : "not analyzed"))
         {
             Kind = NodeKind.Stream,
-            Description = Explain.Stream,
-            Topic = Topics.WmaStandard,
+            Description = description ?? (encrypted ? ProExplain.EncryptedHeaderOnlyStream : Explain.Stream),
+            Topic = topic ?? Topics.WmaStandard,
         });
+        double duration = encrypted ? configuration!.Duration ?? 0 : 0;
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
@@ -198,6 +208,9 @@ public sealed class WmaStandardParser : ICodecParser
             Channels = format.Channels,
             ChannelMode = format.Channels == 1 ? "Mono" : format.Channels == 2 ? "Stereo" : null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
+            Samples = (long)Math.Round(duration * format.SampleRate),
+            Duration = duration,
+            AverageBitrate = encrypted && format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });
     }
 

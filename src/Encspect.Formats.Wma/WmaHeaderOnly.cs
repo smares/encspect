@@ -24,6 +24,13 @@ internal static class WmaHeaderOnly
         var findings = new FindingCollector();
         configuration?.Invoke(config, findings);
 
+        if (config.AreSamplesEncrypted)
+        {
+            WmaStandardParser.AddBasicStream(context, context.Parent, codecName, format, 3, config, ProExplain.EncryptedHeaderOnlyStream, topic);
+            findings.Flush(context);
+            return;
+        }
+
         long count = 0;
         long bytes = 0;
         long smallest = long.MaxValue;

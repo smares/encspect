@@ -1,0 +1,489 @@
+{
+ "description": "Two compressions share ContentEncodingOrder 1, one with scope 4, over AES-CTR at order 0: whatever the tie hides, the track is encrypted by an unknown algorithm.",
+ "length": 424,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 271,
+     "length": 153,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 384,
+   "declared_end": 424
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   384,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     162,
+     [
+      [
+       "TrackEntry",
+       115,
+       156,
+       [
+        [
+         "TrackNumber",
+         118,
+         3
+        ],
+        [
+         "TrackUID",
+         121,
+         5
+        ],
+        [
+         "TrackType",
+         126,
+         3
+        ],
+        [
+         "CodecID",
+         129,
+         8
+        ],
+        [
+         "CodecPrivate",
+         137,
+         22
+        ],
+        [
+         "CodecDelay",
+         159,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         165,
+         7
+        ],
+        [
+         "ContentEncodings",
+         172,
+         84,
+         [
+          [
+           "ContentEncoding",
+           175,
+           26,
+           [
+            [
+             "ContentEncodingOrder",
+             178,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             182,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             186,
+             4
+            ],
+            [
+             "ContentCompression",
+             190,
+             11,
+             [
+              [
+               "ContentCompAlgo",
+               193,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               197,
+               4
+              ]
+             ]
+            ]
+           ]
+          ],
+          [
+           "ContentEncoding",
+           201,
+           22,
+           [
+            [
+             "ContentEncodingOrder",
+             204,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             208,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             212,
+             4
+            ],
+            [
+             "ContentCompression",
+             216,
+             7,
+             [
+              [
+               "ContentCompAlgo",
+               219,
+               4
+              ]
+             ]
+            ]
+           ]
+          ],
+          [
+           "ContentEncoding",
+           223,
+           33,
+           [
+            [
+             "ContentEncodingOrder",
+             226,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             230,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             234,
+             4
+            ],
+            [
+             "ContentEncryption",
+             238,
+             18,
+             [
+              [
+               "ContentEncAlgo",
+               241,
+               4
+              ],
+              [
+               "ContentEncKeyID",
+               245,
+               4
+              ],
+              [
+               "ContentEncAESSettings",
+               249,
+               7,
+               [
+                [
+                 "AESSettingsCipherMode",
+                 252,
+                 4
+                ]
+               ]
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         256,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           258,
+           10
+          ],
+          [
+           "Channels",
+           268,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     271,
+     153,
+     [
+      [
+       "Timestamp",
+       277,
+       3
+      ],
+      [
+       "SimpleBlock",
+       280,
+       36
+      ],
+      [
+       "SimpleBlock",
+       316,
+       36
+      ],
+      [
+       "SimpleBlock",
+       352,
+       36
+      ],
+      [
+       "SimpleBlock",
+       388,
+       36
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 280,
+   "length": 36,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     286,
+     30
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 316,
+   "length": 36,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     322,
+     30
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 352,
+   "length": 36,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     358,
+     30
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 388,
+   "length": 36,
+   "track": 1,
+   "timestamp": 60,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     394,
+     30
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    140,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [
+    {
+     "order": 1,
+     "scope": 4,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      200,
+      1
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    },
+    {
+     "order": 1,
+     "scope": 1,
+     "type": 0,
+     "compression": 0,
+     "settings": null,
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    },
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 1,
+     "compression": null,
+     "settings": null,
+     "encryption": 5,
+     "cipher": 1,
+     "has_encryption": true
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.encoding-order",
+   "contains": "unique"
+  },
+  {
+   "code": "matroska.track-encoding-not-read",
+   "contains": "cannot be ordered"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -123,8 +123,15 @@ public sealed partial class AsfParser
     // scrambled, are findings.
     private static void Route(State state)
     {
+        CheckEncryptedStreams(state);
         if (state.DataNode is null || state.Figures is null)
         {
+            // Without a Data Object there is nothing to read, but a protected stream is still reported as such.
+            foreach (StreamEntry stream in state.Streams)
+            {
+                AddProtectedStream(state, stream);
+            }
+
             return;
         }
 
@@ -135,12 +142,14 @@ public sealed partial class AsfParser
             if (!stream.IsAudio)
             {
                 state.Findings.AddNow(Severity.Info, "asf.stream-not-analyzed", $"Stream {stream.Number} is a {stream.TypeName.ToLowerInvariant()} stream, which is not analyzed; the file's packets are reported as they are.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
             if (stream.Format is not { } format)
             {
                 state.Findings.AddNow(Severity.Info, "asf.stream-not-analyzed", $"Stream {stream.Number} is an audio stream without a readable WAVEFORMATEX, so its coding is not analyzed.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
@@ -149,12 +158,13 @@ public sealed partial class AsfParser
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
                     $"Stream {stream.Number} is coded as {FormatTagName(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which has no parser here; its media objects are not analyzed.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
-            if (stream.IsEncrypted || state.HasContentEncryption)
+            if (ProtectionOf(state, stream) is { } protection)
             {
-                state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed", $"Stream {stream.Number} is encrypted, so its media objects cannot be analyzed.", anchor);
+                RouteEncrypted(state, stream, codec, format, protection, anchor);
                 continue;
             }
 
@@ -177,6 +187,97 @@ public sealed partial class AsfParser
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
                     $"Stream {stream.Number} is coded as {FormatTagName(format.EffectiveTag)}, but the analyzer has no parser for the {codec} coding.", anchor);
+            }
+        }
+    }
+
+    // How the header protects a stream: its Encrypted Content Flag (section 3.3), the Content Encryption Object and the Extended Content Encryption
+    // Object, which cover the whole file, and the records of the Advanced Content Encryption Object that name the stream or 0. Whatever protects it,
+    // its media objects are taken as encrypted: a stream the flag does not mark may still have payloads that the file's object encrypts. The Digital
+    // Signature Object protects nothing.
+    private static StreamProtection? ProtectionOf(State state, StreamEntry stream)
+    {
+        List<ProtectionObject> objects = [.. state.Protections.Where(p => p.Covers(stream.Number))];
+        if (!stream.IsEncrypted && objects.Count == 0)
+        {
+            return null;
+        }
+
+        return new StreamProtection
+        {
+            Scheme = objects.Count > 0 ? objects[0].Scheme : ProtectionSchemes.StreamFlag,
+            IsEncrypted = true,
+            Systems = [.. objects.SelectMany(p => p.Systems).Distinct()],
+        };
+    }
+
+    // An encrypted stream is described by its WAVEFORMATEX and codec-specific data, with no media object handed to the codec parser: ciphertext
+    // is no valid coding.
+    private static void RouteEncrypted(State state, StreamEntry stream, string codec, WaveFormat format, StreamProtection protection, Node anchor)
+    {
+        state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
+            $"Stream {stream.Number} is encrypted, so its media objects cannot be analyzed; the stream is described by its header.", anchor);
+        CodecConfiguration? configuration = ConfigurationOf(state, stream, format);
+        int before = state.Context.Streams.Count;
+        if (configuration is not null)
+        {
+            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true });
+        }
+
+        if (state.Context.Streams.Count == before)
+        {
+            AddProtectedStream(state, stream);
+            return;
+        }
+
+        for (int i = before; i < state.Context.Streams.Count; i++)
+        {
+            state.Context.UpdateStream(state.Context.Streams[i], state.Context.Streams[i] with { Protection = protection });
+        }
+    }
+
+    // The stream of a protected stream that no codec parser describes (a coding without a parser, video, a stream without a readable
+    // WAVEFORMATEX): the header's own account of it, so that its protection is reported all the same.
+    private static void AddProtectedStream(State state, StreamEntry stream)
+    {
+        if (ProtectionOf(state, stream) is not { } protection)
+        {
+            return;
+        }
+
+        Node parent = state.DataNode ?? stream.Properties!;
+        string name = stream.Format is { } format && stream.IsAudio ? FormatTagName(format.EffectiveTag) : stream.TypeName;
+        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.EncryptedStream,
+            Topic = Topics.AsfContentProtection,
+        });
+        double duration = DurationOf(state) ?? 0;
+        state.Context.AddStream(new StreamInfo
+        {
+            Nodes = [node],
+            Codec = name,
+            SampleRate = stream.Format?.SamplesPerSecond ?? 0,
+            Channels = stream.Format?.Channels ?? 0,
+            Protection = protection,
+            Kind = stream.IsAudio ? StreamKind.Audio : stream.Type == AsfGuids.VideoMedia ? StreamKind.Video : StreamKind.Other,
+            Duration = duration,
+        });
+    }
+
+    // Records of the Advanced Content Encryption Object that name a stream the header does not describe.
+    private static void CheckEncryptedStreams(State state)
+    {
+        foreach (ProtectionObject protection in state.Protections)
+        {
+            foreach ((int number, Node node) in protection.Streams)
+            {
+                if (number != 0 && state.Stream(number) is null)
+                {
+                    state.Findings.AddNow(Severity.Info, "asf.encrypted-object-unknown-stream",
+                        $"An Encrypted Object Record names stream {number}, which no Stream Properties Object describes; the record protects nothing in this file.", node);
+                }
             }
         }
     }

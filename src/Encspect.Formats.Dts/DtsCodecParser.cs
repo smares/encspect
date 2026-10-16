@@ -43,7 +43,8 @@ public sealed class DtsCodecParser : ICodecParser
 
         region.End = analysis.Frames.Count;
         DtsRecords records = analysis.Records;
-        region.Node = parent.Add(new Node("DTS", parent.Offset, parent.Length, NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
+        region.Node = parent.Add(new Node("DTS", parent.Offset, parent.Length,
+            context.Configuration is { AreSamplesEncrypted: true } ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
             () => new BlockedChildren(region.Leading, region.End.Value - region.First, i => records.FrameNode(region.First + i)))
         {
             Kind = NodeKind.Stream,

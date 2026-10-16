@@ -58,6 +58,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add(Stream.JocObjectCount is { } objects ? $"object audio ({Format.Count(objects, "object", "objects")})" : "object audio");
             }
 
+            if (Stream.Protection is { } protection)
+            {
+                parts.Add(ProtectionText(protection));
+            }
+
             if (Stream.Encoder is { } encoder)
             {
                 parts.Add(Format.Encoder(encoder, Stream.EncoderConfidence));
@@ -71,4 +76,10 @@ public sealed class StreamItem(StreamInfo stream)
             return string.Join(" · ", parts);
         }
     }
+
+    // "encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady": the scheme, then the
+    // DRM systems the file names; "protected, not encrypted:" where the scheme covers samples that are in the clear.
+    internal static string ProtectionText(StreamProtection protection) =>
+        (protection.IsEncrypted ? "encrypted: " : "protected, not encrypted: ") + protection.Scheme
+        + (protection.Systems.Count > 0 ? "; DRM systems: " + string.Join(", ", protection.Systems) : string.Empty);
 }

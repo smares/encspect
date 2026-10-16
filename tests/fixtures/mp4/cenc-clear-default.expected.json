@@ -1,0 +1,348 @@
+{
+ "description": "AAC LC in an enca entry whose tenc box sets the default IsProtected to false and whose track has no sample group that protects samples, a track of a protected stream that is wholly in the clear: the samples are valid AAC access units, so they are read like those of an unprotected track, and the stream is reported protected but not encrypted.",
+ "length": 1350,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   731
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   615
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   515
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   430
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   370
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   735,
+   24
+  ],
+  [
+   "mdat",
+   759,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": false,
+    "systems": []
+   }
+  }
+ ],
+ "units": [
+  [
+   767,
+   6
+  ],
+  [
+   773,
+   45
+  ],
+  [
+   818,
+   42
+  ],
+  [
+   860,
+   39
+  ],
+  [
+   899,
+   36
+  ],
+  [
+   935,
+   33
+  ],
+  [
+   968,
+   30
+  ],
+  [
+   998,
+   27
+  ],
+  [
+   1025,
+   24
+  ],
+  [
+   1049,
+   20
+  ],
+  [
+   1069,
+   17
+  ],
+  [
+   1086,
+   14
+  ],
+  [
+   1100,
+   11
+  ],
+  [
+   1111,
+   8
+  ],
+  [
+   1119,
+   46
+  ],
+  [
+   1165,
+   43
+  ],
+  [
+   1208,
+   40
+  ],
+  [
+   1248,
+   37
+  ],
+  [
+   1285,
+   34
+  ],
+  [
+   1319,
+   31
+  ]
+ ],
+ "samples": [
+  [
+   767,
+   6
+  ],
+  [
+   773,
+   45
+  ],
+  [
+   818,
+   42
+  ],
+  [
+   860,
+   39
+  ],
+  [
+   899,
+   36
+  ],
+  [
+   935,
+   33
+  ],
+  [
+   968,
+   30
+  ],
+  [
+   998,
+   27
+  ],
+  [
+   1025,
+   24
+  ],
+  [
+   1049,
+   20
+  ],
+  [
+   1069,
+   17
+  ],
+  [
+   1086,
+   14
+  ],
+  [
+   1100,
+   11
+  ],
+  [
+   1111,
+   8
+  ],
+  [
+   1119,
+   46
+  ],
+  [
+   1165,
+   43
+  ],
+  [
+   1208,
+   40
+  ],
+  [
+   1248,
+   37
+  ],
+  [
+   1285,
+   34
+  ],
+  [
+   1319,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default IsProtected": "false",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc": "not protected by default"
+ },
+ "findings": [
+  [
+   "mp4.protected-samples-clear",
+   "no sample is protected"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": false,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 rejects the protected sample entry.",
+   "faad_trace": "faad2 rejects the protected sample entry."
+  }
+ }
+}

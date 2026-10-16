@@ -17,6 +17,13 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   ffprobe's channel layout must feed the speakers of the stream's "channel_layout", in any order
   (channel_layouts.py), where ffprobe's channels are the manifest's: ffmpeg's decoder gives an AAC
   stream the layout its configuration states, whatever a chan or chnl box says.
+- "ffprobe_packets": false where ffmpeg's parser does not list the samples as packets (ciphertext that an AC-3, DTS or MPEG audio parser merges until it finds
+  a sync word); then only the streams are compared. Where a manifest has "samples" (the protected track's samples, as offset and size, since the analyzer
+  reads no frames of them), those are the packets ffprobe must list.
+- "encryption": what the tools report of a protected track: "ffprobe" is whether the first packet carries the "Encryption info" side data that ffmpeg
+  attaches to the packets of a track whose tenc box protects by default (null where the track is protected another way), and "mediainfo" the track's
+  Encryption field ("Encrypted" for an enca entry whatever its tenc says, "iTunes" for drms, absent for aavd). Every other fixture must have no
+  Encryption field in MediaInfo.
 - "mp4box": MP4Box -diso (GPAC 2.2) must list the same boxes with the same sizes, in the same order and
   nesting. MP4Box writes the type of an iTunes item whose first byte is 0xA9 as "A9" and three letters.
 - "mp4box_samples": where ffmpeg cannot read a track (USAC), MP4Box -dtsx must list the same sample sizes.
@@ -75,6 +82,17 @@ def ffprobe_packets(path):
     for packet in json.loads(result.stdout).get("packets", []):
         streams.setdefault(int(packet["stream_index"]), []).append([int(packet["pos"]), int(packet["size"])])
     return [row for index in sorted(streams) for row in streams[index]]
+
+
+def ffprobe_encrypted(path):
+    """Whether ffprobe attaches the "Encryption info" side data to the first audio packet."""
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "packet_side_data", "-select_streams", "a", "-read_intervals", "%+#1", "-of", "json", str(path)],
+                            capture_output=True, text=True)
+    try:
+        packets = json.loads(result.stdout).get("packets", []) if result.stdout.strip() else []
+    except json.JSONDecodeError:
+        packets = []
+    return any(data.get("side_data_type") == "Encryption info" for packet in packets for data in packet.get("side_data_list", []))
 
 
 def ffprobe_streams(path):
@@ -380,6 +398,8 @@ def check_trace(path, report, problems, skipped=()):
 # MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
 MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
                      "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None)}
+# MediaInfo's format of the streams whose frames the analyzer does not read; the analyzer's name for the others is MediaInfo's.
+ENCRYPTED_FORMATS = {"MPEG-1 Audio": "MPEG Audio", "HE-AAC": "AAC", "HE-AAC v2": "AAC", "AAC Main": "AAC", "Apple Lossless": "ALAC"}
 # MediaInfo counts the samples that stts gives a duration (File_Mpeg4.cpp lines 774, 799 and 852
 # fill FrameCount and Source_FrameCount from stts_FrameCount, which File_Mpeg4_Elements.cpp line 8755
 # sums) and takes the stream size from the sizes stsz lists (stsz_StreamSize, File_Mpeg4.cpp lines
@@ -390,7 +410,27 @@ UNPLACED_UNITS = STTS_COUNT + ", whether or not the chunks place them in the fil
 UNPLACED_SIZE = "MediaInfo sums the sizes stsz lists (File_Mpeg4_Elements.cpp, stsz: stsz_StreamSize, filled in File_Mpeg4.cpp lines 801 and 855), whether or not the chunks place the samples in the file; the analyzer leaves out the samples that have no place, with a finding"
 ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it parses without an error; its trace (--Details=1) lists every frame"
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
+NO_CHANNELS = "MediaInfo 24.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
+NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
+MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a stream only for samples its tables or fragments place, and these fragments place them for one track or none"
+FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 MEDIAINFO_READS_OTHERWISE = {
+    "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
+    "mp4/ffmpeg-cenc-opus": dict.fromkeys(["format of an encrypted stream", "channels"], "MediaInfo 24.01 names this track \"(Encrypted)\" and gives it no channel count: it reads the format of an enca entry from the codec it recognizes, and has none for Opus in an encrypted entry"),
+    "mp4/cenc-ac3": {"channels": NO_CHANNELS},
+    "mp4/cenc-dts": {"channels": NO_CHANNELS},
+    "mp4/cenc-mpeg-audio": {"channels": NO_CHANNELS},
+    "mp4/cenc-second-entry": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-entry-out-of-range": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-fragmented-no-tfhd": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-fragmented-traf-in-trak": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-moof-in-trak": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-two-tfhd": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-two-tfhd-protecting": {"streams": MOOV_TRACKS},
+    "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
+    "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
+    "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},
+    "mp4/sinf-no-frma": {"format of an encrypted stream": NO_FORMAT},
     "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data); the analyzer, like the decoders, does not apply it there: FFmpeg 6.1 turns PS off for a configuration of more than one channel (aacdec_template.c, decode_ga_specific_config) and skips the extension (aacsbr_template.c, read_sbr_extension), and faad2 2.11 decodes a channel pair's SBR without PS (specrec.c, reconstruct_channel_pair: sbrDecodeCoupleFrame)"),
     "mp4/chunk-outside-file": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
     "mp4/chunk-sample-mismatch": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
@@ -487,7 +527,7 @@ def milliseconds(seconds):
     return f"{math.floor(seconds * 1000 + 0.5) / 1000:.3f}"
 
 
-def check_mediainfo(path, tally):
+def check_mediainfo(path, tally, check=None):
     """MediaInfo must report each audio track's format and AAC profile, ADTS's MPEG version, sample
     rate, channels and layout, SBR and PS signaling, bitrate mode, access units and stream size, and
     for MP4 the duration, the encoding tool and the iTunes metadata's title, artist and album."""
@@ -496,9 +536,18 @@ def check_mediainfo(path, tally):
     info = mi.read(path)
     audio = info["Audio"] if info else []
     tally.compare("streams", len(audio), len(report["streams"]))
+    expected_encryption = (check or {}).get("encryption", {}).get("mediainfo")
     for stream, track in zip(report["streams"], audio):
         node = mi.stream_node(report, stream)
         codec = stream["codec"]
+        # MediaInfo reads the sample entry only (File_Mpeg4_Elements.cpp, the sample entry's codec: drms is "iTunes", enca "Encrypted").
+        tally.compare("encryption", track.get("Encryption"), expected_encryption if stream.get("protection") else None)
+        if stream.get("protection", {}).get("isEncrypted") or (stream.get("isProtected") and not any(n.get("kind") == "Frame" for n in mi.walk(node))):
+            # No frames are read (a coding with no parser reads none, encrypted or not), so neither side counts any: the configuration's figures are compared.
+            tally.compare("format of an encrypted stream", track.get("Format"), ENCRYPTED_FORMATS.get(codec, codec if codec != "AAC LC" else "AAC"))
+            tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
+            tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
+            continue
         if codec.startswith("MPEG"):
             version, layer = codec.split()[0][5:], {"I": "1", "II": "2", "III": "3"}[codec.split()[-1]]
             tally.compare("format", (track.get("Format"), track.get("Format_Version"), track.get("Format_Profile")), ("MPEG Audio", version, f"Layer {layer}"))
@@ -584,11 +633,12 @@ def main():
             manifest = json.loads((directory / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
             check = manifest.get("crosscheck", {})
             problems = []
+            wanted = manifest.get("samples") or manifest["units"]
             if check.get("ffprobe"):
                 packets = ffprobe_packets(path)
-                if packets != manifest["units"]:
-                    first = next((i for i, (a, b) in enumerate(zip(packets, manifest["units"])) if a != b), min(len(packets), len(manifest["units"])))
-                    problems.append(f"ffprobe lists {len(packets)} packets, the manifest {len(manifest['units'])} access units; first difference at {first}")
+                if check.get("ffprobe_packets", True) and packets != wanted:
+                    first = next((i for i, (a, b) in enumerate(zip(packets, wanted)) if a != b), min(len(packets), len(wanted)))
+                    problems.append(f"ffprobe lists {len(packets)} packets, the manifest {len(wanted)} samples; first difference at {first}")
                 probed = ffprobe_streams(path)
                 if len(probed) != len(manifest["streams"]):
                     problems.append(f"ffprobe finds {len(probed)} audio streams, the manifest {len(manifest['streams'])}")
@@ -601,6 +651,9 @@ def main():
                         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
                     if "ffprobe_profile" in expected and actual.get("profile") != expected["ffprobe_profile"]:
                         problems.append(f"ffprobe's profile {actual.get('profile')}, expected {expected['ffprobe_profile']}")
+            if (encryption := check.get("encryption", {})).get("ffprobe") is not None:
+                if ffprobe_encrypted(path) != encryption["ffprobe"]:
+                    problems.append(f"ffprobe {'finds no' if encryption['ffprobe'] else 'finds'} \"Encryption info\" side data on the first packet")
             if check.get("mp4box"):
                 boxes = mp4box_boxes(path)
                 # MP4Box reads one data atom per iTunes item, so it does not list an item's further ones (cover art with several images).
@@ -615,8 +668,8 @@ def main():
                         problems.append(f"MP4Box: box {first} is {boxes[first] if first < len(boxes) else None}, the manifest's {expected[first] if first < len(expected) else None}")
             if check.get("mp4box_samples"):
                 sizes = mp4box_sample_sizes(path)
-                if sizes != [u[1] for u in manifest["units"]]:
-                    problems.append(f"MP4Box lists {None if sizes is None else len(sizes)} samples of other sizes than the manifest's {len(manifest['units'])}")
+                if sizes != [u[1] for u in wanted]:
+                    problems.append(f"MP4Box lists {None if sizes is None else len(sizes)} samples of other sizes than the manifest's {len(wanted)}")
             if faad := check.get("faad"):
                 line = faad_info(path) or ""
                 if "seconds" in faad:
@@ -632,7 +685,7 @@ def main():
                 messages = decode_messages(path)
                 if messages:
                     problems.append(f"ffmpeg decodes with messages: {messages.splitlines()[0]}")
-            problems += check_mediainfo(path, tally)
+            problems += check_mediainfo(path, tally, check)
             checked += 1
             for problem in problems:
                 print(f"{path.relative_to(ROOT)}: {problem}")

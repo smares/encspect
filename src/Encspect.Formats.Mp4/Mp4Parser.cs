@@ -118,6 +118,8 @@ public sealed partial class Mp4Parser : IFormatParser
         long end = ReadChildren(state, file, reader.Start, reader.End, 0, topLevel: true);
         if (end < reader.End)
         {
+            // What the boxes after it say is not known, so it may say that samples are protected.
+            state.DoesEveryTrackHaveProtectingEvidence = true;
             Node data = file.Add(new Node("Trailing Data", end, reader.End - end, NodeValue.Integer(reader.End - end, "bytes")) { Description = Explain.TrailingData });
             state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{reader.End - end} bytes after the last box at 0x{end:X} are not a box.", data);
         }
@@ -206,6 +208,20 @@ public sealed partial class Mp4Parser : IFormatParser
     // start of bytes that are no box.
     private static long ReadChildren(State state, Node parent, long start, long end, int depth, bool topLevel = false, PayloadParser? custom = null,
         BoxNaming? naming = null)
+    {
+        string? outerParent = state.ParentType;
+        state.ParentType = topLevel ? null : parent.Name;
+        try
+        {
+            return ReadChildrenOf(state, parent, start, end, depth, topLevel, custom, naming);
+        }
+        finally
+        {
+            state.ParentType = outerParent;
+        }
+    }
+
+    private static long ReadChildrenOf(State state, Node parent, long start, long end, int depth, bool topLevel, PayloadParser? custom, BoxNaming? naming)
     {
         ByteReader reader = state.Reader;
         long position = start;
@@ -307,7 +323,12 @@ public sealed partial class Mp4Parser : IFormatParser
         {
             long at = header.Offset + header.HeaderLength - 16;
             byte[] user = state.Reader.ReadBytesAt(at, 16);
-            node.Add(new Node("User Type", at, 16, new Guid(user, bigEndian: true).ToString()) { Description = Explain.UserType });
+            var userType = new Guid(user, bigEndian: true);
+            node.Add(new Node("User Type", at, 16, userType.ToString()) { Description = Explain.UserType });
+            if (userType == PiffSampleEncryption || userType == PiffTrackEncryption)
+            {
+                MarkProtecting(state);
+            }
         }
 
         if (depth >= MaxBoxDepth)
@@ -396,7 +417,7 @@ public sealed partial class Mp4Parser : IFormatParser
         }
         else if (header.Type == "traf")
         {
-            state.Fragment = new FragmentTrack(node, state.Moof);
+            state.Fragment = new FragmentTrack(node, state.Moof) { IsInTrack = state.Track is not null };
         }
         else if (header.Type == "moof")
         {
@@ -404,7 +425,15 @@ public sealed partial class Mp4Parser : IFormatParser
             state.Fragments++;
         }
 
+        bool outerSinf = state.InSinf;
+        if (header.Type == "sinf" && state.CurrentEntry is { } protectedEntry)
+        {
+            state.InSinf = true;
+            protectedEntry.Protection ??= new EntryProtection(node);
+        }
+
         ReadChildren(state, node, f.Position, header.End, depth + 1);
+        state.InSinf = outerSinf;
         CheckChildren(state, node, header.Type);
         if (header.Type == "trak")
         {

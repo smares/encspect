@@ -1,0 +1,399 @@
+{
+ "description": "A drms sample entry in an M4P file, as purchases from iTunes carry it: esds, and a sinf box with the original format mp4a and a schi box that holds the DRM atoms user, key, iviv and priv. The iTunes metadata of the purchase (apID, purd, ownr, cnID) is metadata, not protection.",
+ "length": 11524,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   1153
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   747
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   647
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   562
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   502
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   274
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms",
+   413,
+   258
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf",
+   503,
+   168
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi",
+   523,
+   148
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/user",
+   531,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/key ",
+   555,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/iviv",
+   579,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/priv",
+   603,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   671,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   695,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   723,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   863,
+   28
+  ],
+  [
+   "moov/udta",
+   891,
+   290
+  ],
+  [
+   "moov/udta/meta",
+   899,
+   282
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   911,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   944,
+   237
+  ],
+  [
+   "moov/udta/meta/ilst/©nam",
+   952,
+   39
+  ],
+  [
+   "moov/udta/meta/ilst/©nam/data",
+   960,
+   31
+  ],
+  [
+   "moov/udta/meta/ilst/©ART",
+   991,
+   40
+  ],
+  [
+   "moov/udta/meta/ilst/©ART/data",
+   999,
+   32
+  ],
+  [
+   "moov/udta/meta/ilst/apID",
+   1031,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/apID/data",
+   1039,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/purd",
+   1076,
+   43
+  ],
+  [
+   "moov/udta/meta/ilst/purd/data",
+   1084,
+   35
+  ],
+  [
+   "moov/udta/meta/ilst/ownr",
+   1119,
+   34
+  ],
+  [
+   "moov/udta/meta/ilst/ownr/data",
+   1127,
+   26
+  ],
+  [
+   "moov/udta/meta/ilst/cnID",
+   1153,
+   28
+  ],
+  [
+   "moov/udta/meta/ilst/cnID/data",
+   1161,
+   20
+  ],
+  [
+   "mdat",
+   1181,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "iTunes protection (drms)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   1189,
+   300
+  ],
+  [
+   1489,
+   337
+  ],
+  [
+   1826,
+   374
+  ],
+  [
+   2200,
+   321
+  ],
+  [
+   2521,
+   358
+  ],
+  [
+   2879,
+   305
+  ],
+  [
+   3184,
+   342
+  ],
+  [
+   3526,
+   379
+  ],
+  [
+   3905,
+   326
+  ],
+  [
+   4231,
+   363
+  ],
+  [
+   4594,
+   310
+  ],
+  [
+   4904,
+   347
+  ],
+  [
+   5251,
+   384
+  ],
+  [
+   5635,
+   331
+  ],
+  [
+   5966,
+   368
+  ],
+  [
+   6334,
+   315
+  ],
+  [
+   6649,
+   352
+  ],
+  [
+   7001,
+   389
+  ],
+  [
+   7390,
+   336
+  ],
+  [
+   7726,
+   373
+  ],
+  [
+   8099,
+   320
+  ],
+  [
+   8419,
+   357
+  ],
+  [
+   8776,
+   304
+  ],
+  [
+   9080,
+   341
+  ],
+  [
+   9421,
+   378
+  ],
+  [
+   9799,
+   325
+  ],
+  [
+   10124,
+   362
+  ],
+  [
+   10486,
+   309
+  ],
+  [
+   10795,
+   346
+  ],
+  [
+   11141,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/drms": "drms (iTunes protected audio)",
+  "MP4/ftyp": "M4P (Apple protected audio)",
+  "MP4/moov/udta/meta/iTunes Metadata/Account/data/Value": "buyer@example.invalid",
+  "MP4/moov/udta/meta/iTunes Metadata/Owner/data/Value": "Test Owner"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "mediainfo": "iTunes"
+  },
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 does not read a drms entry (it lists no audio stream).",
+   "mp4box": "MP4Box lists the atoms of schi in its own way.",
+   "faad": "faad2 rejects the protected sample entry."
+  }
+ }
+}

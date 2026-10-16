@@ -32,7 +32,8 @@ public sealed partial class Mp4Parser
     // type (ISO/IEC 14496-1 Table 5, ISO/IEC 14496-14 5.6), QuickTime's ".mp3", AC-3 and E-AC-3
     // (ETSI TS 102 366 F.3, F.5), and DTS (ETSI TS 102 114 E.2.2.1, and object type 0xA9, which FFmpeg's
     // mp4 object type table gives for DTS).
-    private static string? CodecOf(SampleEntry entry) => entry.Format switch
+    // A protected entry is read as the original format its sinf box names.
+    private static string? CodecOf(SampleEntry entry) => entry.EffectiveFormat switch
     {
         "mp4a" => entry.ObjectType switch
         {
@@ -57,15 +58,24 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        SampleEntry entry = track.Entries[0];
+        (SampleEntry entry, bool isProtected, bool isEncrypted) = Decide(state, track);
+        track.ReadEntry = entry;
         string? codec = CodecOf(entry);
+        StreamProtection? protection = isProtected ? new StreamProtection { Scheme = SchemeOf(entry), IsEncrypted = isEncrypted, Systems = [.. state.Systems] } : null;
         List<ByteRange> ranges = SampleRanges(state, track);
         if (codec is null)
         {
-            string what = entry.Format != "mp4a" ? $"{entry.Format} ({FormatName(entry.Format)})"
+            string format = entry.EffectiveFormat;
+            string what = format != "mp4a" ? $"{format} ({FormatName(format)})"
                 : entry.ObjectType is { } type ? $"MPEG-4 audio of object type 0x{type:X2}" : "MPEG-4 audio without an esds box";
-            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {what}, whose samples are not analyzed yet.", entry.Node);
-            return;
+            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}, whose samples are not analyzed yet.", entry.Node);
+
+            // A protected track is still a stream, described by its sample entry, so that its protection is reported; any other track
+            // whose coding has no parser is shown as boxes only.
+            if (protection is null)
+            {
+                return;
+            }
         }
 
         if (ranges.Count == 0)
@@ -86,12 +96,21 @@ public sealed partial class Mp4Parser
         };
         parent.Add(samples);
         int streams = state.Context.Streams.Count;
-        if (codec == "mpeg-audio" && ranges.Count == 1)
+        if (protection is not null)
+        {
+            ProtectionNotice(state, track, label, entry, protection);
+        }
+
+        if (protection is { IsEncrypted: true } || (protection is not null && codec is null))
+        {
+            RouteEncrypted(state, track, entry, codec, samples, ranges, first, protection.IsEncrypted);
+        }
+        else if (codec == "mpeg-audio" && ranges.Count == 1)
         {
             // MPEG audio in one stretch is read as the same bytes in a file would be.
             state.Context.ParseStream(codec, samples, state.Reader.Slice(start, end - start));
         }
-        else
+        else if (codec is not null)
         {
             CodecConfiguration? configuration = null;
             if (entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
@@ -104,6 +123,14 @@ public sealed partial class Mp4Parser
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
         }
 
+        if (protection is not null)
+        {
+            for (int i = streams; i < state.Context.Streams.Count; i++)
+            {
+                state.Context.UpdateStream(state.Context.Streams[i], state.Context.Streams[i] with { Protection = protection });
+            }
+        }
+
         CompareLayouts(state, entry, streams, label);
 
         // The tracks of one movie play at the same time; a track whose codec reported several streams in a row is not marked.
@@ -111,6 +138,77 @@ public sealed partial class Mp4Parser
         if (made.Count == 1)
         {
             state.Context.UpdateStream(made[0], made[0] with { PlaybackGroup = 1 });
+        }
+    }
+
+    // A protected track tells the reader so: its ciphertext is not read, or the scheme covers samples that are in the clear.
+    private static void ProtectionNotice(State state, Track track, string label, SampleEntry entry, StreamProtection protection)
+    {
+        if (protection.IsEncrypted)
+        {
+            state.Findings.AddNow(Severity.Info, "mp4.samples-encrypted",
+                $"The samples of the audio {label} are encrypted ({protection.Scheme}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
+        }
+        else
+        {
+            state.Findings.AddNow(Severity.Info, "mp4.protected-samples-clear",
+                $"The audio {label} is covered by {protection.Scheme}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
+        }
+    }
+
+    // The stream of a track whose samples are encrypted, from the sample entry alone: the codec parser reads the configuration
+    // (AAC's AudioSpecificConfig, AC-3's dac3 box) but is handed no packets; a codec without a configuration, or whose parser
+    // reports no stream, gets a stream built here from the entry. The container's timing fills what the frames would have given.
+    private static void RouteEncrypted(State state, Track track, SampleEntry entry, string? codec, Node samples, List<ByteRange> ranges, bool first, bool isEncrypted)
+    {
+        double seconds = track.MediaDuration is { } units && track.Timescale > 0 && units != uint.MaxValue && units != ulong.MaxValue ? units / (double)track.Timescale : 0;
+        int before = state.Context.Streams.Count;
+        int nodes = samples.Children.Count;
+        if (isEncrypted && codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
+        {
+            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, node)
+            {
+                AreSamplesEncrypted = true,
+                IsVbr = IsVbr(state, entry, first),
+                Duration = seconds > 0 ? seconds : null,
+            });
+        }
+
+        if (state.Context.Streams.Count == before)
+        {
+            string name = entry.EffectiveFormat == "mp4a" && entry.ObjectType is { } type ? ObjectTypeName(type) : FormatName(entry.EffectiveFormat) is "other" ? entry.EffectiveFormat : FormatName(entry.EffectiveFormat);
+            // The codec parser's node for the stream it read the configuration of, else one of our own.
+            Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : "frames not read: coding not analyzed"))
+            {
+                Kind = NodeKind.Stream,
+                Ranges = samples.Ranges,
+                Description = isEncrypted ? Explain.EncryptedStream : Explain.UnanalyzedStream,
+                Topic = Topics.CommonEncryption,
+            });
+            state.Context.AddStream(new StreamInfo
+            {
+                Nodes = [stream],
+                Codec = name,
+                SampleRate = (int)Math.Min(entry.SampleRate, int.MaxValue),
+                Channels = entry.Channels,
+            });
+        }
+
+        long bytes = ranges.Sum(r => r.Length);
+        for (int i = before; i < state.Context.Streams.Count; i++)
+        {
+            StreamInfo stream = state.Context.Streams[i];
+            if (stream.Duration > 0 || seconds <= 0)
+            {
+                continue;
+            }
+
+            state.Context.UpdateStream(stream, stream with
+            {
+                Duration = seconds,
+                Samples = (long)Math.Round(seconds * stream.SampleRate),
+                AverageBitrate = bytes * 8 / seconds / 1000,
+            });
         }
     }
 
@@ -358,6 +456,12 @@ public sealed partial class Mp4Parser
                         $"Entry {run + 1} of the stsc box of {label} refers to sample description {description}, but the stsd box holds {track.Entries.Count}.", stsc);
                 }
 
+                if (firstChunk > offsets.Length)
+                {
+                    state.Findings.AddNow(Severity.Info, "mp4.stsc-chunk-past-end",
+                        $"Entry {run + 1} of the stsc box of {label} starts at chunk {firstChunk}, but the chunk offset box holds {offsets.Length}; no sample uses it, so neither does its sample description.", stsc);
+                }
+
                 long last = run + 1 < runs.Count ? Math.Min(runs[run + 1].FirstChunk - 1L, offsets.Length) : offsets.Length;
                 placed += Math.Max(0, last - firstChunk + 1) * (long)samples;
             }
@@ -459,7 +563,7 @@ public sealed partial class Mp4Parser
             nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
             // Apple's lossless writer shortens the last packet by the padding, so the track lasts delay plus samples.
-            bool lossless = track.Entries.Count > 0 && track.Entries[0].Format == "alac";
+            bool lossless = (track.ReadEntry ?? track.Entries.FirstOrDefault())?.EffectiveFormat == "alac";
             if (total > 0 && state.Fragments == 0 && (ulong)sum != total && !(lossless && (ulong)(sum - smpb.Padding) == total))
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",

@@ -1,0 +1,228 @@
+{
+ "description": "A video stream whose Encrypted Content Flag is set, with a Content Encryption Object, and no audio: the stream is reported as protected and encrypted.",
+ "format": "ASF",
+ "length": 1420,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   346
+  ],
+  [
+   "Data Object",
+   346,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   81
+  ],
+  [
+   "Content Encryption Object",
+   215,
+   85
+  ],
+  [
+   "Header Extension Object",
+   300,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "BC19EFC0-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": true,
+   "type_length": 3
+  }
+ ],
+ "packets": [
+  [
+   396,
+   512,
+   4
+  ],
+  [
+   908,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   4,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   5,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   6,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     427,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     544,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     661,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   100,
+   75,
+   [
+    [
+     778,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   100,
+   100,
+   [
+    [
+     939,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   100,
+   125,
+   [
+    [
+     1056,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1420,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Digital Rights Manager"
+  },
+  {
+   "code": "asf.stream-not-analyzed",
+   "contains": "video"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ },
+ "protection": [
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": []
+  }
+ ]
+}

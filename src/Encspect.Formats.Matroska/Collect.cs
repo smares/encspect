@@ -37,6 +37,9 @@ internal sealed partial class FileReader
             case 0x5035 when _encoding is not null:
                 _encoding.HasEncryption = true;
                 break;
+            case 0x47E7 when _encoding is not null:
+                _encoding.HasAesSettings = true;
+                break;
             case 0x4DBB:
                 _seekId = null;
                 _seekPosition = null;

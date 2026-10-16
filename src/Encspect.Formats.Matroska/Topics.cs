@@ -7,6 +7,7 @@ internal static class Topics
     public const string Container = "matroska-container";
     public const string Lacing = "matroska-lacing";
     public const string Tracks = "matroska-tracks";
+    public const string ContentEncryption = "matroska-content-encryption";
     public const string Timestamps = "matroska-timestamps";
     public const string Crc = "crc";
 }

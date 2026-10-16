@@ -1,0 +1,329 @@
+{
+ "description": "AAC LC in an enca entry: tenc does not protect, the sample table's description protects, and a description that does not lies in an edts box first. The 30 samples are pseudo-random bytes and are not read as AAC.",
+ "length": 11278,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   907
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   791
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   244,
+   56
+  ],
+  [
+   "moov/trak/edts/sgpd",
+   252,
+   48
+  ],
+  [
+   "moov/trak/mdia",
+   300,
+   635
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   308,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   340,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   385,
+   550
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   393,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   409,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   417,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   433,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   445,
+   490
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   453,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   469,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   505,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   559,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   567,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   579,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   599,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   607,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   639,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   663,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   691,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   831,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/sgpd",
+   859,
+   48
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/sbgp",
+   907,
+   28
+  ],
+  [
+   "mdat",
+   935,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   943,
+   300
+  ],
+  [
+   1243,
+   337
+  ],
+  [
+   1580,
+   374
+  ],
+  [
+   1954,
+   321
+  ],
+  [
+   2275,
+   358
+  ],
+  [
+   2633,
+   305
+  ],
+  [
+   2938,
+   342
+  ],
+  [
+   3280,
+   379
+  ],
+  [
+   3659,
+   326
+  ],
+  [
+   3985,
+   363
+  ],
+  [
+   4348,
+   310
+  ],
+  [
+   4658,
+   347
+  ],
+  [
+   5005,
+   384
+  ],
+  [
+   5389,
+   331
+  ],
+  [
+   5720,
+   368
+  ],
+  [
+   6088,
+   315
+  ],
+  [
+   6403,
+   352
+  ],
+  [
+   6755,
+   389
+  ],
+  [
+   7144,
+   336
+  ],
+  [
+   7480,
+   373
+  ],
+  [
+   7853,
+   320
+  ],
+  [
+   8173,
+   357
+  ],
+  [
+   8530,
+   304
+  ],
+  [
+   8834,
+   341
+  ],
+  [
+   9175,
+   378
+  ],
+  [
+   9553,
+   325
+  ],
+  [
+   9878,
+   362
+  ],
+  [
+   10240,
+   309
+  ],
+  [
+   10549,
+   346
+  ],
+  [
+   10895,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ],
+  [
+   "mp4.sample-group-misplaced",
+   "lies in a"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 rejects the encrypted sample entry.",
+   "faad_trace": "faad2 rejects the encrypted sample entry.",
+   "ffprobe": "ffmpeg reads the samples of these files as clear AAC where it does not find them encrypted."
+  }
+ }
+}

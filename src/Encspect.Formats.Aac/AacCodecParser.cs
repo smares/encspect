@@ -94,7 +94,8 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         var leading = new List<Node>();
-        if (config is { ImplicitPossible: true })
+        bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
+        if (config is { ImplicitPossible: true } && !encrypted)
         {
             findings.AddNow(Severity.Info, "aac.implicit-signaling-not-checked",
                 config.Sbr is null
@@ -166,10 +167,15 @@ public sealed class AacCodecParser : ICodecParser
             statistics.Add(Cover("Independent Access Units", NodeValue.Integer(log.Independent, "access units", "access unit"), Explain.IndependentUnits, topic: Topics.Usac));
         }
 
-        leading.Add(statistics);
+        if (!encrypted)
+        {
+            leading.Add(statistics);
+        }
+
         UnitRecords records = log.Records;
         var children = new BlockedChildren(leading, records.Units.Count, i => UnitNode(records, i, withChildren: true));
-        Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, NodeValue.Integer(log.Units.Count, "access units", "access unit"), () => children)
+        NodeValue streamValue = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(log.Units.Count, "access units", "access unit");
+        Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, streamValue, () => children)
         {
             Kind = NodeKind.Stream,
             Ranges = parent.Ranges,

@@ -10,6 +10,14 @@ For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
   reads from each stream (a laced frame is a packet), and, for blocks without lacing, their timestamps: the block's time less the
   track's CodecDelay.
 - the applications: mkvinfo's "Multiplexing application" and "Writing application" of every Segment and MediaInfo's "Writing library" and "Writing application" of the first, against the MuxingApp and WritingApp in the manifest.
+- the protection, on every fixture (those without a ContentEncryption are the negative control): mkvinfo's order, scope, type and encryption
+  algorithm of each track's ContentEncodings against the manifest's, and the golden report's protection against what RFC 9559 (section
+  5.1.4.1.31.8 and following) makes of the manifest's encodings: a type 1 encoding whose algorithm is not 0 protects, its samples are encrypted
+  when its scope covers the frames (bit 1, or bit 4 over an encoding that covers them), and its scheme names the algorithm and, for AES, the cipher mode. mkvinfo 82.0 lists
+  ContentEncAESSettings as an unknown element, so the cipher mode comes from the manifest, which the independent reader of matroska_model.py
+  wrote. MediaInfo 24.01 prints no Encryption field for a Matroska track (observed on these files; its source was not read), which is compared
+  as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
+  tracks is not compared, and the script prints why.
 - ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*).
 - MediaInfo (24.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
   analyzer's golden report, wherever MediaInfo reports them.
@@ -24,12 +32,14 @@ fixtures with a wrong CRC and the encoder-made files with right ones show) and t
 """
 
 import json
+import os
 import pathlib
 import re
 import shutil
 import subprocess
 import sys
 
+import check_matroska_encodings
 import mediainfo_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -118,6 +128,54 @@ def check_apps(manifest, text, problems):
     expected = apps_of(manifest)
     if muxing != [m for m, _ in expected if m is not None] or writing != [w for _, w in expected if w is not None]:
         problems.append(f"mkvinfo reads the applications {muxing} and {writing}, the manifest {expected}")
+
+
+# The fixtures whose protection could not be compared with a tool or the report, for the summary.
+NOT_COMPARED = []
+
+
+def mkvinfo_encodings(text):
+    """The ContentEncodings of every track mkvinfo lists, in order: [[(order, scope, type, encryption algorithm or None)]] per track."""
+    tracks = []
+    for line in text.splitlines():
+        if re.match(r"^\| \+ Track(?: at 0x[0-9a-f]+)?$", line):
+            tracks.append([])
+        elif not tracks:
+            continue
+        elif re.match(r"^\|\s+\+ Content encoding(?: at 0x[0-9a-f]+)?$", line):
+            tracks[-1].append([0, 1, 0, None])  # mkvinfo prints no element that has its default
+        elif tracks[-1] and (m := re.match(r"^\|\s+\+ (Order|Scope|Type|Encryption algorithm): (\d+)", line)):
+            tracks[-1][-1][("Order", "Scope", "Type", "Encryption algorithm").index(m.group(1))] = int(m.group(2))
+    return [[tuple(e) for e in track] for track in tracks]
+
+
+def check_protection(name, manifest, path, problems, tally, report):
+    """mkvinfo's ContentEncodings against the manifest's, the golden report's protection against the RFC's reading of them, and MediaInfo's Encryption."""
+    _, _, text = mkvinfo(path)
+    wanted = [[(e["order"], e["scope"], e["type"], e["encryption"]) for e in t["encodings"]] for t in manifest["tracks"]]
+    got = mkvinfo_encodings(text)
+    if len(got) != len(wanted):
+        print(f"{name}: mkvinfo's ContentEncodings not compared: it lists {len(got)} tracks, the manifest {len(wanted)}, the file being damaged")
+        NOT_COMPARED.append(name)
+    elif got != wanted:
+        problems.append(f"mkvinfo reads the ContentEncodings {got}, the manifest {wanted}")
+    audio = [t for t in manifest["tracks"] if t["type"] == 2]
+    if report is not None and len(report["streams"]) != len(audio):
+        print(f"{name}: the report's protection not compared: it has {len(report['streams'])} streams, the manifest {len(audio)} audio tracks")
+        NOT_COMPARED.append(name)
+    elif report is not None:
+        for track, stream in zip(audio, report["streams"]):
+            expected = check_matroska_encodings.reference_protection(track["codec"], track["private"] is not None, track["encodings"])
+            protection = stream.get("protection")
+            actual = (protection["scheme"], protection["isEncrypted"]) if protection else None
+            if actual != expected:
+                problems.append(f"track {track['number']}: the report's protection is {actual}, the reference model gives {expected}")
+    tracks = mediainfo_tool.read(path)
+    if tracks is None or len(tracks["Audio"]) != len(audio):
+        tally.skip("encryption", "MediaInfo reads no tracks or other audio tracks than the manifest, the file being damaged")
+        return
+    for info in tracks["Audio"]:
+        tally.compare("encryption", info.get("Encryption"), None)
 
 
 def check_ffprobe(manifest, path, problems):
@@ -230,6 +288,7 @@ def main():
                 result = run(command, text=True)
                 if result.returncode < 0:
                     problems.append(f"{tool} crashed (signal {-result.returncode})")
+        check_protection(name, manifest, path, problems, tally, golden_report(path))
         checked += 1
         if problems:
             failures += 1
@@ -242,6 +301,16 @@ def main():
         print(line)
         failures += 1
     tally.print()
+    print(f"{len(NOT_COMPARED)} protection comparisons skipped (listed above)")
+    # The analyzer's reading of random and tied encodings against the model needs the command line app (dotnet build src/Encspect.Cli -c Release); a missing
+    # app fails the run, and the check is skipped only when ENCSPECT_SKIP_ENCODINGS is set.
+    if os.environ.get("ENCSPECT_SKIP_ENCODINGS"):
+        print("random encodings not checked: ENCSPECT_SKIP_ENCODINGS is set")
+    elif not check_matroska_encodings.CLI_DLL.exists():
+        print(f"random encodings not checked, and that fails the run: {check_matroska_encodings.CLI_DLL} is not built (dotnet build src/Encspect.Cli -c Release)")
+        failures += 1
+    elif subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("check_matroska_encodings.py"))]).returncode != 0:
+        failures += 1
     print(f"{checked} fixtures checked, {failures} with problems")
     return 1 if failures else 0
 

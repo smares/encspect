@@ -1,0 +1,340 @@
+{
+ "description": "AAC LC in an enca entry protected with cenc (AES-CTR): the sinf box names mp4a as the original format and the scheme cenc, tenc makes every sample protected with 8-byte IVs and a KID, and three pssh boxes in moov name Widevine, PlayReady (version 1, with two key IDs) and a system ID the registry does not list. The 30 samples are pseudo-random bytes, so the stream is described from the sample entry alone.",
+ "length": 11323,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   952
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   659
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   559
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   474
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   414
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   775,
+   28
+  ],
+  [
+   "moov/pssh",
+   803,
+   50
+  ],
+  [
+   "moov/pssh",
+   853,
+   95
+  ],
+  [
+   "moov/pssh",
+   948,
+   32
+  ],
+  [
+   "mdat",
+   980,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": [
+     "Widevine Content Protection",
+     "Microsoft PlayReady",
+     "01234567-89ab-cdef-0123-456789abcdef"
+    ]
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   988,
+   300
+  ],
+  [
+   1288,
+   337
+  ],
+  [
+   1625,
+   374
+  ],
+  [
+   1999,
+   321
+  ],
+  [
+   2320,
+   358
+  ],
+  [
+   2678,
+   305
+  ],
+  [
+   2983,
+   342
+  ],
+  [
+   3325,
+   379
+  ],
+  [
+   3704,
+   326
+  ],
+  [
+   4030,
+   363
+  ],
+  [
+   4393,
+   310
+  ],
+  [
+   4703,
+   347
+  ],
+  [
+   5050,
+   384
+  ],
+  [
+   5434,
+   331
+  ],
+  [
+   5765,
+   368
+  ],
+  [
+   6133,
+   315
+  ],
+  [
+   6448,
+   352
+  ],
+  [
+   6800,
+   389
+  ],
+  [
+   7189,
+   336
+  ],
+  [
+   7525,
+   373
+  ],
+  [
+   7898,
+   320
+  ],
+  [
+   8218,
+   357
+  ],
+  [
+   8575,
+   304
+  ],
+  [
+   8879,
+   341
+  ],
+  [
+   9220,
+   378
+  ],
+  [
+   9598,
+   325
+  ],
+  [
+   9923,
+   362
+  ],
+  [
+   10285,
+   309
+  ],
+  [
+   10594,
+   346
+  ],
+  [
+   10940,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm/Scheme Type": "cenc",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm/Scheme Version": "65536",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma/Format": "mp4a",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc": "protected by default",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default IsProtected": "true",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default Per Sample IV Size": "8 bytes",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc/Default KID": "10111213-1415-1617-1819-1a1b1c1d1e1f",
+  "MP4/moov/pssh": "Widevine Content Protection",
+  "MP4/moov/pssh/System ID": "edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine Content Protection)",
+  "MP4/moov/pssh/Data Size": "18 bytes",
+  "MP4/moov/pssh[1]": "Microsoft PlayReady",
+  "MP4/moov/pssh[1]/KID Count": "2",
+  "MP4/moov/pssh[1]/KID": "10111213-1415-1617-1819-1a1b1c1d1e1f",
+  "MP4/moov/pssh[2]": "01234567-89ab-cdef-0123-456789abcdef",
+  "MP4/moov/pssh[2]/System ID": "01234567-89ab-cdef-0123-456789abcdef",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca": "enca (encrypted audio)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig": "AAC LC"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": true,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads clear AAC only and rejects the encrypted sample entry."
+  }
+ }
+}

@@ -1,6 +1,6 @@
 {
- "description": "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames.",
- "length": 421,
+ "description": "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames. The frames have the sizes of the clear encryption-algorithm-default.",
+ "length": 420,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -17,7 +17,7 @@
    "clusters": [
     {
      "offset": 224,
-     "length": 197,
+     "length": 196,
      "timestamp": 0,
      "size_unknown": false,
      "blocks": 4
@@ -31,8 +31,8 @@
     "muxing_app": "encspect fixtures",
     "writing_app": "encspect fixtures"
    },
-   "length": 381,
-   "declared_end": 421
+   "length": 380,
+   "declared_end": 420
   }
  ],
  "tree": [
@@ -81,7 +81,7 @@
   [
    "Segment",
    40,
-   381,
+   380,
    [
     [
      "Info",
@@ -237,7 +237,7 @@
     [
      "Cluster",
      224,
-     197,
+     196,
      [
       [
        "Timestamp",
@@ -247,22 +247,22 @@
       [
        "SimpleBlock",
        233,
+       46
+      ],
+      [
+       "SimpleBlock",
+       279,
        47
       ],
       [
        "SimpleBlock",
-       280,
-       47
-      ],
-      [
-       "SimpleBlock",
-       327,
-       47
+       326,
+       48
       ],
       [
        "SimpleBlock",
        374,
-       47
+       46
       ]
      ]
     ]
@@ -273,7 +273,7 @@
   {
    "name": "SimpleBlock",
    "offset": 233,
-   "length": 47,
+   "length": 46,
    "track": 1,
    "timestamp": 0,
    "cluster_timestamp": 0,
@@ -282,13 +282,13 @@
    "frames": [
     [
      239,
-     41
+     40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 280,
+   "offset": 279,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -297,15 +297,15 @@
    "lacing": "none",
    "frames": [
     [
-     286,
+     285,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 327,
-   "length": 47,
+   "offset": 326,
+   "length": 48,
    "track": 1,
    "timestamp": 40,
    "cluster_timestamp": 0,
@@ -313,15 +313,15 @@
    "lacing": "none",
    "frames": [
     [
-     333,
-     41
+     332,
+     42
     ]
    ]
   },
   {
    "name": "SimpleBlock",
    "offset": 374,
-   "length": 47,
+   "length": 46,
    "track": 1,
    "timestamp": 60,
    "cluster_timestamp": 0,
@@ -330,7 +330,7 @@
    "frames": [
     [
      380,
-     41
+     40
     ]
    ]
   }
@@ -356,7 +356,9 @@
      "type": 1,
      "compression": null,
      "settings": null,
-     "encryption": 5
+     "encryption": 5,
+     "cipher": 1,
+     "has_encryption": true
     }
    ],
    "lacing": true
@@ -378,7 +380,7 @@
  "findings": [
   {
    "code": "matroska.track-encrypted",
-   "contains": "is encrypted (AES, AES-CTR)"
+   "contains": "is encrypted (AES-CTR)"
   }
  ],
  "crosscheck": {

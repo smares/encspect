@@ -1,0 +1,232 @@
+{
+ "description": "MPEG-1 audio (object type 0x6B) in an enca entry: no configuration exists, so the stream is described from the sample entry alone.",
+ "length": 5741,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   701
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   585
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   485
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   400
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   340
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   176
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   160
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   493,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   501,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   513,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   533,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   541,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   573,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   597,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   637,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   705,
+   24
+  ],
+  [
+   "mdat",
+   729,
+   5012
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "MPEG-1 Audio",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [],
+   "samples": 13824,
+   "is_vbr": false,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   737,
+   417
+  ],
+  [
+   1154,
+   417
+  ],
+  [
+   1571,
+   417
+  ],
+  [
+   1988,
+   417
+  ],
+  [
+   2405,
+   417
+  ],
+  [
+   2822,
+   417
+  ],
+  [
+   3239,
+   417
+  ],
+  [
+   3656,
+   417
+  ],
+  [
+   4073,
+   417
+  ],
+  [
+   4490,
+   417
+  ],
+  [
+   4907,
+   417
+  ],
+  [
+   5324,
+   417
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_packets": false,
+  "ffprobe_streams": false,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_packets": "ffmpeg's MPEG audio parser merges the random bytes of the samples into packets of its own.",
+   "ffprobe_streams": "the random bytes give ffmpeg's MPEG audio parser no layout that the sample entry does not, so only the packets' side data is not compared."
+  }
+ }
+}

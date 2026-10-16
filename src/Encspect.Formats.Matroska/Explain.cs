@@ -26,4 +26,5 @@ internal static class Explain
     public const string BlockData = "The bytes of the block after its header, which the analyzer does not read as frames.";
 
     public const string TrackFrames = "The frames of an audio track put together from the blocks that carry them, handed to the codec parser of the track's codec ID.";
+    public const string TrackFramesEncrypted = "The frames of an audio track whose ContentEncodings encrypt them (RFC 9559, section 5.1.4.1.31.8). They are not read, since ciphertext is no valid coding; the codec parser is handed the clear configuration only.";
 }

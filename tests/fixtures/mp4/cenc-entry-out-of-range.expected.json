@@ -1,0 +1,320 @@
+{
+ "description": "A track with a clear mp4a first and a cenc-protected enca second, whose chunks use the first and then an index (3) past both: the samples are encrypted, though a clear entry is used too, and are never read as AAC.",
+ "length": 11248,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   877
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   761
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   661
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   576
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   516
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   276
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   503,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   539,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   593,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   601,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   613,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   633,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   641,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   673,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   697,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   737,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   877,
+   28
+  ],
+  [
+   "mdat",
+   905,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   913,
+   300
+  ],
+  [
+   1213,
+   337
+  ],
+  [
+   1550,
+   374
+  ],
+  [
+   1924,
+   321
+  ],
+  [
+   2245,
+   358
+  ],
+  [
+   2603,
+   305
+  ],
+  [
+   2908,
+   342
+  ],
+  [
+   3250,
+   379
+  ],
+  [
+   3629,
+   326
+  ],
+  [
+   3955,
+   363
+  ],
+  [
+   4318,
+   310
+  ],
+  [
+   4628,
+   347
+  ],
+  [
+   4975,
+   384
+  ],
+  [
+   5359,
+   331
+  ],
+  [
+   5690,
+   368
+  ],
+  [
+   6058,
+   315
+  ],
+  [
+   6373,
+   352
+  ],
+  [
+   6725,
+   389
+  ],
+  [
+   7114,
+   336
+  ],
+  [
+   7450,
+   373
+  ],
+  [
+   7823,
+   320
+  ],
+  [
+   8143,
+   357
+  ],
+  [
+   8500,
+   304
+  ],
+  [
+   8804,
+   341
+  ],
+  [
+   9145,
+   378
+  ],
+  [
+   9523,
+   325
+  ],
+  [
+   9848,
+   362
+  ],
+  [
+   10210,
+   309
+  ],
+  [
+   10519,
+   346
+  ],
+  [
+   10865,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca": "enca (encrypted audio)"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ],
+  [
+   "mp4.sample-description-index",
+   "sample description 3"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads the first sample entry.",
+   "ffprobe": "ffmpeg reads the first sample entry and its packets as AAC."
+  }
+ }
+}

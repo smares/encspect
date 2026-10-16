@@ -10,6 +10,7 @@ public static class ReportCsvWriter
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
+        "Is Protected", "Protection Scheme", "DRM Systems",
     ];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer)
@@ -27,6 +28,7 @@ public static class ReportCsvWriter
                 Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.ChannelLayoutText, s.Encoder,
                 s.EncoderConfidence?.ToString(), s.Writer, s.WriterConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
+                s.Streams == 0 ? null : s.IsProtected ? "true" : "false", string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems),
             ]);
             writer.Flush();
         }

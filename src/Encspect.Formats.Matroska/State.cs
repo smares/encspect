@@ -49,11 +49,26 @@ internal sealed class EncodingInfo
 
     public ulong EncryptionAlgorithm { get; set; }
 
+    public bool HasAesSettings { get; set; }
+
     public ulong? CipherMode { get; set; }
 
     public bool AppliesToFrames => (Scope & 1) != 0;
 
     public bool AppliesToCodecPrivate => (Scope & 2) != 0;
+}
+
+internal readonly record struct OrderedEncoding(EncodingInfo Encoding, IReadOnlyList<EncodingInfo> Hiders, bool HasNext)
+{
+    // The outermost hider, whose settings nothing hides.
+    public EncodingInfo? Hider => Hiders.Count > 0 ? Hiders[0] : null;
+
+    // Whether the outermost hider is an encryption (its ContentEncAlgo is not 0).
+    public bool HiderEncrypts => Hider is { Type: 1 } hider && !(hider.HasEncryption && hider.EncryptionAlgorithm == 0);
+
+    // A hidden encoding counts as encrypted when the outermost hider encrypts, or when an encryption is hidden in the chain (its algorithm is unreadable),
+    // or when it is an encryption itself, whatever its settings state.
+    public bool IsHiddenEncrypted => Hider is not null && (HiderEncrypts || Hiders.Skip(1).Any(h => h.Type == 1) || Encoding.Type == 1);
 }
 
 // The totals the blocks of a track add up to.
@@ -155,6 +170,32 @@ internal sealed class TrackInfo
     public ulong? PixelHeight { get; set; }
 
     public List<EncodingInfo> Encodings { get; } = [];
+
+    // RFC 9559 (section 5.1.4.1.31.2) requires the ContentEncodingOrders of a track to be unique. With two the same, the encodings cannot be ordered
+    // (the order of the elements in the file would decide), so none of them is trusted.
+    public bool HasDuplicateOrders => Encodings.GroupBy(e => e.Order).Any(g => g.Count() > 1);
+
+    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first), for a track whose orders are unique. Bit 4 of the
+    // scope of any encoding makes the settings of the next one unreadable (section 5.1.4.1.31.3). That holds for a hidden encoding as well, so the
+    // encodings that hide one are all the encodings of the run of bit 4 encodings just before it, the outermost first: Hiders. HasNext tells whether
+    // an encoding follows.
+    public List<OrderedEncoding> OrderedEncodings()
+    {
+        List<EncodingInfo> ordered = [.. Encodings.OrderByDescending(e => e.Order)];
+        var result = new List<OrderedEncoding>(ordered.Count);
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            int start = i;
+            while (start > 0 && (ordered[start - 1].Scope & 4) != 0)
+            {
+                start--;
+            }
+
+            result.Add(new OrderedEncoding(ordered[i], ordered.GetRange(start, i - start), i + 1 < ordered.Count));
+        }
+
+        return result;
+    }
 
     public bool IsAudio => Type == 2;
 

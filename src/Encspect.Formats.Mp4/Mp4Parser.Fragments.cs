@@ -62,10 +62,18 @@ public sealed partial class Mp4Parser
         uint id = f.U32(node, "Track ID", Explain.TfhdTrackId);
         node.Value = $"Track Fragment Header, track {id}";
         ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, Explain.BaseDataOffset, v => NodeValue.Hex(v, 8)) : null;
+        uint description = state.TrackDefaults.TryGetValue(id, out TrackDefaults? defaults) ? defaults.Description : 1;
         if ((flags & 0x2) != 0)
         {
-            f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
+            description = f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
         }
+
+        if (!state.FragmentDescriptions.TryGetValue(id, out HashSet<uint>? used))
+        {
+            state.FragmentDescriptions[id] = used = [];
+        }
+
+        used.Add(description);
 
         if ((flags & 0x8) != 0)
         {
@@ -80,7 +88,12 @@ public sealed partial class Mp4Parser
 
         if (state.Fragment is { } fragment)
         {
-            fragment.TrackId = id;
+            fragment.HasHeader = true;
+            fragment.HeaderCount++;
+            if (fragment.HeaderCount == 1)
+            {
+                fragment.TrackId = id;
+            }
             fragment.BaseDataOffset = baseOffset;
             fragment.BaseIsMoof = (flags & 0x20000) != 0;
             fragment.DefaultSize = defaultSize;
@@ -168,6 +181,14 @@ public sealed partial class Mp4Parser
     // Places the track fragment's samples once its boxes are read.
     private static void FinishFragment(State state, FragmentTrack fragment)
     {
+        ResolveFragment(state, fragment);
+        if (fragment.HeaderCount > 1)
+        {
+            state.Findings.Add(Severity.Warning, "mp4.fragment-two-headers", fragment.Node, count =>
+                $"{(count == 1 ? "A track fragment holds" : $"{count} track fragments hold")} more than one tfhd box, so whose samples its runs place is not known and they are not analyzed, first at 0x{fragment.Node.Offset:X}.");
+            return;
+        }
+
         Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
         if (track is null)
         {

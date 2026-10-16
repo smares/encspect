@@ -192,8 +192,16 @@ public static class ReportJsonWriter
 
         writer.WriteEndArray();
         writer.WriteString("codec", stream.Codec);
-        writer.WriteNumber("sampleRate", stream.SampleRate);
-        writer.WriteNumber("channels", stream.Channels);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteNumber("sampleRate", stream.SampleRate);
+            writer.WriteNumber("channels", stream.Channels);
+        }
+        else
+        {
+            writer.WriteString("kind", stream.Kind.ToString());
+        }
+
         if (stream.ChannelMode is not null)
         {
             writer.WriteString("channelMode", stream.ChannelMode);
@@ -224,14 +232,22 @@ public static class ReportJsonWriter
             writer.WriteNumber("bitsPerSample", bitsPerSample);
         }
 
-        writer.WriteNumber("samples", stream.Samples);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteNumber("samples", stream.Samples);
+        }
+
         writer.WriteNumber("duration", stream.Duration);
         if (stream.AverageBitrate is { } bitrate)
         {
             writer.WriteNumber("averageBitrate", bitrate);
         }
 
-        writer.WriteBoolean("isVbr", stream.IsVbr);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteBoolean("isVbr", stream.IsVbr);
+        }
+
         if (stream.PlaybackGroup is { } group)
         {
             writer.WriteNumber("playbackGroup", group);
@@ -245,6 +261,22 @@ public static class ReportJsonWriter
         if (stream.JocObjectCount is { } objects)
         {
             writer.WriteNumber("jocObjectCount", objects);
+        }
+
+        if (stream.Protection is { } protection)
+        {
+            writer.WriteBoolean("isProtected", true);
+            writer.WriteStartObject("protection");
+            writer.WriteString("scheme", protection.Scheme);
+            writer.WriteBoolean("isEncrypted", protection.IsEncrypted);
+            writer.WriteStartArray("systems");
+            foreach (string system in protection.Systems)
+            {
+                writer.WriteStringValue(system);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
         }
 
         if (stream.Encoder is not null)

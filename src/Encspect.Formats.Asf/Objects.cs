@@ -647,8 +647,8 @@ public sealed partial class AsfParser
         0x000A => "Windows Media Audio Voice",
         0x0050 => "MPEG audio layer I and II",
         0x0055 => "MPEG audio layer III",
-        0x0160 => "Windows Media Audio version 1",
-        0x0161 => "Windows Media Audio version 2",
+        0x0160 => "Windows Media Audio 1",
+        0x0161 => "Windows Media Audio 2",
         0x0162 => "Windows Media Audio Professional",
         0x0163 => "Windows Media Audio Lossless",
         0x7A21 => "GSM-AMR, fixed bitrate",
@@ -1063,54 +1063,68 @@ public sealed partial class AsfParser
         });
     }
 
-    // ---- Encryption and signature objects (3.14, 3.15, 3.16, 4.13): reported, not interpreted ----
+    // ---- Encryption and signature objects (3.14, 3.15, 3.16, 4.13): their fields are read, nothing is decrypted or verified ----
 
     private static void ParseContentEncryption(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Content Encryption Object", Explain.ContentEncryption);
-        state.HasContentEncryption = true;
+        (Node node, Fields f) = Begin(state, parent, header, end, "Content Encryption Object", Explain.ContentEncryption, Topics.AsfContentProtection);
+        state.Protections.Add(new ProtectionObject(ProtectionSchemes.DrmVersion1, node, [], [], IsWholeFile: true));
         Body(state, node, f, 40, () =>
         {
             uint secret = f.Dword("Secret Data Length", Explain.SecretDataLength, "bytes");
             f.Bytes("Secret Data", Math.Min(secret, f.Remaining), Explain.SecretData);
             uint protectionLength = f.Dword("Protection Type Length", Explain.ProtectionTypeLength, "bytes");
             string protection = f.Ascii("Protection Type", Math.Min(protectionLength, f.Remaining), Explain.ProtectionType);
+            Node protectionNode = node.Children[^1];
             uint keyLength = f.Dword("Key ID Length", Explain.KeyIdLength, "bytes");
             f.Ascii("Key ID", Math.Min(keyLength, f.Remaining), Explain.KeyId);
             uint urlLength = f.Dword("License URL Length", Explain.LicenseUrlLength, "bytes");
             f.Ascii("License URL", Math.Min(urlLength, f.Remaining), Explain.LicenseUrl);
             node.Value = protection;
+            if (protection != "DRM")
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.protection-type", $"The Content Encryption Object's protection type is \"{protection}\"; section 3.14 sets it to \"DRM\".", protectionNode);
+            }
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Microsoft Digital Rights Management version 1; its streams are encrypted and are reported as the file holds them.", node);
+        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Microsoft Digital Rights Manager version 1; its streams are encrypted and are reported as the file holds them.", node);
     }
 
     private static void ParseExtendedContentEncryption(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Extended Content Encryption Object", Explain.ExtendedContentEncryption);
-        state.HasContentEncryption = true;
+        (Node node, Fields f) = Begin(state, parent, header, end, "Extended Content Encryption Object", Explain.ExtendedContentEncryption, Topics.AsfContentProtection);
+        state.Protections.Add(new ProtectionObject(ProtectionSchemes.RightsManager7, node, [], [], IsWholeFile: true));
         Body(state, node, f, 24, () =>
         {
             uint size = f.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
             f.Bytes("Data", Math.Min(size, f.Remaining), Explain.EncryptionData);
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by the Windows Media Rights Manager; its streams are encrypted and are reported as the file holds them.", node);
+        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Windows Media Rights Manager 7; its streams are encrypted and are reported as the file holds them.", node);
     }
 
+    // Section 3.16: a signature of the header between the File Properties Object and this object. It protects nothing, so no stream is protected by it.
     private static void ParseDigitalSignature(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Digital Signature Object", Explain.DigitalSignature);
+        (Node node, Fields f) = Begin(state, parent, header, end, "Digital Signature Object", Explain.DigitalSignature, Topics.AsfContentProtection);
         Body(state, node, f, 32, () =>
         {
-            f.Dword("Signature Type", Explain.SignatureType);
+            uint type = f.Dword("Signature Type", Explain.SignatureType);
+            Node typeNode = node.Children[^1];
             uint size = f.Dword("Signature Data Length", Explain.SignatureDataLength, "bytes");
             f.Bytes("Signature Data", Math.Min(size, f.Remaining), Explain.SignatureData);
+            node.Value = NodeValue.Integer(Math.Min(size, node.Length), "bytes", "byte");
+            if (type != 2)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.signature-type", $"The Digital Signature Object's signature type is {type}; section 3.16 sets it to 2.", typeNode);
+            }
         });
     }
 
     private static void ParseAdvancedContentEncryption(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Advanced Content Encryption Object", Explain.AdvancedContentEncryption);
-        state.HasContentEncryption = true;
+        (Node node, Fields f) = Begin(state, parent, header, end, "Advanced Content Encryption Object", Explain.AdvancedContentEncryption, Topics.AsfContentProtection);
+        int recordsBefore = state.Protections.Count;
+        bool isRead = false;
+        var unreadSystems = new List<string>();
         Body(state, node, f, 26, () =>
         {
             ushort count = f.Word("Content Encryption Records Count", Explain.ContentEncryptionRecordsCount);
@@ -1122,64 +1136,120 @@ public sealed partial class AsfParser
                 if (i == MaxListEntries)
                 {
                     TooManyEntries(state, node, f, $"{count} content encryption records", "from");
-                    break;
+                    return;
                 }
 
                 long at = f.Position;
                 var entry = new Node("Content Encryption Record", at, 0) { Description = Explain.ContentEncryptionRecord };
                 var r = new Fields(f.Reader, entry);
-                r.Guid("System ID", Explain.EncryptionSystemId);
-                r.Dword("System Version", Explain.EncryptionSystemVersion);
-                ushort objects = r.Word("Encrypted Object Record Count", Explain.EncryptedObjectRecordCount);
-                for (int j = 0; j < objects; j++)
+                var streams = new List<(int Number, Node Node)>();
+                var pending = new List<(ushort Type, ushort Length, Node Node)>();
+                string? system = null;
+
+                // The record as far as it was read is kept, with the streams it names, whether it ends here for want of bytes or entries.
+                void Attach(long stop)
                 {
-                    if (++recordNodes > MaxListEntries)
+                    var shown = new Node("Content Encryption Record", at, stop - at) { Description = Explain.ContentEncryptionRecord };
+                    foreach (Node child in entry.Children)
                     {
-                        // The record so far is shown, and the rest of the object is Extra Data.
-                        TooManyEntries(state, node, f, $"{objects} encrypted object records in record {i + 1} of {count}", "from");
-                        var partial = new Node("Content Encryption Record", at, r.Position - at) { Description = Explain.ContentEncryptionRecord };
-                        foreach (Node child in entry.Children)
+                        shown.Add(child);
+                    }
+
+                    node.Add(shown);
+                    foreach ((ushort type, ushort length, Node idTypeNode) in pending)
+                    {
+                        state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
+                            type == 1
+                                ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 sets the length to 2 for type 1."
+                                : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
+                    }
+
+                    state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, shown, [system!], streams));
+                }
+
+                try
+                {
+                    Guid id = r.Guid("System ID", Explain.EncryptionSystemId, AsfGuids.EncryptionSystemName);
+                    system = AsfGuids.EncryptionSystemName(id) ?? AsfGuids.Text(id);
+                    r.Dword("System Version", Explain.EncryptionSystemVersion);
+                    ushort objects = r.Word("Encrypted Object Record Count", Explain.EncryptedObjectRecordCount);
+                    for (int j = 0; j < objects; j++)
+                    {
+                        if (++recordNodes > MaxListEntries)
                         {
-                            partial.Add(child);
+                            // The record so far is shown, and the rest of the object is Extra Data.
+                            TooManyEntries(state, node, f, $"{objects} encrypted object records in record {i + 1} of {count}", "from");
+                            Attach(r.Position);
+                            unreadSystems.Add(system!);
+                            stopped = true;
+                            break;
                         }
 
-                        node.Add(partial);
-                        stopped = true;
-                        break;
+                        long recordAt = r.Position;
+                        var objectRecord = new Node("Encrypted Object Record", recordAt, 0) { Description = Explain.EncryptedObjectRecord };
+                        var o = new Fields(r.Reader, objectRecord);
+                        ushort idType = o.Word("Encrypted Object ID Type", Explain.EncryptedObjectIdType);
+                        ushort idLength = o.Word("Encrypted Object ID Length", Explain.EncryptedObjectIdLength, "bytes");
+                        Node idTypeNode = objectRecord.Children[^2];
+                        bool isStream = idType == 1 && idLength == 2;
+                        if (isStream)
+                        {
+                            streams.Add((o.Word("Encrypted Object ID", Explain.EncryptedObjectStreamNumber), objectRecord.Children[^1]));
+                        }
+                        else
+                        {
+                            o.Bytes("Encrypted Object ID", idLength, Explain.EncryptedObjectId);
+                        }
+
+                        var shownRecord = new Node("Encrypted Object Record", recordAt, r.Position - recordAt) { Description = Explain.EncryptedObjectRecord };
+                        foreach (Node child in objectRecord.Children)
+                        {
+                            shownRecord.Add(child);
+                        }
+
+                        entry.Add(shownRecord);
+                        if (!isStream)
+                        {
+                            pending.Add((idType, idLength, idTypeNode));
+                        }
                     }
 
-                    long recordAt = r.Position;
-                    var objectRecord = new Node("Encrypted Object Record", recordAt, 0) { Description = Explain.EncryptedObjectRecord };
-                    var o = new Fields(r.Reader, objectRecord);
-                    o.Word("Encrypted Object ID Type", Explain.EncryptedObjectIdType);
-                    ushort idLength = o.Word("Encrypted Object ID Length", Explain.EncryptedObjectIdLength, "bytes");
-                    o.Bytes("Encrypted Object ID", idLength, Explain.EncryptedObjectId);
-                    var shownRecord = new Node("Encrypted Object Record", recordAt, r.Position - recordAt) { Description = Explain.EncryptedObjectRecord };
-                    foreach (Node child in objectRecord.Children)
+                    if (stopped)
                     {
-                        shownRecord.Add(child);
+                        return;
                     }
 
-                    entry.Add(shownRecord);
-                }
+                    uint dataSize = r.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
+                    if (dataSize > r.Remaining)
+                    {
+                        state.Findings.AddNow(Severity.Warning, "asf.encryption-data-size", $"A content encryption record of the Advanced Content Encryption Object gives {dataSize} bytes of data, but {r.Remaining} remain in the object.", entry.Children[^1]);
+                    }
 
-                if (stopped)
+                    r.Bytes("Data", Math.Min(dataSize, r.Remaining), Explain.EncryptionData);
+                    Attach(f.Position);
+                }
+                catch (EndOfStreamException) when (system is not null)
                 {
-                    break;
+                    Attach(r.Position);
+                    unreadSystems.Add(system!);
+                    throw;
                 }
-
-                uint dataSize = r.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
-                r.Bytes("Data", Math.Min(dataSize, r.Remaining), Explain.EncryptionData);
-                var shown = new Node("Content Encryption Record", at, f.Position - at) { Description = Explain.ContentEncryptionRecord };
-                foreach (Node child in entry.Children)
-                {
-                    shown.Add(child);
-                }
-
-                node.Add(shown);
             }
+
+            isRead = !stopped;
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Windows Media DRM for network devices; its streams are encrypted and are reported as the file holds them.", node);
+        if (!isRead)
+        {
+            // The records were not all read: the streams the unread ones name are not known, so every stream is taken to be covered.
+            state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, node, [.. unreadSystems], [], IsWholeFile: true));
+        }
+
+        state.Findings.AddNow(Severity.Info, state.Protections.Count > recordsBefore ? "asf.content-encrypted" : "asf.no-content-encryption-record",
+            state.Protections.Count > recordsBefore
+                ? (isRead
+                    ? "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
+                    : "The file is protected by Windows Media DRM for network devices; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.")
+                : "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
     }
 
     // ---- Stream Bitrate Properties Object (3.12) ----

@@ -113,7 +113,7 @@ internal sealed partial class FileReader(ParseContext context)
         return next;
     }
 
-    private static string ElementName(ulong id) => Schema.Find(id)?.Name ?? $"the unknown element 0x{id:X}";
+    private static string ElementName(ulong id) => Schema.Find(id)?.Name ?? $"the unknown element {Ebml.IdText(id)}";
 
     private static string Bytes(long count) => count == 1 ? "1 byte" : $"{count.ToString(CultureInfo.InvariantCulture)} bytes";
 

@@ -81,6 +81,7 @@ def build(elements):
 
 
 OPUS = ("Opus", 48000, 1)
+NOT_ORDERED = [("matroska.encoding-order", "unique"), ("matroska.track-encoding-not-read", "cannot be ordered")]
 
 
 # --- The fixtures ------------------------------------------------------------------------------------
@@ -238,6 +239,22 @@ def _():
     return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
 
 
+@fixture("encrypted-cbc", "A track whose frames are encrypted with AES-CBC (ContentEncAESSettings, AESSettingsCipherMode 2): the stream is protected and encrypted, and its frames are not read.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CBC)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x05\x06"))
+    sealed = [simple_block(1, i * 20, bytes((i * 7 + k) & 0xFF for k in range(33)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-3des", "A track whose frames are encrypted with 3DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
+         findings=[("matroska.track-encrypted", "is encrypted (3DES)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=2, key_id=b"\x09"))
+    sealed = [simple_block(1, i * 20, bytes((i * 5 + k) & 0xFF for k in range(29)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
 @fixture("zlib-compressed", "A track whose frames are compressed with zlib (ContentCompAlgo 0).", streams=[OPUS])
 def _():
     packed = [simple_block(1, i * 20, zlib.compress(opus_packet(i), 9), key=True) for i in range(4)]
@@ -252,12 +269,359 @@ def _():
     return build(standard(cluster(0, *blocks(count=3)), track=[opus_track(private=opus_head()[8:], encodings=enc)]))
 
 
-@fixture("encrypted", "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES, AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+@fixture("encrypted", "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames. The frames have the sizes of the clear encryption-algorithm-default.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01\x02\x03\x04"))
-    sealed = [simple_block(1, i * 20, bytes((i * 13 + k) & 0xFF for k in range(41)), key=True) for i in range(4)]
+    sealed = [simple_block(1, i * 20, bytes((i * 13 + k) & 0xFF for k in range(40 + i % 3)), key=True) for i in range(4)]
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-3des-aes-settings", "A track encrypted with 3DES whose ContentEncryption also holds ContentEncAESSettings, which RFC 9559 forbids unless the algorithm is AES "
+         "(Table 25): the scheme is 3DES without a cipher mode.",
+         findings=[("matroska.aes-settings-not-aes", "not AES"), ("matroska.track-encrypted", "is encrypted (3DES)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=2, cipher=1, key_id=b"\x09"))
+    sealed = [simple_block(1, i * 20, bytes((i * 11 + k) & 0xFF for k in range(31)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-algorithm-none", "A ContentEncoding of type 1 whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24): the frames are read as they are "
+         "and the track is not protected.",
+         findings=[("matroska.encryption-none", "not encrypted")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=0, key_id=b"\x01"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-ignored", "A zlib ContentEncoding (type 0) that also holds a ContentEncryption element, which a reader ignores unless the type is 1 "
+         "(section 5.1.4.1.31.8): the compression is undone and the track is not protected.",
+         findings=[("matroska.encryption-ignored", "ignores")], streams=[OPUS], valid=False)
+def _():
+    packed = [simple_block(1, i * 20, zlib.compress(opus_packet(i), 9), key=True) for i in range(4)]
+    enc = content_encodings(content_encoding(order=0, scope=1, compression=0, stray_encryption=5))
+    return build(standard(cluster(0, *packed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-missing", "A ContentEncoding of type 1 without a ContentEncryption element, which RFC 9559 requires then (section 5.1.4.1.31.8): the track is reported "
+         "as encrypted by an unknown algorithm.",
+         findings=[("matroska.encryption-missing", "without a ContentEncryption"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, missing_encryption=True))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(27)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-under-bzlib", "A track compressed with bzlib (ContentEncodingOrder 1) over AES-CTR encryption (order 0): the finding names both, and the stream is encrypted.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR) and compressed with bzlib")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=1, compression=1), content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x07"))
+    sealed = [simple_block(1, i * 20, bytes((i * 9 + k) & 0xFF for k in range(35)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-private", "A track whose CodecPrivate is encrypted (scope 2, AES-CTR) and whose frames are in the clear: the stream carries the scheme with its samples "
+         "not encrypted, and the codec's setup is not available.",
+         findings=[("matroska.codec-private-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x02"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(private=bytes((k * 5 + 1) & 0xFF for k in range(19)), encodings=enc)]))
+
+
+@fixture("compression-private-bzlib", "A track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: "
+         "the setup of the codec is unavailable, and nothing is protected.",
+         findings=[("matroska.codec-private-not-read", "is compressed with bzlib")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=1))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-algorithm-default", "A ContentEncryption without a ContentEncAlgo, whose default is 0 (not encrypted, RFC 9559 section 5.1.4.1.31.9): the frames are read as they are "
+         "and the track is not protected.",
+         findings=[("matroska.encryption-none", "not encrypted")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, no_algo=True, key_id=b"\x01"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-next-encoding", "AES-CTR with scope 4 (the next ContentEncoding) over header stripping: the stripped bytes in ContentCompSettings are ciphertext, so the "
+         "frames cannot be put back together and the stream is encrypted.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
+    stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
+    return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-aac", "An A_AAC track with a clear CodecPrivate (the AudioSpecificConfig) and encrypted frames: the AAC parser describes the stream from the configuration "
+         "and the container's timing gives its length.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01"))
+    sealed = [simple_block(1, i * 23, bytes((i * 7 + k) & 0xFF for k in range(50)), key=True) for i in range(40)]
+    return build(standard(cluster(0, *sealed), track=[audio_track(codec="A_AAC", channels=2, rate=44100.0, private=b"\x12\x10", encodings=enc)]))
+
+
+@fixture("encrypted-vorbis", "An A_VORBIS track with its three headers in a clear CodecPrivate and encrypted frames: the Vorbis parser reads the headers, not the frames. The "
+         "headers are copied from external-ffmpeg-vorbis, so their vendor string names ffmpeg's muxer while the Segment names this generator.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)"), ("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    offset, length = manifest["tracks"][0]["private"]
+    private = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()[offset:offset + length]
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01"))
+    sealed = [simple_block(1, i * 23, bytes((i * 5 + k) & 0xFF for k in range(60)), key=True) for i in range(30)]
+    return build(standard(cluster(0, *sealed), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=private, encodings=enc)]))
+
+
+@fixture("vorbis-private-zlib", "An A_VORBIS track whose CodecPrivate (the three headers of external-ffmpeg-vorbis) is zlib-compressed (scope 2), with the frames in the clear: the inflated "
+         "headers are handed to the Vorbis parser as they are, including the framing bit of the comment header.",
+         findings=[("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()
+    offset, length = manifest["tracks"][0]["private"]
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:30]
+    items = [simple_block(1, i * 23, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=0))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(data[offset:offset + length], 9), encodings=enc)]))
+
+
+@fixture("vorbis-private-zlib-framing", "The zlib-compressed Vorbis CodecPrivate of vorbis-private-zlib with the framing bit of the identification header cleared: the finding points at the "
+         "identification header's Framing Bit, not at the comment header's, although every field of the inflated bytes covers the same range of the file.",
+         findings=[("vorbis.framing-missing", "identification header"), ("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()
+    offset, length = manifest["tracks"][0]["private"]
+    private = bytearray(data[offset:offset + length])
+    private[3 + private[1] - 1] &= 0xFE
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:30]
+    items = [simple_block(1, i * 23, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=0))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(bytes(private), 9), encodings=enc)]))
+
+
+@fixture("five-byte-id-in-block-group", "An EBML Header that allows IDs of five octets (EBMLMaxIDLength 5), and in a BlockGroup an element with such an ID whose size runs past the BlockGroup: it is an "
+         "unknown element, and the finding about its size points at the node of the tree that holds it.",
+         findings=[("matroska.header-limits", "EBMLMaxIDLength of 5"), ("matroska.element-overruns-parent", "runs past the end of its parent")],
+         streams=[OPUS], valid=False)
+def _():
+    items = [simple_block(1, 0, opus_packet(0)), block_group(1, 20, opus_packet(1), extra=(E(0x7FF1, b"zz", size=40, id_raw=b"\x08\x12\x34\x56\x78"),))]
+    return build([ebml_header(max_id=5), segment(info(), tracks(opus_track()), cluster(0, *items), cluster(100, *blocks(count=4, first=2)))])
+
+
+@fixture("eight-octet-id", "An EBML Header that allows IDs of eight octets (EBMLMaxIDLength 8), and an element with such an ID (0x0123456789ABCDEF) in a BlockGroup and one directly in a "
+         "Cluster: the tree shows the whole ID of each.",
+         findings=[("matroska.header-limits", "EBMLMaxIDLength of 8"), ("matroska.unknown-element", "none the Matroska schema lists")], streams=[OPUS], valid=False)
+def _():
+    long_id = b"\x01\x23\x45\x67\x89\xAB\xCD\xEF"
+    items = [simple_block(1, 0, opus_packet(0)), E(0x7FF1, b"zz", id_raw=long_id), block_group(1, 20, opus_packet(1), extra=(E(0x7FF1, b"yy", id_raw=long_id),))]
+    return build([ebml_header(max_id=8), segment(info(), tracks(opus_track()), cluster(0, *items))])
+
+
+@fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
+         "so the frames count as encrypted by the AES encryption.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, encryption=0))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-over-3des", "AES-CTR with scope 4 over 3DES with scope 1: the scheme names the outermost encryption, which hides the other's settings.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, encryption=2, key_id=b"\x04"))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(33)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-chain", "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next. The 3DES encryption is hidden in the chain, so its algorithm cannot be "
+         "read, and the stripping it hides counts as encrypted by an unknown algorithm: the scheme has no algorithm.",
+         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=2, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=1, scope=4, encryption=2, key_id=b"\x04"),
+                            content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
+    stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
+    return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+
+
+@fixture("compression-hides-encryption", "Header stripping with scope 4 over an encryption: the stripped bytes are the ContentEncAlgo element (AES), but the encryption's own settings are "
+         "unreadable until they are put back, so it counts as encrypted by an unknown algorithm.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x47\xE1\x81\x05"), content_encoding(order=0, scope=1, no_algo=True))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("compression-hides-compression", "Header stripping with scope 4 over a zlib compression: the zlib encoding's settings are unreadable, so the frames are not read and nothing is protected.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encoding-not-read", "settings that another encoding hides")],
+         streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x78"), content_encoding(order=0, scope=1, compression=0))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-covers-nothing", "AES-CTR with scope 4 as the only encoding: no next encoding follows, so it hides nothing and the track is not protected.",
+         findings=[("matroska.encryption-covers-nothing", "encrypts nothing")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+def aac_with_delay(is_encrypted):
+    """Six frames of an ADTS fixture in an A_AAC track with an explicit AudioSpecificConfig and a CodecDelay of 50 ms (which the AAC parser ignores),
+    one cluster each in nanoseconds so that the container's timing equals the frames' length; sealed with the same sizes when encrypted."""
+    object_type, rate_index, channels, frames = adts_frames("cbr")
+    rate = AAC_RATES[rate_index]
+    config = struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3))
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01")) if is_encrypted else None
+    clusters = [cluster(round(i * 1024 * 1e9 / rate),
+                        simple_block(1, 0, bytes((i * 7 + k) & 0xFF for k in range(len(frame))) if is_encrypted else frame, key=True)) for i, frame in enumerate(frames[:6])]
+    return build(standard(*clusters, scale=1, track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, delay=50_000_000, encodings=enc)]))
+
+
+def aac_private(encodings, transform):
+    """Six frames of an ADTS fixture, in the clear, in an A_AAC track whose CodecPrivate (the AudioSpecificConfig, passed through transform) is coded by the encodings."""
+    object_type, rate_index, channels, frames = adts_frames("cbr")
+    rate = AAC_RATES[rate_index]
+    config = transform(struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3)))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames[:6])]
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, encodings=content_encodings(*encodings))]))
+
+
+@fixture("aac-private-zlib", "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the CodecPrivate is inflated and handed to the AAC "
+         "parser as the configuration.", streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=0)], lambda config: zlib.compress(config, 9))
+
+
+@fixture("aac-private-stripped", "An A_AAC track whose CodecPrivate is header-stripped (scope 2, the first byte of the AudioSpecificConfig) and whose frames are in the clear: the byte "
+         "is put back and the configuration handed to the AAC parser.", streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=3, settings=b"\x12")], lambda config: config[1:])
+
+
+@fixture("aac-private-encrypted", "An A_AAC track whose CodecPrivate is encrypted (AES-CTR, scope 2) and whose frames are in the clear: the frames are analyzed, the AAC parser is given no "
+         "configuration, and the stream carries the scheme with its samples not encrypted.",
+         findings=[("matroska.codec-private-encrypted", "is encrypted (AES-CTR)"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x05")], lambda config: bytes((b ^ 0x5A) for b in config))
+
+
+@fixture("aac-private-bzlib", "An A_AAC track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: the frames are "
+         "analyzed without a configuration.",
+         findings=[("matroska.codec-private-not-read", "compressed with bzlib"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=1)], lambda config: config)
+
+
+@fixture("ac3-codec-private", "An A_AC3 track with a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): the AC-3 parser is not handed it as a dac3 "
+         "configuration, and the frames are analyzed.",
+         findings=[("matroska.codec-private-unexpected", "does not define")], streams=[("AC-3", 48000, 6)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-ac3-51.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-ac3-51.mka").read_bytes()
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:4]
+    items = [simple_block(1, i * 32, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_AC3", channels=6, rate=48000.0, private=b"\x10\x3d\xe0")]))
+
+
+@fixture("aac-delay", "A clear A_AAC track with a CodecDelay of 50 ms, which the AAC parser ignores: six frames.", streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_delay(False)
+
+
+@fixture("encrypted-aac-delay", "The frames of aac-delay encrypted: the encrypted track counts the samples and the length of the clear one, since only Opus drops the CodecDelay.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_delay(True)
+
+
+@fixture("encrypted-in-chain-middle", "Header stripping with scope 4 over AES-CTR with scope 4 over header stripping: the encryption in the middle of the chain is itself hidden, so "
+         "its algorithm is unknown, and the frames of the last encoding count as encrypted by it.",
+         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"),
+                   ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=2, scope=4, compression=3, settings=b"\x47"), content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"),
+                            content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("hidden-encryption-covers-nothing", "A compression with scope 4 over AES-CTR with scope 4 and no encoding after it: the hidden encryption covers nothing, so the frames are read "
+         "and the track is not protected.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x47"), content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+# Encodings that share a ContentEncodingOrder (which RFC 9559 section 5.1.4.1.31.2 forbids): the track cannot be ordered, so nothing of it is read and it is
+# encrypted when any encoding is of type 1. Each case is a list of (content_encoding arguments, ContentEncodingType) pairs; the fixtures write them in the order given, and
+# check_matroska_encodings.py writes every permutation and expects the same result.
+TIE_CASES = {
+    "same-order-encryption-and-stripping": [(dict(order=0, scope=1, compression=3, settings=b"\xde\xad"), 0), (dict(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"), 1)],
+    "same-order-two-compressions": [(dict(order=0, scope=1, compression=3, settings=b"\xF8"), 0), (dict(order=0, scope=1, compression=0), 0)],
+    "same-order-aes-modes": [(dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), 1), (dict(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x03"), 1)],
+    "same-order-over-encryption": [(dict(order=1, scope=4, compression=3, settings=b"\x47"), 0), (dict(order=1, scope=1, compression=0), 0),
+                                   (dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), 1)],
+    "same-order-stray-encryption": [(dict(order=0, scope=1, compression=3, settings=b"\xF8", stray_encryption=0), 0), (dict(order=0, scope=1, compression=3, settings=b"\xF8"), 0)],
+}
+
+
+def tie_file(encodings):
+    """A track with the given (content_encoding arguments, type) pairs, in that order, and frames that are the same whatever they are."""
+    enc = content_encodings(*[content_encoding(**kw) for kw, _ in encodings])
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("same-order-encryption-and-stripping", "Header stripping and AES-CTR with scope 4 share ContentEncodingOrder 0 (which RFC 9559 forbids): the encodings cannot be ordered, so none is "
+         "trusted, nothing is read, and the track is encrypted by an unknown algorithm since one of them is an encryption.", findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-encryption-and-stripping"])
+
+
+@fixture("same-order-two-compressions", "Header stripping and zlib share ContentEncodingOrder 0: nothing is read, and with no encryption among them nothing is protected.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-two-compressions"])
+
+
+@fixture("same-order-aes-modes", "Two AES encryptions that differ only in the cipher mode (CTR and CBC) share ContentEncodingOrder 0: the scheme names no algorithm, as it could be either.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-aes-modes"])
+
+
+@fixture("same-order-over-encryption", "Two compressions share ContentEncodingOrder 1, one with scope 4, over AES-CTR at order 0: whatever the tie hides, the track is encrypted by an unknown algorithm.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-over-encryption"])
+
+
+@fixture("same-order-stray-encryption", "Two header strippings share ContentEncodingOrder 0, one with a ContentEncryption element, which a reader ignores under type 0 (section "
+         "5.1.4.1.31.8): the encodings cannot be ordered and nothing is read, but with no encoding of type 1 nothing is protected.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-stray-encryption"])
+
+
+@fixture("encrypted-private-missing", "AES-CTR with scope 2 (the CodecPrivate) on a track that has none: the encryption covers nothing, so the track is not protected, and the Opus "
+         "track lacks the CodecPrivate it needs.",
+         findings=[("matroska.encryption-covers-nothing", "encrypts nothing"), ("matroska.codec-private-missing", "no CodecPrivate")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(private=None, encodings=enc)]))
+
+
+@fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
+         findings=[("matroska.track-empty", "no block with frames"), ("matroska.no-clusters", "no Cluster")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x04"))
+    return build(standard(track=[opus_track(encodings=enc)]))
 
 
 @fixture("compression-bzlib", "A track compressed with bzlib, which the analyzer does not undo.",
@@ -267,8 +631,8 @@ def _():
     return build(standard(cluster(0, *blocks(count=3)), track=[opus_track(encodings=enc)]))
 
 
-@fixture("encoding-order", "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2), and a header-stripped track.",
-         findings=[("matroska.encoding-order", "unique")], streams=[OPUS], valid=False)
+@fixture("encoding-order", "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2): they cannot be ordered, so the header-stripped "
+         "frames are not read.", findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=1, scope=1, compression=3, settings=b"\xF8"), content_encoding(order=1, scope=2, compression=3, settings=b""))
     stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(3)]
@@ -638,6 +1002,17 @@ def legacy_aac(codec, name, output_rate=None, rate_override=None, apps=None):
          "(the object type, the sampling frequency and the channels).", streams=[("AAC", 44100, 2)])
 def _():
     return legacy_aac("A_AAC/MPEG4/LC", "stereo")[0]
+
+
+@fixture("aac-legacy-stray-codec-private", "A track with the legacy ID A_AAC/MPEG4/LC and a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): it would configure "
+         "48 kHz mono, but it is not handed over, and the AudioSpecificConfig is worked out from the ID and the Audio element as for aac-legacy-lc.",
+         findings=[("matroska.codec-private-unexpected", "does not define")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    _, rate_index, channels, frames = adts_frames("stereo")
+    rate = float(AAC_RATES[rate_index])
+    stray = struct.pack(">H", (2 << 11) | (3 << 7) | (1 << 3))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[audio_track(1, "A_AAC/MPEG4/LC", channels, rate, private=stray)]))
 
 
 @fixture("aac-legacy-mpeg2-main", "A track with the legacy ID A_AAC/MPEG2/MAIN, whose frames use the main profile's prediction.", streams=[("AAC", 44100, 1)])

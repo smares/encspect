@@ -4,10 +4,11 @@ namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
-// channel layout, encoder and writer are the first stream's that has one; the duration and samples add up over all streams, except that
-// the streams of one playback group (StreamInfo.PlaybackGroup), which play at the same time, count their longest once, and the
-// average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
-// most JOC objects one reconstructs. Tags are the file's and those its container holds in its chunks,
+// channel layout and encoder are the first audio stream's that has one, and empty where there is none; the writer is the first stream's that has one, since it is a fact about
+// the file; the duration and samples add up over the audio streams, except that the streams of one playback group (StreamInfo.PlaybackGroup), which play at the same
+// time, count their longest once, and the average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
+// most JOC objects one reconstructs. Protection is whether any stream is protected, with the schemes
+// and DRM systems the protected streams name, without repeats, in stream order. Tags are the file's and those its container holds in its chunks,
 // in tree order.
 public sealed record ReportSummary(
     string Source,
@@ -29,8 +30,16 @@ public sealed record ReportSummary(
     int Warnings,
     int Infos,
     bool HasObjectAudio = false,
-    int? JocObjectCount = null)
+    int? JocObjectCount = null,
+    bool IsProtected = false,
+    IReadOnlyList<string>? ProtectionSchemes = null,
+    IReadOnlyList<string>? DrmSystems = null)
 {
+    // The schemes and systems as lists even for a summary made without them.
+    public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
+
+    public IReadOnlyList<string> DrmSystems { get; init; } = DrmSystems ?? [];
+
     // The layout's common name, such as "5.1", or null.
     public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
 
@@ -43,13 +52,14 @@ public sealed record ReportSummary(
         ArgumentNullException.ThrowIfNull(report);
 
         IReadOnlyList<StreamInfo> streams = report.Streams;
-        StreamInfo? first = streams.Count > 0 ? streams[0] : null;
-        StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
+        List<StreamInfo> audio = [.. streams.Where(s => s.Kind == StreamKind.Audio)];
+        StreamInfo? first = audio.Count > 0 ? audio[0] : null;
+        StreamInfo? encoded = audio.FirstOrDefault(s => s.Encoder is not null);
         StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
-        List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
+        List<StreamInfo> timed = audio.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
-        List<StreamInfo> counted = [.. streams.Where(s => s.PlaybackGroup is null),
-            .. streams.Where(s => s.PlaybackGroup is not null).GroupBy(s => s.PlaybackGroup).Select(g => g.MaxBy(s => s.Duration)!)];
+        List<StreamInfo> counted = [.. audio.Where(s => s.PlaybackGroup is null),
+            .. audio.Where(s => s.PlaybackGroup is not null).GroupBy(s => s.PlaybackGroup).Select(g => g.MaxBy(s => s.Duration)!)];
         double duration = counted.Sum(s => s.Duration);
         long samples = counted.Sum(s => s.Samples);
 
@@ -73,7 +83,10 @@ public sealed record ReportSummary(
             report.Findings.Count(f => f.Severity == Severity.Warning),
             report.Findings.Count(f => f.Severity == Severity.Info),
             streams.Any(s => s.HasObjectAudio),
-            streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max());
+            streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max(),
+            streams.Any(s => s.IsProtected),
+            [.. streams.Select(s => s.Protection?.Scheme).OfType<string>().Distinct()],
+            [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()]);
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or

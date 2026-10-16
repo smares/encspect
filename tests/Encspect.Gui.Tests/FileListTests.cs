@@ -122,6 +122,32 @@ public class FileListTests
     }
 
     [Fact]
+    public void A_protected_file_says_so_in_its_row_and_a_clear_one_does_not()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Path.Combine(Fixtures.Directory, "mp4", "cenc-aac.m4a"), "protected.m4a");
+        temp.Copy(Path.Combine(Fixtures.Directory, "mp4", "itunes-purchase-clear.m4a"), "purchase.m4a");
+        temp.Copy(Fixtures.Mpeg("external-lame-vbr-v2.mp3"), "plain.mp3");
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, parallelism: 2, roots: []);
+
+        model.Open(FileSource.ForFolder(temp.Path));
+        ui.Until(() => !model.IsRunning);
+
+        FileRow locked = model.Rows.Single(r => r.Name == "protected.m4a");
+        Assert.True(locked.IsProtected);
+        Assert.Equal("Protected", locked.ProtectionText);
+        Assert.Equal("Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady, 01234567-89ab-cdef-0123-456789abcdef", locked.ProtectionTip);
+        foreach (string clear in new[] { "purchase.m4a", "plain.mp3" })
+        {
+            FileRow row = model.Rows.Single(r => r.Name == clear);
+            Assert.False(row.IsProtected);
+            Assert.Null(row.ProtectionText);
+            Assert.Null(row.ProtectionTip);
+        }
+    }
+
+    [Fact]
     public void An_ogg_speex_file_fills_its_row_from_its_streams()
     {
         using var temp = new TempFolder();

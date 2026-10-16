@@ -120,6 +120,7 @@ public sealed partial class Mp4Parser
         state.CurrentEntry = entry;
         ReadChildren(state, node, f.Position, header.End, depth + 1);
         state.CurrentEntry = outer;
+        CheckProtectedEntry(state, entry);
     }
 
     private static string FormatName(string format) => format switch
@@ -138,6 +139,10 @@ public sealed partial class Mp4Parser
         "samr" => "AMR",
         "sawb" => "AMR-WB",
         "enca" => "encrypted audio",
+        "encv" => "encrypted video",
+        "drms" => "iTunes protected audio",
+        "drmi" => "iTunes protected video",
+        "aavd" => "Audible protected audio",
         "mha1" or "mhm1" => "MPEG-H 3D Audio",
         _ => "other",
     };
@@ -518,12 +523,15 @@ public sealed partial class Mp4Parser
     }
 
     // 8.9.3: sample group descriptions; for the roll and pre-roll groups of audio (10.1 and 10.3),
-    // the roll distance in samples, negative for samples a decoder must decode before.
+    // the roll distance in samples, negative for samples a decoder must decode before. The layout is that of FFmpeg's mov_read_sgpd and GPAC:
+    // default_length from version 1, default_sample_description_index from version 2, and an entry length where default_length is 0.
+    // The seig descriptions of Common Encryption are read for what they say: any that protects, cannot be read, or is of a version unknown,
+    // wherever the box lies, is taken to say that the track's samples are protected.
     private static void SampleGroupDescription(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
         string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
-        uint defaultLength = version == 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
+        uint defaultLength = version >= 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
         if (version >= 2)
         {
             f.U32(node, "Default Sample Description Index", Explain.DefaultSampleDescriptionIndex);
@@ -531,17 +539,61 @@ public sealed partial class Mp4Parser
 
         uint count = f.U32(node, "Entries", Explain.GroupDescriptionEntries);
         node.Value = $"{grouping} ({GroupingName(grouping)})";
-        for (uint i = 0; i < count && i < MaxListedEntries && f.Remaining > 0; i++)
+        CheckGroupPlacement(state, node);
+        bool isSeig = grouping == "seig";
+        if (isSeig && version > 2)
         {
-            long length = version == 1 && defaultLength == 0 ? f.U32(node, "Description Length", Explain.DescriptionLength, unit: "bytes") : defaultLength;
+            state.Findings.AddNow(Severity.Warning, "mp4.sgpd-version", $"The sgpd box at 0x{node.Offset:X} has version {version}; ISO/IEC 14496-12 defines 0 to 2, so its descriptions are not read and are taken to protect.", node);
+            MarkProtecting(state);
+            return;
+        }
+
+        long moreStart = long.MaxValue;
+        uint read = 0;
+        for (uint i = 0; i < count && f.Remaining > 0; i++)
+        {
+            if (i == MaxListedEntries)
+            {
+                moreStart = f.Position;
+            }
+
+            read++;
+            long length = version >= 1 ? (defaultLength != 0 ? defaultLength : (i < MaxListedEntries ? f.U32(node, "Description Length", Explain.DescriptionLength, unit: "bytes") : (long)f.Take(4))) : 0;
             long at = f.Position;
+            if (i >= MaxListedEntries)
+            {
+                // Past the entries shown, the descriptions are still read for whether they protect.
+                if (i % 4096 == 0)
+                {
+                    state.Context.CancellationToken.ThrowIfCancellationRequested();
+                }
+
+                if (!isSeig || !ScanEncryptionGroupEntry(state, f, length, version))
+                {
+                    break;
+                }
+
+                continue;
+            }
+
             if (grouping is "roll" or "prol" && (length == 2 || version == 0))
             {
                 int distance = (short)(ushort)f.Take(2);
                 var entry = new Node("Entry", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollEntry };
                 entry.Add(new Node("Roll Distance", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollDistance });
                 node.Add(entry);
-                state.Track?.Rolls.Add((grouping, distance, entry));
+                if (state.ParentType == "stbl")
+                {
+                    state.Track?.Rolls.Add((grouping, distance, entry));
+                }
+            }
+            else if (isSeig && (length > 0 || version == 0))
+            {
+                // Without a length (version 0) a seig entry sizes itself.
+                long size = length > 0 ? Math.Min(length, f.Remaining) : SeigEntryLength(f);
+                var entry = new Node("Entry", at, size) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
+                SampleEncryptionGroupEntry(state, entry, f, size);
+                node.Add(entry);
             }
             else if (length > 0)
             {
@@ -549,8 +601,52 @@ public sealed partial class Mp4Parser
             }
             else
             {
+                if (isSeig)
+                {
+                    MarkProtecting(state);
+                }
+
                 break;
             }
+        }
+
+        if (isSeig && read < count)
+        {
+            // The descriptions the box has no room for cannot be read.
+            MarkProtecting(state);
+        }
+
+        MoreEntries(node, count, moreStart, f.Position);
+    }
+
+    // One seig description past those shown: whether it protects. False when it cannot be read, which also marks the track as protected.
+    private static bool ScanEncryptionGroupEntry(State state, BoxFields f, long length, int version)
+    {
+        long size = length > 0 ? Math.Min(length, f.Remaining) : version == 0 ? SeigEntryLength(f) : 0;
+        if (size < 20)
+        {
+            MarkProtecting(state);
+            return false;
+        }
+
+        var peek = new BoxFields(f.Reader, f.Position, f.End);
+        peek.Skip(2);
+        if (peek.Take(1) != 0)
+        {
+            MarkProtecting(state);
+        }
+
+        f.Skip(size);
+        return true;
+    }
+
+    // Sample group boxes belong in the sample table or a track fragment (GPAC reads them nowhere else); elsewhere they are shown and reported.
+    private static void CheckGroupPlacement(State state, Node node)
+    {
+        if (state.ParentType is not ("stbl" or "traf"))
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.sample-group-misplaced",
+                $"The {node.Name} box at 0x{node.Offset:X} lies in a {state.ParentType ?? "top-level"} box; sample groups belong in a stbl or traf box (ISO/IEC 14496-12 8.9), so it is shown but does not describe the track's samples.", node);
         }
     }
 
@@ -566,10 +662,11 @@ public sealed partial class Mp4Parser
     };
 
     // 8.9.2: runs of samples and the group description each belongs to.
-    private static void SampleToGroup(Node node, BoxFields f)
+    private static void SampleToGroup(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
-        node.Value = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        node.Value = grouping;
         if (version == 1)
         {
             f.U32(node, "Grouping Type Parameter", Explain.GroupingTypeParameter);
@@ -589,5 +686,6 @@ public sealed partial class Mp4Parser
         }
 
         MoreEntries(node, count, start + (MaxListedEntries * 8L), Math.Min(f.End, start + (count * 8L)));
+        CheckGroupPlacement(state, node);
     }
 }

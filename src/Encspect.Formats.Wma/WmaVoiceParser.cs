@@ -37,7 +37,7 @@ public sealed class WmaVoiceParser : ICodecParser
         }
 
         VoiceParameters parameters = VoiceParameters.Create(format, configuration.Data.Span);
-        if (!parameters.IsUsable)
+        if (!parameters.IsUsable || configuration.AreSamplesEncrypted)
         {
             // What FFmpeg's decoder rejects: the stream is described by what the container states and its packets are counted.
             WmaHeaderOnly.Parse(context, VoiceReport.CodecName, Topics.WmaVoice, "wma.voice-not-read",

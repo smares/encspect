@@ -126,6 +126,61 @@ internal sealed partial class FileReader
                     $"{which} has two ContentEncodings with the ContentEncodingOrder {encoding.Order}, which RFC 9559 requires to be unique (section 5.1.4.1.31.2).", encoding.Node ?? node);
             }
         }
+
+        // Encodings that cannot be ordered have no verdict to check: which one hides which, and which is next, would depend on the order of the elements.
+        if (!track.HasDuplicateOrders)
+        {
+            foreach (OrderedEncoding ordered in track.OrderedEncodings())
+            {
+                CheckEncryption(which, ordered, track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0, node);
+            }
+        }
+    }
+
+    // The ContentEncryption of a ContentEncoding (RFC 9559 sections 5.1.4.1.31.8 to 5.1.4.1.31.12): what the track's reader ignores or reads as clear.
+    private void CheckEncryption(string which, OrderedEncoding ordered, bool hasPrivate, Node fallback)
+    {
+        EncodingInfo encoding = ordered.Encoding;
+        Node node = encoding.Node ?? fallback;
+
+        // Its settings are unreadable, so what they state is not checked.
+        if (ordered.Hider is { } hider)
+        {
+            string consequence = ordered.HiderEncrypts ? "the parts it covers count as encrypted by it"
+                : ordered.IsHiddenEncrypted ? "an encryption is hidden here, so the parts it covers count as encrypted by an unknown algorithm"
+                : "it is not undone";
+            _findings.AddNow(Severity.Info, "matroska.encoding-hidden",
+                $"{which} has a ContentEncoding of order {encoding.Order} whose settings are hidden by the ContentEncoding of order {hider.Order} (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and {consequence}.", node);
+            return;
+        }
+
+        if (encoding.Type == 1 && !(encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) && (encoding.Scope & 1) == 0 && !((encoding.Scope & 2) != 0 && hasPrivate) && !((encoding.Scope & 4) != 0 && ordered.HasNext))
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-covers-nothing",
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor a CodecPrivate the track has and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.", node);
+        }
+
+        if (encoding.Type == 0 && encoding.HasEncryption)
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-ignored",
+                $"{which} has a ContentEncoding of type 0 (compression) with a ContentEncryption element, which a reader ignores unless the type is 1 (section 5.1.4.1.31.8).", node);
+        }
+        else if (encoding.Type == 1 && !encoding.HasEncryption)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.encryption-missing",
+                $"{which} has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, although RFC 9559 requires one for that type (section 5.1.4.1.31.8); the algorithm is unknown.", node);
+        }
+        else if (encoding.Type == 1 && encoding.EncryptionAlgorithm == 0)
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-none",
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24); this encoding changes nothing.", node);
+        }
+
+        if (encoding.Type == 1 && encoding.HasAesSettings && encoding.HasEncryption && encoding.EncryptionAlgorithm != 5)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.aes-settings-not-aes",
+                $"{which} has ContentEncAESSettings although its ContentEncAlgo is {encoding.EncryptionAlgorithm}, not AES (5), which RFC 9559 forbids (Table 25); the cipher mode is not read as part of the scheme.", node);
+        }
     }
 
     // The SeekHead's entries point at the Top-Level Elements they name (RFC 9559 sections 5.1.1 and 6.3).

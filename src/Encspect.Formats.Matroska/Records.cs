@@ -10,7 +10,7 @@ internal enum ItemKind : byte
     // Index is the block record.
     SimpleBlock,
 
-    // Index is the first child record and Count how many follow.
+    // Index is the first child record and Value how many follow.
     BlockGroup,
 
     // A CRC-32 element: Value is the stored value; the value computed over the Cluster's data after it is in Records.ComputedCrcs.
@@ -22,25 +22,30 @@ internal enum ItemKind : byte
 
 // One element of a Cluster, kept in a record because a long file holds millions of them: the nodes are built from the
 // records when they are read (see ClusterNodes).
+// Value holds a BlockGroup's child count: a separate Count field would make an Item 48 bytes, not 40.
 internal struct Item
 {
     public long Offset;
     public long Value;
     public long DataLength;
-    public uint Id;
+
+    // The element's ID as it is in the file, of up to eight octets (EBMLMaxIDLength).
+    public ulong Id;
     public int Index;
-    public int Count;
     public byte HeaderLength;
     public ItemKind Kind;
 }
 
-// A descendant of a BlockGroup, in the order of the file; Depth is below the BlockGroup. Block is the block record of a Block, or -1.
+// A descendant of a BlockGroup, in the order of the file; Depth is below the BlockGroup. Block is the block record of a Block, -1 for another element, or
+// UnparsedBlock for bytes that start no element.
 internal struct Child
 {
+    public const int UnparsedBlock = -2;
+
     public long Offset;
     public long Value;
     public long DataLength;
-    public uint Id;
+    public ulong Id;
     public int Block;
     public byte HeaderLength;
     public byte Depth;

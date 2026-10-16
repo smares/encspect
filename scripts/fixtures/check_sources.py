@@ -22,6 +22,7 @@ import check_sbr_samples
 import check_usac_samples
 import check_wmavoice_samples
 import conformance_mpeg_audio
+import dashif_systems
 import downloads
 import dts_specs
 import faac_tool
@@ -86,6 +87,7 @@ def sources():
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES
+    yield dashif_systems.NAME, dashif_systems.SHA256, dashif_systems.ADDRESSES
 
 
 def main():

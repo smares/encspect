@@ -64,9 +64,9 @@ internal sealed partial class FileReader
 
         if (definition is null)
         {
-            node.Value = $"ID 0x{header.Id:X}, {Bytes(end - header.DataOffset)}";
+            node.Value = $"ID {Ebml.IdText(header.Id)}, {Bytes(end - header.DataOffset)}";
             _findings.Add(Severity.Info, "matroska.unknown-element", node, count =>
-                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x{header.Id:X} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
+                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID {Ebml.IdText(header.Id)} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
             return node;
         }
 
@@ -117,6 +117,7 @@ internal sealed partial class FileReader
         Schema.Ebml => Topics.Ebml,
         Schema.Segment or Schema.Cluster or Schema.SeekHead or Schema.Cues or Schema.Chapters or Schema.Attachments or Schema.Tags => Topics.Container,
         Schema.Tracks or 0x6D80 => Topics.Tracks,
+        0x5035 or 0x47E1 or 0x47E2 or 0x47E7 or 0x47E8 or 0x5032 or 0x5031 or 0x5033 => Topics.ContentEncryption,
         0x2AD7B1 or Schema.Timestamp => Topics.Timestamps,
         Schema.Crc32 => Topics.Crc,
         Schema.SimpleBlock or Schema.Block => Topics.Lacing,

@@ -1,0 +1,320 @@
+{
+ "description": "AAC LC in an enca entry whose tenc box sets the default to not protected but whose sample group description of type seig (Common Encryption's encryption parameters) protects some samples, so the track's samples are taken as encrypted.",
+ "length": 11254,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   883
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   767
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   667
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   582
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   522
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   775,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/sgpd",
+   803,
+   72
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/sbgp",
+   875,
+   36
+  ],
+  [
+   "mdat",
+   911,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   919,
+   300
+  ],
+  [
+   1219,
+   337
+  ],
+  [
+   1556,
+   374
+  ],
+  [
+   1930,
+   321
+  ],
+  [
+   2251,
+   358
+  ],
+  [
+   2609,
+   305
+  ],
+  [
+   2914,
+   342
+  ],
+  [
+   3256,
+   379
+  ],
+  [
+   3635,
+   326
+  ],
+  [
+   3961,
+   363
+  ],
+  [
+   4324,
+   310
+  ],
+  [
+   4634,
+   347
+  ],
+  [
+   4981,
+   384
+  ],
+  [
+   5365,
+   331
+  ],
+  [
+   5696,
+   368
+  ],
+  [
+   6064,
+   315
+  ],
+  [
+   6379,
+   352
+  ],
+  [
+   6731,
+   389
+  ],
+  [
+   7120,
+   336
+  ],
+  [
+   7456,
+   373
+  ],
+  [
+   7829,
+   320
+  ],
+  [
+   8149,
+   357
+  ],
+  [
+   8506,
+   304
+  ],
+  [
+   8810,
+   341
+  ],
+  [
+   9151,
+   378
+  ],
+  [
+   9529,
+   325
+  ],
+  [
+   9854,
+   362
+  ],
+  [
+   10216,
+   309
+  ],
+  [
+   10525,
+   346
+  ],
+  [
+   10871,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/sgpd": "seig (encryption)",
+  "MP4/moov/trak/mdia/minf/stbl/sgpd/Entry": "protected",
+  "MP4/moov/trak/mdia/minf/stbl/sgpd/Entry/IsProtected": "true",
+  "MP4/moov/trak/mdia/minf/stbl/sgpd/Entry/KID": "80818283-8485-8687-8889-8a8b8c8d8e8f",
+  "MP4/moov/trak/mdia/minf/stbl/sgpd/Entry[1]/IsProtected": "false"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 rejects the encrypted sample entry.",
+   "ffprobe_encryption": "ffmpeg 6.1 marks packets encrypted from the tenc default only, so the packets of a track protected by a sample group alone carry no encryption info."
+  }
+ }
+}

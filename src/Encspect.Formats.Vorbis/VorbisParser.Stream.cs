@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Encspect.Core;
 
 namespace Encspect.Formats.Vorbis;
@@ -292,7 +293,7 @@ public sealed partial class VorbisParser
             _parent.Add(prefix);
             MappedBytes body = packet.Slice(7);
             _comment = body.Length > 0 ? context.ParseTag(TagName, body, _parent) : null;
-            int end = _comment is null ? 7 : 7 + BytesBefore(body, _comment.End);
+            int end = _comment is null ? 7 : 7 + (packet.IsOpaque ? CommentBytes(body.Span) : BytesBefore(body, _comment.End));
             if (end < packet.Length)
             {
                 bool framing = (packet.Span[end] & 1) != 0;
@@ -316,6 +317,40 @@ public sealed partial class VorbisParser
                 _findings.Add(Severity.Warning, "vorbis.framing-missing", _comment ?? prefix, _ =>
                     "The comment header ends without its framing bit; libvorbis 1.3.7 refuses the header.");
             }
+        }
+
+        // The length of the comment header's comment from its own layout (Vorbis I, section 5.2.1: the vendor string and the user comments, each with
+        // a 32-bit length), for a packet put together from other bytes (a CodecPrivate that was inflated), whose bytes have no file offsets to count by.
+        private static int CommentBytes(ReadOnlySpan<byte> body)
+        {
+            if (body.Length < 4)
+            {
+                return body.Length;
+            }
+
+            long position = 4 + (long)BinaryPrimitives.ReadUInt32LittleEndian(body);
+            if (position + 4 > body.Length)
+            {
+                return body.Length;
+            }
+
+            long count = BinaryPrimitives.ReadUInt32LittleEndian(body[(int)position..]);
+            position += 4;
+            for (long i = 0; i < count; i++)
+            {
+                if (position + 4 > body.Length)
+                {
+                    return body.Length;
+                }
+
+                position += 4 + (long)BinaryPrimitives.ReadUInt32LittleEndian(body[(int)position..]);
+                if (position > body.Length)
+                {
+                    return body.Length;
+                }
+            }
+
+            return (int)position;
         }
 
         // How many of the packet's bytes lie before a file offset.
@@ -606,7 +641,8 @@ public sealed partial class VorbisParser
                     "The stream ends before its setup header, which Vorbis requires; decoders refuse it.");
             }
 
-            if (_packets == 0)
+            // A container that knows the samples are encrypted hands over the headers and no packet.
+            if (_packets == 0 && context.Configuration is not { AreSamplesEncrypted: true })
             {
                 _findings.Add(Severity.Info, "vorbis.no-audio", anchor, _ => "The stream holds no audio packets.");
             }

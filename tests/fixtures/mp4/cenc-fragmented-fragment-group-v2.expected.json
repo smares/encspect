@@ -1,0 +1,362 @@
+{
+ "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but in which something says that samples are protected: each track fragment's own sgpd box, of version 2 (default length, default index, entry lengths), describes a protecting group. The samples are pseudo-random bytes and must never be read as AAC.",
+ "length": 8033,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   663
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   507
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   407
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   322
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   262
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   599,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   615,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   635,
+   16
+  ],
+  [
+   "moov/mvex",
+   651,
+   40
+  ],
+  [
+   "moov/mvex/trex",
+   659,
+   32
+  ],
+  [
+   "moof",
+   691,
+   208
+  ],
+  [
+   "moof/mfhd",
+   699,
+   16
+  ],
+  [
+   "moof/traf",
+   715,
+   184
+  ],
+  [
+   "moof/traf/tfhd",
+   723,
+   16
+  ],
+  [
+   "moof/traf/tfdt",
+   739,
+   20
+  ],
+  [
+   "moof/traf/sgpd",
+   759,
+   52
+  ],
+  [
+   "moof/traf/sbgp",
+   811,
+   28
+  ],
+  [
+   "moof/traf/trun",
+   839,
+   60
+  ],
+  [
+   "mdat",
+   899,
+   3413
+  ],
+  [
+   "moof",
+   4312,
+   208
+  ],
+  [
+   "moof/mfhd",
+   4320,
+   16
+  ],
+  [
+   "moof/traf",
+   4336,
+   184
+  ],
+  [
+   "moof/traf/tfhd",
+   4344,
+   16
+  ],
+  [
+   "moof/traf/tfdt",
+   4360,
+   20
+  ],
+  [
+   "moof/traf/sgpd",
+   4380,
+   52
+  ],
+  [
+   "moof/traf/sbgp",
+   4432,
+   28
+  ],
+  [
+   "moof/traf/trun",
+   4460,
+   60
+  ],
+  [
+   "mdat",
+   4520,
+   3513
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 0,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   907,
+   300
+  ],
+  [
+   1207,
+   337
+  ],
+  [
+   1544,
+   374
+  ],
+  [
+   1918,
+   321
+  ],
+  [
+   2239,
+   358
+  ],
+  [
+   2597,
+   305
+  ],
+  [
+   2902,
+   342
+  ],
+  [
+   3244,
+   379
+  ],
+  [
+   3623,
+   326
+  ],
+  [
+   3949,
+   363
+  ],
+  [
+   4528,
+   310
+  ],
+  [
+   4838,
+   347
+  ],
+  [
+   5185,
+   384
+  ],
+  [
+   5569,
+   331
+  ],
+  [
+   5900,
+   368
+  ],
+  [
+   6268,
+   315
+  ],
+  [
+   6583,
+   352
+  ],
+  [
+   6935,
+   389
+  ],
+  [
+   7324,
+   336
+  ],
+  [
+   7660,
+   373
+  ]
+ ],
+ "fields": {
+  "MP4/moof/traf/trun": "10 samples"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
+   "ffprobe": "ffmpeg 6.1 marks packets encrypted from the tenc default only, and reads these samples as clear AAC.",
+   "mediainfo_duration": "a fragmented file's track header states no duration"
+  }
+ }
+}

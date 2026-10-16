@@ -27,7 +27,7 @@ namespace Encspect.Gui.Cache;
 // SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 4;
+    public const int FormatVersion = 5;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -417,6 +417,7 @@ public sealed class SummaryCache : IDisposable
             reader.ReadBoolean() ? reader.ReadInt32() : null);
         bool? isVbr = reader.ReadBoolean() ? reader.ReadBoolean() : null;
         string? problem = ReadText(reader);
+        summary = ReadProtection(reader, summary);
         return new Entry(new FileFingerprint(size, ticks, id, hash), version, schemaVersion, lastUsed, new FileSummary(summary, isVbr, problem));
     }
 
@@ -561,6 +562,32 @@ public sealed class SummaryCache : IDisposable
         WriteOptional(writer, summary.JocObjectCount, writer.Write);
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
+        WriteProtection(writer, summary);
+    }
+
+    // The protection figures of a summary: whether a stream is protected, then its schemes and systems.
+    private static void WriteProtection(BinaryWriter writer, ReportSummary summary)
+    {
+        writer.Write(summary.IsProtected);
+        writer.Write(summary.ProtectionSchemes.Count);
+        foreach (string scheme in summary.ProtectionSchemes)
+        {
+            writer.Write(scheme);
+        }
+
+        writer.Write(summary.DrmSystems.Count);
+        foreach (string system in summary.DrmSystems)
+        {
+            writer.Write(system);
+        }
+    }
+
+    private static ReportSummary ReadProtection(BinaryReader reader, ReportSummary summary)
+    {
+        bool isProtected = reader.ReadBoolean();
+        string[] schemes = [.. Enumerable.Range(0, Bounded(reader.ReadInt32(), 1 << 10)).Select(_ => reader.ReadString())];
+        string[] systems = [.. Enumerable.Range(0, Bounded(reader.ReadInt32(), 1 << 10)).Select(_ => reader.ReadString())];
+        return summary with { IsProtected = isProtected, ProtectionSchemes = schemes, DrmSystems = systems };
     }
 
     private static void WriteText(BinaryWriter writer, string? text)

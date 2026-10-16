@@ -73,6 +73,28 @@ public sealed partial class Mp4Parser
 
         // The sample entry whose boxes are being read, which its esds box describes.
         public SampleEntry? CurrentEntry { get; set; }
+
+        // Whether the box being read lies in a sinf box (a frma box in QuickTime's wave box is no protection).
+        public bool InSinf { get; set; }
+
+        // The type of the box whose children are being read.
+        public string? ParentType { get; set; }
+
+        // The DRM systems the file's pssh boxes name, in file order; the tracks whose track fragments hold something that says their samples are protected;
+        // whether a box outside any track and track fragment does (it is taken to apply to every track); and whether a track fragment has no tfhd box.
+        public List<string> Systems { get; } = [];
+
+        public HashSet<uint> ProtectedTracks { get; } = [];
+
+        public bool DoesEveryTrackHaveProtectingEvidence { get; set; }
+
+        public bool IsFragmentHeaderMissing { get; set; }
+
+        // Whether a sinf or schm box lies outside any track, sample entry and track fragment (it is taken to apply to every track).
+        public bool DoesEveryTrackHaveProtectionScheme { get; set; }
+
+        // The sample descriptions the track fragments of each track use (tfhd, else trex).
+        public Dictionary<uint, HashSet<uint>> FragmentDescriptions { get; } = [];
     }
 
     private sealed class Track(Node box)
@@ -124,6 +146,16 @@ public sealed partial class Mp4Parser
         public ChunkedList<FragmentSample> FragmentSamples { get; } = new();
 
         public Node? FirstFragment { get; set; }
+
+        // Whether anything inside the track says that its samples are protected: a seig sample group description that protects, cannot be read or is of
+        // a version the project does not know (wherever in the track it lies), or a sample encryption box.
+        public bool HasProtectingEvidence { get; set; }
+
+        // Whether a sinf or schm box lies in the track outside any sample entry, which says that its samples are protected by a scheme.
+        public bool HasProtectionScheme { get; set; }
+
+        // The sample entry the track is read through, once routed.
+        public SampleEntry? ReadEntry { get; set; }
     }
 
     // One sample description of a track's stsd box: its format, the fields of an audio sample entry
@@ -133,6 +165,13 @@ public sealed partial class Mp4Parser
         public string Format => format;
 
         public Node Node => node;
+
+        // The protection scheme information of a protected entry.
+        public EntryProtection? Protection { get; set; }
+
+        // The coding the samples have once decrypted: the original format a protected entry names, and for Audible's
+        // aavd, whose layout is that of mp4a (GStreamer's qtdemux reads it so), mp4a.
+        public string EffectiveFormat => Protection?.OriginalFormat ?? (format == "aavd" ? "mp4a" : format);
 
         public int Channels { get; set; }
 
@@ -163,6 +202,30 @@ public sealed partial class Mp4Parser
         public string? LayoutBox { get; set; }
     }
 
+    // What a sinf box says: its node, the original format, the scheme and the track encryption defaults.
+    private sealed class EntryProtection(Node sinf)
+    {
+        public Node SinfNode => sinf;
+
+        public string? OriginalFormat { get; set; }
+
+        public string? SchemeType { get; set; }
+
+        public Node? SchemeNode { get; set; }
+
+        public TrackEncryptionInfo? Encryption { get; set; }
+
+        // Everything the entry's sinf boxes state (an entry may hold several, and a sinf box several of each): every original format, scheme type
+        // and track encryption default. The entry is clear only if they all agree that it is.
+        public List<string> OriginalFormats { get; } = [];
+
+        public List<string> SchemeTypes { get; } = [];
+
+        public List<(int IsProtected, int IvSize)> TrackEncryptions { get; } = [];
+    }
+
+    private sealed record TrackEncryptionInfo(int IsProtected, Node Node);
+
     private sealed record Edit(ulong SegmentDuration, long MediaTime, double Rate, Node Node);
 
     private readonly record struct FragmentSample(long Offset, int Size);
@@ -177,6 +240,16 @@ public sealed partial class Mp4Parser
         public (long Offset, Node Node)? Moof => moof;
 
         public uint TrackId { get; set; }
+
+        // Whether the fragment has a tfhd box (without one its track is not known), and whether anything in it says its samples are protected.
+        public bool HasHeader { get; set; }
+
+        // How many tfhd boxes the fragment holds (a fragment has one), and whether it lies inside a trak box.
+        public int HeaderCount { get; set; }
+
+        public bool IsInTrack { get; set; }
+
+        public bool HasProtectingEvidence { get; set; }
 
         public ulong? BaseDataOffset { get; set; }
 

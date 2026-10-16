@@ -41,9 +41,12 @@ internal static class AsfBuilder
     }
 
     // A fixture's bytes with an object put at the end of its Header Object (or of its Header Extension Object).
-    public static byte[] InHeader(string fixture, byte[] obj, bool extension = false)
+    public static byte[] InHeader(string fixture, byte[] obj, bool extension = false) =>
+        InHeader(System.IO.File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", fixture + ".asf")), obj, extension);
+
+    // The same for a file in memory (which this changes).
+    public static byte[] InHeader(byte[] file, byte[] obj, bool extension = false)
     {
-        byte[] file = System.IO.File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", fixture + ".asf"));
         int header = (int)BinaryPrimitives.ReadUInt64LittleEndian(file.AsSpan(16));
         int at = header;
         if (extension)

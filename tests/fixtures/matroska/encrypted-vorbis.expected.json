@@ -1,0 +1,929 @@
+{
+ "description": "An A_VORBIS track with its three headers in a clear CodecPrivate and encrypted frames: the Vorbis parser reads the headers, not the frames. The headers are copied from external-ffmpeg-vorbis, so their vendor string names ffmpeg's muxer while the Segment names this generator.",
+ "length": 6385,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 4396,
+     "length": 1989,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 30
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 6345,
+   "declared_end": 6385
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   6345,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     4287,
+     [
+      [
+       "TrackEntry",
+       115,
+       4281,
+       [
+        [
+         "TrackNumber",
+         118,
+         3
+        ],
+        [
+         "TrackUID",
+         121,
+         5
+        ],
+        [
+         "TrackType",
+         126,
+         3
+        ],
+        [
+         "CodecID",
+         129,
+         10
+        ],
+        [
+         "CodecPrivate",
+         139,
+         4206
+        ],
+        [
+         "ContentEncodings",
+         4345,
+         36,
+         [
+          [
+           "ContentEncoding",
+           4348,
+           33,
+           [
+            [
+             "ContentEncodingOrder",
+             4351,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             4355,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             4359,
+             4
+            ],
+            [
+             "ContentEncryption",
+             4363,
+             18,
+             [
+              [
+               "ContentEncAlgo",
+               4366,
+               4
+              ],
+              [
+               "ContentEncKeyID",
+               4370,
+               4
+              ],
+              [
+               "ContentEncAESSettings",
+               4374,
+               7,
+               [
+                [
+                 "AESSettingsCipherMode",
+                 4377,
+                 4
+                ]
+               ]
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         4381,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           4383,
+           10
+          ],
+          [
+           "Channels",
+           4393,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     4396,
+     1989,
+     [
+      [
+       "Timestamp",
+       4402,
+       3
+      ],
+      [
+       "SimpleBlock",
+       4405,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4471,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4537,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4603,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4669,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4735,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4801,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4867,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4933,
+       66
+      ],
+      [
+       "SimpleBlock",
+       4999,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5065,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5131,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5197,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5263,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5329,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5395,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5461,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5527,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5593,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5659,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5725,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5791,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5857,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5923,
+       66
+      ],
+      [
+       "SimpleBlock",
+       5989,
+       66
+      ],
+      [
+       "SimpleBlock",
+       6055,
+       66
+      ],
+      [
+       "SimpleBlock",
+       6121,
+       66
+      ],
+      [
+       "SimpleBlock",
+       6187,
+       66
+      ],
+      [
+       "SimpleBlock",
+       6253,
+       66
+      ],
+      [
+       "SimpleBlock",
+       6319,
+       66
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 4405,
+   "length": 66,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4411,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4471,
+   "length": 66,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4477,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4537,
+   "length": 66,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4543,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4603,
+   "length": 66,
+   "track": 1,
+   "timestamp": 69,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4609,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4669,
+   "length": 66,
+   "track": 1,
+   "timestamp": 92,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4675,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4735,
+   "length": 66,
+   "track": 1,
+   "timestamp": 115,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4741,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4801,
+   "length": 66,
+   "track": 1,
+   "timestamp": 138,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4807,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4867,
+   "length": 66,
+   "track": 1,
+   "timestamp": 161,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4873,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4933,
+   "length": 66,
+   "track": 1,
+   "timestamp": 184,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4939,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4999,
+   "length": 66,
+   "track": 1,
+   "timestamp": 207,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5005,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5065,
+   "length": 66,
+   "track": 1,
+   "timestamp": 230,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5071,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5131,
+   "length": 66,
+   "track": 1,
+   "timestamp": 253,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5137,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5197,
+   "length": 66,
+   "track": 1,
+   "timestamp": 276,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5203,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5263,
+   "length": 66,
+   "track": 1,
+   "timestamp": 299,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5269,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5329,
+   "length": 66,
+   "track": 1,
+   "timestamp": 322,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5335,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5395,
+   "length": 66,
+   "track": 1,
+   "timestamp": 345,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5401,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5461,
+   "length": 66,
+   "track": 1,
+   "timestamp": 368,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5467,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5527,
+   "length": 66,
+   "track": 1,
+   "timestamp": 391,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5533,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5593,
+   "length": 66,
+   "track": 1,
+   "timestamp": 414,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5599,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5659,
+   "length": 66,
+   "track": 1,
+   "timestamp": 437,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5665,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5725,
+   "length": 66,
+   "track": 1,
+   "timestamp": 460,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5731,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5791,
+   "length": 66,
+   "track": 1,
+   "timestamp": 483,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5797,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5857,
+   "length": 66,
+   "track": 1,
+   "timestamp": 506,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5863,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5923,
+   "length": 66,
+   "track": 1,
+   "timestamp": 529,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5929,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5989,
+   "length": 66,
+   "track": 1,
+   "timestamp": 552,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5995,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6055,
+   "length": 66,
+   "track": 1,
+   "timestamp": 575,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6061,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6121,
+   "length": 66,
+   "track": 1,
+   "timestamp": 598,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6127,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6187,
+   "length": 66,
+   "track": 1,
+   "timestamp": 621,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6193,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6253,
+   "length": 66,
+   "track": 1,
+   "timestamp": 644,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6259,
+     60
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 6319,
+   "length": 66,
+   "track": 1,
+   "timestamp": 667,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     6325,
+     60
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_VORBIS",
+   "private": [
+    143,
+    4202
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 1,
+     "compression": null,
+     "settings": null,
+     "encryption": 5,
+     "cipher": 1,
+     "has_encryption": true
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.track-encrypted",
+   "contains": "is encrypted (AES-CTR)"
+  },
+  {
+   "code": "vorbis.writer-claim-differs",
+   "contains": "Lavf60.16.100"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -111,6 +111,7 @@ jobs:
           python3 scripts/ci/test_changes.py
           python3 scripts/ci/test_check_results.py
           python3 scripts/ci/test_downloads.py
+          python3 scripts/ci/test_model.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -425,6 +426,9 @@ jobs:
       - name: Regenerate the hand-built MP4 and raw AAC fixtures
         run: python3 scripts/fixtures/make_mp4_fixtures.py
 
+      - name: Regenerate the hand-built fixtures of protected MP4 tracks
+        run: python3 scripts/fixtures/make_protection_fixtures.py
+
       # The parser's and the model's Huffman and band tables agree and are complete prefix codes.
       - name: Check the AAC tables
         run: python3 scripts/fixtures/check_aac_tables.py
@@ -597,6 +601,17 @@ jobs:
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
+
+      # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
+      - name: Recompute the manifests of the encrypted MP4 fixtures
+        run: |
+          python3 scripts/fixtures/make_external_protection_fixtures.py --manifests-only
+          git status --porcelain -- tests/fixtures
+          test -z "$(git status --porcelain -- tests/fixtures)"
+
+      # DASH-IF's registry of DRM system IDs, held by its SHA-256, and the table that names the pssh boxes' systems.
+      - name: Check the table of DRM systems against DASH-IF's registry
+        run: python3 scripts/fixtures/dashif_systems.py .cache/dashif
 
       # Fraunhofer's, the ISO conformance streams' and one more exhale file, which the exhale layout
       # rule is checked against; fetched and checked against their SHA-256 rather than committed.
@@ -866,6 +881,14 @@ jobs:
 
       - name: Check the element table against the RFCs
         run: python3 scripts/fixtures/matroska_tables.py --check
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The cross-check also runs the analyzer on random and tied ContentEncodings and compares it with a model written from RFC 9559.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
 
       - name: Cross-check the Matroska and WebM fixtures
         run: python3 scripts/fixtures/crosscheck_matroska_fixtures.py

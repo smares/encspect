@@ -60,9 +60,32 @@ public class AsfFixtureTests
             CheckPackets(manifest, packets);
         }
 
+        CheckProtection(manifest, report);
         CheckFindings(manifest.GetProperty("findings"), report.Findings);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
         TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // The manifest's "protection" lists the scheme, the encryption and the DRM systems of each stream the analyzer reports, in order; a fixture
+    // without it has no protected stream.
+    private static void CheckProtection(JsonElement manifest, Report report)
+    {
+        if (!manifest.TryGetProperty("protection", out JsonElement expected))
+        {
+            Assert.All(report.Streams, s => Assert.False(s.IsProtected));
+            return;
+        }
+
+        JsonElement[] listed = [.. expected.EnumerateArray()];
+        Assert.Equal(listed.Length, report.Streams.Count);
+        for (int i = 0; i < listed.Length; i++)
+        {
+            StreamProtection? actual = report.Streams[i].Protection;
+            Assert.NotNull(actual);
+            Assert.Equal(listed[i].GetProperty("scheme").GetString(), actual.Scheme);
+            Assert.Equal(listed[i].GetProperty("is_encrypted").GetBoolean(), actual.IsEncrypted);
+            Assert.Equal(listed[i].GetProperty("systems").EnumerateArray().Select(e => e.GetString()), actual.Systems);
+        }
     }
 
     // The media objects the second pass puts together from the payloads, handed to a codec parser.

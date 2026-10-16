@@ -1,0 +1,313 @@
+{
+ "description": "A pssh box whose data is shorter than the bytes after the size field: the bytes after the data are shown as extra data.",
+ "length": 11186,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   815
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   659
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   559
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   474
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   414
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   775,
+   28
+  ],
+  [
+   "moov/pssh",
+   803,
+   40
+  ],
+  [
+   "mdat",
+   843,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": [
+     "Widevine Content Protection"
+    ]
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   851,
+   300
+  ],
+  [
+   1151,
+   337
+  ],
+  [
+   1488,
+   374
+  ],
+  [
+   1862,
+   321
+  ],
+  [
+   2183,
+   358
+  ],
+  [
+   2541,
+   305
+  ],
+  [
+   2846,
+   342
+  ],
+  [
+   3188,
+   379
+  ],
+  [
+   3567,
+   326
+  ],
+  [
+   3893,
+   363
+  ],
+  [
+   4256,
+   310
+  ],
+  [
+   4566,
+   347
+  ],
+  [
+   4913,
+   384
+  ],
+  [
+   5297,
+   331
+  ],
+  [
+   5628,
+   368
+  ],
+  [
+   5996,
+   315
+  ],
+  [
+   6311,
+   352
+  ],
+  [
+   6663,
+   389
+  ],
+  [
+   7052,
+   336
+  ],
+  [
+   7388,
+   373
+  ],
+  [
+   7761,
+   320
+  ],
+  [
+   8081,
+   357
+  ],
+  [
+   8438,
+   304
+  ],
+  [
+   8742,
+   341
+  ],
+  [
+   9083,
+   378
+  ],
+  [
+   9461,
+   325
+  ],
+  [
+   9786,
+   362
+  ],
+  [
+   10148,
+   309
+  ],
+  [
+   10457,
+   346
+  ],
+  [
+   10803,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/pssh/Data Size": "3 bytes",
+  "MP4/moov/pssh/Extra Data": "5 bytes"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

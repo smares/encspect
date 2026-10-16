@@ -52,11 +52,11 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(Encspect.Core.Confidence.Low, read.Summary.WriterConfidence);
     }
 
-    // The writer changed what a summary holds and so the store's layout: a store of version 3 reads as empty, and the folder is analyzed again.
+    // The writer (version 4) and the protection (version 5) changed what a summary holds and so the store's layout: an older store reads as empty, and the folder is analyzed again.
     [Fact]
-    public void The_store_format_was_bumped_for_the_writer()
+    public void The_store_format_was_bumped_for_the_writer_and_protection()
     {
-        Assert.Equal(4, SummaryCache.FormatVersion);
+        Assert.Equal(5, SummaryCache.FormatVersion);
     }
 
     [Fact]
@@ -76,6 +76,25 @@ public sealed class CacheTests : IDisposable
         AssertSame(summary, read);
         Assert.True(read!.Summary.HasObjectAudio);
         Assert.Equal(15, read.Summary.JocObjectCount);
+    }
+
+    [Fact]
+    public void Protection_survives_the_cache()
+    {
+        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "mp4", "cenc-aac.m4a"), "protected.m4a");
+        FileSummary summary = Summarize(file);
+        Assert.True(summary.Summary.IsProtected);
+        Assert.Equal(["Common Encryption, AES-CTR (cenc)"], summary.Summary.ProtectionSchemes);
+        Assert.Equal(["Widevine Content Protection", "Microsoft PlayReady", "01234567-89ab-cdef-0123-456789abcdef"], summary.Summary.DrmSystems);
+        using (SummaryCache cache = Cache())
+        {
+            cache.Put(file, FileFingerprint.Read(file)!, summary);
+        }
+
+        using SummaryCache later = Cache();
+        FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
+        AssertSame(summary, read);
+        Assert.True(read!.Summary.IsProtected);
     }
 
     [Theory]
@@ -485,7 +504,10 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(expected.Problem, actual.Problem);
         Assert.Equal(expected.Summary.Tags, actual.Summary.Tags);
         Assert.Equal(expected.Summary.ChannelLayout, actual.Summary.ChannelLayout);
-        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null }, actual.Summary with { Tags = [], ChannelLayout = null });
+        Assert.Equal(expected.Summary.ProtectionSchemes, actual.Summary.ProtectionSchemes);
+        Assert.Equal(expected.Summary.DrmSystems, actual.Summary.DrmSystems);
+        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] },
+            actual.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] });
     }
 
     private static FileId? IdOf(string path)

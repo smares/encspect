@@ -459,7 +459,7 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"records.mka: {live / 1_000_000} MB more live");
         Assert.True(live < 1_400_000_000, $"The live heap grew by {live / 1_000_000} MB.");
         GC.KeepAlive(report);
-        Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 400_000_000, "matroska.too-many-elements");
+        Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 110_000_000, "matroska.too-many-elements");
     }
 
     // A block of seven bytes can state 256 frames of no bytes: the frames of laced blocks are counted against a budget, and fixed-size lacing
@@ -472,7 +472,7 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(block, 100_000)]);
 
         // Without a track the blocks are only recorded; with an Opus track every frame also goes to the codec parser as an empty packet.
-        Bounded("laced.mka", MatroskaBuilder.Concat(MatroskaBuilder.Header(), MatroskaBuilder.Segment(cluster)), 50_000_000, "matroska.too-many-elements");
+        Bounded("laced.mka", MatroskaBuilder.Concat(MatroskaBuilder.Header(), MatroskaBuilder.Segment(cluster)), 16_000_000, "matroska.too-many-elements");
         byte[] data = MatroskaBuilder.File(MatroskaBuilder.OpusTracks(), cluster);
         long before = Live();
         var watch = System.Diagnostics.Stopwatch.StartNew();
