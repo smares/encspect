@@ -314,6 +314,29 @@ public class ProtectionTests
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
+    // Tied encodings give a clear and an encrypted track the same container timing: the length of the blocks, and the samples at the sampling frequency.
+    [Fact]
+    public void MatroskaTiedTracksHaveTheContainersTiming()
+    {
+        StreamInfo clear = Assert.Single(Fixtures.AnalyzeMpeg("matroska/same-order-two-compressions.mka").Streams);
+        StreamInfo encrypted = Assert.Single(Fixtures.AnalyzeMpeg("matroska/same-order-encryption-and-stripping.mka").Streams);
+
+        Assert.Equal(0.08, clear.Duration, 6);
+        Assert.Equal(3840, clear.Samples);
+        Assert.Equal(clear.Duration, encrypted.Duration, 6);
+        Assert.Equal(clear.Samples, encrypted.Samples);
+    }
+
+    // A ContentEncryption under a compression is ignored even when the orders tie: only an encoding of type 1 makes the track encrypted.
+    [Fact]
+    public void MatroskaTiedStrayEncryptionIsNotProtection()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/same-order-stray-encryption.mka");
+
+        Assert.Null(Assert.Single(report.Streams).Protection);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.encryption-ignored" or "matroska.encryption-none");
+    }
+
     // Encodings that share a ContentEncodingOrder cannot be ordered: nothing is read, and with no encryption among them nothing is protected. (That the
     // result does not depend on the order of the elements is checked over every permutation by check_matroska_encodings.py.)
     [Fact]

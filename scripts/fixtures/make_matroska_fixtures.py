@@ -466,20 +466,21 @@ def _():
 
 
 # Encodings that share a ContentEncodingOrder (which RFC 9559 section 5.1.4.1.31.2 forbids): the track cannot be ordered, so nothing of it is read and it is
-# encrypted when any encoding is an encryption. Each case is a list of content_encoding arguments; the fixtures write them in the order given, and
+# encrypted when any encoding is of type 1. Each case is a list of (content_encoding arguments, ContentEncodingType) pairs; the fixtures write them in the order given, and
 # check_matroska_encodings.py writes every permutation and expects the same result.
 TIE_CASES = {
-    "same-order-encryption-and-stripping": [dict(order=0, scope=1, compression=3, settings=b"\xde\xad"), dict(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03")],
-    "same-order-two-compressions": [dict(order=0, scope=1, compression=3, settings=b"\xF8"), dict(order=0, scope=1, compression=0)],
-    "same-order-aes-modes": [dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), dict(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x03")],
-    "same-order-over-encryption": [dict(order=1, scope=4, compression=3, settings=b"\x47"), dict(order=1, scope=1, compression=0),
-                                   dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03")],
+    "same-order-encryption-and-stripping": [(dict(order=0, scope=1, compression=3, settings=b"\xde\xad"), 0), (dict(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"), 1)],
+    "same-order-two-compressions": [(dict(order=0, scope=1, compression=3, settings=b"\xF8"), 0), (dict(order=0, scope=1, compression=0), 0)],
+    "same-order-aes-modes": [(dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), 1), (dict(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x03"), 1)],
+    "same-order-over-encryption": [(dict(order=1, scope=4, compression=3, settings=b"\x47"), 0), (dict(order=1, scope=1, compression=0), 0),
+                                   (dict(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x03"), 1)],
+    "same-order-stray-encryption": [(dict(order=0, scope=1, compression=3, settings=b"\xF8", stray_encryption=0), 0), (dict(order=0, scope=1, compression=3, settings=b"\xF8"), 0)],
 }
 
 
 def tie_file(encodings):
-    """A track with the given content_encoding arguments, in that order, and frames that are the same whatever they are."""
-    enc = content_encodings(*[content_encoding(**kw) for kw in encodings])
+    """A track with the given (content_encoding arguments, type) pairs, in that order, and frames that are the same whatever they are."""
+    enc = content_encodings(*[content_encoding(**kw) for kw, _ in encodings])
     sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
 
@@ -506,6 +507,13 @@ def _():
          findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
     return tie_file(TIE_CASES["same-order-over-encryption"])
+
+
+@fixture("same-order-stray-encryption", "Two header strippings share ContentEncodingOrder 0, one with a ContentEncryption element, which a reader ignores under type 0 (section "
+         "5.1.4.1.31.8): the encodings cannot be ordered and nothing is read, but with no encoding of type 1 nothing is protected.",
+         findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return tie_file(TIE_CASES["same-order-stray-encryption"])
 
 
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",

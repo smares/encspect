@@ -109,7 +109,7 @@ internal sealed partial class FileReader
             _findings.AddNow(Severity.Info, "matroska.track-encoding-not-read",
                 $"{label} ({codecId}) has ContentEncodings that share a ContentEncodingOrder, so they cannot be ordered and none is trusted: its frames and its CodecPrivate are not read, so its frames cannot be analyzed.",
                 track.Encodings.FirstOrDefault()?.Node ?? track.Node);
-            AddContainerStream(segment, track, null, plan.Protection);
+            AddContainerStream(segment, track, null, plan.Protection, isUnordered: true);
             return;
         }
 
@@ -417,12 +417,15 @@ internal sealed partial class FileReader
     }
 
     // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.
-    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection, MappedBytes? privateData = null)
+    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection, MappedBytes? privateData = null, bool isUnordered = false)
     {
         TrackStatistics statistics = track.Statistics;
         string codecId = track.CodecId ?? string.Empty;
+        // The samples of a track whose frames are not read come from the container's timing: for encrypted frames less the codec's delay, as the
+        // clear track's codec parser counts them, and for encodings that cannot be ordered, encrypted or not, from the timing alone.
         bool areFramesEncrypted = protection is { IsEncrypted: true };
-        double duration = areFramesEncrypted ? EncryptedDuration(segment, track, privateData) : ContainerDuration(segment, track);
+        bool areSamplesTimed = areFramesEncrypted || isUnordered;
+        double duration = areFramesEncrypted && !isUnordered ? EncryptedDuration(segment, track, privateData) : ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -437,7 +440,7 @@ internal sealed partial class FileReader
             Channels = channels,
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,
             Duration = duration,
-            Samples = areFramesEncrypted ? (long)Math.Round(duration * rate) : 0,
+            Samples = areSamplesTimed ? (long)Math.Round(duration * rate) : 0,
             AverageBitrate = ContainerDuration(segment, track) is > 0 and var length ? statistics.Bytes * 8 / length / 1000 : null,
             Writer = writerName,
             WriterConfidence = writerConfidence,
@@ -532,11 +535,11 @@ internal sealed partial class FileReader
         var plan = new EncodingPlan();
 
         // Encodings that cannot be ordered are not trusted: neither the frames nor the CodecPrivate are read, and the track is encrypted unless shown
-        // otherwise, as MP4's rule is, when any of them is an encryption or holds a ContentEncryption.
+        // otherwise, as MP4's rule is, when any of them is an encryption (type 1; a ContentEncryption under another type must be ignored, section 5.1.4.1.31.8).
         if (track.HasDuplicateOrders)
         {
             plan.IsAmbiguous = true;
-            plan.Protection = track.Encodings.Any(e => e.Type == 1 || e.HasEncryption)
+            plan.Protection = track.Encodings.Any(e => e.Type == 1)
                 ? new StreamProtection { Scheme = "Matroska ContentEncryption", IsEncrypted = true }
                 : null;
             return plan;

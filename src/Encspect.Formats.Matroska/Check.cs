@@ -127,10 +127,13 @@ internal sealed partial class FileReader
             }
         }
 
-        // Encodings that cannot be ordered hide nothing in a way that is the same whatever the order of the elements.
-        foreach (OrderedEncoding ordered in track.HasDuplicateOrders ? track.Encodings.Select(e => new OrderedEncoding(e, [], true)) : track.OrderedEncodings())
+        // Encodings that cannot be ordered have no verdict to check: which one hides which, and which is next, would depend on the order of the elements.
+        if (!track.HasDuplicateOrders)
         {
-            CheckEncryption(which, ordered, node);
+            foreach (OrderedEncoding ordered in track.OrderedEncodings())
+            {
+                CheckEncryption(which, ordered, node);
+            }
         }
     }
 
