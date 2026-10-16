@@ -370,6 +370,118 @@ DTS Coherent Acoustics is a format parser of its own (`src/Encspect.Formats.Dts`
 
 Not covered: the subframes and the extensions' audio data, the XLL band data and the parameters of its bands, DTS:X beyond its sync word, and the core's optional information beyond its flags.
 
+## Phase 3: Dolby TrueHD and MLP
+
+Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
+
+**Sources**
+
+- FFmpeg n6.1.1 (`ffmpeg_sources.py` pins the release):
+  - `libavcodec/mlp_parse.c` and `mlp_parse.h`: the major sync.
+  - `mlp.c` and `mlp.h`: checksums, Huffman tables, channel tables.
+  - `mlp_parser.c`: framing and the access unit parity check.
+  - `mlpdec.c`: access unit, substream directory, restart header, decoding parameters, block data, substream parity and CRC, lossless check.
+  - `mlpdsp.c`: the lossless check's sample sum.
+  - `truehd_core_bsf.c` and `profiles.c`: the Atmos substream.
+  - `mlpenc.c`: a second reading of the fields the decoder skips.
+  - `libavformat/mlpdec.c` (raw probe), `isom_tags.c` and `mov.c` (`mlpa`, `dmlp`), `matroska.c` and `matroskadec.c`.
+- Public documents that were read:
+  - The AES paper "MLP Lossless Compression" (Stuart, Craven, Gerzon, Law and Wilson, AES 9th Regional Convention, Tokyo, 1999). It describes the stream's CRC check information, its lossless self-check and the substreams, but no bit layout.
+  - The Matroska codec mapping: `A_TRUEHD` and `A_MLP` frames are access units, without CodecPrivate.
+  - The MP4 registry entries `mlpa` and `dmlp`.
+- Documents that exist but have not been read:
+  - Dolby's "Dolby TrueHD high-level bitstream description" (2018).
+  - "MLP (Dolby TrueHD) streams within the ISO Base Media File Format" (version 1.0, 2009).
+  - Both are on developer.dolby.com. Reading them is the first step of the work; a field is added to the scope only if one of them or FFmpeg's source states it.
+
+**Read from the bitstream alone**
+
+- Framing:
+  - An access unit starts with a nibble and a 12-bit length in 16-bit words (4 to 8,190 bytes).
+  - Then comes a 16-bit timestamp that is not checked.
+  - Units follow each other without gaps.
+  - A major sync starts at byte 4 of its unit with 0xF8726FBA (TrueHD) or 0xF8726FBB (MLP).
+- Major sync size: 28 bytes, or 30 plus 2 per extension word where bit 0 of byte 25 is set (the high nibble of byte 26 counts the words).
+- Major sync fields:
+  - Stream type, and the sampling rate (48 or 44.1 kHz times 1, 2 or 4), which gives 40, 80 or 160 samples per access unit.
+  - MLP: bit depth and sampling rate per channel group, and the channel arrangement.
+  - TrueHD: the channel modifiers (stereo, Dolby Surround, Dolby Headphone, mono, Dolby Digital EX) and the channel assignments of the 6-channel and 8-channel presentations (13 flags: left/right, center, LFE, surrounds, height, wide, rear surrounds and more).
+  - The signature 0xB752 and the flags word.
+  - Variable or constant bit rate, peak data rate, substream count and the substream info bytes.
+- Major sync checksum:
+  - The last two bytes, little endian.
+  - A CRC-16 (polynomial 0x002D, start value 0) over the bytes before the last four.
+  - The two bytes before the checksum are XORed into the result instead of run through it.
+- Parity nibble: the four bytes of the unit header and the substream directory (without the major sync), XORed to one byte, must have a high nibble that is the complement of the low one (`mlp_parser.c` 135 to 158, `mlpdec.c` 1264 to 1270).
+- Substream directory:
+  - Per substream 16 bits: extra word present, bit clear when the substream starts with a restart header, check data present, one unknown bit, end offset in words (cumulative).
+  - A 16-bit extra word where flagged (TrueHD only).
+  - A unit with a major sync must have the restart bit clear in every entry, and one without it set.
+- Substream data starts with a block present bit and a restart present bit.
+- Restart header:
+  - A 13-bit sync 0x18F5 and a noise-type bit, which give 0x31EA or 0x31EB.
+  - Timestamp, first and last coded channel, last matrix channel, noise shift and noise generator seed.
+  - The check data flag and the lossless check byte.
+  - The channel assignment of every matrix channel.
+  - An 8-bit CRC over the header's bits from the third bit of the substream on.
+- Decoding parameters:
+  - Block size, matrices, output shifts and quantization steps.
+  - FIR and IIR filters with their orders, shifts and coefficients.
+  - Huffman offset, codebook and bypassed least significant bits.
+- End of stream: the marker 0xD234D234 (TrueHD adds a count of samples to drop).
+- Substream tail, where the directory says so:
+  - A parity byte: all bytes before it XORed with it give 0xA9.
+  - A CRC-8 (polynomial 0x63, start value 0x3C) over the bytes before the parity byte, with the last of them XORed in.
+- Block data (the Huffman-coded residuals) is read to find where a block ends and the next begins; that needs the three codebooks from `mlp.c` and no filter, matrix or noise processing.
+- A block's check data (a bit count and a byte after the block, flagged in the restart header) is not understood: FFmpeg stops with a request for samples, so no stream is known that sets it, and the analyzer reports the flag only.
+
+**Needs decoding**
+
+- The lossless check:
+  - Each restart header holds one byte that FFmpeg compares at the next restart header with the XOR of every output sample since the last one.
+  - Per sample and channel, the value is the 24-bit sample after the output shift, shifted left by its matrix channel, then folded to 8 bits (`mlpdsp.c` 100 to 126).
+  - It is not a function of the bitstream: it needs residuals, filters, matrices with the noise channels, bypassed bits and output shifts of every substream up to the highest one decoded.
+  - It therefore belongs to the decoders that verify stored checksums (phase 3, above).
+  - FFmpeg only logs a mismatch.
+  - The first restart interval of a file has no check, and neither does one after an end of stream marker.
+- Everything else FFmpeg verifies is in the list above. It only logs a failed substream parity, CRC-8 or restart header CRC, and stops the unit for a failed major sync CRC or parity nibble.
+
+**Atmos**
+
+- FFmpeg's rule (`mlpdec.c` 389 to 398, `profiles.c` 55 to 58):
+  - A TrueHD stream with four substreams and the top bit of the substream info byte set is "Dolby TrueHD + Dolby Atmos".
+  - The decoder never decodes the fourth substream; it comments that it holds non-audio data.
+- `truehd_core_bsf.c` (105 to 111) strips the layer:
+  - It keeps three substreams.
+  - It clears that bit and the two extended substream info bits (read by the major sync but unused in 6.1.1, commented as the 16-channel presentation).
+  - It clears the extension flag and recomputes the major sync CRC.
+- The analyzer reports:
+  - The flag, the substream count and the extended substream info bits.
+  - The major sync extension words as bytes.
+  - The fourth substream's length, and its parity and CRC where the directory flags them.
+- What the fourth substream and the extension words hold is not described by any source read so far, so `HasObjectAudio` and an object count stay unset, unlike for E-AC-3.
+
+**Containers**
+
+- Raw files:
+  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs 100 chained units.
+  - The analyzer's detection follows the chain as for other formats (a major sync whose unit is followed by units that pass the parity nibble) with fewer.
+  - `.thd` and `.mlp` are the extensions.
+- MP4:
+  - Sample entry `mlpa` (TrueHD only in FFmpeg), one access unit per sample.
+  - A `dmlp` box of at least 10 bytes: the 32 bits that follow the sync word in the first major sync (sampling rate, channel modifiers and assignments), a 16-bit peak data rate and 4 reserved bytes (`mov.c` 7531 to 7564, `movenc.c` 859 to 886).
+  - FFmpeg's demuxer reads the first field only; the analyzer compares it with the stream's first major sync.
+- Matroska:
+  - `A_TRUEHD` and `A_MLP` blocks are access units without CodecPrivate.
+  - The Matroska parser reports them as `matroska.codec-not-analyzed` today; once the TrueHD codec parser exists, it routes those blocks to it.
+
+Not covered:
+
+- The contents of the fourth substream and of the major sync extension.
+- The audio itself beyond the lossless check.
+- TrueHD with the AC-3 core interleaved as on Blu-ray (FFmpeg's raw parser does not read it either).
+- Fields FFmpeg skips: the flags word and the substream info bits other than the Atmos bit are shown as raw values.
+
 ## Format detection
 
 Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and the host picks the format from the evidence of all of them, never from the order of the parser list.
@@ -501,7 +613,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV4 to SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core; WavPack, whose hybrid mode is lossy (a lossy .wv file and an optional .wvc correction file), with its lossless mode in the same parser |
 | 2 (lossy), continued | The steps listed under "Phase 2, continued" below, in that order |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
-| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD at header level (raw `.thd`, MP4 mlpa, Matroska), including whether an Atmos layer is present; lossless decoders that verify the stored checksums (WavPack MD5 and DSD, FLAC, ALAC, Monkey's Audio, TTA, WMA Lossless) |
+| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD and MLP frame by frame, from FFmpeg's `mlpdec.c` (raw `.thd` and `.mlp`, MP4 `mlpa`, Matroska `A_TRUEHD` and `A_MLP`; see "Phase 3: Dolby TrueHD and MLP"), including whether an Atmos substream is present; lossless decoders that verify the stored checksums (WavPack MD5 and DSD, FLAC, ALAC, Monkey's Audio, TTA, WMA Lossless, Dolby TrueHD and MLP) |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
 | 4 | TAK and OptimFROG at header level only |
 | Later, order not fixed | The items listed under "Later" below |
