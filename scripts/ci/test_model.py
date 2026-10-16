@@ -198,6 +198,43 @@ def undefined_type_before_encryption():  # decision 6
 def missing_encryption_element_hidden_label():  # decision 5
     r = tr([enc(order=1, scope=3, type=1, crypt=None)], "A_AAC"); assert r["scheme"] == S and r["is_encrypted"]
 
+@case
+def rule8a_beats_root_label():  # rule 8a: hidden encryption E1 makes E2 unknown although root R is 3DES
+    r = tr([enc(order=2, scope=4, type=1, crypt=alg(2)), enc(order=1, scope=4, type=1, crypt=aes(1)), enc(order=0, scope=1, comp=zlib())])
+    assert r == dict(protected=True, scheme=S, is_encrypted=True, frames_read=False, codec_private_read=True)
+@case
+def rule8b_root_label_when_hidden_is_compression():  # same chain, E1 compression: 8b names 3DES
+    r = tr([enc(order=2, scope=4, type=1, crypt=alg(2)), enc(order=1, scope=4, comp=zlib()), enc(order=0, scope=1, comp=zlib())])
+    assert r["scheme"] == S+", 3DES" and r["is_encrypted"]
+@case
+def rule8a_algo0_hidden_encryption_cp():  # E1 type 1 hidden (algo unreadable) -> E2 cp encrypted, unknown
+    r = tr([enc(order=2, scope=4, type=1, crypt=aes(2)), enc(order=1, scope=4, type=1, crypt=alg(0)), enc(order=0, scope=2, comp=zlib())], "A_AAC")
+    assert r == dict(protected=True, scheme=S, is_encrypted=False, frames_read=True, codec_private_read=False)
+@case
+def rule8a_outermost_root_still_names_scheme():  # root covers frames: its event comes first
+    r = tr([enc(order=2, scope=5, type=1, crypt=alg(1)), enc(order=1, scope=4, type=1, crypt=alg(2)), enc(order=0, scope=2, comp=zlib())], "A_AAC")
+    assert r["scheme"] == S+", DES" and r["is_encrypted"] and not r["codec_private_read"]
+@case
+def rule8c_hidden_compression_under_algo0():  # root algo 0 is not a real encryption
+    r = tr([enc(order=1, scope=4, type=1, crypt=alg(0)), enc(order=0, scope=1, comp=zlib())])
+    assert r == dict(protected=False, scheme=None, is_encrypted=None, frames_read=False, codec_private_read=True)
+@case
+def rule8c_hidden_encryption_under_algo0():
+    r = tr([enc(order=1, scope=4, type=1, crypt=alg(None)), enc(order=0, scope=1, type=1, crypt=aes(1))])
+    assert r["scheme"] == S and r["is_encrypted"] and not r["frames_read"]
+@case
+def compression_without_algo_element():  # RFC .6 default zlib, with settings present
+    r = tr([enc(scope=3, comp={"algo": None, "has_settings": True})], "A_AAC"); assert r["frames_read"] and r["codec_private_read"]
+@case
+def header_stripping_without_settings_opus_cp():  # Table 23 value 3, nothing stripped
+    r = tr([enc(scope=3, comp={"algo": 3, "has_settings": False})]); assert r["frames_read"] and r["codec_private_read"]
+@case
+def aes_settings_without_cipher_mode():  # AESSettings present, mode element absent
+    r = tr([enc(type=1, crypt=aes(None, True))], "A_VORBIS"); assert r["scheme"] == S+", AES" and r["is_encrypted"]
+@case
+def aes_cipher_mode_zero():  # Table 56: 0 not valid, named by number
+    assert tr([enc(type=1, crypt=aes(0))])["scheme"] == S+", AES, mode 0"
+
 if __name__ == "__main__":
     for f in CASES:
         f()

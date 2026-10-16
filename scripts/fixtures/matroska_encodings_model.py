@@ -16,7 +16,8 @@ Rules
     Other bits are ignored; scope 0 covers nothing. The CodecPrivate counts as covered only
     if the track has one.
  5. Hiding: an encoding with bit 4 makes the next lower-order encoding "hidden"; hiding
-    chains, so every encoding below a bit-4 encoding is hidden (hidden[j] = scope[j-1] & 4).
+    chains through consecutive bit-4 encodings: the encoding right below a bit-4 encoding is
+    hidden (hidden[j] = scope[j-1] & 4), so a hidden encoding with bit 4 hides the next one.
     A hidden encoding's settings (algorithm, compression algorithm) are not read; its own
     scope and type (outside ContentCompression/ContentEncryption) still are. The root of a
     run is the nearest visible encoding above it.
@@ -27,11 +28,17 @@ Rules
     ContentCompression element is missing) or 3 (header stripping, with or without settings)
     is undone for any codec. Any other algorithm: the covered parts are not read (not
     encrypted). Types the RFC does not define (2 or higher): not read, not protected.
- 8. Hidden encoding E under root R, with P the hidden encodings between them:
-      - any encoding of P has type 1: E's parts are encrypted by an unknown algorithm;
-      - else R a real encryption (rule 6): encrypted, labeled as R;
-      - else (R compression or algo 0): E type 1 -> encrypted, unknown algorithm; E type 0
-        -> not encrypted. In every case E's parts are not read.
+ 8. Hidden encoding E under root R, with P the hidden encodings between them (checked in
+    this order):
+      a. any encoding of P has type 1: E's parts are encrypted by an unknown algorithm;
+      b. else R a real encryption (rule 6): E's parts are encrypted, labeled as R. This
+         names R's algorithm even for frames that R's own scope does not cover. Table 21
+         says bit 4 concerns the next encoding's settings, not the frames; the scheme
+         names the encryption involved, here the one whose ciphertext hides the settings
+         needed to read the frames;
+      c. else (R compression or algo 0): E type 1 -> encrypted, unknown algorithm; E type 0
+         -> not encrypted.
+    In every case E's parts are not read.
  9. Protected iff some part (frames, or an existing CodecPrivate) ends up encrypted. An
     encryption that covers nothing itself and hides only encodings that cover nothing gives
     no protection.
