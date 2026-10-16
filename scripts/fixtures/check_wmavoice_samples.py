@@ -31,6 +31,7 @@ import sys
 
 import downloads
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "wmavoice-samples.json"
@@ -144,6 +145,8 @@ def main():
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "wmavoice")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     mi.require()
+    if analyzer is None:
+        tool_versions.require("ffmpeg", "ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

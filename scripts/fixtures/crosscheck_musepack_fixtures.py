@@ -54,6 +54,7 @@ import downloads
 import mediainfo_tool as mi
 import musepack_model as m
 import musepack_tool
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "musepack"
@@ -411,6 +412,7 @@ def check_mediainfo(name, path, tally):
 
 def main():
     mi.require()
+    tool_versions.require("ffprobe", "musepack")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
     frames_tool = musepack_tool.build_frames(tools and tools / "frames")

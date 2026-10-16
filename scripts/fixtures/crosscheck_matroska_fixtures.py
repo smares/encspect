@@ -41,6 +41,7 @@ import sys
 
 import check_matroska_encodings
 import mediainfo_tool
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "matroska"
@@ -264,6 +265,7 @@ def main():
         if shutil.which(tool) is None:
             sys.exit(f"{tool} is needed.")
     mediainfo_tool.require()
+    tool_versions.require("ffmpeg", "ffprobe", "mkvinfo")
     wanted = set(sys.argv[1:])
     tally = mediainfo_tool.Tally(EXPLAINED)
     failures = 0

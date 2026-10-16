@@ -2,8 +2,9 @@ name: CI
 
 # Pull requests run what the change needs, on four platforms; a push to main, the nightly schedule and a
 # manual run run everything, on six. The nightly run and a manual one also write every long input with all
-# three writers on more threads, and fuzz for half an hour. Every Linux job is pinned: the cross-check jobs,
-# whose tools' versions the golden reports name, to ubuntu-24.04, every other job to ubuntu-26.04. See "CI" in
+# three writers on more threads, and fuzz for half an hour. Every Linux job is pinned to ubuntu-26.04. The
+# cross-check jobs run that image's packaged tools (GPAC's MP4Box, which it lacks, is built from source) and fail
+# when a tool's version differs from the one their scripts expect (scripts/fixtures/tool_versions.py). See "CI" in
 # docs/development.md.
 on:
   push:
@@ -112,6 +113,7 @@ jobs:
           python3 scripts/ci/test_check_results.py
           python3 scripts/ci/test_downloads.py
           python3 scripts/ci/test_model.py
+          python3 scripts/ci/test_tool_versions.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -478,7 +480,7 @@ jobs:
 
   mpeg-crosscheck:
     name: MPEG fixtures and the analyzer agree with ffprobe, libmad, mpg123, minimp3, mctoolamed, mp3guessenc, MediaInfo, the ISO streams and mp3PRO samples
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.mpeg-crosscheck == 'true'
     timeout-minutes: 60
@@ -549,7 +551,7 @@ jobs:
 
   mp4-crosscheck:
     name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC and HE-AAC samples with the manifests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.mp4-crosscheck == 'true'
     timeout-minutes: 60
@@ -593,11 +595,24 @@ jobs:
           path: .cache/tools/faad2-trace
           key: faad2-trace-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/faad_trace_tool.py') }}
 
-      # ffmpeg 6.1, GPAC 2.2 and faad2 2.11 from Ubuntu 24.04, the versions the manifests were checked with.
-      - name: Install ffmpeg, gpac and faad
+      # ffmpeg 8.0.1, faad2 2.11.2 and MediaInfo 26.01 from Ubuntu 26.04, which does not package GPAC.
+      - name: Install ffmpeg, faad and mediainfo
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg gpac faad mediainfo
+          sudo apt-get install -y ffmpeg faad mediainfo
+
+      # MP4Box from GPAC 2.2.1's source release, pinned by its SHA-256 and built minimal and static by gpac_tool.py,
+      # which holds the pin and the configuration; the cache key holds it and the runner image, whose compiler built it.
+      - name: Cache the MP4Box build
+        uses: actions/cache@v6
+        with:
+          path: .cache/tools/gpac
+          key: gpac-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/gpac_tool.py') }}
+
+      - name: Build MP4Box
+        run: |
+          python3 scripts/fixtures/gpac_tool.py
+          echo "$PWD/.cache/tools/gpac" >> "$GITHUB_PATH"
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
@@ -647,7 +662,7 @@ jobs:
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe, speexdec and MediaInfo
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.ogg-crosscheck == 'true'
     timeout-minutes: 60
@@ -689,7 +704,7 @@ jobs:
 
   musepack-crosscheck:
     name: Musepack fixtures agree with mpcdec, ffprobe, libmpcdec and MediaInfo
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.musepack-crosscheck == 'true'
     timeout-minutes: 60
@@ -721,8 +736,8 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # mpcdec and mpc2sv8 0.1~r495 and ffmpeg 6.1 from Ubuntu 24.04, the versions the manifests were
-      # checked with; libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
+      # mpcdec and mpc2sv8 0.1~r495, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts
+      # assert (the manifests were checked with ffmpeg 6.1.1 and MediaInfo 24.01); libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
       # for SV4 to SV6 from the pinned libmpcdec 1.2.6 and, with the runner's g++, the pinned Portable
       # Musepack decoder it was ported from. Without Wine, mppdec's check reads what it printed when
       # the fixtures were written and says so.
@@ -739,7 +754,7 @@ jobs:
 
   wavpack-crosscheck:
     name: WavPack fixtures agree with libwavpack, wvunpack, ffprobe and MediaInfo
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.wavpack-crosscheck == 'true'
     timeout-minutes: 60
@@ -771,8 +786,8 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # wavpack 5.6.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
-      # checked with; libwavpack's block reader is built from the pinned 5.6.0 source with the runner's gcc.
+      # wavpack 5.9.0, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the
+      # manifests were checked with 5.6.0, 6.1.1 and 24.01); libwavpack's block reader is built from the pinned 5.6.0 source with the runner's gcc.
       - name: Install wavpack, ffmpeg and mediainfo
         run: |
           sudo apt-get update
@@ -783,7 +798,7 @@ jobs:
 
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.asf-crosscheck == 'true'
     timeout-minutes: 60
@@ -815,8 +830,8 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked
-      # with. The tables of the WMA parser are generated from FFmpeg 6.1.1's source, pinned by its
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the
+      # manifests were checked with 6.1.1 and 24.01). The tables of the WMA parser are generated from FFmpeg 6.1.1's source, pinned by its
       # SHA-256; the check fails if Tables.cs differs from what wma_tables.py writes.
       - name: Install ffmpeg and mediainfo
         run: |
@@ -848,7 +863,7 @@ jobs:
 
   matroska-crosscheck:
     name: Matroska and WebM fixtures agree with mkvinfo, ffprobe, ffmpeg and MediaInfo, and the element table with the RFCs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.matroska-crosscheck == 'true'
     timeout-minutes: 60
@@ -873,7 +888,7 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # mkvtoolnix 82.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked with.
+      # mkvtoolnix 97.0, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the manifests were checked with 82.0, 6.1.1 and 24.01).
       - name: Install mkvtoolnix, ffmpeg and mediainfo
         run: |
           sudo apt-get update
@@ -895,7 +910,7 @@ jobs:
 
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg, liba52 and MediaInfo
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.ac3-crosscheck == 'true'
     timeout-minutes: 60
@@ -927,7 +942,7 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # ffmpeg 6.1 and liba52 0.7.4 from Ubuntu 24.04; a52_blocks.c is built against liba52.
+      # ffmpeg 8.0.1 and liba52 0.7.4 from Ubuntu 26.04; a52_blocks.c is built against liba52.
       - name: Install ffmpeg and liba52
         run: |
           sudo apt-get update
@@ -957,7 +972,7 @@ jobs:
 
   dts-crosscheck:
     name: DTS fixtures agree with ffprobe, ffmpeg, libdca and MediaInfo
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.dts-crosscheck == 'true'
     timeout-minutes: 60
@@ -989,8 +1004,8 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # ffmpeg 6.1, libdca 0.0.7 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were
-      # checked with; dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
+      # ffmpeg 8.0.1, libdca 0.0.7 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the
+      # manifests were checked with ffmpeg 6.1.1 and MediaInfo 24.01); dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
       - name: Install ffmpeg, libdca and mediainfo
         run: |
           sudo apt-get update

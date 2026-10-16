@@ -50,6 +50,8 @@ import subprocess
 import sys
 import tempfile
 
+import mediainfo_tool
+import tool_versions
 import wma_signals
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -405,6 +407,9 @@ def main():
     if not tool("ffprobe") or not tool("ffmpeg"):
         print("ffmpeg and ffprobe are needed.")
         return 1
+    tool_versions.require("ffmpeg", "ffprobe")
+    if tool("mediainfo"):
+        mediainfo_tool.require()
     wanted = set(sys.argv[1:])
     failures = 0
     checked = 0

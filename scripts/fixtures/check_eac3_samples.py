@@ -31,6 +31,7 @@ import sys
 import crosscheck_ac3_fixtures as cc
 import downloads
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "eac3-samples.json"
@@ -127,6 +128,8 @@ def main():
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "eac3")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     mi.require()
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

@@ -104,6 +104,7 @@ import mctoolamed_tool
 import mediainfo_tool as mi
 import minimp3_tool
 import stream_stats
+import tool_versions
 import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
@@ -1502,6 +1503,7 @@ def main():
     failed = 0
     checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "mpg123", "php")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     tools = (minimp3_tool.build(), mctoolamed_tool.build())
     for manifest_path in sorted(p for directory in DIRECTORIES for p in directory.glob("*.expected.json")):

@@ -47,6 +47,8 @@ from crosscheck_mp4_fixtures import ffprobe_packets, mp4box_boxes, mp4box_fields
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "aac"
+# Provenance: the tool versions (Ubuntu 24.04) that wrote the committed files this script produced. The cross-check jobs run Ubuntu 26.04 and
+# assert its versions (tool_versions.py); the committed files and goldens stay as written, so these strings stay as they are.
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 FAAC_VERSION = "FAAC 1.30"
 # The 2.0 and 2.1 front ends' tool atoms carry no commit, the 2.2 front end's tool atom: its version and, from `git describe`, the abbreviated commit (faac_tool.py).

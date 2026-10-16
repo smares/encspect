@@ -68,6 +68,7 @@ import tempfile
 import channel_layouts
 import faad_trace_tool
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 DIRECTORIES = [ROOT / "mp4", ROOT / "adts", ROOT / "aac"]
@@ -622,6 +623,7 @@ def check_mediainfo(path, tally, check=None):
 
 def main():
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "MP4Box", "faad")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     failures = 0
     checked = 0

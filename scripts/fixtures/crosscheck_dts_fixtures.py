@@ -46,6 +46,7 @@ import tempfile
 
 import channel_layouts
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "dts"
@@ -429,6 +430,7 @@ def check_dtshd(path, manifest, report, problems, tally):
 def main():
     failures = checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "dca")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     with tempfile.TemporaryDirectory() as directory:
         work = pathlib.Path(directory)

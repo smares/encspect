@@ -27,6 +27,7 @@ import sys
 import channel_layouts
 import downloads
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "dts-hd-samples.json"
@@ -115,6 +116,8 @@ def main():
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "dts-hd")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     mi.require()
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

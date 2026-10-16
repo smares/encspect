@@ -42,6 +42,7 @@ import sys
 import tempfile
 
 import mediainfo_tool as mi
+import tool_versions
 import wavpack_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -432,6 +433,7 @@ def check_mediainfo(name, manifest, path, report, tally):
 
 def main():
     mi.require()
+    tool_versions.require("ffprobe", "wvunpack")
     wavpack_tool_dir = os.environ.get("WAVPACK_TOOLS_DIR")
     tool = wavpack_tool.build_blocks(pathlib.Path(wavpack_tool_dir) if wavpack_tool_dir else None)
     names = sys.argv[1:]

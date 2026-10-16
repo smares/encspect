@@ -59,6 +59,7 @@ import tempfile
 import channel_layouts
 import mediainfo_tool as mi
 import ogg_model as m
+import tool_versions
 import vorbis_opus_model as vo
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -566,6 +567,7 @@ def check_mediainfo(name, path, tally):
 
 def main():
     mi.require()
+    tool_versions.require("ffprobe", "oggz", "ogginfo")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     for tool in ("oggz", "ogginfo", "vorbiscomment", "oggdec", "ffprobe", "speexdec", "opusinfo", "opusdec"):
         if subprocess.run(["which", tool], capture_output=True).returncode:

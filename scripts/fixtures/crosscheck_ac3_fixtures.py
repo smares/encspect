@@ -74,6 +74,7 @@ import tempfile
 import ac3_model as m
 import channel_layouts
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "ac3"
@@ -564,6 +565,7 @@ def main():
     analyzer = sys.argv[sys.argv.index("--analyzer") + 1] if "--analyzer" in sys.argv else None
     failures = checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "a52")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     with tempfile.TemporaryDirectory() as directory:
         work = pathlib.Path(directory)

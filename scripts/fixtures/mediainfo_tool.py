@@ -1,5 +1,5 @@
-"""Runs MediaInfo (MediaArea's MediaInfo, BSD-2-Clause; Ubuntu 24.04's mediainfo package, on
-MediaInfoLib 24.01) and reads its JSON output for the cross-check scripts.
+"""Runs MediaInfo (MediaArea's MediaInfo, BSD-2-Clause; Ubuntu 26.04's mediainfo package, on
+MediaInfoLib 26.01) and reads its JSON output for the cross-check scripts.
 
 MediaInfo reads container and stream headers and decodes no audio, so it is one more independent
 reader of the header fields, encoder strings and tags the analyzer reports. Each script compares
@@ -9,8 +9,8 @@ bitrate and bitrate mode, encoder evidence, stream size and tags, wherever Media
 
 Every field that is not compared on a fixture is skipped with its reason, and a reason that names
 MediaInfo's own reading cites MediaInfoLib's source (github.com/MediaArea/MediaInfoLib, tag v24.01,
-Source/MediaInfo). Each script prints how often each field was compared and each reason it was not
-(Tally), and fails on a listed difference that no longer occurs, so the lists stay current.
+Source/MediaInfo; the reasons were written against 24.01 and are re-checked against 26.01 as the cross-checks are adapted).
+Each script prints how often each field was compared and each reason it was not (Tally), and fails on a listed difference that no longer occurs, so the lists stay current.
 """
 
 import base64
@@ -21,16 +21,17 @@ import re
 import subprocess
 import sys
 
-VERSION = "24.01"
+VERSION = "26.01"
 
 
 def require():
-    """Exits unless MediaInfo 24.01 is on the PATH: the skips below describe that version's reading."""
+    """Exits unless MediaInfo 26.01 is on the PATH: the skips below describe that version's reading. The version is read from
+    "MediaInfoLib - v26.01" in the output of --Version, whatever follows it (a patch number, a build suffix)."""
     try:
         output = subprocess.run(["mediainfo", "--Version"], capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError) as error:
         sys.exit(f"MediaInfo is needed: {error}")
-    if not re.search(rf"MediaInfoLib - v{re.escape(VERSION)}\b", output):
+    if not re.search(rf"MediaInfoLib - v{re.escape(VERSION)}(?![\d])", output):
         sys.exit(f"MediaInfo {VERSION} is needed, found: {' '.join(output.split())}")
 
 

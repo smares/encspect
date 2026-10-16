@@ -34,6 +34,8 @@ from crosscheck_mp4_fixtures import ffprobe_packets, mp4box_boxes, mp4box_fields
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "mp4"
+# Provenance: the tool versions (Ubuntu 24.04) that wrote the committed files this script produced. The cross-check jobs run Ubuntu 26.04 and
+# assert its versions (tool_versions.py); the committed files and goldens stay as written, so these strings stay as they are.
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 GPAC_VERSION = "GPAC version 2.2.1"
 GPAC_TOOL = "GPAC-2.2.1-rev2.2.1+dfsg1-3.1build2"

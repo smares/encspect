@@ -33,6 +33,7 @@ import sys
 import urllib.parse
 
 import downloads
+import tool_versions
 from conformance_mpeg_audio import child
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -229,6 +230,8 @@ def main():
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     if not manifest["samples"]:
         raise SystemExit(f"{MANIFEST} lists no samples")
+    if analyzer is None:
+        tool_versions.require("MP4Box")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:
