@@ -58,6 +58,8 @@ internal sealed class EncodingInfo
     public bool AppliesToCodecPrivate => (Scope & 2) != 0;
 }
 
+internal readonly record struct OrderedEncoding(EncodingInfo Encoding, EncodingInfo? Hider, bool HasNext);
+
 // The totals the blocks of a track add up to.
 internal sealed class TrackStatistics
 {
@@ -157,6 +159,23 @@ internal sealed class TrackInfo
     public ulong? PixelHeight { get; set; }
 
     public List<EncodingInfo> Encodings { get; } = [];
+
+    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first). An encoding of any type whose scope has bit 4
+    // makes the settings of the next one unreadable (RFC 9559 section 5.1.4.1.31.3): Hider is the outermost encoding of the chain that does so
+    // for this one, null where nothing does; HasNext tells whether an encoding follows.
+    public List<OrderedEncoding> OrderedEncodings()
+    {
+        List<EncodingInfo> ordered = [.. Encodings.OrderByDescending(e => e.Order)];
+        var result = new List<OrderedEncoding>(ordered.Count);
+        EncodingInfo? hider = null;
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            result.Add(new OrderedEncoding(ordered[i], hider, i + 1 < ordered.Count));
+            hider = (ordered[i].Scope & 4) != 0 ? hider ?? ordered[i] : null;
+        }
+
+        return result;
+    }
 
     public bool IsAudio => Type == 2;
 

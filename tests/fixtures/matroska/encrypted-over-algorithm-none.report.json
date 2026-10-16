@@ -736,7 +736,7 @@
         "channelLayoutName": "mono",
         "samples": 3528,
         "duration": 0.0735,
-        "averageBitrate": 17.741496598639458,
+        "averageBitrate": 16.3,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,
@@ -769,8 +769,8 @@
       },
       {
         "severity": "Info",
-        "code": "matroska.encryption-none",
-        "message": "Track 1 has a ContentEncoding of type 1 (encryption) whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24); this encoding changes nothing.",
+        "code": "matroska.encoding-hidden",
+        "message": "Track 1 has a ContentEncoding of order 0 whose settings are hidden by the ContentEncoding of order 1 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.",
         "offset": 208,
         "length": 22,
         "path": [

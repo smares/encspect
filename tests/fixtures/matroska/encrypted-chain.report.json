@@ -787,7 +787,7 @@
         "channelLayoutName": "mono",
         "samples": 3528,
         "duration": 0.0735,
-        "averageBitrate": 16.97959183673469,
+        "averageBitrate": 15.6,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,
@@ -815,6 +815,38 @@
           0,
           7,
           0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.encoding-hidden",
+        "message": "Track 1 has a ContentEncoding of order 1 whose settings are hidden by the ContentEncoding of order 2 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.",
+        "offset": 208,
+        "length": 26,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          7,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.encoding-hidden",
+        "message": "Track 1 has a ContentEncoding of order 0 whose settings are hidden by the ContentEncoding of order 2 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.",
+        "offset": 234,
+        "length": 27,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          7,
+          2
         ],
         "count": 1
       }

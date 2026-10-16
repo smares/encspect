@@ -125,15 +125,34 @@ internal sealed partial class FileReader
                 _findings.AddNow(Severity.Warning, "matroska.encoding-order",
                     $"{which} has two ContentEncodings with the ContentEncodingOrder {encoding.Order}, which RFC 9559 requires to be unique (section 5.1.4.1.31.2).", encoding.Node ?? node);
             }
+        }
 
-            CheckEncryption(which, encoding, node);
+        foreach (OrderedEncoding ordered in track.OrderedEncodings())
+        {
+            CheckEncryption(which, ordered, node);
         }
     }
 
     // The ContentEncryption of a ContentEncoding (RFC 9559 sections 5.1.4.1.31.8 to 5.1.4.1.31.12): what the track's reader ignores or reads as clear.
-    private void CheckEncryption(string which, EncodingInfo encoding, Node fallback)
+    private void CheckEncryption(string which, OrderedEncoding ordered, Node fallback)
     {
+        EncodingInfo encoding = ordered.Encoding;
         Node node = encoding.Node ?? fallback;
+
+        // Its settings are unreadable, so what they state is not checked.
+        if (ordered.Hider is { } hider)
+        {
+            _findings.AddNow(Severity.Info, "matroska.encoding-hidden",
+                $"{which} has a ContentEncoding of order {encoding.Order} whose settings are hidden by the ContentEncoding of order {hider.Order} (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.", node);
+            return;
+        }
+
+        if (encoding.Type == 1 && !(encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) && (encoding.Scope & 3) == 0 && !((encoding.Scope & 4) != 0 && ordered.HasNext))
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-covers-nothing",
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor the CodecPrivate and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.", node);
+        }
+
         if (encoding.Type == 0 && encoding.HasEncryption)
         {
             _findings.AddNow(Severity.Info, "matroska.encryption-ignored",

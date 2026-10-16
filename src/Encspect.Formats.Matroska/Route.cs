@@ -206,7 +206,7 @@ internal sealed partial class FileReader
         }
 
         // Encrypted frames give the codec parser no length to count, so the container's timing stands in, as in MP4's RouteEncrypted.
-        double seconds = areFramesEncrypted ? EncryptedDuration(segment, track) : 0;
+        double seconds = areFramesEncrypted ? EncryptedDuration(segment, track, privateData) : 0;
         CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
             ? new CodecConfiguration(privateData, privateNode)
             {
@@ -267,7 +267,7 @@ internal sealed partial class FileReader
                     {
                         Duration = seconds,
                         Samples = (long)Math.Round(seconds * stream.SampleRate),
-                        AverageBitrate = statistics.Bytes * 8 / seconds / 1000,
+                        AverageBitrate = statistics.Bytes * 8 / ContainerDuration(segment, track) / 1000,
                     };
                 }
 
@@ -382,10 +382,20 @@ internal sealed partial class FileReader
         }
     }
 
-    // The length of a track whose frames are encrypted, as the clear track's codec parser would count it: the container's timing less the codec's
-    // built-in delay (CodecDelay, RFC 9559 section 5.1.4.1.25), which the decoder drops from the start.
-    private static double EncryptedDuration(SegmentState segment, TrackInfo track) =>
-        Math.Max(0, ContainerDuration(segment, track) - (track.CodecDelayNode is null ? 0 : track.CodecDelay / 1e9));
+    // The length of a track whose frames are encrypted, as the clear track's codec parser would count it. Only Opus drops a delay from its samples: its
+    // pre-skip (the OpusHead's when the CodecPrivate is readable, else the CodecDelay, RFC 9559 section 5.1.4.1.25); the other codec parsers ignore the CodecDelay.
+    private static double EncryptedDuration(SegmentState segment, TrackInfo track, MappedBytes? privateData)
+    {
+        double delay = 0;
+        if (Codecs.RouteOf(track.CodecId ?? string.Empty) == "opus")
+        {
+            ReadOnlySpan<byte> head = privateData is null ? default : privateData.Span;
+            delay = head.Length >= 12 && head[..8].SequenceEqual("OpusHead"u8) ? System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(head[10..]) / 48000.0
+                : track.CodecDelayNode is null ? 0 : track.CodecDelay / 1e9;
+        }
+
+        return Math.Max(0, ContainerDuration(segment, track) - delay);
+    }
 
     // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.
     private static double ContainerDuration(SegmentState segment, TrackInfo track)
@@ -403,7 +413,7 @@ internal sealed partial class FileReader
         TrackStatistics statistics = track.Statistics;
         string codecId = track.CodecId ?? string.Empty;
         bool areFramesEncrypted = protection is { IsEncrypted: true };
-        double duration = areFramesEncrypted ? EncryptedDuration(segment, track) : ContainerDuration(segment, track);
+        double duration = areFramesEncrypted ? EncryptedDuration(segment, track, null) : ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -419,7 +429,7 @@ internal sealed partial class FileReader
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,
             Duration = duration,
             Samples = areFramesEncrypted ? (long)Math.Round(duration * rate) : 0,
-            AverageBitrate = duration > 0 ? statistics.Bytes * 8 / duration / 1000 : null,
+            AverageBitrate = ContainerDuration(segment, track) is > 0 and var length ? statistics.Bytes * 8 / length / 1000 : null,
             Writer = writerName,
             WriterConfidence = writerConfidence,
         });
@@ -499,59 +509,52 @@ internal sealed partial class FileReader
 
     // What the track's ContentEncodings (RFC 9559 section 5.1.4.1.31) make of its frames and of its CodecPrivate, worked out once for the finding and
     // the stream's protection. The encodings apply from the highest ContentEncodingOrder down, each to the parts its ContentEncodingScope names
-    // (bit 1 the frames, bit 2 the CodecPrivate; bit 4, the next encoding, which players do not support, hides that encoding's settings, see below). Header stripping
-    // and zlib are undone; encryption, the other compressions and other encoding types are not, and the part they cover is blocked.
+    // (bit 1 the frames, bit 2 the CodecPrivate). Header stripping and zlib are undone; encryption, the other compressions and other encoding
+    // types are not, and the part they cover is blocked.
+    //
+    // Bit 4 (the next encoding, which players do not support) of any encoding makes the settings of the next one unreadable: its algorithm, its
+    // compression settings and its claim to be "not encrypted" cannot be trusted. That encoding is not read; the parts it applies to count as
+    // encrypted by the hiding encryption, which the scheme names (the outermost of a chain). Under a hiding that does not encrypt, a hidden
+    // encryption counts as encrypted by an unknown algorithm and a hidden compression as not read. An encryption whose scope names neither
+    // the frames nor the CodecPrivate and hides no next encoding encrypts nothing.
     private EncodingPlan PlanOf(TrackInfo track)
     {
         var plan = new EncodingPlan();
-        EncodingInfo? covering = null;
-        EncodingInfo? other = null;
-
-        // An encryption with scope bit 4 encrypts the settings of the next encoding (the next lower ContentEncodingOrder): its algorithm, its
-        // compression settings and its claim to be "not encrypted" cannot be trusted. Whatever parts that encoding applies to count as encrypted by
-        // the hiding encryption, which the scheme names; the hidden encoding is otherwise not read. The hiding passes on through an encoding
-        // that has bit 4 itself.
-        EncodingInfo? hiding = null;
-        foreach (EncodingInfo encoding in track.Encodings.OrderByDescending(e => e.Order))
+        Cover? covering = null;
+        Cover? other = null;
+        foreach ((EncodingInfo encoding, EncodingInfo? hider, bool hasNext) in track.OrderedEncodings())
         {
-            EncodingInfo? hidden = hiding;
-            hiding = (encoding.Scope & 4) != 0 ? hidden : null;
-            if (hidden is not null)
-            {
-                string hiddenProblem = EncryptionName(hidden) is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
-                plan.Frames.Apply(encoding.AppliesToFrames, true, hiddenProblem, null);
-                plan.Private.Apply(encoding.AppliesToCodecPrivate, true, hiddenProblem, null);
-                if (encoding.AppliesToFrames)
-                {
-                    covering ??= hidden;
-                }
-                else
-                {
-                    other ??= hidden;
-                }
-
-                continue;
-            }
-
             Step? step = null;
             string? problem = null;
             bool isEncryption = false;
+            Cover? cover = null;
+            if (hider is not null)
+            {
+                bool hiderEncrypts = hider.Type == 1 && !(hider.HasEncryption && hider.EncryptionAlgorithm == 0);
+                isEncryption = hiderEncrypts || encoding.Type == 1;
+                if (isEncryption)
+                {
+                    cover = new Cover(hiderEncrypts ? EncryptionName(hider) : null);
+                    problem = cover.Name is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
+                }
+                else
+                {
+                    problem = "coded with settings that another encoding hides, which the analyzer does not undo";
+                }
+            }
 
             // ContentEncryption is ignored unless the type is 1 (section 5.1.4.1.31.8); ContentEncAlgo 0 states that the data are not
             // encrypted (Table 24), so such an encoding changes nothing.
-            if (encoding.Type == 1)
+            else if (encoding.Type == 1)
             {
-                if (encoding.HasEncryption && encoding.EncryptionAlgorithm == 0)
+                if ((encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) || ((encoding.Scope & 3) == 0 && !((encoding.Scope & 4) != 0 && hasNext)))
                 {
                     continue;
                 }
 
                 isEncryption = true;
-                problem = EncryptionName(encoding) is { } name ? $"encrypted ({name})" : "encrypted";
-                if ((encoding.Scope & 4) != 0)
-                {
-                    hiding = encoding;
-                }
+                cover = new Cover(EncryptionName(encoding));
+                problem = cover.Name is { } name ? $"encrypted ({name})" : "encrypted";
             }
             else if (encoding.Type != 0)
             {
@@ -573,13 +576,13 @@ internal sealed partial class FileReader
 
             plan.Frames.Apply(encoding.AppliesToFrames, isEncryption, problem, step);
             plan.Private.Apply(encoding.AppliesToCodecPrivate, isEncryption, problem, step);
-            if (isEncryption && encoding.AppliesToFrames)
+            if (cover is not null && encoding.AppliesToFrames)
             {
-                covering ??= encoding;
+                covering ??= cover;
             }
-            else if (isEncryption)
+            else if (cover is not null)
             {
-                other ??= encoding;
+                other ??= cover;
             }
         }
 
@@ -588,13 +591,16 @@ internal sealed partial class FileReader
         {
             plan.Protection = new StreamProtection
             {
-                Scheme = EncryptionName(scheme) is { } name ? $"Matroska ContentEncryption, {name}" : "Matroska ContentEncryption",
+                Scheme = scheme.Name is { } name ? $"Matroska ContentEncryption, {name}" : "Matroska ContentEncryption",
                 IsEncrypted = covering is not null,
             };
         }
 
         return plan;
     }
+
+    // The encryption that covers a part of the track, by the name of its algorithm; null where the algorithm is unknown.
+    private sealed record Cover(string? Name);
 
     // The algorithm of a ContentEncryption element and, for AES (ContentEncAlgo 5), its cipher mode; AESSettingsCipherMode is not set for another
     // algorithm (Table 27). Null where the encoding has no ContentEncryption element.

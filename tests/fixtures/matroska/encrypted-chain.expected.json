@@ -480,6 +480,14 @@
  ],
  "findings": [
   {
+   "code": "matroska.encoding-hidden",
+   "contains": "order 1 whose settings are hidden by the ContentEncoding of order 2"
+  },
+  {
+   "code": "matroska.encoding-hidden",
+   "contains": "order 0 whose settings are hidden by the ContentEncoding of order 2"
+  },
+  {
    "code": "matroska.track-encrypted",
    "contains": "is encrypted (AES-CTR)"
   }

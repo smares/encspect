@@ -268,11 +268,11 @@ def _():
     return build(standard(cluster(0, *blocks(count=3)), track=[opus_track(private=opus_head()[8:], encodings=enc)]))
 
 
-@fixture("encrypted", "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames.",
+@fixture("encrypted", "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames. The frames have the sizes of the clear encryption-algorithm-default.",
          findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01\x02\x03\x04"))
-    sealed = [simple_block(1, i * 20, bytes((i * 13 + k) & 0xFF for k in range(41)), key=True) for i in range(4)]
+    sealed = [simple_block(1, i * 20, bytes((i * 13 + k) & 0xFF for k in range(40 + i % 3)), key=True) for i in range(4)]
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
 
 
@@ -345,7 +345,7 @@ def _():
 
 @fixture("encrypted-next-encoding", "AES-CTR with scope 4 (the next ContentEncoding) over header stripping: the stripped bytes in ContentCompSettings are ciphertext, so the "
          "frames cannot be put back together and the stream is encrypted.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
     stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
@@ -375,14 +375,14 @@ def _():
 
 @fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
          "so the frames count as encrypted by the AES encryption.",
-         findings=[("matroska.encryption-none", "not encrypted"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, encryption=0))
     return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
 
 
 @fixture("encrypted-over-3des", "AES-CTR with scope 4 over 3DES with scope 1: the scheme names the outermost encryption, which hides the other's settings.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, encryption=2, key_id=b"\x04"))
     sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(33)), key=True) for i in range(4)]
@@ -390,12 +390,59 @@ def _():
 
 
 @fixture("encrypted-chain", "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next, so the scheme names the AES encryption and the stripped bytes are not used.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=2, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=1, scope=4, encryption=2, key_id=b"\x04"),
                             content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
     stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
     return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+
+
+@fixture("compression-hides-encryption", "Header stripping with scope 4 over an encryption: the stripped bytes are the ContentEncAlgo element (AES), but the encryption's own settings are "
+         "unreadable until they are put back, so it counts as encrypted by an unknown algorithm.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x47\xE1\x81\x05"), content_encoding(order=0, scope=1, no_algo=True))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("compression-hides-compression", "Header stripping with scope 4 over a zlib compression: the zlib encoding's settings are unreadable, so the frames are not read and nothing is protected.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encoding-not-read", "settings that another encoding hides")],
+         streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x78"), content_encoding(order=0, scope=1, compression=0))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-covers-nothing", "AES-CTR with scope 4 as the only encoding: no next encoding follows, so it hides nothing and the track is not protected.",
+         findings=[("matroska.encryption-covers-nothing", "encrypts nothing")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+def aac_with_delay(is_encrypted):
+    """Six frames of an ADTS fixture in an A_AAC track with an explicit AudioSpecificConfig and a CodecDelay of 50 ms (which the AAC parser ignores),
+    one cluster each in nanoseconds so that the container's timing equals the frames' length; sealed with the same sizes when encrypted."""
+    object_type, rate_index, channels, frames = adts_frames("cbr")
+    rate = AAC_RATES[rate_index]
+    config = struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3))
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01")) if is_encrypted else None
+    clusters = [cluster(round(i * 1024 * 1e9 / rate),
+                        simple_block(1, 0, bytes((i * 7 + k) & 0xFF for k in range(len(frame))) if is_encrypted else frame, key=True)) for i, frame in enumerate(frames[:6])]
+    return build(standard(*clusters, scale=1, track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, delay=50_000_000, encodings=enc)]))
+
+
+@fixture("aac-delay", "A clear A_AAC track with a CodecDelay of 50 ms, which the AAC parser ignores: six frames.", streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_delay(False)
+
+
+@fixture("encrypted-aac-delay", "The frames of aac-delay encrypted: the encrypted track counts the samples and the length of the clear one, since only Opus drops the CodecDelay.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_delay(True)
 
 
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
