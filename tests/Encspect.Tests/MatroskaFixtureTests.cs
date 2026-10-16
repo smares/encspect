@@ -203,11 +203,17 @@ public class MatroskaFixtureTests
             report.Streams.Select(s => $"{(s.Codec.StartsWith("HE-AAC", StringComparison.Ordinal) || s.Codec.StartsWith("AAC", StringComparison.Ordinal) ? "AAC" : s.Codec)}, {s.SampleRate} Hz, {s.Channels} channels"));
     }
 
-    // The writer the MuxingApp and WritingApp name, which every stream the analysis reports shares.
+    // The writer each Segment's apps name (matroska_model.py's rule), which the streams of that Segment share, with its confidence.
     private static void CompareWriter(JsonElement manifest, Report report)
     {
-        string? expected = manifest.GetProperty("writer").GetString();
-        Assert.All(report.Streams, s => Assert.Equal(expected, s.Writer));
+        JsonElement[] writers = [.. manifest.GetProperty("writers").EnumerateArray()];
+        foreach (StreamInfo stream in report.Streams)
+        {
+            JsonElement expected = writers[(stream.PlaybackGroup ?? 1) - 1];
+            string? name = expected.ValueKind == JsonValueKind.Null ? null : expected.GetProperty("name").GetString();
+            Assert.Equal(name, stream.Writer);
+            Assert.Equal(expected.ValueKind == JsonValueKind.Null ? null : expected.GetProperty("confidence").GetString(), stream.WriterConfidence?.ToString());
+        }
     }
 
     private static void CheckFindings(JsonElement expected, IReadOnlyList<Finding> findings)

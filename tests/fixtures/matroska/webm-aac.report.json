@@ -105,6 +105,32 @@
                       "value": "encspect fixtures",
                       "offset": 85,
                       "length": 20
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "encspect fixtures",
+                      "offset": 42,
+                      "length": 63,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 42,
+                          "length": 63
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x55 names \"encspect fixtures\"",
+                          "offset": 85,
+                          "length": 20
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x41 names \"encspect fixtures\"",
+                          "offset": 65,
+                          "length": 20
+                        }
+                      ]
                     }
                   ]
                 },
@@ -371,13 +397,13 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "Segment MuxingApp element at 0x41 names \"encspect fixtures\"",
+                          "value": "Segment WritingApp element at 0x55 names \"encspect fixtures\"",
                           "offset": 159,
                           "length": 24
                         },
                         {
                           "name": "Evidence",
-                          "value": "Segment WritingApp element at 0x55 names \"encspect fixtures\"",
+                          "value": "Segment MuxingApp element at 0x41 names \"encspect fixtures\"",
                           "offset": 159,
                           "length": 24
                         }
@@ -459,32 +485,6 @@
                       "value": "9 bytes",
                       "offset": 174,
                       "length": 9
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "encspect fixtures",
-                  "offset": 159,
-                  "length": 24,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 159,
-                      "length": 24
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0x41 names \"encspect fixtures\"",
-                      "offset": 159,
-                      "length": 24
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment WritingApp element at 0x55 names \"encspect fixtures\"",
-                      "offset": 159,
-                      "length": 24
                     }
                   ]
                 }

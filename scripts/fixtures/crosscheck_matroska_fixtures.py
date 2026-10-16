@@ -9,6 +9,7 @@ For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
 - ffprobe (FFmpeg 6.1, the reference demuxer matroskadec.c): the audio streams' codec, channels and sample rate, the sizes of the packets it
   reads from each stream (a laced frame is a packet), and, for blocks without lacing, their timestamps: the block's time less the
   track's CodecDelay.
+- the applications: mkvinfo's "Multiplexing application" and "Writing application" of every Segment and MediaInfo's "Writing library" and "Writing application" of the first, against the MuxingApp and WritingApp in the manifest.
 - ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*).
 - MediaInfo (24.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
   analyzer's golden report, wherever MediaInfo reports them.
@@ -94,6 +95,7 @@ def mkvinfo(path):
 
 def check_mkvinfo(manifest, path, problems):
     positions, frames, text = mkvinfo(path)
+    check_apps(manifest, text, problems)
     missing = sorted({(n, o) for n, o in flatten(manifest["tree"]) if o not in positions})
     if missing:
         problems.append(f"mkvinfo lists no element at {', '.join(f'{n} 0x{o:X}' for n, o in missing[:6])}{' ...' if len(missing) > 6 else ''}")
@@ -102,6 +104,20 @@ def check_mkvinfo(manifest, path, problems):
         first = next((i for i, (w, g) in enumerate(zip(wanted, frames)) if w != g), min(len(wanted), len(frames)))
         problems.append(f"mkvinfo reads {len(frames)} frames, the manifest {len(wanted)}; the first difference is frame {first}: "
                         f"{frames[first] if first < len(frames) else None} against {wanted[first] if first < len(wanted) else None}")
+
+
+def apps_of(manifest):
+    """The MuxingApp and the WritingApp of each Segment the manifest's Info elements hold, as (muxing, writing) pairs."""
+    return [((s.get("info") or {}).get("muxing_app"), (s.get("info") or {}).get("writing_app")) for s in manifest["segments"]]
+
+
+def check_apps(manifest, text, problems):
+    """mkvinfo's "Multiplexing application" and "Writing application" of every Segment against the manifest's MuxingApp and WritingApp."""
+    muxing = re.findall(r"^\|?\s*\+ Multiplexing application: (.*?)(?: at 0x[0-9A-Fa-f]+)?$", text, re.M)
+    writing = re.findall(r"^\|?\s*\+ Writing application: (.*?)(?: at 0x[0-9A-Fa-f]+)?$", text, re.M)
+    expected = apps_of(manifest)
+    if muxing != [m for m, _ in expected if m is not None] or writing != [w for _, w in expected if w is not None]:
+        problems.append(f"mkvinfo reads the applications {muxing} and {writing}, the manifest {expected}")
 
 
 def check_ffprobe(manifest, path, problems):
@@ -168,6 +184,11 @@ def check_mediainfo(name, manifest, path, tally, report):
         tally.compare("format", None, manifest["format"])
         return
     tally.compare("format", tracks["General"].get("Format"), manifest["format"])
+    # MediaInfo's "Writing application" is the first Segment's WritingApp and its "Writing library" the MuxingApp.
+    if manifest["segments"]:
+        muxing, writing = apps_of(manifest)[0]
+        tally.compare("writing application", tracks["General"].get("Encoded_Application"), writing)
+        tally.compare("writing library", tracks["General"].get("Encoded_Library"), muxing)
     audio_tracks = [t for t in manifest["tracks"] if t["type"] == 2]
     tally.compare("audio tracks", len(tracks["Audio"]), len(audio_tracks))
     if len(tracks["Audio"]) != len(audio_tracks):

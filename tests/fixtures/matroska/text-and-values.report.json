@@ -109,6 +109,32 @@
                       "value": "app",
                       "offset": 80,
                       "length": 6
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "app",
+                      "offset": 46,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 40
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x50 names \"app\"",
+                          "offset": 80,
+                          "length": 6
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x49 names \"app\u0001\"",
+                          "offset": 73,
+                          "length": 7
+                        }
+                      ]
                     }
                   ]
                 },
@@ -688,32 +714,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "app\u0001",
-                  "offset": 122,
-                  "length": 141,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 122,
-                      "length": 141
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0x49 names \"app\u0001\"",
-                      "offset": 122,
-                      "length": 141
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment WritingApp element at 0x50 names \"app\"",
-                      "offset": 122,
-                      "length": 141
-                    }
-                  ]
                 }
               ]
             }
@@ -742,7 +742,7 @@
         "averageBitrate": 16.2,
         "isVbr": true,
         "playbackGroup": 1,
-        "writer": "app\u0001",
+        "writer": "app",
         "writerConfidence": "Low",
         "series": [
           {

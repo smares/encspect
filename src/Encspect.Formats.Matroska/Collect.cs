@@ -43,6 +43,7 @@ internal sealed partial class FileReader
                 break;
             case Schema.Info when _segment is not null:
                 _segment.InfoCount++;
+                _segment.InfoNode ??= node;
                 break;
             case Schema.Tracks when _segment is not null:
                 _segment.TracksCount++;

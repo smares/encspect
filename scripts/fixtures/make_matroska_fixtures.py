@@ -621,13 +621,16 @@ def adts_frames(name):
 AAC_RATES = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350]
 
 
-def legacy_aac(codec, name, output_rate=None, rate_override=None):
+def legacy_aac(codec, name, output_rate=None, rate_override=None, apps=None):
     """A track with a legacy A_AAC/MPEG2|4/* ID, which has no CodecPrivate (draft-ietf-cellar-codec section 3.4.2 and following)."""
     _, rate_index, channels, frames = adts_frames(name)
     rate = float(rate_override or AAC_RATES[rate_index])
     extra = (flt(ID["OutputSamplingFrequency"], output_rate),) if output_rate else ()
     track = audio_track(1, codec, channels, rate, audio_extra=extra)
     items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    if apps is not None:
+        inf = info(duration=100.0, muxing=apps[0], writing=apps[1])
+        return build([ebml_header(), segment(inf, tracks(track), cluster(0, *items))]), channels, int(output_rate or rate)
     return build(standard(cluster(0, *items), track=[track])), channels, int(output_rate or rate)
 
 
@@ -822,25 +825,37 @@ def _():
     return with_apps("Lavf60.16.100", "Lavf60.16.100")
 
 
-@fixture("writer-lavc-id", "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 libopus\"), which names the encoder, not the writer; the MuxingApp's \"Lavf\" is the writer.",
-         streams=[OPUS])
+@fixture("writer-lavc-id", "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 aac\") on an AAC track: it is a claim of the encoder role, which reaches the AAC parser "
+         "(that names ffmpeg's native encoder only from the stream's own evidence); the MuxingApp's \"Lavf\" is the writer.", streams=[("AAC", 44100, 2)])
 def _():
-    return with_apps("Lavf60.16.100", "Lavc60.31.102 libopus")
+    return legacy_aac("A_AAC/MPEG4/LC", "stereo", apps=("Lavf60.16.100", "Lavc60.31.102 aac"))[0]
 
 
-@fixture("writer-apps-differ", "A MuxingApp and a WritingApp that name different software: the Matroska parser weighs the Opus stream's claims and says so.",
-         findings=[("matroska.writer-claim-differs", "WritingApp")], streams=[OPUS], valid=False)
+@fixture("writer-apps-differ", "A MuxingApp and a WritingApp that name different software, in a Segment with two Opus tracks: one finding for the Segment, not one for each track, "
+         "and the WritingApp, the application that wrote the file, names the writer.", findings=[("matroska.writer-claim-differs", "MuxingApp")],
+         streams=[OPUS, ("Opus", 48000, 2)], valid=False)
 def _():
-    return with_apps("muxer 1.0", "writer 2.0")
+    return with_apps("muxer 1.0", "writer 2.0", [opus_track(1), opus_track(2, 2)], blocks(1, 2) + blocks(2, 2, channels=2))
 
 
 @fixture("writer-pcm-lame", "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the "
-         "container reports the writer itself, and both findings.",
-         findings=[("matroska.writer-claim-differs", "WritingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "PCM")],
+         "WritingApp names the writer, the container reports one finding for the two apps and one for LAME writing MPEG audio, not PCM.",
+         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "PCM")],
          streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
     return with_apps("foo 1.0", "LAME 3.100", [pcm], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
+
+
+@fixture("writer-two-segments", "Two Segments, one written by ffmpeg and one by mkvmerge: each Segment's apps are the writer claims of its own tracks only.",
+         streams=[OPUS, ("Opus", 48000, 2)], valid=False)
+def _():
+    def seg(muxing, writing, track, channels, first):
+        inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], muxing), text(ID["WritingApp"], writing))
+        return segment(inf, tracks(track), cluster(0, *blocks(count=3, channels=channels, first=first)))
+
+    return build([ebml_header(), seg("Lavf60.16.100", "Lavf60.16.100", opus_track(), 1, 0),
+                  seg("libebml v1.4.5 + libmatroska v1.7.1", "mkvmerge v82.0 ('I'm The President') 64-bit", opus_track(1, 2), 2, 3)])
 
 
 @fixture("writer-pcm-ffmpeg", "A PCM track written by ffmpeg: the container names FFmpeg as the writer of a stream no codec parser reads.",

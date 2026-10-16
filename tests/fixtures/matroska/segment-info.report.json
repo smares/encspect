@@ -129,6 +129,26 @@
                       "value": "0x010203",
                       "offset": 140,
                       "length": 7
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "writer 2.0",
+                      "offset": 46,
+                      "length": 101,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 101
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x7F names \"writer 2.0\"",
+                          "offset": 127,
+                          "length": 13
+                        }
+                      ]
                     }
                   ]
                 },
@@ -716,26 +736,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "muxer 1.0",
-                  "offset": 176,
-                  "length": 148,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 176,
-                      "length": 148
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0x73 names \"muxer 1.0\"",
-                      "offset": 176,
-                      "length": 148
-                    }
-                  ]
                 }
               ]
             }
@@ -764,7 +764,7 @@
         "averageBitrate": 16.2,
         "isVbr": true,
         "playbackGroup": 1,
-        "writer": "muxer 1.0",
+        "writer": "writer 2.0",
         "writerConfidence": "Low",
         "series": [
           {
@@ -798,14 +798,14 @@
       {
         "severity": "Info",
         "code": "matroska.writer-claim-differs",
-        "message": "The Segment WritingApp element names \"writer 2.0\", but the Segment MuxingApp element names \"muxer 1.0\"; other software may have rewritten the file, and kept one of them.",
-        "offset": 127,
-        "length": 13,
+        "message": "The Segment MuxingApp element names \"muxer 1.0\", but the Segment WritingApp element names \"writer 2.0\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 115,
+        "length": 12,
         "path": [
           0,
           1,
           0,
-          6
+          5
         ],
         "count": 1
       },

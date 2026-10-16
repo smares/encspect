@@ -105,6 +105,32 @@
                       "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
                       "offset": 107,
                       "length": 46
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
+                      "offset": 46,
+                      "length": 107,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 107
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x6B names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
+                          "offset": 107,
+                          "length": 46
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x45 names \"libebml v1.4.5 + libmatroska v1.7.1\"",
+                          "offset": 69,
+                          "length": 38
+                        }
+                      ]
                     }
                   ]
                 },
@@ -942,26 +968,6 @@
                           "length": 39
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
-                  "offset": 182,
-                  "length": 243,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 182,
-                      "length": 243
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment WritingApp element at 0x6B names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
-                      "offset": 182,
-                      "length": 243
                     }
                   ]
                 }

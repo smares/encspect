@@ -105,6 +105,32 @@
                       "value": "x",
                       "offset": 70,
                       "length": 4
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "x",
+                      "offset": 46,
+                      "length": 28,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 28
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x46 names \"x\"",
+                          "offset": 70,
+                          "length": 4
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x42 names \"x\"",
+                          "offset": 66,
+                          "length": 4
+                        }
+                      ]
                     }
                   ]
                 },
@@ -776,32 +802,6 @@
                           "length": 39
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "x",
-                  "offset": 111,
-                  "length": 183,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 111,
-                      "length": 183
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0x42 names \"x\"",
-                      "offset": 111,
-                      "length": 183
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment WritingApp element at 0x46 names \"x\"",
-                      "offset": 111,
-                      "length": 183
                     }
                   ]
                 }

@@ -99,6 +99,26 @@
                       "unit": "bytes",
                       "offset": 62,
                       "length": 10
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "x",
+                      "offset": 46,
+                      "length": 26,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 26
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x3A names \"x\"",
+                          "offset": 58,
+                          "length": 4
+                        }
+                      ]
                     }
                   ]
                 },
@@ -691,26 +711,6 @@
                           "length": 40
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "x",
-                  "offset": 101,
-                  "length": 148,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 101,
-                      "length": 148
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0x3A names \"x\"",
-                      "offset": 101,
-                      "length": 148
                     }
                   ]
                 }

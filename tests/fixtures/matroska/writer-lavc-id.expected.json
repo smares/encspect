@@ -1,6 +1,6 @@
 {
- "description": "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 libopus\"), which names the encoder, not the writer; the MuxingApp's \"Lavf\" is the writer.",
- "length": 381,
+ "description": "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 aac\") on an AAC track: it is a claim of the encoder role, which reaches the AAC parser (that names ffmpeg's native encoder only from the stream's own evidence); the MuxingApp's \"Lavf\" is the writer.",
+ "length": 3105,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,11 +16,11 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 185,
-     "length": 196,
+     "offset": 154,
+     "length": 2951,
      "timestamp": 0,
      "size_unknown": false,
-     "blocks": 4
+     "blocks": 6
     }
    ],
    "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "Lavf60.16.100",
-    "writing_app": "Lavc60.31.102 libopus"
+    "writing_app": "Lavc60.31.102 aac"
    },
-   "length": 341,
-   "declared_end": 381
+   "length": 3065,
+   "declared_end": 3105
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   341,
+   3065,
    [
     [
      "Info",
      46,
-     63,
+     59,
      [
       [
        "TimestampScale",
@@ -106,68 +106,53 @@
       [
        "WritingApp",
        85,
-       24
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     109,
-     76,
+     105,
+     49,
      [
       [
        "TrackEntry",
-       114,
-       71,
+       110,
+       44,
        [
         [
          "TrackNumber",
-         116,
+         112,
          3
         ],
         [
          "TrackUID",
-         119,
+         115,
          5
         ],
         [
          "TrackType",
-         124,
+         120,
          3
         ],
         [
          "CodecID",
-         127,
-         8
-        ],
-        [
-         "CodecPrivate",
-         135,
-         22
-        ],
-        [
-         "CodecDelay",
-         157,
-         6
-        ],
-        [
-         "SeekPreRoll",
-         163,
-         7
+         123,
+         16
         ],
         [
          "Audio",
-         170,
+         139,
          15,
          [
           [
            "SamplingFrequency",
-           172,
+           141,
            10
           ],
           [
            "Channels",
-           182,
+           151,
            3
           ]
          ]
@@ -178,33 +163,43 @@
     ],
     [
      "Cluster",
-     185,
-     196,
+     154,
+     2951,
      [
       [
        "Timestamp",
-       191,
+       160,
        3
       ],
       [
        "SimpleBlock",
-       194,
-       46
+       163,
+       371
       ],
       [
        "SimpleBlock",
-       240,
-       47
+       534,
+       376
       ],
       [
        "SimpleBlock",
-       287,
-       48
+       910,
+       371
       ],
       [
        "SimpleBlock",
-       335,
-       46
+       1281,
+       755
+      ],
+      [
+       "SimpleBlock",
+       2036,
+       693
+      ],
+      [
+       "SimpleBlock",
+       2729,
+       376
       ]
      ]
     ]
@@ -214,8 +209,8 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 194,
-   "length": 46,
+   "offset": 163,
+   "length": 371,
    "track": 1,
    "timestamp": 0,
    "cluster_timestamp": 0,
@@ -223,56 +218,88 @@
    "lacing": "none",
    "frames": [
     [
-     200,
-     40
+     170,
+     364
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 240,
-   "length": 47,
+   "offset": 534,
+   "length": 376,
    "track": 1,
-   "timestamp": 20,
+   "timestamp": 23,
    "cluster_timestamp": 0,
    "flags": 128,
    "lacing": "none",
    "frames": [
     [
-     246,
-     41
+     541,
+     369
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 287,
-   "length": 48,
+   "offset": 910,
+   "length": 371,
    "track": 1,
-   "timestamp": 40,
+   "timestamp": 46,
    "cluster_timestamp": 0,
    "flags": 128,
    "lacing": "none",
    "frames": [
     [
-     293,
-     42
+     917,
+     364
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 335,
-   "length": 46,
+   "offset": 1281,
+   "length": 755,
    "track": 1,
-   "timestamp": 60,
+   "timestamp": 70,
    "cluster_timestamp": 0,
    "flags": 128,
    "lacing": "none",
    "frames": [
     [
-     341,
-     40
+     1288,
+     748
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2036,
+   "length": 693,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2043,
+     686
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2729,
+   "length": 376,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2736,
+     369
     ]
    ]
   }
@@ -282,25 +309,27 @@
    "number": 1,
    "uid": 4097,
    "type": 2,
-   "codec": "A_OPUS",
-   "private": [
-    138,
-    19
-   ],
-   "channels": 1,
-   "rate": 48000.0,
+   "codec": "A_AAC/MPEG4/LC",
+   "private": null,
+   "channels": 2,
+   "rate": 44100.0,
    "bits": null,
-   "delay": 6500000,
+   "delay": 0,
    "encodings": [],
    "lacing": true
   }
  ],
- "writer": "FFmpeg (Lavf60.16.100)",
+ "writers": [
+  {
+   "name": "FFmpeg (Lavf60.16.100)",
+   "confidence": "Low"
+  }
+ ],
  "streams": [
   {
-   "codec": "Opus",
-   "sample_rate": 48000,
-   "channels": 1
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
   }
  ],
  "findings": [],

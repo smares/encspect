@@ -105,6 +105,26 @@
                       "value": "LAME 3.100",
                       "offset": 79,
                       "length": 13
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "LAME 3.100",
+                      "offset": 46,
+                      "length": 46,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 46
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x4F names \"LAME 3.100\"",
+                          "offset": 79,
+                          "length": 13
+                        }
+                      ]
                     }
                   ]
                 },
@@ -167,26 +187,6 @@
                               "unit": "bits",
                               "offset": 140,
                               "length": 4
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Writer",
-                          "value": "foo 1.0",
-                          "offset": 97,
-                          "length": 47,
-                          "children": [
-                            {
-                              "name": "Confidence",
-                              "value": "Low",
-                              "offset": 97,
-                              "length": 47
-                            },
-                            {
-                              "name": "Evidence",
-                              "value": "Segment MuxingApp element at 0x45 names \"foo 1.0\"",
-                              "offset": 97,
-                              "length": 47
                             }
                           ]
                         }
@@ -548,7 +548,7 @@
         "averageBitrate": 51.2,
         "isVbr": false,
         "playbackGroup": 1,
-        "writer": "foo 1.0",
+        "writer": "LAME 3.100",
         "writerConfidence": "Low",
         "series": []
       }
@@ -557,14 +557,14 @@
       {
         "severity": "Info",
         "code": "matroska.writer-claim-differs",
-        "message": "The Segment WritingApp element names \"LAME 3.100\", but the Segment MuxingApp element names \"foo 1.0\"; other software may have rewritten the file, and kept one of them.",
-        "offset": 79,
-        "length": 13,
+        "message": "The Segment MuxingApp element names \"foo 1.0\", but the Segment WritingApp element names \"LAME 3.100\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 69,
+        "length": 10,
         "path": [
           0,
           1,
           0,
-          3
+          2
         ],
         "count": 1
       },

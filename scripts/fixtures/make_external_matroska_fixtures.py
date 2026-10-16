@@ -37,6 +37,7 @@ MKVMERGE = "mkvmerge"
 # Inputs are paths under tests/fixtures (or the names of the files written below); the arguments go before the inputs for ffmpeg and
 # between the output and the inputs for mkvmerge, which takes its options per file where they apply.
 NOT_READ = ("matroska.codec-not-analyzed", "frames are not analyzed yet")
+VORBIS_VENDOR = ("vorbis.writer-claim-differs", "Lavf60.16.100")
 MPEG_PACKETS = ("mpeg.packets-not-analyzed", "only one contiguous payload")
 
 FIXTURES = {
@@ -77,7 +78,14 @@ FIXTURES = {
     "external-mkvmerge-ac3": ("mkvmerge", ["ac3/external-ffmpeg-5.1-448k.ac3"], [], [("AC-3", 48000, 6)], [], "mka"),
     "external-mkvmerge-eac3": ("mkvmerge", ["ac3/external-ffmpeg-eac3-5.1-256k.eac3"], [], [("E-AC-3", 48000, 6)], [], "mka"),
     "external-mkvmerge-dts": ("mkvmerge", ["dts/external-ffmpeg-5.1-48k-768k.dts"], [], [("DTS", 48000, 6)], [], "mka"),
-    "external-mkvmerge-vorbis": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg"], [], [("Vorbis", 44100, 2)], [], "mka"),
+    "external-mkvmerge-vorbis": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg"], [], [("Vorbis", 44100, 2)], [VORBIS_VENDOR], "mka"),
+    # The Vorbis comment of an ffmpeg-made Ogg file names ffmpeg; the claims of the other tracks must not weigh it, whatever the order.
+    "external-mkvmerge-vorbis-pcm": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg", "sine.wav"], [], [("Vorbis", 44100, 2), ("PCM (integer, little-endian)", 44100, 1)],
+                                     [VORBIS_VENDOR, NOT_READ], "mka"),
+    "external-mkvmerge-pcm-vorbis": ("mkvmerge", ["sine.wav", "ogg/external-ffmpeg-libvorbis.ogg"], [], [("PCM (integer, little-endian)", 44100, 1), ("Vorbis", 44100, 2)],
+                                     [VORBIS_VENDOR, NOT_READ], "mka"),
+    "external-mkvmerge-vorbis-aac": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg", "aac/apple-lc-adts-cbr-st44.aac"], [], [("Vorbis", 44100, 2), ("AAC", 44100, 2)],
+                                     [VORBIS_VENDOR], "mka"),
     "external-mkvmerge-opus": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"], [], [("Opus", 48000, 2)], [], "mka"),
     "external-mkvmerge-opus-webm": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"], ["--webm"], [("Opus", 48000, 2)],
                                     [("matroska.webm-timestamp-scale", "20832")], "webm"),
@@ -159,18 +167,11 @@ def encode(name, tool, inputs, arguments, extension, work):
     return {"tool": f"mkvmerge {version('mkvmerge')}", "arguments": arguments, "inputs": inputs}
 
 
-# Streams whose codec parser names a writer from the stream's own Vorbis comment, which the Segment's claims do not outweigh: mkvmerge copied the
-# Vorbis headers of an ffmpeg-made Ogg file, whose vendor string is ffmpeg's muxer version.
-STREAM_WRITERS = {"external-mkvmerge-vorbis": "FFmpeg (Lavf60.16.100)"}
-
-
 def manifest(name, encoder, streams, findings, extension):
     data = (OUT / f"{name}.{extension}").read_bytes()
     result = {"description": f"{encoder['tool']} {' '.join(encoder['arguments'])}".strip()}
     result.update(m.manifest(data))
     result["encoder"] = encoder
-    if name in STREAM_WRITERS:
-        result["writer"] = STREAM_WRITERS[name]
     result["streams"] = [{"codec": c, "sample_rate": r, "channels": n} for c, r, n in streams]
     result["findings"] = [{"code": code, "contains": contains} for code, contains in findings]
     result["crosscheck"] = {"valid": True}
@@ -187,7 +188,11 @@ def main():
     with tempfile.TemporaryDirectory() as work:
         if not only_manifests:
             helper_files(work)
+        # Names on the command line write only those fixtures (the encoders' output is not byte for byte the same twice).
+        wanted = [a for a in sys.argv[1:] if not a.startswith("--")]
         for name, (tool, inputs, arguments, streams, findings, extension) in FIXTURES.items():
+            if wanted and name not in wanted:
+                continue
             path = OUT / f"{name}.expected.json"
             if only_manifests:
                 encoder = json.loads(path.read_text(encoding="utf-8"))["encoder"]

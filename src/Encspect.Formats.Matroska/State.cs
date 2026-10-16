@@ -201,6 +201,17 @@ internal sealed class SegmentState
 
     public Node? WritingAppNode { get; set; }
 
+    public Node? InfoNode { get; set; }
+
+    // The claims the Segment's MuxingApp and WritingApp make, WritingApp first (see Route.cs): what the codec parsers weigh for the Segment's
+    // streams, and what the container weighs itself, which also holds a library MuxingApp as evidence.
+    public List<EncoderClaim> StreamClaims { get; } = [];
+
+    public List<EncoderClaim> OwnClaims { get; } = [];
+
+    // The Writer node of the Segment's streams the container resolved, made once.
+    public Node? WriterNode { get; set; }
+
     public int InfoCount { get; set; }
 
     public int TracksCount { get; set; }

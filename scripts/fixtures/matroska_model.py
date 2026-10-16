@@ -899,26 +899,31 @@ def read(data):
     return Reader(bytes(data)).run()
 
 
-def writer_of(segments):
-    """The writer the analyzer names: the MuxingApp and WritingApp of each Segment are writer claims in file order, except a "Lavc" encoder ID
-    (the encoder's) and a MuxingApp that names the Matroska libraries when the Segment has a WritingApp; the first claim wins (all are
-    low confidence), named as ClaimRoles.WriterName shows it."""
-    for info in (s.get("info", {}) for s in segments):
-        mux, writing = (info.get("muxing_app") or "").strip(), (info.get("writing_app") or "").strip()
-        claims = []
-        if mux and not ((mux.startswith("libebml") or mux.startswith("libmatroska")) and writing):
-            claims.append(mux)
-        if writing:
-            claims.append(writing)
-        for text in claims:
-            if re.match(r"^Lavc(?:\d| )", text):
-                continue
-            if text == "ffmpeg":
-                return "FFmpeg"
-            if re.match(r"^\s*Lavf(?![A-Za-z])", text):
-                return f"FFmpeg ({text[:64]})"
-            return text[:64]
-    return None
+def writers_of(segments):
+    """The writer each Segment's streams are named by, worked out from the documented rule rather than from the analyzer's code.
+
+    RFC 9559 gives a Segment's Info two apps: the WritingApp, "the application that wrote this file", and the MuxingApp, "the muxing
+    application or library". Both are claims of the writer role at low confidence, the application first, so it names the writer. Two
+    exceptions: a text that is a libavcodec encoder ID ("Lavc60.31.102 libopus": "Lavc" and a digit or a space) names the encoder, not the
+    writer; and a MuxingApp that names the Matroska libraries (mkvtoolnix: "libebml ... + libmatroska ...") is the library under the
+    application and only evidence. ffmpeg's muxer version ("Lavf...") shows as "FFmpeg (<text>)". Streams of one Segment share the
+    result; a Segment with no claim has none (None)."""
+    result = []
+    for segment in segments:
+        info = segment.get("info", {})
+        writing, muxing = (info.get("writing_app") or "").strip(), (info.get("muxing_app") or "").strip()
+        library = muxing.startswith(("libebml", "libmatroska")) and writing
+        candidates = [writing] + ([] if library else [muxing])
+        text = next((t for t in candidates if t and not (t.startswith("Lavc") and len(t) > 4 and (t[4].isdigit() or t[4] == " "))), None)
+        if text is None:
+            result.append(None)
+        elif text == "ffmpeg":
+            result.append({"name": "FFmpeg", "confidence": "Low"})
+        elif text.startswith("Lavf"):
+            result.append({"name": f"FFmpeg ({text[:64]})", "confidence": "Low"})
+        else:
+            result.append({"name": text[:64], "confidence": "Low"})
+    return result
 
 
 def manifest(data):
@@ -936,5 +941,5 @@ def manifest(data):
         "tree": [e.list() for e in r.top],
         "blocks": [b.dict() for b in r.blocks],
         "tracks": r.tracks,
-        "writer": writer_of(r.facts["segments"]),
+        "writers": writers_of(r.facts["segments"]),
     }

@@ -1,5 +1,5 @@
 {
- "description": "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the container reports the writer itself, and both findings.",
+ "description": "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the WritingApp names the writer, the container reports one finding for the two apps and one for LAME writing MPEG audio, not PCM.",
  "length": 433,
  "format": "Matroska",
  "ebml": {
@@ -282,7 +282,12 @@
    "lacing": true
   }
  ],
- "writer": "foo 1.0",
+ "writers": [
+  {
+   "name": "LAME 3.100",
+   "confidence": "Low"
+  }
+ ],
  "streams": [
   {
    "codec": "PCM (integer, little-endian)",
@@ -293,7 +298,7 @@
  "findings": [
   {
    "code": "matroska.writer-claim-differs",
-   "contains": "WritingApp"
+   "contains": "MuxingApp"
   },
   {
    "code": "matroska.writer-other-format",

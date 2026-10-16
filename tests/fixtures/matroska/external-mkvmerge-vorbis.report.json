@@ -7815,7 +7815,7 @@
                 },
                 {
                   "name": "Writer",
-                  "value": "FFmpeg (Lavf60.16.100)",
+                  "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
                   "offset": 4375,
                   "length": 21,
                   "children": [
@@ -7827,9 +7827,9 @@
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment vendor string at 0x111B names \"Lavf60.16.100\"",
-                      "offset": 4379,
-                      "length": 13
+                      "value": "Segment WritingApp element at 0x1069 names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
+                      "offset": 4375,
+                      "length": 21
                     }
                   ]
                 },
@@ -12617,7 +12617,7 @@
         "averageBitrate": 41.69846282173499,
         "isVbr": true,
         "playbackGroup": 1,
-        "writer": "FFmpeg (Lavf60.16.100)",
+        "writer": "mkvmerge v82.0 ('I'm The President') 64-bit",
         "writerConfidence": "Low",
         "series": [
           {
@@ -12835,6 +12835,21 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "vorbis.writer-claim-differs",
+        "message": "The Vorbis comment vendor string names \"Lavf60.16.100\", but the Segment WritingApp element names \"mkvmerge v82.0 ('I'm The President') 64-bit\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 4379,
+        "length": 13,
+        "path": [
+          0,
+          2,
+          2,
+          1
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

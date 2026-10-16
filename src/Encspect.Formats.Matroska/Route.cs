@@ -11,7 +11,7 @@ internal sealed partial class FileReader
 
     private void RouteTracks(SegmentState segment)
     {
-        AddWriterClaims(segment);
+        PrepareWriterClaims(segment);
         foreach (TrackInfo track in segment.Tracks)
         {
             string label = track.Number is { } n ? $"Track {n}" : "A track without a number";
@@ -31,11 +31,11 @@ internal sealed partial class FileReader
             if (made.Count == 1)
             {
                 StreamInfo stream = made[0];
-                // A codec parser that reads no tag of its own (Opus and Vorbis in a Matroska track have none) names no writer: the claims of the
+                // A codec parser that finds no tag to put a Writer in (an Opus track has no comment packet) names no writer: the claims of the
                 // Segment and the file's tags are weighed here.
                 if (stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
                 {
-                    Node? writer = ResolveWriter(stream.Nodes[0], kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
+                    Node? writer = ResolveWriter(segment, kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
                     (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
                     stream = stream with { Writer = writerName, WriterConfidence = writerConfidence };
                 }
@@ -45,25 +45,46 @@ internal sealed partial class FileReader
         }
     }
 
-    // The Segment's MuxingApp and WritingApp (RFC 9559, sections 5.1.2.13 and 5.1.2.14) name the library and the application that wrote the
-    // container: claims of the writer role, never the encoder's (a "Lavc" encoder ID in either takes the encoder role, ClaimRoles.Of). They are
-    // added before the tracks are routed, so every codec parser weighs them with the claims of the tags. A MuxingApp that names the Matroska
-    // libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") says no more than the WritingApp that uses them, and would only
-    // contradict it, so it counts when no WritingApp does. The claims of every Segment join the file's.
-    private void AddWriterClaims(SegmentState segment)
+    // The Segment's WritingApp and MuxingApp (RFC 9559, sections 5.1.2.14 and 5.1.2.13: "Writing application", "Muxing application or library") are
+    // claims of the writer role (a "Lavc" encoder ID takes the encoder role, ClaimRoles.Of), WritingApp first so that on a tie the application
+    // that wrote this file outweighs the library that muxed it. They belong to the Segment (each has its own Info) and reach the codec parsers of
+    // its tracks through the route's claims, never through the file's, so no other Segment sees them.
+    // - A MuxingApp that names the Matroska libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") is the library under the
+    //   WritingApp that uses it and never conflicts with it: the codec parsers do not get it, and the container's own Writer node holds it as evidence.
+    // - A MuxingApp and a WritingApp that name different software are one finding per Segment (not one per track); the codec parsers then
+    //   get the WritingApp alone.
+    private void PrepareWriterClaims(SegmentState segment)
     {
-        bool isLibrary = segment.MuxingApp is { } muxing && (muxing.StartsWith("libebml", StringComparison.Ordinal) || muxing.StartsWith("libmatroska", StringComparison.Ordinal));
-        bool hasWritingApp = !string.IsNullOrWhiteSpace(segment.WritingApp);
-        if (segment.MuxingApp is { } muxingApp && segment.MuxingAppNode is { } muxingNode && !string.IsNullOrWhiteSpace(muxingApp) && !(isLibrary && hasWritingApp))
+        EncoderClaim? writing = segment.WritingApp is { } w && segment.WritingAppNode is { } wn && !string.IsNullOrWhiteSpace(w)
+            ? new EncoderClaim(w, wn, "Segment WritingApp element", ClaimRoles.Of(ClaimRole.Writer, w)) : null;
+        EncoderClaim? muxing = segment.MuxingApp is { } m && segment.MuxingAppNode is { } mn && !string.IsNullOrWhiteSpace(m)
+            ? new EncoderClaim(m, mn, "Segment MuxingApp element", ClaimRoles.Of(ClaimRole.Writer, m)) : null;
+        segment.OwnClaims.AddRange(new[] { writing, muxing }.OfType<EncoderClaim>());
+        if (writing is null || muxing is null)
         {
-            _context.AddEncoderClaim(new EncoderClaim(muxingApp, muxingNode, "Segment MuxingApp element", ClaimRoles.Of(ClaimRole.Writer, muxingApp)));
+            segment.StreamClaims.AddRange(segment.OwnClaims);
+            return;
         }
 
-        if (segment.WritingApp is { } writingApp && segment.WritingAppNode is { } writingNode && !string.IsNullOrWhiteSpace(writingApp))
+        bool isLibrary = IsMatroskaLibrary(muxing.Text);
+        bool differs = writing.Role == ClaimRole.Writer && muxing.Role == ClaimRole.Writer && !isLibrary && ClaimRoles.FamilyOf(writing.Text) != ClaimRoles.FamilyOf(muxing.Text);
+        segment.StreamClaims.Add(writing);
+        if (differs)
         {
-            _context.AddEncoderClaim(new EncoderClaim(writingApp, writingNode, "Segment WritingApp element", ClaimRoles.Of(ClaimRole.Writer, writingApp)));
+            _findings.AddNow(Severity.Info, "matroska.writer-claim-differs",
+                WriterDetection.Disagreement(muxing, muxing.Text.Trim(), $"the {writing.Description} names \"{ClaimRoles.WriterName(writing.Text)}\""), muxing.Source);
+        }
+        else if (!isLibrary)
+        {
+            segment.StreamClaims.Add(muxing);
         }
     }
+
+    private static bool IsMatroskaLibrary(string text) => text.StartsWith("libebml", StringComparison.Ordinal) || text.StartsWith("libmatroska", StringComparison.Ordinal);
+
+    // The family of a library MuxingApp is its WritingApp's: the application uses the library.
+    private static string FamilyIn(SegmentState segment, string text) =>
+        IsMatroskaLibrary(text) && segment.WritingApp is { } writing && !string.IsNullOrWhiteSpace(writing) ? ClaimRoles.FamilyOf(writing) : ClaimRoles.FamilyOf(text);
 
     private void RouteAudio(SegmentState segment, TrackInfo track, string label)
     {
@@ -179,7 +200,7 @@ internal sealed partial class FileReader
             ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9 }
             : null;
         int streamsBefore = _context.Streams.Count;
-        bool routed = _context.ParsePackets(codec, node, Packets(segment, track, headers, frames), configuration);
+        bool routed = _context.ParsePackets(codec, node, Packets(segment, track, headers, frames), configuration, segment.StreamClaims);
         if (!routed)
         {
             _findings.AddNow(Severity.Info, "matroska.codec-not-analyzed",
@@ -310,7 +331,7 @@ internal sealed partial class FileReader
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
-        Node? writer = ResolveWriter(streamNode, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
+        Node? writer = ResolveWriter(segment, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
@@ -326,18 +347,27 @@ internal sealed partial class FileReader
         });
     }
 
-    // The writer of a stream no codec parser reads, from the claims of the file (the Segment's MuxingApp and WritingApp, the tags'). Software
-    // known to write another kind of stream is a finding, as in the codec parsers.
-    private Node? ResolveWriter(Node stream, string kind, string label)
+    // The writer of a stream the codec parser names none for, from the claims of the file (its tags) and of the Segment, the Segment's after
+    // the tags'. Software known to write another kind of stream is a finding, as in the codec parsers. The Writer node is made once for the
+    // Segment, in its Info element, which holds the claims' elements: the evidence points at them.
+    private Node? ResolveWriter(SegmentState segment, string kind, string label)
     {
-        Node? writer = WriterDetection.Detect(_context.EncoderClaims,
-            (name, value, description) => new Node(name, stream.Offset, stream.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => _findings.AddNow(Severity.Info, "matroska.writer-claim-differs", WriterDetection.Disagreement(claim, text, name), claim.Source),
-            format: new WriterDetection.StreamFormat(kind, label,
-                (claim, message, node) => _findings.AddNow(Severity.Info, "matroska.writer-other-format", message, node)));
-        if (writer is not null)
+        if (segment.InfoNode is not { } info)
         {
-            stream.Add(writer);
+            return null;
+        }
+
+        // The Segment's own conflict is reported once, in PrepareWriterClaims; the library MuxingApp joins as evidence.
+        List<EncoderClaim> claims = [.. segment.OwnClaims.Where(c => segment.StreamClaims.Contains(c) || IsMatroskaLibrary(c.Text)), .. _context.EncoderClaims];
+        Node? writer = WriterDetection.Detect(claims,
+            (name, value, description) => new Node(name, info.Offset, info.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => _findings.AddNow(Severity.Info, "matroska.writer-claim-differs", WriterDetection.Disagreement(claim, text, name), claim.Source),
+            isEvidenceAtSource: claims.All(c => c.Source.Offset >= info.Offset && c.Source.End <= info.End),
+            familyOf: text => FamilyIn(segment, text),
+            format: new WriterDetection.StreamFormat(kind, label, (claim, message, node) => _findings.AddNow(Severity.Info, "matroska.writer-other-format", message, node)));
+        if (writer is not null && segment.WriterNode is null)
+        {
+            segment.WriterNode = info.Add(writer);
         }
 
         return writer;

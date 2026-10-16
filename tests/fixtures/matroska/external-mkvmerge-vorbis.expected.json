@@ -1258,7 +1258,12 @@
    "lacing": true
   }
  ],
- "writer": "FFmpeg (Lavf60.16.100)",
+ "writers": [
+  {
+   "name": "mkvmerge v82.0 ('I'm The President') 64-bit",
+   "confidence": "Low"
+  }
+ ],
  "encoder": {
   "tool": "mkvmerge mkvmerge v82.0",
   "arguments": [],
@@ -1273,7 +1278,12 @@
    "channels": 2
   }
  ],
- "findings": [],
+ "findings": [
+  {
+   "code": "vorbis.writer-claim-differs",
+   "contains": "Lavf60.16.100"
+  }
+ ],
  "crosscheck": {
   "valid": true
  }

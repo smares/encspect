@@ -274,7 +274,12 @@
    "lacing": true
   }
  ],
- "writer": "muxer 1.0",
+ "writers": [
+  {
+   "name": "writer 2.0",
+   "confidence": "Low"
+  }
+ ],
  "streams": [
   {
    "codec": "Opus",

@@ -5,9 +5,9 @@ namespace Encspect.Core;
 // the routes on their context, never this interface.
 public interface IParserRouter
 {
-    bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration);
+    bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims);
 
-    bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration);
+    bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims);
 
     Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent);
 

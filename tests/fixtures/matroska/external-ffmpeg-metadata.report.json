@@ -273,6 +273,32 @@
                       "unit": "ticks",
                       "offset": 292,
                       "length": 11
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
+                      "offset": 213,
+                      "length": 90,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 213,
+                          "length": 90
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x101 names \"Lavf60.16.100\"",
+                          "offset": 257,
+                          "length": 16
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0xF1 names \"Lavf60.16.100\"",
+                          "offset": 241,
+                          "length": 16
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10615,32 +10641,6 @@
                           "length": 471
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "FFmpeg (Lavf60.16.100)",
-                  "offset": 400,
-                  "length": 29640,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 400,
-                      "length": 29640
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment MuxingApp element at 0xF1 names \"Lavf60.16.100\"",
-                      "offset": 400,
-                      "length": 29640
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Segment WritingApp element at 0x101 names \"Lavf60.16.100\"",
-                      "offset": 400,
-                      "length": 29640
                     }
                   ]
                 }

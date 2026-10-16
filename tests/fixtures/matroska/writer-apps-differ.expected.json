@@ -1,6 +1,6 @@
 {
- "description": "A MuxingApp and a WritingApp that name different software: the Matroska parser weighs the Opus stream's claims and says so.",
- "length": 366,
+ "description": "A MuxingApp and a WritingApp that name different software, in a Segment with two Opus tracks: one finding for the Segment, not one for each track, and the WritingApp, the application that wrote the file, names the writer.",
+ "length": 437,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,8 +16,8 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 170,
-     "length": 196,
+     "offset": 242,
+     "length": 195,
      "timestamp": 0,
      "size_unknown": false,
      "blocks": 4
@@ -31,8 +31,8 @@
     "muxing_app": "muxer 1.0",
     "writing_app": "writer 2.0"
    },
-   "length": 326,
-   "declared_end": 366
+   "length": 397,
+   "declared_end": 437
   }
  ],
  "tree": [
@@ -81,7 +81,7 @@
   [
    "Segment",
    40,
-   326,
+   397,
    [
     [
      "Info",
@@ -113,61 +113,120 @@
     [
      "Tracks",
      94,
-     76,
+     148,
      [
       [
        "TrackEntry",
-       99,
+       100,
        71,
        [
         [
          "TrackNumber",
-         101,
+         102,
          3
         ],
         [
          "TrackUID",
-         104,
+         105,
          5
         ],
         [
          "TrackType",
-         109,
+         110,
          3
         ],
         [
          "CodecID",
-         112,
+         113,
          8
         ],
         [
          "CodecPrivate",
-         120,
+         121,
          22
         ],
         [
          "CodecDelay",
-         142,
+         143,
          6
         ],
         [
          "SeekPreRoll",
-         148,
+         149,
          7
         ],
         [
          "Audio",
-         155,
+         156,
          15,
          [
           [
            "SamplingFrequency",
-           157,
+           158,
            10
           ],
           [
            "Channels",
-           167,
+           168,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       171,
+       71,
+       [
+        [
+         "TrackNumber",
+         173,
+         3
+        ],
+        [
+         "TrackUID",
+         176,
+         5
+        ],
+        [
+         "TrackType",
+         181,
+         3
+        ],
+        [
+         "CodecID",
+         184,
+         8
+        ],
+        [
+         "CodecPrivate",
+         192,
+         22
+        ],
+        [
+         "CodecDelay",
+         214,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         220,
+         7
+        ],
+        [
+         "Audio",
+         227,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           229,
+           10
+          ],
+          [
+           "Channels",
+           239,
            3
           ]
          ]
@@ -178,33 +237,33 @@
     ],
     [
      "Cluster",
-     170,
-     196,
+     242,
+     195,
      [
       [
        "Timestamp",
-       176,
+       248,
        3
       ],
       [
        "SimpleBlock",
-       179,
+       251,
        46
       ],
       [
        "SimpleBlock",
-       225,
+       297,
        47
       ],
       [
        "SimpleBlock",
-       272,
-       48
+       344,
+       46
       ],
       [
        "SimpleBlock",
-       320,
-       46
+       390,
+       47
       ]
      ]
     ]
@@ -214,7 +273,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 179,
+   "offset": 251,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -223,14 +282,14 @@
    "lacing": "none",
    "frames": [
     [
-     185,
+     257,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 225,
+   "offset": 297,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -239,40 +298,40 @@
    "lacing": "none",
    "frames": [
     [
-     231,
+     303,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 272,
-   "length": 48,
-   "track": 1,
-   "timestamp": 40,
+   "offset": 344,
+   "length": 46,
+   "track": 2,
+   "timestamp": 0,
    "cluster_timestamp": 0,
    "flags": 128,
    "lacing": "none",
    "frames": [
     [
-     278,
-     42
+     350,
+     40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 320,
-   "length": 46,
-   "track": 1,
-   "timestamp": 60,
+   "offset": 390,
+   "length": 47,
+   "track": 2,
+   "timestamp": 20,
    "cluster_timestamp": 0,
    "flags": 128,
    "lacing": "none",
    "frames": [
     [
-     326,
-     40
+     396,
+     41
     ]
    ]
   }
@@ -284,7 +343,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    123,
+    124,
     19
    ],
    "channels": 1,
@@ -293,20 +352,46 @@
    "delay": 6500000,
    "encodings": [],
    "lacing": true
+  },
+  {
+   "number": 2,
+   "uid": 4098,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    195,
+    19
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
   }
  ],
- "writer": "muxer 1.0",
+ "writers": [
+  {
+   "name": "writer 2.0",
+   "confidence": "Low"
+  }
+ ],
  "streams": [
   {
    "codec": "Opus",
    "sample_rate": 48000,
    "channels": 1
+  },
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 2
   }
  ],
  "findings": [
   {
    "code": "matroska.writer-claim-differs",
-   "contains": "WritingApp"
+   "contains": "MuxingApp"
   }
  ],
  "crosscheck": {
