@@ -38,6 +38,7 @@ import shutil
 import subprocess
 import sys
 
+import check_matroska_encodings
 import mediainfo_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -128,8 +129,6 @@ def check_apps(manifest, text, problems):
         problems.append(f"mkvinfo reads the applications {muxing} and {writing}, the manifest {expected}")
 
 
-ALGORITHM_NAMES = {1: "DES", 2: "3DES", 3: "Twofish", 4: "Blowfish", 5: "AES"}
-AES_MODES = {1: "AES-CTR", 2: "AES-CBC"}
 
 
 # The fixtures whose protection could not be compared with a tool or the report, for the summary.
@@ -152,55 +151,8 @@ def mkvinfo_encodings(text):
 
 
 def expected_protection(encodings):
-    """What RFC 9559 makes of a track's encodings (section 5.1.4.1.31), as (scheme, isEncrypted) or None, worked out from these rules and not from the
-    analyzer's code:
-
-    - A reader undoes the encodings from the highest ContentEncodingOrder down (5.1.4.1.31.2); the orders must be unique, and between equal ones the
-      encoding with scope bit 4 comes first and hides the rest of its order (the analyzer's own rule for a file the RFC forbids).
-    - ContentEncryption counts for type 1 only (5.1.4.1.31.8); ContentEncAlgo 0, also its default when the element is there without it, states that the
-      data are not encrypted (Table 24); only AES has a cipher mode (Table 25).
-    - Bit 4 of the scope (Table 21) makes the next encoding's settings unreadable. So an encoding is hidden when the one before it has bit 4, and the
-      encodings hiding it are the run of bit 4 encodings just before it. A hidden encoding states nothing that can be trusted: it is encrypted when
-      the first of the run encrypts, or when the run holds another encryption, or when it is an encryption itself (the scheme names the first of the run
-      if that encrypts, else it has no algorithm); otherwise it is not read.
-    - An encoding covers the frames with scope bit 1 and the CodecPrivate with bit 2; an encryption that covers neither covers nothing.
-    - The stream is protected by the first encryption in that order that covers the frames (encrypted), else the first that covers the CodecPrivate
-      (its samples are in the clear)."""
-    ordered = sorted(encodings, key=lambda e: (-e["order"], not e["scope"] & 4, -e["type"], -(e["encryption"] or 0), -(e["compression"] or 0), -e["scope"]))
-
-    def encrypts(e):
-        return e["type"] == 1 and not (e["has_encryption"] and (e["encryption"] or 0) == 0)
-
-    def name_of(e):
-        if not e["has_encryption"]:
-            return None
-        if e["encryption"] == 5 and e["cipher"] is not None:
-            return AES_MODES.get(e["cipher"], f"AES, mode {e['cipher']}")
-        return ALGORITHM_NAMES.get(e["encryption"], f"algorithm {e['encryption']}")
-
-    found = []
-    for i, e in enumerate(ordered):
-        start = i
-        while start > 0 and ordered[start - 1]["scope"] & 4:
-            start -= 1
-        run = ordered[start:i]
-        tie = next(x for x in ordered if x["order"] == e["order"])
-        if tie is not e and tie["scope"] & 4 and tie not in run:
-            run.insert(0, tie)
-        if run:
-            if not (encrypts(run[0]) or any(x["type"] == 1 for x in run[1:]) or e["type"] == 1):
-                continue
-            name = name_of(run[0]) if encrypts(run[0]) else None
-        elif encrypts(e):
-            name = name_of(e)
-        else:
-            continue
-        if e["scope"] & 3:
-            found.append((name, bool(e["scope"] & 1)))
-    chosen = next((f for f in found if f[1]), found[0] if found else None)
-    if chosen is None:
-        return None
-    return "Matroska ContentEncryption" + (f", {chosen[0]}" if chosen[0] else ""), chosen[1]
+    """What RFC 9559 makes of a track's encodings, as (scheme, isEncrypted) or None: the model of check_matroska_encodings.py, whose docstring states the rules."""
+    return check_matroska_encodings.expected(encodings)[0]
 
 
 def check_protection(name, manifest, path, problems, tally, report):
@@ -356,6 +308,12 @@ def main():
         failures += 1
     tally.print()
     print(f"{len(NOT_COMPARED)} protection comparisons skipped (listed above)")
+    # The analyzer's reading of random and tied encodings against the model, which needs the command line app built (dotnet build src/Encspect.Cli -c Release).
+    if (ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect.dll").exists():
+        if subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("check_matroska_encodings.py"))]).returncode != 0:
+            failures += 1
+    else:
+        print("random encodings not checked: the command line app is not built (dotnet build src/Encspect.Cli -c Release)")
     print(f"{checked} fixtures checked, {failures} with problems")
     return 1 if failures else 0
 

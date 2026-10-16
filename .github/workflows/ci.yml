@@ -881,6 +881,14 @@ jobs:
       - name: Check the element table against the RFCs
         run: python3 scripts/fixtures/matroska_tables.py --check
 
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The cross-check also runs the analyzer on random and tied ContentEncodings and compares it with a model written from RFC 9559.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
       - name: Cross-check the Matroska and WebM fixtures
         run: python3 scripts/fixtures/crosscheck_matroska_fixtures.py
 
