@@ -142,8 +142,11 @@ internal sealed partial class FileReader
         // Its settings are unreadable, so what they state is not checked.
         if (ordered.Hider is { } hider)
         {
+            string consequence = ordered.HiderEncrypts ? "the parts it covers count as encrypted by it"
+                : ordered.IsHiddenEncrypted ? "an encryption is hidden here, so the parts it covers count as encrypted by an unknown algorithm"
+                : "it is not undone";
             _findings.AddNow(Severity.Info, "matroska.encoding-hidden",
-                $"{which} has a ContentEncoding of order {encoding.Order} whose settings are hidden by the ContentEncoding of order {hider.Order} (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.", node);
+                $"{which} has a ContentEncoding of order {encoding.Order} whose settings are hidden by the ContentEncoding of order {hider.Order} (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and {consequence}.", node);
             return;
         }
 

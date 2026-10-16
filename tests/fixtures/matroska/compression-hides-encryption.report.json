@@ -750,7 +750,7 @@
       {
         "severity": "Info",
         "code": "matroska.encoding-hidden",
-        "message": "Track 1 has a ContentEncoding of order 0 whose settings are hidden by the ContentEncoding of order 1 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and the parts the encoding covers count as encrypted if that encoding encrypts.",
+        "message": "Track 1 has a ContentEncoding of order 0 whose settings are hidden by the ContentEncoding of order 1 (ContentEncodingScope bit 4, section 5.1.4.1.31.3); they are not read, and an encryption is hidden here, so the parts it covers count as encrypted by an unknown algorithm.",
         "offset": 202,
         "length": 18,
         "path": [

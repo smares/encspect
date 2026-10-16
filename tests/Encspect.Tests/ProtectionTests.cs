@@ -264,6 +264,9 @@ public class ProtectionTests
     [InlineData("matroska/encrypted-over-3des.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-chain.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/compression-hides-encryption.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
+    [InlineData("matroska/encrypted-in-chain-middle.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
+    [InlineData("matroska/same-order-stripping-first.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/same-order-encryption-first.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-aac-delay.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-aac.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-vorbis.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
@@ -298,6 +301,18 @@ public class ProtectionTests
         Assert.Equal(clear.AverageBitrate ?? 0, encrypted.AverageBitrate ?? 0, 0.05);
     }
 
+    // Equal ContentEncodingOrders (which RFC 9559 forbids) do not make the result depend on the order of the elements in the file.
+    [Fact]
+    public void MatroskaEncodingsOfOneOrderGiveTheSameResultInEitherFileOrder()
+    {
+        Report first = Fixtures.AnalyzeMpeg("matroska/same-order-stripping-first.mka");
+        Report second = Fixtures.AnalyzeMpeg("matroska/same-order-encryption-first.mka");
+
+        Assert.Equal(Assert.Single(first.Streams).Protection, Assert.Single(second.Streams).Protection);
+        Assert.Equal(first.Findings.Select(f => f.Code).Order(), second.Findings.Select(f => f.Code).Order());
+        Assert.Contains(first.Findings, f => f.Code == "matroska.encoding-order");
+    }
+
     // A compression whose scope hides the next encoding makes that encoding's settings unreadable: a hidden compression is not read, and the frames are not
     // handed to the codec parser.
     [Fact]
@@ -328,6 +343,7 @@ public class ProtectionTests
     [InlineData("matroska/encryption-algorithm-none.mka", "matroska.encryption-none")]
     [InlineData("matroska/encryption-algorithm-default.mka", "matroska.encryption-none")]
     [InlineData("matroska/encryption-covers-nothing.mka", "matroska.encryption-covers-nothing")]
+    [InlineData("matroska/hidden-encryption-covers-nothing.mka", "matroska.encoding-hidden")]
     [InlineData("matroska/encryption-ignored.mka", "matroska.encryption-ignored")]
     public void MatroskaEncryptionThatEncryptsNothingIsNotProtection(string name, string code)
     {

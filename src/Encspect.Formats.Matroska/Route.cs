@@ -254,7 +254,7 @@ internal sealed partial class FileReader
         List<StreamInfo> added = [.. _context.Streams.Skip(streamsBefore)];
         if (added.Count == 0)
         {
-            AddContainerStream(segment, track, node, plan.Protection);
+            AddContainerStream(segment, track, node, plan.Protection, privateData);
         }
         else
         {
@@ -408,12 +408,12 @@ internal sealed partial class FileReader
     }
 
     // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.
-    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection)
+    private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection, MappedBytes? privateData = null)
     {
         TrackStatistics statistics = track.Statistics;
         string codecId = track.CodecId ?? string.Empty;
         bool areFramesEncrypted = protection is { IsEncrypted: true };
-        double duration = areFramesEncrypted ? EncryptedDuration(segment, track, null) : ContainerDuration(segment, track);
+        double duration = areFramesEncrypted ? EncryptedDuration(segment, track, privateData) : ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -515,26 +515,27 @@ internal sealed partial class FileReader
     // Bit 4 (the next encoding, which players do not support) of any encoding makes the settings of the next one unreadable: its algorithm, its
     // compression settings and its claim to be "not encrypted" cannot be trusted. That encoding is not read; the parts it applies to count as
     // encrypted by the hiding encryption, which the scheme names (the outermost of a chain). Under a hiding that does not encrypt, a hidden
-    // encryption counts as encrypted by an unknown algorithm and a hidden compression as not read. An encryption whose scope names neither
-    // the frames nor the CodecPrivate and hides no next encoding encrypts nothing.
+    // encryption, or any encoding after an encryption hidden in the chain, counts as encrypted by an unknown algorithm and a hidden compression
+    // as not read. An encryption covers a part of the track only through its scope: one that names neither the frames nor the CodecPrivate
+    // covers nothing, hidden or not, and the scheme is named only from encodings that cover something.
     private EncodingPlan PlanOf(TrackInfo track)
     {
         var plan = new EncodingPlan();
         Cover? covering = null;
         Cover? other = null;
-        foreach ((EncodingInfo encoding, EncodingInfo? hider, bool hasNext) in track.OrderedEncodings())
+        foreach (OrderedEncoding ordered in track.OrderedEncodings())
         {
+            EncodingInfo encoding = ordered.Encoding;
             Step? step = null;
             string? problem = null;
             bool isEncryption = false;
             Cover? cover = null;
-            if (hider is not null)
+            if (ordered.Hider is not null)
             {
-                bool hiderEncrypts = hider.Type == 1 && !(hider.HasEncryption && hider.EncryptionAlgorithm == 0);
-                isEncryption = hiderEncrypts || encoding.Type == 1;
+                isEncryption = ordered.IsHiddenEncrypted;
                 if (isEncryption)
                 {
-                    cover = new Cover(hiderEncrypts ? EncryptionName(hider) : null);
+                    cover = new Cover(ordered.HiderEncrypts ? EncryptionName(ordered.Hider) : null);
                     problem = cover.Name is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
                 }
                 else
@@ -547,7 +548,7 @@ internal sealed partial class FileReader
             // encrypted (Table 24), so such an encoding changes nothing.
             else if (encoding.Type == 1)
             {
-                if ((encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) || ((encoding.Scope & 3) == 0 && !((encoding.Scope & 4) != 0 && hasNext)))
+                if (encoding.HasEncryption && encoding.EncryptionAlgorithm == 0)
                 {
                     continue;
                 }
@@ -576,6 +577,13 @@ internal sealed partial class FileReader
 
             plan.Frames.Apply(encoding.AppliesToFrames, isEncryption, problem, step);
             plan.Private.Apply(encoding.AppliesToCodecPrivate, isEncryption, problem, step);
+
+            // An encryption covers a part of the track only through its own scope (an encryption with bit 4 covers what the encoding it hides covers).
+            if (!encoding.AppliesToFrames && !encoding.AppliesToCodecPrivate)
+            {
+                continue;
+            }
+
             if (cover is not null && encoding.AppliesToFrames)
             {
                 covering ??= cover;

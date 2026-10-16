@@ -445,6 +445,49 @@ def _():
     return aac_with_delay(True)
 
 
+@fixture("encrypted-in-chain-middle", "Header stripping with scope 4 over AES-CTR with scope 4 over header stripping: the encryption in the middle of the chain is itself hidden, so "
+         "its algorithm is unknown, and the frames of the last encoding count as encrypted by it.",
+         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"),
+                   ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=2, scope=4, compression=3, settings=b"\x47"), content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"),
+                            content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(30)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("hidden-encryption-covers-nothing", "A compression with scope 4 over AES-CTR with scope 4 and no encoding after it: the hidden encryption covers nothing, so the frames are read "
+         "and the track is not protected.",
+         findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, compression=3, settings=b"\x47"), content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+def same_order(strips_first):
+    """Header stripping (order 0, frames) and AES-CTR (order 0, scope 4), in either order in the file: the tie rule makes the encryption hide the stripping."""
+    stripping = content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad")
+    sealing = content_encoding(order=0, scope=4, encryption=5, cipher=1, key_id=b"\x03")
+    enc = content_encodings(stripping, sealing) if strips_first else content_encodings(sealing, stripping)
+    stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
+    return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+
+
+@fixture("same-order-stripping-first", "Header stripping and AES-CTR with scope 4 share ContentEncodingOrder 0 (which RFC 9559 forbids), the stripping first in the file: between equal orders the "
+         "encryption hides the other, as in same-order-encryption-first.",
+         findings=[("matroska.encoding-order", "unique"), ("matroska.encoding-hidden", "hidden by the ContentEncoding of order 0"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")],
+         streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return same_order(True)
+
+
+@fixture("same-order-encryption-first", "The same two encodings as same-order-stripping-first with the encryption first in the file: the result is the same.",
+         findings=[("matroska.encoding-order", "unique"), ("matroska.encoding-hidden", "hidden by the ContentEncoding of order 0"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")],
+         streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    return same_order(False)
+
+
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
          findings=[("matroska.track-empty", "no block with frames"), ("matroska.no-clusters", "no Cluster")], streams=[("Opus", 48000, 1)], valid=False)
 def _():

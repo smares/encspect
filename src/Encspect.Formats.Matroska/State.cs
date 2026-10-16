@@ -58,7 +58,18 @@ internal sealed class EncodingInfo
     public bool AppliesToCodecPrivate => (Scope & 2) != 0;
 }
 
-internal readonly record struct OrderedEncoding(EncodingInfo Encoding, EncodingInfo? Hider, bool HasNext);
+internal readonly record struct OrderedEncoding(EncodingInfo Encoding, IReadOnlyList<EncodingInfo> Hiders, bool HasNext)
+{
+    // The outermost hider, whose settings nothing hides.
+    public EncodingInfo? Hider => Hiders.Count > 0 ? Hiders[0] : null;
+
+    // Whether the outermost hider is an encryption (its ContentEncAlgo is not 0).
+    public bool HiderEncrypts => Hider is { Type: 1 } hider && !(hider.HasEncryption && hider.EncryptionAlgorithm == 0);
+
+    // A hidden encoding counts as encrypted when the outermost hider encrypts, or when an encryption is hidden in the chain (its algorithm is unreadable),
+    // or when it is an encryption itself, whatever its settings state.
+    public bool IsHiddenEncrypted => Hider is not null && (HiderEncrypts || Hiders.Skip(1).Any(h => h.Type == 1) || Encoding.Type == 1);
+}
 
 // The totals the blocks of a track add up to.
 internal sealed class TrackStatistics
@@ -160,18 +171,35 @@ internal sealed class TrackInfo
 
     public List<EncodingInfo> Encodings { get; } = [];
 
-    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first). An encoding of any type whose scope has bit 4
-    // makes the settings of the next one unreadable (RFC 9559 section 5.1.4.1.31.3): Hider is the outermost encoding of the chain that does so
-    // for this one, null where nothing does; HasNext tells whether an encoding follows.
+    // The encodings in the order a reader undoes them (the highest ContentEncodingOrder first). RFC 9559 (section 5.1.4.1.31.2) requires the orders to
+    // be unique; between equal ones an encoding with scope bit 4 comes first and hides the others of its order, so that the result does not depend on
+    // the order of the elements in the file. Bit 4 of any encoding makes the settings of the next one unreadable (section 5.1.4.1.31.3): Hiders are the
+    // encodings that do so for this one, the outermost first (the run of encodings with bit 4 before it, and the encoding that hides its tie); HasNext
+    // tells whether an encoding follows.
     public List<OrderedEncoding> OrderedEncodings()
     {
-        List<EncodingInfo> ordered = [.. Encodings.OrderByDescending(e => e.Order)];
+        List<EncodingInfo> ordered =
+        [
+            .. Encodings.OrderByDescending(e => e.Order).ThenByDescending(e => (e.Scope & 4) != 0).ThenByDescending(e => e.Type)
+                .ThenByDescending(e => e.EncryptionAlgorithm).ThenByDescending(e => e.CompressionAlgorithm).ThenByDescending(e => e.Scope),
+        ];
         var result = new List<OrderedEncoding>(ordered.Count);
-        EncodingInfo? hider = null;
         for (int i = 0; i < ordered.Count; i++)
         {
-            result.Add(new OrderedEncoding(ordered[i], hider, i + 1 < ordered.Count));
-            hider = (ordered[i].Scope & 4) != 0 ? hider ?? ordered[i] : null;
+            int start = i;
+            while (start > 0 && (ordered[start - 1].Scope & 4) != 0)
+            {
+                start--;
+            }
+
+            List<EncodingInfo> hiders = ordered.GetRange(start, i - start);
+            int tie = ordered.FindIndex(e => e.Order == ordered[i].Order);
+            if (tie < i && (ordered[tie].Scope & 4) != 0 && !hiders.Contains(ordered[tie]))
+            {
+                hiders.Insert(0, ordered[tie]);
+            }
+
+            result.Add(new OrderedEncoding(ordered[i], hiders, i + 1 < ordered.Count));
         }
 
         return result;
