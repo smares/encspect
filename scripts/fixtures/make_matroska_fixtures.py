@@ -335,6 +335,46 @@ def _():
     return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
 
 
+@fixture("encryption-algorithm-default", "A ContentEncryption without a ContentEncAlgo, whose default is 0 (not encrypted, RFC 9559 section 5.1.4.1.31.9): the frames are read as they are "
+         "and the track is not protected.",
+         findings=[("matroska.encryption-none", "not encrypted")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, no_algo=True, key_id=b"\x01"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-next-encoding", "AES-CTR with scope 4 (the next ContentEncoding) over header stripping: the stripped bytes in ContentCompSettings are ciphertext, so the "
+         "frames cannot be put back together and the stream is encrypted.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
+    stripped = [simple_block(1, i * 20, opus_packet(i)[1:], key=True) for i in range(4)]
+    return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-aac", "An A_AAC track with a clear CodecPrivate (the AudioSpecificConfig) and encrypted frames: the AAC parser describes the stream from the configuration "
+         "and the container's timing gives its length.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01"))
+    sealed = [simple_block(1, i * 23, bytes((i * 7 + k) & 0xFF for k in range(50)), key=True) for i in range(40)]
+    return build(standard(cluster(0, *sealed), track=[audio_track(codec="A_AAC", channels=2, rate=44100.0, private=b"\x12\x10", encodings=enc)]))
+
+
+@fixture("encrypted-vorbis", "An A_VORBIS track with its three headers in a clear CodecPrivate (those of external-ffmpeg-vorbis) and encrypted frames: the Vorbis parser reads the "
+         "headers, not the frames.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    offset, length = manifest["tracks"][0]["private"]
+    private = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()[offset:offset + length]
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01"))
+    sealed = [simple_block(1, i * 23, bytes((i * 5 + k) & 0xFF for k in range(60)), key=True) for i in range(30)]
+    # The headers name ffmpeg's muxer as the vendor, so the Segment names it as well.
+    return build([ebml_header(), segment(info(duration=100.0, muxing="Lavf60.16.100", writing="Lavf60.16.100"),
+                                         tracks(audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=private, encodings=enc)), cluster(0, *sealed))])
+
+
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
          findings=[("matroska.track-empty", "no block with frames"), ("matroska.no-clusters", "no Cluster")], streams=[("Opus", 48000, 1)], valid=False)
 def _():

@@ -142,12 +142,12 @@ internal sealed partial class FileReader
         else if (encoding.Type == 1 && !encoding.HasEncryption)
         {
             _findings.AddNow(Severity.Warning, "matroska.encryption-missing",
-                $"{which} has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, which RFC 9559 requires then (section 5.1.4.1.31.8); the algorithm is unknown.", node);
+                $"{which} has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, although RFC 9559 requires one for that type (section 5.1.4.1.31.8); the algorithm is unknown.", node);
         }
         else if (encoding.Type == 1 && encoding.EncryptionAlgorithm == 0)
         {
             _findings.AddNow(Severity.Info, "matroska.encryption-none",
-                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24); the encoding changes nothing and the track is not reported as protected.", node);
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24); this encoding changes nothing.", node);
         }
 
         if (encoding.Type == 1 && encoding.HasAesSettings && encoding.HasEncryption && encoding.EncryptionAlgorithm != 5)

@@ -259,6 +259,9 @@ public class ProtectionTests
     [InlineData("matroska/encrypted-empty.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-empty")]
     [InlineData("matroska/encryption-missing.mka", "Matroska ContentEncryption", true, "matroska.encryption-missing")]
     [InlineData("matroska/encrypted-private.mka", "Matroska ContentEncryption, AES-CTR", false, "matroska.codec-private-encrypted")]
+    [InlineData("matroska/encrypted-next-encoding.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-aac.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-vorbis.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     public void MatroskaContentEncryptionIsProtection(string name, string scheme, bool isEncrypted, string code)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -272,6 +275,22 @@ public class ProtectionTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
         Assert.All(report.Findings, f => Assert.StartsWith("matroska.", f.Code, StringComparison.Ordinal));
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
+    // An encrypted track still has a length, samples and a bitrate: the codec parser has no frame to count, so the container's timing stands in (as MP4's does).
+    [Theory]
+    [InlineData("matroska/encrypted.mka", "Opus")]
+    [InlineData("matroska/encrypted-aac.mka", "AAC LC")]
+    [InlineData("matroska/encrypted-vorbis.mka", "Vorbis")]
+    public void MatroskaEncryptedTracksHaveTheContainersTiming(string name, string codec)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(codec, stream.Codec);
+        Assert.True(stream.Duration > 0, $"The duration is {stream.Duration}.");
+        Assert.True(stream.Samples > 0, $"The samples are {stream.Samples}.");
+        Assert.True(stream.AverageBitrate > 0, $"The bitrate is {stream.AverageBitrate}.");
     }
 
     // The finding and the stream's protection come from one reading of the ContentEncodings: both name the encryption that lies under a compression.
@@ -289,6 +308,7 @@ public class ProtectionTests
     // the frames are read as they are and the track is not protected.
     [Theory]
     [InlineData("matroska/encryption-algorithm-none.mka", "matroska.encryption-none")]
+    [InlineData("matroska/encryption-algorithm-default.mka", "matroska.encryption-none")]
     [InlineData("matroska/encryption-ignored.mka", "matroska.encryption-ignored")]
     public void MatroskaEncryptionThatEncryptsNothingIsNotProtection(string name, string code)
     {

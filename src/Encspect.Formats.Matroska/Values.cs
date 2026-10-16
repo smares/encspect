@@ -105,7 +105,7 @@ internal static class Values
     }
 
     // The names of the enumerations the analysis shows: the track types (RFC 9559 section 5.1.4.1.3, Table 2), the content encodings
-    // (section 5.1.4.1.31, Tables 21 to 26), the display units (Table 10) and the tag target types (Table 33).
+    // (section 5.1.4.1.31, Tables 21 to 24 and 26), the display units (Table 10) and the tag target types (Table 33).
     public static string? Named(string element, ulong value) => element switch
     {
         "TrackType" => TrackTypeName(value),

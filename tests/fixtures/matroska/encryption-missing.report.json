@@ -664,8 +664,9 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 0,
-        "duration": 0,
+        "samples": 3840,
+        "duration": 0.08,
+        "averageBitrate": 10.8,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,
@@ -683,7 +684,7 @@
       {
         "severity": "Warning",
         "code": "matroska.encryption-missing",
-        "message": "Track 1 has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, which RFC 9559 requires then (section 5.1.4.1.31.8); the algorithm is unknown.",
+        "message": "Track 1 has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, although RFC 9559 requires one for that type (section 5.1.4.1.31.8); the algorithm is unknown.",
         "offset": 173,
         "length": 15,
         "path": [

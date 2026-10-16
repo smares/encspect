@@ -140,8 +140,11 @@ internal sealed partial class FileReader
         {
             // The frames of a track whose CodecPrivate is encrypted may be in the clear (scope 1 alone), but the setup of their codec is not.
             bool needsSetup = codec is "vorbis" or "opus";
+            string consequence = needsSetup ? "the setup of its codec is unavailable and its frames cannot be analyzed"
+                : areFramesEncrypted ? "the configuration of its codec is unavailable and no codec parser reads the track"
+                : "its codec parser is given no configuration";
             _findings.AddNow(Severity.Info, plan.Private.IsEncrypted ? "matroska.codec-private-encrypted" : "matroska.codec-private-not-read",
-                $"The CodecPrivate of {label} ({codecId}) {privateProblem}, so {(needsSetup ? "the setup of its codec is unavailable and its frames cannot be analyzed" : "its codec parser is given no configuration")}.",
+                $"The CodecPrivate of {label} ({codecId}) {privateProblem}, so {consequence}.",
                 track.CodecPrivateNode ?? anchor);
             if (needsSetup)
             {
@@ -200,8 +203,15 @@ internal sealed partial class FileReader
             }
         }
 
+        // Encrypted frames give the codec parser no length to count, so the container's timing stands in, as in MP4's RouteEncrypted.
+        double seconds = areFramesEncrypted ? ContainerDuration(segment, track) : 0;
         CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
-            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9, AreSamplesEncrypted = areFramesEncrypted }
+            ? new CodecConfiguration(privateData, privateNode)
+            {
+                Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
+                AreSamplesEncrypted = areFramesEncrypted,
+                Duration = seconds > 0 ? seconds : null,
+            }
             : null;
         if (areFramesEncrypted && configuration is null)
         {
@@ -225,7 +235,7 @@ internal sealed partial class FileReader
             areFramesEncrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(statistics.Frames, "frames", "frame"))
         {
             Description = areFramesEncrypted ? Explain.TrackFramesEncrypted : Explain.TrackFrames,
-            Topic = Topics.Tracks,
+            Topic = areFramesEncrypted ? Topics.ContentEncryption : Topics.Tracks,
         };
         _file.Add(node);
 
@@ -246,11 +256,22 @@ internal sealed partial class FileReader
         }
         else
         {
-            if (plan.Protection is not null)
+            foreach (StreamInfo stream in added)
             {
-                foreach (StreamInfo stream in added)
+                StreamInfo updated = stream with { Protection = plan.Protection ?? stream.Protection };
+                if (areFramesEncrypted && stream.Duration <= 0 && seconds > 0)
                 {
-                    _context.UpdateStream(stream, stream with { Protection = plan.Protection });
+                    updated = updated with
+                    {
+                        Duration = seconds,
+                        Samples = (long)Math.Round(seconds * stream.SampleRate),
+                        AverageBitrate = statistics.Bytes * 8 / seconds / 1000,
+                    };
+                }
+
+                if (updated != stream)
+                {
+                    _context.UpdateStream(stream, updated);
                 }
             }
 
@@ -359,15 +380,22 @@ internal sealed partial class FileReader
         }
     }
 
+    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.
+    private static double ContainerDuration(SegmentState segment, TrackInfo track)
+    {
+        TrackStatistics statistics = track.Statistics;
+        double scale = segment.TimestampScale / 1e9;
+        double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale * track.TimestampScale : 0;
+        double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
+        return statistics.HasTimes ? span + step : 0;
+    }
+
     // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.
     private void AddContainerStream(SegmentState segment, TrackInfo track, Node? frames, StreamProtection? protection)
     {
         TrackStatistics statistics = track.Statistics;
         string codecId = track.CodecId ?? string.Empty;
-        double scale = segment.TimestampScale / 1e9;
-        double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale * track.TimestampScale : 0;
-        double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
-        double duration = statistics.HasTimes ? span + step : 0;
+        double duration = ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -469,8 +497,14 @@ internal sealed partial class FileReader
         var plan = new EncodingPlan();
         EncodingInfo? covering = null;
         EncodingInfo? other = null;
+
+        // An encryption with scope bit 4 encrypts the settings of the next encoding (the next lower ContentEncodingOrder), which then cannot be
+        // used: the parts that encoding applies to are encrypted as well.
+        EncodingInfo? hiding = null;
         foreach (EncodingInfo encoding in track.Encodings.OrderByDescending(e => e.Order))
         {
+            EncodingInfo? hidden = hiding;
+            hiding = null;
             Step? step = null;
             string? problem = null;
             bool isEncryption = false;
@@ -481,6 +515,7 @@ internal sealed partial class FileReader
             {
                 if (encoding.HasEncryption && encoding.EncryptionAlgorithm == 0)
                 {
+                    hiding = hidden;
                     continue;
                 }
 
@@ -491,7 +526,7 @@ internal sealed partial class FileReader
             {
                 problem = $"coded with the ContentEncodingType {encoding.Type}, which the analyzer does not undo";
             }
-            else
+            else if (hidden is null)
             {
                 step = encoding.CompressionAlgorithm switch
                 {
@@ -514,6 +549,26 @@ internal sealed partial class FileReader
             else if (isEncryption)
             {
                 other ??= encoding;
+            }
+
+            if (hidden is not null)
+            {
+                string hiddenProblem = EncryptionName(hidden) is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
+                plan.Frames.Apply(encoding.AppliesToFrames, true, hiddenProblem, null);
+                plan.Private.Apply(encoding.AppliesToCodecPrivate, true, hiddenProblem, null);
+                if (encoding.AppliesToFrames)
+                {
+                    covering ??= hidden;
+                }
+                else
+                {
+                    other ??= hidden;
+                }
+            }
+
+            if ((encoding.Scope & 4) != 0)
+            {
+                hiding = isEncryption ? encoding : hidden;
             }
         }
 
