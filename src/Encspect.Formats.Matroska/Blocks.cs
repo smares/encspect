@@ -375,7 +375,8 @@ internal sealed partial class FileReader
             ElementDefinition? definition = Schema.Find(child.Id);
             long childEnd = ChildEnd(child, definition, end, parentName);
             CheckHeaderForm(child, definition, childEnd);
-            var record = new Child { Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Id = (uint)Math.Min(child.Id, uint.MaxValue), Depth = (byte)depth, Block = -1 };
+            var record = new Child { Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Id = (uint)Math.Min(child.Id, uint.MaxValue - 1), Depth = (byte)depth, Block = -1 };
+            // uint.MaxValue marks the record of bytes that start no element, so an ID of five bytes (EBMLMaxIDLength 5), which no schema element has, is kept below it.
             if (child.Id == Schema.Block && depth == 0)
             {
                 record.Block = ReadBlock(segment, cluster, child, childEnd, true);

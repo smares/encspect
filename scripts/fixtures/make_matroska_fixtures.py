@@ -402,6 +402,15 @@ def _():
     return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(bytes(private), 9), encodings=enc)]))
 
 
+@fixture("five-byte-id-in-block-group", "An EBML Header that allows IDs of five octets (EBMLMaxIDLength 5), and in a BlockGroup an element with such an ID whose size runs past the BlockGroup: it is an "
+         "unknown element, and the finding about its size points at the node of the tree that holds it.",
+         findings=[("matroska.header-limits", "EBMLMaxIDLength of 5"), ("matroska.element-overruns-parent", "runs past the end of its parent")],
+         streams=[OPUS], valid=False)
+def _():
+    items = [simple_block(1, 0, opus_packet(0)), block_group(1, 20, opus_packet(1), extra=(E(0x7FF1, b"zz", size=40, id_raw=b"\x08\x12\x34\x56\x78"),))]
+    return build([ebml_header(max_id=5), segment(info(), tracks(opus_track()), cluster(0, *items), cluster(100, *blocks(count=4, first=2)))])
+
+
 @fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
          "so the frames count as encrypted by the AES encryption.",
          findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)

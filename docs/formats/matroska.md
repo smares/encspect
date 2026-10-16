@@ -90,5 +90,5 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 
 ## Fixtures and cross-checks
 
-- `tests/fixtures/matroska`: 120 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 43 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
+- `tests/fixtures/matroska`: 121 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 43 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
 - `crosscheck_matroska_fixtures.py` checks the manifests against mkvinfo, ffprobe (streams, packets and presentation times), ffmpeg decoding and MediaInfo, and each Segment's MuxingApp and WritingApp against mkvinfo's and MediaInfo's.
