@@ -17,7 +17,7 @@ and test_model.py (scripts/ci) works 62 cases by hand. This script writes the ca
   audio, PCM, from the committed fixtures), encoded as the generated encodings say (zlib, header stripping with the frames' real first bytes, random bytes for
   an encryption or a compression that is not undone). Where the model says the frames are read and a codec parser takes them, it reports what it reports on
   the clear source (the same findings and samples); where the AAC configuration is not read it says aac.no-configuration; where the frames are not read it
-  reports nothing.
+  reports no finding that the clear source's parser does not (a parser handed a clear configuration and no frame may say what the configuration says).
 """
 
 import argparse
