@@ -109,6 +109,7 @@ jobs:
         run: |
           python3 scripts/ci/test_changes.py
           python3 scripts/ci/test_check_results.py
+          python3 scripts/ci/test_downloads.py
 
   build-test:
     name: build and test (${{ matrix.os }})
