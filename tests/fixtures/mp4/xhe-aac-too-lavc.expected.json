@@ -1,0 +1,309 @@
+{
+ "description": "xHE-AAC with the fill element Fraunhofer's demonstration files write, which names no encoder, and a tool atom that holds ffmpeg's libavcodec encoder ID: the ID names the encoder in whichever field it stands, so the atom names no writer.",
+ "length": 2185,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   24
+  ],
+  [
+   "moov",
+   24,
+   818
+  ],
+  [
+   "moov/mvhd",
+   32,
+   108
+  ],
+  [
+   "moov/trak",
+   140,
+   593
+  ],
+  [
+   "moov/trak/tkhd",
+   148,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   240,
+   493
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   248,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   280,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   325,
+   408
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   333,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   349,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   357,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   373,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   385,
+   348
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   393,
+   120
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   409,
+   104
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   445,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   513,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   537,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   565,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   705,
+   28
+  ],
+  [
+   "moov/udta",
+   733,
+   109
+  ],
+  [
+   "moov/udta/meta",
+   741,
+   101
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   753,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   786,
+   56
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   794,
+   48
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   802,
+   40
+  ],
+  [
+   "mdat",
+   842,
+   1343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "xHE-AAC (USAC)",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "encoder": [
+    "Lavc60.31.102 libfdk_aac",
+    "Low"
+   ]
+  }
+ ],
+ "units": [
+  [
+   850,
+   21
+  ],
+  [
+   871,
+   34
+  ],
+  [
+   905,
+   47
+  ],
+  [
+   952,
+   60
+  ],
+  [
+   1012,
+   23
+  ],
+  [
+   1035,
+   36
+  ],
+  [
+   1071,
+   49
+  ],
+  [
+   1120,
+   62
+  ],
+  [
+   1182,
+   25
+  ],
+  [
+   1207,
+   38
+  ],
+  [
+   1245,
+   51
+  ],
+  [
+   1296,
+   64
+  ],
+  [
+   1360,
+   27
+  ],
+  [
+   1387,
+   40
+  ],
+  [
+   1427,
+   53
+  ],
+  [
+   1480,
+   66
+  ],
+  [
+   1546,
+   29
+  ],
+  [
+   1575,
+   42
+  ],
+  [
+   1617,
+   55
+  ],
+  [
+   1672,
+   68
+  ],
+  [
+   1740,
+   31
+  ],
+  [
+   1771,
+   44
+  ],
+  [
+   1815,
+   57
+  ],
+  [
+   1872,
+   70
+  ],
+  [
+   1942,
+   33
+  ],
+  [
+   1975,
+   46
+  ],
+  [
+   2021,
+   59
+  ],
+  [
+   2080,
+   22
+  ],
+  [
+   2102,
+   35
+  ],
+  [
+   2137,
+   48
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig": "3 elements",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[0]/Extension Element Type": "3 (audio pre-roll)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacDecoderConfig/Element[1]": "CPE",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/UsacConfig/UsacConfigExtension/Extension Type": "2 (loudness info)"
+ },
+ "findings": [
+  [
+   "aac.usac-frames-not-analyzed",
+   "usacIndependencyFlag"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "mp4box_samples": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
+   "faad": "faad2 2.11 does not read USAC configurations (it fails to open the file)."
+  }
+ }
+}

@@ -307,6 +307,8 @@ def xhe_layouts():
         ("xhe-aac-writer-other-format", "exhale's layout of the UsacConfig with a tool atom that names FAAC 1.30: the stream's evidence "
          "names exhale as the encoder, and FAAC, which writes AAC and not xHE-AAC, as the writer, which is a finding of its own.", False, "FAAC 1.30", ("exhale", "Medium"),
          [["aac.writer-other-format", "which writes AAC, not xHE-AAC (USAC)"]]),
+        ("xhe-aac-too-lavc", "xHE-AAC with the fill element Fraunhofer's demonstration files write, which names no encoder, and a tool atom that holds "
+         "ffmpeg's libavcodec encoder ID: the ID names the encoder in whichever field it stands, so the atom names no writer.", True, "Lavc60.31.102 libfdk_aac", ("Lavc60.31.102 libfdk_aac", "Low"), []),
     ]:
         config = usac_layout_config(fill_element)
         samples = [bytes([0x80 if i % 10 == 0 else 0x00]) + bytes((i * 13) % 50 + 20) for i in range(30)]
@@ -316,7 +318,7 @@ def xhe_layouts():
         elements = ASC + "/UsacConfig/UsacDecoderConfig"
         out.append((name, data, {
             "description": description, "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder, writer=(tool, "Low") if tool else None)],
+            "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=encoder, writer=(tool, "Low") if tool and not tool.startswith("Lavc") else None)],
             "units": unit_list(offsets[0], samples, 10),
             "fields": {elements: f"{3 if fill_element else 2} elements", elements + "/Element[0]/Extension Element Type": "3 (audio pre-roll)",
                        elements + "/Element[1]": "CPE", ASC + "/UsacConfig/UsacConfigExtension/Extension Type": "2 (loudness info)"},

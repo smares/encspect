@@ -322,7 +322,7 @@ public sealed class ApeTagParser : ITagParser
                 // encoder (the APEv2 key list could not be checked), so it is given to no role and the claim is the writer's.
                 if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && item.Value?.AsText() is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
-                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item", ClaimRole.Writer));
+                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
                 }
 
                 if (IsV1 && flags != 0)

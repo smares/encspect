@@ -268,6 +268,17 @@ fixture("spread-audio", "Windows Media Audio whose error correction spreads the 
         spread_file, [finding("asf.audio-spread", "2 packets")], {"ffprobe": False, "reason": "ffmpeg descrambles the media objects and decodes them as Windows Media Audio, which these are not."})
 
 
+def tool_name_file():
+    return m.asf_file(
+        [m.stream_properties(1, m.wave_format(0x0161, 2, 44100, 16000, 743, 16, bytes(10))),
+         m.extended_content_description([("WM/ToolName", 0, "Lavc60.31.102 wmav2")])],
+        objects_in([1], 3, 100, 512), 512, file_id=FILE_ID, play=500_000)
+
+
+fixture("tool-name-lavc", "Windows Media Audio whose WM/ToolName attribute holds ffmpeg's libavcodec encoder ID, which names the encoder in whichever field it stands: the attribute names no writer.",
+        tool_name_file, [finding("wma.superframe-short", "3 media objects")], {"ffprobe": False, "reason": "the payloads are not Windows Media Audio frames."})
+
+
 def two_codecs():
     return m.asf_file(
         [m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)),

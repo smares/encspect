@@ -1,0 +1,154 @@
+{
+ "description": "Windows Media Audio whose WM/ToolName attribute holds ffmpeg's libavcodec encoder ID, which names the encoder in whichever field it stands: the attribute names no writer.",
+ "format": "ASF",
+ "length": 944,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   382
+  ],
+  [
+   "Data Object",
+   382,
+   562
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   106
+  ],
+  [
+   "Extended Content Description Object",
+   240,
+   96
+  ],
+  [
+   "Header Extension Object",
+   336,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 743,
+   "bits": 16,
+   "codec_data": "00000000000000000000"
+  }
+ ],
+ "packets": [
+  [
+   432,
+   512,
+   3
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     463,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     580,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     697,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 944,
+  "packets": 1,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.superframe-short",
+   "contains": "3 media objects"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the payloads are not Windows Media Audio frames."
+ }
+}

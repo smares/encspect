@@ -16,7 +16,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 
 - ID3v2 TSSE: encoder (ID3v2.3 section 4.2.1, ID3v2.4 frames section 4.2.5). DTS-HD BUILDVER: encoder (A/103 Table E.1, "DTS-HD Encoder Version Identification").
 - Vorbis comment vendor string: encoder. ENCODER field: writer; Vorbis I section 5.2.2 lists none, and RFC 7845 section 5.2 has applications "identify themselves" with it.
-- QuickTime ©swr, ASF WM/ToolName, Matroska WritingApp and MuxingApp: writer. MP4 ©too has no Apple specification: writer.
+- QuickTime ©swr, ASF WM/ToolName, Matroska WritingApp and MuxingApp: writer. MP4 ©too has no Apple specification: writer. A `Lavc…` encoder ID in any of these fields names the encoder instead.
 - APEv2 Encoder item and ASF WMFSDKVersion: unverified, so writer.
 
 **Versions.** The encoder may take the version of a writer claim that is the encoder's own name followed by white space and a version, and the evidence says so. Another name lends nothing.

@@ -194,7 +194,7 @@ public sealed partial class AsfParser
                 text = $"Media Foundation {text}";
             }
 
-            state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}", ClaimRole.Writer));
+            state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}", ClaimRoles.Of(ClaimRole.Writer, text)));
         }
 
         _ = stream;
