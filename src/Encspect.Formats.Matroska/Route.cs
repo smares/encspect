@@ -335,6 +335,7 @@ internal sealed partial class FileReader
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
+            Protection = ProtectionOf(track),
             Nodes = [streamNode],
             Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? "unknown" : codecId),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
@@ -464,6 +465,21 @@ internal sealed partial class FileReader
         }
 
         return (frames.Count == 0 ? null : new Decoder(frames), priv.Count == 0 ? null : new Decoder(priv), null, false);
+    }
+
+    // The protection a track's ContentEncryption element states (RFC 9559 section 5.1.4.1.31.8 and following): the algorithm and, for AES, the cipher mode.
+    // The frames are never read, so the stream is encrypted; ContentEncKeyID names a key and no DRM system.
+    private static StreamProtection? ProtectionOf(TrackInfo track)
+    {
+        EncodingInfo? encoding = track.Encodings.OrderByDescending(e => e.Order).FirstOrDefault(e => e.HasEncryption || e.Type == 1);
+        if (encoding is null)
+        {
+            return null;
+        }
+
+        string algorithm = Values.Named("ContentEncAlgo", encoding.EncryptionAlgorithm) ?? $"algorithm {encoding.EncryptionAlgorithm}";
+        string mode = encoding.CipherMode is { } cipher ? ", " + (Values.Named("AESSettingsCipherMode", cipher) ?? $"mode {cipher}") : string.Empty;
+        return new StreamProtection { Scheme = $"Matroska ContentEncryption, {algorithm}{mode}", IsEncrypted = true };
     }
 
     private sealed record Step(bool IsStripping, byte[] Prefix);

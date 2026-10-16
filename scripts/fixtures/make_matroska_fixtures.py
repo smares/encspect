@@ -238,6 +238,22 @@ def _():
     return build(standard(cluster(0, *stripped), track=[opus_track(encodings=enc)]))
 
 
+@fixture("encrypted-cbc", "A track whose frames are encrypted with AES-CBC (ContentEncAESSettings, AESSettingsCipherMode 2): the stream is protected and encrypted, and its frames are not read.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES, AES-CBC)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x05\x06"))
+    sealed = [simple_block(1, i * 20, bytes((i * 7 + k) & 0xFF for k in range(33)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-3des", "A track whose frames are encrypted with Triple DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
+         findings=[("matroska.track-encrypted", "is encrypted (3DES)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=2, key_id=b"\x09"))
+    sealed = [simple_block(1, i * 20, bytes((i * 5 + k) & 0xFF for k in range(29)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
 @fixture("zlib-compressed", "A track whose frames are compressed with zlib (ContentCompAlgo 0).", streams=[OPUS])
 def _():
     packed = [simple_block(1, i * 20, zlib.compress(opus_packet(i), 9), key=True) for i in range(4)]

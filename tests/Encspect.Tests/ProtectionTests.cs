@@ -247,6 +247,25 @@ public class ProtectionTests
         Assert.True(stream.Duration > 0);
     }
 
+    // A Matroska track with a ContentEncryption element is a protected, encrypted stream (RFC 9559 section 5.1.4.1.31); its frames are not routed.
+    [Theory]
+    [InlineData("matroska/encrypted.mka", "Matroska ContentEncryption, AES, AES-CTR")]
+    [InlineData("matroska/encrypted-cbc.mka", "Matroska ContentEncryption, AES, AES-CBC")]
+    [InlineData("matroska/encrypted-3des.mka", "Matroska ContentEncryption, 3DES")]
+    public void MatroskaContentEncryptionIsProtection(string name, string scheme)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(scheme, stream.Protection!.Scheme);
+        Assert.True(stream.Protection.IsEncrypted);
+        Assert.Empty(stream.Protection.Systems);
+        Assert.Equal(StreamKind.Audio, stream.Kind);
+        Assert.Contains(report.Findings, f => f.Code == "matroska.track-encrypted");
+        Assert.All(report.Findings, f => Assert.StartsWith("matroska.", f.Code, StringComparison.Ordinal));
+        Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
     // A protected stream no codec parser describes is still a stream, so that its protection is reported: MPEG audio, video, a clear track of an unparsed coding.
     [Theory]
     [InlineData("asf/protected-mpeg-audio.asf", "MPEG audio layer III", true)]
