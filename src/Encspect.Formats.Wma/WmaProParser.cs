@@ -46,7 +46,7 @@ public sealed class WmaProParser : ICodecParser
 
         if (configuration.AreSamplesEncrypted)
         {
-            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3, configuration, ProExplain.Stream, Topics.WmaPro);
+            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3, configuration, ProExplain.EncryptedHeaderOnlyStream, Topics.WmaPro);
             findings.Flush(context);
             return;
         }

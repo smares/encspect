@@ -151,6 +151,12 @@ public sealed partial class Mp4Parser
         public bool HasEncryptionRuns => EncryptionRuns.Count > 0;
 
         public bool AreEncryptionRunsCounted { get; set; }
+
+        // The default_sample_description_index of the sample table's seig sample group descriptions (version 2), 0 for none.
+        public uint EncryptionDefault { get; set; }
+
+        // The sample entry the track is read through, once routed.
+        public SampleEntry? ReadEntry { get; set; }
     }
 
     // One sample description of a track's stsd box: its format, the fields of an audio sample entry
@@ -227,6 +233,16 @@ public sealed partial class Mp4Parser
         public (long Offset, Node Node)? Moof => moof;
 
         public uint TrackId { get; set; }
+
+        // The fragment's own seig descriptions (whether each protects), the distinct description indexes its seig sample-to-group boxes use,
+        // the default of its descriptions (version 2), and whether it uses more indexes than are kept.
+        public List<bool> LocalGroups { get; } = [];
+
+        public HashSet<uint> GroupIndexes { get; } = [];
+
+        public uint GroupDefault { get; set; }
+
+        public bool HasTooManyGroupIndexes { get; set; }
 
         public ulong? BaseDataOffset { get; set; }
 

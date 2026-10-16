@@ -1,5 +1,5 @@
 {
- "description": "A track with two sample entries, a clear mp4a first and a cenc-protected enca second, whose chunks (stsc) all use the second entry: the samples are encrypted, though the first entry is not protected, and are never read as AAC.",
+ "description": "A track with a clear mp4a first and a cenc-protected enca second, whose chunks (stsc) all use the second entry: the samples are encrypted, though a clear entry is used too, and are never read as AAC.",
  "length": 11236,
  "format": "MP4",
  "boxes": [
@@ -292,8 +292,7 @@
   ]
  ],
  "fields": {
-  "MP4/moov/trak/mdia/minf/stbl/stsd/enca": "enca (encrypted audio)",
-  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a": "mp4a (MPEG-4 audio)"
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca": "enca (encrypted audio)"
  },
  "findings": [
   [
@@ -307,12 +306,11 @@
   "faad": null,
   "encryption": {
    "ffprobe": null,
-   "mediainfo": null
+   "mediainfo": "Encrypted"
   },
   "skip": {
-   "faad": "faad2 reads the first sample entry, which is clear.",
-   "ffprobe": "ffmpeg reads the first sample entry, which is clear, and its packets as AAC.",
-   "mediainfo_duration": "MediaInfo reads the first sample entry"
+   "faad": "faad2 reads the first sample entry.",
+   "ffprobe": "ffmpeg reads the first sample entry and its packets as AAC."
   }
  }
 }

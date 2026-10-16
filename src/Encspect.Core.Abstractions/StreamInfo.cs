@@ -65,6 +65,10 @@ public sealed record StreamInfo
     // stream a codec parser reported (AnalysisContext.UpdateStream), or on the one it reports itself.
     public StreamProtection? Protection { get; init; }
 
+    // False for a stream of a container that is not audio (a protected video stream the container reports so that its protection is not lost); the
+    // summary takes the codec, sample rate and channel mode from the first audio stream.
+    public bool IsAudio { get; init; } = true;
+
     public bool IsProtected => Protection is not null;
 
     public string? Encoder { get; init; }

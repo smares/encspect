@@ -488,7 +488,7 @@ def movie(tracks, before=(), after=(), movie_timescale=1000, moov_first=True, wi
     return data + trailer, boxes, [[mdat_start + o for o in offs] for offs in relative]
 
 
-# --- Protection: sinf, Common Encryption, iTunes Store protection and Audible ----------------------------------------
+# --- Protection: sinf, Common Encryption, iTunes protection and Audible ----------------------------------------
 
 
 def frma(original):
@@ -548,9 +548,11 @@ def seig_entry(is_protected, iv_size, kid, crypt=0, skip=0, constant_iv=None):
     return body
 
 
-def sgpd_seig(entries):
-    """A sample group description of grouping type seig (version 1, each entry with its length)."""
-    return fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(len(entries)) + b"".join(u32(len(e)) + e for e in entries))
+def sgpd_seig(entries, version=1, default=0):
+    """A sample group description of grouping type seig: version 1 gives each entry its length, versions 0 and 2 none (a seig entry sizes itself), version 2 a default index."""
+    if version == 1:
+        return fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(len(entries)) + b"".join(u32(len(e)) + e for e in entries))
+    return fullbox("sgpd", version, 0, b"seig" + (u32(default) if version == 2 else b"") + u32(len(entries)) + b"".join(entries))
 
 
 def sbgp_seig(runs):

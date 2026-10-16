@@ -176,6 +176,7 @@ public sealed partial class Mp4Parser
     // Places the track fragment's samples once its boxes are read.
     private static void FinishFragment(State state, FragmentTrack fragment)
     {
+        ResolveFragmentGroups(state, fragment);
         Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
         if (track is null)
         {

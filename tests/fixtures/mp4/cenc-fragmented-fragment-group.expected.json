@@ -1,5 +1,5 @@
 {
- "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose track fragments put every sample in a seig group that protects it; each track fragment's own sgpd box describes the group (index 0x10001). The samples are pseudo-random bytes and must never be read as AAC.",
+ "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose seig sample groups are taken to protect the samples; each track fragment's own sgpd box describes the group (index 0x10001). The samples are pseudo-random bytes and must never be read as AAC.",
  "length": 8217,
  "format": "MP4",
  "boxes": [
@@ -347,7 +347,6 @@
   ]
  ],
  "fields": {
-  "MP4/moof/traf/sbgp": "seig",
   "MP4/moof/traf/senc": "10 samples"
  },
  "findings": [

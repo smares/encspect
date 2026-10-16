@@ -253,6 +253,7 @@ public sealed partial class AsfParser
             Description = Explain.EncryptedStream,
             Topic = Topics.AsfContentProtection,
         });
+        double duration = DurationOf(state) ?? 0;
         state.Context.AddStream(new StreamInfo
         {
             Nodes = [node],
@@ -260,6 +261,8 @@ public sealed partial class AsfParser
             SampleRate = stream.Format?.SamplesPerSecond ?? 0,
             Channels = stream.Format?.Channels ?? 0,
             Protection = protection,
+            IsAudio = stream.IsAudio,
+            Duration = duration,
         });
     }
 

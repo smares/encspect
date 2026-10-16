@@ -58,9 +58,10 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        SampleEntry entry = EntryOf(state, track);
+        (SampleEntry entry, bool isProtected, bool isEncrypted) = Decide(state, track);
+        track.ReadEntry = entry;
         string? codec = CodecOf(entry);
-        StreamProtection? protection = IsProtectedEntry(entry.Format) ? ProtectionOf(state, track, entry) : null;
+        StreamProtection? protection = isProtected ? new StreamProtection { Scheme = SchemeOf(entry), IsEncrypted = isEncrypted, Systems = [.. state.Systems] } : null;
         List<ByteRange> ranges = SampleRanges(state, track);
         if (codec is null)
         {
@@ -548,7 +549,7 @@ public sealed partial class Mp4Parser
             nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
             // Apple's lossless writer shortens the last packet by the padding, so the track lasts delay plus samples.
-            bool lossless = track.Entries.Count > 0 && track.Entries[0].EffectiveFormat == "alac";
+            bool lossless = (track.ReadEntry ?? track.Entries.FirstOrDefault())?.EffectiveFormat == "alac";
             if (total > 0 && state.Fragments == 0 && (ulong)sum != total && !(lossless && (ulong)(sum - smpb.Padding) == total))
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",

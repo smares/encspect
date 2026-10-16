@@ -412,12 +412,15 @@ ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it pa
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 NO_CHANNELS = "MediaInfo 24.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
 NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
+FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 MEDIAINFO_READS_OTHERWISE = {
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
     "mp4/ffmpeg-cenc-opus": dict.fromkeys(["format of an encrypted stream", "channels"], "MediaInfo 24.01 names this track \"(Encrypted)\" and gives it no channel count: it reads the format of an enca entry from the codec it recognizes, and has none for Opus in an encrypted entry"),
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},
     "mp4/cenc-mpeg-audio": {"channels": NO_CHANNELS},
+    "mp4/cenc-second-entry": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-entry-out-of-range": {"encryption": FIRST_ENTRY},
     "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
     "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
     "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},
@@ -533,7 +536,7 @@ def check_mediainfo(path, tally, check=None):
         codec = stream["codec"]
         # MediaInfo reads the sample entry only (File_Mpeg4_Elements.cpp, the sample entry's codec: drms is "iTunes", enca "Encrypted").
         tally.compare("encryption", track.get("Encryption"), expected_encryption if stream.get("protection") else None)
-        if stream.get("protection", {}).get("isEncrypted") or (stream.get("isProtected") and codec == "Apple Lossless"):
+        if stream.get("protection", {}).get("isEncrypted") or (stream.get("isProtected") and not any(n.get("kind") == "Frame" for n in mi.walk(node))):
             # No frames are read (a coding with no parser reads none, encrypted or not), so neither side counts any: the configuration's figures are compared.
             tally.compare("format of an encrypted stream", track.get("Format"), ENCRYPTED_FORMATS.get(codec, codec if codec != "AAC LC" else "AAC"))
             tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))

@@ -1,0 +1,341 @@
+{
+ "description": "A track with two enca entries, the first of which sets the default to not protected and the second to protected, used by the chunks in turn: the samples are encrypted, though a clear entry is used too, and are never read as AAC.",
+ "length": 11328,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   957
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   841
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   741
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   656
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   596
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   356
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   583,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   619,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   673,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   681,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   693,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   713,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   721,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   753,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   777,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   817,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   957,
+   28
+  ],
+  [
+   "mdat",
+   985,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   993,
+   300
+  ],
+  [
+   1293,
+   337
+  ],
+  [
+   1630,
+   374
+  ],
+  [
+   2004,
+   321
+  ],
+  [
+   2325,
+   358
+  ],
+  [
+   2683,
+   305
+  ],
+  [
+   2988,
+   342
+  ],
+  [
+   3330,
+   379
+  ],
+  [
+   3709,
+   326
+  ],
+  [
+   4035,
+   363
+  ],
+  [
+   4398,
+   310
+  ],
+  [
+   4708,
+   347
+  ],
+  [
+   5055,
+   384
+  ],
+  [
+   5439,
+   331
+  ],
+  [
+   5770,
+   368
+  ],
+  [
+   6138,
+   315
+  ],
+  [
+   6453,
+   352
+  ],
+  [
+   6805,
+   389
+  ],
+  [
+   7194,
+   336
+  ],
+  [
+   7530,
+   373
+  ],
+  [
+   7903,
+   320
+  ],
+  [
+   8223,
+   357
+  ],
+  [
+   8580,
+   304
+  ],
+  [
+   8884,
+   341
+  ],
+  [
+   9225,
+   378
+  ],
+  [
+   9603,
+   325
+  ],
+  [
+   9928,
+   362
+  ],
+  [
+   10290,
+   309
+  ],
+  [
+   10599,
+   346
+  ],
+  [
+   10945,
+   383
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/enca": "enca (encrypted audio)"
+ },
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 reads the first sample entry.",
+   "ffprobe": "ffmpeg reads the first sample entry and its packets as AAC."
+  }
+ }
+}

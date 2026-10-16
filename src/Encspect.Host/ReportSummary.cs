@@ -49,7 +49,7 @@ public sealed record ReportSummary(
         ArgumentNullException.ThrowIfNull(report);
 
         IReadOnlyList<StreamInfo> streams = report.Streams;
-        StreamInfo? first = streams.Count > 0 ? streams[0] : null;
+        StreamInfo? first = streams.FirstOrDefault(s => s.IsAudio) ?? (streams.Count > 0 ? streams[0] : null);
         StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
         List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);

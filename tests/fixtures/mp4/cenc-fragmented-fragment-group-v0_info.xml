@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--MP4Box dump trace-->
+<IsoMediaFile xmlns="urn:mpeg:isobmff:schema:file:2016" Name="cenc-fragmented-fragment-group-v0.mp4">
+<FileTypeBox Size="28" Type="ftyp" Specification="p12" Container="file otyp" MajorBrand="iso6" MinorVersion="0">
+<BrandEntry AlternateBrand="iso6"/>
+<BrandEntry AlternateBrand="dash"/>
+<BrandEntry AlternateBrand="mp41"/>
+</FileTypeBox>
+<MovieBox Size="663" Type="moov" Specification="p12" Container="file" >
+<MovieHeaderBox Size="108" Type="mvhd" Version="0" Flags="0" Specification="p12" Container="moov" CreationTime="0" ModificationTime="0" TimeScale="1000" Duration="0" NextTrackID="2">
+</MovieHeaderBox>
+<TrackBox Size="507" Type="trak" Specification="p12" Container="moov" >
+<TrackHeaderBox Size="92" Type="tkhd" Version="0" Flags="3" Specification="p12" Container="trak" CreationTime="0" ModificationTime="0" TrackID="1" Duration="0" AlternateGroupID="1" Volume="1.00">
+</TrackHeaderBox>
+<MediaBox Size="407" Type="mdia" Specification="p12" Container="trak" >
+<MediaHeaderBox Size="32" Type="mdhd" Version="0" Flags="0" Specification="p12" Container="mdia" CreationTime="0" ModificationTime="0" TimeScale="44100" Duration="0" LanguageCode="und">
+</MediaHeaderBox>
+<HandlerBox Size="45" Type="hdlr" Version="0" Flags="0" Specification="p12" Container="mdia meta minf" hdlrType="soun" Name="SoundHandler" reserved1="0" reserved2="data:application/octet-string,000000000000000000000000">
+</HandlerBox>
+<MediaInformationBox Size="322" Type="minf" Specification="p12" Container="mdia" >
+<SoundMediaHeaderBox Size="16" Type="smhd" Version="0" Flags="0" Specification="p12" Container="minf" >
+</SoundMediaHeaderBox>
+<DataInformationBox Size="36" Type="dinf" Specification="p12" Container="minf meta" >
+<DataReferenceBox Size="28" Type="dref" Version="0" Flags="0" Specification="p12" Container="dinf" >
+<URLDataEntryBox Size="12" Type="url " Version="0" Flags="1" Specification="p12" Container="dref" >
+<!--Data is contained in the movie file-->
+</URLDataEntryBox>
+</DataReferenceBox>
+</DataInformationBox>
+<SampleTableBox Size="262" Type="stbl" Specification="p12" Container="minf" >
+<SampleDescriptionBox Size="186" Type="stsd" Version="0" Flags="0" Specification="p12" Container="stbl" >
+<AudioSampleDescriptionBox Size="170" Type="enca" Specification="p12" Container="stsd"  DataReferenceIndex="1" SampleRate="44100" Channels="2" BitsPerSample="16">
+<MPEG4ESDescriptorBox Size="54" Type="esds" Version="0" Flags="0" Specification="p14" Container="mp4a mp4s mp4v encv enca encs resv wave" >
+ <ES_Descriptor ES_ID="es1" binaryID="1" >
+  <decConfigDescr>
+   <DecoderConfigDescriptor objectTypeIndication="64" streamType="5" >
+    <decSpecificInfo>
+     <DecoderSpecificInfo type="auto" src="data:application/octet-string,%12%10%56%E5%00" />
+    </decSpecificInfo>
+   </DecoderConfigDescriptor>
+  </decConfigDescr>
+  <slConfigDescr>
+   <SLConfigDescriptor >
+    <predefined value="2" />
+    <custom >
+    </custom>
+   </SLConfigDescriptor>
+  </slConfigDescr>
+ </ES_Descriptor>
+</MPEG4ESDescriptorBox>
+<ProtectionSchemeInfoBox Size="80" Type="sinf" Specification="p12" Container="ipro sample_entry" >
+<OriginalFormatBox Size="12" Type="frma" Specification="p12" Container="sinf rinf" data_format="mp4a">
+</OriginalFormatBox>
+<SchemeTypeBox Size="20" Type="schm" Version="0" Flags="0" Specification="p12" Container="sinf rinf" scheme_type="cenc" scheme_version="65536" >
+</SchemeTypeBox>
+<SchemeInformationBox Size="40" Type="schi" Specification="p12" Container="sinf rinf" >
+<TrackEncryptionBox Size="32" Type="tenc" Version="0" Flags="0" Specification="cenc" Container="schi" isEncrypted="0" constant_IV_size="0" constant_IV="0x"  KID="0x101112131415161718191A1B1C1D1E1F">
+</TrackEncryptionBox>
+</SchemeInformationBox>
+</ProtectionSchemeInfoBox>
+</AudioSampleDescriptionBox>
+</SampleDescriptionBox>
+<TimeToSampleBox Size="16" Type="stts" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="0">
+<!-- counted 0 samples in STTS entries -->
+</TimeToSampleBox>
+<SampleToChunkBox Size="16" Type="stsc" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="0">
+<!-- counted 0 samples in STSC entries (could be less than sample count) -->
+</SampleToChunkBox>
+<SampleSizeBox Size="20" Type="stsz" Version="0" Flags="0" Specification="p12" Container="stbl" SampleCount="0">
+<!--WARNING: No Sample Size indications-->
+</SampleSizeBox>
+<ChunkOffsetBox Size="16" Type="stco" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="0">
+<!--Warning: No Chunk Offsets indications-->
+</ChunkOffsetBox>
+</SampleTableBox>
+</MediaInformationBox>
+</MediaBox>
+</TrackBox>
+<MovieExtendsBox Size="40" Type="mvex" Specification="p12" Container="moov" >
+<TrackExtendsBox Size="32" Type="trex" Version="0" Flags="0" Specification="p12" Container="mvex" TrackID="1" SampleDescriptionIndex="1" SampleDuration="1024" SampleSize="0">
+<DefaultSampleFlags IsLeading="0" SampleDependsOn="0" SampleIsDependedOn="0" SampleHasRedundancy="0" SamplePadding="0" SampleSync="1" SampleDegradationPriority="0"/>
+</TrackExtendsBox>
+</MovieExtendsBox>
+</MovieBox>
+<MovieFragmentBox Size="292" Type="moof" Specification="p12" Container="file" TrackFragments="1">
+<MovieFragmentHeaderBox Size="16" Type="mfhd" Version="0" Flags="0" Specification="p12" Container="moof" FragmentSequenceNumber="1">
+</MovieFragmentHeaderBox>
+<TrackFragmentBox Size="268" Type="traf" Specification="p12" Container="moof" >
+<TrackFragmentHeaderBox Size="16" Type="tfhd" Version="0" Flags="131072" Specification="p12" Container="traf" TrackID="1" BaseDataOffset="moof">
+</TrackFragmentHeaderBox>
+<TrackFragmentBaseMediaDecodeTimeBox Size="20" Type="tfdt" Version="1" Flags="0" Specification="p12" Container="traf" baseMediaDecodeTime="0">
+</TrackFragmentBaseMediaDecodeTimeBox>
+<SampleGroupDescriptionBox Size="40" Type="sgpd" Version="0" Flags="0" Specification="p12" Container="stbl traf" grouping_type="seig">
+<CENCSampleEncryptionGroupEntry IsEncrypted="1" IV_size="8" KID="0x101112131415161718191A1B1C1D1E1F"/>
+</SampleGroupDescriptionBox>
+<SampleGroupBox Size="28" Type="sbgp" Version="0" Flags="0" Specification="p12" Container="stbl traf" grouping_type="seig">
+<SampleGroupBoxEntry sample_count="10" group_description_index="1" group_description_in_traf="1" />
+</SampleGroupBox>
+<SampleEncryptionBox Size="96" Type="senc" Specification="cenc" Container="trak traf" sampleCount="10">
+<FullBoxInfo Version="0" Flags="0x0"/>
+<SampleEncryptionEntry sampleNumber="1" IV_size="8" IV="0x0100010001000100">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="2" IV_size="8" IV="0x0101010101010101">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="3" IV_size="8" IV="0x0102010201020102">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="4" IV_size="8" IV="0x0103010301030103">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="5" IV_size="8" IV="0x0104010401040104">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="6" IV_size="8" IV="0x0105010501050105">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="7" IV_size="8" IV="0x0106010601060106">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="8" IV_size="8" IV="0x0107010701070107">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="9" IV_size="8" IV="0x0108010801080108">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="10" IV_size="8" IV="0x0109010901090109">
+</SampleEncryptionEntry>
+</SampleEncryptionBox>
+<TrackRunBox Size="60" Type="trun" Version="0" Flags="513" Specification="p12" Container="traf" SampleCount="10" DataOffset="300">
+<TrackRunEntry Size="300"/>
+<TrackRunEntry Size="337"/>
+<TrackRunEntry Size="374"/>
+<TrackRunEntry Size="321"/>
+<TrackRunEntry Size="358"/>
+<TrackRunEntry Size="305"/>
+<TrackRunEntry Size="342"/>
+<TrackRunEntry Size="379"/>
+<TrackRunEntry Size="326"/>
+<TrackRunEntry Size="363"/>
+</TrackRunBox>
+</TrackFragmentBox>
+</MovieFragmentBox>
+<MediaDataBox Size="3413" Type="mdat" Specification="p12" Container="file" dataSize="3405">
+</MediaDataBox>
+<MovieFragmentBox Size="292" Type="moof" Specification="p12" Container="file" TrackFragments="1">
+<MovieFragmentHeaderBox Size="16" Type="mfhd" Version="0" Flags="0" Specification="p12" Container="moof" FragmentSequenceNumber="2">
+</MovieFragmentHeaderBox>
+<TrackFragmentBox Size="268" Type="traf" Specification="p12" Container="moof" >
+<TrackFragmentHeaderBox Size="16" Type="tfhd" Version="0" Flags="131072" Specification="p12" Container="traf" TrackID="1" BaseDataOffset="moof">
+</TrackFragmentHeaderBox>
+<TrackFragmentBaseMediaDecodeTimeBox Size="20" Type="tfdt" Version="1" Flags="0" Specification="p12" Container="traf" baseMediaDecodeTime="10240">
+</TrackFragmentBaseMediaDecodeTimeBox>
+<SampleGroupDescriptionBox Size="40" Type="sgpd" Version="0" Flags="0" Specification="p12" Container="stbl traf" grouping_type="seig">
+<CENCSampleEncryptionGroupEntry IsEncrypted="1" IV_size="8" KID="0x101112131415161718191A1B1C1D1E1F"/>
+</SampleGroupDescriptionBox>
+<SampleGroupBox Size="28" Type="sbgp" Version="0" Flags="0" Specification="p12" Container="stbl traf" grouping_type="seig">
+<SampleGroupBoxEntry sample_count="10" group_description_index="1" group_description_in_traf="1" />
+</SampleGroupBox>
+<SampleEncryptionBox Size="96" Type="senc" Specification="cenc" Container="trak traf" sampleCount="10">
+<FullBoxInfo Version="0" Flags="0x0"/>
+<SampleEncryptionEntry sampleNumber="1" IV_size="8" IV="0x0200020002000200">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="2" IV_size="8" IV="0x0201020102010201">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="3" IV_size="8" IV="0x0202020202020202">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="4" IV_size="8" IV="0x0203020302030203">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="5" IV_size="8" IV="0x0204020402040204">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="6" IV_size="8" IV="0x0205020502050205">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="7" IV_size="8" IV="0x0206020602060206">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="8" IV_size="8" IV="0x0207020702070207">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="9" IV_size="8" IV="0x0208020802080208">
+</SampleEncryptionEntry>
+<SampleEncryptionEntry sampleNumber="10" IV_size="8" IV="0x0209020902090209">
+</SampleEncryptionEntry>
+</SampleEncryptionBox>
+<TrackRunBox Size="60" Type="trun" Version="0" Flags="513" Specification="p12" Container="traf" SampleCount="10" DataOffset="300">
+<TrackRunEntry Size="310"/>
+<TrackRunEntry Size="347"/>
+<TrackRunEntry Size="384"/>
+<TrackRunEntry Size="331"/>
+<TrackRunEntry Size="368"/>
+<TrackRunEntry Size="315"/>
+<TrackRunEntry Size="352"/>
+<TrackRunEntry Size="389"/>
+<TrackRunEntry Size="336"/>
+<TrackRunEntry Size="373"/>
+</TrackRunBox>
+</TrackFragmentBox>
+</MovieFragmentBox>
+<MediaDataBox Size="3513" Type="mdat" Specification="p12" Container="file" dataSize="3505">
+</MediaDataBox>
+</IsoMediaFile>

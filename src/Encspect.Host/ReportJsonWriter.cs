@@ -242,6 +242,11 @@ public static class ReportJsonWriter
             writer.WriteNumber("jocObjectCount", objects);
         }
 
+        if (!stream.IsAudio)
+        {
+            writer.WriteBoolean("isAudio", false);
+        }
+
         if (stream.Protection is { } protection)
         {
             writer.WriteBoolean("isProtected", true);

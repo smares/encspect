@@ -144,6 +144,18 @@ def check_voice_decode(name, manifest, path, problems):
         problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
 
 
+# What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
+VOICE_CONFIG_REJECTED = {
+    "voice-config-align": "ffprobe's decoder rejects the configuration: invalid block alignment 0",
+    "voice-config-denoise": "ffprobe's decoder rejects the configuration: invalid denoise filter strength 12 (maximum 11)",
+    "voice-config-extra": "ffprobe's decoder rejects the configuration: invalid extradata size 50 (should be 46)",
+    "voice-config-size": "ffprobe's decoder rejects the configuration: invalid extradata size 45 (should be 46)",
+    "voice-config-rate": "ffprobe's decoder rejects the configuration: unsupported sample rate 100 (minimum 322)",
+    "voice-config-rate-low": "ffprobe's decoder rejects the configuration: invalid delta pitch range",
+    "voice-config-table": "ffprobe's decoder rejects the configuration: invalid VBM tree",
+}
+
+
 def check_protection(name, manifest, path, problems):
     """What ffmpeg and MediaInfo report of the protection objects and the Encrypted Content Flag, against the manifest's objects and the golden report."""
     objects = [o[0] for o in manifest["header_objects"]]
@@ -158,7 +170,7 @@ def check_protection(name, manifest, path, problems):
     try:
         tags = json.loads(result.stdout).get("format", {}).get("tags", {}) if result.stdout.strip() else {}
     except json.JSONDecodeError:
-        skip(name, "ffprobe's ASF_ tags", "ffprobe's decoder rejects the configuration (block alignment 0)" if name.startswith("voice-config-") else "ffprobe fails on the damaged file")
+        skip(name, "ffprobe's ASF_ tags", VOICE_CONFIG_REJECTED.get(name, "ffprobe fails on the damaged file"))
         tags = None
     report = golden_report(path)
     encryption = next((n for n in nodes_of(report["root"]) if n["name"] == "Content Encryption Object"), None) if report else None

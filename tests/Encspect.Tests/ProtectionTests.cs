@@ -80,6 +80,15 @@ public class ProtectionTests
     [InlineData("mp4/cenc-fragmented-table-group.mp4")]
     [InlineData("mp4/cenc-fragmented-fragment-group.mp4")]
     [InlineData("mp4/cenc-second-entry.m4a")]
+    [InlineData("mp4/cenc-two-enca-entries.m4a")]
+    [InlineData("mp4/cenc-entry-out-of-range.m4a")]
+    [InlineData("mp4/cenc-sample-group-default.m4a")]
+    [InlineData("mp4/cenc-fragmented-fragment-group-v0.mp4")]
+    [InlineData("mp4/cenc-fragmented-fragment-group-v2.mp4")]
+    [InlineData("mp4/cenc-fragmented-index-past-groups.mp4")]
+    [InlineData("mp4/cenc-fragmented-index-no-groups.mp4")]
+    [InlineData("mp4/cenc-fragmented-index-out-of-range.mp4")]
+    [InlineData("mp4/cenc-fragmented-table-default.mp4")]
     [InlineData("mp4/itunes-drms.m4a")]
     [InlineData("mp4/audible-aavd.m4a")]
     public void EncryptedSamplesAreNotReadAsFrames(string name)
@@ -222,6 +231,23 @@ public class ProtectionTests
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
+    // A protected video stream is a stream of the report, but the summary describes the file by its first audio stream.
+    [Fact]
+    public void SummaryTakesCodecAndRateFromTheFirstAudioStream()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/protected-audio-and-video.asf");
+        Assert.Equal([true, false], report.Streams.Select(s => s.IsAudio).OrderByDescending(a => a));
+
+        ReportSummary summary = ReportSummary.From(report);
+        Assert.Equal("Windows Media Audio 2", summary.Codec);
+        Assert.Equal(44100, summary.SampleRate);
+        Assert.Equal(["Microsoft Digital Rights Manager version 1"], summary.ProtectionSchemes);
+        Assert.True(summary.IsProtected);
+
+        ReportSummary videoOnly = ReportSummary.From(Fixtures.AnalyzeMpeg("asf/protected-video-only.asf"));
+        Assert.True(videoOnly.IsProtected);
+    }
+
     // An Advanced Content Encryption Object protects the streams its records name: none when it holds no record, and those of the part of a record read when
     // the record is cut at the limit of entries read.
     [Fact]
@@ -229,7 +255,7 @@ public class ProtectionTests
     {
         Report empty = Fixtures.AnalyzeMpeg("asf/protected-advanced-no-records.asf");
         Assert.All(empty.Streams, s => Assert.False(s.IsProtected));
-        Assert.Contains(empty.Findings, f => f.Code == "asf.content-encrypted" && f.Message.Contains("no content encryption record", StringComparison.Ordinal));
+        Assert.Contains(empty.Findings, f => f.Code == "asf.no-content-encryption-record" && f.Message.Contains("no content encryption record", StringComparison.Ordinal));
 
         Report many = Fixtures.AnalyzeMpeg("asf/protected-advanced-many-records.asf");
         Assert.Contains(many.Findings, f => f.Code == "asf.too-many-entries");

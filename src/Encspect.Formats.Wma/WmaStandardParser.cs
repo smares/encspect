@@ -196,7 +196,7 @@ public sealed class WmaStandardParser : ICodecParser
         var node = parent.Add(new Node(codec, parent.Offset, parent.Length, NodeValue.Text(encrypted ? "frames not read: encrypted" : "not analyzed"))
         {
             Kind = NodeKind.Stream,
-            Description = description ?? Explain.Stream,
+            Description = description ?? (encrypted ? ProExplain.EncryptedHeaderOnlyStream : Explain.Stream),
             Topic = topic ?? Topics.WmaStandard,
         });
         double duration = encrypted ? configuration!.Duration ?? 0 : 0;

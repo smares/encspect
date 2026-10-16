@@ -529,9 +529,17 @@ public sealed partial class Mp4Parser
         int version = FullBox(node, f).Version;
         string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
         uint defaultLength = version == 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
-        if (version >= 2)
+        uint defaultIndex = version >= 2 ? f.U32(node, "Default Sample Description Index", Explain.DefaultSampleDescriptionIndex) : 0;
+        if (grouping == "seig")
         {
-            f.U32(node, "Default Sample Description Index", Explain.DefaultSampleDescriptionIndex);
+            if (state.Track is { } owner)
+            {
+                owner.EncryptionDefault = defaultIndex;
+            }
+            else if (state.Fragment is { } fragment)
+            {
+                fragment.GroupDefault = defaultIndex;
+            }
         }
 
         uint count = f.U32(node, "Entries", Explain.GroupDescriptionEntries);
@@ -548,10 +556,12 @@ public sealed partial class Mp4Parser
                 node.Add(entry);
                 state.Track?.Rolls.Add((grouping, distance, entry));
             }
-            else if (grouping == "seig" && length > 0)
+            else if (grouping == "seig" && (length > 0 || version != 1))
             {
-                var entry = new Node("Entry", at, Math.Min(length, f.Remaining)) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
-                SampleEncryptionGroupEntry(state, entry, f, Math.Min(length, f.Remaining));
+                // Without a length (versions 0 and 2) a seig entry sizes itself.
+                long size = length > 0 ? Math.Min(length, f.Remaining) : SeigEntryLength(f);
+                var entry = new Node("Entry", at, size) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
+                SampleEncryptionGroupEntry(state, entry, f, size);
                 node.Add(entry);
             }
             else if (length > 0)

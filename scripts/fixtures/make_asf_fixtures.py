@@ -373,11 +373,11 @@ def advanced_partial():
 fixture("protected-advanced", "An Advanced Content Encryption Object in the Header Extension Object with a record of the one system ID the specification lists (Windows Media DRM for network devices) "
         "for stream 2, the Windows Media Audio stream, and one of a system ID it does not list for stream 7, which the file does not have. A PCM stream 1 stays clear.",
         advanced_partial, [ADVANCED_FINDING, ENCRYPTED, finding("asf.encrypted-object-unknown-stream", "stream 7")], ENCRYPTED_FFPROBE,
-        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
+        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 fixture("protected-advanced-whole-file", "An Advanced Content Encryption Object whose record names stream 0, the whole file, with a system ID the specification does not list: every stream is protected, "
         "and the system is named by its ID.",
         protected([wma(1)], extension=advanced([(UNKNOWN_SYSTEM, 2, [(1, stream_number(0))], b"data")])), [ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM]}])
+        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM]}])
 fixture("protected-all-objects", "Windows Media Audio covered by all three encryption objects and a Digital Signature Object: the first object in file order names the scheme, and the systems are those of the Advanced Content Encryption Object.",
         protected([wma(1, encrypted=True), m.content_encryption(), m.obj(m.EXTENDED_CONTENT_ENCRYPTION, struct.pack("<I", 2) + b"ab"), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 2, 4) + b"sign")],
                   extension=advanced([(DRM_SYSTEM, 1, [(1, stream_number(1))], b"")])), [DRM1_FINDING, EXTENDED_FINDING, ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
@@ -401,8 +401,26 @@ fixture("protected-mpeg-audio", "MPEG audio layer III, which has no parser here,
 fixture("protected-video-only", "A video stream whose Encrypted Content Flag is set, with a Content Encryption Object, and no audio: the stream is reported as protected and encrypted.",
         protected([m.stream_properties(1, b"\x01\x02\x03", stream_type=m.VIDEO_MEDIA, encrypted=True), m.content_encryption()]),
         [DRM1_FINDING, finding("asf.stream-not-analyzed", "video")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
+fixture("protected-audio-and-video", "An encrypted Windows Media Audio stream and an encrypted video stream, with a Content Encryption Object: the summary takes its codec and rate from the audio stream, and its protection from both.",
+        protected([wma(1, encrypted=True), m.stream_properties(2, b"\x01\x02\x03", stream_type=m.VIDEO_MEDIA, encrypted=True), m.content_encryption()]),
+        [DRM1_FINDING, ENCRYPTED, finding("asf.stream-not-analyzed", "video"), finding("asf.stream-without-payloads", "Stream 2")], ENCRYPTED_FFPROBE,
+        scheme("Microsoft Digital Rights Manager version 1") * 2)
 fixture("protected-advanced-no-records", "An Advanced Content Encryption Object with no content encryption record: it protects no stream, and a PCM stream stays clear.",
-        protected([pcm(1)], extension=advanced([])), [finding("asf.content-encrypted", "no content encryption record")], None, [])
+        protected([pcm(1)], extension=advanced([])), [finding("asf.no-content-encryption-record", "no content encryption record")], None, [])
+
+
+def advanced_raw(body, streams=1):
+    return lambda: m.asf_file([pcm(1), wma(2)], objects_in([1, 2], 6, 100, 512), 512, file_id=FILE_ID, play=1_000_000, extension=m.obj(m.ADVANCED_CONTENT_ENCRYPTION, body))
+
+
+RECORD_HEAD = struct.pack("<H", 1) + m.guid(DRM_SYSTEM) + struct.pack("<I", 1)
+NETWORK = [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}]
+fixture("protected-advanced-truncated", "An Advanced Content Encryption Object cut inside its only record, which counts three encrypted object records and holds one, for stream 2: the record as far as it was read still protects the stream.",
+        advanced_raw(RECORD_HEAD + struct.pack("<H", 3) + struct.pack("<HH", 1, 2) + stream_number(2)),
+        [ADVANCED_FINDING, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")], ENCRYPTED_FFPROBE, NETWORK)
+fixture("protected-advanced-data-size", "An Advanced Content Encryption Object whose record states 100 bytes of data and holds 3, for stream 2.",
+        advanced_raw(RECORD_HEAD + struct.pack("<H", 1) + struct.pack("<HH", 1, 2) + stream_number(2) + struct.pack("<I", 100) + b"abc"),
+        [ADVANCED_FINDING, ENCRYPTED, finding("asf.encryption-data-size", "100 bytes of data")], ENCRYPTED_FFPROBE, NETWORK)
 
 
 def advanced_many():
@@ -413,7 +431,7 @@ def advanced_many():
 fixture("protected-advanced-many-records", "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read, so the stream is protected "
         "by the part of the record that was read, and the rest of the object is not.", advanced_many,
         [ADVANCED_FINDING, ENCRYPTED, finding("asf.too-many-entries", "encrypted object records")], ENCRYPTED_FFPROBE,
-        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
+        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 
 # ---- damaged files ----
 
