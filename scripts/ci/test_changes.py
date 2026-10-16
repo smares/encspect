@@ -51,7 +51,7 @@ class ChangesTests(unittest.TestCase):
 
     def test_the_matroska_parser_its_codec_parsers_scripts_and_fixtures_belong_to_the_matroska_job(self):
         for path in ("src/Encspect.Formats.Matroska/Tree.cs", "src/Encspect.Formats.Opus/OpusParser.cs", "tests/fixtures/matroska/webm.webm",
-                     "scripts/fixtures/matroska_tables.py", "scripts/fixtures/make_matroska_fixtures.py", "scripts/fixtures/matroska_model.py"):
+                     "scripts/fixtures/matroska_tables.py", "scripts/fixtures/make_matroska_fixtures.py", "scripts/fixtures/matroska_model.py", "scripts/fixtures/matroska_encodings_model.py"):
             self.assertIn("matroska-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_matroska_fixtures.py"), {"matroska-crosscheck", "fixtures"})
         self.assertNotIn("matroska-crosscheck", run("src/Encspect.Formats.Musepack/MusepackParser.cs"))

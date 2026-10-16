@@ -77,7 +77,7 @@ AREAS = {
                      "Encspect.Formats.Opus", "Encspect.Formats.Vorbis"],
         "fixtures": ["matroska"],
         "scripts": ["crosscheck_matroska_fixtures.py", "matroska_tables.py"],
-        "globs": ["scripts/fixtures/make_*matroska*", "scripts/fixtures/matroska_model.py"],
+        "globs": ["scripts/fixtures/make_*matroska*", "scripts/fixtures/matroska_*model.py"],
     },
     "ac3-crosscheck": {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],

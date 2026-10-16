@@ -149,11 +149,6 @@ def mkvinfo_encodings(text):
     return [[tuple(e) for e in track] for track in tracks]
 
 
-def expected_protection(encodings):
-    """What RFC 9559 makes of a track's encodings, as (scheme, isEncrypted) or None: the model of check_matroska_encodings.py, whose docstring states the rules."""
-    return check_matroska_encodings.expected(encodings)[0]
-
-
 def check_protection(name, manifest, path, problems, tally, report):
     """mkvinfo's ContentEncodings against the manifest's, the golden report's protection against the RFC's reading of them, and MediaInfo's Encryption."""
     _, _, text = mkvinfo(path)
@@ -170,11 +165,11 @@ def check_protection(name, manifest, path, problems, tally, report):
         NOT_COMPARED.append(name)
     elif report is not None:
         for track, stream in zip(audio, report["streams"]):
-            expected = expected_protection(track["encodings"])
+            expected = check_matroska_encodings.reference_protection(track["codec"], track["private"] is not None, track["encodings"])
             protection = stream.get("protection")
             actual = (protection["scheme"], protection["isEncrypted"]) if protection else None
             if actual != expected:
-                problems.append(f"track {track['number']}: the report's protection is {actual}, RFC 9559 gives {expected}")
+                problems.append(f"track {track['number']}: the report's protection is {actual}, the reference model gives {expected}")
     tracks = mediainfo_tool.read(path)
     if tracks is None or len(tracks["Audio"]) != len(audio):
         tally.skip("encryption", "MediaInfo reads no tracks or other audio tracks than the manifest, the file being damaged")
