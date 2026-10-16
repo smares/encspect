@@ -118,6 +118,8 @@ public sealed partial class Mp4Parser : IFormatParser
         long end = ReadChildren(state, file, reader.Start, reader.End, 0, topLevel: true);
         if (end < reader.End)
         {
+            // What the boxes after it say is not known, so it may say that samples are protected.
+            state.DoesEveryTrackHaveProtectingEvidence = true;
             Node data = file.Add(new Node("Trailing Data", end, reader.End - end, NodeValue.Integer(reader.End - end, "bytes")) { Description = Explain.TrailingData });
             state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{reader.End - end} bytes after the last box at 0x{end:X} are not a box.", data);
         }
@@ -321,7 +323,12 @@ public sealed partial class Mp4Parser : IFormatParser
         {
             long at = header.Offset + header.HeaderLength - 16;
             byte[] user = state.Reader.ReadBytesAt(at, 16);
-            node.Add(new Node("User Type", at, 16, new Guid(user, bigEndian: true).ToString()) { Description = Explain.UserType });
+            var userType = new Guid(user, bigEndian: true);
+            node.Add(new Node("User Type", at, 16, userType.ToString()) { Description = Explain.UserType });
+            if (userType == PiffSampleEncryption || userType == PiffTrackEncryption)
+            {
+                MarkProtecting(state);
+            }
         }
 
         if (depth >= MaxBoxDepth)
@@ -410,7 +417,7 @@ public sealed partial class Mp4Parser : IFormatParser
         }
         else if (header.Type == "traf")
         {
-            state.Fragment = new FragmentTrack(node, state.Moof);
+            state.Fragment = new FragmentTrack(node, state.Moof) { IsInTrack = state.Track is not null };
         }
         else if (header.Type == "moof")
         {

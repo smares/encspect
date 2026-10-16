@@ -430,6 +430,11 @@ for cut, why, body, protection in [
     fixture(f"protected-advanced-cut-{cut}", f"An Advanced Content Encryption Object cut {why}: the records were not read in full, so every stream is taken to be protected.",
             advanced_raw(body), [UNREAD, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")] + ([finding("asf.object-size", "at least 26")] if not body else []),
             ENCRYPTED_FFPROBE, protection * 2)
+ONE_RECORD = m.guid(DRM_SYSTEM) + struct.pack("<IH", 1, 1) + struct.pack("<HH", 1, 2) + stream_number(2) + struct.pack("<I", 0)
+fixture("protected-advanced-count-past-object", "An Advanced Content Encryption Object that counts two records and holds one, which names stream 2: the second record is missing, so every stream is taken to be protected.",
+        advanced_raw(struct.pack("<H", 2) + ONE_RECORD), [UNREAD, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")], ENCRYPTED_FFPROBE, NO_SYSTEM + NETWORK)
+fixture("protected-advanced-1001-records", "An Advanced Content Encryption Object of 1001 records, each naming stream 2: the first 1000 are read and the rest are not, so every stream is taken to be protected.",
+        advanced_raw(struct.pack("<H", 1001) + ONE_RECORD * 1001), [UNREAD, ENCRYPTED, finding("asf.too-many-entries", "content encryption records")], ENCRYPTED_FFPROBE, NO_SYSTEM + NETWORK)
 fixture("protected-advanced-data-size", "An Advanced Content Encryption Object whose record states 100 bytes of data and holds 3, for stream 2.",
         advanced_raw(RECORD_HEAD + struct.pack("<H", 1) + struct.pack("<HH", 1, 2) + stream_number(2) + struct.pack("<I", 100) + b"abc"),
         [ADVANCED_FINDING, ENCRYPTED, finding("asf.encryption-data-size", "100 bytes of data")], ENCRYPTED_FFPROBE, NETWORK)

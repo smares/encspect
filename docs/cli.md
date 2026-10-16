@@ -149,11 +149,11 @@ A JSON report (schema version 1) is an object:
 The CSV row of a file has:
 
 - its format and the number of streams;
-- the first stream's codec;
-- the duration and samples of all streams together;
+- the first audio stream's codec;
+- the duration and samples of the audio streams together;
 - their average bitrate, weighted by duration;
-- the first stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
-- the first encoder named and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named and its confidence (`Writer`, `Writer Confidence`, the two columns after the encoder's);
+- the first audio stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
+- the first encoder named by an audio stream and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named by any stream and its confidence (a fact about the file) (`Writer`, `Writer Confidence`, the two columns after the encoder's);
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;

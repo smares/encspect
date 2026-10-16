@@ -89,7 +89,11 @@ public sealed partial class Mp4Parser
         if (state.Fragment is { } fragment)
         {
             fragment.HasHeader = true;
-            fragment.TrackId = id;
+            fragment.HeaderCount++;
+            if (fragment.HeaderCount == 1)
+            {
+                fragment.TrackId = id;
+            }
             fragment.BaseDataOffset = baseOffset;
             fragment.BaseIsMoof = (flags & 0x20000) != 0;
             fragment.DefaultSize = defaultSize;
@@ -178,6 +182,13 @@ public sealed partial class Mp4Parser
     private static void FinishFragment(State state, FragmentTrack fragment)
     {
         ResolveFragment(state, fragment);
+        if (fragment.HeaderCount > 1)
+        {
+            state.Findings.Add(Severity.Warning, "mp4.fragment-two-headers", fragment.Node, count =>
+                $"{(count == 1 ? "A track fragment holds" : $"{count} track fragments hold")} more than one tfhd box, so whose samples its runs place is not known and they are not analyzed, first at 0x{fragment.Node.Offset:X}.");
+            return;
+        }
+
         Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
         if (track is null)
         {

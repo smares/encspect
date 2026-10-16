@@ -90,6 +90,9 @@ public sealed partial class Mp4Parser
 
         public bool IsFragmentHeaderMissing { get; set; }
 
+        // Whether a sinf or schm box lies outside any track, sample entry and track fragment (it is taken to apply to every track).
+        public bool DoesEveryTrackHaveProtectionScheme { get; set; }
+
         // The sample descriptions the track fragments of each track use (tfhd, else trex).
         public Dictionary<uint, HashSet<uint>> FragmentDescriptions { get; } = [];
     }
@@ -147,6 +150,9 @@ public sealed partial class Mp4Parser
         // Whether anything inside the track says that its samples are protected: a seig sample group description that protects, cannot be read or is of
         // a version the project does not know (wherever in the track it lies), or a sample encryption box.
         public bool HasProtectingEvidence { get; set; }
+
+        // Whether a sinf or schm box lies in the track outside any sample entry, which says that its samples are protected by a scheme.
+        public bool HasProtectionScheme { get; set; }
 
         // The sample entry the track is read through, once routed.
         public SampleEntry? ReadEntry { get; set; }
@@ -237,6 +243,11 @@ public sealed partial class Mp4Parser
 
         // Whether the fragment has a tfhd box (without one its track is not known), and whether anything in it says its samples are protected.
         public bool HasHeader { get; set; }
+
+        // How many tfhd boxes the fragment holds (a fragment has one), and whether it lies inside a trak box.
+        public int HeaderCount { get; set; }
+
+        public bool IsInTrack { get; set; }
 
         public bool HasProtectingEvidence { get; set; }
 

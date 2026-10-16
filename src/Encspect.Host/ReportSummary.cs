@@ -3,9 +3,9 @@ using Encspect.Core;
 namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
-// reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode and
-// channel layout are the first audio stream's, and empty where there is none; encoder and writer are the first stream's that has one; the
-// duration and samples add up over the audio streams, and the average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
+// reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
+// channel layout and encoder are the first audio stream's that has one, and empty where there is none; the writer is the first stream's that has one, since it is a fact about
+// the file; the duration and samples add up over the audio streams, and the average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
 // most JOC objects one reconstructs. Protection is whether any stream is protected, with the schemes
 // and DRM systems the protected streams name, without repeats, in stream order. Tags are the file's and those its container holds in its chunks,
 // in tree order.
@@ -53,7 +53,7 @@ public sealed record ReportSummary(
         IReadOnlyList<StreamInfo> streams = report.Streams;
         List<StreamInfo> audio = [.. streams.Where(s => s.Kind == StreamKind.Audio)];
         StreamInfo? first = audio.Count > 0 ? audio[0] : null;
-        StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
+        StreamInfo? encoded = audio.FirstOrDefault(s => s.Encoder is not null);
         StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
         List<StreamInfo> timed = audio.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);

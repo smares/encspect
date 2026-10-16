@@ -14,6 +14,11 @@ public sealed partial class Mp4Parser
     // The bytes FFmpeg's mov_read_adrm takes from an adrm box: 8, a 56-byte blob, 4 and a 20-byte checksum.
     private const int AudibleDrmLength = 88;
 
+    // The extension boxes of Microsoft's PIFF, which GPAC names (gf_isom_solve_uuid_box): the sample encryption and the track encryption box.
+    private static readonly Guid PiffSampleEncryption = new("A2394F52-5A9B-4F14-A244-6C427C648DF4");
+
+    private static readonly Guid PiffTrackEncryption = new("8974DBCE-7BE7-4C51-84F9-7148F9882554");
+
 
     // The default ISO/IEC 23001-7 gives for a track whose samples are protected: an initialization
     // vector per sample of 0 (a constant one in tenc), 8 or 16 bytes.
@@ -63,6 +68,11 @@ public sealed partial class Mp4Parser
         }
 
         node.Value = $"{type} ({(ProtectsByCommonEncryption(type) ? "Common Encryption" : SchemeName(type))})";
+        if (!state.InSinf || state.CurrentEntry is not { Protection: not null })
+        {
+            MarkProtectionScheme(state);
+        }
+
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })
         {
             protection.SchemeType ??= type;
@@ -106,6 +116,11 @@ public sealed partial class Mp4Parser
         }
 
         node.Value = isProtected != 0 ? "protected by default" : "not protected by default";
+        if (isProtected != 0)
+        {
+            MarkProtecting(state);
+        }
+
         if (constant is not null && constantSize is { } declared && constant.Length < declared)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv", $"The tenc box at 0x{node.Offset:X} declares a constant initialization vector of {declared} bytes, but holds {constant.Length}.", node);
@@ -447,15 +462,17 @@ public sealed partial class Mp4Parser
         List<SampleEntry> used = [.. indexes.Where(d => d >= 1 && d <= track.Entries.Count).Select(d => track.Entries[(int)d - 1])];
         // A description that points to no entry, or a track fragment that does not say whose it is, may be any entry.
         bool isUnresolved = indexes.Any(d => d < 1 || d > track.Entries.Count) || state.IsFragmentHeaderMissing;
-        List<SampleEntry> protectedEntries = [.. used.Where(e => IsProtectedEntry(e.Format))];
+        List<SampleEntry> protectedEntries = [.. used.Where(IsProtectedEntry)];
         if (isUnresolved)
         {
-            protectedEntries = [.. protectedEntries.Concat(track.Entries.Where(e => IsProtectedEntry(e.Format) && !protectedEntries.Contains(e)))];
+            protectedEntries = [.. protectedEntries.Concat(track.Entries.Where(e => IsProtectedEntry(e) && !protectedEntries.Contains(e)))];
         }
 
         if (protectedEntries.Count == 0)
         {
-            return (used.FirstOrDefault() ?? track.Entries[0], false, false);
+            // A scheme stated in the track outside its sample entries protects the track whatever its entries say.
+            bool hasScheme = track.HasProtectionScheme || state.DoesEveryTrackHaveProtectionScheme;
+            return (used.FirstOrDefault() ?? track.Entries[0], hasScheme, hasScheme);
         }
 
         SampleEntry chosen = protectedEntries.FirstOrDefault(e => !IsClearByKeyInformation(e)) ?? protectedEntries[0];
@@ -464,22 +481,44 @@ public sealed partial class Mp4Parser
         return (chosen, true, isEncrypted);
     }
 
-    // Something in the track, track fragment or (outside both) the file that says its samples are protected.
+    // Something that says samples are protected, wherever it lies. In a track fragment it is the fragment's, which goes to its track once
+    // the fragment is read (the innermost box counts, though a fragment may lie in a trak box); in a track, the track's; anywhere else
+    // (the top level, moov, a skipped part of the file) it applies to every track.
     private static void MarkProtecting(State state)
     {
-        if (state.Track is { } track)
-        {
-            track.HasProtectingEvidence = true;
-        }
-        else if (state.Fragment is { } fragment)
+        if (state.Fragment is { } fragment)
         {
             fragment.HasProtectingEvidence = true;
+        }
+        else if (state.Track is { } track)
+        {
+            track.HasProtectingEvidence = true;
         }
         else
         {
             state.DoesEveryTrackHaveProtectingEvidence = true;
         }
     }
+
+    // A sinf or schm box outside a sample entry's protection scheme information: the track it lies in, or every track, is protected by a scheme.
+    private static void MarkProtectionScheme(State state)
+    {
+        MarkProtecting(state);
+        if (state.Fragment is null)
+        {
+            if (state.Track is { } track)
+            {
+                track.HasProtectionScheme = true;
+            }
+            else
+            {
+                state.DoesEveryTrackHaveProtectionScheme = true;
+            }
+        }
+    }
+
+    // Whether the entry is protected: its format says so, or it carries a sinf box whatever its format.
+    private static bool IsProtectedEntry(SampleEntry entry) => IsProtectedEntry(entry.Format) || entry.Protection is not null;
 
     // Once a track fragment is read: what it says about protection goes to its track, or to every track where the fragment does not name one.
     private static void ResolveFragment(State state, FragmentTrack fragment)
@@ -494,7 +533,8 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        if (fragment.HasHeader && state.Tracks.Any(t => t.Id == fragment.TrackId))
+        // Evidence belongs to a track only where the fragment names exactly one existing track.
+        if (fragment.HeaderCount == 1 && !fragment.IsInTrack && state.Tracks.Count(t => t.Id == fragment.TrackId) == 1)
         {
             state.ProtectedTracks.Add(fragment.TrackId);
         }

@@ -109,10 +109,10 @@ def manifest(description, data, records, streams, samples_rows, fields, findings
 
 
 def encrypted(name, description, entry, *, count=30, extra_moov=(), extra_stbl=(), findings=None, fields=None, streams=None, scheme_name=None,
-              systems=(), before=(), crosscheck=None, brand=None, rate=44100, samples=None, mode="Stereo", codec="AAC LC", channels=2, durations=None, layout=True, track_options=None):
+              systems=(), before=(), crosscheck=None, brand=None, rate=44100, samples=None, mode="Stereo", codec="AAC LC", channels=2, durations=None, layout=True, track_options=None, movie_options=None):
     samples = samples if samples is not None else ciphertext(count)
     track = Track(1, samples, rate, channels, entry, extra=list(extra_stbl), durations=durations, **(track_options or {}))
-    options = {"moov_extra": list(extra_moov)}
+    options = {"moov_extra": list(extra_moov), **(movie_options or {})}
     if brand:
         options["ftyp_box"] = brand
     data, records, offsets = movie([track], **options)
@@ -343,6 +343,127 @@ def encrypted_groups():
                              crosscheck={"ffprobe": False, "mp4box": name != "cenc-two-tenc", "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
                                          "skip": {**({"mp4box": "MP4Box lists only the first tenc box of a schi box."} if name == "cenc-two-tenc" else {}), "faad": "faad2 rejects the encrypted sample entry.", "faad_trace": "faad2 rejects the encrypted sample entry.",
                                                   "ffprobe": "ffmpeg reads the samples of these files as clear AAC where it does not find them encrypted."}}))
+    return out
+
+
+PIFF_SAMPLE_ENCRYPTION = bytes.fromhex("A2394F525A9B4F14A2446C427C648DF4")
+PIFF_TRACK_ENCRYPTION = bytes.fromhex("8974DBCE7BE74C5184F97148F9882554")
+
+
+def file_wide_evidence():
+    """Whole files in which something that says samples are protected lies where it does not belong: a sinf box in a sample entry that is no enca entry or in the
+    trak box, a protecting tenc outside its sinf box, PIFF's sample and track encryption boxes, a senc box that the parser never reads because the boxes stop
+    before the end of the file. Wherever it lies, it counts: the evidence of a track or of a track fragment that names one track is that track's, any other is every track's."""
+    clear = encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0))
+    plain = mp4a(2, 44100, esds(0x40, LC, 0, 0))
+    protecting_sinf = lambda: sinf(frma(b"mp4a"), schm(b"cenc"), schi(tenc()))
+    piff_senc = box("uuid", u32(0) + u32(30) + ivs(30), uuid=PIFF_SAMPLE_ENCRYPTION)
+    piff_tenc = box("uuid", u32(0) + bytes([0, 0, 1]) + bytes([8]) + bytes(range(16)), uuid=PIFF_TRACK_ENCRYPTION)
+    one = [SAMPLES_ENCRYPTED]
+    cases = [
+        ("cenc-sinf-in-mp4a-entry", "a plain mp4a sample entry holds a sinf box with the scheme cenc and a protecting tenc box", mp4a(2, 44100, esds(0x40, LC, 0, 0), protecting_sinf()), {}, one),
+        ("cenc-sinf-in-trak", "the trak box holds a sinf box with the scheme cenc and a protecting tenc box, outside the plain mp4a sample entry", plain, dict(after_mdia=[protecting_sinf()]), one),
+        ("cenc-stray-tenc-in-entry", "a protecting tenc box lies in the enca sample entry outside its sinf box, whose own tenc box does not protect", encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0), extra=[tenc()]), {}, one),
+        ("cenc-stray-schi-in-trak", "a schi box with a protecting tenc box lies in the trak box, outside the enca sample entry", clear, dict(after_mdia=[schi(tenc())]), one),
+        ("cenc-stray-tenc-in-stbl", "a protecting tenc box lies in the stbl box, outside the enca sample entry", clear, dict(extra_stbl=[tenc()]), one),
+        ("cenc-stray-sinf-in-trak", "a sinf box with the scheme cenc and a protecting tenc box lies in the trak box of an enca track whose own tenc box does not protect", clear, dict(after_mdia=[protecting_sinf()]), one),
+        ("cenc-stray-schi-in-entry", "a schi box with a protecting tenc box lies in the enca sample entry outside its sinf box", encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0), extra=[schi(tenc())]), {}, one),
+        ("piff-senc-in-stbl", "a PIFF sample encryption box (a uuid box) lies in the stbl box, and tenc does not protect", clear, dict(extra_stbl=[piff_senc]), one),
+        ("piff-scheme", "the scheme is piff, which the project does not know, with a PIFF track encryption box", encrypted_aac_entry(schm(b"piff", 0x10001), schi(piff_tenc)), {}, one),
+        ("piff-tenc-beside-cenc", "the schi box of a cenc entry holds a tenc box that does not protect and a PIFF track encryption box", encrypted_aac_entry(schm(b"cenc"), schi(tenc(is_protected=0, iv_size=0), piff_tenc)), {}, one),
+        ("cenc-senc-after-mdat", "a senc box follows the mdat box at the top level, where the parser stops reading boxes, and tenc does not protect", clear,
+         dict(movie_options=dict(after=[senc(30)])), one + [["mp4.trailing-data", "are not a box"]]),
+    ]
+    out = []
+    for name, text, entry, options, findings in cases:
+        out.append(encrypted(name, f"AAC LC: {text}. The 30 samples are pseudo-random bytes and are not read as AAC.", entry, extra_stbl=options.get("extra_stbl", ()), findings=findings,
+                             scheme_name={"piff-scheme": "protection scheme piff", "cenc-sinf-in-trak": "protection scheme not stated"}.get(name, SCHEMES[b"cenc"]),
+                             track_options={k: options[k] for k in ("before_mdia", "after_mdia") if k in options}, movie_options=options.get("movie_options"),
+                             crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"ffprobe": None, "mediainfo": None if name in ("cenc-sinf-in-mp4a-entry", "cenc-sinf-in-trak") else "Encrypted"},
+                                         "skip": {"all": "a file whose boxes lie where they do not belong, which the tools read in their own ways"}}))
+    # The parser stops at the senc box, which is no top-level box, so the manifest lists the boxes up to it.
+    name, data, result = out[-1]
+    result["boxes"] = result["boxes"][:-1]
+    return out + fragmented_evidence() + [pssh_only_clear()]
+
+
+def pssh_only_clear():
+    """A clear track with a pssh box: a DRM system's data alone says nothing about the samples, so they are read as usual."""
+    entry = encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0))
+    samples = units("stereo", 20)
+    track = Track(1, samples, 44100, 2, entry)
+    data, records, offsets = movie([track], moov_extra=[pssh(WIDEVINE, b"abc")])
+    return ("cenc-pssh-only-clear", data, manifest(
+        "AAC LC in an enca entry whose tenc box does not protect, in a file with a Widevine pssh box and nothing else that says samples are protected: the pssh data names a DRM system and "
+        "says nothing about the samples, so they are read as usual.", data, records,
+        [dict(aac_stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True), protection=protection(SCHEMES[b"cenc"], False, [WIDEVINE]))], sample_rows(offsets[0], samples, 10), {},
+        [["mp4.protected-samples-clear", "no sample is protected"]], units_rows=unit_list(offsets[0], samples, 10),
+        crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
+                    "skip": {"faad": "faad2 rejects the protected sample entry.", "faad_trace": "faad2 rejects the protected sample entry."}}))
+
+
+def fragmented_evidence():
+    """Fragmented files with absolute base data offsets whose evidence of protection lies in a track fragment that names no single existing track, or in a box nested where it
+    does not belong."""
+    clear = encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0))
+    protecting = encrypted_aac_entry(*cenc_sinf())
+    plain = mp4a(2, 44100, esds(0x40, LC, 0, 0))
+    samples = ciphertext(20)
+    sizes = [len(s) for s in samples]
+    mdat = box("mdat", b"".join(samples))
+    ft = ftyp(b"iso6", 0, (b"iso6", b"dash", b"mp41"))
+
+    def trak(track_id, entries, after_mdia=()):
+        stbl = box("stbl", b"", stsd(*entries), stts([]), stsc([]), stsz([]), stco([]))
+        return box("trak", b"", tkhd(track_id, 0), box("mdia", b"", mdhd(44100, 0), hdlr(b"soun"), box("minf", b"", fullbox("smhd", 0, 0, bytes(4)), dinf(), stbl)), *after_mdia)
+
+    def trex(track_id):
+        return fullbox("trex", 0, 0, u32(track_id) + u32(1) + u32(1024) + u32(0) + u32(0))
+
+    def tfhd(track_id, base):
+        return fullbox("tfhd", 0, 0x1, u32(track_id) + u64(base))
+
+    def trun(run):
+        return fullbox("trun", 0, 0x200, u32(len(run)) + b"".join(u32(x) for x in run))
+
+    def mfhd():
+        return fullbox("mfhd", 0, 0, u32(1))
+
+    def moov(*traks):
+        return box("moov", b"", mvhd(1000, 0), *traks, box("mvex", b"", *[trex(i) for i in (1, 2, 9)]))
+
+    cases = [
+        ("cenc-fragmented-traf-missing-track", "a track fragment for the missing track 9 holds a senc box", 10, [SAMPLES_ENCRYPTED, ["mp4.fragment-unknown-track", "track 9"]],
+         lambda b: [ft, moov(trak(1, [clear])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), trun(sizes[:10])), box("traf", b"", tfhd(9, b), senc(10, ivs(10)), trun(sizes[:10]))), mdat]),
+        ("cenc-fragmented-traf-in-trak", "a traf box lies inside the trak box of track 1 and names track 2, with a senc box", 20, [SAMPLES_ENCRYPTED],
+         lambda b: [ft, moov(trak(2, [clear]), trak(1, [clear], after_mdia=[box("traf", b"", tfhd(2, b), senc(20, ivs(20)), trun(sizes))])), mdat]),
+        ("cenc-fragmented-moof-in-trak", "a moof box lies inside the trak box of track 1 and holds a traf box for track 2 with a senc box", 20, [SAMPLES_ENCRYPTED],
+         lambda b: [ft, moov(trak(2, [clear]), trak(1, [clear], after_mdia=[box("moof", b"", mfhd(), box("traf", b"", tfhd(2, b), senc(20, ivs(20)), trun(sizes)))])), mdat]),
+        ("cenc-fragmented-piff-senc", "a PIFF sample encryption box (a uuid box) lies in the track fragment, and tenc does not protect", 20, [SAMPLES_ENCRYPTED],
+         lambda b: [ft, moov(trak(1, [clear])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), box("uuid", u32(0) + u32(20) + ivs(20), uuid=PIFF_SAMPLE_ENCRYPTION), trun(sizes))), mdat]),
+        ("cenc-fragmented-two-tfhd", "a track fragment holds two tfhd boxes (tracks 1 and 2) and a senc box, so that whose samples its run places is not known", 0,
+         [["mp4.fragment-two-headers", "more than one tfhd"], ["mp4.duplicate-box", "tfhd"]],
+         lambda b: [ft, moov(trak(1, [clear]), trak(2, [plain])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), senc(20, ivs(20)), trun(sizes), tfhd(2, b))), mdat]),
+        ("cenc-fragmented-two-tfhd-protecting", "a track fragment holds two tfhd boxes (tracks 1 and 2), and track 1 is protected by default", 0,
+         [["mp4.fragment-two-headers", "more than one tfhd"], ["mp4.duplicate-box", "tfhd"]],
+         lambda b: [ft, moov(trak(1, [protecting]), trak(2, [plain])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), trun(sizes), tfhd(2, b))), mdat]),
+    ]
+    out = []
+    for name, text, placed, findings, build in cases:
+        data, records = write(build(0))
+        start = next(o for path, o, size in records if path == "mdat") + 8
+        data, records = write(build(start))
+        rows = []
+        position = start
+        for size in sizes[:placed]:
+            rows.append([position, size])
+            position += size
+        streams = [dict(aac_stream("AAC LC", 44100, 2, "Stereo", 0, vbr=True), protection=protection(SCHEMES[b"cenc"], True))] if placed else []
+        out.append((name, data, manifest(
+            f"A fragmented MP4 of ciphertext in which something says samples are protected although the tenc box does not: {text}. The samples are pseudo-random bytes and must never be read as AAC.",
+            data, records, streams, rows, {}, findings,
+            crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
+                        "skip": {"all": "a file whose boxes lie where they do not belong, which the tools read in their own ways"}})))
     return out
 
 
@@ -608,7 +729,7 @@ def corrupt():
 
 
 def main():
-    fixtures = common_encryption() + clear_protected() + sample_groups() + other_codecs() + fragmented() + itunes() + fragmented_groups() + sample_group_defaults() + encrypted_groups() + unused_entry_run() + two_entries() + audible() + purchase_on_clear_file() + corrupt()
+    fixtures = common_encryption() + clear_protected() + sample_groups() + other_codecs() + fragmented() + itunes() + fragmented_groups() + sample_group_defaults() + encrypted_groups() + file_wide_evidence() + unused_entry_run() + two_entries() + audible() + purchase_on_clear_file() + corrupt()
     for name, data, result in fixtures:
         extension = ".mp4" if name.startswith("cenc-fragmented") else ".m4a"
         MP4.mkdir(parents=True, exist_ok=True)

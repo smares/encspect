@@ -232,14 +232,22 @@ public static class ReportJsonWriter
             writer.WriteNumber("bitsPerSample", bitsPerSample);
         }
 
-        writer.WriteNumber("samples", stream.Samples);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteNumber("samples", stream.Samples);
+        }
+
         writer.WriteNumber("duration", stream.Duration);
         if (stream.AverageBitrate is { } bitrate)
         {
             writer.WriteNumber("averageBitrate", bitrate);
         }
 
-        writer.WriteBoolean("isVbr", stream.IsVbr);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteBoolean("isVbr", stream.IsVbr);
+        }
+
         if (stream.HasObjectAudio)
         {
             writer.WriteBoolean("hasObjectAudio", true);

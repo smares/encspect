@@ -412,6 +412,7 @@ ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it pa
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 NO_CHANNELS = "MediaInfo 24.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
 NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
+MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a stream only for samples its tables or fragments place, and these fragments place them for one track or none"
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 MEDIAINFO_READS_OTHERWISE = {
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
@@ -422,6 +423,10 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/cenc-second-entry": {"encryption": FIRST_ENTRY},
     "mp4/cenc-entry-out-of-range": {"encryption": FIRST_ENTRY},
     "mp4/cenc-fragmented-no-tfhd": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-fragmented-traf-in-trak": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-moof-in-trak": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-two-tfhd": {"streams": MOOV_TRACKS},
+    "mp4/cenc-fragmented-two-tfhd-protecting": {"streams": MOOV_TRACKS},
     "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
     "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
     "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},

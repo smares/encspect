@@ -1,0 +1,352 @@
+{
+ "description": "AAC LC in an enca entry whose tenc box does not protect, in a file with a Widevine pssh box and nothing else that says samples are protected: the pssh data names a DRM system and says nothing about the samples, so they are read as usual.",
+ "length": 1385,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   766
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   615
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   515
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   430
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   370
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   735,
+   24
+  ],
+  [
+   "moov/pssh",
+   759,
+   35
+  ],
+  [
+   "mdat",
+   794,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": false,
+    "systems": [
+     "Widevine Content Protection"
+    ]
+   }
+  }
+ ],
+ "units": [
+  [
+   802,
+   6
+  ],
+  [
+   808,
+   45
+  ],
+  [
+   853,
+   42
+  ],
+  [
+   895,
+   39
+  ],
+  [
+   934,
+   36
+  ],
+  [
+   970,
+   33
+  ],
+  [
+   1003,
+   30
+  ],
+  [
+   1033,
+   27
+  ],
+  [
+   1060,
+   24
+  ],
+  [
+   1084,
+   20
+  ],
+  [
+   1104,
+   17
+  ],
+  [
+   1121,
+   14
+  ],
+  [
+   1135,
+   11
+  ],
+  [
+   1146,
+   8
+  ],
+  [
+   1154,
+   46
+  ],
+  [
+   1200,
+   43
+  ],
+  [
+   1243,
+   40
+  ],
+  [
+   1283,
+   37
+  ],
+  [
+   1320,
+   34
+  ],
+  [
+   1354,
+   31
+  ]
+ ],
+ "samples": [
+  [
+   802,
+   6
+  ],
+  [
+   808,
+   45
+  ],
+  [
+   853,
+   42
+  ],
+  [
+   895,
+   39
+  ],
+  [
+   934,
+   36
+  ],
+  [
+   970,
+   33
+  ],
+  [
+   1003,
+   30
+  ],
+  [
+   1033,
+   27
+  ],
+  [
+   1060,
+   24
+  ],
+  [
+   1084,
+   20
+  ],
+  [
+   1104,
+   17
+  ],
+  [
+   1121,
+   14
+  ],
+  [
+   1135,
+   11
+  ],
+  [
+   1146,
+   8
+  ],
+  [
+   1154,
+   46
+  ],
+  [
+   1200,
+   43
+  ],
+  [
+   1243,
+   40
+  ],
+  [
+   1283,
+   37
+  ],
+  [
+   1320,
+   34
+  ],
+  [
+   1354,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.protected-samples-clear",
+   "no sample is protected"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "faad": "faad2 rejects the protected sample entry.",
+   "faad_trace": "faad2 rejects the protected sample entry."
+  }
+ }
+}
