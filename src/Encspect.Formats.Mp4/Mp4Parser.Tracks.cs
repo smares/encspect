@@ -139,14 +139,13 @@ public sealed partial class Mp4Parser
     {
         if (protection.IsEncrypted)
         {
-            string clear = track.HasEncryptionRuns && track.GroupedClear > 0 ? $"; {track.GroupedClear} of its {SampleCount(track)} samples are in the clear by their sample group, but none is read" : string.Empty;
             state.Findings.AddNow(Severity.Info, "mp4.samples-encrypted",
-                $"The samples of the audio {label} are encrypted ({protection.Scheme}){clear}, so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
+                $"The samples of the audio {label} are encrypted ({protection.Scheme}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
         }
         else
         {
             state.Findings.AddNow(Severity.Info, "mp4.protected-samples-clear",
-                $"The audio {label} is covered by {protection.Scheme}, but none of its samples is encrypted: the tenc box sets the default to not protected and no sample group protects samples, or the sample groups leave every sample in the clear.", entry.Protection?.Encryption?.Node ?? entry.Node);
+                $"The audio {label} is covered by {protection.Scheme}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
         }
     }
 
@@ -446,6 +445,12 @@ public sealed partial class Mp4Parser
                 {
                     state.Findings.AddNow(Severity.Warning, "mp4.sample-description-index",
                         $"Entry {run + 1} of the stsc box of {label} refers to sample description {description}, but the stsd box holds {track.Entries.Count}.", stsc);
+                }
+
+                if (firstChunk > offsets.Length)
+                {
+                    state.Findings.AddNow(Severity.Info, "mp4.stsc-chunk-past-end",
+                        $"Entry {run + 1} of the stsc box of {label} starts at chunk {firstChunk}, but the chunk offset box holds {offsets.Length}; no sample uses it, so neither does its sample description.", stsc);
                 }
 
                 long last = run + 1 < runs.Count ? Math.Min(runs[run + 1].FirstChunk - 1L, offsets.Length) : offsets.Length;

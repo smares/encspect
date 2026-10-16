@@ -421,6 +421,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/cenc-mpeg-audio": {"channels": NO_CHANNELS},
     "mp4/cenc-second-entry": {"encryption": FIRST_ENTRY},
     "mp4/cenc-entry-out-of-range": {"encryption": FIRST_ENTRY},
+    "mp4/cenc-fragmented-no-tfhd": {"encryption": FIRST_ENTRY},
     "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
     "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
     "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},

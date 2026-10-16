@@ -245,22 +245,23 @@
     "front left",
     "front right"
    ],
-   "samples": 67584,
+   "samples": 67174,
    "is_vbr": false,
    "protection": {
     "scheme": "Common Encryption, AES-CTR (cenc)",
-    "is_encrypted": false,
+    "is_encrypted": true,
     "systems": [
      "Widevine Content Protection"
     ]
    },
    "encoder": [
-    "FFmpeg (Lavc60.31.102)",
-    "High"
+    "GPAC-2.2.1-rev2.2.1+dfsg1-3.1build2",
+    "Low"
    ]
   }
  ],
- "units": [
+ "units": [],
+ "samples": [
   [
    1419,
    358
@@ -526,7 +527,6 @@
    330
   ]
  ],
- "samples": [],
  "fields": {
   "MP4/moov/mvhd/Timescale": "1000 units per second",
   "MP4/moov/mvhd/Duration": "1500 (1.500 s)",
@@ -546,12 +546,8 @@
  },
  "findings": [
   [
-   "mp4.protected-samples-clear",
-   "none of its samples is encrypted"
-  ],
-  [
-   "aac.encoder-claim-differs",
-   "GPAC"
+   "mp4.samples-encrypted",
+   "are encrypted"
   ]
  ],
  "crosscheck": {
@@ -566,7 +562,7 @@
   "skip": {
    "faad": "faad2 reads clear AAC only and rejects the encrypted sample entry.",
    "faad_trace": "faad2 rejects the protected sample entry.",
-   "ffprobe_encryption": "ffmpeg 6.1 marks the packets encrypted from the tenc default and ignores the sample group that leaves every sample in the clear."
+   "clear_samples": "the samples are in the clear (MP4Box's selectiveType Clear), and ffmpeg could read them; the analyzer reports the track as encrypted because its tenc box protects by default"
   }
  }
 }

@@ -1,6 +1,6 @@
 {
- "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose seig sample groups are taken to protect the samples; the index 0x10001 points into a track fragment that has no sgpd box. The samples are pseudo-random bytes and must never be read as AAC.",
- "length": 8121,
+ "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but in which something says that samples are protected: a protecting description lies in a udta box of the track fragment, where it describes nothing, next to a clear one in no group. The samples are pseudo-random bytes and must never be read as AAC.",
+ "length": 8137,
  "format": "MP4",
  "boxes": [
   [
@@ -146,7 +146,7 @@
   [
    "moof",
    691,
-   252
+   260
   ],
   [
    "moof/mfhd",
@@ -156,7 +156,7 @@
   [
    "moof/traf",
    715,
-   228
+   236
   ],
   [
    "moof/traf/tfhd",
@@ -169,68 +169,88 @@
    20
   ],
   [
-   "moof/traf/sbgp",
+   "moof/traf/udta",
    759,
+   56
+  ],
+  [
+   "moof/traf/udta/sgpd",
+   767,
+   48
+  ],
+  [
+   "moof/traf/sgpd",
+   815,
+   48
+  ],
+  [
+   "moof/traf/sbgp",
+   863,
    28
   ],
   [
-   "moof/traf/senc",
-   787,
-   96
-  ],
-  [
    "moof/traf/trun",
-   883,
+   891,
    60
   ],
   [
    "mdat",
-   943,
+   951,
    3413
   ],
   [
    "moof",
-   4356,
-   252
+   4364,
+   260
   ],
   [
    "moof/mfhd",
-   4364,
+   4372,
    16
   ],
   [
    "moof/traf",
-   4380,
-   228
+   4388,
+   236
   ],
   [
    "moof/traf/tfhd",
-   4388,
+   4396,
    16
   ],
   [
    "moof/traf/tfdt",
-   4404,
+   4412,
    20
   ],
   [
+   "moof/traf/udta",
+   4432,
+   56
+  ],
+  [
+   "moof/traf/udta/sgpd",
+   4440,
+   48
+  ],
+  [
+   "moof/traf/sgpd",
+   4488,
+   48
+  ],
+  [
    "moof/traf/sbgp",
-   4424,
+   4536,
    28
   ],
   [
-   "moof/traf/senc",
-   4452,
-   96
-  ],
-  [
    "moof/traf/trun",
-   4548,
+   4564,
    60
   ],
   [
    "mdat",
-   4608,
+   4624,
    3513
   ]
  ],
@@ -256,93 +276,101 @@
  "units": [],
  "samples": [
   [
-   951,
+   959,
    300
   ],
   [
-   1251,
+   1259,
    337
   ],
   [
-   1588,
+   1596,
    374
   ],
   [
-   1962,
+   1970,
    321
   ],
   [
-   2283,
+   2291,
    358
   ],
   [
-   2641,
+   2649,
    305
   ],
   [
-   2946,
+   2954,
    342
   ],
   [
-   3288,
+   3296,
    379
   ],
   [
-   3667,
+   3675,
    326
   ],
   [
-   3993,
+   4001,
    363
   ],
   [
-   4616,
+   4632,
    310
   ],
   [
-   4926,
+   4942,
    347
   ],
   [
-   5273,
+   5289,
    384
   ],
   [
-   5657,
+   5673,
    331
   ],
   [
-   5988,
+   6004,
    368
   ],
   [
-   6356,
+   6372,
    315
   ],
   [
-   6671,
+   6687,
    352
   ],
   [
-   7023,
+   7039,
    389
   ],
   [
-   7412,
+   7428,
    336
   ],
   [
-   7748,
+   7764,
    373
   ]
  ],
  "fields": {
-  "MP4/moof/traf/senc": "10 samples"
+  "MP4/moof/traf/trun": "10 samples"
  },
  "findings": [
   [
    "mp4.samples-encrypted",
    "are encrypted"
+  ],
+  [
+   "mp4.sample-group-misplaced",
+   "udta box"
+  ],
+  [
+   "mp4.sample-group-misplaced",
+   "udta box"
   ]
  ],
  "crosscheck": {

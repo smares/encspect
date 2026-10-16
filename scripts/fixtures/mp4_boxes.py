@@ -401,13 +401,15 @@ class Track:
     """An audio track whose samples are laid out in chunks of chunk samples."""
 
     def __init__(self, track_id, samples, rate, channels, sample_entry, timescale=None, chunk=10, extra=(), edits=None, mdhd_duration=None, stts_entries=None,
-                 stsz_box=None, stsc_box=None, durations=None, more_entries=()):
+                 stsz_box=None, stsc_box=None, durations=None, more_entries=(), before_mdia=(), after_mdia=()):
         self.track_id = track_id
         self.samples = samples
         self.rate = rate
         self.channels = channels
         self.sample_entry = sample_entry
         self.more_entries = list(more_entries)
+        self.before_mdia = list(before_mdia)
+        self.after_mdia = list(after_mdia)
         self.timescale = timescale or rate
         self.chunk = chunk
         self.extra = list(extra)
@@ -451,7 +453,9 @@ class Track:
             self.stsz_box or stsz([len(s) for s in self.samples]),
             stco_box or stco(chunk_offsets, wide),
         ] + self.extra
+        children += self.before_mdia
         children.append(box("mdia", b"", mdhd(self.timescale, duration), hdlr(b"soun"), box("minf", b"", fullbox("smhd", 0, 0, bytes(4)), dinf(), box("stbl", b"", *table))))
+        children += self.after_mdia
         return box("trak", b"", *children)
 
 
@@ -548,11 +552,14 @@ def seig_entry(is_protected, iv_size, kid, crypt=0, skip=0, constant_iv=None):
     return body
 
 
-def sgpd_seig(entries, version=1, default=0):
-    """A sample group description of grouping type seig: version 1 gives each entry its length, versions 0 and 2 none (a seig entry sizes itself), version 2 a default index."""
-    if version == 1:
-        return fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(len(entries)) + b"".join(u32(len(e)) + e for e in entries))
-    return fullbox("sgpd", version, 0, b"seig" + (u32(default) if version == 2 else b"") + u32(len(entries)) + b"".join(entries))
+def sgpd_seig(entries, version=1, default=0, default_length=0):
+    """A sample group description of grouping type seig, laid out as FFmpeg's mov_read_sgpd and GPAC read it: default_length from version 1 and
+    default_sample_description_index from version 2, then the entry count; an entry has its length first where default_length is 0 (versions 1 and 2),
+    and none in version 0, where a seig entry sizes itself."""
+    head = b"seig" + (u32(default_length) if version >= 1 else b"") + (u32(default) if version >= 2 else b"") + u32(len(entries))
+    if version >= 1 and default_length == 0:
+        return fullbox("sgpd", version, 0, head + b"".join(u32(len(e)) + e for e in entries))
+    return fullbox("sgpd", version, 0, head + b"".join(entries))
 
 
 def sbgp_seig(runs):

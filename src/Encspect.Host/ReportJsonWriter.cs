@@ -192,8 +192,16 @@ public static class ReportJsonWriter
 
         writer.WriteEndArray();
         writer.WriteString("codec", stream.Codec);
-        writer.WriteNumber("sampleRate", stream.SampleRate);
-        writer.WriteNumber("channels", stream.Channels);
+        if (stream.Kind == StreamKind.Audio)
+        {
+            writer.WriteNumber("sampleRate", stream.SampleRate);
+            writer.WriteNumber("channels", stream.Channels);
+        }
+        else
+        {
+            writer.WriteString("kind", stream.Kind.ToString());
+        }
+
         if (stream.ChannelMode is not null)
         {
             writer.WriteString("channelMode", stream.ChannelMode);
@@ -240,11 +248,6 @@ public static class ReportJsonWriter
         if (stream.JocObjectCount is { } objects)
         {
             writer.WriteNumber("jocObjectCount", objects);
-        }
-
-        if (!stream.IsAudio)
-        {
-            writer.WriteBoolean("isAudio", false);
         }
 
         if (stream.Protection is { } protection)

@@ -207,6 +207,20 @@ public sealed partial class Mp4Parser : IFormatParser
     private static long ReadChildren(State state, Node parent, long start, long end, int depth, bool topLevel = false, PayloadParser? custom = null,
         BoxNaming? naming = null)
     {
+        string? outerParent = state.ParentType;
+        state.ParentType = topLevel ? null : parent.Name;
+        try
+        {
+            return ReadChildrenOf(state, parent, start, end, depth, topLevel, custom, naming);
+        }
+        finally
+        {
+            state.ParentType = outerParent;
+        }
+    }
+
+    private static long ReadChildrenOf(State state, Node parent, long start, long end, int depth, bool topLevel, PayloadParser? custom, BoxNaming? naming)
+    {
         ByteReader reader = state.Reader;
         long position = start;
         while (position < end)

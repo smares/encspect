@@ -27932,6 +27932,13 @@
                   ]
                 },
                 {
+                  "name": "Stream 1",
+                  "kind": "Stream",
+                  "value": "frames not read: encrypted",
+                  "offset": 6440,
+                  "length": 1074
+                },
+                {
                   "name": "Windows Media Audio 2",
                   "kind": "Stream",
                   "value": "frames not read: encrypted",
@@ -27951,6 +27958,30 @@
             0,
             1,
             7
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 8000,
+        "channels": 1,
+        "samples": 0,
+        "duration": 0.1,
+        "isVbr": false,
+        "isProtected": true,
+        "protection": {
+          "scheme": "Windows Media DRM for network devices",
+          "isEncrypted": true,
+          "systems": [
+            "Windows Media DRM for network devices"
+          ]
+        },
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            8
           ]
         ],
         "codec": "Windows Media Audio 2",
@@ -28021,7 +28052,7 @@
       {
         "severity": "Info",
         "code": "asf.content-encrypted",
-        "message": "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them.",
+        "message": "The file is protected by Windows Media DRM for network devices; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.",
         "offset": 382,
         "length": 6058,
         "path": [

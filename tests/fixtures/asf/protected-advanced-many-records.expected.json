@@ -1,5 +1,5 @@
 {
- "description": "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read, so the stream is protected by the part of the record that was read, and the rest of the object is not.",
+ "description": "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read and the rest of the object is not, so every stream is taken to be protected.",
  "format": "ASF",
  "length": 7514,
  "objects": [
@@ -239,7 +239,7 @@
   },
   {
    "code": "asf.content-encrypted",
-   "contains": "network devices"
+   "contains": "could not be read in full"
   },
   {
    "code": "asf.codec-not-analyzed",
@@ -254,6 +254,13 @@
   "ffprobe": true
  },
  "protection": [
+  {
+   "scheme": "Windows Media DRM for network devices",
+   "is_encrypted": true,
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
+  },
   {
    "scheme": "Windows Media DRM for network devices",
    "is_encrypted": true,

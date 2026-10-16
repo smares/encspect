@@ -77,11 +77,18 @@ public sealed partial class Mp4Parser
         // Whether the box being read lies in a sinf box (a frma box in QuickTime's wave box is no protection).
         public bool InSinf { get; set; }
 
-        // The DRM systems the file's pssh boxes name, in file order; the senc boxes counted; and the tracks (0 where a box
-        // names none) that a sample group of Common Encryption protects samples of.
+        // The type of the box whose children are being read.
+        public string? ParentType { get; set; }
+
+        // The DRM systems the file's pssh boxes name, in file order; the tracks whose track fragments hold something that says their samples are protected;
+        // whether a box outside any track and track fragment does (it is taken to apply to every track); and whether a track fragment has no tfhd box.
         public List<string> Systems { get; } = [];
 
-        public HashSet<uint> SampleGroupProtectedTracks { get; } = [];
+        public HashSet<uint> ProtectedTracks { get; } = [];
+
+        public bool DoesEveryTrackHaveProtectingEvidence { get; set; }
+
+        public bool IsFragmentHeaderMissing { get; set; }
 
         // The sample descriptions the track fragments of each track use (tfhd, else trex).
         public Dictionary<uint, HashSet<uint>> FragmentDescriptions { get; } = [];
@@ -137,23 +144,9 @@ public sealed partial class Mp4Parser
 
         public Node? FirstFragment { get; set; }
 
-        // The seig sample group descriptions of the track's sample table (whether each protects its samples) and what its seig sample-to-group box
-        // maps: the samples of groups that protect and groups that do not, and whether every run could be placed against a description.
-        public List<bool> EncryptionGroups { get; } = [];
-
-        public long GroupedProtected { get; set; }
-
-        public long GroupedClear { get; set; }
-
-        // The seig sample-to-group boxes of the sample table, counted once the descriptions are all read.
-        public List<(BoxFields Runs, uint Count)> EncryptionRuns { get; } = [];
-
-        public bool HasEncryptionRuns => EncryptionRuns.Count > 0;
-
-        public bool AreEncryptionRunsCounted { get; set; }
-
-        // The default_sample_description_index of the sample table's seig sample group descriptions (version 2), 0 for none.
-        public uint EncryptionDefault { get; set; }
+        // Whether anything inside the track says that its samples are protected: a seig sample group description that protects, cannot be read or is of
+        // a version the project does not know (wherever in the track it lies), or a sample encryption box.
+        public bool HasProtectingEvidence { get; set; }
 
         // The sample entry the track is read through, once routed.
         public SampleEntry? ReadEntry { get; set; }
@@ -215,6 +208,14 @@ public sealed partial class Mp4Parser
         public Node? SchemeNode { get; set; }
 
         public TrackEncryptionInfo? Encryption { get; set; }
+
+        // Everything the entry's sinf boxes state (an entry may hold several, and a sinf box several of each): every original format, scheme type
+        // and track encryption default. The entry is clear only if they all agree that it is.
+        public List<string> OriginalFormats { get; } = [];
+
+        public List<string> SchemeTypes { get; } = [];
+
+        public List<(int IsProtected, int IvSize)> TrackEncryptions { get; } = [];
     }
 
     private sealed record TrackEncryptionInfo(int IsProtected, Node Node);
@@ -234,15 +235,10 @@ public sealed partial class Mp4Parser
 
         public uint TrackId { get; set; }
 
-        // The fragment's own seig descriptions (whether each protects), the distinct description indexes its seig sample-to-group boxes use,
-        // the default of its descriptions (version 2), and whether it uses more indexes than are kept.
-        public List<bool> LocalGroups { get; } = [];
+        // Whether the fragment has a tfhd box (without one its track is not known), and whether anything in it says its samples are protected.
+        public bool HasHeader { get; set; }
 
-        public HashSet<uint> GroupIndexes { get; } = [];
-
-        public uint GroupDefault { get; set; }
-
-        public bool HasTooManyGroupIndexes { get; set; }
+        public bool HasProtectingEvidence { get; set; }
 
         public ulong? BaseDataOffset { get; set; }
 

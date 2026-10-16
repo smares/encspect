@@ -414,10 +414,22 @@ def advanced_raw(body, streams=1):
 
 
 RECORD_HEAD = struct.pack("<H", 1) + m.guid(DRM_SYSTEM) + struct.pack("<I", 1)
+UNREAD = finding("asf.content-encrypted", "could not be read in full")
 NETWORK = [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}]
 fixture("protected-advanced-truncated", "An Advanced Content Encryption Object cut inside its only record, which counts three encrypted object records and holds one, for stream 2: the record as far as it was read still protects the stream.",
         advanced_raw(RECORD_HEAD + struct.pack("<H", 3) + struct.pack("<HH", 1, 2) + stream_number(2)),
-        [ADVANCED_FINDING, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")], ENCRYPTED_FFPROBE, NETWORK)
+        [UNREAD, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")], ENCRYPTED_FFPROBE, NETWORK * 2)
+NO_SYSTEM = [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": []}]
+for cut, why, body, protection in [
+    ("in-guid", "inside the system ID of the only record", RECORD_HEAD[:10], NO_SYSTEM),
+    ("after-system", "after the system ID and version of the only record, before its object count", RECORD_HEAD, NETWORK),
+    ("after-count", "after the object count of the only record, which counts two encrypted object records and holds none", RECORD_HEAD + struct.pack("<H", 2), NETWORK),
+    ("in-object-record", "inside the only encrypted object record", RECORD_HEAD + struct.pack("<H", 1) + struct.pack("<H", 1), NETWORK),
+    ("empty", "before the count of records", b"", NO_SYSTEM),
+]:
+    fixture(f"protected-advanced-cut-{cut}", f"An Advanced Content Encryption Object cut {why}: the records were not read in full, so every stream is taken to be protected.",
+            advanced_raw(body), [UNREAD, ENCRYPTED, finding("asf.object-truncated", "Advanced Content Encryption Object")] + ([finding("asf.object-size", "at least 26")] if not body else []),
+            ENCRYPTED_FFPROBE, protection * 2)
 fixture("protected-advanced-data-size", "An Advanced Content Encryption Object whose record states 100 bytes of data and holds 3, for stream 2.",
         advanced_raw(RECORD_HEAD + struct.pack("<H", 1) + struct.pack("<HH", 1, 2) + stream_number(2) + struct.pack("<I", 100) + b"abc"),
         [ADVANCED_FINDING, ENCRYPTED, finding("asf.encryption-data-size", "100 bytes of data")], ENCRYPTED_FFPROBE, NETWORK)
@@ -428,10 +440,9 @@ def advanced_many():
     return m.asf_file([pcm(1), wma(2)], objects_in([1, 2], 6, 100, 512), 512, file_id=FILE_ID, play=1_000_000, extension=advanced([(DRM_SYSTEM, 1, objects, b"")]))
 
 
-fixture("protected-advanced-many-records", "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read, so the stream is protected "
-        "by the part of the record that was read, and the rest of the object is not.", advanced_many,
-        [ADVANCED_FINDING, ENCRYPTED, finding("asf.too-many-entries", "encrypted object records")], ENCRYPTED_FFPROBE,
-        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
+fixture("protected-advanced-many-records", "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read and the rest of the object is not, so every stream is taken to be protected.", advanced_many,
+        [UNREAD, ENCRYPTED, finding("asf.too-many-entries", "encrypted object records")], ENCRYPTED_FFPROBE,
+        NETWORK * 2)
 
 # ---- damaged files ----
 

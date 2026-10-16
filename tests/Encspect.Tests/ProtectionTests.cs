@@ -67,30 +67,46 @@ public class ProtectionTests
 
     // Ciphertext is no valid coding: an encrypted track's samples are never read as frames, so the codec parsers raise nothing about them.
     [Theory]
-    [InlineData("mp4/cenc-aac.m4a")]
-    [InlineData("mp4/cbcs-constant-iv.m4a")]
-    [InlineData("mp4/cens-pattern.m4a")]
+    [InlineData("mp4/audible-aavd.m4a")]
     [InlineData("mp4/cbc1-iv16.m4a")]
+    [InlineData("mp4/cbcs-constant-iv.m4a")]
+    [InlineData("mp4/cenc-aac.m4a")]
     [InlineData("mp4/cenc-ac3.m4a")]
-    [InlineData("mp4/cenc-eac3.m4a")]
+    [InlineData("mp4/cenc-decoy-group-in-edts.m4a")]
+    [InlineData("mp4/cenc-decoy-group-in-entry.m4a")]
     [InlineData("mp4/cenc-dts.m4a")]
-    [InlineData("mp4/cenc-mpeg-audio.m4a")]
-    [InlineData("mp4/cenc-sample-group.m4a")]
-    [InlineData("mp4/cenc-fragmented.mp4")]
-    [InlineData("mp4/cenc-fragmented-table-group.mp4")]
-    [InlineData("mp4/cenc-fragmented-fragment-group.mp4")]
-    [InlineData("mp4/cenc-second-entry.m4a")]
-    [InlineData("mp4/cenc-two-enca-entries.m4a")]
+    [InlineData("mp4/cenc-eac3.m4a")]
     [InlineData("mp4/cenc-entry-out-of-range.m4a")]
-    [InlineData("mp4/cenc-sample-group-default.m4a")]
+    [InlineData("mp4/cenc-fragmented-fragment-default.mp4")]
     [InlineData("mp4/cenc-fragmented-fragment-group-v0.mp4")]
     [InlineData("mp4/cenc-fragmented-fragment-group-v2.mp4")]
-    [InlineData("mp4/cenc-fragmented-index-past-groups.mp4")]
-    [InlineData("mp4/cenc-fragmented-index-no-groups.mp4")]
-    [InlineData("mp4/cenc-fragmented-index-out-of-range.mp4")]
+    [InlineData("mp4/cenc-fragmented-fragment-group.mp4")]
+    [InlineData("mp4/cenc-fragmented-misplaced-group.mp4")]
+    [InlineData("mp4/cenc-fragmented-no-tfhd.mp4")]
+    [InlineData("mp4/cenc-fragmented-senc.mp4")]
     [InlineData("mp4/cenc-fragmented-table-default.mp4")]
+    [InlineData("mp4/cenc-fragmented-table-group.mp4")]
+    [InlineData("mp4/cenc-fragmented.mp4")]
+    [InlineData("mp4/cenc-groups-clear-tenc-protects.m4a")]
+    [InlineData("mp4/cenc-groups-in-edts.m4a")]
+    [InlineData("mp4/cenc-groups-index-zero.m4a")]
+    [InlineData("mp4/cenc-groups-two-sbgp.m4a")]
+    [InlineData("mp4/cenc-mpeg-audio.m4a")]
+    [InlineData("mp4/cenc-no-tenc.m4a")]
+    [InlineData("mp4/cenc-sample-group-default.m4a")]
+    [InlineData("mp4/cenc-sample-group.m4a")]
+    [InlineData("mp4/cenc-sbgp-in-trak.m4a")]
+    [InlineData("mp4/cenc-sbgp-in-udta.m4a")]
+    [InlineData("mp4/cenc-second-entry.m4a")]
+    [InlineData("mp4/cenc-senc-tenc-clear.m4a")]
+    [InlineData("mp4/cenc-sgpd-unknown-version.m4a")]
+    [InlineData("mp4/cenc-sgpd-v2-default-length.m4a")]
+    [InlineData("mp4/cenc-sgpd-v2-entry-lengths.m4a")]
+    [InlineData("mp4/cenc-two-enca-entries.m4a")]
+    [InlineData("mp4/cenc-two-sinf.m4a")]
+    [InlineData("mp4/cenc-two-tenc.m4a")]
+    [InlineData("mp4/cens-pattern.m4a")]
     [InlineData("mp4/itunes-drms.m4a")]
-    [InlineData("mp4/audible-aavd.m4a")]
     public void EncryptedSamplesAreNotReadAsFrames(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -236,20 +252,35 @@ public class ProtectionTests
     public void SummaryTakesCodecAndRateFromTheFirstAudioStream()
     {
         Report report = Fixtures.AnalyzeMpeg("asf/protected-audio-and-video.asf");
-        Assert.Equal([true, false], report.Streams.Select(s => s.IsAudio).OrderByDescending(a => a));
+        Assert.Equal([StreamKind.Audio, StreamKind.Video], report.Streams.Select(s => s.Kind).Order());
 
         ReportSummary summary = ReportSummary.From(report);
         Assert.Equal("Windows Media Audio 2", summary.Codec);
         Assert.Equal(44100, summary.SampleRate);
         Assert.Equal(["Microsoft Digital Rights Manager version 1"], summary.ProtectionSchemes);
         Assert.True(summary.IsProtected);
+        Assert.Equal(0.1, summary.Duration!.Value, 3);
 
-        ReportSummary videoOnly = ReportSummary.From(Fixtures.AnalyzeMpeg("asf/protected-video-only.asf"));
+        Report videoOnlyReport = Fixtures.AnalyzeMpeg("asf/protected-video-only.asf");
+        ReportSummary videoOnly = ReportSummary.From(videoOnlyReport);
         Assert.True(videoOnly.IsProtected);
+        Assert.Null(videoOnly.Codec);
+        Assert.Null(videoOnly.SampleRate);
+        Assert.Null(videoOnly.Duration);
+
+        var json = new MemoryStream();
+        ReportJsonWriter.Write([videoOnlyReport], json);
+        string text = System.Text.Encoding.UTF8.GetString(json.ToArray());
+        Assert.Contains("\"kind\": \"Video\"", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"sampleRate\"", text, StringComparison.Ordinal);
+
+        var csv = new StringWriter();
+        ReportCsvWriter.Write([videoOnlyReport], csv);
+        Assert.Contains(",Microsoft Digital Rights Manager version 1,", csv.ToString(), StringComparison.Ordinal);
     }
 
-    // An Advanced Content Encryption Object protects the streams its records name: none when it holds no record, and those of the part of a record read when
-    // the record is cut at the limit of entries read.
+    // An Advanced Content Encryption Object protects the streams its records name: none when it holds no record, and every stream where the records were not
+    // read in full.
     [Fact]
     public void AdvancedContentEncryptionProtectsTheStreamsItsRecordsName()
     {
@@ -259,7 +290,7 @@ public class ProtectionTests
 
         Report many = Fixtures.AnalyzeMpeg("asf/protected-advanced-many-records.asf");
         Assert.Contains(many.Findings, f => f.Code == "asf.too-many-entries");
-        Assert.True(Assert.Single(many.Streams).IsProtected);
+        Assert.All(many.Streams, st => Assert.True(st.IsProtected));
     }
 
     private static IEnumerable<Node> Descendants(Node node)

@@ -1,6 +1,6 @@
 {
- "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose seig sample groups are taken to protect the samples; each track fragment's own sgpd box, of version 2 whose entries state no length, describes the group (index 0x10001). The samples are pseudo-random bytes and must never be read as AAC.",
- "length": 8209,
+ "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but in which something says that samples are protected: each track fragment's own sgpd box, of version 2 (default length, default index, entry lengths), describes a protecting group. The samples are pseudo-random bytes and must never be read as AAC.",
+ "length": 8033,
  "format": "MP4",
  "boxes": [
   [
@@ -146,7 +146,7 @@
   [
    "moof",
    691,
-   296
+   208
   ],
   [
    "moof/mfhd",
@@ -156,7 +156,7 @@
   [
    "moof/traf",
    715,
-   272
+   184
   ],
   [
    "moof/traf/tfhd",
@@ -171,76 +171,66 @@
   [
    "moof/traf/sgpd",
    759,
-   44
+   52
   ],
   [
    "moof/traf/sbgp",
-   803,
+   811,
    28
   ],
   [
-   "moof/traf/senc",
-   831,
-   96
-  ],
-  [
    "moof/traf/trun",
-   927,
+   839,
    60
   ],
   [
    "mdat",
-   987,
+   899,
    3413
   ],
   [
    "moof",
-   4400,
-   296
+   4312,
+   208
   ],
   [
    "moof/mfhd",
-   4408,
+   4320,
    16
   ],
   [
    "moof/traf",
-   4424,
-   272
+   4336,
+   184
   ],
   [
    "moof/traf/tfhd",
-   4432,
+   4344,
    16
   ],
   [
    "moof/traf/tfdt",
-   4448,
+   4360,
    20
   ],
   [
    "moof/traf/sgpd",
-   4468,
-   44
+   4380,
+   52
   ],
   [
    "moof/traf/sbgp",
-   4512,
+   4432,
    28
   ],
   [
-   "moof/traf/senc",
-   4540,
-   96
-  ],
-  [
    "moof/traf/trun",
-   4636,
+   4460,
    60
   ],
   [
    "mdat",
-   4696,
+   4520,
    3513
   ]
  ],
@@ -266,88 +256,88 @@
  "units": [],
  "samples": [
   [
-   995,
+   907,
    300
   ],
   [
-   1295,
+   1207,
    337
   ],
   [
-   1632,
+   1544,
    374
   ],
   [
-   2006,
+   1918,
    321
   ],
   [
-   2327,
+   2239,
    358
   ],
   [
-   2685,
+   2597,
    305
   ],
   [
-   2990,
+   2902,
    342
   ],
   [
-   3332,
+   3244,
    379
   ],
   [
-   3711,
+   3623,
    326
   ],
   [
-   4037,
+   3949,
    363
   ],
   [
-   4704,
+   4528,
    310
   ],
   [
-   5014,
+   4838,
    347
   ],
   [
-   5361,
+   5185,
    384
   ],
   [
-   5745,
+   5569,
    331
   ],
   [
-   6076,
+   5900,
    368
   ],
   [
-   6444,
+   6268,
    315
   ],
   [
-   6759,
+   6583,
    352
   ],
   [
-   7111,
+   6935,
    389
   ],
   [
-   7500,
+   7324,
    336
   ],
   [
-   7836,
+   7660,
    373
   ]
  ],
  "fields": {
-  "MP4/moof/traf/senc": "10 samples"
+  "MP4/moof/traf/trun": "10 samples"
  },
  "findings": [
   [
@@ -357,14 +347,13 @@
  ],
  "crosscheck": {
   "ffprobe": false,
-  "mp4box": false,
+  "mp4box": true,
   "faad": null,
   "encryption": {
    "ffprobe": null,
    "mediainfo": "Encrypted"
   },
   "skip": {
-   "mp4box": "MP4Box 2.2 rejects a sample group description box of version 2 (it reports the movie box as invalid).",
    "faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
    "ffprobe": "ffmpeg 6.1 marks packets encrypted from the tenc default only, and reads these samples as clear AAC.",
    "mediainfo_duration": "a fragmented file's track header states no duration"

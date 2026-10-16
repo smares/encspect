@@ -49,9 +49,10 @@ public sealed record ReportSummary(
         ArgumentNullException.ThrowIfNull(report);
 
         IReadOnlyList<StreamInfo> streams = report.Streams;
-        StreamInfo? first = streams.FirstOrDefault(s => s.IsAudio) ?? (streams.Count > 0 ? streams[0] : null);
+        List<StreamInfo> audio = [.. streams.Where(s => s.Kind == StreamKind.Audio)];
+        StreamInfo? first = audio.Count > 0 ? audio[0] : null;
         StreamInfo? encoded = streams.FirstOrDefault(s => s.Encoder is not null);
-        List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
+        List<StreamInfo> timed = audio.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
 
         return new ReportSummary(
@@ -59,8 +60,8 @@ public sealed record ReportSummary(
             report.Root.Value?.ToString(),
             streams.Count,
             first?.Codec,
-            first is null ? null : streams.Sum(s => s.Duration),
-            first is null ? null : streams.Sum(s => s.Samples),
+            first is null ? null : audio.Sum(s => s.Duration),
+            first is null ? null : audio.Sum(s => s.Samples),
             timedDuration > 0 ? timed.Sum(s => s.AverageBitrate!.Value * s.Duration) / timedDuration : null,
             first?.SampleRate,
             first?.ChannelMode,

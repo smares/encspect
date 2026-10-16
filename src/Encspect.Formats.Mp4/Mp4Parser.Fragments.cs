@@ -88,6 +88,7 @@ public sealed partial class Mp4Parser
 
         if (state.Fragment is { } fragment)
         {
+            fragment.HasHeader = true;
             fragment.TrackId = id;
             fragment.BaseDataOffset = baseOffset;
             fragment.BaseIsMoof = (flags & 0x20000) != 0;
@@ -176,7 +177,7 @@ public sealed partial class Mp4Parser
     // Places the track fragment's samples once its boxes are read.
     private static void FinishFragment(State state, FragmentTrack fragment)
     {
-        ResolveFragmentGroups(state, fragment);
+        ResolveFragment(state, fragment);
         Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
         if (track is null)
         {

@@ -1098,7 +1098,7 @@ public sealed partial class AsfParser
             uint size = f.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
             f.Bytes("Data", Math.Min(size, f.Remaining), Explain.EncryptionData);
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by the Windows Media Rights Manager 7; its streams are encrypted and are reported as the file holds them.", node);
+        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Windows Media Rights Manager 7; its streams are encrypted and are reported as the file holds them.", node);
     }
 
     // Section 3.16: a signature of the header between the File Properties Object and this object. It protects nothing, so no stream is protected by it.
@@ -1123,6 +1123,8 @@ public sealed partial class AsfParser
     {
         (Node node, Fields f) = Begin(state, parent, header, end, "Advanced Content Encryption Object", Explain.AdvancedContentEncryption, Topics.AsfContentProtection);
         int recordsBefore = state.Protections.Count;
+        bool isRead = false;
+        var unreadSystems = new List<string>();
         Body(state, node, f, 26, () =>
         {
             ushort count = f.Word("Content Encryption Records Count", Explain.ContentEncryptionRecordsCount);
@@ -1134,7 +1136,7 @@ public sealed partial class AsfParser
                 if (i == MaxListEntries)
                 {
                     TooManyEntries(state, node, f, $"{count} content encryption records", "from");
-                    break;
+                    return;
                 }
 
                 long at = f.Position;
@@ -1178,6 +1180,7 @@ public sealed partial class AsfParser
                             // The record so far is shown, and the rest of the object is Extra Data.
                             TooManyEntries(state, node, f, $"{objects} encrypted object records in record {i + 1} of {count}", "from");
                             Attach(r.Position);
+                            unreadSystems.Add(system!);
                             stopped = true;
                             break;
                         }
@@ -1213,7 +1216,7 @@ public sealed partial class AsfParser
 
                     if (stopped)
                     {
-                        break;
+                        return;
                     }
 
                     uint dataSize = r.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
@@ -1228,13 +1231,24 @@ public sealed partial class AsfParser
                 catch (EndOfStreamException) when (system is not null)
                 {
                     Attach(r.Position);
+                    unreadSystems.Add(system!);
                     throw;
                 }
             }
+
+            isRead = !stopped;
         });
+        if (!isRead)
+        {
+            // The records were not all read: the streams the unread ones name are not known, so every stream is taken to be covered.
+            state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, node, [.. unreadSystems], [], IsWholeFile: true));
+        }
+
         state.Findings.AddNow(Severity.Info, state.Protections.Count > recordsBefore ? "asf.content-encrypted" : "asf.no-content-encryption-record",
             state.Protections.Count > recordsBefore
-                ? "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
+                ? (isRead
+                    ? "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
+                    : "The file is protected by Windows Media DRM for network devices; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.")
                 : "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
     }
 

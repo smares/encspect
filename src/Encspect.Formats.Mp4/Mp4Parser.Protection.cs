@@ -14,8 +14,6 @@ public sealed partial class Mp4Parser
     // The bytes FFmpeg's mov_read_adrm takes from an adrm box: 8, a 56-byte blob, 4 and a 20-byte checksum.
     private const int AudibleDrmLength = 88;
 
-    // The most distinct seig description indexes a track fragment's sample-to-group boxes may use before the fragment is taken to protect its samples.
-    private const int MaxGroupIndexes = 4096;
 
     // The default ISO/IEC 23001-7 gives for a track whose samples are protected: an initialization
     // vector per sample of 0 (a constant one in tenc), 8 or 16 bytes.
@@ -48,7 +46,8 @@ public sealed partial class Mp4Parser
         node.Value = f.FourCc(node, "Format", Explain.OriginalFormat);
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })
         {
-            protection.OriginalFormat = node.Value.ToString();
+            protection.OriginalFormat ??= node.Value.ToString();
+            protection.OriginalFormats.Add(node.Value.ToString()!);
         }
     }
 
@@ -67,6 +66,7 @@ public sealed partial class Mp4Parser
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })
         {
             protection.SchemeType ??= type;
+            protection.SchemeTypes.Add(type);
             protection.SchemeNode ??= node;
         }
     }
@@ -126,6 +126,7 @@ public sealed partial class Mp4Parser
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })
         {
             protection.Encryption ??= new TrackEncryptionInfo(isProtected, node);
+            protection.TrackEncryptions.Add((isProtected, ivSize));
         }
     }
 
@@ -199,6 +200,7 @@ public sealed partial class Mp4Parser
     {
         uint flags = FullBox(node, f).Flags;
         node.Add(Node.FromBits("UsesSubsampleEncryption", node.Children[^1].Offset + 2, 6, 7, NodeValue.Boolean((flags & 2) != 0), description: Explain.UsesSubsampleEncryption));
+        MarkProtecting(state);
         uint count = f.U32(node, "Sample Count", Explain.SencSampleCount);
         node.Value = NodeValue.Integer(count, "samples", "sample");
         if (f.Remaining > 0)
@@ -207,15 +209,28 @@ public sealed partial class Mp4Parser
         }
     }
 
+    // The type of auxiliary information of a saiz or saio box (8.7.8, 8.7.9), which for a Common Encryption scheme is its scheme type; without one the
+    // information is the scheme's. Auxiliary information of an encryption type says that samples are protected.
+    private static void MarkIfEncryptionInformation(State state, Node node, BoxFields f, uint flags)
+    {
+        string? type = null;
+        if ((flags & 1) != 0)
+        {
+            type = f.FourCc(node, "Auxiliary Information Type", Explain.AuxInfoType);
+            f.U32(node, "Auxiliary Information Type Parameter", Explain.AuxInfoTypeParameter);
+        }
+
+        if (type is null || ProtectsByCommonEncryption(type))
+        {
+            MarkProtecting(state);
+        }
+    }
+
     // ISO/IEC 14496-12 8.7.8: the size of each sample's auxiliary information, here the encryption data of senc's layout.
     private static void SampleAuxiliaryInformationSizes(State state, Node node, BoxFields f)
     {
         uint flags = FullBox(node, f).Flags;
-        if ((flags & 1) != 0)
-        {
-            f.FourCc(node, "Auxiliary Information Type", Explain.AuxInfoType);
-            f.U32(node, "Auxiliary Information Type Parameter", Explain.AuxInfoTypeParameter);
-        }
+        MarkIfEncryptionInformation(state, node, f, flags);
 
         int fixedSize = f.U8(node, "Default Sample Info Size", Explain.DefaultSampleInfoSize, unit: "bytes");
         uint count = f.U32(node, "Sample Count", Explain.SaizSampleCount);
@@ -238,11 +253,7 @@ public sealed partial class Mp4Parser
     private static void SampleAuxiliaryInformationOffsets(State state, Node node, BoxFields f)
     {
         (int version, uint flags) = FullBox(node, f);
-        if ((flags & 1) != 0)
-        {
-            f.FourCc(node, "Auxiliary Information Type", Explain.AuxInfoType);
-            f.U32(node, "Auxiliary Information Type Parameter", Explain.AuxInfoTypeParameter);
-        }
+        MarkIfEncryptionInformation(state, node, f, flags);
 
         uint count = f.U32(node, "Entries", Explain.SaioEntries);
         node.Value = NodeValue.Integer(count, "entries", "entry");
@@ -268,8 +279,8 @@ public sealed partial class Mp4Parser
     {
         if (length < 20)
         {
-            // It keeps its place among the descriptions, as one that cannot be read and so is taken to protect.
-            AddEncryptionGroup(state, true);
+            // An entry that cannot be read is taken to protect.
+            MarkProtecting(state);
             f.Bytes(entry, "Entry", Math.Min(length, f.Remaining), Explain.GroupDescription);
             return;
         }
@@ -294,7 +305,10 @@ public sealed partial class Mp4Parser
             entry.Add(new Node("Constant IV", ivAt, iv.Length, Convert.ToHexString(iv).ToLowerInvariant()) { Description = Explain.ConstantIv });
         }
 
-        AddEncryptionGroup(state, isProtected != 0);
+        if (isProtected != 0)
+        {
+            MarkProtecting(state);
+        }
 
         if (f.Position < end)
         {
@@ -321,87 +335,6 @@ public sealed partial class Mp4Parser
 
         peek.Skip(16);
         return peek.Remaining > 0 ? Math.Min(21L + (long)peek.Take(1), f.Remaining) : 20;
-    }
-
-    private static void AddEncryptionGroup(State state, bool isProtected)
-    {
-        if (state.Track is { } track)
-        {
-            track.EncryptionGroups.Add(isProtected);
-        }
-        else
-        {
-            state.Fragment?.LocalGroups.Add(isProtected);
-        }
-    }
-
-    // The seig sample-to-group box of a track, counted once the track's descriptions are all read (the box may come first): the samples of
-    // its runs, by whether the description each run points to protects them. A run with index 0 belongs to no group and has the track's
-    // default; one past the descriptions cannot be placed, and counts as protected.
-    private static void CountEncryptionGroups(State state, Track track)
-    {
-        if (track.AreEncryptionRunsCounted)
-        {
-            return;
-        }
-
-        track.AreEncryptionRunsCounted = true;
-        foreach ((BoxFields runs, uint count) in track.EncryptionRuns)
-        {
-            for (uint i = 0; i < count && runs.Remaining >= 8; i++)
-            {
-                if (i % 4096 == 0)
-                {
-                    state.Context.CancellationToken.ThrowIfCancellationRequested();
-                }
-
-                uint samples = (uint)runs.Take(4);
-                uint index = (uint)runs.Take(4);
-                if (index == 0)
-                {
-                    continue;
-                }
-
-                if (index > track.EncryptionGroups.Count || track.EncryptionGroups[(int)index - 1])
-                {
-                    track.GroupedProtected += samples;
-                }
-                else
-                {
-                    track.GroupedClear += samples;
-                }
-            }
-        }
-    }
-
-    // The seig sample-to-group box of a track fragment: the distinct description indexes its runs use, resolved when the fragment ends.
-    private static void FragmentEncryptionGroups(State state, BoxFields runs, uint count)
-    {
-        if (state.Fragment is not { } fragment)
-        {
-            return;
-        }
-
-        for (uint i = 0; i < count && runs.Remaining >= 8; i++)
-        {
-            if (i % 4096 == 0)
-            {
-                state.Context.CancellationToken.ThrowIfCancellationRequested();
-            }
-
-            runs.Skip(4);
-            uint index = (uint)runs.Take(4);
-            if (index != 0 && !fragment.GroupIndexes.Contains(index))
-            {
-                if (fragment.GroupIndexes.Count >= MaxGroupIndexes)
-                {
-                    fragment.HasTooManyGroupIndexes = true;
-                    return;
-                }
-
-                fragment.GroupIndexes.Add(index);
-            }
-        }
     }
 
     // The boxes inside the schi of an iTunes protected entry (user, key, iVIV and priv), whose content a source names but does not describe:
@@ -471,30 +404,30 @@ public sealed partial class Mp4Parser
         }
     }
 
-    // Whether samples of the entry are encrypted unless a sample group says otherwise: the entries of iTunes protection and Audible always
-    // are; with Common Encryption the track encryption box's default decides. A scheme the project does not know, an entry without a sinf box
-    // and a Common Encryption entry without tenc are taken to encrypt, since only the scheme can say it does not.
-    private static bool EncryptsByDefault(SampleEntry entry) =>
-        entry.Format is "drms" or "drmi" or "aavd" || entry.Protection is not { } protection || !ProtectsByCommonEncryption(protection.SchemeType)
-        || protection.Encryption is not { IsProtected: 0 };
+    // Whether the entry's key information says that no sample is protected: it is a Common Encryption entry whose sinf boxes agree on a known scheme,
+    // name the original format and give track encryption defaults that all set the default to not protected. The entries of iTunes protection and Audible
+    // never are, nor one without sinf, with a scheme the project does not know or without tenc: only the scheme can say a sample is not encrypted.
+    private static bool IsClearByKeyInformation(SampleEntry entry) =>
+        entry.Format is not ("drms" or "drmi" or "aavd") && entry.Protection is { } protection
+        && protection.OriginalFormats.Count > 0 && protection.OriginalFormats.Distinct().Count() == 1
+        && protection.SchemeTypes.Count > 0 && protection.SchemeTypes.Distinct().Count() == 1 && ProtectsByCommonEncryption(protection.SchemeTypes[0])
+        && protection.TrackEncryptions.Count > 0 && protection.TrackEncryptions.Distinct().Count() == 1 && protection.TrackEncryptions[0].IsProtected == 0;
 
-    // Whether only the track encryption box makes the entry's samples encrypted, which sample groups that put every sample in a group that
-    // does not protect override (as MP4Box writes a file whose samples are in the clear).
-    private static bool IsOverridable(SampleEntry entry) =>
-        entry.Format is not ("drms" or "drmi" or "aavd") && entry.Protection is { Encryption: { IsProtected: not 0 } } protection && ProtectsByCommonEncryption(protection.SchemeType);
-
-    // What a track's protection is, from the sample descriptions its samples use (stsc, and the track fragments' tfhd or trex): the entry it is
-    // read through, whether any used entry is protected, and whether its samples are encrypted. A track is encrypted unless every sample is
-    // proven clear: each protected entry used says not protected by default, and every sample group that applies resolves to a description that
-    // says so. A description index that points nowhere counts as encrypted.
+    // What a track's protection is, from the sample descriptions its samples use: the entry it is read through, whether any of them is protected,
+    // and whether the samples are encrypted. A track counts as encrypted unless its key information says no sample is protected and nothing in the
+    // file says otherwise: every protected entry in use is clear by its key information, no seig sample group description anywhere in the track or its
+    // track fragments protects (or cannot be read), and there is no sample encryption box. The analyzer does not prove sample by sample that an
+    // encrypted track is partly clear.
     private static (SampleEntry Entry, bool IsProtected, bool IsEncrypted) Decide(State state, Track track)
     {
         var indexes = new SortedSet<uint>();
         if (track.SampleToChunk is { } chunks)
         {
-            foreach ((_, uint samples, uint description) in chunks)
+            // A run of chunks that the chunk offset box does not have is used by no sample.
+            long chunkCount = track.ChunkOffsets?.Length ?? long.MaxValue;
+            foreach ((uint firstChunk, uint samples, uint description) in chunks)
             {
-                if (samples > 0)
+                if (samples > 0 && firstChunk <= chunkCount)
                 {
                     indexes.Add(description);
                 }
@@ -512,11 +445,12 @@ public sealed partial class Mp4Parser
         }
 
         List<SampleEntry> used = [.. indexes.Where(d => d >= 1 && d <= track.Entries.Count).Select(d => track.Entries[(int)d - 1])];
-        bool isUnresolved = indexes.Any(d => d < 1 || d > track.Entries.Count);
+        // A description that points to no entry, or a track fragment that does not say whose it is, may be any entry.
+        bool isUnresolved = indexes.Any(d => d < 1 || d > track.Entries.Count) || state.IsFragmentHeaderMissing;
         List<SampleEntry> protectedEntries = [.. used.Where(e => IsProtectedEntry(e.Format))];
-        if (protectedEntries.Count == 0 && isUnresolved)
+        if (isUnresolved)
         {
-            protectedEntries = [.. track.Entries.Where(e => IsProtectedEntry(e.Format)).Take(1)];
+            protectedEntries = [.. protectedEntries.Concat(track.Entries.Where(e => IsProtectedEntry(e.Format) && !protectedEntries.Contains(e)))];
         }
 
         if (protectedEntries.Count == 0)
@@ -524,41 +458,49 @@ public sealed partial class Mp4Parser
             return (used.FirstOrDefault() ?? track.Entries[0], false, false);
         }
 
-        SampleEntry chosen = protectedEntries.FirstOrDefault(EncryptsByDefault) ?? protectedEntries[0];
-        bool isEncrypted = isUnresolved || DoGroupsProtect(state, track) || protectedEntries.Any(e => EncryptsByDefault(e) && !(IsOverridable(e) && AreAllSamplesInClearGroups(state, track)));
+        SampleEntry chosen = protectedEntries.FirstOrDefault(e => !IsClearByKeyInformation(e)) ?? protectedEntries[0];
+        bool isEncrypted = isUnresolved || protectedEntries.Any(e => !IsClearByKeyInformation(e)) || track.HasProtectingEvidence || state.DoesEveryTrackHaveProtectingEvidence
+            || state.ProtectedTracks.Contains(track.Id ?? 0);
         return (chosen, true, isEncrypted);
     }
 
-    // Whether the sample table's seig runs put every sample of the track in a description that does not protect; a track with fragments is not proven.
-    private static bool AreAllSamplesInClearGroups(State state, Track track) =>
-        track.HasEncryptionRuns && track.GroupedProtected == 0 && SampleCount(track) > 0 && track.GroupedClear >= SampleCount(track)
-        && !(track.Id is { } id && state.FragmentDescriptions.ContainsKey(id));
-
-    // Whether a seig sample group of the track protects samples, or points somewhere it cannot be resolved.
-    private static bool DoGroupsProtect(State state, Track track)
+    // Something in the track, track fragment or (outside both) the file that says its samples are protected.
+    private static void MarkProtecting(State state)
     {
-        CountEncryptionGroups(state, track);
-        return track.GroupedProtected > 0
-            || (track.EncryptionDefault != 0 && (track.EncryptionDefault > track.EncryptionGroups.Count || track.EncryptionGroups[(int)track.EncryptionDefault - 1]))
-            || state.SampleGroupProtectedTracks.Contains(track.Id ?? 0);
+        if (state.Track is { } track)
+        {
+            track.HasProtectingEvidence = true;
+        }
+        else if (state.Fragment is { } fragment)
+        {
+            fragment.HasProtectingEvidence = true;
+        }
+        else
+        {
+            state.DoesEveryTrackHaveProtectingEvidence = true;
+        }
     }
 
-    // Once a track fragment is read: whether its seig sample-to-group boxes (and the default of its descriptions) resolve to descriptions that
-    // do not protect. Indexes up to 0x10000 are the sample table's descriptions, from 0x10001 the fragment's own (ISO/IEC 14496-12 8.9.4).
-    private static void ResolveFragmentGroups(State state, FragmentTrack fragment)
+    // Once a track fragment is read: what it says about protection goes to its track, or to every track where the fragment does not name one.
+    private static void ResolveFragment(State state, FragmentTrack fragment)
     {
-        if (fragment.GroupIndexes.Count == 0 && fragment.GroupDefault == 0 && !fragment.HasTooManyGroupIndexes)
+        if (!fragment.HasHeader)
+        {
+            state.IsFragmentHeaderMissing = true;
+        }
+
+        if (!fragment.HasProtectingEvidence)
         {
             return;
         }
 
-        Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
-        bool IsClear(uint index) => index == 0 || (index <= 0x10000
-            ? track is not null && index <= track.EncryptionGroups.Count && !track.EncryptionGroups[(int)index - 1]
-            : index - 0x10001 < fragment.LocalGroups.Count && !fragment.LocalGroups[(int)(index - 0x10001)]);
-        if (fragment.HasTooManyGroupIndexes || !IsClear(fragment.GroupDefault) || !fragment.GroupIndexes.All(IsClear))
+        if (fragment.HasHeader && state.Tracks.Any(t => t.Id == fragment.TrackId))
         {
-            state.SampleGroupProtectedTracks.Add(fragment.TrackId);
+            state.ProtectedTracks.Add(fragment.TrackId);
+        }
+        else
+        {
+            state.DoesEveryTrackHaveProtectingEvidence = true;
         }
     }
 

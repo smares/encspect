@@ -261,7 +261,7 @@ public sealed partial class AsfParser
             SampleRate = stream.Format?.SamplesPerSecond ?? 0,
             Channels = stream.Format?.Channels ?? 0,
             Protection = protection,
-            IsAudio = stream.IsAudio,
+            Kind = stream.IsAudio ? StreamKind.Audio : stream.Type == AsfGuids.VideoMedia ? StreamKind.Video : StreamKind.Other,
             Duration = duration,
         });
     }

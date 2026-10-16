@@ -1,6 +1,6 @@
 {
- "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose seig sample groups are taken to protect the samples; each track fragment's own sgpd box, of version 0 whose entries state no length, describes the group (index 0x10001). The samples are pseudo-random bytes and must never be read as AAC.",
- "length": 8201,
+ "description": "A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but in which something says that samples are protected: each track fragment's own sgpd box, of version 0 whose entries state no length, describes a protecting group. The samples are pseudo-random bytes and must never be read as AAC.",
+ "length": 8009,
  "format": "MP4",
  "boxes": [
   [
@@ -146,7 +146,7 @@
   [
    "moof",
    691,
-   292
+   196
   ],
   [
    "moof/mfhd",
@@ -156,7 +156,7 @@
   [
    "moof/traf",
    715,
-   268
+   172
   ],
   [
    "moof/traf/tfhd",
@@ -179,68 +179,58 @@
    28
   ],
   [
-   "moof/traf/senc",
-   827,
-   96
-  ],
-  [
    "moof/traf/trun",
-   923,
+   827,
    60
   ],
   [
    "mdat",
-   983,
+   887,
    3413
   ],
   [
    "moof",
-   4396,
-   292
+   4300,
+   196
   ],
   [
    "moof/mfhd",
-   4404,
+   4308,
    16
   ],
   [
    "moof/traf",
-   4420,
-   268
+   4324,
+   172
   ],
   [
    "moof/traf/tfhd",
-   4428,
+   4332,
    16
   ],
   [
    "moof/traf/tfdt",
-   4444,
+   4348,
    20
   ],
   [
    "moof/traf/sgpd",
-   4464,
+   4368,
    40
   ],
   [
    "moof/traf/sbgp",
-   4504,
+   4408,
    28
   ],
   [
-   "moof/traf/senc",
-   4532,
-   96
-  ],
-  [
    "moof/traf/trun",
-   4628,
+   4436,
    60
   ],
   [
    "mdat",
-   4688,
+   4496,
    3513
   ]
  ],
@@ -266,88 +256,88 @@
  "units": [],
  "samples": [
   [
-   991,
+   895,
    300
   ],
   [
-   1291,
+   1195,
    337
   ],
   [
-   1628,
+   1532,
    374
   ],
   [
-   2002,
+   1906,
    321
   ],
   [
-   2323,
+   2227,
    358
   ],
   [
-   2681,
+   2585,
    305
   ],
   [
-   2986,
+   2890,
    342
   ],
   [
-   3328,
+   3232,
    379
   ],
   [
-   3707,
+   3611,
    326
   ],
   [
-   4033,
+   3937,
    363
   ],
   [
-   4696,
+   4504,
    310
   ],
   [
-   5006,
+   4814,
    347
   ],
   [
-   5353,
+   5161,
    384
   ],
   [
-   5737,
+   5545,
    331
   ],
   [
-   6068,
+   5876,
    368
   ],
   [
-   6436,
+   6244,
    315
   ],
   [
-   6751,
+   6559,
    352
   ],
   [
-   7103,
+   6911,
    389
   ],
   [
-   7492,
+   7300,
    336
   ],
   [
-   7828,
+   7636,
    373
   ]
  ],
  "fields": {
-  "MP4/moof/traf/senc": "10 samples"
+  "MP4/moof/traf/trun": "10 samples"
  },
  "findings": [
   [

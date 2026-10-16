@@ -10,13 +10,13 @@
       "name": "File",
       "value": "MP4",
       "offset": 0,
-      "length": 11190,
+      "length": 11198,
       "children": [
         {
           "name": "MP4",
           "value": "M4A (Apple audio)",
           "offset": 0,
-          "length": 11190,
+          "length": 11198,
           "children": [
             {
               "name": "ftyp",
@@ -73,11 +73,11 @@
               "name": "moov",
               "value": "Movie",
               "offset": 28,
-              "length": 819,
+              "length": 827,
               "children": [
                 {
                   "name": "Size",
-                  "value": 819,
+                  "value": 827,
                   "unit": "bytes",
                   "offset": 28,
                   "length": 4
@@ -175,11 +175,11 @@
                   "name": "trak",
                   "value": "Track",
                   "offset": 144,
-                  "length": 703,
+                  "length": 711,
                   "children": [
                     {
                       "name": "Size",
-                      "value": 703,
+                      "value": 711,
                       "unit": "bytes",
                       "offset": 144,
                       "length": 4
@@ -296,11 +296,11 @@
                       "name": "mdia",
                       "value": "Media",
                       "offset": 244,
-                      "length": 603,
+                      "length": 611,
                       "children": [
                         {
                           "name": "Size",
-                          "value": 603,
+                          "value": 611,
                           "unit": "bytes",
                           "offset": 244,
                           "length": 4
@@ -436,11 +436,11 @@
                           "name": "minf",
                           "value": "Media Information",
                           "offset": 329,
-                          "length": 518,
+                          "length": 526,
                           "children": [
                             {
                               "name": "Size",
-                              "value": 518,
+                              "value": 526,
                               "unit": "bytes",
                               "offset": 329,
                               "length": 4
@@ -593,11 +593,11 @@
                               "name": "stbl",
                               "value": "Sample Table",
                               "offset": 389,
-                              "length": 458,
+                              "length": 466,
                               "children": [
                                 {
                                   "name": "Size",
-                                  "value": 458,
+                                  "value": 466,
                                   "unit": "bytes",
                                   "offset": 389,
                                   "length": 4
@@ -1588,19 +1588,19 @@
                                     },
                                     {
                                       "name": "Chunk Offset",
-                                      "value": 855,
+                                      "value": 863,
                                       "offset": 791,
                                       "length": 4
                                     },
                                     {
                                       "name": "Chunk Offset",
-                                      "value": 4260,
+                                      "value": 4268,
                                       "offset": 795,
                                       "length": 4
                                     },
                                     {
                                       "name": "Chunk Offset",
-                                      "value": 7765,
+                                      "value": 7773,
                                       "offset": 799,
                                       "length": 4
                                     }
@@ -1610,11 +1610,11 @@
                                   "name": "sgpd",
                                   "value": "seig (encryption)",
                                   "offset": 803,
-                                  "length": 44,
+                                  "length": 52,
                                   "children": [
                                     {
                                       "name": "Size",
-                                      "value": 44,
+                                      "value": 52,
                                       "unit": "bytes",
                                       "offset": 803,
                                       "length": 4
@@ -1644,34 +1644,48 @@
                                       "length": 4
                                     },
                                     {
-                                      "name": "Default Sample Description Index",
-                                      "value": 1,
+                                      "name": "Default Length",
+                                      "value": 0,
+                                      "unit": "bytes",
                                       "offset": 819,
                                       "length": 4
                                     },
                                     {
-                                      "name": "Entries",
+                                      "name": "Default Sample Description Index",
                                       "value": 1,
                                       "offset": 823,
                                       "length": 4
                                     },
                                     {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 827,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Description Length",
+                                      "value": 20,
+                                      "unit": "bytes",
+                                      "offset": 831,
+                                      "length": 4
+                                    },
+                                    {
                                       "name": "Entry",
                                       "value": "protected",
-                                      "offset": 827,
+                                      "offset": 835,
                                       "length": 20,
                                       "children": [
                                         {
                                           "name": "Reserved",
                                           "value": 0,
-                                          "offset": 827,
+                                          "offset": 835,
                                           "length": 1
                                         },
                                         {
                                           "name": "Crypt Byte Block",
                                           "value": 0,
                                           "unit": "blocks",
-                                          "offset": 828,
+                                          "offset": 836,
                                           "length": 1,
                                           "bitOffset": 0,
                                           "bitLength": 4
@@ -1680,7 +1694,7 @@
                                           "name": "Skip Byte Block",
                                           "value": 0,
                                           "unit": "blocks",
-                                          "offset": 828,
+                                          "offset": 836,
                                           "length": 1,
                                           "bitOffset": 4,
                                           "bitLength": 4
@@ -1688,20 +1702,20 @@
                                         {
                                           "name": "IsProtected",
                                           "value": true,
-                                          "offset": 829,
+                                          "offset": 837,
                                           "length": 1
                                         },
                                         {
                                           "name": "Per Sample IV Size",
                                           "value": 8,
                                           "unit": "bytes",
-                                          "offset": 830,
+                                          "offset": 838,
                                           "length": 1
                                         },
                                         {
                                           "name": "KID",
                                           "value": "80818283-8485-8687-8889-8a8b8c8d8e8f",
-                                          "offset": 831,
+                                          "offset": 839,
                                           "length": 16
                                         }
                                       ]
@@ -1721,41 +1735,41 @@
             {
               "name": "mdat",
               "value": "Media Data",
-              "offset": 847,
+              "offset": 855,
               "length": 10343,
               "children": [
                 {
                   "name": "Size",
                   "value": 10343,
                   "unit": "bytes",
-                  "offset": 847,
+                  "offset": 855,
                   "length": 4
                 },
                 {
                   "name": "Type",
                   "value": "mdat",
-                  "offset": 851,
+                  "offset": 859,
                   "length": 4
                 },
                 {
                   "name": "Data",
                   "value": 10335,
                   "unit": "bytes",
-                  "offset": 855,
+                  "offset": 863,
                   "length": 10335
                 },
                 {
                   "name": "Track 1 Samples",
                   "value": 30,
                   "unit": "samples",
-                  "offset": 855,
+                  "offset": 863,
                   "length": 10335,
                   "children": [
                     {
                       "name": "AAC",
                       "kind": "Stream",
                       "value": "frames not read: encrypted",
-                      "offset": 855,
+                      "offset": 863,
                       "length": 10335
                     }
                   ]

@@ -77,8 +77,9 @@ def ffmpeg(name, extension, codec_options, codec, rate, parsed=True, fragmented=
 
 
 def mp4box(scheme, options, pssh, name=None, clear=False):
-    """A file MP4Box encrypts with a crypt file; clear is its selectiveType Clear, which signals the encryption but leaves every sample in the clear, with a sample group."""
-    findings = [["mp4.protected-samples-clear", "none of its samples is encrypted"], ["aac.encoder-claim-differs", "GPAC"]] if clear else [ENCRYPTED]
+    """A file MP4Box encrypts with a crypt file; clear is its selectiveType Clear, which signals the encryption but leaves every sample in the clear, with a sample group.
+    The tenc box still protects by default, so the analyzer reports the track as encrypted and reads no frame: it does not prove sample by sample that an encrypted track is partly clear."""
+    findings = [ENCRYPTED]
     return dict(name=name or f"mp4box-{scheme}-aac", extension=".m4a", command=["MP4Box", "-quiet", "-crypt", "{crypt}", "{clear}", "-out", "{out}"], codec="AAC LC", rate=44100,
                 scheme=scheme, systems=[SYSTEM_NAMES[system] for system, _, _ in pssh], parsed=True, findings=findings, pssh=pssh, options=options, is_clear=clear,
                 crypt=crypt_file(scheme, options + (' selectiveType="Clear"' if clear else ""), pssh))
@@ -162,12 +163,9 @@ def manifest_for(entry, path):
     is_clear = entry.get("is_clear", False)
     stream = {"codec": entry["codec"], "sample_rate": entry["rate"], "channels": 2, "channel_mode": "Stereo" if is_aac else None,
               "channel_layout": ["front left", "front right"] if is_aac else [],
-              "samples": len(packets) * 1024 if is_clear else duration_samples(fields, entry["rate"]), "is_vbr": False,
-              "protection": {"scheme": SCHEMES[entry["scheme"]], "is_encrypted": not is_clear, "systems": entry["systems"]}}
-    if is_clear:
-        # The frames are read, and name ffmpeg's encoder; the tool atom of MP4Box, the muxer, is a claim that differs.
-        stream["encoder"] = [LAVC, "High"]
-    elif entry["command"][0] == "MP4Box":
+              "samples": duration_samples(fields, entry["rate"]), "is_vbr": False,
+              "protection": {"scheme": SCHEMES[entry["scheme"]], "is_encrypted": True, "systems": entry["systems"]}}
+    if entry["command"][0] == "MP4Box":
         # With no frame to read, the only evidence is the writer's own tool atom, a claim of low confidence as in any file whose frames name nothing.
         stream["encoder"] = [GPAC_TOOL, "Low"]
     crosscheck = {"ffprobe": listed, "mp4box": True, "mp4box_samples": not listed, "faad": None,
@@ -175,7 +173,7 @@ def manifest_for(entry, path):
                   "skip": {"faad": "faad2 reads clear AAC only and rejects the encrypted sample entry."}}
     if is_clear:
         crosscheck["skip"]["faad_trace"] = "faad2 rejects the protected sample entry."
-        crosscheck["skip"]["ffprobe_encryption"] = "ffmpeg 6.1 marks the packets encrypted from the tenc default and ignores the sample group that leaves every sample in the clear."
+        crosscheck["skip"]["clear_samples"] = "the samples are in the clear (MP4Box's selectiveType Clear), and ffmpeg could read them; the analyzer reports the track as encrypted because its tenc box protects by default"
     if entry["name"] == "mp4box-cbc1-aac":
         # ffmpeg's AAC decoder reads the first access unit, here AES-CBC ciphertext, and takes a program config element from it, by chance.
         crosscheck["ffprobe_streams"] = False
@@ -188,7 +186,7 @@ def manifest_for(entry, path):
     return {
         "description": f"{' '.join(entry['command'])} on 1.5 s of a 440/660 Hz tone, with the test key and key ID of this script.",
         "encoder": {"command": entry["command"]},
-        "length": len(data), "format": "MP4", "boxes": boxes, "streams": [stream], "units": packets if is_clear else [], "samples": [] if is_clear else packets,
+        "length": len(data), "format": "MP4", "boxes": boxes, "streams": [stream], "units": [], "samples": packets,
         "fields": fields, "findings": entry["findings"], "crosscheck": crosscheck,
     }
 
