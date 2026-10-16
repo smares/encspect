@@ -1,0 +1,298 @@
+{
+ "description": "A Segment with a CRC-32 whose size runs past the end of the file: the file is cut short, so the CRC covers data the file lacks and no verdict is given.",
+ "length": 330,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 180,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 290,
+   "declared_end": 1046
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   290,
+   [
+    [
+     "CRC-32",
+     46,
+     6
+    ],
+    [
+     "Info",
+     52,
+     52,
+     [
+      [
+       "TimestampScale",
+       57,
+       7
+      ],
+      [
+       "MuxingApp",
+       64,
+       20
+      ],
+      [
+       "WritingApp",
+       84,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     104,
+     76,
+     [
+      [
+       "TrackEntry",
+       109,
+       71,
+       [
+        [
+         "TrackNumber",
+         111,
+         3
+        ],
+        [
+         "TrackUID",
+         114,
+         5
+        ],
+        [
+         "TrackType",
+         119,
+         3
+        ],
+        [
+         "CodecID",
+         122,
+         8
+        ],
+        [
+         "CodecPrivate",
+         130,
+         22
+        ],
+        [
+         "CodecDelay",
+         152,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         158,
+         7
+        ],
+        [
+         "Audio",
+         165,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           167,
+           10
+          ],
+          [
+           "Channels",
+           177,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     180,
+     150,
+     [
+      [
+       "Timestamp",
+       186,
+       3
+      ],
+      [
+       "SimpleBlock",
+       189,
+       46
+      ],
+      [
+       "SimpleBlock",
+       235,
+       47
+      ],
+      [
+       "SimpleBlock",
+       282,
+       48
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 189,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     195,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 235,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     241,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 282,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     288,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    133,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.element-truncated",
+   "contains": "The Segment states"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

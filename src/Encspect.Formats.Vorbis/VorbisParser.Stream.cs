@@ -43,6 +43,28 @@ public sealed partial class VorbisParser
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
+
+        // For packets a container changed (MappedBytes.IsOpaque), whose parts map to the whole range they come from: the length of that
+        // range plus one, 0 for the others. A list of its own, filled to the last such packet, because a stream with many of them keeps
+        // four bytes for each instead of a dictionary entry.
+        private ChunkedList<int>? _spans;
+
+        public void AddOpaque(int packet, long span)
+        {
+            _spans ??= new ChunkedList<int>();
+            while (_spans.Count < packet)
+            {
+                _spans.Add(0);
+            }
+
+            _spans.Add((int)Math.Min(span + 1, int.MaxValue));
+        }
+
+        public bool IsOpaque(int packet) => _spans is { } spans && packet < spans.Count && spans[packet] != 0;
+
+        // The length of the file range an opaque packet comes from.
+        public long SpanOf(int packet) => _spans![packet] - 1;
+
         public int ModeBits { get; set; }
 
         public int Blocksize0 { get; set; }
@@ -86,6 +108,10 @@ public sealed partial class VorbisParser
         private readonly FindingCollector _findings = new();
         private readonly Records _records = new();
         private readonly long[] _modeCounts = new long[64];
+
+        // A container that holds the headers apart (CodecContext.Configuration, Matroska's CodecPrivate) and hands them over as the first
+        // packets has no Ogg pages, so nothing is said of where they lie on a page.
+        private readonly bool _isContained = context.Configuration is not null;
 
         private Identification? _identification;
         private Node? _identificationNode;
@@ -205,7 +231,7 @@ public sealed partial class VorbisParser
             _records.Blocksize1 = id.Blocksize1;
 
             // Section A.2: the identification header is alone on the first page.
-            if (packet.EndPosition is null)
+            if (!_isContained && packet.EndPosition is null)
             {
                 _findings.Add(Severity.Warning, "vorbis.page-layout", _identificationNode, _ =>
                     "The identification header shares its page with other packets, where the Vorbis I specification puts it on a page of its own (section A.2).");
@@ -322,7 +348,7 @@ public sealed partial class VorbisParser
             }
 
             // Section A.2: the setup header ends its page, so the first audio packet starts a new one.
-            if (packet.EndPosition is null)
+            if (!_isContained && packet.EndPosition is null)
             {
                 _findings.Add(Severity.Warning, "vorbis.page-layout", _setup.Node, _ =>
                     "The setup header does not end its page, where the Vorbis I specification starts the audio on a fresh page (section A.2).");
@@ -339,7 +365,11 @@ public sealed partial class VorbisParser
             int index = _records.Packets.Count;
             PacketRecord record = Read(packet);
             _records.Add(packet.FileStart, record);
-            if (packet.FileEnd - packet.FileStart != packet.Length)
+            if (packet.IsOpaque)
+            {
+                _records.AddOpaque(index, packet.FileEnd - packet.FileStart);
+            }
+            else if (packet.FileEnd - packet.FileStart != packet.Length)
             {
                 _records.Ranges[index] = [.. packet.FileRanges()];
             }

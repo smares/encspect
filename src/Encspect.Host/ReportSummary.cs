@@ -4,7 +4,8 @@ namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
-// channel layout, encoder and writer are the first stream's that has one; the duration and samples add up over all streams, and the
+// channel layout, encoder and writer are the first stream's that has one; the duration and samples add up over all streams, except that
+// the streams of one playback group (StreamInfo.PlaybackGroup), which play at the same time, count their longest once, and the
 // average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
 // most JOC objects one reconstructs. Tags are the file's and those its container holds in its chunks,
 // in tree order.
@@ -47,14 +48,18 @@ public sealed record ReportSummary(
         StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
         List<StreamInfo> timed = streams.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
+        List<StreamInfo> counted = [.. streams.Where(s => s.PlaybackGroup is null),
+            .. streams.Where(s => s.PlaybackGroup is not null).GroupBy(s => s.PlaybackGroup).Select(g => g.MaxBy(s => s.Duration)!)];
+        double duration = counted.Sum(s => s.Duration);
+        long samples = counted.Sum(s => s.Samples);
 
         return new ReportSummary(
             report.Source,
             report.Root.Value?.ToString(),
             streams.Count,
             first?.Codec,
-            first is null ? null : streams.Sum(s => s.Duration),
-            first is null ? null : streams.Sum(s => s.Samples),
+            first is null ? null : duration,
+            first is null ? null : samples,
             timedDuration > 0 ? timed.Sum(s => s.AverageBitrate!.Value * s.Duration) / timedDuration : null,
             first?.SampleRate,
             first?.ChannelMode,

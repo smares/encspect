@@ -26,9 +26,9 @@ public sealed record CodecConfiguration
     // variable bitrate, ISO/IEC 14496-1 7.2.6.6.2).
     public bool? IsVbr { get; init; }
 
-    // What the container's evidence about this one stream says about the encoder (MP4's layout of one track), in addition to the claims
+    // What the container read about this stream's coding that says something about the encoder (MP4's layout of one track), in addition to the claims
     // of the whole file. The codec parser sees them with the file's, after them, and the caller's claims do not gain them; they take effect
-    // only through the host's router. Record equality compares this list by reference.
+    // only through the host's router. What the container states about the stream itself, not the coding, goes in the route's claims. Record equality compares this list by reference.
     public IReadOnlyList<EncoderClaim> Claims { get; init; } = [];
 
     // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
@@ -39,4 +39,8 @@ public sealed record CodecConfiguration
     // preroll), for codec parsers that do not read the data far enough to count samples; null when
     // it states none.
     public double? Duration { get; init; }
+
+    // The built-in delay of the coding the container states, in seconds (Matroska's CodecDelay, RFC 9559 section 5.1.4.1.25): what a
+    // decoder drops from the start of the decoded audio. Null when it states none.
+    public double? Delay { get; init; }
 }

@@ -105,6 +105,13 @@ public sealed partial class Mp4Parser
         }
 
         CompareLayouts(state, entry, streams, label);
+
+        // The tracks of one movie play at the same time; a track whose codec reported several streams in a row is not marked.
+        List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
+        if (made.Count == 1)
+        {
+            state.Context.UpdateStream(made[0], made[0] with { PlaybackGroup = 1 });
+        }
     }
 
     // The software behind the AAC track, from the way it lays out the file. Every AAC file afconvert encoded on macOS 15.7

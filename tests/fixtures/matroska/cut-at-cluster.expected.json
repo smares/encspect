@@ -1,0 +1,250 @@
+{
+ "description": "A file that starts at a Cluster: Clusters and Cues with no header, Segment or Tracks, so the blocks name tracks no TrackEntry describes.",
+ "length": 318,
+ "format": "Matroska",
+ "ebml": {},
+ "segments": [
+  {
+   "offset": 0,
+   "clusters": [
+    {
+     "offset": 0,
+     "length": 150,
+     "timestamp": 60,
+     "size_unknown": false,
+     "blocks": 3
+    },
+    {
+     "offset": 150,
+     "length": 150,
+     "timestamp": 120,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": true,
+   "length": 318,
+   "declared_end": 318
+  }
+ ],
+ "tree": [
+  [
+   "Segment",
+   0,
+   318,
+   [
+    [
+     "Cluster",
+     0,
+     150,
+     [
+      [
+       "Timestamp",
+       6,
+       3
+      ],
+      [
+       "SimpleBlock",
+       9,
+       46
+      ],
+      [
+       "SimpleBlock",
+       55,
+       47
+      ],
+      [
+       "SimpleBlock",
+       102,
+       48
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     150,
+     150,
+     [
+      [
+       "Timestamp",
+       156,
+       3
+      ],
+      [
+       "SimpleBlock",
+       159,
+       46
+      ],
+      [
+       "SimpleBlock",
+       205,
+       47
+      ],
+      [
+       "SimpleBlock",
+       252,
+       48
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     300,
+     18,
+     [
+      [
+       "CuePoint",
+       305,
+       13,
+       [
+        [
+         "CueTime",
+         307,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         310,
+         8,
+         [
+          [
+           "CueTrack",
+           312,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           315,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 9,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     15,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 55,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     61,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 102,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 60,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     108,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 159,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 120,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     165,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 205,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 120,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     211,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 252,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 120,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     258,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [],
+ "writers": [
+  null
+ ],
+ "streams": null,
+ "findings": [
+  {
+   "code": "matroska.no-ebml-header",
+   "contains": "does not start with an EBML Header"
+  },
+  {
+   "code": "matroska.segment-header-missing",
+   "contains": "no Segment element before them"
+  },
+  {
+   "code": "matroska.block-track-unknown",
+   "contains": "no TrackEntry describes"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}
