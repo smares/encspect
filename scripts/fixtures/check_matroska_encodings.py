@@ -127,13 +127,15 @@ def expected_codes(encodings, has_private, codec):
         codes.add("matroska.track-encrypted" if is_encrypted(1) else "matroska.track-encoding-not-read")
         if not is_encrypted(1):
             return codes
-    elif not opaque and (steps(1) or steps(2)):
+    elif not opaque and steps(1):
         codes.add("matroska.track-encoding-not-read")
         return codes
     if has_private and not is_read(2):
         codes.add("matroska.codec-private-encrypted" if is_encrypted(2) else "matroska.codec-private-not-read")
         if opaque:
             return codes
+    elif has_private and not opaque and steps(2):
+        codes.add("matroska.codec-private-not-read")
     elif has_private and has_zlib(2):
         codes.add("matroska.codec-private-invalid")
         return codes
@@ -195,8 +197,7 @@ def write(path, tracks):
 
 
 def analyze(cli, directory):
-    """{file name: [what the analyzer shows per track]}: the protection, the tracks whose frames were counted, the finding codes of CODES, and whether it
-    undid the frames and could not map them to a codec parser."""
+    """{file name: [what the analyzer shows per track]}: the protection, the tracks whose frames were counted, the finding codes of CODES, whether it undid the frames, or the CodecPrivate, and could not map them to a codec parser."""
     result = subprocess.run([*cli, "--ndjson", str(directory)], capture_output=True, text=True, timeout=1200)
     reports = {}
     for line in result.stdout.splitlines():
@@ -208,17 +209,17 @@ def analyze(cli, directory):
             stack.extend(node.get("children", []))
             if (m := re.fullmatch(r"Track (\d+) Frames", node["name"])) and isinstance(node["value"], int):
                 counted.add(int(m.group(1)))
-        codes, unmapped = {}, set()
+        codes, unmapped, private_unmapped = {}, set(), set()
         for finding in report["findings"]:
             if (m := re.search(r"Track (\d+)", finding["message"])) and finding["code"] in CODES:
                 codes.setdefault(int(m.group(1)), set()).add(finding["code"])
                 if "cannot map back" in finding["message"]:
-                    unmapped.add(int(m.group(1)))
+                    (private_unmapped if finding["code"] == "matroska.codec-private-not-read" else unmapped).add(int(m.group(1)))
         tracks = []
         for number, stream in enumerate(report["streams"], 1):
             protection = stream.get("protection")
             tracks.append(dict(protection=(protection["scheme"], protection["isEncrypted"]) if protection else None, counted=number in counted,
-                               codes=codes.get(number, set()), unmapped=number in unmapped))
+                               codes=codes.get(number, set()), unmapped=number in unmapped, private_unmapped=number in private_unmapped))
         reports[pathlib.Path(report["source"]).name] = tracks
     return reports
 
@@ -233,14 +234,16 @@ def compare(got, codec, has_private, models):
         differences.append(f"protection {got['protection']}, model {protection}")
 
     # The frames are clear and undone when the analyzer counted them, or undid them and could not go on for a reason that is not about the frames.
-    blocked = "matroska.track-encrypted" in codes or ("matroska.track-encoding-not-read" in codes and not got["unmapped"])
-    frames = got["counted"] or got["unmapped"] or (not blocked and bool(codes & {"matroska.codec-private-invalid", "matroska.codec-private-missing"}))
+    # It undid the frames and could not map them to a codec parser only if an encoding that covers the frames is undone (header stripping or zlib).
+    unmapped = got["unmapped"] and any(m["type"] == 0 and m["scope"] & 1 for m in models)
+    blocked = "matroska.track-encrypted" in codes or ("matroska.track-encoding-not-read" in codes and not unmapped)
+    frames = got["counted"] or unmapped or (not blocked and bool(codes & {"matroska.codec-private-invalid", "matroska.codec-private-missing"}))
     if frames != want["frames_read"]:
         differences.append(f"frames read {frames}, model {want['frames_read']}")
 
     # The CodecPrivate is seen where the analyzer gets as far as it: not after frames it cannot read, a codec parser it cannot map them to, or tied encodings.
     if "matroska.track-encoding-not-read" not in codes:
-        private = has_private and not codes & {"matroska.codec-private-encrypted", "matroska.codec-private-not-read"}
+        private = has_private and (got["private_unmapped"] or not codes & {"matroska.codec-private-encrypted", "matroska.codec-private-not-read"})
         if private != want["codec_private_read"]:
             differences.append(f"CodecPrivate read {private}, model {want['codec_private_read']}")
     if codes != expected_codes(models, has_private, codec):
