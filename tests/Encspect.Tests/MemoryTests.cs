@@ -447,19 +447,24 @@ public class MemoryTests(ITestOutputHelper output)
     [Fact]
     public void MatroskaRecordsAndElementsPastTheirLimitsStayBounded()
     {
-        // Once, not four times as Measure does: the cap's records are about 120 bytes per block.
-        Report report = Analyzer.CreateDefault().Analyze("records.mka", new MemoryStream(MatroskaBuilder.OpusBlocks(6_100_000, blocksPerCluster: 100_000)));
+        // Once, not four times as Measure does: the cap's records are about 120 bytes per block. The input is built before the baseline and kept
+        // alive past the reading, as in Measure, so that its 55 MB are in neither. linux-x64 measures 710 MB; the bound is about twice that.
+        byte[] data = MatroskaBuilder.OpusBlocks(6_100_000, blocksPerCluster: 100_000);
+        long before = Live();
+        Report report = Analyzer.CreateDefault().Analyze("records.mka", new MemoryStream(data));
         Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        long live = GC.GetTotalMemory(forceFullCollection: true);
-        output.WriteLine($"records.mka: {live / 1_000_000} MB live");
-        Assert.True(live < 1_200_000_000, $"The live heap is {live / 1_000_000} MB.");
+        long live = Live() - before;
+        GC.KeepAlive(data);
+        output.WriteLine($"records.mka: {live / 1_000_000} MB more live");
+        Assert.True(live < 1_400_000_000, $"The live heap grew by {live / 1_000_000} MB.");
         GC.KeepAlive(report);
         Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 400_000_000, "matroska.too-many-elements");
     }
 
     // A block of seven bytes can state 256 frames of no bytes: the frames of laced blocks are counted against a budget, and fixed-size lacing
-    // keeps no sizes, so 100,000 such blocks (700 KB of file, 25.6 million frames) cost a record per block and the frames up to the budget.
+    // keeps no sizes, so 100,000 such blocks (700 KB of file, 25.6 million frames) cost a record per block and the frames up to the budget:
+    // 120 MB on linux-x64, and the bound about twice that.
     [Fact]
     public void LacedBlocksOfEmptyFramesStayBounded()
     {
@@ -468,31 +473,37 @@ public class MemoryTests(ITestOutputHelper output)
 
         // Without a track the blocks are only recorded; with an Opus track every frame also goes to the codec parser as an empty packet.
         Bounded("laced.mka", MatroskaBuilder.Concat(MatroskaBuilder.Header(), MatroskaBuilder.Segment(cluster)), 50_000_000, "matroska.too-many-elements");
+        byte[] data = MatroskaBuilder.File(MatroskaBuilder.OpusTracks(), cluster);
+        long before = Live();
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Report report = Analyzer.CreateDefault().Analyze("laced-opus.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.OpusTracks(), cluster)));
+        Report report = Analyzer.CreateDefault().Analyze("laced-opus.mka", new MemoryStream(data));
         watch.Stop();
         Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        long live = GC.GetTotalMemory(forceFullCollection: true);
-        output.WriteLine($"laced-opus.mka: {live / 1_000_000} MB live, {watch.Elapsed.TotalSeconds:0.0} s");
-        Assert.True(live < 500_000_000, $"The live heap is {live / 1_000_000} MB.");
+        long live = Live() - before;
+        GC.KeepAlive(data);
+        output.WriteLine($"laced-opus.mka: {live / 1_000_000} MB more live, {watch.Elapsed.TotalSeconds:0.0} s");
+        Assert.True(live < 240_000_000, $"The live heap grew by {live / 1_000_000} MB.");
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(120), $"The analysis took {watch.Elapsed.TotalSeconds:0} s.");
         GC.KeepAlive(report);
     }
 
     // Frames put together from other bytes (header stripping) reach the codec parser as opaque packets, which keep four bytes each beyond
-    // the plain ones: the same laced file with a track that strips a byte from every frame stays near the plain one.
+    // the plain ones: the same laced file with a track that strips a byte from every frame stays near the plain one (177 MB on linux-x64, the bound about twice that).
     [Fact]
     public void LacedBlocksOfHeaderStrippedFramesStayBounded()
     {
         byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(MatroskaBuilder.EmptyLacedBlock(), 100_000)]);
-        Report report = Analyzer.CreateDefault().Analyze("stripped.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.OpusTracks(isHeaderStripped: true), cluster)));
+        byte[] data = MatroskaBuilder.File(MatroskaBuilder.OpusTracks(isHeaderStripped: true), cluster);
+        long before = Live();
+        Report report = Analyzer.CreateDefault().Analyze("stripped.mka", new MemoryStream(data));
         Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.InRange(report.Streams.Sum(s => s.Samples) / 960, 3_990_000, 4_000_000);
-        long live = GC.GetTotalMemory(forceFullCollection: true);
-        output.WriteLine($"stripped.mka: {live / 1_000_000} MB live");
-        Assert.True(live < 350_000_000, $"The live heap is {live / 1_000_000} MB.");
+        long live = Live() - before;
+        GC.KeepAlive(data);
+        output.WriteLine($"stripped.mka: {live / 1_000_000} MB more live");
+        Assert.True(live < 350_000_000, $"The live heap grew by {live / 1_000_000} MB.");
         GC.KeepAlive(report);
     }
 
@@ -597,7 +608,9 @@ public class MemoryTests(ITestOutputHelper output)
     // run, so empty packets of an unknown key (3 bytes each) keep about nothing per packet. The
     // bound is on the growth from 1 to 4 million packets: what the report keeps whatever the count
     // (the detailed packets, pools the runtime holds on to) differs by platform and would otherwise
-    // dominate.
+    // dominate. The second figure is what the analysis held above the heap it ends with
+    // (MeasureExcess), which reads the heap at fixed places in the input and does not depend on the
+    // heap before the analysis or on when a sampler thread runs.
     [Fact]
     public void UnknownSv8PacketsStayCompact()
     {
@@ -605,18 +618,28 @@ public class MemoryTests(ITestOutputHelper output)
         const int packets = 4_000_000;
         byte[] warmUp = Sv8EmptyPackets(5000, "XX"u8);
 
-        (_, long fewerKept, long fewerPeak) = Measure("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
-        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
+        (_, long fewerKept, long fewerPeak, string fewerWhere) = MeasureExcess("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
+        (Report report, long kept, long peak, string where) = MeasureExcess("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
 
         Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
         Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
         double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
         double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
-        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes peak: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the start and end: {Hundredths(keptPerPacket)} and {Hundredths(peakPerPacket)} per further packet");
+        output.WriteLine($"Highest readings, 1 million packets: {fewerWhere}");
+        output.WriteLine($"Highest readings, 4 million packets: {where}");
+        output.WriteLine(RuntimeSettings());
         Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
-        Assert.True(peakPerPacket < UndetailedPacketBound, $"The live heap grew by {peakPerPacket:F2} bytes per further packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further packet than it starts and ends with. Highest readings: 1 million packets {fewerWhere}; 4 million packets {where}. {RuntimeSettings()}");
         GC.KeepAlive(report);
     }
+
+    // What the runtime is configured with, for reading a failure on a runner.
+    private static string RuntimeSettings() =>
+        $"{Environment.ProcessorCount} processors, server GC {GCSettings.IsServerGC}, " +
+        string.Join(", ", GC.GetConfigurationVariables().Where(v => v.Key is "GCServer" or "GCConcurrent" or "GCHeapCount" or "GCgen0size" or "GCgen0MaxBudget" or "GCRegionSize" or "GCConserveMemory" or "GCHeapHardLimit").Select(v => $"{v.Key}={v.Value}"));
+
+    private static string Hundredths(double value) => (Math.Round(value, 2) + 0.0).ToString("F2");
 
     // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
     // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
@@ -782,22 +805,202 @@ public class MemoryTests(ITestOutputHelper output)
     // to 4 million packets, read 992 bytes for the first (macOS on x64) where the second read 3.5
     // MB, and failed with 1.17 bytes per further packet. The heap with the report alive, after the
     // analysis, is the least the analysis held at its end, so it counts as a reading too (the
-    // smaller of the two pairs' readings).
+    // smaller of the two pairs' readings). MeasureExcess is the variant for tests whose bound is on
+    // a growth between two counts and so must not depend on the heap before the analysis.
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
+    {
+        (Report report, long kept, long before, long sampled, long atEnd) = Run(name, data, warmUp);
+        return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
+    }
+
+    // What the analysis holds above the heap it starts and ends with (report alive), as the highest of the
+    // live heap read at 32 places in the input and by a thread that reads it every 300 ms, all by
+    // the compacting collections of Live, so only live objects count and no reading can be too
+    // high. The places are fixed fractions of the input, read after the read that reaches them in
+    // any pass over it (ProbeStream), so they do not depend on timing; the thread covers the work
+    // after the last read and the stretches between places, and its timing only decides whether
+    // it catches a transient that exists. docs/development.md, "Memory tests", gives the
+    // measurement, what it can and cannot see, and the failures that led to it. The reference is the
+    // higher of the heap before the analysis and the heap at its end, so memory that earlier work
+    // releases during the analysis lowers the reading instead of raising it. As with kept, two
+    // analyses are taken and the smaller excess counts.
+    private static (Report Report, long Kept, long Excess, string Where) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
+    {
+        var analyzer = Analyzer.CreateDefault();
+        analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
+        Live();
+        (long before, long withReport, long highest, string where) = ProbedAnalysis(analyzer, name, data);
+        long withoutReport = Live();
+        (long secondBefore, long secondWithReport, long secondHighest, string secondWhere) = ProbedAnalysis(analyzer, name, data);
+        long secondWithoutReport = Live();
+        Report report = analyzer.Analyze(name, new MemoryStream(data));
+        GC.KeepAlive(data);
+        long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
+        long excess = Math.Max(0, highest - Math.Max(before, withReport));
+        long secondExcess = Math.Max(0, secondHighest - Math.Max(secondBefore, secondWithReport));
+        return (report, kept, Math.Min(excess, secondExcess),
+            $"[{where}, before {before}, at end {withReport} | {secondWhere}, before {secondBefore}, at end {secondWithReport}]");
+    }
+
+    // The live heap before the analysis, with its report alive after it, and the highest live heap
+    // read during it; the report is dropped on return. A measurement whose probes did not fire is a failure, not a pass.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static (long Before, long WithReport, long Highest, string Where) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
+    {
+        var stream = new ProbeStream(data);
+        long before = Live();
+        bool done = false;
+        var sampler = new Thread(() =>
+        {
+            long next = 0;
+            while (!Volatile.Read(ref done))
+            {
+                if (Environment.TickCount64 >= next || stream.Ended)
+                {
+                    stream.Record(LiveOnce(), stream.Ended ? "thread after the end" : "thread");
+                    next = Environment.TickCount64 + 300;
+                }
+                else
+                {
+                    Thread.Sleep(10);
+                }
+            }
+        });
+        sampler.IsBackground = true;
+        sampler.Start();
+        Report report;
+        try
+        {
+            report = analyzer.Analyze(name, stream);
+        }
+        finally
+        {
+            Volatile.Write(ref done, true);
+            sampler.Join();
+        }
+
+        Assert.True(stream.FullPasses >= 1, $"No pass over the input reached all {ProbeStream.Places.Length} places ({stream.Probes} places reached in all).");
+        long live = Live();
+        GC.KeepAlive(report);
+        return (before, live, stream.Highest, stream.Where);
+    }
+
+    private sealed class ProbeStream(byte[] data) : MemoryStream(data)
+    {
+        // Prime numerators of 137: irregular, fixed fractions of the input.
+        public static readonly int[] Places =
+            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131];
+
+        private const int Denominator = 137;
+
+        private long _highest;
+        private int _passed;
+        private int _probes;
+        private int _fullPasses;
+        private long _endedUntil;
+
+        public long Highest { get { lock (this) { return _highest; } } }
+
+        public int Probes => Volatile.Read(ref _probes);
+
+        // Passes that reached every place without a read back before one.
+        public int FullPasses => Volatile.Read(ref _fullPasses);
+
+        // True for half a second after a read has reached the end of the input, when what the
+        // analysis does next (checks, the stream info, the findings) is read back to back.
+        public bool Ended => Environment.TickCount64 < Volatile.Read(ref _endedUntil);
+
+        // Which reading was the highest, and what the collector recorded for the collection that made it.
+        public string Where { get; private set; } = "none";
+
+        public void Record(long live, string source)
+        {
+            lock (this)
+            {
+                if (live <= _highest)
+                {
+                    return;
+                }
+
+                _highest = live;
+                GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
+                string generations = string.Join("/", info.GenerationInfo.ToArray().Select(g => $"{g.SizeBeforeBytes >> 10}>{g.SizeAfterBytes >> 10}"));
+                Where = $"{live} by {source} (position {Position}, places {_passed}), generations KB before>after {generations}, pinned {info.PinnedObjectsCount}, finalization pending {info.FinalizationPendingCount}, promoted {info.PromotedBytes}, fragmented {info.FragmentedBytes}";
+            }
+        }
+
+        // After a read, once for the places it reached whatever the pass over the input; a read
+        // back before a place makes it count again.
+        private void Probe()
+        {
+            long position = Position;
+            int passed = _passed;
+            while (passed > 0 && At(passed - 1) > position)
+            {
+                passed--;
+            }
+
+            int reached = passed;
+            while (reached < Places.Length && At(reached) <= position)
+            {
+                reached++;
+            }
+
+            if (position >= Length)
+            {
+                Volatile.Write(ref _endedUntil, Environment.TickCount64 + 500);
+            }
+
+            _passed = reached;
+            if (reached > passed)
+            {
+                Interlocked.Add(ref _probes, reached - passed);
+                if (reached == Places.Length)
+                {
+                    Interlocked.Increment(ref _fullPasses);
+                }
+
+                Record(LiveOnce(), $"place {reached}");
+            }
+        }
+
+        private long At(int place) => Length * Places[place] / Denominator;
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int read = base.Read(buffer, offset, count);
+            Probe();
+            return read;
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            int read = base.Read(buffer);
+            Probe();
+            return read;
+        }
+
+        public override int ReadByte()
+        {
+            int value = base.ReadByte();
+            Probe();
+            return value;
+        }
+    }
+
+    private static (Report Report, long Kept, long Before, long Sampled, long AtEnd) Run(string name, byte[] data, byte[]? warmUp)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         long before = Live();
-        long peak = before;
-        long withReport = SampledAnalysis(analyzer, name, data, ref peak);
+        long withReport = SampledAnalysis(analyzer, name, data, out long sampled);
         long withoutReport = Live();
         long secondWithReport = AnalysisWithReport(analyzer, name, data);
         long secondWithoutReport = Live();
         Report report = analyzer.Analyze(name, new MemoryStream(data));
         GC.KeepAlive(data);
         long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
-        long atEnd = Math.Min(withReport, secondWithReport);
-        return (report, kept, Math.Max(Volatile.Read(ref peak), atEnd) - before);
+        return (report, kept, before, sampled, Math.Min(withReport, secondWithReport));
     }
 
     // The live heap with the report of an analysis alive; the report is dropped on return.
@@ -813,12 +1016,10 @@ public class MemoryTests(ITestOutputHelper output)
     // The live heap with the report of an analysis alive, read while a sampler thread forces
     // collections during it; the report is dropped on return.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, ref long peak)
+    private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, out long sampled)
     {
-        long observed = Volatile.Read(ref peak);
-        long highest = observed;
         bool done = false;
-        long shared = observed;
+        long shared = 0;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
@@ -828,14 +1029,22 @@ public class MemoryTests(ITestOutputHelper output)
                 Thread.Sleep(SampleInterval);
             }
         });
+        sampler.IsBackground = true;
         sampler.Start();
-        Report report = analyzer.Analyze(name, new MemoryStream(data));
-        Volatile.Write(ref done, true);
-        sampler.Join();
+        Report report;
+        try
+        {
+            report = analyzer.Analyze(name, new MemoryStream(data));
+        }
+        finally
+        {
+            Volatile.Write(ref done, true);
+            sampler.Join();
+        }
+
         long live = Live();
         GC.KeepAlive(report);
-        highest = Math.Max(highest, Volatile.Read(ref shared));
-        peak = highest;
+        sampled = Volatile.Read(ref shared);
         return live;
     }
 
@@ -845,6 +1054,15 @@ public class MemoryTests(ITestOutputHelper output)
     {
         GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
         return info.HeapSizeBytes - info.FragmentedBytes;
+    }
+
+    // One such collection: a reading to compare with a bound of MB, taken while the analysis runs,
+    // where the repeats of Live (for what finalizers release) would cost seconds.
+    private static long LiveOnce()
+    {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        return LastFullCollection();
     }
 
     // The live heap after full, compacting collections that also compact the large object heap,
@@ -982,16 +1200,24 @@ public class MemoryTests(ITestOutputHelper output)
         crc ^= 0xFFFFFFFF;
         byte[] sh = [(byte)'S', (byte)'H', 12, (byte)(crc >> 24), (byte)(crc >> 16), (byte)(crc >> 8), (byte)crc, .. body];
         byte[] rg = [(byte)'R', (byte)'G', 12, 1, 0, 0, 0, 0, 0, 0, 0, 0];
-        var data = new List<byte>("MPCK"u8.ToArray());
-        data.AddRange(sh);
-        data.AddRange(rg);
-        for (int i = 0; i < packets; i++)
+        // Filled in place: a list that doubles up to 16 MB and is copied out leaves tens of MB of
+        // dead large arrays in the heap for the analysis that follows.
+        byte[] tail = "SE\x03"u8.ToArray();
+        int packetLength = key[0] == 'A' ? 4 : 3;
+        byte[] data = new byte[4 + sh.Length + rg.Length + (packets * packetLength) + tail.Length];
+        "MPCK"u8.CopyTo(data);
+        sh.CopyTo(data, 4);
+        rg.CopyTo(data, 4 + sh.Length);
+        int at = 4 + sh.Length + rg.Length;
+        for (int i = 0; i < packets; i++, at += packetLength)
         {
-            data.AddRange(key[0] == 'A' ? [key[0], key[1], 4, 0] : [key[0], key[1], 3]);
+            data[at] = key[0];
+            data[at + 1] = key[1];
+            data[at + 2] = key[0] == 'A' ? (byte)4 : (byte)3;
         }
 
-        data.AddRange("SE\x03"u8.ToArray());
-        return [.. data];
+        tail.CopyTo(data, at);
+        return data;
     }
 
     // An SV5 stream (libmpcdec 1.2.6 streaminfo_read_header_sv6): a header with a variable bitrate,

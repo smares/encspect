@@ -11,6 +11,19 @@ internal sealed class FindingCollector
 
     public void Add(Severity severity, string code, Node node, Func<int, string> message) => Add(severity, code, () => node, message);
 
+    // True, and counted, when a finding of this code is already aggregated, so its caller builds no
+    // delegates for the cases after the first.
+    public bool Repeat(string code)
+    {
+        if (!_aggregated.TryGetValue(code, out var existing))
+        {
+            return false;
+        }
+
+        _aggregated[code] = existing with { Count = existing.Count + 1 };
+        return true;
+    }
+
     // node is built only for the first case, and only when the findings are reported, so a finding
     // repeated over many units builds one node, and a node that grows while the units are read (a run
     // of packets) is built as it ends.
