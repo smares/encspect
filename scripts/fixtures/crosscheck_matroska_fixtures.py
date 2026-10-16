@@ -132,6 +132,10 @@ ALGORITHM_NAMES = {1: "DES", 2: "3DES", 3: "Twofish", 4: "Blowfish", 5: "AES"}
 AES_MODES = {1: "AES-CTR", 2: "AES-CBC"}
 
 
+# The fixtures whose protection could not be compared with a tool or the report, for the summary.
+NOT_COMPARED = []
+
+
 def mkvinfo_encodings(text):
     """The ContentEncodings of every track mkvinfo lists, in order: [[(order, scope, type, encryption algorithm or None)]] per track."""
     tracks = []
@@ -181,11 +185,13 @@ def check_protection(name, manifest, path, problems, tally, report):
     got = mkvinfo_encodings(text)
     if len(got) != len(wanted):
         print(f"{name}: mkvinfo's ContentEncodings not compared: it lists {len(got)} tracks, the manifest {len(wanted)}, the file being damaged")
+        NOT_COMPARED.append(name)
     elif got != wanted:
         problems.append(f"mkvinfo reads the ContentEncodings {got}, the manifest {wanted}")
     audio = [t for t in manifest["tracks"] if t["type"] == 2]
     if report is not None and len(report["streams"]) != len(audio):
         print(f"{name}: the report's protection not compared: it has {len(report['streams'])} streams, the manifest {len(audio)} audio tracks")
+        NOT_COMPARED.append(name)
     elif report is not None:
         for track, stream in zip(audio, report["streams"]):
             expected = expected_protection(track["encodings"])
@@ -324,6 +330,7 @@ def main():
         print(line)
         failures += 1
     tally.print()
+    print(f"{len(NOT_COMPARED)} protection comparisons skipped (listed above)")
     print(f"{checked} fixtures checked, {failures} with problems")
     return 1 if failures else 0
 
