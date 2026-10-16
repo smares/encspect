@@ -411,6 +411,15 @@ def _():
     return build([ebml_header(max_id=5), segment(info(), tracks(opus_track()), cluster(0, *items), cluster(100, *blocks(count=4, first=2)))])
 
 
+@fixture("eight-octet-id", "An EBML Header that allows IDs of eight octets (EBMLMaxIDLength 8), and an element with such an ID (0x0123456789ABCDEF) in a BlockGroup and one directly in a "
+         "Cluster: the tree shows the whole ID of each.",
+         findings=[("matroska.header-limits", "EBMLMaxIDLength of 8"), ("matroska.unknown-element", "none the Matroska schema lists")], streams=[OPUS], valid=False)
+def _():
+    long_id = b"\x01\x23\x45\x67\x89\xAB\xCD\xEF"
+    items = [simple_block(1, 0, opus_packet(0)), E(0x7FF1, b"zz", id_raw=long_id), block_group(1, 20, opus_packet(1), extra=(E(0x7FF1, b"yy", id_raw=long_id),))]
+    return build([ebml_header(max_id=8), segment(info(), tracks(opus_track()), cluster(0, *items))])
+
+
 @fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
          "so the frames count as encrypted by the AES encryption.",
          findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
@@ -993,6 +1002,17 @@ def legacy_aac(codec, name, output_rate=None, rate_override=None, apps=None):
          "(the object type, the sampling frequency and the channels).", streams=[("AAC", 44100, 2)])
 def _():
     return legacy_aac("A_AAC/MPEG4/LC", "stereo")[0]
+
+
+@fixture("aac-legacy-stray-codec-private", "A track with the legacy ID A_AAC/MPEG4/LC and a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): it would configure "
+         "48 kHz mono, but it is not handed over, and the AudioSpecificConfig is worked out from the ID and the Audio element as for aac-legacy-lc.",
+         findings=[("matroska.codec-private-unexpected", "does not define")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    _, rate_index, channels, frames = adts_frames("stereo")
+    rate = float(AAC_RATES[rate_index])
+    stray = struct.pack(">H", (2 << 11) | (3 << 7) | (1 << 3))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[audio_track(1, "A_AAC/MPEG4/LC", channels, rate, private=stray)]))
 
 
 @fixture("aac-legacy-mpeg2-main", "A track with the legacy ID A_AAC/MPEG2/MAIN, whose frames use the main profile's prediction.", streams=[("AAC", 44100, 1)])

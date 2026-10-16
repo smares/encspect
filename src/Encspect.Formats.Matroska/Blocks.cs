@@ -332,7 +332,7 @@ internal sealed partial class FileReader
         Records records = segment.Records;
         var item = new Item { Kind = ItemKind.BlockGroup, Id = Schema.BlockGroup, Offset = group.Offset, HeaderLength = (byte)group.Length, DataLength = end - group.DataOffset, Index = records.Children.Count };
         int found = ReadGroupChildren(segment, cluster, group.DataOffset, end, 0, "BlockGroup", item.Offset);
-        item.Count = records.Children.Count - item.Index;
+        item.Value = records.Children.Count - item.Index;
         blocks = found;
         if (found == 0)
         {
@@ -360,7 +360,7 @@ internal sealed partial class FileReader
             HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
-                records.Children.Add(new Child { Id = uint.MaxValue, Offset = position, DataLength = end - position, Depth = (byte)depth, Block = -1 });
+                records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
                 _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
                     $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
                     Unparsed(position, end, "the " + parentName));
@@ -375,8 +375,7 @@ internal sealed partial class FileReader
             ElementDefinition? definition = Schema.Find(child.Id);
             long childEnd = ChildEnd(child, definition, end, parentName);
             CheckHeaderForm(child, definition, childEnd);
-            var record = new Child { Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Id = (uint)Math.Min(child.Id, uint.MaxValue - 1), Depth = (byte)depth, Block = -1 };
-            // uint.MaxValue marks the record of bytes that start no element, so an ID of five bytes (EBMLMaxIDLength 5), which no schema element has, is kept below it.
+            var record = new Child { Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Id = child.Id, Depth = (byte)depth, Block = -1 };
             if (child.Id == Schema.Block && depth == 0)
             {
                 record.Block = ReadBlock(segment, cluster, child, childEnd, true);

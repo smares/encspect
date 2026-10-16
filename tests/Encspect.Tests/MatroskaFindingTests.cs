@@ -87,4 +87,30 @@ public class MatroskaFindingTests
 
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
+
+    // An element whose ID has eight octets (EBMLMaxIDLength 8) shows its whole ID, in a BlockGroup and directly in a Cluster.
+    [Fact]
+    public void LongIdsAreShownWhole()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/eight-octet-id.mka");
+
+        var shown = new List<string>();
+        var stack = new Stack<Node>([report.Root]);
+        while (stack.Count > 0)
+        {
+            Node node = stack.Pop();
+            if (node.Name == "Unknown Element")
+            {
+                shown.Add(node.Value!.ToString()!);
+            }
+
+            foreach (Node child in node.Children)
+            {
+                stack.Push(child);
+            }
+        }
+
+        Assert.Equal(2, shown.Count);
+        Assert.All(shown, text => Assert.StartsWith("ID 0x123456789ABCDEF,", text, StringComparison.Ordinal));
+    }
 }

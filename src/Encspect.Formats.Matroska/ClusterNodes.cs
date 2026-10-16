@@ -51,7 +51,7 @@ internal static class ClusterNodes
     }
 
     // A leaf the Cluster or a BlockGroup holds besides the blocks.
-    private static Node ElementNode(uint id, long offset, int headerLength, long dataLength, long value)
+    private static Node ElementNode(ulong id, long offset, int headerLength, long dataLength, long value)
     {
         ElementDefinition? definition = Schema.Find(id);
         long length = headerLength + dataLength;
@@ -79,7 +79,7 @@ internal static class ClusterNodes
     {
         ElementDefinition definition = Schema.Find(Schema.BlockGroup)!;
         int first = item.Index;
-        int count = item.Count;
+        int count = (int)item.Value;
         return new Node("BlockGroup", item.Offset, item.HeaderLength + item.DataLength, null, () => GroupChildren(records, first, count))
         {
             Description = definition.Description,
@@ -95,7 +95,7 @@ internal static class ClusterNodes
         {
             Child child = records.Children[i];
             Node node = child.Block >= 0 ? BlockNode(records, child.Block, "Block")
-                : child.Id == uint.MaxValue ? new Node("Unparsed Data", child.Offset, child.DataLength, NodeValue.Integer(child.DataLength, "bytes", "byte")) { Description = Explain.UnparsedData }
+                : child.Block == Child.UnparsedBlock ? new Node("Unparsed Data", child.Offset, child.DataLength, NodeValue.Integer(child.DataLength, "bytes", "byte")) { Description = Explain.UnparsedData }
                 : ElementNode(child.Id, child.Offset, child.HeaderLength, child.DataLength, child.Value);
             if (child.Depth == 0 || stack.Count == 0)
             {

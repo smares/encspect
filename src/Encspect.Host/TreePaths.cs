@@ -6,9 +6,9 @@ namespace Encspect.Host;
 // it in Name, Offset and Length, which is the contract (a parser may point at a node it built again,
 // as frames are). Several nodes can be equal, as the fields of bytes that are not in the file as
 // they are (an inflated CodecPrivate) all cover the same range, so the very same Node object, where
-// the tree holds it, wins over an equal one that is met earlier. Only children whose bytes contain the node's are searched, so of
-// a stream's frames only the ones on the way have their children built; each list of children is
-// built once and kept while the finder lives.
+// the tree holds it, wins over an equal one that is met earlier. Only children whose bytes contain
+// the node's are searched, so of a stream's frames only the ones on the way have their children
+// built; each list of children is built once and kept while the finder lives.
 internal sealed class TreePaths(Node root)
 {
     private readonly Dictionary<Node, ChildIndex> _indexes = new(ReferenceEqualityComparer.Instance);

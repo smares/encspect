@@ -89,11 +89,11 @@ internal sealed partial class FileReader
                     }
                 }
 
-                records.Items.Add(new Item { Kind = ItemKind.Element, Id = (uint)child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Value = (long)value });
+                records.Items.Add(new Item { Kind = ItemKind.Element, Id = child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Value = (long)value });
             }
             else if (child.Id == Schema.Crc32)
             {
-                var item = new Item { Kind = ItemKind.Crc, Id = (uint)child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset };
+                var item = new Item { Kind = ItemKind.Crc, Id = child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset };
                 if (seen == 0 && child.Size == 4 && childEnd - child.DataOffset == 4 && isComplete)
                 {
                     _reader.Position = child.DataOffset;
@@ -145,7 +145,7 @@ internal sealed partial class FileReader
                         $"{(count == 1 ? "An element is one" : $"{count} elements are ones")} that RFC 9559 lists as no longer used (appendix A); the first is the {definition.Name} at 0x{child.Offset:X}.");
                 }
 
-                records.Items.Add(new Item { Kind = ItemKind.Element, Id = (uint)Math.Min(child.Id, uint.MaxValue), Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Value = value });
+                records.Items.Add(new Item { Kind = ItemKind.Element, Id = child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset, Value = value });
             }
 
             seen++;
